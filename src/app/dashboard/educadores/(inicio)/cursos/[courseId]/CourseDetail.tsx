@@ -5,11 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
+import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +28,6 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
-import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   Breadcrumb,
@@ -223,6 +224,49 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
+  const { user } = useUser(); // Ya está dentro del componente
+
+  const handleEnrollAndRedirect = async () => {
+    if (!user?.id || !courseIdNumber) {
+      toast.error('Usuario no autenticado o curso inválido');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/enrollments/educatorsEnroll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: String(courseIdNumber),
+          userIds: [user.id], // 🔁 Aquí sí tienes acceso
+          planType: 'Pro',
+        }),
+      });
+
+      if (!res.ok) {
+        const responseData: unknown = await res.json();
+
+        const errorMessage =
+          typeof responseData === 'object' &&
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
+            ? (responseData as { error: string }).error
+            : 'Error al matricular';
+
+        toast.error(errorMessage);
+      } else {
+        toast.success('Matriculado correctamente');
+        router.push(`/estudiantes/cursos/${courseIdNumber}`);
+      }
+    } catch (error) {
+      console.error('Error al matricular:', error);
+      toast.error('Error al matricular al curso');
+    }
+  };
+
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
     if (courseIdNumber !== null) {
@@ -269,8 +313,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             (await responseParametros.json()) as Parametros[]; // Obtener los parámetros
           setParametros(dataParametros); // Inicializar los parámetros
         } else {
-          const errorData = (await response.json()) as { error?: string };
-          const errorMessage = errorData.error ?? response.statusText;
+          // Valor inicial del mensaje de error por defecto
+          let errorMessage = response.statusText;
+
+          try {
+            // Intentamos extraer mensaje de error del JSON si existe
+            const errorJson: unknown = await response.json();
+
+            if (
+              typeof errorJson === 'object' &&
+              errorJson !== null &&
+              'error' in errorJson &&
+              typeof (errorJson as { error?: string }).error === 'string'
+            ) {
+              errorMessage = (errorJson as { error: string }).error;
+            }
+          } catch {
+            // Si la respuesta no tiene JSON válido o no contiene 'error', ignoramos
+          }
+
+          // Guardamos el error en el estado y mostramos el toast
           setError(`Error al cargar el curso: ${errorMessage}`);
           toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
@@ -780,10 +842,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                <Button className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto">
-                  <Link href={`./${course.id}/ver/${course.id}`}>
-                    Visualizar curso
-                  </Link>
+                <Button
+                  onClick={handleEnrollAndRedirect}
+                  className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto"
+                >
+                  Visualizar curso
                 </Button>
                 <Button
                   onClick={handleEditCourse}

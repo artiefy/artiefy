@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
 import { toast } from 'sonner';
 
@@ -223,6 +224,49 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
+  const { user } = useUser(); // Ya está dentro del componente
+
+  const handleEnrollAndRedirect = async () => {
+    if (!user?.id || !courseIdNumber) {
+      toast.error('Usuario no autenticado o curso inválido');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/enrollments/educatorsEnroll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: String(courseIdNumber),
+          userIds: [user.id], // 🔁 Aquí sí tienes acceso
+          planType: 'Pro',
+        }),
+      });
+
+      if (!res.ok) {
+        const responseData: unknown = await res.json();
+
+        const errorMessage =
+          typeof responseData === 'object' &&
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
+            ? (responseData as { error: string }).error
+            : 'Error al matricular';
+
+        toast.error(errorMessage);
+      } else {
+        toast.success('Matriculado correctamente');
+        router.push(`/estudiantes/cursos/${courseIdNumber}`);
+      }
+    } catch (error) {
+      console.error('Error al matricular:', error);
+      toast.error('Error al matricular al curso');
+    }
+  };
+
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
     if (courseIdNumber !== null) {
@@ -269,8 +313,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             (await responseParametros.json()) as Parametros[]; // Obtener los parámetros
           setParametros(dataParametros); // Inicializar los parámetros
         } else {
-          const errorData = (await response.json()) as { error?: string };
-          const errorMessage = errorData.error ?? response.statusText;
+          let errorMessage = response.statusText;
+
+          // Intentamos parsear el cuerpo de la respuesta como JSON
+          const errorResponseRaw: unknown = await response
+            .json()
+            .catch(() => null);
+
+          if (
+            errorResponseRaw &&
+            typeof errorResponseRaw === 'object' &&
+            'error' in errorResponseRaw &&
+            typeof (errorResponseRaw as { error: unknown }).error === 'string'
+          ) {
+            errorMessage = (errorResponseRaw as { error: string }).error;
+          }
+
+          // Guardar en estado y mostrar toast con mensaje claro
           setError(`Error al cargar el curso: ${errorMessage}`);
           toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
@@ -780,10 +839,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                <Button className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto">
-                  <Link href={`./${course.id}/ver/${course.id}`}>
-                    Visualizar curso
-                  </Link>
+                <Button
+                  onClick={handleEnrollAndRedirect}
+                  className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto"
+                >
+                  Visualizar curso
                 </Button>
                 <Button
                   onClick={handleEditCourse}

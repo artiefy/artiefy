@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { and,eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollmentPrograms,enrollments, users } from '~/server/db/schema';
+import {
+  enrollmentPrograms,
+  enrollments,
+  lessons,
+  userLessonsProgress,
+  users,
+} from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // mes primero
+  const day = String(date.getDate()).padStart(2, '0'); // luego día
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${day}-${month} ${hours}:${minutes}:${seconds}`;
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 export async function POST(request: Request) {
@@ -168,6 +175,47 @@ export async function POST(request: Request) {
             completed: false,
           }))
         );
+
+        // Obtener lecciones del curso
+        const courseLessons = await db.query.lessons.findMany({
+          where: eq(lessons.courseId, parsedCourseId), // asegúrate de usar parsedCourseId aquí
+        });
+
+        const sortedLessons = sortLessons(courseLessons);
+        const lessonIds = sortedLessons.map((lesson) => lesson.id);
+
+        for (const userId of newUsers) {
+          const existingProgress: { lessonId: string }[] =
+            await db.query.userLessonsProgress.findMany({
+              where: and(
+                eq(userLessonsProgress.userId, userId),
+                inArray(userLessonsProgress.lessonId, lessonIds)
+              ),
+            });
+
+          const existingProgressSet = new Set(
+            existingProgress.map((progress) => progress.lessonId)
+          );
+
+          for (const [index, lesson] of sortedLessons.entries()) {
+            if (!existingProgressSet.has(lesson.id)) {
+              const isFirstOrWelcome =
+                index === 0 ||
+                lesson.title.toLowerCase().includes('bienvenida') ||
+                lesson.title.toLowerCase().includes('clase 1');
+
+              await db.insert(userLessonsProgress).values({
+                userId,
+                lessonId: lesson.id,
+                progress: 0,
+                isCompleted: false,
+                isLocked: !isFirstOrWelcome,
+                isNew: true,
+                lastUpdated: new Date(),
+              });
+            }
+          }
+        }
       }
     }
 
