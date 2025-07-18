@@ -241,7 +241,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         body: JSON.stringify({
           courseId: String(courseIdNumber),
           userIds: [user.id], // 🔁 Aquí sí tienes acceso
-          planType: 'Pro',
+          planType: 'Premium',
         }),
       });
 
