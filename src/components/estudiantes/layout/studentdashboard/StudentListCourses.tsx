@@ -174,8 +174,8 @@ export default async function StudentListCourses({
                 {course.individualPrice
                   ? course.individualPrice.toLocaleString('es-ES')
                   : purchasableType?.price
-                  ? purchasableType.price.toLocaleString('es-ES')
-                  : 'Comprar'}
+                    ? purchasableType.price.toLocaleString('es-ES')
+                    : 'Comprar'}
               </span>
             </div>
           );
@@ -196,8 +196,8 @@ export default async function StudentListCourses({
                 {course.individualPrice
                   ? course.individualPrice.toLocaleString('es-ES')
                   : purchasableType?.price
-                  ? purchasableType.price.toLocaleString('es-ES')
-                  : 'Comprar'}
+                    ? purchasableType.price.toLocaleString('es-ES')
+                    : 'Comprar'}
               </span>
             </div>
             {includedInPlans.length > 0 && (
@@ -205,13 +205,19 @@ export default async function StudentListCourses({
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{includedInPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">
+                      {includedInPlans.join(', ')}
+                    </span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{includedInPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">
+                      {includedInPlans.join(', ')}
+                    </span>
                   </Badge>
                 </div>
               </>
@@ -226,22 +232,22 @@ export default async function StudentListCourses({
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
             <div className="mt-1 flex items-center gap-1">
               <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">
-                PREMIUM
-              </span>
+              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
             </div>
             {otherPlans.length > 0 && (
               <>
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
               </>
@@ -263,13 +269,15 @@ export default async function StudentListCourses({
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
               </>
@@ -291,13 +299,15 @@ export default async function StudentListCourses({
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
                   <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en: <span className="font-bold">{otherPlans.join(', ')}</span>
+                    Incluido en:{' '}
+                    <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
               </>
@@ -402,12 +412,21 @@ export default async function StudentListCourses({
                   <p className="line-clamp-2 text-sm text-gray-300">
                     {course.description}
                   </p>
-                  <div className="-mb-4 flex items-start justify-between">
+                  {/* MOBILE: Modalidad (izq) y tipo de curso (der) en la misma fila */}
+                  <div className="flex w-full items-center justify-between sm:hidden">
                     <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
                       {course.modalidad?.name}
                     </p>
-                    {/* Mueve el tipo de curso a la derecha con un contenedor alineado a la derecha */}
-                    <div className="ml-auto flex justify-end w-full">
+                    <div className="flex w-fit flex-shrink-0 justify-end">
+                      {getCourseTypeLabel(course)}
+                    </div>
+                  </div>
+                  {/* DESKTOP: Modalidad y tipo de curso como antes */}
+                  <div className="-mb-4 hidden items-start justify-between sm:flex">
+                    <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
+                      {course.modalidad?.name}
+                    </p>
+                    <div className="ml-auto flex w-full justify-end">
                       {getCourseTypeLabel(course)}
                     </div>
                   </div>
