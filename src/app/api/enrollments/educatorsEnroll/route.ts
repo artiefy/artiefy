@@ -55,13 +55,13 @@ if (isNaN(parsedCourseId)) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
-    const normalizedPlan: 'Pro' | 'Premium' | 'Enterprise' | 'none' = [
-      'Pro',
-      'Premium',
-      'Enterprise',
-    ].includes(planType)
-      ? planType
-      : 'none';
+    const validPlans = ['Pro', 'Premium', 'Enterprise'] as const;
+type PlanType = (typeof validPlans)[number] | 'none';
+
+const normalizedPlan: PlanType = validPlans.includes(planType as PlanType)
+  ? (planType as PlanType)
+  : 'none';
+
 
     const subscriptionEndDate = new Date();
     subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
