@@ -479,3 +479,15 @@ export interface Notification {
   createdAt: Date;
   metadata?: NotificationMetadata;
 }
+
+export interface Certificate {
+  id: number;
+  userId: string;
+  courseId: number;
+  grade: number;
+  createdAt: Date;
+  publicCode?: string | null;
+  studentName?: string | null;
+  user?: User;
+  course?: Course;
+}

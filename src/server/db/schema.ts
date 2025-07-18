@@ -438,6 +438,22 @@ export const userCredentials = pgTable('user_credentials', {
   email: text('email').notNull(),
 });
 
+// Tabla de certificados
+export const certificates = pgTable('certificates', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  grade: real('grade').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  // Puedes agregar un código público para validación si lo deseas
+  publicCode: varchar('public_code', { length: 32 }),
+  studentName: varchar('student_name', { length: 255 }), // <-- Nuevo campo para el nombre original
+});
+
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
   creator: one(users, {
@@ -940,3 +956,15 @@ export const courseCourseTypesRelations = relations(
     }),
   })
 );
+
+// Añadir esta nueva relación cerca de las demás relaciones
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [certificates.courseId],
+    references: [courses.id],
+  }),
+}));

@@ -17,11 +17,13 @@ import '~/styles/confetti.css';
 interface StudentCertificationProps {
   course: Course;
   userId: string | null;
+  studentName?: string | null; // <-- Nuevo prop opcional
 }
 
 export function CertificationStudent({
   course,
   userId,
+  studentName,
 }: StudentCertificationProps) {
   const { user } = useUser();
 
@@ -32,6 +34,13 @@ export function CertificationStudent({
   // Get current URL for certificate verification
   const certificateUrl =
     typeof window !== 'undefined' ? window.location.href : '';
+
+  // Usa el nombre original si está disponible, si no, usa el del usuario logueado
+  const displayName =
+    studentName ??
+    (user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : (user.firstName ?? user.lastName ?? user.username ?? ''));
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -141,7 +150,7 @@ export function CertificationStudent({
                     Por medio de la presente se hace constar que
                   </p>
                   <p className="text-background text-3xl font-bold">
-                    {user.firstName} {user.lastName}
+                    {displayName}
                   </p>
                   <p className="text-xl text-gray-600">
                     ha participado y completado exitosamente el curso
@@ -255,7 +264,7 @@ export function CertificationStudent({
           <PDFDownloadLink
             document={
               <CertificationStudentPDF
-                userName={`${user.firstName} ${user.lastName}`}
+                userName={displayName}
                 course={course}
                 date={formatDate(today)}
                 certificateUrl={certificateUrl}
