@@ -432,7 +432,7 @@ export default async function StudentListCourses({
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start justify-between space-y-2">
-                  <div className="flex w-full justify-between">
+                  <div className="md:mt-0 -mt-4 flex w-full justify-between">
                     <p className="text-sm font-bold text-gray-300 italic">
                       Educador:{' '}
                       <span className="font-bold italic">
