@@ -117,7 +117,7 @@ export async function POST(req: Request) {
 
       // Insertar progreso de lecciones si aplica
       const courseLessons = await db.query.lessons.findMany({
-        where: eq(lessons.courseId, courseId),
+        where: eq(lessons.courseId, parsedCourseId),
       });
 
       const sortedLessons = sortLessons(courseLessons);
