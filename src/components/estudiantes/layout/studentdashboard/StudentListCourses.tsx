@@ -355,6 +355,143 @@ export default async function StudentListCourses({
     );
   };
 
+  // Modifica getCourseTypeLabel para separar tipo principal y badges "Incluido en"
+  const getCourseTypeLabelMobile = (course: Course) => {
+    const userPlanType = user?.publicMetadata?.planType as string;
+    const hasActiveSubscription =
+      userPlanType === 'Pro' || userPlanType === 'Premium';
+
+    if (course.courseTypes && course.courseTypes.length > 0) {
+      const hasPurchasable = course.courseTypes.some(
+        (type) => type.isPurchasableIndividually
+      );
+      const hasPremium = course.courseTypes.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      );
+      const hasPro = course.courseTypes.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
+      );
+      const hasFree = course.courseTypes.some(
+        (type) =>
+          type.requiredSubscriptionLevel === 'none' &&
+          !type.isPurchasableIndividually
+      );
+
+      // Principal type
+      let principalType: React.ReactNode = null;
+      if (hasActiveSubscription) {
+        if (userPlanType === 'Premium' && hasPremium) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaCrown className="text-lg text-purple-500" />
+              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            </div>
+          );
+        } else if (
+          (userPlanType === 'Pro' || userPlanType === 'Premium') &&
+          hasPro
+        ) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaCrown className="text-lg text-orange-500" />
+              <span className="text-sm font-bold text-orange-500">PRO</span>
+            </div>
+          );
+        } else if (hasFree) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <IoGiftOutline className="text-lg text-green-500" />
+              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            </div>
+          );
+        } else if (hasPurchasable) {
+          const purchasableType = course.courseTypes.find(
+            (type) => type.isPurchasableIndividually
+          );
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaStar className="text-lg text-blue-500" />
+              <span className="text-sm font-bold text-blue-500">
+                $
+                {course.individualPrice
+                  ? course.individualPrice.toLocaleString('es-ES')
+                  : purchasableType?.price
+                    ? purchasableType.price.toLocaleString('es-ES')
+                    : 'Comprar'}
+              </span>
+            </div>
+          );
+        }
+      } else {
+        if (hasPurchasable) {
+          const purchasableType = course.courseTypes.find(
+            (type) => type.isPurchasableIndividually
+          );
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaStar className="text-lg text-blue-500" />
+              <span className="text-sm font-bold text-blue-500">
+                $
+                {course.individualPrice
+                  ? course.individualPrice.toLocaleString('es-ES')
+                  : purchasableType?.price
+                    ? purchasableType.price.toLocaleString('es-ES')
+                    : 'Comprar'}
+              </span>
+            </div>
+          );
+        } else if (hasPremium) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaCrown className="text-lg text-purple-500" />
+              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            </div>
+          );
+        } else if (hasPro) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <FaCrown className="text-lg text-orange-500" />
+              <span className="text-sm font-bold text-orange-500">PRO</span>
+            </div>
+          );
+        } else if (hasFree) {
+          principalType = (
+            <div className="flex items-center gap-1">
+              <IoGiftOutline className="text-lg text-green-500" />
+              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            </div>
+          );
+        }
+      }
+
+      // Badges "Incluido en"
+      const includedInPlans: string[] = [];
+      if (course.courseTypes.length > 1) {
+        if (hasPremium) includedInPlans.push('PREMIUM');
+        if (hasPro) includedInPlans.push('PRO');
+        if (hasFree) includedInPlans.push('GRATUITO');
+      }
+      const badges =
+        includedInPlans.length > 0 ? (
+          <div className="mt-0.5">
+            <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+              Incluido en:{' '}
+              <span className="font-bold">{includedInPlans.join(', ')}</span>
+            </Badge>
+          </div>
+        ) : null;
+
+      return (
+        <div className="flex w-full flex-col items-end">
+          <div className="flex w-full justify-end">{principalType}</div>
+          {badges}
+        </div>
+      );
+    }
+    // Fallback a la lógica original para compatibilidad
+    return getCourseTypeLabel(course);
+  };
+
   return (
     <>
       <div className="flex justify-center">
@@ -417,8 +554,9 @@ export default async function StudentListCourses({
                     <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
                       {course.modalidad?.name}
                     </p>
-                    <div className="flex w-fit flex-shrink-0 justify-end">
-                      {getCourseTypeLabel(course)}
+                    {/* Tipo principal alineado al borde derecho, badges debajo */}
+                    <div className="ml-auto flex w-fit flex-shrink-0 justify-end">
+                      {getCourseTypeLabelMobile(course)}
                     </div>
                   </div>
                   {/* DESKTOP: Modalidad y tipo de curso como antes */}
@@ -432,7 +570,7 @@ export default async function StudentListCourses({
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start justify-between space-y-2">
-                  <div className="md:mt-0 -mt-4 flex w-full justify-between">
+                  <div className="-mt-4 flex w-full justify-between md:mt-0">
                     <p className="text-sm font-bold text-gray-300 italic">
                       Educador:{' '}
                       <span className="font-bold italic">
