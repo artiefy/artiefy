@@ -159,7 +159,7 @@ export function Header() {
         isScrolled
           ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
           : 'py-4'
-      }`}
+      } md:py-4 -mb-5`} // <-- Agrega py-2 para móviles, md:py-4 para desktop
     >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
@@ -267,19 +267,19 @@ export function Header() {
         <div className="flex w-full items-center justify-between md:hidden">
           <div className="mt-[-8px] shrink-0">
             <Link href="/estudiantes">
-              <div className="relative size-[150px]">
+              <div className="relative size-[110px]"> {/* Reduce logo size */}
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
                   fill
                   priority
-                  className="ml-6 object-contain"
-                  sizes="(max-width: 768px) 150px, 150px"
+                  className="ml-2 object-contain" // Reduce left margin
+                  sizes="(max-width: 768px) 110px, 110px"
                 />
               </div>
             </Link>
           </div>
-          <label className="hamburger flex h-12 w-12 items-center justify-center">
+          <label className="hamburger flex h-8 w-8 items-center justify-center"> {/* Reduce hamburger size */}
             <input
               type="checkbox"
               checked={mobileMenuOpen}
@@ -302,37 +302,37 @@ export function Header() {
         className="fixed inset-0 z-50 md:hidden"
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
-          <div className="mt-9 flex items-center justify-between">
-            <div className="relative size-[150px]">
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[75%] max-w-xs bg-white p-4 shadow-xl">
+          <div className="mt-4 flex items-center justify-between">
+            <div className="relative size-[110px]">
               <Link href="/estudiantes">
-                <div className="relative size-[150px]">
+                <div className="relative size-[110px]">
                   <Image
                     src="/artiefy-logo2.svg"
                     alt="Logo Artiefy Mobile"
                     fill
                     unoptimized
                     className="object-contain"
-                    sizes="150px"
+                    sizes="110px"
                   />
                 </div>
               </Link>
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="ml-5 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
+              className="ml-2 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
               aria-label="Close menu"
             >
-              <XMarkIconSolid className="size-8" />
+              <XMarkIconSolid className="size-7" />
             </button>
           </div>
-          <nav className="pb-7">
-            <ul className="space-y-12">
+          <nav className="pb-4">
+            <ul className="space-y-6">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                    className="block text-base text-gray-900 transition-colors hover:text-orange-500 active:scale-95 py-1" // Reduce font size and add less vertical padding
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
@@ -341,7 +341,7 @@ export function Header() {
               ))}
             </ul>
           </nav>
-          <div className="mt-6 flex items-center justify-center">
+          <div className="mt-4 flex items-center justify-center"> {/* Reduce top margin */}
             <Suspense
               fallback={
                 <div className="flex min-w-[180px] items-center justify-start">

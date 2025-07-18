@@ -113,15 +113,16 @@ export function CourseHeader({
   onEnrollAction,
   onUnenrollAction,
 }: CourseHeaderProps) {
-  const { user, isSignedIn } = useUser(); // Add isSignedIn here
+  const { user, isSignedIn } = useUser();
   const router = useRouter();
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // Add a new state to track if program enrollment toast has been shown
   const [programToastShown, setProgramToastShown] = useState(false);
+  // Add state to track local enrollment status to hide the top button after enrolling
+  const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
 
   // Ref para controlar el video
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -253,6 +254,19 @@ export function CourseHeader({
 
       if (programMateria?.programaId && user?.id && !isEnrolled) {
         try {
+          // Check if course has both PRO and PREMIUM types
+          const hasPremiumType = course.courseTypes?.some(
+            (type) => type.requiredSubscriptionLevel === 'premium'
+          );
+          const hasProType = course.courseTypes?.some(
+            (type) => type.requiredSubscriptionLevel === 'pro'
+          );
+
+          // If course has both types, don't redirect to program
+          if (hasPremiumType && hasProType) {
+            return; // Skip program redirection for courses with both PRO and PREMIUM types
+          }
+
           const isProgramEnrolled = await isUserEnrolledInProgram(
             programMateria.programaId,
             user.id
@@ -275,7 +289,14 @@ export function CourseHeader({
     };
 
     void checkProgramEnrollment();
-  }, [course.materias, user?.id, isEnrolled, router, programToastShown]);
+  }, [
+    course.materias,
+    course.courseTypes,
+    user?.id,
+    isEnrolled,
+    router,
+    programToastShown,
+  ]);
 
   // Helper function to format dates
   const formatDateString = (date: string | number | Date): string => {
@@ -778,34 +799,102 @@ export function CourseHeader({
     setIsEnrollClicked(true);
 
     try {
-      // HANDLE INDIVIDUAL PURCHASE (HIGHEST PRIORITY)
-      // Always prioritize direct purchase regardless of subscription status
-      if (course.courseTypeId === 4) {
-        console.log('Processing Type 4 course purchase');
-        if (!course.individualPrice) {
-          toast.error('Error en el precio del curso');
-          return;
-        }
+      // FIRST, CHECK IF USER CAN ACCESS VIA SUBSCRIPTION
+      const userPlanType = user?.publicMetadata?.planType as string;
 
-        // Generate a product from the course
-        const courseProduct = createProductFromCourse(course);
-        console.log('Created course product:', courseProduct);
-
-        // Set the product and show the modal
-        setSelectedProduct(courseProduct);
-        setShowPaymentModal(true);
-        return; // Early return to prevent enrollment logic
-      }
-
-      // Check for purchasable course types (new system)
-      const purchasableType = course.courseTypes?.find(
-        (type) => type.isPurchasableIndividually
+      // Check if the user's subscription level gives them access
+      const hasPremiumType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      );
+      const hasProType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
       );
 
-      if (purchasableType) {
-        console.log('Processing purchasable course type:', purchasableType);
-        // Use either individual price from course or from the course type
-        const price = course.individualPrice ?? purchasableType.price;
+      // Fix this line - use logical OR instead of nullish coalescing
+
+      const userCanAccessWithSubscription =
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        (userPlanType === 'Premium' && hasPremiumType) ||
+        ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+
+      // If user has subscription access and subscription is active, proceed with direct enrollment
+      if (userCanAccessWithSubscription && isSubscriptionActive) {
+        console.log(
+          'User has subscription access to this course. Proceeding with direct enrollment.'
+        );
+
+        // Check if course requires program enrollment first
+        const programMateria = course.materias?.find(
+          (materia) => materia.programaId !== null
+        );
+
+        if (programMateria?.programaId) {
+          try {
+            // If course has both PRO and PREMIUM types, don't redirect to program
+            if (hasPremiumType && hasProType) {
+              // Skip program check for courses with both types
+              console.log(
+                'Course has both PRO and PREMIUM types - skipping program redirect'
+              );
+            } else {
+              const isProgramEnrolled = await isUserEnrolledInProgram(
+                programMateria.programaId,
+                user?.id ?? ''
+              );
+
+              if (!isProgramEnrolled) {
+                // Show toast and redirect to program page
+                setProgramToastShown(true);
+                toast.warning(
+                  `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
+                  {
+                    description:
+                      'Serás redirigido a la página del programa para inscribirte.',
+                    duration: 4000,
+                    id: 'program-enrollment',
+                  }
+                );
+
+                // Wait a moment for the toast to be visible
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                router.push(
+                  `/estudiantes/programas/${programMateria.programaId}`
+                );
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('Error checking program enrollment:', error);
+            toast.error('Error al verificar la inscripción al programa');
+            return;
+          }
+        }
+
+        // If we get here, proceed with enrollment via subscription
+        console.log('Calling onEnrollAction for subscription user');
+        await onEnrollAction();
+        return;
+      }
+
+      // If user doesn't have subscription access, continue with individual purchase logic
+      // HANDLE INDIVIDUAL PURCHASE
+      const isPurchasable =
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually);
+
+      if (isPurchasable) {
+        console.log('Course is purchasable - showing payment modal');
+
+        let price: number | null = null;
+
+        if (course.courseTypeId === 4) {
+          price = course.individualPrice;
+        } else {
+          const purchasableType = course.courseTypes?.find(
+            (type) => type.isPurchasableIndividually
+          );
+          price = course.individualPrice ?? purchasableType?.price ?? null;
+        }
 
         if (!price) {
           toast.error('Error en el precio del curso');
@@ -818,99 +907,20 @@ export function CourseHeader({
           individualPrice: price,
         });
 
-        console.log('Created course product from type:', courseProduct);
+        console.log('Created course product:', courseProduct);
 
         // Set the product and show the modal
         setSelectedProduct(courseProduct);
         setShowPaymentModal(true);
-        return; // Early return to prevent enrollment logic
-      }
-
-      // Rest of enrollment logic for subscription-based courses
-      const userPlanType = user?.publicMetadata?.planType as string;
-
-      // Only continue checking for non-purchasable course types
-      // Verificar si el usuario tiene acceso según su suscripción
-      const hasPremiumType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
-      );
-      const hasProType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
-      );
-      const hasFreeType = course.courseTypes?.some(
-        (type) =>
-          type.requiredSubscriptionLevel === 'none' &&
-          !type.isPurchasableIndividually
-      );
-
-      // Check for program requirement
-      const programMateria = course.materias?.find(
-        (materia) => materia.programaId !== null
-      );
-
-      // First check: If Pro user trying to access Premium course
-      if (
-        userPlanType === 'Pro' &&
-        hasPremiumType &&
-        !hasFreeType &&
-        !hasProType
-      ) {
-        toast.error('Acceso Restringido', {
-          description:
-            'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
-        });
-        window.open('/planes', '_blank', 'noopener,noreferrer');
         return;
       }
 
-      // Second check: If needs program enrollment
-      if (programMateria?.programaId && isSubscriptionActive) {
-        try {
-          const isProgramEnrolled = await isUserEnrolledInProgram(
-            programMateria.programaId,
-            user?.id ?? ''
-          );
-
-          if (!isProgramEnrolled) {
-            // Show toast first and mark as shown to prevent duplicates
-            setProgramToastShown(true);
-            toast.warning(
-              `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
-              {
-                description:
-                  'Serás redirigido a la página del programa para inscribirte.',
-                duration: 4000,
-                id: 'program-enrollment',
-              }
-            );
-
-            // Wait a moment for the toast to be visible
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // Then redirect
-            router.push(`/estudiantes/programas/${programMateria.programaId}`);
-            return;
-          }
-        } catch (error) {
-          console.error('Error checking program enrollment:', error);
-          toast.error('Error al verificar la inscripción al programa');
-          return;
-        }
-      }
-
-      // Check if subscription is required for non-free courses
-      const requiresSubscription =
-        (hasPremiumType ?? hasProType) &&
-        !hasFreeType &&
-        !course.courseTypes?.some((type) => type.isPurchasableIndividually);
-
-      if (requiresSubscription && !isSubscriptionActive) {
-        window.open('/planes', '_blank', 'noopener,noreferrer');
-        return;
-      }
-
-      // If we got here, proceed with enrollment
+      // For free courses and other non-purchasable courses
+      console.log(
+        'Course is not purchasable - calling onEnrollAction directly'
+      );
       await onEnrollAction();
+      setLocalIsEnrolled(true); // Mark as enrolled locally after successful enrollment
     } catch (error) {
       console.error('Error in handleEnrollClick:', error);
       const errorMessage =
@@ -1107,7 +1117,8 @@ export function CourseHeader({
     );
 
     const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (userPlanType === 'Premium' && hasPremiumType) ||
       ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
     // Always show "Comprar Curso" for individual courses without active subscription
@@ -1166,26 +1177,28 @@ export function CourseHeader({
 
   // Get price display function - update to respect subscription status
   const getButtonPrice = (): string | null => {
-    const userPlanType = user?.publicMetadata?.planType as string;
-    const userHasActiveSubscription =
+    const buttonUserPlanType = user?.publicMetadata?.planType as string;
+    const buttonUserHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium');
+      (buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium');
 
     // Check if the user's subscription covers this course
-    const hasPremiumType = course.courseTypes?.some(
+    const buttonHasPremiumType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'premium'
     );
-    const hasProType = course.courseTypes?.some(
+    const buttonHasProType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
 
     const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ||
+      ((buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium') &&
+        buttonHasProType);
 
     // Don't show price if user has subscription access
-    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+    if (buttonUserHasActiveSubscription && userCanAccessWithSubscription) {
       return null;
     }
 
@@ -1220,42 +1233,58 @@ export function CourseHeader({
 
   // Extraer el botón de compra individual para reutilizarlo
   const renderBuyButton = () => {
+    // Don't show the button if locally enrolled
+    if (localIsEnrolled) {
+      return null;
+    }
+
     // Obtener información del usuario y suscripción
-    const userPlanType = user?.publicMetadata?.planType as string;
+    const renderUserPlanType = user?.publicMetadata?.planType as string;
     const userHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium');
+      (renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium');
 
     // Verificar si el curso tiene tipos que coinciden con la suscripción del usuario
-    const hasPremiumType = course.courseTypes?.some(
+    const renderHasPremiumType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'premium'
     );
-    const hasProType = course.courseTypes?.some(
+    const renderHasProType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
-    const hasFreeType = course.courseTypes?.some(
+    const renderHasFreeType = course.courseTypes?.some(
       (type) =>
         type.requiredSubscriptionLevel === 'none' &&
         !type.isPurchasableIndividually
     );
+    const _renderHasPurchasable = course.courseTypes?.some(
+      (type) => type.isPurchasableIndividually
+    );
 
-    const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+    // Calculate userCanAccessWithSubscription within this function scope
 
-    // Si el usuario ya está inscrito, no mostrar botón
-    if (isEnrolled) {
-      return null;
-    }
+    const renderUserCanAccessWithSubscription =
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (renderUserPlanType === 'Premium' && renderHasPremiumType) ||
+      ((renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium') &&
+        renderHasProType);
 
-    // NUEVO: Si el usuario tiene acceso por suscripción, mostrar botón de inscripción
-    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+    // IMPORTANT: Changed logic to prioritize subscription access over purchase options
+    // If user has active subscription and can access this course with it, show the enrollment button
+    if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
       return (
         <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
             <strong>
-              <span>Inscribirse al Curso</span>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse al Curso</span>
+              )}
             </strong>
             <div id="container-stars">
               <div id="stars" />
@@ -1269,13 +1298,21 @@ export function CourseHeader({
       );
     }
 
-    // NUEVO: Si es un curso gratuito, mostrar botón de inscripción gratuita
-    if (hasFreeType && !hasPremiumType && !hasProType) {
+    // Free course enrollment button - only show if user doesn't have subscription access
+    if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
       return (
         <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
             <strong>
-              <span>Inscribirse Gratis</span>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse Gratis</span>
+              )}
             </strong>
             <div id="container-stars">
               <div id="stars" />
@@ -1289,6 +1326,7 @@ export function CourseHeader({
       );
     }
 
+    // Purchase buttons - only show if user doesn't have subscription access
     // Verificar si es un curso tipo 4 (sistema tradicional)
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
@@ -1355,6 +1393,11 @@ export function CourseHeader({
   const handlePlanBadgeClick = () => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
   };
+
+  // Update local enrollment status when the prop changes
+  useEffect(() => {
+    setLocalIsEnrolled(isEnrolled);
+  }, [isEnrolled]);
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
@@ -1795,15 +1838,22 @@ export function CourseHeader({
             Materias asociadas:
           </h3>
           <div className="flex flex-wrap gap-2">
-            {course.materias?.map((materia: CourseMateria, index: number) => (
-              <Badge
-                key={materia.id}
-                variant="secondary"
-                className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
-              >
-                {materia.title}
-              </Badge>
-            ))}
+            {course.materias
+              ? // Filter to only show unique materia titles
+                Array.from(
+                  new Map(
+                    course.materias.map((materia) => [materia.title, materia])
+                  ).values()
+                ).map((materia: CourseMateria, index: number) => (
+                  <Badge
+                    key={materia.id}
+                    variant="secondary"
+                    className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
+                  >
+                    {materia.title}
+                  </Badge>
+                ))
+              : null}
           </div>
         </div>
 
@@ -1825,7 +1875,7 @@ export function CourseHeader({
         {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32">
-            {isEnrolled ? (
+            {localIsEnrolled ? (
               <div className="flex flex-col space-y-4">
                 {/* Wrap both buttons in a fragment or a div */}
                 <Button

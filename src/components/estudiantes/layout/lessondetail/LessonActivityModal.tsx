@@ -1730,12 +1730,8 @@ export function LessonActivityModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Prevent closing if it's a document upload activity
-        if (!open && activity.typeid === 1) {
-          return; // This prevents the modal from closing
-        }
-
-        // For other activity types, use existing logic
+        // Eliminar la lógica que previene el cierre para typeid === 1
+        // Ahora siempre permite cerrar el modal con la X
         if (!open) {
           if (activity.typeid === 1) {
             if (isNewUpload) {
