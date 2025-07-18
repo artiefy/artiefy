@@ -91,7 +91,6 @@ if (isNaN(parsedCourseId)) {
       })
     );
 
-    const parsedCourseId = Number(courseId);
     const existingEnrollments = await db
       .select({ userId: enrollments.userId })
       .from(enrollments)
