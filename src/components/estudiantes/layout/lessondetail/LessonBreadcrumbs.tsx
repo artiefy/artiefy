@@ -19,7 +19,7 @@ const LessonBreadcrumbs = ({
 }: LessonBreadcrumbsProps) => {
   return (
     <nav className="w-full max-w-full overflow-x-auto px-2 md:px-8">
-      <ol className="flex flex-wrap items-center space-y-2 space-x-2 pr-2 text-sm whitespace-nowrap text-gray-400 sm:space-y-0">
+      <ol className="flex flex-nowrap items-center space-x-2 pr-2 text-sm whitespace-nowrap text-gray-400">
         <li>
           <Link
             href="/"
@@ -49,18 +49,28 @@ const LessonBreadcrumbs = ({
             title={courseTitle}
           >
             <FaBook className="mr-1" />{' '}
-            <span className="break-words whitespace-normal">{courseTitle}</span>
+            <span
+              className="inline-block max-w-[100px] truncate align-middle"
+              title={courseTitle}
+            >
+              {courseTitle}
+            </span>
           </Link>
         </li>
         <li>
           <ChevronRightIcon className="h-4 w-4" />
         </li>
         <li
-          className="text-primary mb-2 sm:mb-0 flex items-center pr-2 font-bold break-words whitespace-normal"
+          className="text-primary mb-2 flex items-center pr-2 font-bold sm:mb-0"
           title={lessonTitle}
         >
           <SquarePlay className="mr-1 size-5" />{' '}
-          <span className="break-words whitespace-normal">{lessonTitle}</span>
+          <span
+            className="inline-block max-w-[100px] truncate align-middle"
+            title={lessonTitle}
+          >
+            {lessonTitle}
+          </span>
         </li>
       </ol>
     </nav>
