@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, inArray,sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -245,8 +245,8 @@ export async function POST(req: Request) {
 
         const sortedLessons = sortLessons(courseLessons);
 
-        const lessonIds: (string | number)[] = sortedLessons.map(
-          (lesson) => lesson.id
+        const lessonIds: number[] = sortedLessons.map((lesson) =>
+          Number(lesson.id)
         );
 
         // Verificación defensiva
