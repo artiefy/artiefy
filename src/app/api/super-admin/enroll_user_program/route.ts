@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray,sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   courses,
   enrollmentPrograms,
   enrollments,
+  lessons,
   programas,
   userCustomFields,
+  userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -233,6 +236,54 @@ export async function POST(req: Request) {
 
     if (insertData.length > 0) {
       await db.insert(enrollments).values(insertData);
+
+      // Crear progreso de lecciones por cada (userId, courseId) insertado
+      for (const { userId, courseId } of insertData) {
+        const courseLessons = await db.query.lessons.findMany({
+          where: eq(lessons.courseId, courseId),
+        });
+
+        const sortedLessons = sortLessons(courseLessons);
+
+        const lessonIds: (string | number)[] = sortedLessons.map(
+          (lesson) => lesson.id
+        );
+
+        // Verificación defensiva
+        if (lessonIds.length === 0) {
+          continue;
+        }
+
+        const existingProgress = await db.query.userLessonsProgress.findMany({
+          where: and(
+            eq(userLessonsProgress.userId, userId),
+            inArray(userLessonsProgress.lessonId, lessonIds)
+          ),
+        });
+
+        const existingProgressSet = new Set(
+          existingProgress.map((progress) => progress.lessonId)
+        );
+
+        for (const [index, lesson] of sortedLessons.entries()) {
+          if (!existingProgressSet.has(lesson.id)) {
+            const isFirstOrWelcome =
+              index === 0 ||
+              lesson.title.toLowerCase().includes('bienvenida') ||
+              lesson.title.toLowerCase().includes('clase 1');
+
+            await db.insert(userLessonsProgress).values({
+              userId,
+              lessonId: lesson.id,
+              progress: 0,
+              isCompleted: false,
+              isLocked: !isFirstOrWelcome,
+              isNew: true,
+              lastUpdated: new Date(),
+            });
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true });
