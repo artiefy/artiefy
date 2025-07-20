@@ -36,7 +36,7 @@ export const plansPersonas: Plan[] = [
   {
     id: 2,
     name: 'Premium',
-    price: 1000,
+    price: 2000,
     priceUsd: 37,
     period: '/mes',
     courses: 'Ilimitados',
