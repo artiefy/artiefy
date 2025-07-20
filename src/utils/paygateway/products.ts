@@ -14,7 +14,7 @@ function getPlanAmount(planName: string): string {
     case 'Pro':
       return '99800.00';
     case 'Premium':
-      return '2000.00';
+      return '149800.00';
     case 'Enterprise':
       return '200000.00';
     default:
