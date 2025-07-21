@@ -1645,50 +1645,76 @@ export function CourseHeader({
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex items-center">
-                <FaCalendar className="mr-2 text-white" /> {/* icono blanco */}
-                <span className="text-xs text-white sm:text-sm">
-                  Creado: {formatDateString(course.createdAt)}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <FaClock className="mr-2 text-white" /> {/* icono blanco */}
-                <span className="text-xs text-white sm:text-sm">
-                  Actualizado: {formatDateString(course.updatedAt)}
-                </span>
-              </div>
+              {/* Ocultar en pantallas pequeñas si no está logueado */}
+              {isSignedIn ?? (
+                <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
+                  {/* ...existing code... */}
+                  <div className="flex items-center">
+                    <FaCalendar className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Creado: {formatDateString(course.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaClock className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Actualizado: {formatDateString(course.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {/* Mostrar en desktop siempre */}
+              {isSignedIn && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center">
+                    <FaCalendar className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Creado: {formatDateString(course.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaClock className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Actualizado: {formatDateString(course.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center sm:-mt-1">
-              <FaUserGraduate className="mr-2 text-blue-600" />
-              <span className="text-sm font-semibold text-blue-600 sm:text-base">
-                {Math.max(0, totalStudents)}{' '}
-                {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
-              </span>
+          {/* Ocultar número de estudiantes en mobile si no está logueado */}
+          {(isSignedIn ?? window.innerWidth >= 640) && (
+            <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
+              <div className="flex items-center sm:-mt-1">
+                <FaUserGraduate className="mr-2 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-600 sm:text-base">
+                  {Math.max(0, totalStudents)}{' '}
+                  {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
+                </span>
+              </div>
+              <div className="flex items-center sm:-mt-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <StarIcon
+                    key={index}
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      index < Math.floor(course.rating ?? 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+                  {course.rating?.toFixed(1)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center sm:-mt-1">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <StarIcon
-                  key={index}
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    index < Math.floor(course.rating ?? 0)
-                      ? 'text-yellow-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-              <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-                {course.rating?.toFixed(1)}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="-mt-2 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
+            <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
               <div>
                 <h3 className="text-base font-extrabold text-white sm:text-lg">
                   {/* Cambiado a blanco */}
@@ -1718,36 +1744,39 @@ export function CourseHeader({
         {/* New buttons container */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Grade button */}
-          <Button
-            onClick={() => setIsGradeModalOpen(true)}
-            disabled={!canAccessGrades}
-            className={cn(
-              'h-9 shrink-0 px-4 font-semibold sm:w-auto',
-              canAccessGrades
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-400 text-white'
-            )}
-            aria-label={
-              !isEnrolled
-                ? 'Debes inscribirte al curso'
-                : 'Completa todas las clases para ver tus calificaciones'
-            }
-          >
-            <FaTrophy
+          {/* Ocultar botón en mobile si no está logueado */}
+        {(isSignedIn ?? window.innerWidth >= 640) && (
+            <Button
+              onClick={() => setIsGradeModalOpen(true)}
+              disabled={!canAccessGrades}
               className={cn(
-                'mr-2 h-4 w-4',
-                !canAccessGrades ? 'text-black' : ''
+                'h-9 shrink-0 px-4 font-semibold sm:w-auto',
+                canAccessGrades
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-400 text-white'
               )}
-            />
-            <span
-              className={cn(
-                'text-sm font-bold',
-                !canAccessGrades ? 'text-black' : ''
-              )}
+              aria-label={
+                !isEnrolled
+                  ? 'Debes inscribirte al curso'
+                  : 'Completa todas las clases para ver tus calificaciones'
+              }
             >
-              Mis Calificaciones
-            </span>
-          </Button>
+              <FaTrophy
+                className={cn(
+                  'mr-2 h-4 w-4',
+                  !canAccessGrades ? 'text-black' : ''
+                )}
+              />
+              <span
+                className={cn(
+                  'text-sm font-bold',
+                  !canAccessGrades ? 'text-black' : ''
+                )}
+              >
+                Mis Calificaciones
+              </span>
+            </Button>
+          )}
 
           {/* Price button with space theme */}
           {course.courseTypeId === 4 &&

@@ -44,7 +44,10 @@ export function CourseBreadcrumb({
             <BreadcrumbItem>
               <BreadcrumbLink href={`/estudiantes/programas/${programInfo.id}`}>
                 <HiAcademicCap className="mr-1 inline-block" />
-                <span className="max-w-[100px] truncate inline-block align-middle" title={programInfo.title}>
+                <span
+                  className="sm:truncate-none inline-block max-w-[100px] truncate align-middle sm:max-w-none"
+                  title={programInfo.title}
+                >
                   {programInfo.title}
                 </span>
               </BreadcrumbLink>
@@ -63,7 +66,10 @@ export function CourseBreadcrumb({
         )}
         <BreadcrumbItem>
           <BreadcrumbPage>
-            <span className="max-w-[120px] truncate inline-block align-middle" title={title}>
+            <span
+              className="sm:truncate-none inline-block max-w-[120px] truncate align-middle sm:max-w-none"
+              title={title}
+            >
               {title}
             </span>
           </BreadcrumbPage>
