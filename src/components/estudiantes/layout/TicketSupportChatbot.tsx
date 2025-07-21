@@ -9,7 +9,7 @@ import { IoMdClose } from 'react-icons/io';
 import { MdSupportAgent } from 'react-icons/md';
 import { toast } from 'sonner';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
-import {SuportChat} from './SuportChat';
+import { SuportChat } from './SuportChat';
 import { SaveTicketMessage } from '~/server/actions/estudiantes/chats/suportChatBot';
 
 import '~/styles/ticketSupportButton.css';
@@ -18,31 +18,58 @@ import '~/styles/ticketSupportButton.css';
 
 const TicketSupportChatbot = () => {
 	const { showExtras } = useExtras();
-
 	const [isDesktop, setIsDesktop] = useState(false);
-
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
 		{ id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' },
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
-	const [hideButton, setHideButton] = useState(false);
+
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const { isSignedIn } = useAuth();
 	const { user } = useUser();
 	const router = useRouter();
+	const ANIMATION_DURATION = 350; // ms
+	const [showAnim, setShowAnim] = useState(false);
 
 	useEffect(() => {
-			// Solo se ejecuta en el cliente
-			setIsDesktop(window.innerWidth > 768);
-		
-			// Si quieres que se actualice al redimensionar:
-			const handleResize = () => setIsDesktop(window.innerWidth > 768);
-			window.addEventListener('resize', handleResize);
-			return () => window.removeEventListener('resize', handleResize);
+		// Solo se ejecuta en el cliente
+		setIsDesktop(window.innerWidth > 768);
+
+		// Si quieres que se actualice al redimensionar:
+		const handleResize = () => setIsDesktop(window.innerWidth > 768);
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
 	}, []);
+
+
+	const [hideButton, setHideButton] = useState(false);
+
+	useEffect(() => {
+		const handleHideButton = () => setHideButton(true);
+		const handleShowButton = () => setHideButton(false);
+		window.addEventListener('student-chat-open', handleHideButton);
+		window.addEventListener('student-chat-close', handleShowButton);
+		return () => {
+			window.removeEventListener('student-chat-open', handleHideButton);
+			window.removeEventListener('student-chat-close', handleShowButton);
+		};
+	}, []);
+
+
+
+	useEffect(() => {
+		if (showExtras && !hideButton) {
+			setShowAnim(true);
+		} else if (hideButton) {
+			setShowAnim(false); // Oculta inmediatamente al abrir el chat
+		} else if (showAnim) {
+			const timeout = setTimeout(() => setShowAnim(false), ANIMATION_DURATION);
+			return () => clearTimeout(timeout);
+		}
+	}, [showExtras, hideButton]);
 
 	useEffect(() => {
 		if (isOpen && inputRef.current) {
@@ -53,54 +80,54 @@ const TicketSupportChatbot = () => {
 	useEffect(() => {
 		const handleChatOpen = (e: CustomEvent) => {
 
-			
+
 			const fetchMessages = async () => {
-            let chats: { ticket: { id: number; content: string; sender: string }[] } = { ticket: [] };
+				let chats: { ticket: { id: number; content: string; sender: string }[] } = { ticket: [] };
 
-		
-			console.log(chats)
-            try {
-                if (e.detail !== null || user?.id) {
-					
-					const ticketData = await getTicketWithMessages(e.detail.id, user?.id);
-				
-					if (ticketData && ticketData.ticket) {
-						// Si tienes un array de mensajes, usa ese array aquí
-						// Aquí se asume que los mensajes están en ticketData.ticket.messages
-						console.log('Entro al ticketData.ticket');
-						console.log('Mensajes del ticket:', ticketData);
-						chats.ticket = ticketData.messages.map((msg: any) => ({
-							id: msg.id,
-							content: msg.content || msg.description || '',
-							sender: msg.sender || 'user'
+
+				console.log(chats)
+				try {
+					if (e.detail !== null || user?.id) {
+
+						const ticketData = await getTicketWithMessages(e.detail.id, user?.id);
+
+						if (ticketData && ticketData.ticket) {
+							// Si tienes un array de mensajes, usa ese array aquí
+							// Aquí se asume que los mensajes están en ticketData.ticket.messages
+							console.log('Entro al ticketData.ticket');
+							console.log('Mensajes del ticket:', ticketData);
+							chats.ticket = ticketData.messages.map((msg: any) => ({
+								id: msg.id,
+								content: msg.content || msg.description || '',
+								sender: msg.sender || 'user'
 							}));
+						}
 					}
-                }
 
-				const botMessage = { id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' }
+					const botMessage = { id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' }
 
-                // Mapear mensajes del ticket
-				const loadedMessages = chats.ticket.map((msg: { id: number; content: string; sender: string }) => ({
-					id: msg.id,
-					text: msg.content,
-					sender: msg.sender
-				}));
+					// Mapear mensajes del ticket
+					const loadedMessages = chats.ticket.map((msg: { id: number; content: string; sender: string }) => ({
+						id: msg.id,
+						text: msg.content,
+						sender: msg.sender
+					}));
 
-                // Si el primer mensaje NO es el del bot, lo agregamos al inicio
-                if (loadedMessages.length === 0 || loadedMessages[0].sender !== 'bot') {
-                    setMessages([botMessage, ...loadedMessages]);
-                } else {
-                    setMessages(loadedMessages);
-                }
+					// Si el primer mensaje NO es el del bot, lo agregamos al inicio
+					if (loadedMessages.length === 0 || loadedMessages[0].sender !== 'bot') {
+						setMessages([botMessage, ...loadedMessages]);
+					} else {
+						setMessages(loadedMessages);
+					}
 
-				console.log('Mensajes: ', messages);
+					console.log('Mensajes: ', messages);
 
-            } catch (error) {
-                console.error('Error al obtener los mensajes:', error);
-            }
-        };
-        fetchMessages();
-        setIsOpen(true);
+				} catch (error) {
+					console.error('Error al obtener los mensajes:', error);
+				}
+			};
+			fetchMessages();
+			setIsOpen(true);
 
 		};
 
@@ -116,16 +143,7 @@ const TicketSupportChatbot = () => {
 		scrollToBottom();
 	}, [messages]);
 
-	useEffect(() => {
-		const handleOpen = () => setHideButton(true);
-		const handleClose = () => setHideButton(false);
-		window.addEventListener('student-chat-open', handleOpen);
-		window.addEventListener('student-chat-close', handleClose);
-		return () => {
-			window.removeEventListener('student-chat-open', handleOpen);
-			window.removeEventListener('student-chat-close', handleClose);
-		};
-	}, []);
+	// Ya no es necesario controlar hideButton, la animación depende de showExtras
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -133,19 +151,19 @@ const TicketSupportChatbot = () => {
 
 
 	const saveUserMessage = (trimmedInput: string, sender: string) => {
-		
-			
-			if (isOpen && isSignedIn && user?.id) {
-				console.log('Guardando mensaje del usuario:', trimmedInput);
-				void SaveTicketMessage(
-					user.id,
-					trimmedInput,
-					sender
-				);
-			}else{
-				console.log('No está entrando al chat para guardar el mensaje del usuario');
-			}
-		};
+
+
+		if (isOpen && isSignedIn && user?.id) {
+			console.log('Guardando mensaje del usuario:', trimmedInput);
+			void SaveTicketMessage(
+				user.id,
+				trimmedInput,
+				sender
+			);
+		} else {
+			console.log('No está entrando al chat para guardar el mensaje del usuario');
+		}
+	};
 
 	const handleSendMessage = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -212,40 +230,50 @@ const TicketSupportChatbot = () => {
 		}, 300);
 	};
 
-	if (!showExtras && isDesktop) return null; // Solo se muestra si showExtras es true
+
+
+	// if (!isDesktop) return null; // Solo se muestra si showExtras es true
+
+
+
+	console.log('Datos: ' + isOpen, showExtras, isSignedIn, isOpen, isDesktop)
 
 	return (
 		<>
-			{!hideButton && (
-				<>
-					<div className="fixed bottom-24 sm:bottom-40 right-25 sm:right-10 translate-x-1/2 sm:translate-x-0 z-50">
-					<button
-						onClick={handleClick}
-						className={`relative px-5 py-2 rounded-full border border-blue-400 text-white bg-gradient-to-r from-blue-500 to-cyan-600 
-						hover:from-cyan-500 hover:to-blue-600 transition-all duration-300 ease-in-out 
-						shadow-md hover:shadow-[0_0_20px_#38bdf8] hover:scale-105 flex items-center gap-2
-						${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
-					>
-						<MdSupportAgent className="text-xl text-white opacity-90" />
-						<span className="hidden sm:inline font-medium tracking-wide">Soporte técnico</span>
-
-						{/* Triángulo tipo burbuja */}
-						<span className="absolute bottom-[-9px] left-1/2 transform translate-x-15 w-0 h-0 
-						border-l-[6px] border-r-[6px] border-t-[8px] 
-						border-l-transparent border-r-transparent border-t-blue-500 hidden sm:inline" />
-					</button>
-					</div>
-
-
-				</>
-
-
-			)}
-
+			{isSignedIn && (
+  isDesktop
+    ? showAnim && !isOpen
+    : true
+) && (
+  <div
+    className="fixed bottom-24 sm:bottom-40 right-25 sm:right-10 translate-x-1/2 sm:translate-x-0 z-50"
+    style={{
+      animationName: isDesktop
+        ? (showExtras ? 'fadeInUp' : 'fadeOutDown')
+        : undefined,
+      animationDuration: isDesktop ? `${ANIMATION_DURATION}ms` : undefined,
+      animationTimingFunction: isDesktop ? 'ease' : undefined,
+      animationFillMode: isDesktop ? 'forwards' : undefined,
+    }}
+  >
+    <button
+      onClick={handleClick}
+      className={`relative px-5 py-2 rounded-full border border-blue-400 text-white bg-gradient-to-r from-blue-500 to-cyan-600 
+      hover:from-cyan-500 hover:to-blue-600 transition-all duration-300 ease-in-out 
+      shadow-md hover:shadow-[0_0_20px_#38bdf8] hover:scale-105 flex items-center gap-2`}
+    >
+      <MdSupportAgent className="text-xl text-white opacity-90" />
+      <span className="hidden sm:inline font-medium tracking-wide">Soporte técnico</span>
+      <span className="absolute bottom-[-9px] left-1/2 transform translate-x-15 w-0 h-0 
+      border-l-[6px] border-r-[6px] border-t-[8px] 
+      border-l-transparent border-r-transparent border-t-blue-500 hidden sm:inline" />
+    </button>
+  </div>
+)}
 			{/* Chatbot */}
 			{isOpen && isSignedIn && (
 				<div className="fixed z-50 bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden
-				w-[350px] h-[500px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+				w-[100%] h-[100%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
 				sm:top-auto sm:left-auto sm:translate-x-0 sm:translate-y-0 sm:bottom-0 sm:right-0 sm:w-[400px] md:w-[500px] sm:h-[100vh]"
 
 				>
@@ -266,7 +294,7 @@ const TicketSupportChatbot = () => {
 							</button>
 						</div>
 
-						<SuportChat 
+						<SuportChat
 							messages={messages}
 							setMessages={setMessages}
 							isOpen={isOpen}

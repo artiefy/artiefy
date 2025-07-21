@@ -286,16 +286,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			// Url para la petición según si hay courseTitle
 			const urlDefault = { url: 'http://18.191.230.0:5000/root_courses', body: { prompt: query } };
 			const urlCourses = { url: 'http://18.191.230.0:5000/get_classes', body: { user_id: user?.id, curso: courseTitle ? courseTitle: chatMode.curso_title, prompt: query } };
+			const urlSales = { url: '/api/sales', body: { userMessage: query ? query : 'Precios generales de los programas'}};
 
 			console.log('Titulo del chat de curso: ' + courseTitle);
+			console.log('Var to fetching:', booleanVar, courseTitle, isSignedIn);
 			let fetchConfig;
 
-			console.log('booleanVar:', booleanVar);
-
-			if(courseTitle && !booleanVar){
+			if(courseTitle){
+				console.log('1')
 				fetchConfig = urlCourses;
-			}else if(booleanVar){
+			}else if(isSignedIn && !courseTitle){
+				console.log('2')
 				fetchConfig = urlDefault;
+			}else if(!isSignedIn && !courseTitle){
+				console.log('3')
+				fetchConfig = urlSales;
 			}
 
 			if (fetchConfig) {
@@ -321,12 +326,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 				const data = (await result.json());
 
+				console.log('Respuesta del servidor:', data);
+
 				console.log('respuesta del bot:', data.result);
 
 				
 
-				if (Array.isArray(data.result)) {
-					
+				if (Array.isArray(data.result) && fetchConfig.url.includes('root_courses')) {
+					console.log('Ingreso a mapear cursos');
 					const cursos: Curso[] = data.result;
 
 					if (cursos.length > 0) {
@@ -348,6 +355,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							},
 						]);
 					} else {
+						console.log('Ingreso a otros')
 						setMessages((prev) => [
 							...prev,
 							{
@@ -358,7 +366,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						]);
 					}
 				} else {
-				
+					console.log('Ingreso afuera del mapeo de cursos')
 					setMessages((prev) => [
 						...prev,
 						{
@@ -466,9 +474,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		// Set initial dimensions based on window size
 		const initialDimensions = {
 			width:
-				typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : 500,
+				typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerWidth : 500,
 			height:
-				typeof window !== 'undefined' && window.innerWidth < 768 ? 620 : window.innerHeight,
+				typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerHeight : window.innerHeight,
 		};
 		setDimensions(initialDimensions);
 
@@ -513,10 +521,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		/*
 		if (!isSignedIn && pathname !== '/') {
 			toast.error('Debes iniciar sesión para usar el chat');
 			return;
 		}
+			*/
 
 		const trimmedInput = inputText.trim();
 		if (!trimmedInput || searchRequestInProgress.current) return;
@@ -549,8 +559,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		setMessages([
 			{
 				id: Date.now(),
-				text: 'Hola ¿En qué puedo ayudarte hoy?',
+				text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
 				sender: 'bot',
+				buttons: [
+					{ label: '📚 Crear Proyecto', action: 'new_project' },
+					{ label: '💬 Nueva Idea', action: 'new_idea' },
+					{ label: '🛠 Soporte Técnico', action: 'contact_support' },
+				],
 			},
 		]);
 		setInputText('');
@@ -560,6 +575,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	const handleClick = () => {
+		/*
 		if (!isSignedIn && pathname !== '/') {
 			const currentUrl = encodeURIComponent(window.location.href);
 			toast.error('Acceso restringido', {
@@ -572,6 +588,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			});
 			return;
 		}
+			*/
 		if (isOpen) {
 			handleClose();
 		} else {
@@ -608,98 +625,125 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	const renderMessage = (message: ChatMessage) => {
-		if (message.sender === 'bot') {
-			
+	if (message.sender === 'bot') {
+		const parts = message.text.split('\n\n');
+		const introText = parts[0];
+		const courseTexts = parts.slice(1);
 
-			const parts = message.text.split('\n\n');
-			const introText = parts[0];
-			const courseTexts = parts.slice(1);
+		const courses = courseTexts
+			.map((text) => {
+				const match = text.match(/^(\d+)\.\s+(.*?)\s+\|\s+(\d+)$/);
+				if (!match) return null;
+				return {
+					number: parseInt(match[1]),
+					title: match[2].trim(),
+					id: parseInt(match[3]),
+				};
+			})
+			.filter((course): course is { number: number; title: string; id: number } => Boolean(course));
 
-		
-
-			const courses = courseTexts
-				.map((text) => {
-					const match = text.match(/^(\d+)\.\s+(.*?)\s+\|\s+(\d+)$/);
-					if (!match) {
-						console.warn('No match para curso:', text);
-						return null;
-					}
-					return {
-						number: parseInt(match[1]),
-						title: match[2].trim(),
-						id: parseInt(match[3]),
-					};
-				})
-				.filter(
-					(course): course is { number: number; title: string; id: number } =>
-						Boolean(course)
-				);
-
-				
-
+		// ⚠️ Si no hay cursos, mostramos todo el texto directamente
+		if (courses.length === 0) {
 			return (
 				<div className="flex flex-col space-y-4">
-					<p className="font-medium text-gray-800">{introText}</p>
+					<div className="space-y-3">
+	{message.text.split('\n').map((line, index) => {
+		// Si la línea parece un título (por ejemplo: "Carreras Técnicas")
+		if (/^(Carreras|Diplomados|Cursos|Financiación)/i.test(line.trim())) {
+			return (
+				<h4 key={index} className="text-cyan-700 font-semibold text-base">
+					{line}
+				</h4>
+			);
+		}
 
-					{courses.length > 0 && (
-						<div className="grid gap-4">
-							{courses.map((course) => (
-								<Card
-									key={course.id}
-									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02] rounded-lg"
-								>
-									<div className="flex items-center justify-between px-4 py-3">
-										<h4 className="font-bold text-white text-base tracking-wide">
-											{course.number}. {course.title}
-										</h4>
+		// Si contiene un monto
+		if (/\$\d[\d.]*\s?COP/.test(line)) {
+			return (
+				<p key={index} className="text-gray-800">
+					<span className="font-medium text-cyan-600">{line}</span>
+				</p>
+			);
+		}
 
-										<Link
-											href={`/estudiantes/cursos/${course.id}`}
-											className="group/button inline-flex items-center h-12 px-4 rounded-md border border-cyan-400 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400/20 transition-all duration-300 ease-in-out shadow-md backdrop-blur-sm"
-										>
-											<span className="font-semibold tracking-wide">Ver Curso</span>
-											<ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 group-hover/button:translate-x-1 transition-transform duration-300 ease-in-out" />
-										</Link>
-									</div>
-								</Card>
+		// Línea vacía = espacio
+		if (line.trim() === '') {
+			return <div key={index} className="h-2" />;
+		}
 
-							))}
-							<button
-							className="group relative mt-3 w-full overflow-hidden rounded-lg border border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 text-white py-2 text-sm font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-cyan-500/50"
-							onClick={() => {
-								// lógica del proyecto
-							}}
-							>
-							<span className="relative z-10">+ Agregar proyecto</span>
-							<span className="absolute inset-0 bg-cyan-400/10 blur-md group-hover:blur-lg transition-all duration-500 ease-in-out" />
-							<span className="absolute left-0 top-0 h-full w-1 bg-cyan-500 animate-pulse" />
-							</button>
-						</div> 
-					)}
+		// Texto normal
+		return (
+			<p key={index} className="text-gray-700 leading-relaxed">
+				{line}
+			</p>
+		);
+	})}
+</div>
 				</div>
 			);
 		}
 
+		// Si hay cursos, usamos intro + tarjetas
 		return (
 			<div className="flex flex-col space-y-4">
-				<p className="font-medium text-gray-800">{message.text}</p>
-				{message.buttons && (
-					<div className="flex flex-wrap gap-2 mt-2">
-						{message.buttons.map((btn) => (
-							<button
-								key={btn.action}
-								className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
-								onClick={() => handleBotButtonClick(btn.action)}
-								type="button"
-							>
-								{btn.label}
-							</button>
-						))}
-					</div>
-				)}
+				<p className="font-medium text-gray-800">{introText}</p>
+				<div className="grid gap-4">
+					{courses.map((course) => (
+						<Card
+							key={course.id}
+							className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02] rounded-lg"
+						>
+							<div className="flex items-center justify-between px-4 py-3">
+								<h4 className="font-bold text-white text-base tracking-wide">
+									{course.number}. {course.title}
+								</h4>
+								<Link
+									href={`/estudiantes/cursos/${course.id}`}
+									className="group/button inline-flex items-center h-12 px-4 rounded-md border border-cyan-400 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400/20 transition-all duration-300 ease-in-out shadow-md backdrop-blur-sm"
+								>
+									<span className="font-semibold tracking-wide">Ver Curso</span>
+									<ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 group-hover/button:translate-x-1 transition-transform duration-300 ease-in-out" />
+								</Link>
+							</div>
+						</Card>
+					))}
+					<button
+						className="group relative mt-3 w-full overflow-hidden rounded-lg border border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 text-white py-2 text-sm font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-cyan-500/50"
+						onClick={() => {
+							// lógica del proyecto
+						}}
+					>
+						<span className="relative z-10">+ Agregar proyecto</span>
+						<span className="absolute inset-0 bg-cyan-400/10 blur-md group-hover:blur-lg transition-all duration-500 ease-in-out" />
+						<span className="absolute left-0 top-0 h-full w-1 bg-cyan-500 animate-pulse" />
+					</button>
+				</div>
 			</div>
 		);
-	};
+	}
+
+	// Para mensajes del usuario o genéricos
+	return (
+		<div className="flex flex-col space-y-4">
+			<p className="font-medium text-gray-800 whitespace-pre-line">{message.text}</p>
+			{message.buttons && (
+				<div className="flex flex-wrap gap-2 mt-2">
+					{message.buttons.map((btn) => (
+						<button
+							key={btn.action}
+							className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+							onClick={() => handleBotButtonClick(btn.action)}
+							type="button"
+						>
+							{btn.label}
+						</button>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
 
 
 	// Emitir eventos globales para ocultar/mostrar el botón de soporte
@@ -724,7 +768,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						transition-all duration-300 ease-out
 						hover:shadow-xl hover:shadow-cyan-400/40
 						hover:scale-110
-						${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'}
 						${isOpen ? 'minimized' : ''}
 						`}
 						onMouseEnter={() => {
@@ -816,9 +859,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{/* Mostrar el chat solo cuando isOpen es true */}
-			{isOpen && (isSignedIn || pathname === '/') && (
+			{isOpen && (
 				<div
-					className="fixed right-2 bottom-5 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
+					className="fixed right-0 bottom-0 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
 					ref={chatContainerRef}
 					style={{ zIndex: 110000 }} // Aumenta el z-index para que esté por encima del botón de soporte
 				>

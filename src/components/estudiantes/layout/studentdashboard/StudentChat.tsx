@@ -284,12 +284,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
                             placeholder={
-                                isSignedIn
-                                    ? 'Escribe tu mensaje...'
-                                    : 'Inicia sesión para chatear'
+                            'Escribe un mensaje...'
                             }
                             className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
-                            disabled={!isSignedIn || isLoading}
+                            disabled={isLoading}
                         />
                         <button
                             type="submit"
