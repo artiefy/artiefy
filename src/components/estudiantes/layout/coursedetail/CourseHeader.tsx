@@ -1745,12 +1745,12 @@ export function CourseHeader({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Grade button */}
           {/* Ocultar botón en mobile si no está logueado */}
-        {(isSignedIn ?? window.innerWidth >= 640) && (
+          {(isSignedIn ?? window.innerWidth >= 640) && (
             <Button
               onClick={() => setIsGradeModalOpen(true)}
               disabled={!canAccessGrades}
               className={cn(
-                'h-9 shrink-0 px-4 font-semibold sm:w-auto',
+                'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
                 canAccessGrades
                   ? 'bg-blue-500 text-white hover:bg-blue-600'
                   : 'bg-gray-400 text-white'
