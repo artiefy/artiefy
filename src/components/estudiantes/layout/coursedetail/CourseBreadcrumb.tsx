@@ -25,7 +25,7 @@ export function CourseBreadcrumb({
   programInfo,
 }: CourseBreadcrumbProps) {
   return (
-    <Breadcrumb className="w-full overflow-x-auto pb-6">
+    <Breadcrumb className="w-full overflow-x-auto pb-6 sm:mt-12">
       <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 whitespace-nowrap">
         <BreadcrumbItem>
           <BreadcrumbLink href="/">
@@ -67,7 +67,7 @@ export function CourseBreadcrumb({
         <BreadcrumbItem>
           <BreadcrumbPage>
             <span
-              className="sm:truncate-none inline-block max-w-[90px] truncate align-middle sm:max-w-none"
+              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[90px]"
               title={title}
             >
               {title}

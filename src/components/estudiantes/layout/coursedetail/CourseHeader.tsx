@@ -1401,7 +1401,8 @@ export function CourseHeader({
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
-      <CardHeader className="px-0">
+      {/* Cambia el CardHeader para reducir el espacio en móviles */}
+      <CardHeader className="px-0 py-2 sm:py-6">
         {/* Removed negative margin to show full cover image on all screen sizes */}
         <div className="relative mb-4 w-full transition-all duration-200">
           {/* Use consistent aspect ratio on all screen sizes */}

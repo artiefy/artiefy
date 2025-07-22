@@ -18,7 +18,7 @@ const LessonBreadcrumbs = ({
   lessonTitle,
 }: LessonBreadcrumbsProps) => {
   return (
-    <nav className="w-full max-w-full overflow-x-auto px-2 md:px-8">
+    <nav className="w-full max-w-full overflow-x-auto px-2 sm:mt-12 md:px-8">
       <ol className="flex flex-nowrap items-center space-x-2 pr-2 text-sm whitespace-nowrap text-gray-400">
         <li>
           <Link
@@ -50,7 +50,7 @@ const LessonBreadcrumbs = ({
           >
             <FaBook className="mr-1" />{' '}
             <span
-              className="sm:truncate-none inline-block max-w-[70px] truncate align-middle sm:max-w-none"
+              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[70px]"
               title={courseTitle}
             >
               {courseTitle}
@@ -66,7 +66,7 @@ const LessonBreadcrumbs = ({
         >
           <SquarePlay className="mr-1 size-5" />{' '}
           <span
-            className="sm:truncate-none inline-block max-w-[70px] truncate align-middle sm:max-w-none"
+            className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[70px]"
             title={lessonTitle}
           >
             {lessonTitle}
