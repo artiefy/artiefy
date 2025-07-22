@@ -16,6 +16,8 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { db } from '~/server/db';
 
+import '~/styles/certificadobutton.css'; // Importa el nuevo CSS
+
 export default async function CertificatesListPage() {
   // Obtener usuario actual
   const { userId } = await auth();
@@ -38,6 +40,8 @@ export default async function CertificatesListPage() {
     <div className="bg-background min-h-screen">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        {/* Elimina el botón bonito de "Mis Certificados" aquí */}
+
         <div className="mb-8 flex items-center gap-3">
           <PiCertificate className="text-primary h-8 w-8" />
           <h1 className="text-primary text-3xl font-bold">Mis Certificados</h1>
@@ -90,13 +94,17 @@ export default async function CertificatesListPage() {
                     </div>
                   </div>
                   <div className="flex justify-center">
-                    <Button asChild variant="outline" className="w-full">
-                      <Link
-                        href={`/estudiantes/certificados/${certificate.courseId}`}
-                      >
-                        Ver Certificado
-                      </Link>
-                    </Button>
+                    <Link
+                      href={`/estudiantes/certificados/${certificate.courseId}`}
+                      className="flex justify-center"
+                    >
+                      <button className="button relative mx-auto text-base font-bold">
+                        <span className="relative z-10">Ver Certificado</span>
+                        <div className="hoverEffect">
+                          <div />
+                        </div>
+                      </button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
