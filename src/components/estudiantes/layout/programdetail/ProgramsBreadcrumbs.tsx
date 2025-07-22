@@ -34,7 +34,7 @@ export function ProgramsBreadcrumbs({ title }: ProgramsBreadcrumbsProps) {
         <BreadcrumbItem>
           <BreadcrumbPage>
             <span
-              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[90px]"
+              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
               title={title}
             >
               {title}

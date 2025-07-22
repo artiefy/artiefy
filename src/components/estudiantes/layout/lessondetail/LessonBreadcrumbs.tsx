@@ -50,7 +50,7 @@ const LessonBreadcrumbs = ({
           >
             <FaBook className="mr-1" />{' '}
             <span
-              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[70px]"
+              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
               title={courseTitle}
             >
               {courseTitle}
@@ -66,7 +66,7 @@ const LessonBreadcrumbs = ({
         >
           <SquarePlay className="mr-1 size-5" />{' '}
           <span
-            className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-[70px]"
+            className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
             title={lessonTitle}
           >
             {lessonTitle}
