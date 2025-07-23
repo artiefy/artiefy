@@ -265,12 +265,12 @@
   transition: all 0.2s ease;
 
   &:is(
-      :focus-within,
-      :active,
-      [aria-expanded='true'],
-      [data-open='true'],
-      [aria-selected='true']
-    ) {
+    :focus-within,
+    :active,
+    [aria-expanded='true'],
+    [data-open='true'],
+    [aria-selected='true']
+  ) {
     outline: 2px solid rgb(255 255 255 / 0.5);
     outline-offset: 2px;
     box-shadow: 0 0 0 4px rgb(255 255 255 / 0.2);
@@ -335,4 +335,17 @@
 
 .animate-toast-slide {
   animation: toast-slide 3s ease-in-out forwards;
+}
+
+/* Ocultar avisos de Clerk en UserButton y otros componentes */
+.cl-internal-l2l775,
+.cl-internal-1q4rk2m,
+.cl-internal-fcx671,
+.cl-internal-1axx6jt,
+.cl-internal-1dauvpw,
+.cl-footerPages,
+.cl-footerPagesLink,
+.cl-internal-6685xs,
+.cl-internal-3din4a {
+  display: none !important;
 }
