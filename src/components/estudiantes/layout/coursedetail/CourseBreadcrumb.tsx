@@ -25,7 +25,7 @@ export function CourseBreadcrumb({
   programInfo,
 }: CourseBreadcrumbProps) {
   return (
-    <Breadcrumb className="w-full overflow-x-auto pb-6 sm:mt-12">
+    <Breadcrumb className="w-full overflow-x-auto pb-2">
       <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 whitespace-nowrap">
         <BreadcrumbItem>
           <BreadcrumbLink href="/">

@@ -17,7 +17,7 @@ interface ProgramsBreadcrumbsProps {
 
 export function ProgramsBreadcrumbs({ title }: ProgramsBreadcrumbsProps) {
   return (
-    <Breadcrumb className="w-full overflow-x-auto pb-6 sm:mt-12">
+    <Breadcrumb className="w-full overflow-x-auto pb-2 sm:mt-0">
       <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 whitespace-nowrap">
         <BreadcrumbItem>
           <BreadcrumbLink href="/">

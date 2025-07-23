@@ -126,7 +126,9 @@ export default async function Page({ params }: { params: PageParams }) {
   const { id } = await Promise.resolve(params);
 
   return (
-    <div>
+    <div className="pt-0">
+      {' '}
+      {/* Antes sin pt-0 */}
       <Header />
       <Suspense fallback={<CourseDetailsSkeleton />}>
         <CourseContent id={id} />
