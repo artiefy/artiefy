@@ -277,6 +277,24 @@ export function ProgramHeader({
     }
   };
 
+  // Renderizar el botón duplicado arriba de ProgramContent con espacio dinámico
+  const renderTopEnrollmentButton = () => {
+    // Si está inscrito, muestra ambos botones y deja espacio
+    if (isEnrolled) {
+      return (
+        <div className="flex justify-center pt-2 sm:mb-0 mb-0">
+          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+        </div>
+      );
+    }
+    // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
+    return (
+      <div className="flex justify-center pt-3 sm:pt-0">
+        <div className="relative h-16 w-64">{renderEnrollmentButton()}</div>
+      </div>
+    );
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {' '}
@@ -380,6 +398,9 @@ export function ProgramHeader({
           </Button>
         </div>
 
+        {/* --- NUEVO: Botón de inscripción arriba de la descripción con espacio dinámico --- */}
+        {renderTopEnrollmentButton()}
+
         {/* Program courses */}
         <ProgramContent
           program={program}
@@ -389,6 +410,7 @@ export function ProgramHeader({
           isCheckingEnrollment={isCheckingEnrollment}
         />
 
+        {/* Botón de inscripción abajo como antes */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
         </div>
