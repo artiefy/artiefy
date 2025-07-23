@@ -318,7 +318,7 @@ export default function LessonDetails({
     }
   }, [lesson, isVideoCompleted]);
 
-  // Update handleNavigationClick to use await
+  // Update handleNavigationClick to use await y solo navegar si la clase destino está desbloqueada
   const handleNavigationClick = async (direction: 'prev' | 'next') => {
     if (isNavigating) return;
     const sortedLessons = sortLessons(lessonsState);
@@ -326,15 +326,20 @@ export default function LessonDetails({
       (l) => l.id === selectedLessonId
     );
 
-    const targetLesson =
-      direction === 'prev'
-        ? sortedLessons
-            .slice(0, currentIndex)
-            .reverse()
-            .find((l) => !l.isLocked)
-        : sortedLessons.slice(currentIndex + 1).find((l) => !l.isLocked);
+    let targetLesson: LessonWithProgress | undefined;
+    if (direction === 'prev') {
+      targetLesson = sortedLessons
+        .slice(0, currentIndex)
+        .reverse()
+        .find((l) => !l.isLocked);
+    } else {
+      targetLesson = sortedLessons
+        .slice(currentIndex + 1)
+        .find((l) => !l.isLocked);
+    }
 
-    if (targetLesson) {
+    // Solo navegar si la clase destino está desbloqueada
+    if (targetLesson && !targetLesson.isLocked) {
       await navigateWithProgress(targetLesson.id);
     }
   };
