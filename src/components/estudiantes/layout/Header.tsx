@@ -154,9 +154,13 @@ export function Header() {
   };
 
   return (
-    <header className="w-full py-2 sm:py-6">
-      {' '}
-      {/* Quitar bg-gray-900 */}
+    <header
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled
+          ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
+          : 'py-4'
+      }`}
+    >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
           {!isScrolled ? (
@@ -264,7 +268,6 @@ export function Header() {
           <div className="mt-[-8px] shrink-0">
             <Link href="/estudiantes">
               <div className="relative size-[110px]">
-                {' '}
                 {/* Reduce logo size */}
                 <Image
                   src="/artiefy-logo.png"
@@ -278,7 +281,6 @@ export function Header() {
             </Link>
           </div>
           <label className="hamburger flex h-8 w-8 items-center justify-center">
-            {' '}
             {/* Reduce hamburger size */}
             <input
               type="checkbox"
@@ -342,7 +344,6 @@ export function Header() {
             </ul>
           </nav>
           <div className="mt-4 flex items-center justify-center">
-            {' '}
             {/* Reduce top margin */}
             <Suspense
               fallback={
