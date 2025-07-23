@@ -457,7 +457,8 @@ export type NotificationType =
   | 'TICKET_ASSIGNED'
   | 'NEW_COURSE_ADDED'
   | 'ACTIVITY_COMPLETED'
-  | 'COURSE_UNENROLLMENT'; // <-- Agregado
+  | 'COURSE_UNENROLLMENT'
+  | 'CERTIFICATE_CREATED';
 
 export interface NotificationMetadata {
   programId?: number;
@@ -466,7 +467,8 @@ export interface NotificationMetadata {
   planId?: string;
   ticketId?: number;
   creatorId?: string;
-  activityId?: number; // Add this line
+  activityId?: number;
+  certificateId?: number;
 }
 
 export interface Notification {

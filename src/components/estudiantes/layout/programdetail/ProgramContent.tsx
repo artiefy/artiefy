@@ -172,7 +172,9 @@ export function ProgramContent({
   );
 
   return (
-    <div className="relative rounded-lg border bg-white p-6 shadow-sm">
+    <div className="relative rounded-lg border bg-background p-6 shadow-lg">
+      {' '}
+      {/* Fondo azul oscuro */}
       {isEnrolled && !isSubscriptionActive && (
         <Alert
           variant="destructive"
@@ -202,10 +204,9 @@ export function ProgramContent({
           </div>
         </Alert>
       )}
-
       <div className="mb-6">
         <div className="mb-4 flex flex-row items-center justify-between">
-          <h2 className="text-background text-2xl font-bold">
+          <h2 className="text-primary text-2xl font-bold">
             Cursos Del Programa
           </h2>
           {isClient && isSignedIn && isSubscriptionActive && (
@@ -223,7 +224,6 @@ export function ProgramContent({
           )}
         </div>
       </div>
-
       <div
         className={
           !isSubscriptionActive && isEnrolled
@@ -234,8 +234,11 @@ export function ProgramContent({
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course, index) => (
             <div key={`${course.id}-${index}`} className="group relative">
-              <div className="animate-gradient absolute -inset-2 rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
-              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+              {/* Gradiente azul y sombra en hover, igual a StudentProgram */}
+              <div className="animate-gradient absolute -inset-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
+              <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white shadow-lg transition-transform duration-300 ease-in-out group-hover:scale-[1.03]">
+                {' '}
+                {/* Fondo azul oscuro y sombra */}
                 {/* Añadir Badge "Muy pronto" para cursos desactivados */}
                 {!course.isActive && (
                   <div className="absolute top-2 right-2 z-10 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-gray-900 shadow">
@@ -260,7 +263,6 @@ export function ProgramContent({
                     </div>
                   </AspectRatio>
                 </CardHeader>
-
                 <CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-background rounded text-lg">
@@ -338,13 +340,13 @@ export function ProgramContent({
                             : ''
                         } group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
                           !course.isActive || !isSignedIn || !isEnrolled
-                            ? 'pointer-events-none bg-gray-600 !text-[#fff] !font-extrabold !opacity-100' // Fuerza blanco puro y sin opacidad
+                            ? 'pointer-events-none bg-gray-600 !font-extrabold !text-[#fff] !opacity-100' // Fuerza blanco puro y sin opacidad
                             : 'bg-background text-primary active:scale-95'
                         }`}
                       >
                         <span className="font-bold">
                           {!course.isActive ? (
-                            <span className="flex items-center justify-center !text-[#fff] !font-extrabold !opacity-100">
+                            <span className="flex items-center justify-center !font-extrabold !text-[#fff] !opacity-100">
                               <MdOutlineLockClock className="mr-1.5 size-5 !text-[#fff] !opacity-100" />
                               Muy pronto
                             </span>

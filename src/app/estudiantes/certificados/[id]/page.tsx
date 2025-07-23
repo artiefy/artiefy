@@ -9,6 +9,7 @@ import { CertificationStudent } from '~/components/estudiantes/layout/certificat
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { certificates } from '~/server/db/schema';
 
@@ -88,6 +89,29 @@ export default async function CertificatePage({ params }: PageProps) {
         .returning();
 
       certificate = Array.isArray(newCert) ? newCert[0] : newCert;
+
+      // Notificar al estudiante sobre el nuevo certificado
+      await createNotification({
+        userId,
+        type: 'CERTIFICATE_CREATED',
+        title: '¡Nuevo certificado disponible!',
+        message: `Has obtenido el certificado del curso: ${course.title}`,
+        metadata: {
+          courseId,
+          certificateId: certificate.id,
+        },
+      });
+
+      // Notificar al estudiante que completó el curso
+      await createNotification({
+        userId,
+        type: 'COURSE_COMPLETED',
+        title: '¡Curso completado!',
+        message: `Has completado el curso "${course.title}" con nota final ${finalGrade.toFixed(2)}`,
+        metadata: {
+          courseId,
+        },
+      });
     } else {
       // Si no cumple requisitos, mostrar notFound
       notFound();
