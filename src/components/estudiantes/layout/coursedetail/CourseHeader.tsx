@@ -1402,11 +1402,12 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {/* Cambia el CardHeader para reducir el espacio en móviles */}
-      <CardHeader className="px-0 py-2 sm:py-6">
-        {/* Removed negative margin to show full cover image on all screen sizes */}
-        <div className="relative mb-4 w-full transition-all duration-200">
-          {/* Use consistent aspect ratio on all screen sizes */}
-          <AspectRatio ratio={16 / 9} className="w-full">
+      <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
+        <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">
+          <AspectRatio
+            ratio={16 / 9}
+            className="mt-0 w-full pt-0 sm:mt-0 sm:pt-0"
+          >
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -1498,7 +1499,9 @@ export function CourseHeader({
         </div>
         {/* Removed mobile metadata section from here */}
       </CardHeader>
-      <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
+      <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
+        {' '}
+        {/* <-- Ensure no top margin/padding */}
         {/* Course titles - desktop and mobile */}
         <div className="w-full">
           {/* Título en móviles */}
@@ -1511,7 +1514,6 @@ export function CourseHeader({
             {course.title}
           </h1>
         </div>
-
         {/* MOVED: Mobile metadata section - now below title in mobile view */}
         <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
           <div className="flex items-center justify-between gap-2">
@@ -1629,7 +1631,6 @@ export function CourseHeader({
             </div>
           </div>
         </div>
-
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
@@ -1711,7 +1712,6 @@ export function CourseHeader({
             </div>
           )}
         </div>
-
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
@@ -1741,7 +1741,6 @@ export function CourseHeader({
             </Badge>
           </div>
         </div>
-
         {/* New buttons container */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Grade button */}
@@ -1806,7 +1805,6 @@ export function CourseHeader({
               </div>
             )}
         </div>
-
         {/* --- NUEVO: Botón de compra individual arriba de la descripción --- */}
         {/* Pantallas grandes: mostrar arriba de la descripción y debajo de modalidad */}
         <div className="hidden sm:flex sm:justify-center sm:pt-2">
@@ -1814,7 +1812,6 @@ export function CourseHeader({
         </div>
         {/* Pantallas pequeñas: mostrar arriba de la descripción */}
         <div className="block pt-2 sm:hidden">{renderBuyButton()}</div>
-
         {/* Course description y botones responsivos */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="prose flex-1">
@@ -1825,7 +1822,6 @@ export function CourseHeader({
           </div>
           {/* Eliminar el botón de compra de aquí */}
         </div>
-
         {/* Botón de certificado con texto descriptivo */}
         {canAccessCertificate && (
           <div className="mt-6 space-y-4">
@@ -1861,7 +1857,6 @@ export function CourseHeader({
             </Button>
           </div>
         )}
-
         {/* Add Materias section below description */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-cyan-300">
@@ -1886,7 +1881,6 @@ export function CourseHeader({
               : null}
           </div>
         </div>
-
         {/* Course lessons */}
         <CourseContent
           course={course}
@@ -1895,13 +1889,11 @@ export function CourseHeader({
           subscriptionEndDate={subscriptionEndDate}
           isSignedIn={!!isSignedIn}
         />
-
         {/* --- Botón de compra individual en la parte inferior (como antes) --- */}
         {/* Eliminar la siguiente línea para evitar el botón duplicado en desktop */}
         {/* <div className="hidden pt-4 sm:flex sm:justify-center">
           {renderBuyButton()}
         </div> */}
-
         {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32">
@@ -1956,7 +1948,6 @@ export function CourseHeader({
             )}
           </div>
         </div>
-
         {/* Add GradeModal */}
         <GradeModal
           isOpen={isGradeModalOpen}
