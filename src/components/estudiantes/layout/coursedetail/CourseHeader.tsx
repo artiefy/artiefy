@@ -1833,7 +1833,7 @@ export function CourseHeader({
                 className="transition-all duration-300 hover:scale-110"
               />
             </div>
-            <p className="text-center font-serif text-lg text-gray-600 italic">
+            <p className="text-center font-serif text-lg text-yellow-500 italic">
               ¡Felicitaciones! Has completado exitosamente el curso con una
               calificación sobresaliente. Tu certificado está listo para ser
               visualizado y compartido.
