@@ -11,7 +11,6 @@ export async function GET() {
 			.select({
 				id: conversations.id,
 				senderId: conversations.senderId,
-				receiverId: conversations.receiverId,
 				status: conversations.status,
 				userName: users.name,
 			})

@@ -83,7 +83,7 @@ export default function ChatList({
 						</div>
 						<div className="relative">
 							<button
-								onClick={() => onSelectChat(conv.id, conv.receiverId)}
+onClick={() => onSelectChat(conv.id, conv.senderId)}
 								className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600"
 								title="Iniciar chat"
 							>

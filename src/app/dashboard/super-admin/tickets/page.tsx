@@ -9,6 +9,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
+import FloatingChat from '~/app/dashboard/admin/chat/FloatingChat';
 
 import TicketModal from './TicketModal';
 
@@ -1070,6 +1071,16 @@ export default function TicketsPage() {
           ticket={selectedTicket}
           onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
         />
+        {selectedChat && (
+          <FloatingChat
+            chatId={selectedChat.id}
+            receiverId={selectedChat.receiverId}
+            userName={selectedChat.userName}
+            unreadConversations={unreadConversationIds}
+            setUnreadConversations={() => {}} // puedes implementar si quieres
+            onClose={() => setSelectedChat(null)}
+          />
+        )}
       </div>
       <ToastContainer position="top-right" autoClose={3000} />
     </>
