@@ -89,16 +89,21 @@ export function ProgramHeader({
     }
   );
 
-  // Agrupa por curso y muestra solo una nota final por curso
-  const allCourses = program.materias?.map(m => m.curso?.title ?? 'Curso sin nombre') ?? [];
+  // Agrupa por curso y toma solo una nota final por curso (la primera materia encontrada)
+  const allCourses =
+    program.materias?.map((m) => m.curso?.title ?? 'Curso sin nombre') ?? [];
   const uniqueCourses = Array.from(new Set(allCourses));
 
   const coursesGrades: CourseGrade[] = uniqueCourses.map((courseTitle) => {
-    // Busca la nota final de ese curso en las materias del gradesData
-    const materia = gradesData?.materias?.find(m => m.courseTitle === courseTitle);
+    // Busca la primera materia de ese curso en gradesData
+    const materiaDelCurso = gradesData?.materias?.find(
+      (m) => m.courseTitle === courseTitle
+    );
+    // Toma la nota final de esa materia (todas tienen la misma)
+    const finalGrade = materiaDelCurso ? Number(materiaDelCurso.grade) : 0;
     return {
       courseTitle,
-      finalGrade: materia ? materia.grade : 0,
+      finalGrade,
     };
   });
 
