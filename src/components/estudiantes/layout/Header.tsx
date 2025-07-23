@@ -154,7 +154,9 @@ export function Header() {
   };
 
   return (
-    <header className="w-full bg-gray-900 py-2 sm:py-6">
+    <header className="w-full py-2 sm:py-6">
+      {' '}
+      {/* Quitar bg-gray-900 */}
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
           {!isScrolled ? (
