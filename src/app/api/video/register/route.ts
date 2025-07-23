@@ -12,12 +12,6 @@ const redis = new Redis({
 });
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    console.log('[VIDEO_REGISTER] ❌ Usuario no autorizado');
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
   try {
     const { key, lessonId } = (await req.json()) as {
       key: string;
@@ -99,9 +93,7 @@ export async function POST(req: Request) {
 
         const redisKey = `transcription:lesson:${lessonId}`;
         await redis.set(redisKey, res.data);
-       
       } catch (err) {
-        
         if (isAxiosError(err)) {
           console.error('Axios Error:', err.message);
           console.error('Response data:', err.response?.data);
