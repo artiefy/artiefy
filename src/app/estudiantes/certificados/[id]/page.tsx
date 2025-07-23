@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -34,7 +34,10 @@ export default async function CertificatePage({ params }: PageProps) {
 
   // Buscar certificado existente
   let certificate = await db.query.certificates.findFirst({
-    where: (cert) => eq(cert.userId, userId) && eq(cert.courseId, courseId),
+    where: and(
+      eq(certificates.userId, userId),
+      eq(certificates.courseId, courseId)
+    ),
   });
 
   // Solo permitir ver el certificado si el usuario autenticado es el dueño
