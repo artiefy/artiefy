@@ -1400,6 +1400,71 @@ export function CourseHeader({
     setLocalIsEnrolled(isEnrolled);
   }, [isEnrolled]);
 
+  // --- Botón de inscripción/cancelación arriba de la descripción ---
+  // Reubica el bloque de inscripción aquí, elimina los duplicados
+  const renderTopEnrollmentButton = () => {
+    if (localIsEnrolled) {
+      return (
+        <div className="mb-0 flex justify-center pt-2 sm:mb-0">
+          <div className="relative h-32 w-64">
+            <div className="flex flex-col space-y-4">
+              <Button
+                className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                disabled
+              >
+                <FaCheck className="mr-2" /> Suscrito Al Curso
+              </Button>
+              <Button
+                className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                onClick={onUnenrollAction}
+                disabled={isUnenrolling}
+              >
+                {isUnenrolling ? (
+                  <Icons.spinner
+                    className="text-white"
+                    style={{ width: '35px', height: '35px' }}
+                  />
+                ) : (
+                  'Cancelar Suscripción'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
+    return (
+      <div className="mb-0 flex justify-center pt-3 sm:mb-0 sm:pt-0">
+        <div className="relative h-16 w-64">
+          <button
+            className="btn"
+            onClick={handleEnrollClick}
+            disabled={isEnrolling || isEnrollClicked}
+          >
+            <strong>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <>
+                  {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                  <span>{getEnrollButtonText()}</span>
+                </>
+              )}
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {/* Cambia el CardHeader para reducir el espacio en móviles */}
@@ -1806,13 +1871,9 @@ export function CourseHeader({
               </div>
             )}
         </div>
-        {/* --- NUEVO: Botón de compra individual arriba de la descripción --- */}
-        {/* Pantallas grandes: mostrar arriba de la descripción y debajo de modalidad */}
-        <div className="hidden sm:flex sm:justify-center sm:pt-2">
-          {renderBuyButton()}
-        </div>
-        {/* Pantallas pequeñas: mostrar arriba de la descripción */}
-        <div className="block pt-2 sm:hidden">{renderBuyButton()}</div>
+        {/* --- Botón de inscripción/cancelación arriba de la descripción --- */}
+        {/* Reubica el bloque de inscripción aquí, elimina los duplicados */}
+        {renderTopEnrollmentButton()}
         {/* Course description y botones responsivos */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="prose flex-1">
@@ -1880,17 +1941,11 @@ export function CourseHeader({
           subscriptionEndDate={subscriptionEndDate}
           isSignedIn={!!isSignedIn}
         />
-        {/* --- Botón de compra individual en la parte inferior (como antes) --- */}
-        {/* Eliminar la siguiente línea para evitar el botón duplicado en desktop */}
-        {/* <div className="hidden pt-4 sm:flex sm:justify-center">
-          {renderBuyButton()}
-        </div> */}
-        {/* Enrollment buttons with space theme */}
+        {/* --- Botón de inscripción/cancelación abajo como antes --- */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32">
             {localIsEnrolled ? (
               <div className="flex flex-col space-y-4">
-                {/* Wrap both buttons in a fragment or a div */}
                 <Button
                   className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
                   disabled
