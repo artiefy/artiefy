@@ -47,6 +47,7 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
+import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 
@@ -1650,7 +1651,7 @@ export function CourseHeader({
               {/* Ocultar en pantallas pequeñas si no está logueado */}
               {isSignedIn ?? (
                 <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
-                  {/* ...existing code... */}
+                  {/* ...existing code...*/}
                   <div className="flex items-center">
                     <FaCalendar className="mr-2 text-white" />
                     <span className="text-xs text-white sm:text-sm">
@@ -1838,23 +1839,13 @@ export function CourseHeader({
               calificación sobresaliente. Tu certificado está listo para ser
               visualizado y compartido.
             </p>
-            <Button
-              asChild
-              className="group relative w-full bg-green-500 p-0 text-white shadow-lg transition-all hover:bg-green-600"
-            >
-              <Link
-                href={`/estudiantes/certificados/${course.id}`}
-                className="relative flex h-full w-full items-center justify-center gap-2 overflow-hidden py-3"
-              >
-                {/* Fondo animado con opacidad ajustada */}
-                <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-green-600/40 to-green-400/40" />
-
-                {/* Contenido del botón */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <span className="text-lg font-bold">Ver Tu Certificado</span>
-                </div>
+            <div className="flex justify-center">
+              <Link href={`/estudiantes/certificados/${course.id}`}>
+                <button className="certificacion relative mx-auto text-base font-bold">
+                  <span className="relative z-10">Ver Tu Certificado</span>
+                </button>
               </Link>
-            </Button>
+            </div>
           </div>
         )}
         {/* Add Materias section below description */}

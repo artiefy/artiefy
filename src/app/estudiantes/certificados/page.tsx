@@ -98,11 +98,8 @@ export default async function CertificatesListPage() {
                       href={`/estudiantes/certificados/${certificate.courseId}`}
                       className="flex justify-center"
                     >
-                      <button className="button relative mx-auto text-base font-bold">
+                      <button className="certificacion relative mx-auto text-base font-bold">
                         <span className="relative z-10">Ver Certificado</span>
-                        <div className="hoverEffect">
-                          <div />
-                        </div>
                       </button>
                     </Link>
                   </div>

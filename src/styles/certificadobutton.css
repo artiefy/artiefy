@@ -1,70 +1,58 @@
-/* From Uiverse.io by Wendell47 */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px 30px;
-  border: 0;
+/* From Uiverse.io by vinodjangid07 */
+.certificacion {
+  width: auto;
+  min-width: 140px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(
+    to right,
+    #77530a,
+    #ffd277,
+    #77530a,
+    #77530a,
+    #ffd277,
+    #77530a
+  );
+  background-size: 250%;
+  background-position: left;
+  color: #ffd277;
   position: relative;
-  overflow: hidden;
-  border-radius: 10rem;
-  transition: all 0.02s;
-  font-weight: bold;
-  cursor: pointer;
-  color: rgb(37, 37, 37);
-  z-index: 0;
-  box-shadow: 0 0px 7px -5px rgba(0, 0, 0, 0.5);
-}
-
-.button:hover {
-  background: rgb(193, 228, 248);
-  color: rgb(33, 0, 85);
-}
-
-.button:active {
-  transform: scale(0.97);
-}
-
-.hoverEffect {
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  left: 0;
-  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  cursor: pointer;
+  transition-duration: 1s;
+  overflow: hidden;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.hoverEffect div {
-  background: rgb(222, 0, 75);
-  background: linear-gradient(
-    90deg,
-    rgba(222, 0, 75, 1) 0%,
-    rgba(191, 70, 255, 1) 49%,
-    rgba(0, 212, 255, 1) 100%
-  );
-  border-radius: 40rem;
-  width: 10rem;
-  height: 10rem;
-  transition: 0.4s;
-  filter: blur(20px);
-  animation: effect infinite 3s linear;
-  opacity: 0.5;
+.certificacion::before {
+  position: absolute;
+  content: '';
+  color: #ffd277;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 97%;
+  height: 90%;
+  border-radius: 8px;
+  transition-duration: 1s;
+  background-color: rgba(0, 0, 0, 0.842);
+  background-size: 200%;
 }
 
-.button:hover .hoverEffect div {
-  width: 8rem;
-  height: 8rem;
+.certificacion:hover {
+  background-position: right;
+  transition-duration: 1s;
 }
 
-@keyframes effect {
-  0% {
-    transform: rotate(0deg);
-  }
+.certificacion:hover::before {
+  background-position: right;
+  transition-duration: 1s;
+}
 
-  100% {
-    transform: rotate(360deg);
-  }
+.certificacion:active {
+  transform: scale(0.95);
 }
