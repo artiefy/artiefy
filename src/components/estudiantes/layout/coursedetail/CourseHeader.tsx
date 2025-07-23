@@ -1619,7 +1619,7 @@ export function CourseHeader({
           )}
         </div>
         {/* Course type and instructor info */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:-mb-1 mb-6 sm:justify-between">
           <div className="w-full space-y-4">
             <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
               <div>
