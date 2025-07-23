@@ -1232,6 +1232,164 @@ export function CourseHeader({
     return null;
   };
 
+  // Extraer el botón de compra individual para reutilizarlo
+  const renderBuyButton = () => {
+    // Don't show the button if locally enrolled
+    if (localIsEnrolled) {
+      return null;
+    }
+
+    // Obtener información del usuario y suscripción
+    const renderUserPlanType = user?.publicMetadata?.planType as string;
+    const userHasActiveSubscription =
+      isSignedIn &&
+      isSubscriptionActive &&
+      (renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium');
+
+    // Verificar si el curso tiene tipos que coinciden con la suscripción del usuario
+    const renderHasPremiumType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'premium'
+    );
+    const renderHasProType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'pro'
+    );
+    const renderHasFreeType = course.courseTypes?.some(
+      (type) =>
+        type.requiredSubscriptionLevel === 'none' &&
+        !type.isPurchasableIndividually
+    );
+    const _renderHasPurchasable = course.courseTypes?.some(
+      (type) => type.isPurchasableIndividually
+    );
+
+    // Calculate userCanAccessWithSubscription within this function scope
+
+    const renderUserCanAccessWithSubscription =
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (renderUserPlanType === 'Premium' && renderHasPremiumType) ||
+      ((renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium') &&
+        renderHasProType);
+
+    // IMPORTANT: Changed logic to prioritize subscription access over purchase options
+    // If user has active subscription and can access this course with it, show the enrollment button
+    if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
+            <strong>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse al Curso</span>
+              )}
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    // Free course enrollment button - only show if user doesn't have subscription access
+    if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
+            <strong>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse Gratis</span>
+              )}
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    // Purchase buttons - only show if user doesn't have subscription access
+    // Verificar si es un curso tipo 4 (sistema tradicional)
+    if (course.courseTypeId === 4 && course.individualPrice) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>
+                ${' '}
+                {course.individualPrice.toLocaleString('es-CO', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span>Comprar Curso</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    // Verificar si es un curso con tipo individual (sistema nuevo)
+    const purchasableType = course.courseTypes?.find(
+      (type) => type.isPurchasableIndividually
+    );
+
+    if (purchasableType && (course.individualPrice || purchasableType.price)) {
+      const price = course.individualPrice ?? purchasableType.price;
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>
+                ${' '}
+                {price?.toLocaleString('es-CO', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span>Comprar Curso</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   // Add a function to handle plan badge click
   const handlePlanBadgeClick = () => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
@@ -1247,30 +1405,28 @@ export function CourseHeader({
   const renderTopEnrollmentButton = () => {
     if (localIsEnrolled) {
       return (
-        <div className="mb-0 flex justify-center pt-2 sm:mb-0">
-          <div className="relative h-32 w-64">
-            <div className="flex flex-col space-y-4">
-              <Button
-                className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-                disabled
-              >
-                <FaCheck className="mr-2" /> Suscrito Al Curso
-              </Button>
-              <Button
-                className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-                onClick={onUnenrollAction}
-                disabled={isUnenrolling}
-              >
-                {isUnenrolling ? (
-                  <Icons.spinner
-                    className="text-white"
-                    style={{ width: '35px', height: '35px' }}
-                  />
-                ) : (
-                  'Cancelar Suscripción'
-                )}
-              </Button>
-            </div>
+        <div className="mb-0 flex justify-center pt-0 pb-2 sm:mb-0 sm:pt-0">
+          <div className="flex flex-col space-y-4 items-center w-full">
+            <Button
+              className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+              disabled
+            >
+              <FaCheck className="mr-2" /> Suscrito Al Curso
+            </Button>
+            <Button
+              className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+              onClick={onUnenrollAction}
+              disabled={isUnenrolling}
+            >
+              {isUnenrolling ? (
+                <Icons.spinner
+                  className="text-white"
+                  style={{ width: '35px', height: '35px' }}
+                />
+              ) : (
+                'Cancelar Suscripción'
+              )}
+            </Button>
           </div>
         </div>
       );
@@ -1278,7 +1434,7 @@ export function CourseHeader({
     // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
     return (
       <div className="mb-0 flex justify-center pt-3 sm:mb-0 sm:pt-0">
-        <div className="relative h-16 w-64">
+        <div className="flex items-center justify-center w-full">
           <button
             className="btn"
             onClick={handleEnrollClick}
