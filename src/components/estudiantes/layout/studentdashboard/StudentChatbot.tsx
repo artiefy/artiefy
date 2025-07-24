@@ -135,6 +135,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const ideaRef = useRef(idea);
 
+	
 	useEffect(() => {
 			// Solo se ejecuta en el cliente
 			setIsDesktop(window.innerWidth > 768);
@@ -270,6 +271,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			if (processingQuery || searchRequestInProgress.current) return;
 
 			let booleanVar = false;
+			let inCourse = false;
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
@@ -278,11 +280,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			const modoActual = chatModeRef.current;
 			const courseTitle = modoActual.curso_title;
 
+			console.log('Modo actual del chat:', modoActual);
+
 			if(courseTitle.includes('Nuevo Chat')) {
 				console.log('Ingreso al titlenewChat');
 				booleanVar = true;
 			}
+			// Obtener url y ver si esta dentro de un curso
 
+
+			if(pathname.includes('cursos') || pathname.includes('curso')) {
+				console.log('Ingreso al if');
+				if(isEnrolled) {
+					console.log('Usuario está inscrito en el curso');
+					inCourse = true;
+				}
+			}
+
+			
+			console.log(chatMode)
 			// Url para la petición según si hay courseTitle
 			const urlDefault = { url: 'http://18.191.230.0:5000/root_courses', body: { prompt: query } };
 			const urlCourses = { url: 'http://18.191.230.0:5000/get_classes', body: { user_id: user?.id, curso: courseTitle ? courseTitle: chatMode.curso_title, prompt: query } };
@@ -290,12 +306,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 			console.log('Titulo del chat de curso: ' + courseTitle);
 			console.log('Var to fetching:', booleanVar, courseTitle, isSignedIn);
+			console.log('InCourse:', inCourse);
 			let fetchConfig;
 
-			if(courseTitle){
+			if(!courseTitle.includes('Nuevo Chat') && !courseTitle.includes('Sin título') && courseTitle || inCourse){
 				console.log('1')
 				fetchConfig = urlCourses;
-			}else if(isSignedIn && !courseTitle){
+			}else if(isSignedIn || courseTitle.includes('Nuevo Chat') || courseTitle.includes('Sin título') || booleanVar){
 				console.log('2')
 				fetchConfig = urlDefault;
 			}else if(!isSignedIn && !courseTitle){
@@ -607,7 +624,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const handleBotButtonClick = (action: string) => {
 		if (action === 'new_project') {
 			// Lógica para crear proyecto
-			toast.info('Funcionalidad para crear proyecto');
+			if(!isSignedIn){
+				// Redirigir a la página de planes
+				
+
+				router.push(`/planes`);
+			}
 		} else if (action === 'new_idea') {
 			setIdea({ selected: true, idea: '' });
 			setMessages((prev) => [
@@ -727,18 +749,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		<div className="flex flex-col space-y-4">
 			<p className="font-medium text-gray-800 whitespace-pre-line">{message.text}</p>
 			{message.buttons && (
-				<div className="flex flex-wrap gap-2 mt-2">
-					{message.buttons.map((btn) => (
-						<button
-							key={btn.action}
-							className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
-							onClick={() => handleBotButtonClick(btn.action)}
-							type="button"
-						>
-							{btn.label}
-						</button>
-					))}
-				</div>
+			<div className="flex flex-wrap gap-2 mt-2">
+				{message.buttons
+				.filter(btn => !(btn.action === 'contact_support' && !isSignedIn))
+				.map((btn) => (
+					<button
+					key={btn.action}
+					className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+					onClick={() => handleBotButtonClick(btn.action)}
+					type="button"
+					>
+					{btn.label}
+					</button>
+				))}
+			</div>
 			)}
 		</div>
 	);

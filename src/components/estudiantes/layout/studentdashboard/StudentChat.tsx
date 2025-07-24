@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { User } from "@clerk/nextjs/server"; // o "@clerk/nextjs/dist/api" si es necesario
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
-
+import { useRouter } from 'next/navigation';
 import { getOrCreateConversation, getConversationWithMessages } from '~/server/actions/estudiantes/chats/saveChat';
-
+import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+
 
 
 // Props for the chat component
@@ -70,8 +71,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
 }) => {
 
     const [conversation] = useState<{ id: number }>({ id: (chatMode.idChat ?? courseId ?? 0) });
-    
-
+    const router = useRouter();
+    const pathname = usePathname();
     useEffect(() => {
         setShowChatList(false);
     }, []);
@@ -96,6 +97,13 @@ export const ChatMessages: React.FC<ChatProps> = ({
         case 'contact_support':
             window.dispatchEvent(new CustomEvent('support-open-chat'));
         break;
+
+        case 'new_project':
+            // Lógica para crear proyecto
+			if(!isSignedIn){
+				// Redirigir a la página de planes
+				router.push(`/planes`);
+			}
         default:
         console.log('Acción no reconocida:', action);
     }
@@ -106,6 +114,18 @@ export const ChatMessages: React.FC<ChatProps> = ({
         console.log('La conversación: ' + conversation);
         
         if (!conversation) return;
+
+        
+
+        let inCourse = false;
+
+        if(pathname.includes('cursos') || pathname.includes('curso')) {
+				console.log('Ingreso al if');
+				if(isEnrolled) {
+					console.log('Usuario está inscrito en el curso');
+					inCourse = true;
+				}
+			}
 
         const fetchMessages = async () => {
             let chats: { messages: { id: number; message: string; sender: string }[] } = { messages: [] };
@@ -120,6 +140,15 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
                 if(chats && chats.messages.length > 0 ) {
                     console.log('Cargando mensajes de la conversación existente');
+                    // Si ya hay mensajes, los cargamos
+                        if(inCourse){
+                            setChatMode({
+                                idChat: conversation.id,
+                                status: true,
+                                curso_title: courseTitle ?? ''
+                            });
+                        }
+                        
                         const loadedMessages = chats.messages.map((msg: { id: number; message: string; sender: string }) => ({
                         id: msg.id,
                         text: msg.message,
@@ -177,8 +206,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
                     }else{
                         console.log('Pero no entra para el if de crear conversación');
                     }
-
-
                 }
 
             } catch (error) {
@@ -235,15 +262,22 @@ export const ChatMessages: React.FC<ChatProps> = ({
                                 
                                 {message.sender === 'bot' && message.buttons && (
                                     <div className="mt-3 flex flex-wrap gap-2">
-                                    {message.buttons.map((btn, index) => (
-                                        <button
-                                        key={index}
-                                        onClick={() => handleBotButtonClick(btn.action)}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-all"
-                                        >
-                                        {btn.label}
-                                        </button>
-                                    ))}
+                                    {message.buttons && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {message.buttons
+                                            .filter(btn => !(btn.action === 'contact_support' && !isSignedIn))
+                                            .map((btn) => (
+                                                <button
+                                                key={btn.action}
+                                                className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+                                                onClick={() => handleBotButtonClick(btn.action)}
+                                                type="button"
+                                                >
+                                                {btn.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        )}
                                     </div>
                                 )}
                                 

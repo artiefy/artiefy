@@ -92,7 +92,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
                     
                     <li key={chat.id}>
                         <Button
-                            onClick={() => { chat.curso_id ? setChatMode({idChat: chat.curso_id, status: true, curso_title: chat.title}) : window.dispatchEvent(new CustomEvent('support-open-chat', { detail: chat }));  }}
+                            onClick={() => { chat.curso_id ? setChatMode({idChat: chat.curso_id, status: true, curso_title: chat.title}) : window.dispatchEvent(new CustomEvent('support-open-chat', { detail: chat })); console.log('Chat seleccionado:', chat); }}
                             className="w-full px-4 py-3 bg-gray-50 border-b border-gray-100 text-left transition-transform duration-200 ease-in-out hover:scale-[1.02]"
 
                         >

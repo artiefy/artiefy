@@ -1,7 +1,7 @@
 'use client';
 import { useExtras } from '~/app/estudiantes/StudentContext';
 import React, { useEffect, useState, useRef } from 'react';
-import { ImEnter } from "react-icons/im";
+import { LuInfo } from "react-icons/lu";
 import '~/styles/tourButtonAnimations.css';
 
 
@@ -85,7 +85,7 @@ const ANIMATION_DURATION = 350;
 						hover:from-emerald-500 hover:to-green-600 transition-all duration-300 ease-in-out 
 						shadow-md hover:shadow-[0_0_20px_#00c951] hover:scale-105 flex items-center gap-2"
 					>
-						<ImEnter className="text-xl text-white opacity-90" />
+						<LuInfo className="text-xl text-white opacity-90" />
 						<span className="hidden sm:inline font-medium tracking-wide">Tour por la Aplicación</span>
 
 						{/* Triángulo tipo burbuja */}
