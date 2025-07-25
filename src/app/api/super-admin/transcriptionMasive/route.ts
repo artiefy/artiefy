@@ -13,7 +13,7 @@ const redis = new Redis({
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url); // ✅ usar URL segura
+    const { searchParams } = new URL(req.url);
     const lessonId = searchParams.get('lessonId');
 
     if (!lessonId) {
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     const redisKey = `transcription:lesson:${lessonId}`;
-    const transcription = await redis.get<string[] | string>(redisKey); // ✅ tipado correcto
+    const transcription = await redis.get(redisKey);
 
     if (!transcription) {
       return NextResponse.json(
@@ -33,9 +33,27 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const formatTime = (seconds: number): string => {
+      const mins = Math.floor(seconds);
+      const secs = Math.floor((seconds % 1) * 60);
+      const formattedMins = Math.floor(mins / 60);
+      const formattedSecs = mins % 60;
+      return `${formattedMins}:${formattedSecs.toString().padStart(2, '0')}`;
+    };
+
     const textContent = Array.isArray(transcription)
-      ? transcription.join('\n')
-      : String(transcription); // ✅ evita [object Object]
+      ? transcription
+          .map((item: any) =>
+            item &&
+            typeof item === 'object' &&
+            'text' in item &&
+            'start' in item &&
+            'end' in item
+              ? `${formatTime(item.start)} ${item.text} ${formatTime(item.end)}`
+              : ''
+          )
+          .join('\n')
+      : String(transcription);
 
     return new NextResponse(textContent, {
       status: 200,
