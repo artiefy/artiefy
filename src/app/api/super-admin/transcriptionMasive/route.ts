@@ -1,15 +1,22 @@
+import { type NextRequest,NextResponse } from 'next/server';
+
 import { Redis } from '@upstash/redis';
 import axios, { isAxiosError } from 'axios';
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
 
-import { NextResponse, type NextRequest } from 'next/server';
-
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+// Tipar correctamente los elementos de transcripción
+interface TranscriptionItem {
+  start: number;
+  end: number;
+  text: string;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,7 +31,7 @@ export async function GET(req: NextRequest) {
     }
 
     const redisKey = `transcription:lesson:${lessonId}`;
-    const transcription = await redis.get(redisKey);
+    const transcription = await redis.get<TranscriptionItem[] | string>(redisKey);
 
     if (!transcription) {
       return NextResponse.json(
@@ -34,26 +41,21 @@ export async function GET(req: NextRequest) {
     }
 
     const formatTime = (seconds: number): string => {
-      const mins = Math.floor(seconds);
-      const secs = Math.floor((seconds % 1) * 60);
-      const formattedMins = Math.floor(mins / 60);
-      const formattedSecs = mins % 60;
-      return `${formattedMins}:${formattedSecs.toString().padStart(2, '0')}`;
+      const totalSecs = Math.floor(seconds);
+      const mins = Math.floor(totalSecs / 60);
+      const secs = totalSecs % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     const textContent = Array.isArray(transcription)
       ? transcription
-          .map((item: any) =>
-            item &&
-            typeof item === 'object' &&
-            'text' in item &&
-            'start' in item &&
-            'end' in item
+          .map((item) =>
+            item && typeof item === 'object' && 'text' in item
               ? `${formatTime(item.start)} ${item.text} ${formatTime(item.end)}`
               : ''
           )
           .join('\n')
-      : String(transcription);
+      : transcription;
 
     return new NextResponse(textContent, {
       status: 200,
@@ -70,6 +72,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 
 export async function POST() {
   try {
