@@ -1,16 +1,57 @@
-import { NextResponse } from 'next/server';
-
 import { Redis } from '@upstash/redis';
 import axios, { isAxiosError } from 'axios';
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
 
+import type { NextRequest, NextResponse } from 'next/server'; // ✅ IMPORT TYPED
+
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url); // ✅ usar URL segura
+    const lessonId = searchParams.get('lessonId');
+
+    if (!lessonId) {
+      return NextResponse.json(
+        { error: 'lessonId es requerido' },
+        { status: 400 }
+      );
+    }
+
+    const redisKey = `transcription:lesson:${lessonId}`;
+    const transcription = await redis.get<string[] | string>(redisKey); // ✅ tipado correcto
+
+    if (!transcription) {
+      return NextResponse.json(
+        { error: 'Transcripción no encontrada para esta lección' },
+        { status: 404 }
+      );
+    }
+
+    const textContent = Array.isArray(transcription)
+      ? transcription.join('\n')
+      : String(transcription); // ✅ evita [object Object]
+
+    return new NextResponse(textContent, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain',
+        'Content-Disposition': `attachment; filename="transcription-${lessonId}.txt"`,
+      },
+    });
+  } catch (error) {
+    console.error('[TRANSCRIPCIÓN] ❌ Error al obtener transcripción:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener la transcripción' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST() {
   try {
@@ -23,21 +64,38 @@ export async function POST() {
 
     const AWS_BASE_URL = 'https://s3.us-east-2.amazonaws.com/artiefy-upload/';
 
-    for (const lesson of allLessons) {
+    // Obtener todas las claves de transcripciones ya existentes
+    const existingKeys = await redis.keys('transcription:lesson:*');
+    const alreadyProcessedIds = new Set(
+      existingKeys.map((key: string) =>
+        key.replace('transcription:lesson:', '')
+      )
+    );
+
+    // Filtrar solo las lecciones que NO tienen transcripción
+    const lessonsToProcess = allLessons.filter((lesson) => {
+      return (
+        lesson.coverVideoKey && !alreadyProcessedIds.has(lesson.id.toString())
+      );
+    });
+
+    if (lessonsToProcess.length === 0) {
+      console.log(
+        '[TRANSCRIPCIÓN] ✅ No hay lecciones nuevas por transcribir.'
+      );
+      return NextResponse.json({
+        message: 'Todas las lecciones ya tienen transcripción.',
+      });
+    }
+
+    for (const lesson of lessonsToProcess) {
       const { id: lessonId, coverVideoKey } = lesson;
-
-      if (!coverVideoKey) {
-        console.log(`[TRANSCRIPCIÓN] ❌ Lección ${lessonId} no tiene coverVideoKey.`);
-        continue;
-      }
-
       const videoUrl = `${AWS_BASE_URL}${coverVideoKey}`;
       console.log(`[TRANSCRIPCIÓN] 📹 Procesando video: ${videoUrl}`);
 
       // Verificar que el video sea accesible
       try {
         const check = await fetch(videoUrl, { method: 'HEAD' });
-
         if (!check.ok) {
           console.error(
             `[TRANSCRIPCIÓN] ❌ Video no accesible para lección ${lessonId}. Status:`,
@@ -52,12 +110,6 @@ export async function POST() {
 
       // Procesar transcripción
       try {
-        const redisKey = `transcription:lesson:${lessonId}`;
-        const alreadyTranscribed = await redis.get(redisKey);
-        if (alreadyTranscribed) {
-        console.log(`[TRANSCRIPCIÓN] 🟡 Ya existe transcripción para lección ${lessonId}`);
-        continue;
-        }
         const response = await axios.post(
           'http://3.148.245.81:8000/video2text',
           { url: videoUrl },
@@ -75,8 +127,11 @@ export async function POST() {
           continue;
         }
 
+        const redisKey = `transcription:lesson:${lessonId}`;
         await redis.set(redisKey, response.data);
-        console.log(`[TRANSCRIPCIÓN] ✅ Guardada transcripción para lección ${lessonId}`);
+        console.log(
+          `[TRANSCRIPCIÓN] ✅ Guardada transcripción para lección ${lessonId}`
+        );
       } catch (err) {
         if (isAxiosError(err)) {
           console.error(`Axios Error (lección ${lessonId}):`, err.message);
@@ -88,7 +143,8 @@ export async function POST() {
     }
 
     return NextResponse.json({
-      message: 'Proceso de transcripción iniciado para todas las lecciones con video',
+      message:
+        'Proceso de transcripción completado para las lecciones pendientes.',
     });
   } catch (err) {
     console.error('[TRANSCRIPCIÓN] ❌ Error general:', err);
