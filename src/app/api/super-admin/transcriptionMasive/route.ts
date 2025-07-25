@@ -52,6 +52,12 @@ export async function POST() {
 
       // Procesar transcripción
       try {
+        const redisKey = `transcription:lesson:${lessonId}`;
+        const alreadyTranscribed = await redis.get(redisKey);
+        if (alreadyTranscribed) {
+        console.log(`[TRANSCRIPCIÓN] 🟡 Ya existe transcripción para lección ${lessonId}`);
+        continue;
+        }
         const response = await axios.post(
           'http://3.148.245.81:8000/video2text',
           { url: videoUrl },
@@ -69,7 +75,6 @@ export async function POST() {
           continue;
         }
 
-        const redisKey = `transcription:lesson:${lessonId}`;
         await redis.set(redisKey, response.data);
         console.log(`[TRANSCRIPCIÓN] ✅ Guardada transcripción para lección ${lessonId}`);
       } catch (err) {
