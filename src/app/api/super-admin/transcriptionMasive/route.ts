@@ -4,7 +4,7 @@ import axios, { isAxiosError } from 'axios';
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
 
-import type { NextRequest, NextResponse } from 'next/server'; // ✅ IMPORT TYPED
+import { NextResponse, type NextRequest } from 'next/server';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
