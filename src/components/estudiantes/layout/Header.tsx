@@ -159,7 +159,7 @@ export function Header() {
         isScrolled
           ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
           : 'py-4'
-      } md:py-4 -mb-5`} // <-- Agrega py-2 para móviles, md:py-4 para desktop
+      }`}
     >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
@@ -267,7 +267,8 @@ export function Header() {
         <div className="flex w-full items-center justify-between md:hidden">
           <div className="mt-[-8px] shrink-0">
             <Link href="/estudiantes">
-              <div className="relative size-[110px]"> {/* Reduce logo size */}
+              <div className="relative size-[110px]">
+                {/* Reduce logo size */}
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
@@ -279,7 +280,8 @@ export function Header() {
               </div>
             </Link>
           </div>
-          <label className="hamburger flex h-8 w-8 items-center justify-center"> {/* Reduce hamburger size */}
+          <label className="hamburger flex h-8 w-8 items-center justify-center">
+            {/* Reduce hamburger size */}
             <input
               type="checkbox"
               checked={mobileMenuOpen}
@@ -332,7 +334,7 @@ export function Header() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="block text-base text-gray-900 transition-colors hover:text-orange-500 active:scale-95 py-1" // Reduce font size and add less vertical padding
+                    className="block py-1 text-base text-gray-900 transition-colors hover:text-orange-500 active:scale-95" // Reduce font size and add less vertical padding
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
@@ -341,7 +343,8 @@ export function Header() {
               ))}
             </ul>
           </nav>
-          <div className="mt-4 flex items-center justify-center"> {/* Reduce top margin */}
+          <div className="mt-4 flex items-center justify-center">
+            {/* Reduce top margin */}
             <Suspense
               fallback={
                 <div className="flex min-w-[180px] items-center justify-start">

@@ -246,7 +246,7 @@ export default function CourseDetails({
 
   return (
     <div className="bg-background min-h-screen">
-      <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
+      <main className="mx-auto max-w-7xl pt-0 pb-4 md:pb-6 lg:pb-8">
         <CourseBreadcrumb
           title={course.title}
           programInfo={

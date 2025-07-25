@@ -39,15 +39,11 @@ export function NotificationHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [hasMarkedAsRead, setHasMarkedAsRead] = useState(false); // Nuevo estado
 
   useEffect(() => {
     if (user?.id) {
       void getNotifications(user.id).then(setNotifications);
-      void getUnreadCount(user.id).then((count) => {
-        setUnreadCount(count);
-        setHasMarkedAsRead(false); // Resetear cuando cambia el usuario
-      });
+      void getUnreadCount(user.id).then(setUnreadCount);
     }
   }, [user?.id]);
 
@@ -63,32 +59,29 @@ export function NotificationHeader() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Optimizado: marca solo las notificaciones no leídas como leídas al abrir el menú
   const handleClick = async () => {
     setIsOpen(!isOpen);
 
-    // Marcar como leídas solo la primera vez que se abre el menú
-    if (!isOpen && user?.id && unreadCount > 0 && !hasMarkedAsRead) {
+    if (!isOpen && user?.id && unreadCount > 0) {
       try {
+        // Marca solo las notificaciones no leídas
         await markNotificationsAsRead(user.id);
-        setUnreadCount(0); // Actualizar localmente
-        setHasMarkedAsRead(true); // Evitar volver a mostrar el contador
-        // Refrescar notificaciones
-        const updatedNotifications = await getNotifications(user.id);
-        setNotifications(updatedNotifications);
+        // Actualiza localmente el estado de las notificaciones
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setUnreadCount(0);
       } catch (error) {
         console.error('Error marking notifications as read:', error);
       }
     }
 
-    // Solo aplicar animación en pantallas grandes
     if (window.innerWidth >= 768) {
       setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 300); // Duración de la animación
+      setTimeout(() => setIsAnimating(false), 300);
     }
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    // Cerrar el menú de notificaciones
     setIsOpen(false);
 
     // Navegar según el tipo de notificación y metadata
@@ -140,7 +133,7 @@ export function NotificationHeader() {
         <span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0 transition-opacity group-hover:opacity-100 md:block">
           Notificaciones
         </span>
-        {unreadCount > 0 && !hasMarkedAsRead ? (
+        {unreadCount > 0 ? (
           <>
             <BellRing className="text-primary group-hover:text-background size-6 transition-colors" />
             <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
@@ -163,7 +156,9 @@ export function NotificationHeader() {
           notifications.map((notification) => (
             <div
               key={notification.id}
-              className="notification-item"
+              className={`notification-item ${
+                !notification.isRead ? 'notification-unread' : ''
+              }`}
               onClick={() => handleNotificationClick(notification)}
               role="button"
               tabIndex={0}

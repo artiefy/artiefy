@@ -323,7 +323,7 @@ export default function StudentDetails({
                         className="object-cover"
                         priority={index === currentSlide}
                         sizes="100vw"
-                        quality={75}
+                        quality={100}
                       />
                     </div>
                     <div className="text-primary absolute inset-0 flex items-center justify-start p-4">
@@ -537,11 +537,11 @@ export default function StudentDetails({
               </div>
               <div>
                 <Carousel className="w-full">
-                  <CarouselContent className="my-6 pl-4 sm:pl-4">
+                  <CarouselContent className="my-6">
                     {sortedPrograms.map((program) => (
                       <CarouselItem
                         key={program.id}
-                        className="basis-[95%] sm:basis-2/3 lg:basis-1/3"
+                        className="basis-full sm:basis-1/2 lg:basis-1/3"
                       >
                         <StudentProgram program={program} />
                       </CarouselItem>

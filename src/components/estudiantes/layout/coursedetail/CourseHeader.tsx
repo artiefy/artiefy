@@ -47,6 +47,7 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
+import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 
@@ -1231,164 +1232,6 @@ export function CourseHeader({
     return null;
   };
 
-  // Extraer el botón de compra individual para reutilizarlo
-  const renderBuyButton = () => {
-    // Don't show the button if locally enrolled
-    if (localIsEnrolled) {
-      return null;
-    }
-
-    // Obtener información del usuario y suscripción
-    const renderUserPlanType = user?.publicMetadata?.planType as string;
-    const userHasActiveSubscription =
-      isSignedIn &&
-      isSubscriptionActive &&
-      (renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium');
-
-    // Verificar si el curso tiene tipos que coinciden con la suscripción del usuario
-    const renderHasPremiumType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
-    );
-    const renderHasProType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
-    );
-    const renderHasFreeType = course.courseTypes?.some(
-      (type) =>
-        type.requiredSubscriptionLevel === 'none' &&
-        !type.isPurchasableIndividually
-    );
-    const _renderHasPurchasable = course.courseTypes?.some(
-      (type) => type.isPurchasableIndividually
-    );
-
-    // Calculate userCanAccessWithSubscription within this function scope
-
-    const renderUserCanAccessWithSubscription =
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      (renderUserPlanType === 'Premium' && renderHasPremiumType) ||
-      ((renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium') &&
-        renderHasProType);
-
-    // IMPORTANT: Changed logic to prioritize subscription access over purchase options
-    // If user has active subscription and can access this course with it, show the enrollment button
-    if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
-      return (
-        <div className="flex flex-col items-center gap-4">
-          <button
-            onClick={handleEnrollClick}
-            className="btn"
-            disabled={isEnrolling || isEnrollClicked}
-          >
-            <strong>
-              {isEnrolling || isEnrollClicked ? (
-                <Icons.spinner className="h-6 w-6" />
-              ) : (
-                <span>Inscribirse al Curso</span>
-              )}
-            </strong>
-            <div id="container-stars">
-              <div id="stars" />
-            </div>
-            <div id="glow">
-              <div className="circle" />
-              <div className="circle" />
-            </div>
-          </button>
-        </div>
-      );
-    }
-
-    // Free course enrollment button - only show if user doesn't have subscription access
-    if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
-      return (
-        <div className="flex flex-col items-center gap-4">
-          <button
-            onClick={handleEnrollClick}
-            className="btn"
-            disabled={isEnrolling || isEnrollClicked}
-          >
-            <strong>
-              {isEnrolling || isEnrollClicked ? (
-                <Icons.spinner className="h-6 w-6" />
-              ) : (
-                <span>Inscribirse Gratis</span>
-              )}
-            </strong>
-            <div id="container-stars">
-              <div id="stars" />
-            </div>
-            <div id="glow">
-              <div className="circle" />
-              <div className="circle" />
-            </div>
-          </button>
-        </div>
-      );
-    }
-
-    // Purchase buttons - only show if user doesn't have subscription access
-    // Verificar si es un curso tipo 4 (sistema tradicional)
-    if (course.courseTypeId === 4 && course.individualPrice) {
-      return (
-        <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
-            <strong>
-              <span>
-                ${' '}
-                {course.individualPrice.toLocaleString('es-CO', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-              <span>Comprar Curso</span>
-            </strong>
-            <div id="container-stars">
-              <div id="stars" />
-            </div>
-            <div id="glow">
-              <div className="circle" />
-              <div className="circle" />
-            </div>
-          </button>
-        </div>
-      );
-    }
-
-    // Verificar si es un curso con tipo individual (sistema nuevo)
-    const purchasableType = course.courseTypes?.find(
-      (type) => type.isPurchasableIndividually
-    );
-
-    if (purchasableType && (course.individualPrice || purchasableType.price)) {
-      const price = course.individualPrice ?? purchasableType.price;
-      return (
-        <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
-            <strong>
-              <span>
-                ${' '}
-                {price?.toLocaleString('es-CO', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-              <span>Comprar Curso</span>
-            </strong>
-            <div id="container-stars">
-              <div id="stars" />
-            </div>
-            <div id="glow">
-              <div className="circle" />
-              <div className="circle" />
-            </div>
-          </button>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
   // Add a function to handle plan badge click
   const handlePlanBadgeClick = () => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
@@ -1399,13 +1242,78 @@ export function CourseHeader({
     setLocalIsEnrolled(isEnrolled);
   }, [isEnrolled]);
 
+  // --- Botón de inscripción/cancelación arriba de la descripción ---
+  // Reubica el bloque de inscripción aquí, elimina los duplicados
+  const renderTopEnrollmentButton = () => {
+    if (localIsEnrolled) {
+      return (
+        <div className="mb-0 pt-0 pb-2 sm:mb-0 sm:pt-0 flex justify-center sm:justify-start">
+          <div className="flex flex-col space-y-4 items-center sm:items-start w-full sm:w-auto">
+            <Button
+              className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+              disabled
+            >
+              <FaCheck className="mr-2" /> Suscrito Al Curso
+            </Button>
+            <Button
+              className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+              onClick={onUnenrollAction}
+              disabled={isUnenrolling}
+            >
+              {isUnenrolling ? (
+                <Icons.spinner
+                  className="text-white"
+                  style={{ width: '35px', height: '35px' }}
+                />
+              ) : (
+                'Cancelar Suscripción'
+              )}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
+    return (
+      <div className="mb-2 pt-0 sm:mb-2 sm:pt-0 flex justify-center sm:justify-start">
+        <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+          <button
+            className="btn"
+            onClick={handleEnrollClick}
+            disabled={isEnrolling || isEnrollClicked}
+          >
+            <strong>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <>
+                  {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                  <span>{getEnrollButtonText()}</span>
+                </>
+              )}
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
-      <CardHeader className="px-0">
-        {/* Removed negative margin to show full cover image on all screen sizes */}
-        <div className="relative mb-4 w-full transition-all duration-200">
-          {/* Use consistent aspect ratio on all screen sizes */}
-          <AspectRatio ratio={16 / 9} className="w-full">
+      {/* Cambia el CardHeader para reducir el espacio en móviles */}
+      <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
+        <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">
+          <AspectRatio
+            ratio={16 / 9}
+            className="mt-0 w-full pt-0 sm:mt-0 sm:pt-0"
+          >
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -1497,7 +1405,9 @@ export function CourseHeader({
         </div>
         {/* Removed mobile metadata section from here */}
       </CardHeader>
-      <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
+      <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
+        {' '}
+        {/* <-- Ensure no top margin/padding */}
         {/* Course titles - desktop and mobile */}
         <div className="w-full">
           {/* Título en móviles */}
@@ -1510,7 +1420,6 @@ export function CourseHeader({
             {course.title}
           </h1>
         </div>
-
         {/* MOVED: Mobile metadata section - now below title in mobile view */}
         <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
           <div className="flex items-center justify-between gap-2">
@@ -1628,7 +1537,6 @@ export function CourseHeader({
             </div>
           </div>
         </div>
-
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
@@ -1645,50 +1553,75 @@ export function CourseHeader({
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex items-center">
-                <FaCalendar className="mr-2 text-white" /> {/* icono blanco */}
-                <span className="text-xs text-white sm:text-sm">
-                  Creado: {formatDateString(course.createdAt)}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <FaClock className="mr-2 text-white" /> {/* icono blanco */}
-                <span className="text-xs text-white sm:text-sm">
-                  Actualizado: {formatDateString(course.updatedAt)}
-                </span>
-              </div>
+              {/* Ocultar en pantallas pequeñas si no está logueado */}
+              {isSignedIn ?? (
+                <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
+                  {/* ...existing code...*/}
+                  <div className="flex items-center">
+                    <FaCalendar className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Creado: {formatDateString(course.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaClock className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Actualizado: {formatDateString(course.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {/* Mostrar en desktop siempre */}
+              {isSignedIn && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center">
+                    <FaCalendar className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Creado: {formatDateString(course.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaClock className="mr-2 text-white" />
+                    <span className="text-xs text-white sm:text-sm">
+                      Actualizado: {formatDateString(course.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center sm:-mt-1">
-              <FaUserGraduate className="mr-2 text-blue-600" />
-              <span className="text-sm font-semibold text-blue-600 sm:text-base">
-                {Math.max(0, totalStudents)}{' '}
-                {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
-              </span>
+          {/* Ocultar número de estudiantes en mobile si no está logueado */}
+          {(isSignedIn ?? window.innerWidth >= 640) && (
+            <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
+              <div className="flex items-center sm:-mt-1">
+                <FaUserGraduate className="mr-2 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-600 sm:text-base">
+                  {Math.max(0, totalStudents)}{' '}
+                  {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
+                </span>
+              </div>
+              <div className="flex items-center sm:-mt-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <StarIcon
+                    key={index}
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      index < Math.floor(course.rating ?? 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+                  {course.rating?.toFixed(1)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center sm:-mt-1">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <StarIcon
-                  key={index}
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    index < Math.floor(course.rating ?? 0)
-                      ? 'text-yellow-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-              <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-                {course.rating?.toFixed(1)}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
-
         {/* Course type and instructor info */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:-mb-1 mb-6 sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="-mt-2 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
+            <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
               <div>
                 <h3 className="text-base font-extrabold text-white sm:text-lg">
                   {/* Cambiado a blanco */}
@@ -1714,40 +1647,42 @@ export function CourseHeader({
             </Badge>
           </div>
         </div>
-
         {/* New buttons container */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Grade button */}
-          <Button
-            onClick={() => setIsGradeModalOpen(true)}
-            disabled={!canAccessGrades}
-            className={cn(
-              'h-9 shrink-0 px-4 font-semibold sm:w-auto',
-              canAccessGrades
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-400 text-white'
-            )}
-            aria-label={
-              !isEnrolled
-                ? 'Debes inscribirte al curso'
-                : 'Completa todas las clases para ver tus calificaciones'
-            }
-          >
-            <FaTrophy
+          {/* Ocultar botón en mobile si no está logueado */}
+          {(isSignedIn ?? window.innerWidth >= 640) && (
+            <Button
+              onClick={() => setIsGradeModalOpen(true)}
+              disabled={!canAccessGrades}
               className={cn(
-                'mr-2 h-4 w-4',
-                !canAccessGrades ? 'text-black' : ''
+                'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
+                canAccessGrades
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-400 text-white'
               )}
-            />
-            <span
-              className={cn(
-                'text-sm font-bold',
-                !canAccessGrades ? 'text-black' : ''
-              )}
+              aria-label={
+                !isEnrolled
+                  ? 'Debes inscribirte al curso'
+                  : 'Completa todas las clases para ver tus calificaciones'
+              }
             >
-              Mis Calificaciones
-            </span>
-          </Button>
+              <FaTrophy
+                className={cn(
+                  'mr-2 h-4 w-4',
+                  !canAccessGrades ? 'text-black' : ''
+                )}
+              />
+              <span
+                className={cn(
+                  'text-sm font-bold',
+                  !canAccessGrades ? 'text-black' : ''
+                )}
+              >
+                Mis Calificaciones
+              </span>
+            </Button>
+          )}
 
           {/* Price button with space theme */}
           {course.courseTypeId === 4 &&
@@ -1776,15 +1711,9 @@ export function CourseHeader({
               </div>
             )}
         </div>
-
-        {/* --- NUEVO: Botón de compra individual arriba de la descripción --- */}
-        {/* Pantallas grandes: mostrar arriba de la descripción y debajo de modalidad */}
-        <div className="hidden sm:flex sm:justify-center sm:pt-2">
-          {renderBuyButton()}
-        </div>
-        {/* Pantallas pequeñas: mostrar arriba de la descripción */}
-        <div className="block pt-2 sm:hidden">{renderBuyButton()}</div>
-
+        {/* --- Botón de inscripción/cancelación arriba de la descripción --- */}
+        {/* Reubica el bloque de inscripción aquí, elimina los duplicados */}
+        {renderTopEnrollmentButton()}
         {/* Course description y botones responsivos */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="prose flex-1">
@@ -1795,7 +1724,6 @@ export function CourseHeader({
           </div>
           {/* Eliminar el botón de compra de aquí */}
         </div>
-
         {/* Botón de certificado con texto descriptivo */}
         {canAccessCertificate && (
           <div className="mt-6 space-y-4">
@@ -1807,31 +1735,20 @@ export function CourseHeader({
                 className="transition-all duration-300 hover:scale-110"
               />
             </div>
-            <p className="text-center font-serif text-lg text-gray-600 italic">
+            <p className="text-center font-serif text-lg text-yellow-500 italic">
               ¡Felicitaciones! Has completado exitosamente el curso con una
               calificación sobresaliente. Tu certificado está listo para ser
               visualizado y compartido.
             </p>
-            <Button
-              asChild
-              className="group relative w-full bg-green-500 p-0 text-white shadow-lg transition-all hover:bg-green-600"
-            >
-              <Link
-                href={`/estudiantes/certificados/${course.id}`}
-                className="relative flex h-full w-full items-center justify-center gap-2 overflow-hidden py-3"
-              >
-                {/* Fondo animado con opacidad ajustada */}
-                <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-green-600/40 to-green-400/40" />
-
-                {/* Contenido del botón */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <span className="text-lg font-bold">Ver Tu Certificado</span>
-                </div>
+            <div className="flex justify-center">
+              <Link href={`/estudiantes/certificados/${course.id}`}>
+                <button className="certificacion relative mx-auto text-base font-bold">
+                  <span className="relative z-10">Ver Tu Certificado</span>
+                </button>
               </Link>
-            </Button>
+            </div>
           </div>
         )}
-
         {/* Add Materias section below description */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-cyan-300">
@@ -1856,7 +1773,6 @@ export function CourseHeader({
               : null}
           </div>
         </div>
-
         {/* Course lessons */}
         <CourseContent
           course={course}
@@ -1865,19 +1781,11 @@ export function CourseHeader({
           subscriptionEndDate={subscriptionEndDate}
           isSignedIn={!!isSignedIn}
         />
-
-        {/* --- Botón de compra individual en la parte inferior (como antes) --- */}
-        {/* Eliminar la siguiente línea para evitar el botón duplicado en desktop */}
-        {/* <div className="hidden pt-4 sm:flex sm:justify-center">
-          {renderBuyButton()}
-        </div> */}
-
-        {/* Enrollment buttons with space theme */}
+        {/* --- Botón de inscripción/cancelación abajo como antes --- */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32">
             {localIsEnrolled ? (
               <div className="flex flex-col space-y-4">
-                {/* Wrap both buttons in a fragment or a div */}
                 <Button
                   className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
                   disabled
@@ -1926,7 +1834,6 @@ export function CourseHeader({
             )}
           </div>
         </div>
-
         {/* Add GradeModal */}
         <GradeModal
           isOpen={isGradeModalOpen}

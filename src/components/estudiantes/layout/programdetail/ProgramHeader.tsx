@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -75,7 +75,7 @@ export function ProgramHeader({
     FetchError
   >(
     user?.id
-      ? `/api/grades/materias?userId=${user.id}&courseId=${program.id}`
+      ? `/api/grades/program?userId=${user.id}&programId=${program.id}`
       : null,
     async (url: string): Promise<GradesApiResponse> => {
       const res = await fetch(url);
@@ -89,54 +89,39 @@ export function ProgramHeader({
     }
   );
 
-  const currentFinalGrade = useMemo(() => {
-    if (!gradesData?.materias?.length) return 0;
+  // Agrupa por curso y toma solo una nota final por curso (la primera materia encontrada)
+  const allCourses =
+    program.materias?.map((m) => m.curso?.title ?? 'Curso sin nombre') ?? [];
+  const uniqueCourses = Array.from(new Set(allCourses));
 
-    // Simplemente calcular el promedio de las notas
-    const average =
-      gradesData.materias.reduce((acc, materia) => acc + materia.grade, 0) /
-      gradesData.materias.length;
+  const coursesGrades: CourseGrade[] = uniqueCourses.map((courseTitle) => {
+    // Busca la primera materia de ese curso en gradesData
+    const materiaDelCurso = gradesData?.materias?.find(
+      (m) => m.courseTitle === courseTitle
+    );
+    // Toma la nota final de esa materia (todas tienen la misma)
+    const finalGrade = materiaDelCurso ? Number(materiaDelCurso.grade) : 0;
+    return {
+      courseTitle,
+      finalGrade,
+    };
+  });
 
-    console.log('Cálculo de nota:', {
-      materias: gradesData.materias,
-      promedio: average,
-      mostrarCertificado: average >= 3,
-    });
-
-    return Number(average.toFixed(2));
-  }, [gradesData]);
+  // Promedio temporal del programa usando la nota final de cada curso
+  const programAverage =
+    coursesGrades.length > 0
+      ? Number(
+          (
+            coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
+            coursesGrades.length
+          ).toFixed(2)
+        )
+      : 0;
 
   interface CourseGrade {
     courseTitle: string;
     finalGrade: number;
   }
-
-  const coursesGrades = useMemo(() => {
-    if (!gradesData?.materias?.length) return [];
-
-    // Agrupar las materias por curso y calcular promedios
-    const courseGrades = new Map<string, { sum: number; count: number }>();
-
-    gradesData.materias.forEach((materia) => {
-      if (!materia.courseTitle) return; // Skip if no courseTitle
-      const current = courseGrades.get(materia.courseTitle) ?? {
-        sum: 0,
-        count: 0,
-      };
-      courseGrades.set(materia.courseTitle, {
-        sum: current.sum + materia.grade,
-        count: current.count + 1,
-      });
-    });
-
-    // Convertir el Map a un array de CourseGrade
-    return Array.from(courseGrades.entries()).map(
-      ([courseTitle, { sum, count }]): CourseGrade => ({
-        courseTitle,
-        finalGrade: Number((sum / count).toFixed(2)),
-      })
-    );
-  }, [gradesData]);
 
   // Update loading state based on SWR
   // Update loading state with proper error handling
@@ -292,6 +277,24 @@ export function ProgramHeader({
     }
   };
 
+  // Renderizar el botón duplicado arriba de ProgramContent con espacio dinámico
+  const renderTopEnrollmentButton = () => {
+    // Si está inscrito, muestra ambos botones y deja espacio
+    if (isEnrolled) {
+      return (
+        <div className="flex justify-center pt-2 sm:mb-0 mb-0">
+          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+        </div>
+      );
+    }
+    // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
+    return (
+      <div className="flex justify-center pt-3 sm:pt-0">
+        <div className="relative h-16 w-64">{renderEnrollmentButton()}</div>
+      </div>
+    );
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {' '}
@@ -395,6 +398,9 @@ export function ProgramHeader({
           </Button>
         </div>
 
+        {/* --- NUEVO: Botón de inscripción arriba de la descripción con espacio dinámico --- */}
+        {renderTopEnrollmentButton()}
+
         {/* Program courses */}
         <ProgramContent
           program={program}
@@ -404,6 +410,7 @@ export function ProgramHeader({
           isCheckingEnrollment={isCheckingEnrollment}
         />
 
+        {/* Botón de inscripción abajo como antes */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
         </div>
@@ -411,7 +418,7 @@ export function ProgramHeader({
           isOpen={isGradeModalOpen}
           onCloseAction={() => setIsGradeModalOpen(false)}
           programTitle={program.title}
-          finalGrade={currentFinalGrade}
+          finalGrade={programAverage}
           isLoading={isLoadingGrade}
           coursesGrades={coursesGrades}
         />
