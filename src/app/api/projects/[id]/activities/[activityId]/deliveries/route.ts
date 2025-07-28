@@ -133,6 +133,17 @@ export async function POST(
       activityIdNum
     );
 
+    // Verificar que la actividad existe
+    const [activityExists] = await db
+      .select({ id: projectActivities.id })
+      .from(projectActivities)
+      .where(eq(projectActivities.id, activityIdNum))
+      .limit(1);
+
+    if (!activityExists) {
+      return respondWithError('Actividad no encontrada', 404);
+    }
+
     // Verificar permisos de entrega
     const tienePermisos = await verificarPermisosEntrega(
       userId,
@@ -146,7 +157,25 @@ export async function POST(
       );
     }
 
+    // Verificar si ya existe una entrega para esta actividad y usuario
+    const [existingDelivery] = await db
+      .select()
+      .from(projectActivityDeliveries)
+      .where(
+        and(
+          eq(projectActivityDeliveries.activityId, activityIdNum),
+          eq(projectActivityDeliveries.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (existingDelivery) {
+      return respondWithError('Ya existe una entrega para esta actividad', 409);
+    }
+
     const body = await req.json();
+    console.log('Datos recibidos:', body);
+
     const {
       documentKey,
       documentName,
@@ -159,6 +188,18 @@ export async function POST(
       comentario,
       entregaUrl,
     } = body;
+
+    // Validar que al menos haya algo para entregar
+    const hasFiles = documentKey || imageKey || videoKey || compressedFileKey;
+    const hasComment = comentario && comentario.trim().length > 0;
+    const hasUrl = entregaUrl && entregaUrl.trim().length > 0;
+
+    if (!hasFiles && !hasComment && !hasUrl) {
+      return respondWithError(
+        'Debe proporcionar al menos un archivo, comentario o URL para la entrega',
+        400
+      );
+    }
 
     // Calcular tipos de archivos y total
     const fileTypes = [];
@@ -181,32 +222,37 @@ export async function POST(
       totalFiles++;
     }
 
+    const deliveryData = {
+      activityId: activityIdNum,
+      userId,
+      documentKey: documentKey || null,
+      documentName: documentName || null,
+      imageKey: imageKey || null,
+      imageName: imageName || null,
+      videoKey: videoKey || null,
+      videoName: videoName || null,
+      compressedFileKey: compressedFileKey || null,
+      compressedFileName: compressedFileName || null,
+      comentario: comentario || null,
+      entregaUrl: entregaUrl || null,
+      fileTypes: fileTypes.length > 0 ? JSON.stringify(fileTypes) : null,
+      totalFiles,
+      entregado: totalFiles > 0 || hasComment || hasUrl,
+    };
+
+    console.log('Datos a insertar:', deliveryData);
+
     const [delivery] = await db
       .insert(projectActivityDeliveries)
-      .values({
-        activityId: activityIdNum,
-        userId,
-        documentKey,
-        documentName,
-        imageKey,
-        imageName,
-        videoKey,
-        videoName,
-        compressedFileKey,
-        compressedFileName,
-        comentario,
-        entregaUrl,
-        fileTypes: JSON.stringify(fileTypes),
-        totalFiles,
-        entregado: totalFiles > 0 || !!comentario,
-      })
+      .values(deliveryData)
       .returning();
 
-    console.log('Entrega creada:', delivery);
+    console.log('Entrega creada exitosamente:', delivery);
     return NextResponse.json(delivery);
   } catch (error) {
-    console.error('Error al crear entrega:', error);
-    return respondWithError('Error al crear la entrega', 500);
+    console.error('Error detallado al crear entrega:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return respondWithError(`Error al crear la entrega: ${errorMessage}`, 500);
   }
 }
 
@@ -254,7 +300,25 @@ export async function PUT(
       );
     }
 
+    // Verificar que existe la entrega
+    const [existingDelivery] = await db
+      .select()
+      .from(projectActivityDeliveries)
+      .where(
+        and(
+          eq(projectActivityDeliveries.activityId, activityIdNum),
+          eq(projectActivityDeliveries.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (!existingDelivery) {
+      return respondWithError('Entrega no encontrada', 404);
+    }
+
     const body = await req.json();
+    console.log('Datos para actualizar:', body);
+
     const {
       documentKey,
       documentName,
@@ -267,6 +331,18 @@ export async function PUT(
       comentario,
       entregaUrl,
     } = body;
+
+    // Validar que al menos haya algo para entregar
+    const hasFiles = documentKey || imageKey || videoKey || compressedFileKey;
+    const hasComment = comentario && comentario.trim().length > 0;
+    const hasUrl = entregaUrl && entregaUrl.trim().length > 0;
+
+    if (!hasFiles && !hasComment && !hasUrl) {
+      return respondWithError(
+        'Debe proporcionar al menos un archivo, comentario o URL para la entrega',
+        400
+      );
+    }
 
     // Calcular tipos de archivos y total
     const fileTypes = [];
@@ -289,24 +365,28 @@ export async function PUT(
       totalFiles++;
     }
 
+    const updateData = {
+      documentKey: documentKey || null,
+      documentName: documentName || null,
+      imageKey: imageKey || null,
+      imageName: imageName || null,
+      videoKey: videoKey || null,
+      videoName: videoName || null,
+      compressedFileKey: compressedFileKey || null,
+      compressedFileName: compressedFileName || null,
+      comentario: comentario || null,
+      entregaUrl: entregaUrl || null,
+      fileTypes: fileTypes.length > 0 ? JSON.stringify(fileTypes) : null,
+      totalFiles,
+      entregado: totalFiles > 0 || hasComment || hasUrl,
+      updatedAt: new Date(),
+    };
+
+    console.log('Datos a actualizar:', updateData);
+
     const [delivery] = await db
       .update(projectActivityDeliveries)
-      .set({
-        documentKey,
-        documentName,
-        imageKey,
-        imageName,
-        videoKey,
-        videoName,
-        compressedFileKey,
-        compressedFileName,
-        comentario,
-        entregaUrl,
-        fileTypes: JSON.stringify(fileTypes),
-        totalFiles,
-        entregado: totalFiles > 0 || !!comentario,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(
         and(
           eq(projectActivityDeliveries.activityId, activityIdNum),
@@ -315,11 +395,15 @@ export async function PUT(
       )
       .returning();
 
-    if (!delivery) return respondWithError('Entrega no encontrada', 404);
+    if (!delivery) {
+      return respondWithError('Error al actualizar la entrega', 500);
+    }
 
+    console.log('Entrega actualizada exitosamente:', delivery);
     return NextResponse.json(delivery);
   } catch (error) {
-    console.error('Error al actualizar entrega:', error);
-    return respondWithError('Error al actualizar la entrega', 500);
+    console.error('Error detallado al actualizar entrega:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return respondWithError(`Error al actualizar la entrega: ${errorMessage}`, 500);
   }
 }
