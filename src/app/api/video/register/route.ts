@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import axios, { isAxiosError } from 'axios';
 

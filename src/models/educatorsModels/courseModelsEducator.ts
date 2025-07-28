@@ -3,6 +3,7 @@ import { and, count, eq, isNotNull, ne as neq, sum } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
   categories,
+  certificates,
   courseCourseTypes,
   courses,
   courseTypes,
@@ -515,45 +516,44 @@ export async function updateMateria(
       }
     }
     // ✅ Clonar la materia a todos los programas donde ya existe, si no está aún en el nuevo curso
-const programasConEsaMateria = await db
-  .selectDistinct({ programaId: materias.programaId })
-  .from(materias)
-  .where(
-    and(
-      eq(materias.title, existingMateria.title),
-      isNotNull(materias.programaId)
-    )
-  );
+    const programasConEsaMateria = await db
+      .selectDistinct({ programaId: materias.programaId })
+      .from(materias)
+      .where(
+        and(
+          eq(materias.title, existingMateria.title),
+          isNotNull(materias.programaId)
+        )
+      );
 
-for (const { programaId } of programasConEsaMateria) {
-  if (!programaId) continue;
+    for (const { programaId } of programasConEsaMateria) {
+      if (!programaId) continue;
 
-  const yaExisteEnCurso = await db
-    .select()
-    .from(materias)
-    .where(
-      and(
-        eq(materias.title, existingMateria.title),
-        eq(materias.programaId, programaId),
-        eq(materias.courseid, data.courseid)
-      )
-    )
-    .then((r) => r.length > 0);
+      const yaExisteEnCurso = await db
+        .select()
+        .from(materias)
+        .where(
+          and(
+            eq(materias.title, existingMateria.title),
+            eq(materias.programaId, programaId),
+            eq(materias.courseid, data.courseid)
+          )
+        )
+        .then((r) => r.length > 0);
 
-  if (!yaExisteEnCurso) {
-    await db.insert(materias).values({
-      title: existingMateria.title,
-      description: existingMateria.description ?? '',
-      programaId,
-      courseid: data.courseid,
-    });
+      if (!yaExisteEnCurso) {
+        await db.insert(materias).values({
+          title: existingMateria.title,
+          description: existingMateria.description ?? '',
+          programaId,
+          courseid: data.courseid,
+        });
 
-    console.log(
-      `📚 Materia '${existingMateria.title}' clonada para programaId ${programaId} y courseId ${data.courseid}`
-    );
-  }
-}
-
+        console.log(
+          `📚 Materia '${existingMateria.title}' clonada para programaId ${programaId} y courseId ${data.courseid}`
+        );
+      }
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('❌ Error al procesar materia:', error.message);
@@ -566,23 +566,43 @@ for (const { programaId } of programasConEsaMateria) {
 
 // Eliminar un curso y sus datos asociado
 export const deleteCourse = async (courseId: number) => {
-  // Primero elimina las inscripciones asociadas al curso
-  await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
-  // Luego elimina los parámetros asociados al curso
-  await deleteParametroByCourseId(courseId);
-  // Luego elimina el foro asociado al curso
-  await deleteForumByCourseId(courseId);
-  // Luego elimina las lecciones asociadas al curso
-  await deleteLessonsByCourseId(courseId);
-  await db
-    .delete(courseCourseTypes)
-    .where(eq(courseCourseTypes.courseId, courseId));
+  console.log('[🔄] Iniciando eliminación del curso:', courseId);
 
-  // Finalmente, elimina el curso
+  try {
+    // [1] Eliminar inscripciones
+    console.log('[1] 🧾 Eliminando enrollments...');
+    await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
 
-  return db.delete(courses).where(eq(courses.id, courseId));
+    // [2] Eliminar parámetros y dependencias
+    console.log('[2] ⚙️ Eliminando parámetros y dependencias...');
+    await deleteParametroByCourseId(courseId);
+
+    // [3] Eliminar foros del curso
+    console.log('[3] 💬 Eliminando foro...');
+    await deleteForumByCourseId(courseId);
+
+    // [4] Eliminar lecciones del curso
+    console.log('[4] 📚 Eliminando lecciones...');
+    await deleteLessonsByCourseId(courseId);
+
+    // [5] Eliminar registros en courseCourseTypes
+    console.log('[5] 🗂️ Eliminando courseCourseTypes...');
+    await db
+      .delete(courseCourseTypes)
+      .where(eq(courseCourseTypes.courseId, courseId));
+    console.log('[5.1] 🎓 Eliminando certificados...');
+    await db.delete(certificates).where(eq(certificates.courseId, courseId)); // 🧠 El fix
+    // [6] Eliminar curso
+    console.log('[6] 🗑️ Eliminando curso...');
+    await db.delete(courses).where(eq(courses.id, courseId));
+
+    console.log('[✅] Curso eliminado exitosamente:', courseId);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error final al eliminar curso:', error);
+    throw error;
+  }
 };
-
 // Obtener los cursos en los que el usuario está inscrito
 export const getCoursesByUserIdSimplified = async (userId: string) => {
   try {
