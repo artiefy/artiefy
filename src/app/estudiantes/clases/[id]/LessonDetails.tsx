@@ -490,8 +490,49 @@ export default function LessonDetails({
     }
   }, [user, course, router]);
 
-  // Detectar si es móvil (pantalla <= 768px) - MOVER ARRIBA
+  // Estado para la transcripción (hook debe ir arriba, nunca en condicional)
+  const [transcription, setTranscription] = useState<
+    { start: number; end: number; text: string }[]
+  >([]);
+  // Reparar: hook siempre al inicio, antes de cualquier return
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Obtener la transcripción al montar el componente
+  useEffect(() => {
+    const fetchTranscription = async () => {
+      try {
+        const res = await fetch(
+          `/api/lessons/getTranscription?lessonId=${lesson.id}`
+        );
+        if (!res.ok) return;
+        // Tipar la respuesta
+        interface TranscriptionResponse {
+          transcription?:
+            | string
+            | { start: number; end: number; text: string }[];
+        }
+        const data: TranscriptionResponse = await res.json();
+        let parsed: { start: number; end: number; text: string }[] = [];
+        if (typeof data.transcription === 'string') {
+          try {
+            parsed = JSON.parse(data.transcription) as {
+              start: number;
+              end: number;
+              text: string;
+            }[];
+          } catch {
+            parsed = [];
+          }
+        } else if (Array.isArray(data.transcription)) {
+          parsed = data.transcription;
+        }
+        setTranscription(parsed);
+      } catch {
+        // Silenciar error, no mostrar toast
+      }
+    };
+    fetchTranscription();
+  }, [lesson.id]);
 
   if (!lesson) {
     return (
@@ -574,6 +615,7 @@ export default function LessonDetails({
             progress={progress}
             handleVideoEnd={handleVideoEnd}
             handleProgressUpdate={handleProgressUpdate}
+            transcription={transcription}
           />
           {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
           {isMobile && (
