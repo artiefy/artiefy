@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react';
 
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { type LessonWithProgress } from '~/types';
 
@@ -11,6 +12,7 @@ interface LessonPlayerProps {
   handleVideoEnd: () => void;
   handleProgressUpdate: (videoProgress: number) => void;
   transcription?: { start: number; end: number; text: string }[];
+  isLoadingTranscription?: boolean;
 }
 
 const LessonPlayer = ({
@@ -19,6 +21,7 @@ const LessonPlayer = ({
   handleVideoEnd,
   handleProgressUpdate,
   transcription,
+  isLoadingTranscription = false,
 }: LessonPlayerProps) => {
   const isLocked = lesson.isLocked === true;
 
@@ -57,28 +60,36 @@ const LessonPlayer = ({
         <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
           {lesson.title}
         </h1>
-        <p className="text-gray-600 font-semibold">{lesson.description}</p>
-        {/* Transcripción debajo de la descripción, con estilo diferenciado */}
-        {transcription && transcription.length > 0 && (
-          <div className="mt-4 mb-4">
-            <h2 className="mb-2 text-lg font-semibold text-indigo-700">
-              Transcripción
-            </h2>
-            <div className="space-y-2">
-              {transcription.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="rounded bg-indigo-50 px-2 py-1 text-sm text-indigo-700 italic"
-                >
-                  <span className="mr-2 font-mono text-xs text-indigo-400">
-                    [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
-                  </span>
-                  {item.text}
-                </div>
-              ))}
-            </div>
+        <p className="font-semibold text-gray-600">{lesson.description}</p>
+        {/* Loading y transcripción debajo de la descripción */}
+        {isLoadingTranscription && (
+          <div className="mt-4 mb-4 flex items-center gap-2 text-indigo-700">
+            <span className="text-base italic">Cargando transcripción...</span>
+            <Icons.spinner className="h-5 w-5 text-indigo-500" />
           </div>
         )}
+        {transcription &&
+          transcription.length > 0 &&
+          !isLoadingTranscription && (
+            <div className="mt-4 mb-4">
+              <h2 className="mb-2 text-lg font-semibold text-indigo-700">
+                Transcripción
+              </h2>
+              <div className="space-y-2">
+                {transcription.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded bg-indigo-50 px-2 py-1 text-sm text-indigo-700 italic"
+                  >
+                    <span className="mr-2 font-mono text-xs text-indigo-400">
+                      [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                    </span>
+                    {item.text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         <div className="mt-4 md:mt-6">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-bold text-gray-700">

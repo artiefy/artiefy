@@ -494,17 +494,22 @@ export default function LessonDetails({
   const [transcription, setTranscription] = useState<
     { start: number; end: number; text: string }[]
   >([]);
-  // Reparar: hook siempre al inicio, antes de cualquier return
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Obtener la transcripción al montar el componente
   useEffect(() => {
     const fetchTranscription = async () => {
+      setIsLoadingTranscription(true);
       try {
         const res = await fetch(
           `/api/lessons/getTranscription?lessonId=${lesson.id}`
         );
-        if (!res.ok) return;
+        if (!res.ok) {
+          setTranscription([]);
+          setIsLoadingTranscription(false);
+          return;
+        }
         // Tipar la respuesta
         interface TranscriptionResponse {
           transcription?:
@@ -528,7 +533,9 @@ export default function LessonDetails({
         }
         setTranscription(parsed);
       } catch {
-        // Silenciar error, no mostrar toast
+        setTranscription([]);
+      } finally {
+        setIsLoadingTranscription(false);
       }
     };
     fetchTranscription();
@@ -616,6 +623,7 @@ export default function LessonDetails({
             handleVideoEnd={handleVideoEnd}
             handleProgressUpdate={handleProgressUpdate}
             transcription={transcription}
+            isLoadingTranscription={isLoadingTranscription}
           />
           {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
           {isMobile && (
