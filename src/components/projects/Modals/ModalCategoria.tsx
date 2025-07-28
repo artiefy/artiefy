@@ -6,7 +6,7 @@ interface ModalRamaInvestigacionProps {
   categoria?: Category | null;
 }
 
-const ModalRamaInvestigacion: React.FC<ModalRamaInvestigacionProps> = ({
+const ModalCategoria: React.FC<ModalRamaInvestigacionProps> = ({
   isOpen,
   onClose,
   categoria,
@@ -35,4 +35,4 @@ const ModalRamaInvestigacion: React.FC<ModalRamaInvestigacionProps> = ({
   );
 };
 
-export default ModalRamaInvestigacion;
+export default ModalCategoria;

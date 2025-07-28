@@ -22,6 +22,13 @@ interface UpdatedProjectData {
   tipoVisualizacion?: 'meses' | 'dias';
 }
 
+// Añade la interfaz SpecificObjective
+interface SpecificObjective {
+  id: string;
+  title: string;
+  activities: string[];
+}
+
 interface ModalResumenProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,13 +36,13 @@ interface ModalResumenProps {
   planteamiento: string;
   justificacion: string;
   objetivoGen: string;
-  objetivosEsp: string[];
-  actividad: string[];
+  objetivosEsp: SpecificObjective[];
+  actividad: string[]; // Puedes ignorar este prop, ya que ahora las actividades están por objetivo
   cronograma?: Record<string, number[]>;
   categoriaId?: number;
   numMeses?: number;
-  setObjetivosEsp: (value: string[]) => void;
-  setActividades: (value: string[]) => void;
+  setObjetivosEsp: (value: SpecificObjective[]) => void;
+  setActividades: (value: string[]) => void; // Puedes ignorar este prop
   projectId?: number;
   coverImageKey?: string;
   tipoProyecto?: string;
@@ -43,6 +50,13 @@ interface ModalResumenProps {
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
+  actividades?: {
+    descripcion: string;
+    meses: number[];
+    objetivoId?: string;
+    responsibleUserId?: string;
+    hoursPerDay?: number;
+  }[];
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -66,6 +80,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   fechaInicio: fechaInicioProp,
   fechaFin: fechaFinProp,
   tipoVisualizacion: tipoVisualizacionProp,
+  actividades: actividadesProp = [],
 }) => {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
@@ -76,10 +91,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     useState(justificacion);
   const [objetivoGenEditado, setObjetivoGenEditado] = useState(objetivoGen);
   const [objetivosEspEditado, setObjetivosEspEditado] =
-    useState<string[]>(objetivosEsp);
-  const [actividadEditada, setActividadEditada] = useState<string[]>(actividad);
+    useState<SpecificObjective[]>(objetivosEsp);
   const [nuevoObjetivo, setNuevoObjetivo] = useState('');
-  const [nuevaActividad, setNuevaActividad] = useState('');
+  const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<{
+    [id: string]: string;
+  }>({});
   const [cronogramaState, setCronograma] =
     useState<Record<string, number[]>>(cronograma);
   const [fechaInicio, setFechaInicio] = useState<string>(fechaInicioProp ?? '');
@@ -89,17 +105,56 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [tipoVisualizacion, setTipoVisualizacion] = useState<'meses' | 'dias'>(
     tipoVisualizacionProp ?? 'meses'
   );
-  const [tipoProyecto, setTipoProyecto] = useState<string>(
-    typeProjects[0]?.value || ''
-  );
+  const [tipoProyecto, setTipoProyecto] = useState<string>(''); // Por defecto vacío
   const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [planGenerado, setPlanGenerado] = useState<any>(null); // Nuevo estado para la respuesta
   const isEditMode = !!projectId; // <-- AÑADE ESTA LÍNEA
   //const router = useRouter();
 
   const cronogramaRef = useRef<Record<string, number[]>>(cronograma);
   const tituloRef = useRef<string>(titulo);
+
+  // Agrega un estado para responsables y horas por actividad
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
+    [key: string]: string;
+  }>({});
+  const [horasPorActividad, setHorasPorActividad] = useState<{
+    [key: string]: number;
+  }>({});
+  const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
+
+  // Nuevo estado para el filtro de búsqueda por actividad
+  const [buscadorResponsable, setBuscadorResponsable] = useState<{
+    [key: string]: string;
+  }>({});
+
+  // Estado global para controlar el despliegue del dropdown por actividad
+  const [showDropdownResponsable, setShowDropdownResponsable] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  useEffect(() => {
+    // Cargar todos los usuarios existentes para el selector de responsables
+    const fetchUsuarios = async () => {
+      try {
+        const res = await fetch('/api/projects/UsersResponsable');
+        const data = await res.json();
+        // Normaliza el array para asegurar que tenga id y name
+        const usuariosFormateados = Array.isArray(data)
+          ? data.map((u: any) => ({
+              id: u.id ?? '',
+              name: u.name && u.name.trim() !== '' ? u.name : (u.email ?? ''),
+            }))
+          : [];
+        setUsuarios(usuariosFormateados);
+      } catch (error) {
+        setUsuarios([]);
+      }
+    };
+    fetchUsuarios();
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';
@@ -125,7 +180,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   useEffect(() => setJustificacionEditada(justificacion), [justificacion]);
   useEffect(() => setObjetivoGenEditado(objetivoGen), [objetivoGen]);
   useEffect(() => setObjetivosEspEditado(objetivosEsp), [objetivosEsp]);
-  useEffect(() => setActividadEditada(actividad), [actividad]);
+  // useEffect(() => setActividadEditada(actividad), [actividad]); // Elimina esta línea
 
   // Función para calcular los meses entre dos fechas
   const calcularMesesEntreFechas = (inicio: string, fin: string): string[] => {
@@ -321,62 +376,107 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     });
   };
 
-  // Simplificar el useEffect del cronograma
-  useEffect(() => {
-    if (actividadEditada.length > 0) {
-      setCronograma((prev) => {
-        const nuevo: Record<string, number[]> = {};
-        actividadEditada.forEach((act) => {
-          // Mantener los meses existentes o inicializar como array vacío
-          nuevo[act] = prev[act] || [];
-        });
-        cronogramaRef.current = nuevo;
-        return nuevo;
-      });
-    }
-  }, [actividadEditada]);
+  const renumerarObjetivos = (objetivos: SpecificObjective[]) => {
+    return objetivos.map((obj, idx) => ({
+      ...obj,
+      title: `OE ${idx + 1}. ${obj.title.replace(/^OE \d+\.\s*/, '')}`,
+      activities: obj.activities.map(
+        (act, actIdx) =>
+          // Extraer solo el texto puro de la actividad, sin importar el OE/ACT anterior
+          `OE ${idx + 1}. ACT ${actIdx + 1}. ${act.replace(/^OE \d+\. ACT \d+\.\s*/, '')}`
+      ),
+    }));
+  };
 
+  // Asegúrate de definir las funciones de manejo de objetivos y actividades antes del return
   const handleAgregarObjetivo = () => {
     if (nuevoObjetivo.trim()) {
-      setObjetivosEsp([...objetivosEspEditado, nuevoObjetivo.trim()]);
-      setObjetivosEspEditado((prev) => [...prev, nuevoObjetivo.trim()]);
+      const nextNumber = objetivosEspEditado.length + 1;
+      const newObj: SpecificObjective = {
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        title: `OE ${nextNumber}. ${nuevoObjetivo.trim()}`,
+        activities: [],
+      };
+      const nuevos = renumerarObjetivos([...objetivosEspEditado, newObj]);
+      setObjetivosEspEditado(nuevos);
+      setObjetivosEsp(nuevos);
       setNuevoObjetivo('');
     }
   };
 
   const handleEditarObjetivo = (index: number, value: string) => {
     const copia = [...objetivosEspEditado];
-    copia[index] = value;
-    setObjetivosEsp(copia);
+    copia[index] = { ...copia[index], title: value };
     setObjetivosEspEditado(copia);
+    setObjetivosEsp(copia);
   };
 
   const handleEliminarObjetivo = (index: number) => {
     const copia = objetivosEspEditado.filter((_, i) => i !== index);
-    setObjetivosEsp(copia);
-    setObjetivosEspEditado(copia);
+    const renumerados = renumerarObjetivos(copia);
+    setObjetivosEspEditado(renumerados);
+    setObjetivosEsp(renumerados);
   };
 
-  const handleAgregarActividad = () => {
-    if (nuevaActividad.trim()) {
-      setActividadEditada((prev) => [...prev, nuevaActividad.trim()]);
-      setNuevaActividad('');
+  const handleAgregarActividad = (objectiveId: string) => {
+    const actividad = nuevaActividadPorObjetivo[objectiveId]?.trim();
+    if (actividad) {
+      const nuevos = objetivosEspEditado.map((obj, idx) =>
+        obj.id === objectiveId
+          ? {
+              ...obj,
+              activities: [...obj.activities, actividad],
+            }
+          : obj
+      );
+      const renumerados = renumerarObjetivos(nuevos);
+      setObjetivosEspEditado(renumerados);
+      setObjetivosEsp(renumerados);
+      setNuevaActividadPorObjetivo((prev) => ({ ...prev, [objectiveId]: '' }));
+      // Opcional: inicializa responsable y horas para la nueva actividad
+      const nuevaActividadIdx =
+        renumerados.find((o) => o.id === objectiveId)?.activities.length ?? 1;
+      const actividadKey = `${objectiveId}_${nuevaActividadIdx - 1}`;
+      setResponsablesPorActividad((prev) => ({ ...prev, [actividadKey]: '' }));
+      setHorasPorActividad((prev) => ({ ...prev, [actividadKey]: 1 }));
     }
   };
 
-  const handleEditarActividad = (index: number, value: string) => {
-    const copia = [...actividadEditada];
-    copia[index] = value;
-    setActividadEditada(copia);
-    setActividades(copia);
+  const handleEditarActividad = (
+    objectiveId: string,
+    idx: number,
+    value: string
+  ) => {
+    const nuevos = objetivosEspEditado.map((obj) =>
+      obj.id === objectiveId
+        ? {
+            ...obj,
+            activities: obj.activities.map((act, i) =>
+              i === idx ? value : act
+            ),
+          }
+        : obj
+    );
+    setObjetivosEspEditado(nuevos);
+    setObjetivosEsp(nuevos);
   };
 
-  const handleEliminarActividad = (index: number) => {
-    const copia = actividadEditada.filter((_, i) => i !== index);
-    setActividadEditada(copia);
-    setActividades(copia);
+  const handleEliminarActividad = (objectiveId: string, idx: number) => {
+    const nuevos = objetivosEspEditado.map((obj, objIdx) =>
+      obj.id === objectiveId
+        ? {
+            ...obj,
+            activities: obj.activities.filter((_, i) => i !== idx),
+          }
+        : obj
+    );
+    // Renumerar después de eliminar
+    const renumerados = renumerarObjetivos(nuevos);
+    setObjetivosEspEditado(renumerados);
+    setObjetivosEsp(renumerados);
   };
 
+  // Al guardar, transforma los datos para el backend
   const handleGuardarProyecto = async () => {
     if (
       !tituloState ||
@@ -398,10 +498,46 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       return;
     }
 
-    const actividadesMapped = actividadEditada.map((descripcion) => ({
-      descripcion,
-      meses: cronogramaState[descripcion] || [],
-    }));
+    // Mapear actividades con los nombres correctos del schema
+    const actividadesMapped = objetivosEspEditado.flatMap((obj) =>
+      obj.activities
+        .map((descripcion, idx) => {
+          const desc =
+            typeof descripcion === 'string' ? descripcion.trim() : '';
+
+          // Solo incluir actividades válidas
+          if (!desc || desc === 'default') return null;
+
+          const actividadKey = `${obj.id}_${idx}`;
+          const responsableId = responsablesPorActividad[actividadKey];
+          const horas = horasPorActividad[actividadKey];
+
+          console.log(`Mapeando actividad ${actividadKey}:`, {
+            descripcion: desc,
+            responsableId,
+            horas,
+          });
+
+          return {
+            descripcion: desc,
+            meses: Array.isArray(cronogramaState[desc])
+              ? cronogramaState[desc]
+              : [],
+            objetivoId: obj.id,
+            responsibleUserId:
+              responsableId && responsableId.trim() !== ''
+                ? responsableId
+                : undefined, // Campo correcto del schema
+            hoursPerDay: typeof horas === 'number' && horas > 0 ? horas : 1, // Campo correcto del schema
+          };
+        })
+        .filter(
+          (actividad): actividad is NonNullable<typeof actividad> =>
+            actividad !== null
+        )
+    );
+
+    console.log('Actividades mapeadas para enviar:', actividadesMapped);
 
     let coverImageKey: string | undefined = coverImageKeyProp;
 
@@ -459,21 +595,30 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
       }
 
-      // Construye el objeto del proyecto
+      // Construir el objeto del proyecto con todos los campos necesarios
       const proyecto = {
         name: tituloState,
         categoryId: parseInt(categoria),
         planteamiento: planteamientoEditado,
         justificacion: justificacionEditada,
         objetivo_general: objetivoGenEditado,
-        objetivos_especificos: objetivosEspEditado,
+        objetivos_especificos: objetivosEspEditado.map((obj) => ({
+          id: obj.id,
+          title: obj.title,
+        })), // <-- Enviar como array de objetos
         actividades: actividadesMapped,
         type_project: tipoProyecto,
         coverImageKey,
-        fechaInicio,
-        fechaFin,
-        tipoVisualizacion,
+        fechaInicio, // Mantener como está para no afectar el funcionamiento
+        fechaFin, // Mantener como está para no afectar el funcionamiento
+        tipoVisualizacion, // Mantener como está para no afectar el funcionamiento
+        isPublic: false,
       };
+
+      console.log(
+        'Proyecto completo a enviar:',
+        JSON.stringify(proyecto, null, 2)
+      );
 
       setIsUpdating(true);
 
@@ -496,7 +641,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             planteamiento: planteamientoEditado,
             justificacion: justificacionEditada,
             objetivo_general: objetivoGenEditado,
-            objetivos_especificos: objetivosEspEditado,
+            objetivos_especificos: objetivosEspEditado.map((obj) => obj.title),
             actividades: actividadesMapped,
             type_project: tipoProyecto,
             categoryId: parseInt(categoria),
@@ -645,6 +790,206 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isEditMode, isOpen, fechaInicioProp, fechaFinProp]);
 
+  // Sincronizar responsables y horas de actividades en modo edición
+  useEffect(() => {
+    if (isEditMode && isOpen && Array.isArray(actividadesProp)) {
+      const nuevosResponsables: { [key: string]: string } = {};
+      const nuevasHoras: { [key: string]: number } = {};
+
+      actividadesProp.forEach((act, idx) => {
+        if (act.objetivoId) {
+          // Buscar el índice de la actividad dentro del objetivo correspondiente
+          const objIdx = objetivosEsp.findIndex(
+            (obj) => obj.id === act.objetivoId
+          );
+          if (objIdx !== -1) {
+            // Buscar el índice real de la actividad dentro del objetivo
+            const actIdx = objetivosEsp[objIdx].activities.findIndex(
+              (a) => a.trim() === act.descripcion.trim()
+            );
+            const actividadKey = `${act.objetivoId}_${actIdx !== -1 ? actIdx : idx}`;
+            if (act.responsibleUserId) {
+              nuevosResponsables[actividadKey] = act.responsibleUserId;
+            }
+            if (typeof act.hoursPerDay === 'number') {
+              nuevasHoras[actividadKey] = act.hoursPerDay;
+            }
+          }
+        }
+      });
+
+      setResponsablesPorActividad(nuevosResponsables);
+      setHorasPorActividad(nuevasHoras);
+    }
+  }, [isEditMode, isOpen, actividadesProp, objetivosEsp]);
+
+  // Elimina uno de los useEffect duplicados que sincronizan actividades en modo edición.
+  // Solo deja el siguiente (el que compara antes de setear para evitar bucles infinitos):
+  useEffect(() => {
+    if (
+      isEditMode &&
+      isOpen &&
+      Array.isArray(actividadesProp) &&
+      actividadesProp.length > 0
+    ) {
+      // 1. Reconstruir los objetivos y actividades para el formulario
+      const objetivosMap: { [id: string]: SpecificObjective } = {};
+      actividadesProp.forEach((act) => {
+        if (!act.objetivoId) return;
+        if (!objetivosMap[act.objetivoId]) {
+          // Busca el título del objetivo en los objetivos originales
+          const objetivo = objetivosEsp.find((o) => o.id === act.objetivoId);
+          objetivosMap[act.objetivoId] = {
+            id: act.objetivoId,
+            title: objetivo ? objetivo.title : '',
+            activities: [],
+          };
+        }
+        objetivosMap[act.objetivoId].activities.push(act.descripcion);
+      });
+      // Si no hay actividades, mantener los objetivos originales
+      const nuevosObjetivos =
+        Object.values(objetivosMap).length > 0
+          ? Object.values(objetivosMap)
+          : objetivosEsp;
+
+      setObjetivosEspEditado((prev) => {
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(nuevosObjetivos);
+        return prevStr !== nextStr ? nuevosObjetivos : prev;
+      });
+
+      // 2. Sincronizar responsables y horas
+      const nuevosResponsables: { [key: string]: string } = {};
+      const nuevasHoras: { [key: string]: number } = {};
+      actividadesProp.forEach((act) => {
+        if (!act.objetivoId) return;
+        const objIdx = nuevosObjetivos.findIndex(
+          (o) => o.id === act.objetivoId
+        );
+        if (objIdx !== -1) {
+          const actIdx = nuevosObjetivos[objIdx].activities.findIndex(
+            (a) => a.trim() === act.descripcion.trim()
+          );
+          const actividadKey = `${act.objetivoId}_${actIdx !== -1 ? actIdx : 0}`;
+          if (act.responsibleUserId) {
+            nuevosResponsables[actividadKey] = act.responsibleUserId;
+          }
+          if (typeof act.hoursPerDay === 'number') {
+            nuevasHoras[actividadKey] = act.hoursPerDay;
+          }
+        }
+      });
+      setResponsablesPorActividad((prev) => {
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(nuevosResponsables);
+        return prevStr !== nextStr ? nuevosResponsables : prev;
+      });
+      setHorasPorActividad((prev) => {
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(nuevasHoras);
+        return prevStr !== nextStr ? nuevasHoras : prev;
+      });
+
+      // 3. Sincronizar cronograma
+      const nuevoCronograma: Record<string, number[]> = {};
+      actividadesProp.forEach((act) => {
+        if (act.descripcion && Array.isArray(act.meses)) {
+          nuevoCronograma[act.descripcion] = act.meses;
+        }
+      });
+      setCronograma((prev) => {
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(nuevoCronograma);
+        return prevStr !== nextStr ? nuevoCronograma : prev;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, isOpen, actividadesProp]);
+
+  // Función para generar el plan del proyecto
+  const handleGenerarPlanProyecto = async () => {
+    const data = {
+      project_type: tipoProyecto,
+      industry: categorias.find((c) => c.id === Number(categoria))?.name || '',
+      project_objectives: objetivoGenEditado,
+      team_members: '', // Puedes agregar lógica para obtener miembros
+      project_requirements: planteamientoEditado,
+    };
+
+    try {
+      const response = await fetch('/api/plan_project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      setPlanGenerado(result);
+
+      // Si la respuesta tiene milestones, actualiza objetivos y actividades
+      if (result && Array.isArray(result.milestones)) {
+        // Extrae milestone_name como objetivos específicos
+        const nuevosObjetivos = result.milestones
+          .map((m: any) => m.milestone_name)
+          .filter((name: string) => !!name);
+
+        // Extrae todas las tareas de todos los milestones
+        const nuevasActividades = result.milestones
+          .flatMap((m: any) => (Array.isArray(m.tasks) ? m.tasks : []))
+          .filter((task: string) => !!task);
+
+        setObjetivosEsp(nuevosObjetivos);
+        setObjetivosEspEditado(nuevosObjetivos);
+        setActividades(nuevasActividades);
+      }
+    } catch (error) {
+      alert('Error al generar el plan de proyecto');
+    }
+  };
+
+  const handleAbrirPlanEnNuevaPagina = () => {
+    if (!planGenerado) return;
+    // Intenta abrir la ventana antes de cualquier lógica para evitar bloqueos de popup
+    const win = window.open('about:blank', '_blank');
+    if (!win) {
+      alert(
+        'No se pudo abrir la nueva página. Permite popups en tu navegador.'
+      );
+      return;
+    }
+    // Espera a que la ventana esté lista antes de escribir el contenido
+    setTimeout(() => {
+      const html = `
+      <html>
+        <head>
+          <title>Plan Generado por IA</title>
+          <style>
+            body { background: #0F2940; color: #fff; font-family: sans-serif; padding: 2rem; }
+            pre { background: #222; color: #fff; padding: 1rem; border-radius: 8px; }
+            h1 { color: #00bcd4; }
+          </style>
+        </head>
+        <body>
+          <h1>Plan Generado por IA</h1>
+          <pre>${escapeHtml(JSON.stringify(planGenerado, null, 2))}</pre>
+        </body>
+      </html>
+    `;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    }, 0);
+  };
+
+  function escapeHtml(text: string) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   if (!isOpen) return null;
 
   return (
@@ -741,23 +1086,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
           <div className="col-span-2">
             <label>Objetivos Específicos</label>
-            <ul className="mb-2 space-y-2">
-              {objetivosEspEditado.map((obj, idx) => (
-                <li key={idx} className="flex gap-2">
-                  <input
-                    value={obj}
-                    onChange={(e) => handleEditarObjetivo(idx, e.target.value)}
-                    className="flex-1 rounded bg-gray-400 p-2 text-black"
-                  />
-                  <button
-                    onClick={() => handleEliminarObjetivo(idx)}
-                    className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
             <div className="flex gap-2">
               <input
                 value={nuevoObjetivo}
@@ -773,41 +1101,214 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 +
               </button>
             </div>
-          </div>
-
-          <div className="col-span-2">
-            <label>Actividades</label>
-            <ul className="mb-2 space-y-2">
-              {actividadEditada.map((act, idx) => (
-                <li key={idx} className="flex gap-2">
-                  <input
-                    value={act}
-                    onChange={(e) => handleEditarActividad(idx, e.target.value)}
-                    className="flex-1 rounded bg-gray-400 p-2 text-black"
-                  />
-                  <button
-                    onClick={() => handleEliminarActividad(idx)}
-                    className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
+            <div className="m-2 mb-2 gap-2">
+              <ul className="mb-2 space-y-4">
+                {objetivosEspEditado.map((obj, idx) => (
+                  <li
+                    key={obj.id}
+                    className="flex flex-col gap-2 border-b border-gray-600 pb-2"
                   >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="flex gap-2">
-              <input
-                value={nuevaActividad}
-                onChange={(e) => setNuevaActividad(e.target.value)}
-                className="flex-1 rounded bg-gray-400 p-2 text-black"
-                placeholder="Agregar nueva actividad..."
-              />
-              <button
-                type="button"
-                onClick={handleAgregarActividad}
-                className="rounded bg-green-600 px-2 text-2xl font-semibold text-white hover:bg-green-700"
-              >
-                +
-              </button>
+                    <div className="flex gap-2">
+                      <input
+                        value={obj.title}
+                        onChange={(e) =>
+                          handleEditarObjetivo(idx, e.target.value)
+                        }
+                        className="flex-1 rounded bg-gray-400 p-2 text-black"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarObjetivo(idx)}
+                        className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {/* Actividades para este objetivo */}
+                    <div className="ml-4">
+                      <label className="text-sm text-cyan-300">
+                        Actividades
+                      </label>
+                      <ul className="mb-1 space-y-2">
+                        {obj.activities.map((act, actIdx) => {
+                          const actividadKey = `${obj.id}_${actIdx}`;
+                          const responsableId =
+                            responsablesPorActividad[actividadKey] || '';
+                          const responsableObj = usuarios.find(
+                            (u) => u.id === responsableId
+                          );
+                          return (
+                            <li key={actIdx} className="flex flex-col gap-2">
+                              <div className="flex gap-2">
+                                <input
+                                  value={act}
+                                  onChange={(e) =>
+                                    handleEditarActividad(
+                                      obj.id,
+                                      actIdx,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 rounded bg-gray-400 p-2 text-black"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleEliminarActividad(obj.id, actIdx)
+                                  }
+                                  className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <div className="mt-1 flex items-center gap-2">
+                                {/* Buscador de responsable con dropdown tipo select tradicional */}
+                                <div className="relative w-64">
+                                  <input
+                                    type="text"
+                                    value={
+                                      buscadorResponsable[actividadKey] ??
+                                      responsableObj?.name ??
+                                      ''
+                                    }
+                                    onChange={(e) => {
+                                      setBuscadorResponsable((prev) => ({
+                                        ...prev,
+                                        [actividadKey]: e.target.value,
+                                      }));
+                                      setShowDropdownResponsable((prev) => ({
+                                        ...prev,
+                                        [actividadKey]: true,
+                                      }));
+                                    }}
+                                    onFocus={() =>
+                                      setShowDropdownResponsable((prev) => ({
+                                        ...prev,
+                                        [actividadKey]: true,
+                                      }))
+                                    }
+                                    onClick={() =>
+                                      setShowDropdownResponsable((prev) => ({
+                                        ...prev,
+                                        [actividadKey]: true,
+                                      }))
+                                    }
+                                    onBlur={() =>
+                                      setTimeout(() => {
+                                        setShowDropdownResponsable((prev) => ({
+                                          ...prev,
+                                          [actividadKey]: false,
+                                        }));
+                                      }, 150)
+                                    }
+                                    placeholder="Buscar responsable..."
+                                    className="w-full rounded bg-gray-300 p-1 text-black"
+                                    autoComplete="off"
+                                  />
+                                  {/* Lista de sugerencias desplegable */}
+                                  {showDropdownResponsable[actividadKey] && (
+                                    <div className="absolute right-0 left-0 z-10 max-h-60 overflow-y-auto rounded border border-gray-300 bg-white shadow-lg">
+                                      {(buscadorResponsable[actividadKey]
+                                        ? usuarios.filter((u) =>
+                                            u.name
+                                              .toLowerCase()
+                                              .includes(
+                                                buscadorResponsable[
+                                                  actividadKey
+                                                ].toLowerCase()
+                                              )
+                                          )
+                                        : usuarios
+                                      )
+                                        // 🔹 Elimina el .slice(0, 50) para mostrar toda la lista
+                                        .map((u) => (
+                                          <div
+                                            key={u.id}
+                                            className="cursor-pointer px-2 py-1 text-black hover:bg-cyan-100"
+                                            onMouseDown={() => {
+                                              setResponsablesPorActividad(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [actividadKey]: u.id,
+                                                })
+                                              );
+                                              setBuscadorResponsable(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [actividadKey]: u.name,
+                                                })
+                                              );
+                                              setShowDropdownResponsable(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [actividadKey]: false,
+                                                })
+                                              );
+                                            }}
+                                          >
+                                            {u.name}
+                                          </div>
+                                        ))}
+                                      {(buscadorResponsable[actividadKey]
+                                        ? usuarios.filter((u) =>
+                                            u.name
+                                              .toLowerCase()
+                                              .includes(
+                                                buscadorResponsable[
+                                                  actividadKey
+                                                ].toLowerCase()
+                                              )
+                                          ).length === 0
+                                        : usuarios.length === 0) && (
+                                        <div className="px-2 py-1 text-gray-400">
+                                          Sin resultados
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={horasPorActividad[actividadKey] || 1}
+                                  onChange={(e) =>
+                                    setHorasPorActividad((prev) => ({
+                                      ...prev,
+                                      [actividadKey]: Number(e.target.value),
+                                    }))
+                                  }
+                                  className="w-24 rounded bg-gray-300 p-1 text-black"
+                                  placeholder="Horas/día"
+                                />
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className="flex gap-2">
+                        <input
+                          value={nuevaActividadPorObjetivo[obj.id] || ''}
+                          onChange={(e) =>
+                            setNuevaActividadPorObjetivo((prev) => ({
+                              ...prev,
+                              [obj.id]: e.target.value,
+                            }))
+                          }
+                          className="flex-1 rounded bg-gray-400 p-2 text-black"
+                          placeholder="Agregar nueva actividad..."
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAgregarActividad(obj.id)}
+                          className="rounded bg-green-600 px-2 text-2xl font-semibold text-white hover:bg-green-700"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
@@ -837,9 +1338,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               className="mt-1 rounded border bg-gray-400 p-2 text-black"
               required
             >
-              <option value="">-- Seleccione un Tipo de Proyecto--</option>
               {typeProjects.map((tp) => (
-                <option key={tp.value} value={tp.value}>
+                <option
+                  key={tp.value}
+                  value={tp.value}
+                  disabled={tp.value === ''}
+                >
                   {tp.label}
                 </option>
               ))}
@@ -955,23 +1459,40 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {actividadEditada.map((act, idx) => (
-                    <tr key={idx}>
-                      <td className="border bg-white px-2 py-2 font-medium break-words">
-                        {act}
-                      </td>
-                      {meses.map((_, i) => (
-                        <td
-                          key={i}
-                          onClick={() => toggleMesActividad(act, i)}
-                          className={`cursor-pointer border px-2 py-2 ${
-                            cronogramaState[act]?.includes(i)
-                              ? 'bg-cyan-300 font-bold text-white'
-                              : 'bg-white'
-                          }`}
-                        />
-                      ))}
-                    </tr>
+                  {objetivosEspEditado.map((obj) => (
+                    <React.Fragment key={obj.id}>
+                      {obj.activities.map((act, idx) => {
+                        const actividadKey = `${obj.id}_${idx}`;
+                        const responsableId =
+                          responsablesPorActividad[actividadKey] || '';
+                        const responsableObj = usuarios.find(
+                          (u) => u.id === responsableId
+                        );
+                        return (
+                          <tr key={idx}>
+                            <td className="border bg-white px-2 py-2 font-medium break-words">
+                              {act}
+                              {responsableObj && (
+                                <div className="text-xs font-semibold text-cyan-700">
+                                  Responsable: {responsableObj.name}
+                                </div>
+                              )}
+                            </td>
+                            {meses.map((_, i) => (
+                              <td
+                                key={i}
+                                onClick={() => toggleMesActividad(act, i)}
+                                className={`cursor-pointer border px-2 py-2 ${
+                                  cronogramaState[act]?.includes(i)
+                                    ? 'bg-cyan-300 font-bold text-white'
+                                    : 'bg-white'
+                                }`}
+                              />
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -982,6 +1503,30 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </p>
           )}
         </div>
+
+        {/* Botón para generar el plan de proyecto */}
+        <div className="mt-4 flex justify-center gap-4">
+          <button
+            type="button"
+            onClick={handleAbrirPlanEnNuevaPagina}
+            className="rounded bg-cyan-700 px-6 py-2 text-lg font-bold text-white hover:bg-cyan-600"
+            disabled={!planGenerado}
+          >
+            Ver en Nueva Página
+          </button>
+        </div>
+
+        {/* Mostrar la información generada directamente en el modal */}
+        {planGenerado && (
+          <div className="mt-6 rounded bg-gray-800 p-4 text-white">
+            <h4 className="mb-2 text-xl font-bold text-cyan-300">
+              Plan Generado
+            </h4>
+            <pre className="text-sm break-words whitespace-pre-wrap">
+              {JSON.stringify(planGenerado, null, 2)}
+            </pre>
+          </div>
+        )}
 
         <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
           <button

@@ -31,7 +31,7 @@ const ModalConfirmacionEliminacion: React.FC<
 
         // Si no hay callback, redirigir (comportamiento original)
         if (!onProjectDeleted) {
-          router.push('/proyectos');
+          router.push('/proyectos/MisProyectos');
         }
       } else {
         alert('Error al eliminar el proyecto');

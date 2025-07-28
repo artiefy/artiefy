@@ -20,6 +20,9 @@ interface UpdateProjectData {
   actividades?: {
     descripcion: string;
     meses: number[];
+    objetivoId?: string;
+    responsibleUserId?: string; // <-- Añadir
+    hoursPerDay?: number; // <-- Añadir
   }[];
   coverImageKey?: string;
   type_project?: string;
@@ -140,22 +143,29 @@ export async function updateProject(
       .delete(projectActivities)
       .where(eq(projectActivities.projectId, projectId));
 
+    // Filtrar actividades válidas (con descripción no vacía)
+    const actividadesValidas = projectData.actividades.filter(
+      (actividad) =>
+        actividad.descripcion && actividad.descripcion.trim() !== ''
+    );
+
     // Insertar nuevas actividades y cronograma
-    if (projectData.actividades.length > 0) {
-      for (const actividad of projectData.actividades) {
-        // Insertar actividad
+    if (actividadesValidas.length > 0) {
+      for (const actividad of actividadesValidas) {
         const [insertedActividad] = await db
           .insert(projectActivities)
           .values({
             projectId,
             description: actividad.descripcion,
+            responsibleUserId: actividad.responsibleUserId ?? null,
+            hoursPerDay: actividad.hoursPerDay ?? 1,
           })
           .returning({ id: projectActivities.id });
 
         const actividadId = insertedActividad?.id;
 
         // Insertar cronograma
-        if (actividadId && actividad.meses.length > 0) {
+        if (actividadId && actividad.meses && actividad.meses.length > 0) {
           const scheduleData = actividad.meses.map((mes) => ({
             activityId: actividadId,
             month: mes,

@@ -23,8 +23,18 @@ export interface ProjectDetail {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
-  objetivos_especificos: string[];
-  actividades: { descripcion: string; meses: number[] }[];
+  objetivos_especificos: {
+    id: number;
+    description: string;
+    actividades: { descripcion: string; meses: number[] }[];
+  }[];
+  actividades: {
+    id: number;
+    descripcion: string;
+    meses: number[];
+    responsibleUserId?: string | null;
+    hoursPerDay?: number | null;
+  }[];
   fecha_inicio?: string;
   fecha_fin?: string;
   tipo_visualizacion?: 'meses' | 'dias';
@@ -67,6 +77,31 @@ export async function getProjectById(
     })
   );
 
+  // Relaciona actividades con objetivos específicos usando objectiveId
+  const objetivos_especificos = objetivos.map((o) => {
+    const actividadesRelacionadas = actividadesConMeses
+      .filter((a) => a.objectiveId === o.id)
+      .map((a) => ({
+        descripcion: a.description,
+        meses: a.meses,
+      }));
+
+    return {
+      id: o.id,
+      description: o.description,
+      actividades: actividadesRelacionadas,
+    };
+  });
+
+  // Todas las actividades (para compatibilidad)
+  const actividadesSimple = actividadesConMeses.map((a) => ({
+    id: a.id,
+    descripcion: a.description,
+    meses: a.meses,
+    responsibleUserId: a.responsibleUserId ?? null,
+    hoursPerDay: a.hoursPerDay ?? null,
+  }));
+
   const projectDetail: ProjectDetail = {
     id: project.id,
     name: project.name ?? 'Untitled Project',
@@ -84,11 +119,8 @@ export async function getProjectById(
     updatedAt: project.updatedAt
       ? new Date(project.updatedAt).toISOString()
       : '',
-    objetivos_especificos: objetivos.map((o) => o.description),
-    actividades: actividadesConMeses.map((a) => ({
-      descripcion: a.description,
-      meses: a.meses,
-    })),
+    objetivos_especificos,
+    actividades: actividadesSimple,
     // Devuelve fechas en formato YYYY-MM-DD para inputs tipo date y lógica de días
     fecha_inicio: project.fecha_inicio
       ? new Date(project.fecha_inicio).toISOString().split('T')[0]

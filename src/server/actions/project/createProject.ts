@@ -17,10 +17,13 @@ interface ProjectData {
   planteamiento: string;
   justificacion: string;
   objetivo_general: string;
-  objetivos_especificos?: string[];
+  objetivos_especificos?: { id: string; title: string }[]; // <-- Cambia a array de objetos
   actividades?: {
     descripcion: string;
     meses: number[]; // Ej: [0, 1, 2] para Ene-Feb-Mar
+    objetivoId?: string;
+    responsibleUserId?: string; // <-- Añadir
+    hoursPerDay?: number; // <-- Añadir
   }[];
   integrantes?: number[]; // Aún no usados
   coverImageKey?: string; // ya está incluido
@@ -112,28 +115,48 @@ export async function createProject(
     throw new Error('No se pudo crear el proyecto');
   }
 
-  // 2. Insertar objetivos específicos
+  // 2. Insertar objetivos específicos y guardar el mapeo de ids temporales a ids reales
+  let objetivosIdMap: Record<string, number> = {};
   if (
     projectData.objetivos_especificos &&
     projectData.objetivos_especificos.length > 0
   ) {
-    const objetivosData = projectData.objetivos_especificos.map((desc) => ({
+    // Ahora los objetivos vienen como array de objetos {id, title}
+    const objetivosData = projectData.objetivos_especificos.map((obj) => ({
       projectId,
-      description: desc,
+      description: obj.title,
       createdAt: new Date(),
     }));
-    await db.insert(specificObjectives).values(objetivosData);
+    const inserted = await db
+      .insert(specificObjectives)
+      .values(objetivosData)
+      .returning({ id: specificObjectives.id });
+    // Mapea id temporal a id real
+    objetivosIdMap = Object.fromEntries(
+      projectData.objetivos_especificos.map((obj, idx) => [
+        obj.id,
+        inserted[idx].id,
+      ])
+    );
   }
 
   // 3. Insertar actividades y cronograma
   if (projectData.actividades && projectData.actividades.length > 0) {
     for (const actividad of projectData.actividades) {
-      // Insertar actividad
+      // Buscar el id real del objetivo si viene objetivoId
+      let realObjectiveId: number | undefined = undefined;
+      if (actividad.objetivoId && objetivosIdMap[actividad.objetivoId]) {
+        realObjectiveId = objetivosIdMap[actividad.objetivoId];
+      }
+      // Insertar actividad con objectiveId
       const [insertedActividad] = await db
         .insert(projectActivities)
         .values({
           projectId,
+          objectiveId: realObjectiveId,
           description: actividad.descripcion,
+          responsibleUserId: actividad.responsibleUserId ?? null,
+          hoursPerDay: actividad.hoursPerDay ?? 1,
         })
         .returning({ id: projectActivities.id });
 
@@ -141,7 +164,7 @@ export async function createProject(
 
       // Insertar meses del cronograma
       if (actividadId && actividad.meses.length > 0) {
-        const scheduleData = actividad.meses.map((mes) => ({
+        const scheduleData = actividad.meses.map((mes: number) => ({
           activityId: actividadId,
           month: mes,
         }));

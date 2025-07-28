@@ -84,6 +84,50 @@ export async function PUT(
     const body = (await req.json()) as Record<string, unknown>;
     const { id, userId, createdAt, updatedAt, ...updateFields } = body;
 
+    // --- Normaliza actividades para que coincidan con el schema ---
+    if (updateFields.actividades && Array.isArray(updateFields.actividades)) {
+      updateFields.actividades = (updateFields.actividades as any[])
+        .map((a) => {
+          let desc =
+            typeof a.descripcion === 'string'
+              ? a.descripcion
+              : typeof a.description === 'string'
+                ? a.description
+                : '';
+          desc = desc.trim();
+          // Si description es string vacío, null o 'default', retorna null
+          if (!desc || desc === 'default') return null;
+
+          return {
+            description: desc,
+            meses: Array.isArray(a.meses) ? a.meses : [],
+            responsibleUserId:
+              typeof a.responsableId === 'string'
+                ? a.responsableId
+                : typeof a.responsibleUserId === 'string'
+                  ? a.responsibleUserId
+                  : undefined,
+            hoursPerDay:
+              typeof a.horas === 'number'
+                ? a.horas
+                : typeof a.hoursPerDay === 'number'
+                  ? a.hoursPerDay
+                  : undefined,
+            objetivoId:
+              typeof a.objetivoId === 'string' ? a.objetivoId : undefined,
+          };
+        })
+        // Filtra cualquier actividad null (sin descripción válida)
+        .filter(
+          (act) =>
+            !!act &&
+            typeof act.description === 'string' &&
+            act.description.trim() !== '' &&
+            act.description !== 'default'
+        );
+    }
+    // -------------------------------------------------------------
+
     const allowedFields: Record<string, unknown> = {};
     for (const key of Object.keys(updateFields)) {
       if (

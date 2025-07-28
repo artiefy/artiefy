@@ -4,21 +4,28 @@ import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
+// Si usas Clerk:
+import { useUser } from '@clerk/nextjs';
 import {
-//  Bookmark,
+  ArrowRight,
+  //  Bookmark,
   Filter,
-//  Heart,
+  Folder,
+  //  Heart,
   ImageIcon,
-//  MessageCircle,
+  //  MessageCircle,
   MoreHorizontal,
   Search,
-//  Share2,
+  //  Share2,
   TrendingUp,
   Users,
 } from 'lucide-react';
 import { FaFolderOpen } from 'react-icons/fa';
+import * as RadixSelect from '@radix-ui/react-select';
 
 import { Header } from '~/components/estudiantes/layout/Header';
+import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalProjectInfo from '~/components/projects/Modals/ModalProjectInfo';
 import {
   Avatar,
   AvatarFallback,
@@ -29,11 +36,13 @@ import { Button } from '~/components/projects/ui/button';
 import {
   Card,
   CardContent,
-//  CardFooter,
+  //  CardFooter,
   CardHeader,
 } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
 import { ScrollArea } from '~/components/projects/ui/scroll-area';
+// Si usas NextAuth:
+// import { useSession } from "next-auth/react";
 
 // Define el tipo para los proyectos públicos
 interface PublicProject {
@@ -102,6 +111,18 @@ async function fetchPublicProjects(): Promise<PublicProject[]> {
   });
 }
 
+// Utilidad para SelectItem
+function SelectItem({ children, ...props }: any) {
+  return (
+    <RadixSelect.Item
+      {...props}
+      className="cursor-pointer rounded-xl px-3 py-2 text-slate-300 hover:bg-cyan-900 focus:bg-cyan-800"
+    >
+      <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
+    </RadixSelect.Item>
+  );
+}
+
 export default function Component() {
   const [projects, setProjects] = useState<PublicProject[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<PublicProject[]>([]);
@@ -111,6 +132,20 @@ export default function Component() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedTrending, setSelectedTrending] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<PublicProject | null>(
+    null
+  );
+  const [integrantesModalOpen, setIntegrantesModalOpen] = useState<
+    number | null
+  >(null);
+  const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
+  // Clerk:
+  const { user } = useUser();
+  const userId = user?.id;
+  // NextAuth:
+  // const { data: session } = useSession();
+  // const userId = session?.user?.id;
 
   // Función para cargar proyectos
   const loadProjects = React.useCallback(async () => {
@@ -126,33 +161,33 @@ export default function Component() {
     }
   }, []);
 
-  // Obtener categorías únicas de los proyectos
+  // Obtener categorías únicas de los proyectos filtrados
   const categories = React.useMemo(() => {
     const uniqueCategories = new Set<string>();
-    projects.forEach((project) => {
+    filteredProjects.forEach((project) => {
       if (project.category?.name) {
         uniqueCategories.add(project.category.name);
       }
     });
     return Array.from(uniqueCategories).map((name) => ({
       name,
-      count: projects.filter((p) => p.category?.name === name).length,
+      count: filteredProjects.filter((p) => p.category?.name === name).length,
     }));
-  }, [projects]);
+  }, [filteredProjects]);
 
-  // Obtener tipos de proyecto únicos
+  // Obtener tipos de proyecto únicos de los proyectos filtrados
   const projectTypes = React.useMemo(() => {
     const uniqueTypes = new Set<string>();
-    projects.forEach((project) => {
+    filteredProjects.forEach((project) => {
       if (project.type_project) {
         uniqueTypes.add(project.type_project);
       }
     });
     return Array.from(uniqueTypes).map((type) => ({
       name: type,
-      count: projects.filter((p) => p.type_project === type).length,
+      count: filteredProjects.filter((p) => p.type_project === type).length,
     }));
-  }, [projects]);
+  }, [filteredProjects]);
 
   // Filtrar proyectos
   React.useEffect(() => {
@@ -261,7 +296,6 @@ export default function Component() {
   const clearFilters = () => {
     setSelectedCategory('all');
     setSelectedType('all');
-    setSelectedTrending('all');
   };
 
   // Función para limpiar búsqueda
@@ -270,13 +304,36 @@ export default function Component() {
   };
 
   // Verificar si hay filtros activos
-  const hasActiveFilters =
-    selectedCategory !== 'all' ||
-    selectedType !== 'all' ||
-    selectedTrending !== 'all';
+  const hasActiveFilters = selectedCategory !== 'all' || selectedType !== 'all';
+
+  // Cargar la cantidad de inscritos para todos los proyectos al cargar la lista
+  useEffect(() => {
+    const fetchAllInscritos = async () => {
+      const newMap: Record<number, number> = {};
+      await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/taken/count?projectId=${project.id}`
+            );
+            if (res.ok) {
+              const data: { count: number } = await res.json();
+              newMap[project.id] = data.count ?? 0;
+            } else {
+              newMap[project.id] = 0;
+            }
+          } catch {
+            newMap[project.id] = 0;
+          }
+        })
+      );
+      setInscritosMap(newMap);
+    };
+    if (projects.length > 0) fetchAllInscritos();
+  }, [projects]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-emerald-900">
+    <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
       <div className="sticky top-0 z-50 bg-[#041C3C] shadow-md">
         <Header />
       </div>
@@ -284,16 +341,22 @@ export default function Component() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Sidebar */}
           <div className="space-y-6 lg:col-span-1">
-            <aside className="sticky top-[80px] flex h-fit flex-col items-center justify-start text-sm font-semibold text-cyan-300 hover:scale-110">
-              <span className="mt-2">
-                <a href="/proyectos/MisProyectos">
-                  <div className="mb-2 flex items-center justify-center">
-                    <FaFolderOpen size={40} />
+            <div className="relative hidden md:block">
+              <a href="/proyectos/MisProyectos">
+                <button className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-cyan-500/30">
+                  <div className="flex items-center justify-center space-x-4 rounded-3xl bg-slate-900 px-12 py-6 transition-all duration-300 group-hover:bg-slate-800">
+                    <div className="relative">
+                      <Folder className="h-8 w-8 text-cyan-400 transition-all duration-300 group-hover:text-white" />
+                      <div className="absolute -top-2 -right-2 h-3 w-3 animate-pulse rounded-full bg-gradient-to-r from-cyan-400 to-blue-400"></div>
+                    </div>
+                    <span className="text-2xl font-bold tracking-wide text-white">
+                      Mis Proyectos
+                    </span>
+                    <ArrowRight className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:translate-x-2 group-hover:text-white" />
                   </div>
-                  Mis Proyectos{' '}
-                </a>
-              </span>
-            </aside>
+                </button>
+              </a>
+            </div>
 
             <div className="relative hidden md:block">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
@@ -419,70 +482,87 @@ export default function Component() {
                     <h4 className="mb-2 text-sm font-medium text-slate-300">
                       Categorías
                     </h4>
-                    <div className="space-y-1">
-                      <div
-                        className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                          selectedCategory === 'all' ? 'bg-slate-700' : ''
-                        }`}
-                        onClick={() => setSelectedCategory('all')}
-                      >
-                        <span className="text-slate-300">
-                          Todas las categorías
-                        </span>
-                        <span className="text-slate-500">
-                          {projects.length}
-                        </span>
-                      </div>
-                      {categories.map((category) => (
-                        <div
-                          key={category.name}
-                          className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                            selectedCategory === category.name
-                              ? 'bg-slate-700'
-                              : ''
-                          }`}
-                          onClick={() => setSelectedCategory(category.name)}
-                        >
-                          <span className="text-slate-300">
-                            {category.name}
-                          </span>
-                          <span className="text-slate-500">
-                            {category.count}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <RadixSelect.Root
+                      value={selectedCategory}
+                      onValueChange={setSelectedCategory}
+                    >
+                      <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                        <RadixSelect.Value />
+                        <RadixSelect.Icon>
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 16 16"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              stroke="#94a3b8"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </RadixSelect.Icon>
+                      </RadixSelect.Trigger>
+                      <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                        <RadixSelect.Viewport className="p-1">
+                          <SelectItem value="all">
+                            Todas las categorías ({categories.length})
+                          </SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem
+                              key={category.name}
+                              value={category.name}
+                            >
+                              {category.name} ({category.count})
+                            </SelectItem>
+                          ))}
+                        </RadixSelect.Viewport>
+                      </RadixSelect.Content>
+                    </RadixSelect.Root>
                   </div>
 
                   <div>
                     <h4 className="mb-2 text-sm font-medium text-slate-300">
                       Tipo de Proyecto
                     </h4>
-                    <div className="space-y-1">
-                      <div
-                        className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                          selectedType === 'all' ? 'bg-slate-700' : ''
-                        }`}
-                        onClick={() => setSelectedType('all')}
-                      >
-                        <span className="text-slate-300">Todos los tipos</span>
-                        <span className="text-slate-500">
-                          {projects.length}
-                        </span>
-                      </div>
-                      {projectTypes.map((type) => (
-                        <div
-                          key={type.name}
-                          className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                            selectedType === type.name ? 'bg-slate-700' : ''
-                          }`}
-                          onClick={() => setSelectedType(type.name)}
-                        >
-                          <span className="text-slate-300">{type.name}</span>
-                          <span className="text-slate-500">{type.count}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <RadixSelect.Root
+                      value={selectedType}
+                      onValueChange={setSelectedType}
+                    >
+                      <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                        <RadixSelect.Value />
+                        <RadixSelect.Icon>
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 16 16"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              stroke="#94a3b8"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </RadixSelect.Icon>
+                      </RadixSelect.Trigger>
+                      <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                        <RadixSelect.Viewport className="p-1">
+                          <SelectItem value="all">
+                            Todos los tipos ({projectTypes.length})
+                          </SelectItem>
+                          {projectTypes.map((type) => (
+                            <SelectItem key={type.name} value={type.name}>
+                              {type.name} ({type.count})
+                            </SelectItem>
+                          ))}
+                        </RadixSelect.Viewport>
+                      </RadixSelect.Content>
+                    </RadixSelect.Root>
                   </div>
                 </div>
               </CardContent>
@@ -520,35 +600,55 @@ export default function Component() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div
-                  className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                    selectedTrending === 'all' ? 'bg-slate-700' : ''
-                  }`}
-                  onClick={() => setSelectedTrending('all')}
+                <RadixSelect.Root
+                  value={selectedTrending}
+                  onValueChange={setSelectedTrending}
                 >
-                  <span className="text-slate-300">Todas las tendencias</span>
-                  <span className="text-slate-500">{projects.length}</span>
-                </div>
-                {trendingTopics.map((topic) => (
-                  <div
-                    key={topic.name}
-                    className={`flex cursor-pointer items-center justify-between rounded p-1 text-sm hover:bg-slate-700/50 ${
-                      selectedTrending === topic.name ? 'bg-slate-700' : ''
-                    }`}
-                    onClick={() => setSelectedTrending(topic.name)}
-                  >
-                    <span className="text-slate-300">#{topic.name}</span>
-                    <span className="text-slate-500">{topic.posts} posts</span>
-                  </div>
-                ))}
+                  <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                    <RadixSelect.Value />
+                    <RadixSelect.Icon>
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M4 6l4 4 4-4"
+                          stroke="#94a3b8"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </RadixSelect.Icon>
+                  </RadixSelect.Trigger>
+                  <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                    <RadixSelect.Viewport className="p-1">
+                      <SelectItem value="all">
+                        Todas las tendencias ({trendingTopics.length})
+                      </SelectItem>
+                      {trendingTopics.map((topic) => (
+                        <SelectItem key={topic.name} value={topic.name}>
+                          #{topic.name} ({topic.posts} posts)
+                        </SelectItem>
+                      ))}
+                    </RadixSelect.Viewport>
+                  </RadixSelect.Content>
+                </RadixSelect.Root>
               </CardContent>
             </Card>
           </div>
 
           {/* Main Feed */}
-          <div className="lg:col-span-3">
-            <ScrollArea className="h-[calc(100vh-120px)]">
-              <div className="space-y-6">
+          <div className="h-[calc(110vh-100px)] lg:col-span-3">
+            <div
+              className="custom-scrollbar h-full overflow-x-hidden overflow-y-auto"
+              style={{
+                height: '100%',
+              }}
+            >
+              <div className="h-full space-y-6">
                 {/* Welcome Message */}
                 <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10">
                   <CardContent className="p-6">
@@ -568,7 +668,7 @@ export default function Component() {
                       <div className="text-right text-sm text-slate-400">
                         <p>
                           {filteredProjects.length} de {projects.length}{' '}
-                          proyectos
+                          proyectos publicados
                         </p>
                         {isLoading && (
                           <p className="text-cyan-400">Actualizando...</p>
@@ -711,6 +811,43 @@ export default function Component() {
                             </Badge>
                           ))}
                         </div>
+                        <div className="flex items-center text-slate-400">
+                          <button
+                            type="button"
+                            onClick={() => setIntegrantesModalOpen(project.id)}
+                            className="flex items-center gap-1 rounded bg-[#1F3246] px-2 py-1 text-xs text-purple-300 hover:scale-105"
+                          >
+                            {inscritosMap[project.id] ?? 0}{' '}
+                            <Users className="inline h-4 w-4 text-purple-300" />{' '}
+                            Integrantes
+                          </button>
+                          {integrantesModalOpen === project.id && (
+                            <ModalIntegrantesProyectoInfo
+                              isOpen={true}
+                              onClose={() => setIntegrantesModalOpen(null)}
+                              proyecto={{
+                                ...project,
+                                titulo: project.name ?? '',
+                                rama: '', // Ajusta si tienes el dato real
+                                especialidades: '', // Ajusta si tienes el dato real
+                                participacion: '', // Ajusta si tienes el dato real
+                              }}
+                              integrantes={[]}
+                            />
+                          )}
+                        </div>
+                        {/* Botón para abrir el modal */}
+                        <div className="pt-2">
+                          <Button
+                            className="w-full bg-gradient-to-r from-teal-500 to-teal-600 font-semibold text-white hover:from-teal-600 hover:to-teal-700"
+                            onClick={() => {
+                              setSelectedProject(project);
+                              setModalOpen(true);
+                            }}
+                          >
+                            Ver más
+                          </Button>
+                        </div>
                       </CardContent>
 
                       {/* <CardFooter className="pt-0">
@@ -775,10 +912,45 @@ export default function Component() {
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </div>
+      {/* Modal de información del proyecto */}
+      <ModalProjectInfo
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        project={selectedProject}
+        userId={userId}
+      />
+
+      {/* Scrollbar color personalizado */}
+      <style jsx global>{`
+        /* Oculta el scroll global del html/body */
+        html,
+        body {
+          scrollbar-width: none !important; /* Firefox */
+          -ms-overflow-style: none !important; /* IE 10+ */
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          background: transparent !important;
+        }
+        /* Oculta el scroll en el área principal */
+        .custom-scrollbar {
+          scrollbar-width: none !important; /* Firefox */
+          -ms-overflow-style: none !important; /* IE 10+ */
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          background: transparent !important;
+        }
+      `}</style>
     </div>
   );
 }

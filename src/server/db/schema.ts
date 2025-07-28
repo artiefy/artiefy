@@ -246,7 +246,12 @@ export const projectActivities = pgTable('project_activities', {
   projectId: integer('project_id')
     .references(() => projects.id, { onDelete: 'cascade' })
     .notNull(),
+  objectiveId: integer('objective_id') // <-- NUEVO: relación con specific_objectives
+    .references(() => specificObjectives.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
+  // IMPORTANTE: El nombre en la BD es 'responsible_user_id', en el frontend mapea como 'responsibleUserId'
+  responsibleUserId: text('responsible_user_id').references(() => users.id), // Usuario responsable (puede ser null)
+  hoursPerDay: integer('hours_per_day'), // Horas al día dedicadas a la actividad
 });
 
 //Tabla de cronograma
@@ -264,6 +269,11 @@ export const projectActivitiesRelations = relations(
     project: one(projects, {
       fields: [projectActivities.projectId],
       references: [projects.id],
+    }),
+    objective: one(specificObjectives, {
+      // <-- NUEVO: relación con objetivos específicos
+      fields: [projectActivities.objectiveId],
+      references: [specificObjectives.id],
     }),
     schedule: many(projectSchedule),
   })
@@ -985,3 +995,56 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').defaultNow(),
   metadata: jsonb('metadata'),
 });
+
+// Tabla de entregas de actividades de proyecto
+export const projectActivityDeliveries = pgTable(
+  'project_activity_deliveries',
+  {
+    id: serial('id').primaryKey(),
+    activityId: integer('activity_id')
+      .references(() => projectActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    entregado: boolean('entregado').default(false).notNull(),
+    aprobado: boolean('aprobado').default(false).notNull(),
+    entregaUrl: text('entrega_url'), // opcional: link a archivo o evidencia (mantener por compatibilidad)
+
+    // Nuevos campos para diferentes tipos de archivos
+    documentKey: text('document_key'), // Para documentos (PDF, Word, Excel, etc.)
+    documentName: text('document_name'), // Nombre original del documento
+    imageKey: text('image_key'), // Para imágenes (JPG, PNG, etc.)
+    imageName: text('image_name'), // Nombre original de la imagen
+    videoKey: text('video_key'), // Para videos (MP4, AVI, etc.)
+    videoName: text('video_name'), // Nombre original del video
+    compressedFileKey: text('compressed_file_key'), // Para archivos comprimidos (RAR, ZIP, 7z, etc.)
+    compressedFileName: text('compressed_file_name'), // Nombre original del archivo comprimido
+
+    // Metadatos adicionales
+    fileTypes: text('file_types'), // JSON string con los tipos de archivos subidos
+    totalFiles: integer('total_files').default(0), // Contador total de archivos
+
+    comentario: text('comentario'), // opcional: comentario del usuario
+    feedback: text('feedback'), // opcional: comentario del responsable
+    entregadoAt: timestamp('entregado_at').defaultNow(),
+    aprobadoAt: timestamp('aprobado_at'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [unique('unique_activity_user').on(table.activityId, table.userId)]
+);
+
+// Relaciones para projectActivityDeliveries
+export const projectActivityDeliveriesRelations = relations(
+  projectActivityDeliveries,
+  ({ one }) => ({
+    activity: one(projectActivities, {
+      fields: [projectActivityDeliveries.activityId],
+      references: [projectActivities.id],
+    }),
+    user: one(users, {
+      fields: [projectActivityDeliveries.userId],
+      references: [users.id],
+    }),
+  })
+);

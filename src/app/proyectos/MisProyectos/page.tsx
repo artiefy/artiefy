@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import {
   ImageIcon,
   Plus,
   Search,
-  Trash2,
+  //  Trash2,
   Users,
 } from 'lucide-react';
 
@@ -36,13 +36,14 @@ import {
   SelectValue,
 } from '~/components/projects/ui/select';
 
-import ModalActividades from '../../../components/projects/Modals/ModalActividades';
 import ModalConfirmacionEliminacion from '../../../components/projects/Modals/ModalConfirmacionEliminacion';
+import ModalIntegrantesProyectoInfo from '../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
 import ModalJustificacion from '../../../components/projects/Modals/ModalJustificacion';
 import ModalObjetivoGen from '../../../components/projects/Modals/ModalObjetivoGen';
 import ModalObjetivosEsp from '../../../components/projects/Modals/ModalObjetivosEsp';
 import ModalPlanteamiento from '../../../components/projects/Modals/ModalPlanteamiento';
 import ModalResumen from '../../../components/projects/Modals/ModalResumen';
+import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
 
 // Actualizar la interfaz para incluir el tipo de proyecto
 interface Project {
@@ -88,6 +89,13 @@ interface ProjectDetails {
   updatedAt: string;
 }
 
+// Añade la interfaz para SpecificObjective (igual que en el modal)
+interface SpecificObjective {
+  id: string;
+  title: string;
+  activities: string[];
+}
+
 export default function ProyectosPage() {
   const router = useRouter();
   const { userId, isLoaded } = useAuth();
@@ -99,10 +107,14 @@ export default function ProyectosPage() {
   const [objetivoGenOpen, setObjetivoGenOpen] = React.useState(false);
   const [objetivoGenTexto, setObjetivoGenTexto] = useState('');
   const [ObjetivosEspOpen, setObjetivosEspOpen] = React.useState(false);
-  const [ObjetivosEspTexto, setObjetivosEspTexto] = useState<string[]>([]);
-  const [actividadesOpen, setActividadesOpen] = React.useState(false);
-  const [actividadesTexto, setActividadesTexto] = useState<string[]>([]);
+  const [ObjetivosEspTexto, setObjetivosEspTexto] = useState<
+    SpecificObjective[]
+  >([]);
   const [ResumenOpen, setResumenOpen] = React.useState(false);
+  const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
+  const [proyectoGenerado, setProyectoGenerado] = useState<any>(null);
+  const [modalResumenGeneradoOpen, setModalResumenGeneradoOpen] =
+    useState(false);
 
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [editingProjectDetails, setEditingProjectDetails] =
@@ -111,6 +123,9 @@ export default function ProyectosPage() {
   const [deletingProjectId, setDeletingProjectId] = useState<number | null>(
     null
   );
+  const [integrantesModalOpen, setIntegrantesModalOpen] = useState<
+    number | null
+  >(null);
 
   const handleConfirmarPlanteamiento = () => {
     setPlanteamientoOpen(false);
@@ -138,14 +153,6 @@ export default function ProyectosPage() {
   };
   const handleConfirmarObjetivosEsp = () => {
     setObjetivosEspOpen(false);
-    setActividadesOpen(true);
-  };
-  const handleAnteriorActividades = () => {
-    setActividadesOpen(false);
-    setObjetivosEspOpen(true);
-  };
-  const handleConfirmarActividades = () => {
-    setActividadesOpen(false);
     setResumenOpen(true);
   };
 
@@ -153,6 +160,35 @@ export default function ProyectosPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+
+  // Estado para los contadores de inscritos por proyecto
+  const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
+
+  // Cargar la cantidad de inscritos para todos los proyectos al cargar la lista
+  useEffect(() => {
+    const fetchAllInscritos = async () => {
+      const newMap: Record<number, number> = {};
+      await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/taken/count?projectId=${project.id}`
+            );
+            if (res.ok) {
+              const data: { count: number } = await res.json();
+              newMap[project.id] = data.count ?? 0;
+            } else {
+              newMap[project.id] = 0;
+            }
+          } catch {
+            newMap[project.id] = 0;
+          }
+        })
+      );
+      setInscritosMap(newMap);
+    };
+    if (projects.length > 0) fetchAllInscritos();
+  }, [projects]);
 
   // Redireccionar si no está autenticado
   React.useEffect(() => {
@@ -428,511 +464,641 @@ export default function ProyectosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+    <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
       {/* Header superior */}
-      <Header />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          className="mb-6 text-cyan-400 hover:bg-slate-800/50 hover:text-cyan-300"
-          onClick={() => router.push('/proyectos')}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver
-        </Button>
-
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold text-white">
-            Gestión de Proyectos
-          </h1>
-          <p className="text-slate-400">
-            Administra y supervisa todos tus proyectos educativos
-          </p>
+      <div className="sticky top-0 z-50 bg-[#041C3C] shadow-md">
+        <Header />
+      </div>
+      <main className="container mx-auto px-6 py-8">
+        {/* Back Button - sticky below header */}
+        <div className="sticky top-[175px] z-40 -mx-6 bg-slate-800/1 px-6 pb-2">
+          <Button
+            variant="ghost"
+            className="group mb-4 rounded-md border border-white bg-slate-800 font-bold text-cyan-400 shadow-lg transition-all duration-200 hover:scale-105 hover:border-cyan-400 hover:bg-cyan-950/60 hover:text-cyan-300 focus:scale-105 active:scale-100"
+            onClick={() => router.push('/proyectos')}
+            style={{ borderWidth: 2 }}
+          >
+            {/* Custom SVG for a thicker arrow */}
+            <svg
+              className="mr-2 h-5 w-5 transition-transform duration-200 group-hover:-translate-x-1 group-hover:scale-110"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 19l-7-7 7-7" />
+            </svg>
+            Volver
+          </Button>
         </div>
 
-        {/* Filters and Search */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
-              <Input
-                placeholder="Buscar proyectos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="border-slate-600 bg-slate-800/50 pr-10 pl-10 text-white placeholder:text-slate-400 focus:border-cyan-400"
-              />
-              {searchTerm && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSearch}
-                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0 text-slate-400 hover:bg-cyan-400/20 hover:text-cyan-400"
-                  title="Limpiar búsqueda"
-                >
-                  ✕
-                </Button>
-              )}
-            </div>
+        <div className="container mx-auto px-4 py-8">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="mb-2 text-4xl font-bold text-white">
+              Gestión de Proyectos
+            </h1>
+            <p className="text-slate-400">
+              Administra y supervisa todos tus proyectos educativos
+            </p>
           </div>
 
-          <Select
-            value={projectTypeFilter}
-            onValueChange={(value) =>
-              setProjectTypeFilter(value as 'all' | 'own' | 'taken')
-            }
-          >
-            <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
-              <SelectValue placeholder="Tipo de proyecto" />
-            </SelectTrigger>
-            <SelectContent className="border-slate-600 bg-slate-800">
-              {projectTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label} ({option.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filters and Search */}
+          <div className="mb-8 flex flex-col gap-4 md:flex-row">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
+                <Input
+                  placeholder="Buscar proyectos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border-slate-600 bg-slate-800/50 pr-10 pl-10 text-white placeholder:text-slate-400 focus:border-cyan-400"
+                />
+                {searchTerm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSearch}
+                    className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0 text-slate-400 hover:bg-cyan-400/20 hover:text-cyan-400"
+                    title="Limpiar búsqueda"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            </div>
 
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent className="border-slate-600 bg-slate-800">
-              {categories.map((category) => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.label} ({category.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={projectTypeFilter}
+              onValueChange={(value) =>
+                setProjectTypeFilter(value as 'all' | 'own' | 'taken')
+              }
+            >
+              <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
+                <SelectValue placeholder="Tipo de proyecto" />
+              </SelectTrigger>
+              <SelectContent className="border-slate-600 bg-slate-800">
+                {projectTypeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {/* Botón de limpiar filtros */}
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-700/20"
-            title="Limpiar filtros"
-            disabled={selectedCategory === 'all' && projectTypeFilter === 'all'}
-          >
-            🗑️
-          </Button>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
+              <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent className="border-slate-600 bg-slate-800">
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label} ({category.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button
-            className="bg-cyan-500 text-white hover:bg-cyan-600"
-            onClick={() => {
-              setPlanteamientoTexto('');
-              setJustificacionTexto('');
-              setObjetivoGenTexto('');
-              setObjetivosEspTexto([]);
-              setActividadesTexto([]);
-              setPlanteamientoOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Proyecto
-          </Button>
-        </div>
-
-        {/* Indicadores de filtros activos */}
-        {(searchTerm !== '' ||
-          selectedCategory !== 'all' ||
-          projectTypeFilter !== 'all') && (
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-400">Filtros activos:</span>
-
-            {searchTerm && (
-              <Badge
-                variant="outline"
-                className="cursor-pointer border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/20"
-                onClick={clearSearch}
-              >
-                Búsqueda: &quot;{searchTerm}&quot; ✕
-              </Badge>
-            )}
-
-            {selectedCategory !== 'all' && (
-              <Badge
-                variant="outline"
-                className="cursor-pointer border-teal-400/50 text-teal-300 hover:bg-teal-400/20"
-                onClick={() => setSelectedCategory('all')}
-              >
-                Categoría: {selectedCategory} ✕
-              </Badge>
-            )}
-
-            {projectTypeFilter !== 'all' && (
-              <Badge
-                variant="outline"
-                className="cursor-pointer border-purple-400/50 text-purple-300 hover:bg-purple-400/20"
-                onClick={() => setProjectTypeFilter('all')}
-              >
-                Tipo:{' '}
-                {projectTypeFilter === 'own'
-                  ? 'Mis proyectos'
-                  : 'Proyectos tomados'}{' '}
-                ✕
-              </Badge>
-            )}
+            {/* Botón de limpiar filtros */}
+            <Button
+              variant="outline"
+              onClick={clearFilters}
+              className="border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-700/20"
+              title="Limpiar filtros"
+              disabled={
+                selectedCategory === 'all' && projectTypeFilter === 'all'
+              }
+            >
+              🗑️
+            </Button>
 
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetAll}
-              className="text-xs text-gray-500 hover:text-gray-300"
+              className="bg-cyan-500 text-white hover:bg-cyan-600"
+              onClick={() => {
+                setPlanteamientoTexto('');
+                setJustificacionTexto('');
+                setObjetivoGenTexto('');
+                setObjetivosEspTexto([]);
+                setPlanteamientoOpen(true);
+              }}
             >
-              Limpiar todo
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Proyecto
+            </Button>
+            <Button
+              className="bg-emerald-500 text-white hover:bg-emerald-600"
+              onClick={() => {
+                setProyectoGenerado(null);
+                setModalResumenGeneradoOpen(false);
+                setModalGenerarOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Generar Proyecto con IA
             </Button>
           </div>
-        )}
 
-        {/* Projects Grid */}
-        {loading ? (
-          <div className="py-12 text-center text-white">
-            Cargando proyectos...
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => (
-                <Card
-                  key={`${project.projectType}-${project.id}`}
-                  className="border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+          {/* Indicadores de filtros activos */}
+          {(searchTerm !== '' ||
+            selectedCategory !== 'all' ||
+            projectTypeFilter !== 'all') && (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-400">Filtros activos:</span>
+
+              {searchTerm && (
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/20"
+                  onClick={clearSearch}
                 >
-                  <CardHeader className="pb-4">
-                    {/* Imagen del proyecto */}
-                    <div className="relative mb-4 h-48 overflow-hidden rounded-lg">
-                      {project.coverImageKey && !imageErrors.has(project.id) ? (
-                        <Image
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
-                          alt={project.title ?? 'Proyecto'}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                          onError={() => {
-                            console.error(
-                              'Error cargando imagen del proyecto:',
-                              project.title,
-                              'ID:',
-                              project.id
-                            );
-                            handleImageError(project.id);
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-slate-700">
-                          <div className="text-center text-slate-400">
-                            <ImageIcon className="mx-auto mb-2 h-12 w-12" />
-                            <p className="text-sm">
-                              {imageErrors.has(project.id) &&
-                              project.coverImageKey
-                                ? 'Error al cargar imagen'
-                                : 'Sin imagen'}
-                            </p>
+                  Búsqueda: &quot;{searchTerm}&quot; ✕
+                </Badge>
+              )}
+
+              {selectedCategory !== 'all' && (
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer border-teal-400/50 text-teal-300 hover:bg-teal-400/20"
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Categoría: {selectedCategory} ✕
+                </Badge>
+              )}
+
+              {projectTypeFilter !== 'all' && (
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer border-purple-400/50 text-purple-300 hover:bg-purple-400/20"
+                  onClick={() => setProjectTypeFilter('all')}
+                >
+                  Tipo:{' '}
+                  {projectTypeFilter === 'own'
+                    ? 'Mis proyectos'
+                    : 'Proyectos tomados'}{' '}
+                  ✕
+                </Badge>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetAll}
+                className="text-xs text-gray-500 hover:text-gray-300"
+              >
+                Limpiar todo
+              </Button>
+            </div>
+          )}
+
+          {/* Projects Grid */}
+          {loading ? (
+            <div className="py-12 text-center text-white">
+              Cargando proyectos...
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => (
+                  <Card
+                    key={`${project.projectType}-${project.id}`}
+                    className="border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+                  >
+                    <CardHeader className="pb-4">
+                      {/* Imagen del proyecto */}
+                      <div className="relative mb-4 h-48 overflow-hidden rounded-lg">
+                        {project.coverImageKey &&
+                        !imageErrors.has(project.id) ? (
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                            alt={project.title ?? 'Proyecto'}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                            onError={() => {
+                              console.error(
+                                'Error cargando imagen del proyecto:',
+                                project.title,
+                                'ID:',
+                                project.id
+                              );
+                              handleImageError(project.id);
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-slate-700">
+                            <div className="text-center text-slate-400">
+                              <ImageIcon className="mx-auto mb-2 h-12 w-12" />
+                              <p className="text-sm">
+                                {imageErrors.has(project.id) &&
+                                project.coverImageKey
+                                  ? 'Error al cargar imagen'
+                                  : 'Sin imagen'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="mb-2 line-clamp-2 text-xl text-white">
+                          {project.title}
+                        </CardTitle>
+                        {/* Mostrar botones solo si el proyecto es propio */}
+                        {project.projectType === 'own' &&
+                          project.userId === userId && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-cyan-400 hover:bg-slate-700/50 hover:text-cyan-300"
+                                onClick={() => handleEditProject(project.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-400 hover:bg-slate-700/50 hover:text-red-300"
+                                onClick={() => setDeletingProjectId(project.id)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          )}
+                      </div>
+                      <p className="line-clamp-3 text-sm text-slate-400">
+                        {project.description}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Status Badges */}
+                      <div className="flex flex-wrap gap-2">
+                        <Badge
+                          variant="secondary"
+                          className={
+                            project.projectType === 'own'
+                              ? 'border-cyan-400/30 bg-slate-700 text-cyan-400'
+                              : 'border-purple-400/30 bg-slate-700 text-purple-400'
+                          }
+                        >
+                          {project.projectType === 'own' ? 'Propio' : 'Tomado'}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            project.isPublic
+                              ? 'border-green-400/30 bg-slate-700 text-green-400'
+                              : 'border-orange-400/30 bg-slate-700 text-orange-400'
+                          }
+                        >
+                          {project.isPublic ? 'Publico' : 'Privado'}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="border-blue-400/30 bg-slate-700 text-blue-400"
+                        >
+                          {project.status}
+                        </Badge>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Progreso</span>
+                          <span className="text-cyan-400">
+                            {Math.floor(Math.random() * 100)}%
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-700">
+                          <div
+                            className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-300"
+                            style={{
+                              width: `${Math.floor(Math.random() * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Project Details */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center text-slate-400">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIntegrantesModalOpen(project.id)
+                              }
+                              className="flex items-center gap-1 rounded bg-[#1F3246] px-2 py-1 text-xs text-purple-300 hover:scale-105"
+                            >
+                              {inscritosMap[project.id] ?? 0}{' '}
+                              <Users className="inline h-4 w-4 text-purple-300" />{' '}
+                              Integrantes
+                            </button>
+                            {/* Modal para ver integrantes */}
+                            {integrantesModalOpen === project.id && (
+                              <ModalIntegrantesProyectoInfo
+                                isOpen={true}
+                                onClose={() => setIntegrantesModalOpen(null)}
+                                proyecto={{
+                                  ...project,
+                                  titulo: project.name ?? '',
+                                  rama: '', // Ajusta si tienes el dato real
+                                  especialidades: '', // Ajusta si tienes el dato real
+                                  participacion: '', // Ajusta si tienes el dato real
+                                }}
+                                integrantes={[]}
+                              />
+                            )}
+                          </div>
+                          <div className="flex items-center text-slate-400">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            <span>
+                              {project.date
+                                ? new Date(project.date).toLocaleDateString(
+                                    'es-ES'
+                                  )
+                                : ''}
+                            </span>
                           </div>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="mb-2 line-clamp-2 text-xl text-white">
-                        {project.title}
-                      </CardTitle>
-                      <div className="flex gap-2">
+                        <div className="border-t border-slate-700 pt-3">
+                          <div className="text-sm">
+                            <span className="text-slate-400">Tipo: </span>
+                            <span className="font-medium text-cyan-400">
+                              {project.type_project}
+                            </span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-slate-400">Categoría: </span>
+                            <span className="font-medium text-cyan-400">
+                              {project.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2">
                         <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-cyan-400 hover:bg-slate-700/50 hover:text-cyan-300"
-                          onClick={() => handleEditProject(project.id)}
+                          className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
+                          onClick={() =>
+                            (window.location.href = `/proyectos/DetallesProyectos/${project.id}`)
+                          }
                         >
-                          <Edit className="h-4 w-4" />
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver Proyecto
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-400 hover:bg-slate-700/50 hover:text-red-300"
-                          onClick={() => {
-                            setDeletingProjectId(project.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Mostrar botón de renunciar solo si es tomado */}
+                        {project.projectType === 'taken' && (
+                          <Button
+                            variant="outline"
+                            className="border-red-500 bg-transparent text-red-400 hover:bg-red-500/10"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch('/api/projects/taken', {
+                                  method: 'DELETE',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    userId,
+                                    projectId: project.id,
+                                  }),
+                                });
+                                if (res.ok) {
+                                  setProjects((prev) =>
+                                    prev.filter((p) => p.id !== project.id)
+                                  );
+                                } else {
+                                  alert('No se pudo renunciar al proyecto');
+                                }
+                              } catch {
+                                alert('No se pudo renunciar al proyecto');
+                              }
+                            }}
+                          >
+                            Renunciar
+                          </Button>
+                        )}
                       </div>
-                    </div>
-                    <p className="line-clamp-3 text-sm text-slate-400">
-                      {project.description}
-                    </p>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Status Badges */}
-                    <div className="flex flex-wrap gap-2">
-                      <Badge
-                        variant="secondary"
-                        className={
-                          project.projectType === 'own'
-                            ? 'border-cyan-400/30 bg-slate-700 text-cyan-400'
-                            : 'border-purple-400/30 bg-slate-700 text-purple-400'
-                        }
-                      >
-                        {project.projectType === 'own' ? 'Propio' : 'Tomado'}
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          project.isPublic
-                            ? 'border-green-400/30 bg-slate-700 text-green-400'
-                            : 'border-orange-400/30 bg-slate-700 text-orange-400'
-                        }
-                      >
-                        {project.isPublic ? 'Publico' : 'Privado'}
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className="border-blue-400/30 bg-slate-700 text-blue-400"
-                      >
-                        {project.status}
-                      </Badge>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Progreso</span>
-                        <span className="text-cyan-400">
-                          {Math.floor(Math.random() * 100)}%
-                        </span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-slate-700">
-                        <div
-                          className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-300"
-                          style={{
-                            width: `${Math.floor(Math.random() * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Project Details */}
-                    <div className="space-y-3 pt-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center text-slate-400">
-                          <Users className="mr-2 h-4 w-4" />
-                          <span>
-                            {Math.floor(Math.random() * 10) + 1} Integrantes
-                          </span>
-                        </div>
-                        <div className="flex items-center text-slate-400">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          <span>
-                            {project.date
-                              ? new Date(project.date).toLocaleDateString(
-                                  'es-ES'
-                                )
-                              : ''}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-700 pt-3">
-                        <div className="text-sm">
-                          <span className="text-slate-400">Tipo: </span>
-                          <span className="font-medium text-cyan-400">
-                            {project.type_project}
-                          </span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-slate-400">Categoría: </span>
-                          <span className="font-medium text-cyan-400">
-                            {project.category}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
-                        onClick={() =>
-                          (window.location.href = `/proyectos/DetallesProyectos/${project.id}`)
-                        }
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver Proyecto
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-red-500 bg-transparent text-red-400 hover:bg-red-500/10"
-                        onClick={() => {
-                          setDeletingProjectId(project.id);
-                        }}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              // Empty State
-              <div className="col-span-full py-16 text-center">
-                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-800">
-                  <Plus className="h-12 w-12 text-slate-600" />
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                // Empty State
+                <div className="col-span-full py-16 text-center">
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-800">
+                    <Plus className="h-12 w-12 text-slate-600" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-white">
+                    No hay proyectos aún
+                  </h3>
+                  <p className="mb-6 text-slate-400">
+                    {projectTypeFilter === 'own'
+                      ? 'No tienes proyectos propios registrados.'
+                      : projectTypeFilter === 'taken'
+                        ? 'No has tomado ningún proyecto.'
+                        : 'Comienza creando tu primer proyecto educativo'}
+                  </p>
+                  <Button
+                    className="bg-cyan-500 text-white hover:bg-cyan-600"
+                    onClick={() => {
+                      setPlanteamientoTexto('');
+                      setJustificacionTexto('');
+                      setObjetivoGenTexto('');
+                      setObjetivosEspTexto([]);
+                      setPlanteamientoOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear Primer Proyecto
+                  </Button>
                 </div>
-                <h3 className="mb-2 text-xl font-semibold text-white">
-                  No hay proyectos aún
-                </h3>
-                <p className="mb-6 text-slate-400">
-                  {projectTypeFilter === 'own'
-                    ? 'No tienes proyectos propios registrados.'
-                    : projectTypeFilter === 'taken'
-                      ? 'No has tomado ningún proyecto.'
-                      : 'Comienza creando tu primer proyecto educativo'}
-                </p>
-                <Button
-                  className="bg-cyan-500 text-white hover:bg-cyan-600"
-                  onClick={() => {
-                    setPlanteamientoTexto('');
-                    setJustificacionTexto('');
-                    setObjetivoGenTexto('');
-                    setObjetivosEspTexto([]);
-                    setActividadesTexto([]);
-                    setPlanteamientoOpen(true);
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Crear Primer Proyecto
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {/* Load More Button */}
-        <div className="mt-12 text-center">
-          <Button className="bg-cyan-600 px-8 py-3 text-white hover:bg-cyan-700">
-            Cargar más proyectos
-          </Button>
-        </div>
-
-        {/* Modales */}
-        <ModalPlanteamiento
-          isOpen={planteamientoOpen}
-          onClose={() => setPlanteamientoOpen(false)}
-          onConfirm={handleConfirmarPlanteamiento}
-          texto={planteamientoTexto}
-          setTexto={setPlanteamientoTexto}
-        />
-        <ModalJustificacion
-          isOpen={justificacionOpen}
-          onClose={() => setJustificacionOpen(false)}
-          onAnterior={handleAnteriorJustificacion}
-          onConfirm={handleConfirmarJustificacion}
-          texto={justificacionTexto}
-          setTexto={setJustificacionTexto}
-        />
-        <ModalObjetivoGen
-          isOpen={objetivoGenOpen}
-          onClose={() => setObjetivoGenOpen(false)}
-          onAnterior={handleAnteriorObjetivoGen}
-          onConfirm={handleConfirmarObjetivoGen}
-          texto={objetivoGenTexto}
-          setTexto={setObjetivoGenTexto}
-        />
-        <ModalObjetivosEsp
-          isOpen={ObjetivosEspOpen}
-          onClose={() => setObjetivosEspOpen(false)}
-          onAnterior={handleAnteriorObjetivosEsp}
-          onConfirm={handleConfirmarObjetivosEsp}
-          texto={ObjetivosEspTexto}
-          setTexto={setObjetivosEspTexto}
-        />
-        <ModalActividades
-          isOpen={actividadesOpen}
-          onClose={() => setActividadesOpen(false)}
-          onAnterior={handleAnteriorActividades}
-          onConfirm={handleConfirmarActividades}
-          texto={actividadesTexto}
-          setTexto={setActividadesTexto}
-        />
-        <ModalResumen
-          isOpen={ResumenOpen}
-          onClose={() => setResumenOpen(false)}
-          planteamiento={planteamientoTexto}
-          justificacion={justificacionTexto}
-          objetivoGen={objetivoGenTexto}
-          objetivosEsp={ObjetivosEspTexto}
-          actividad={actividadesTexto}
-          setObjetivosEsp={setObjetivosEspTexto}
-          setActividades={setActividadesTexto}
-        />
-
-        {/* Modal de confirmación de eliminación */}
-        <ModalConfirmacionEliminacion
-          isOpen={deletingProjectId !== null}
-          onClose={() => setDeletingProjectId(null)}
-          projectId={deletingProjectId ?? 0}
-          onProjectDeleted={handleDeleteProject}
-        />
-
-        {/* Modal de edición de proyecto */}
-        {editingProjectId && (
-          <ModalResumen
-            isOpen={editingProjectId !== null}
-            onClose={handleCloseEditModal}
-            titulo={editingProjectDetails?.name ?? ''}
-            planteamiento={editingProjectDetails?.planteamiento ?? ''}
-            justificacion={editingProjectDetails?.justificacion ?? ''}
-            objetivoGen={editingProjectDetails?.objetivo_general ?? ''}
-            objetivosEsp={editingProjectDetails?.objetivos_especificos ?? []}
-            actividad={
-              editingProjectDetails?.actividades?.map((a) => a.descripcion) ??
-              []
-            }
-            cronograma={cronogramaEdicion}
-            categoriaId={editingProjectDetails?.categoryId}
-            numMeses={maxMesesEdicion}
-            setActividades={() => {
-              /* Función requerida por la interfaz */
-            }}
-            setObjetivosEsp={() => {
-              /* Función requerida por la interfaz */
-            }}
-            projectId={editingProjectId}
-            coverImageKey={editingProjectDetails?.coverImageKey}
-            tipoProyecto={editingProjectDetails?.type_project}
-            onUpdateProject={(updatedData: {
-              name?: string;
-              planteamiento?: string;
-              justificacion?: string;
-              objetivo_general?: string;
-              objetivos_especificos?: string[];
-              actividades?: { descripcion: string; meses: number[] }[];
-              type_project?: string;
-              categoryId?: number;
-              coverImageKey?: string;
-            }) => {
-              handleUpdateProject(editingProjectId, updatedData);
-              handleCloseEditModal();
-            }}
+          {/* Modales */}
+          <ModalPlanteamiento
+            isOpen={planteamientoOpen}
+            onClose={() => setPlanteamientoOpen(false)}
+            onConfirm={handleConfirmarPlanteamiento}
+            texto={planteamientoTexto}
+            setTexto={setPlanteamientoTexto}
           />
-        )}
+          <ModalJustificacion
+            isOpen={justificacionOpen}
+            onClose={() => setJustificacionOpen(false)}
+            onAnterior={handleAnteriorJustificacion}
+            onConfirm={handleConfirmarJustificacion}
+            texto={justificacionTexto}
+            setTexto={setJustificacionTexto}
+          />
+          <ModalObjetivoGen
+            isOpen={objetivoGenOpen}
+            onClose={() => setObjetivoGenOpen(false)}
+            onAnterior={handleAnteriorObjetivoGen}
+            onConfirm={handleConfirmarObjetivoGen}
+            texto={objetivoGenTexto}
+            setTexto={setObjetivoGenTexto}
+          />
+          <ModalObjetivosEsp
+            isOpen={ObjetivosEspOpen}
+            onClose={() => setObjetivosEspOpen(false)}
+            onAnterior={handleAnteriorObjetivosEsp}
+            onConfirm={handleConfirmarObjetivosEsp}
+            texto={ObjetivosEspTexto}
+            setTexto={setObjetivosEspTexto}
+          />
+          <ModalResumen
+            isOpen={ResumenOpen}
+            onClose={() => setResumenOpen(false)}
+            planteamiento={planteamientoTexto}
+            justificacion={justificacionTexto}
+            objetivoGen={objetivoGenTexto}
+            objetivosEsp={ObjetivosEspTexto}
+            actividad={[]} // Ya no se usa, pero el prop es requerido
+            setObjetivosEsp={setObjetivosEspTexto}
+            setActividades={() => {}} // Ya no se usa, pero el prop es requerido
+            cronograma={undefined}
+            categoriaId={undefined}
+            numMeses={undefined}
+          />
+          <ModalGenerarProyecto
+            isOpen={modalGenerarOpen}
+            onClose={() => setModalGenerarOpen(false)}
+            onProyectoGenerado={(data) => {
+              setProyectoGenerado(data);
+              setModalGenerarOpen(false);
+              setModalResumenGeneradoOpen(true); // Abre el modal resumen con los datos generados
+            }}
+            resetOnOpen={modalGenerarOpen}
+          />
 
-        {/* Loading overlay para cuando se cargan los detalles */}
-        {loadingProjectDetails && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="rounded-lg bg-slate-800 p-6 text-white">
-              <div className="flex items-center space-x-3">
-                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-cyan-400" />
-                <span>Cargando detalles del proyecto...</span>
+          {/* Modal de confirmación de eliminación */}
+          <ModalConfirmacionEliminacion
+            isOpen={deletingProjectId !== null}
+            onClose={() => setDeletingProjectId(null)}
+            projectId={deletingProjectId ?? 0}
+            onProjectDeleted={handleDeleteProject}
+          />
+
+          {/* Modal de edición de proyecto */}
+          {editingProjectId && editingProjectDetails && (
+            <ModalResumen
+              isOpen={editingProjectId !== null}
+              onClose={handleCloseEditModal}
+              titulo={editingProjectDetails.name}
+              planteamiento={editingProjectDetails.planteamiento}
+              justificacion={editingProjectDetails.justificacion}
+              objetivoGen={editingProjectDetails.objetivo_general}
+              objetivosEsp={
+                // Adaptar los objetivos específicos para el resumen de edición
+                Array.isArray(editingProjectDetails.objetivos_especificos)
+                  ? editingProjectDetails.objetivos_especificos.map(
+                      (title, idx) => ({
+                        id: String(idx) + '-' + Date.now(),
+                        title,
+                        activities: [],
+                      })
+                    )
+                  : []
+              }
+              actividad={
+                editingProjectDetails.actividades?.map((a) => a.descripcion) ??
+                []
+              }
+              cronograma={cronogramaEdicion}
+              categoriaId={editingProjectDetails.categoryId}
+              numMeses={maxMesesEdicion}
+              setActividades={() => {}}
+              setObjetivosEsp={() => {}}
+              projectId={editingProjectId}
+              coverImageKey={editingProjectDetails.coverImageKey}
+              tipoProyecto={editingProjectDetails.type_project}
+              onUpdateProject={(updatedData) => {
+                handleUpdateProject(editingProjectId, updatedData);
+                handleCloseEditModal();
+              }}
+            />
+          )}
+
+          {/* Modal Resumen para proyecto generado por IA */}
+          {modalResumenGeneradoOpen && proyectoGenerado && (
+            <ModalResumen
+              isOpen={modalResumenGeneradoOpen}
+              onClose={() => setModalResumenGeneradoOpen(false)}
+              titulo={proyectoGenerado.project_name ?? ''}
+              planteamiento={proyectoGenerado.project_description ?? ''}
+              justificacion={proyectoGenerado.justification ?? ''}
+              objetivoGen={proyectoGenerado.general_objective ?? ''}
+              objetivosEsp={
+                Array.isArray(proyectoGenerado.specific_objectives)
+                  ? proyectoGenerado.specific_objectives.map(
+                      (title: string, idx: number) => ({
+                        id: String(idx) + '-' + Date.now(),
+                        title,
+                        activities: [],
+                      })
+                    )
+                  : []
+              }
+              actividad={
+                Array.isArray(proyectoGenerado.tasks)
+                  ? proyectoGenerado.tasks.map((t: any) => t.task_name)
+                  : []
+              }
+              cronograma={
+                Array.isArray(proyectoGenerado.tasks)
+                  ? proyectoGenerado.tasks.reduce(
+                      (acc: any, t: any, idx: number) => {
+                        acc[t.task_name] = [idx];
+                        return acc;
+                      },
+                      {}
+                    )
+                  : {}
+              }
+              categoriaId={proyectoGenerado.categoryId ?? undefined}
+              numMeses={proyectoGenerado.numMeses ?? 1}
+              setObjetivosEsp={() => {}}
+              setActividades={() => {}}
+              coverImageKey={undefined}
+              tipoProyecto={proyectoGenerado.project_type ?? ''}
+              fechaInicio={proyectoGenerado.fechaInicio ?? ''}
+              fechaFin={proyectoGenerado.fechaFin ?? ''}
+              tipoVisualizacion={'meses'}
+            />
+          )}
+
+          {/* Loading overlay para cuando se cargan los detalles */}
+          {loadingProjectDetails && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+              <div className="rounded-lg bg-slate-800 p-6 text-white">
+                <div className="flex items-center space-x-3">
+                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-cyan-400" />
+                  <span>Cargando detalles del proyecto...</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </main>
+      {/* Scrollbar color personalizado */}
+      <style jsx global>{`
+        /* Oculta el scroll global del html/body */
+        html,
+        body {
+          scrollbar-width: thin !important; /* Firefox */
+          scrollbar-color: #0f3a6e #041c3c;
+          -ms-overflow-style: none !important; /* IE 10+ */
+      `}</style>
     </div>
   );
 }

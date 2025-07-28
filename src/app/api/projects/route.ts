@@ -8,22 +8,29 @@ import { createProject } from '~/server/actions/project/createProject';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
 
-// Define el tipo ProjectData igual que en createProject.ts para tipado seguro
+// Actualizar la interfaz para que coincida completamente con el schema
 interface ProjectData {
   name: string;
   planteamiento: string;
   justificacion: string;
   objetivo_general: string;
-  objetivos_especificos?: string[];
+  objetivos_especificos?: { id: string; title: string }[]; // <-- Cambia a array de objetos
   actividades?: {
     descripcion: string;
     meses: number[];
+    objetivoId?: string;
+    responsibleUserId?: string;
+    hoursPerDay?: number;
   }[];
   integrantes?: number[];
   coverImageKey?: string;
   type_project: string;
   categoryId: number;
   isPublic?: boolean;
+  userId: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  tipoVisualizacion?: 'meses' | 'dias';
 }
 
 const respondWithError = (message: string, status: number) =>
@@ -55,11 +62,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    // Asegúrate de que Clerk esté correctamente configurado y el token de autenticación se envíe en la petición.
-    // Si usas fetch desde el frontend, asegúrate de enviar las cookies de sesión o el header Authorization.
     const { userId } = await auth();
     if (!userId) {
-      // Puedes agregar más logging para depurar problemas de autenticación
       console.error('No autorizado: No se encontró userId en Clerk');
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -78,7 +82,6 @@ export async function POST(req: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileName = `proyecto_${Date.now()}_${file.name}`;
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-        // Asegura que la carpeta exista antes de guardar el archivo
         await mkdir(uploadsDir, { recursive: true });
         const filePath = path.join(uploadsDir, fileName);
         await writeFile(filePath, buffer);
@@ -86,18 +89,74 @@ export async function POST(req: Request) {
       }
     } else {
       body = (await req.json()) as Partial<ProjectData>;
-      // Si el body ya trae coverImageKey, úsalo
       if (body.coverImageKey) {
         coverImageKey = body.coverImageKey;
       }
     }
 
-    const result = await createProject({
-      ...body,
-      // @ts-expect-error: userId no está en ProjectData pero el backend lo requiere
+    // Validar campos requeridos según el schema
+    if (
+      !body.name ||
+      !body.planteamiento ||
+      !body.justificacion ||
+      !body.objetivo_general ||
+      !body.type_project ||
+      !body.categoryId
+    ) {
+      return NextResponse.json(
+        { error: 'Faltan campos requeridos para crear el proyecto' },
+        { status: 400 }
+      );
+    }
+
+    // Procesar actividades asegurando que responsibleUserId se pase correctamente
+    if (body.actividades && Array.isArray(body.actividades)) {
+      body.actividades = body.actividades
+        .map((actividad) => ({
+          descripcion: actividad.descripcion || '',
+          meses: Array.isArray(actividad.meses) ? actividad.meses : [],
+          objetivoId: actividad.objetivoId,
+          responsibleUserId: actividad.responsibleUserId || undefined,
+          hoursPerDay:
+            typeof actividad.hoursPerDay === 'number'
+              ? actividad.hoursPerDay
+              : 1,
+        }))
+        .filter((actividad) => actividad.descripcion.trim() !== '');
+    }
+
+    // Preparar datos del proyecto - mantener fechas como están funcionando
+    const projectData: ProjectData = {
+      name: body.name,
+      planteamiento: body.planteamiento,
+      justificacion: body.justificacion,
+      objetivo_general: body.objetivo_general,
+      type_project: body.type_project,
+      categoryId: body.categoryId,
       userId,
+      objetivos_especificos:
+        (body.objetivos_especificos as { id: string; title: string }[]) || [], // <-- Asegura el tipo correcto
+      actividades: body.actividades || [],
+      integrantes: body.integrantes || [],
       coverImageKey: coverImageKey ?? undefined,
-    });
+      fechaInicio:
+        body.fechaInicio && !isNaN(Date.parse(body.fechaInicio))
+          ? new Date(body.fechaInicio).toISOString().split('T')[0]
+          : undefined,
+      fechaFin:
+        body.fechaFin && !isNaN(Date.parse(body.fechaFin))
+          ? new Date(body.fechaFin).toISOString().split('T')[0]
+          : undefined,
+      tipoVisualizacion: body.tipoVisualizacion || 'meses',
+      isPublic: body.isPublic ?? false,
+    };
+
+    console.log(
+      'Datos finales del proyecto a crear:',
+      JSON.stringify(projectData, null, 2)
+    );
+
+    const result = await createProject(projectData);
 
     return NextResponse.json({
       message: 'Proyecto creado correctamente',

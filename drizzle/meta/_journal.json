@@ -15,6 +15,34 @@
       "when": 1752019917376,
       "tag": "0001_natural_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753123240337,
+      "tag": "0002_same_the_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1753338877039,
+      "tag": "0003_clear_hardball",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1753726192991,
+      "tag": "0004_adorable_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1753735496983,
+      "tag": "0005_mean_blindfold",
+      "breakpoints": true
     }
   ]
 }
