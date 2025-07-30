@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useAuth,useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';

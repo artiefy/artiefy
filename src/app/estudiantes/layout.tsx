@@ -1,9 +1,10 @@
 import React from 'react';
 
+import {ExtrasProvider} from '~/app/estudiantes/StudentContext';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import {TourComponent} from '~/components/estudiantes/layout/TourComponent';
+
 import '~/styles/ticketSupportButton.css';
-import {ExtrasProvider} from '~/app/estudiantes/StudentContext';
 
 export default function StudentLayout({
 	children,

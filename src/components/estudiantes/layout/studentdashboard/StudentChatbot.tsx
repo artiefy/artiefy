@@ -4,7 +4,7 @@ import { useCallback,useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname,useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
@@ -15,20 +15,18 @@ import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
+// Importar StudentChat
+import { useExtras } from '~/app/estudiantes/StudentContext';
 import { Card } from '~/components/estudiantes/ui/card';
-
-import '~/styles/chatmodal.css';
-import 'react-resizable/css/styles.css';
-
 // Importar StudentChatList.tsx
 import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
 
 import { ChatMessages } from './StudentChat';
 import { ChatList } from './StudentChatList';
-// Importar StudentChat
 
-import { useExtras } from '~/app/estudiantes/StudentContext';
+import '~/styles/chatmodal.css';
+import 'react-resizable/css/styles.css';
 
 interface StudentChatbotProps {
   className?: string;

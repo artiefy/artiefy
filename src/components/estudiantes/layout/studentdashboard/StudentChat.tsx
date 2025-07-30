@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef,useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname,useRouter } from 'next/navigation';
 
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
-  getOrCreateConversation,
   getConversationWithMessages,
+  getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 
 import type { UserResource } from '@clerk/types';

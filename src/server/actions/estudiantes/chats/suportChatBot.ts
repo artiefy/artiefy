@@ -3,7 +3,7 @@
 import { eq , or} from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { tickets, ticketComments } from '~/server/db/schema';
+import { ticketComments,tickets } from '~/server/db/schema';
 
 export async function getTicketByUser(userId: string): Promise<{
     ticket: typeof tickets.$inferSelect | undefined;

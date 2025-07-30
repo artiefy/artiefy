@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { LuInfo } from "react-icons/lu";
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
+
 import '~/styles/tourButtonAnimations.css';
 
 

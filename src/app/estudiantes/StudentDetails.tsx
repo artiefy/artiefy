@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
 
-
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -207,7 +206,6 @@ export default function StudentDetails({
   };
 
   // Rename to _getCourseTypeIcon to mark as unused
-  
 
   return (
     <div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
@@ -242,9 +240,7 @@ export default function StudentDetails({
                     }`}
                     name="search"
                     placeholder={
-                      searchBarDisabled
-                        ? 'Procesando consulta...'
-                        : 'Que Deseas Crear? Escribe Tu Idea...'
+                      searchBarDisabled ? 'Procesando consulta...' : _text
                     }
                     type="search"
                     value={searchQuery}
