@@ -1,7 +1,8 @@
 'use client';
 import { useEffect } from 'react';
+
 import { useRouter, usePathname } from 'next/navigation';
-import introJs from 'intro.js';
+
 import 'intro.js/introjs.css';
 import '~/styles/introjs-custom.css';
 
@@ -12,63 +13,75 @@ const steps = {
     { intro: 'Te guiaremos paso a paso. ¡Vamos allá!' },
     {
       element: '.div-header-inicio',
-      intro: 'Este es el inicio, donde verás las novedades principales.'
+      intro: 'Este es el inicio, donde verás las novedades principales.',
     },
     {
       element: '.div-header-cursos',
-      intro: 'Aquí encontrarás todos los cursos disponibles.'
+      intro: 'Aquí encontrarás todos los cursos disponibles.',
     },
     {
       element: '.div-header-proyectos',
-      intro: 'En esta sección verás proyectos interesantes de la comunidad.'
+      intro: 'En esta sección verás proyectos interesantes de la comunidad.',
     },
     {
       element: '.div-header-espacios',
-      intro: 'Espacios para interactuar y debatir con otros estudiantes.'
+      intro: 'Espacios para interactuar y debatir con otros estudiantes.',
     },
     {
       element: '.div-header-planes',
-      intro: 'Consulta los diferentes planes de la plataforma.'
+      intro: 'Consulta los diferentes planes de la plataforma.',
     },
     {
       element: '.test',
-      intro: 'Desde aquí accedes a tu perfil y configuración. El simbolo de campaña podrás ver tus notificaciones y mensajes.'
-    }
+      intro:
+        'Desde aquí accedes a tu perfil y configuración. El simbolo de campaña podrás ver tus notificaciones y mensajes.',
+    },
   ],
   estudiantesEstaticos: [
     {
       element: '.div-main',
-      intro: 'Aquí puedes ver los últimos cursos añadidos a nuestra plataforma. ¡Mantente al día con las nuevas oportunidades de aprendizaje! 📌'
+      intro:
+        'Aquí puedes ver los últimos cursos añadidos a nuestra plataforma. ¡Mantente al día con las nuevas oportunidades de aprendizaje! 📌',
     },
     {
       element: '.div-courses',
-      intro: 'Explora nuestra variedad de cursos disponibles. Filtra, busca y encuentra el contenido que más se ajuste a tus intereses y objetivos. 🔍'
+      intro:
+        'Explora nuestra variedad de cursos disponibles. Filtra, busca y encuentra el contenido que más se ajuste a tus intereses y objetivos. 🔍',
     },
     {
       element: '.div-programs',
-      intro: 'En esta sección encontrarás nuestras categorías de cursos organizadas por áreas temáticas. ¡Elige la que más te llame la atención! 📚'
+      intro:
+        'En esta sección encontrarás nuestras categorías de cursos organizadas por áreas temáticas. ¡Elige la que más te llame la atención! 📚',
     },
     {
       element: '.div-filters',
-      intro: '¿Buscas algo específico? Utiliza los filtros para encontrar cursos por categoría, modalidad o nivel de dificultad. ¡Haz tu búsqueda más eficiente! 🛠️'
-    }
+      intro:
+        '¿Buscas algo específico? Utiliza los filtros para encontrar cursos por categoría, modalidad o nivel de dificultad. ¡Haz tu búsqueda más eficiente! 🛠️',
+    },
   ],
   estudiantesDinamicos: [
     {
       element: '.div-all',
-      intro: 'Aquí puedes encontrar todos los cursos disponibles en Artiefy, en Ver Curso puedes desplegar una información más detallada sobre el curso de interes ✍️'
+      intro:
+        'Aquí puedes encontrar todos los cursos disponibles en Artiefy, en Ver Curso puedes desplegar una información más detallada sobre el curso de interes ✍️',
     },
     {
       element: '.div-pagination',
-      intro: 'Navega por las páginas de resultados para explorar más cursos. ¡No te pierdas ninguna oportunidad! 📖'
-    }
-  ]
+      intro:
+        'Navega por las páginas de resultados para explorar más cursos. ¡No te pierdas ninguna oportunidad! 📖',
+    },
+  ],
 };
 
-function waitForElements(selectors: string[], callback: () => void, maxAttempts = 30, interval = 250) {
+function waitForElements(
+  selectors: string[],
+  callback: () => void,
+  maxAttempts = 30,
+  interval = 250
+) {
   let attempts = 0;
   const check = () => {
-    const allExist = selectors.every(sel => document.querySelector(sel));
+    const allExist = selectors.every((sel) => document.querySelector(sel));
     if (allExist) {
       callback();
     } else if (attempts < maxAttempts) {
@@ -83,31 +96,47 @@ const TourManager = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-
   useEffect(() => {
-    if (typeof window !== 'undefined' && pathname === '/estudiantes' && localStorage.getItem('startEstudiantesTourDinamico') === '1') {
+    if (
+      typeof window !== 'undefined' &&
+      pathname === '/estudiantes' &&
+      localStorage.getItem('startEstudiantesTourDinamico') === '1'
+    ) {
       localStorage.removeItem('startEstudiantesTourDinamico');
       waitForElements(
-        steps.estudiantesDinamicos.map(s => s.element).filter(Boolean) as string[],
-        () => {
-          introJs().setOptions({ steps: steps.estudiantesDinamicos }).start();
+        steps.estudiantesDinamicos
+          .map((s) => s.element)
+          .filter((el): el is string => Boolean(el)),
+        async () => {
+          const introJs = (await import('intro.js')).default;
+          void introJs()
+            .setOptions({ steps: steps.estudiantesDinamicos })
+            .start();
         }
       );
     }
   }, [pathname]);
 
-
   useEffect(() => {
-    if (typeof window !== 'undefined' && pathname === '/estudiantes' && localStorage.getItem('startEstudiantesTour') === '1') {
+    if (
+      typeof window !== 'undefined' &&
+      pathname === '/estudiantes' &&
+      localStorage.getItem('startEstudiantesTour') === '1'
+    ) {
       localStorage.removeItem('startEstudiantesTour');
       waitForElements(
-        steps.estudiantesEstaticos.map(s => s.element).filter(Boolean) as string[],
-        () => {
-          introJs().setOptions({ steps: steps.estudiantesEstaticos }).oncomplete(() => {
-            // Marca que debe lanzarse el tour dinámico
-            localStorage.setItem('startEstudiantesTourDinamico', '1');
-
-          }).start();
+        steps.estudiantesEstaticos
+          .map((s) => s.element)
+          .filter((el): el is string => Boolean(el)),
+        async () => {
+          const introJs = (await import('intro.js')).default;
+          void introJs()
+            .setOptions({ steps: steps.estudiantesEstaticos })
+            .oncomplete(() => {
+              // Marca que debe lanzarse el tour dinámico
+              localStorage.setItem('startEstudiantesTourDinamico', '1');
+            })
+            .start();
         }
       );
     }
@@ -116,32 +145,40 @@ const TourManager = () => {
   useEffect(() => {
     const handleStartTour = () => {
       if (pathname !== '/') {
-        router.push('/');
+        void router.push('/');
         waitForElements(
-          steps.intro.map(s => s.element).filter(Boolean) as string[],
-          () => {
+          steps.intro
+            .map((s) => s.element)
+            .filter((el): el is string => Boolean(el)),
+          async () => {
+            const introJs = (await import('intro.js')).default;
             const intro = introJs();
-            intro.setOptions({ steps: steps.intro }).oncomplete(() => {
-              localStorage.setItem('startEstudiantesTour', '1');
-              router.push('/estudiantes');
-            });
-            intro.start();
+            void intro
+              .setOptions({ steps: steps.intro })
+              .oncomplete(() => {
+                localStorage.setItem('startEstudiantesTour', '1');
+                void router.push('/estudiantes');
+              })
+              .start();
           }
         );
-
       } else {
         waitForElements(
-          steps.intro.map(s => s.element).filter(Boolean) as string[],
-          () => {
+          steps.intro
+            .map((s) => s.element)
+            .filter((el): el is string => Boolean(el)),
+          async () => {
+            const introJs = (await import('intro.js')).default;
             const intro = introJs();
-            intro.setOptions({ steps: steps.intro }).oncomplete(() => {
-              localStorage.setItem('startEstudiantesTour', '1');
-              router.push('/estudiantes');
-            });
-            intro.start();
+            void intro
+              .setOptions({ steps: steps.intro })
+              .oncomplete(() => {
+                localStorage.setItem('startEstudiantesTour', '1');
+                void router.push('/estudiantes');
+              })
+              .start();
           }
         );
-
       }
     };
     window.addEventListener('start-tour', handleStartTour);
@@ -158,12 +195,16 @@ const TourManager = () => {
         localStorage.getItem('startEstudiantesTourDinamico') === '1'
       ) {
         const allExist = steps.estudiantesDinamicos
-          .map(s => s.element)
-          .filter(Boolean)
-          .every(sel => document.querySelector(sel));
+          .map((s) => s.element)
+          .filter((el): el is string => Boolean(el))
+          .every((sel) => document.querySelector(sel));
         if (allExist) {
           localStorage.removeItem('startEstudiantesTourDinamico');
-          introJs().setOptions({ steps: steps.estudiantesDinamicos }).start();
+          void import('intro.js').then(({ default: introJs }) => {
+            void introJs()
+              .setOptions({ steps: steps.estudiantesDinamicos })
+              .start();
+          });
           if (intervalId) clearInterval(intervalId);
         }
       }

@@ -1,14 +1,11 @@
 'use server';
 
-import { db } from '~/server/db';
-import { conversations, chat_messages } from '~/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-interface CreateConversationParams {
-    senderId: string;
-    title: string;
-    cursoId?: number; 
-}
+import { db } from '~/server/db';
+import { conversations, chat_messages } from '~/server/db/schema';
+
+
 
 export async function getOrCreateConversation({
   senderId,

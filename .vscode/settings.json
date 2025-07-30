@@ -124,5 +124,5 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
-  "workbench.colorTheme": "GitHub Dark Default",
+  "workbench.colorTheme": "Beautiful Dracula Normal",
 }

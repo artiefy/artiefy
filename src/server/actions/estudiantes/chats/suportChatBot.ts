@@ -1,8 +1,9 @@
 'use server'
 
+import { eq , or} from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { tickets, ticketComments } from '~/server/db/schema';
-import { eq , or} from 'drizzle-orm';
 
 export async function getTicketByUser(userId: string): Promise<{
     ticket: typeof tickets.$inferSelect | undefined;

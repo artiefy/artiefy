@@ -1,5 +1,7 @@
 import { Merriweather, Montserrat } from 'next/font/google';
 
+import type { Metadata } from 'next';
+
 import '~/styles/globals.css';
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
@@ -8,6 +10,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
+import TourManager from '~/components/tour/tourManager';
 import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
 	getWebsiteSchema,
@@ -15,7 +18,6 @@ import {
 } from '~/lib/metadata/structured-data';
 
 import Providers from './providers';
-import TourManager from '~/components/tour/tourManager';
 
 
 const montserrat = Montserrat({
@@ -35,10 +37,10 @@ const merriweather = Merriweather({
 	preload: false,
 	adjustFontFallback: true,
 });
-
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
 	return await getMetadataForRoute();
 }
+
 
 export default function RootLayout({
 	children,

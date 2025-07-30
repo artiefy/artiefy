@@ -1,7 +1,9 @@
 'use client';
-import { useExtras } from '~/app/estudiantes/StudentContext';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { LuInfo } from "react-icons/lu";
+
+import { useExtras } from '~/app/estudiantes/StudentContext';
 import '~/styles/tourButtonAnimations.css';
 
 
@@ -37,7 +39,7 @@ const ANIMATION_DURATION = 350;
 			}, ANIMATION_DURATION);
 			return () => clearTimeout(timeout);
 		}
-	}, [showExtras, hideButton]);
+	}, [showExtras, hideButton, showAnim]);
 
 	// Oculta al abrir chat, muestra al cerrar chat
 	useEffect(() => {

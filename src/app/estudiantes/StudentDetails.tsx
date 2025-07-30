@@ -53,13 +53,21 @@ export default function StudentDetails({
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
 	const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
-	const [placeHolderIndex, setPlaceholderIndex] = useState<number>(0);
 	const [text, setText] = useState('');
 	const [index, setIndex] = useState(0); // índice del mensaje
 	const [subIndex, setSubIndex] = useState(0); // índice de la letra
 	const [reverse, setReverse] = useState(false); // si está borrando
-	const [delay, setDelay] = useState(40); // velocidad de escritura
-	const placeHolderText = ['¿Que Deseas Crear? Escribe Tu Idea...' , '¿Qué quieres crear?', 'Desarrollemos esa idea que tienes en mente...', 'Estoy para ayudarte, Artiefy impulsa tus sueños', '¿Tienes una idea? ¡Vamos a hacerla realidad!'];
+	const [delay, _setDelay] = useState(40); // velocidad de escritura
+	const placeHolderText = useMemo(
+		() => [
+			'¿Que Deseas Crear? Escribe Tu Idea...',
+			'¿Qué quieres crear?',
+			'Desarrollemos esa idea que tienes en mente...',
+			'Estoy para ayudarte, Artiefy impulsa tus sueños',
+			'¿Tienes una idea? ¡Vamos a hacerla realidad!',
+		],
+		[]
+	);
 
 	// Memoized values to prevent re-renders
 	const sortedCourses = useMemo(() => {
@@ -175,7 +183,7 @@ export default function StudentDetails({
 	}, reverse ? 40 : delay);
 
 	return () => clearTimeout(timeout);
-}, [subIndex, index, reverse]);
+}, [subIndex, index, reverse, delay, placeHolderText]);
 
 
 

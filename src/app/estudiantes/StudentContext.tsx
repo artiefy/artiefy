@@ -1,16 +1,23 @@
 'use client';
 
-
-import { createContext, useContext, useState, useRef, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  type ReactNode,
+} from 'react';
 
 const ExtrasContext = createContext({
   showExtras: false,
-  show: () => { },
-  hide: () => { },
+  show: () => {
+    /* Default implementation */
+  },
+  hide: () => {
+    /* Default implementation */
+  },
 });
-
-import { ReactNode } from "react";
-
 
 export function ExtrasProvider({ children }: { children: ReactNode }) {
   const [showExtras, setShowExtras] = useState(false);
@@ -19,15 +26,18 @@ export function ExtrasProvider({ children }: { children: ReactNode }) {
   // Duración visible + animación extra (en ms)
   const VISIBLE_TIME = 5000; // tiempo visible real
   const ANIMATION_DURATION = 350; // igual que en el botón
-  const SAFETY_MARGIN = 50; 
+  const SAFETY_MARGIN = 50;
 
   const show = () => {
     setShowExtras(true);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      // Solo oculta si sigue visible (previene cortes si show() se llama varias veces)
-      setShowExtras(prev => prev ? false : prev);
-    }, VISIBLE_TIME + ANIMATION_DURATION + SAFETY_MARGIN);
+    timeoutRef.current = setTimeout(
+      () => {
+        // Solo oculta si sigue visible (previene cortes si show() se llama varias veces)
+        setShowExtras((prev) => (prev ? false : prev));
+      },
+      VISIBLE_TIME + ANIMATION_DURATION + SAFETY_MARGIN
+    );
   };
 
   // Limpia el timeout al desmontar
@@ -38,7 +48,9 @@ export function ExtrasProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ExtrasContext.Provider value={{ showExtras, show, hide: () => setShowExtras(false) }}>
+    <ExtrasContext.Provider
+      value={{ showExtras, show, hide: () => setShowExtras(false) }}
+    >
       {children}
     </ExtrasContext.Provider>
   );

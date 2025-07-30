@@ -2,14 +2,10 @@
 
 import { db } from '~/server/db';
 import { chat_messages } from '~/server/db/schema';
+
 import { getOrCreateConversation } from './saveChat';
 
-interface MessageInput {
-    id: number;
-    sender: string;
-    sender_id: string;
-    text: string;
-}
+
 
 export async function saveMessages(
   senderId: string,
