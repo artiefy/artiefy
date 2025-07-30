@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
-	getAllCourses,
 	createCourse,
 	deleteCourse,
+	getAllCourses,
 	getCourseById,
 	updateCourse,
 } from '~/models/super-adminModels/courseModelsSuperAdmin';

@@ -1,135 +1,124 @@
-import { clerkClient } from '@clerk/nextjs/server';
+import { clerkClient, type User } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
-const SUBSCRIPTION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const SUBSCRIPTION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
 const TIME_ZONE = 'America/Bogota';
 
 interface PaymentData {
-	email_buyer: string;
-	state_pol: string;
-	reference_sale: string;
-	value: string; // Added to fix type error
+  email_buyer: string;
+  state_pol: string;
+  reference_sale: string;
+  value?: string;
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
-	const { email_buyer, state_pol, reference_sale } = paymentData;
-	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
+  const { email_buyer, state_pol, reference_sale } = paymentData;
+  console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
-	if (state_pol !== '4') {
-		console.warn(
-			`⚠️ Pago con estado ${state_pol}, no se actualizó la suscripción.`
-		);
-		return;
-	}
+  if (state_pol !== '4') {
+    console.warn(
+      `⚠️ Pago con estado ${state_pol}, no se actualizó la suscripción.`
+    );
+    return;
+  }
 
-	const getPlanTypeFromReference = (
-		ref: string
-	): 'Pro' | 'Premium' | 'Enterprise' => {
-		const planMatch = /plan_(premium|pro|enterprise)_/i.exec(ref);
-		if (planMatch) {
-			const planName = planMatch[1].toLowerCase();
-			switch (planName) {
-				case 'premium':
-					return 'Premium';
-				case 'enterprise':
-					return 'Enterprise';
-				default:
-					return 'Pro';
-			}
-		}
-		return 'Pro';
-	};
+  // Extraer el tipo de plan del reference_sale
+  const planType = reference_sale.includes('pro')
+    ? 'Pro'
+    : reference_sale.includes('premium')
+      ? 'Premium'
+      : reference_sale.includes('enterprise')
+        ? 'Enterprise'
+        : 'Pro';
 
-	const planType = getPlanTypeFromReference(reference_sale);
+  // Obtener la fecha actual en Bogotá y calcular el fin de suscripción
+  const now = new Date();
+  const bogotaNow = formatInTimeZone(now, TIME_ZONE, 'yyyy-MM-dd HH:mm:ss');
+  const subscriptionEndDate = new Date(now.getTime() + SUBSCRIPTION_DURATION);
+  const subscriptionEndBogota = formatInTimeZone(
+    subscriptionEndDate,
+    TIME_ZONE,
+    'yyyy-MM-dd HH:mm:ss'
+  );
+  const subscriptionEndUtc = toZonedTime(subscriptionEndDate, TIME_ZONE);
 
-	console.log('🔄 Plan detection result:', {
-		reference: reference_sale,
-		amount: paymentData.value,
-		detectedPlan: planType,
-	});
+  try {
+    // Buscar usuario en la base de datos
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.email, email_buyer),
+    });
 
-	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
-	const now = new Date();
-	const bogotaNow = formatInTimeZone(now, TIME_ZONE, 'yyyy-MM-dd HH:mm:ss');
+    let userId = existingUser?.id;
 
-	const subscriptionEndDate = new Date(now.getTime() + SUBSCRIPTION_DURATION);
-	const subscriptionEndBogota = formatInTimeZone(
-		subscriptionEndDate,
-		TIME_ZONE,
-		'yyyy-MM-dd HH:mm:ss'
-	);
+    if (!existingUser) {
+      userId = uuidv4();
+      await db.insert(users).values({
+        id: userId,
+        email: email_buyer,
+        role: 'estudiante',
+        subscriptionStatus: 'active',
+        subscriptionEndDate: new Date(subscriptionEndBogota),
+        planType: planType,
+        purchaseDate: new Date(bogotaNow),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
+    } else {
+      await db
+        .update(users)
+        .set({
+          subscriptionStatus: 'active',
+          subscriptionEndDate: new Date(subscriptionEndBogota),
+          planType: planType,
+          purchaseDate: new Date(bogotaNow),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.email, email_buyer));
+      console.log(`✅ Usuario existente actualizado a activo: ${email_buyer}`);
+    }
 
-	// Convertir a UTC antes de guardar en la base de datos
-	const subscriptionEndUtc = toZonedTime(subscriptionEndDate, TIME_ZONE);
+    // Actualizar metadata en Clerk
+    const clerk = await clerkClient();
+    const clerkUsers = await clerk.users.getUserList({
+      emailAddress: [email_buyer],
+    });
 
-	try {
-		// Buscar usuario existente
-		const existingUser = await db.query.users.findFirst({
-			where: eq(users.email, email_buyer),
-		});
+    if (clerkUsers.totalCount > 0) {
+      const clerkUser = clerkUsers.data[0] as User | undefined;
+      if (!clerkUser) {
+        console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+        return;
+      }
 
-		if (existingUser) {
-			console.log('👤 Updating user plan:', {
-				from: existingUser.planType,
-				to: planType,
-			});
+      await clerk.users.updateUserMetadata(clerkUser.id, {
+        publicMetadata: {
+          subscriptionStatus: 'active',
+          subscriptionEndDate: subscriptionEndBogota,
+          planType: planType,
+        },
+      });
 
-			// Forzar la actualización del planType en la base de datos
-			const updateResult = await db
-				.update(users)
-				.set({
-					planType,
-					subscriptionStatus: 'active',
-					subscriptionEndDate: new Date(subscriptionEndBogota),
-					purchaseDate: new Date(bogotaNow),
-					updatedAt: new Date(),
-				})
-				.where(eq(users.email, email_buyer))
-				.returning();
+      console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
+    } else {
+      console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+    }
 
-			console.log('✅ Database update completed:', updateResult);
-
-			// Actualización de Clerk con verificación explícita
-			const clerk = await clerkClient();
-			const clerkUsers = await clerk.users.getUserList({
-				emailAddress: [email_buyer],
-			});
-
-			if (clerkUsers.data.length > 0) {
-				const clerkUser = clerkUsers.data[0];
-
-				console.log('🔄 Current Clerk metadata:', clerkUser.publicMetadata);
-
-				// Forzar la actualización en Clerk
-				if (clerkUsers.data.length > 0) {
-					const clerkUser = clerkUsers.data[0];
-
-					// Actualizar metadata forzando el nuevo planType
-					await clerk.users.updateUserMetadata(clerkUser.id, {
-						publicMetadata: {
-							planType, // Asegurar que este valor se actualice
-							subscriptionStatus: 'active',
-							subscriptionEndDate: subscriptionEndBogota,
-						},
-					});
-				}
-			}
-		}
-
-		// Logs de depuración
-		console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
-		console.log(`📅 Fin suscripción (Bogotá): ${subscriptionEndBogota}`);
-		console.log(
-			`🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
-		);
-	} catch (error: unknown) {
-		const errorMessage =
-			error instanceof Error ? error.message : 'Unknown error';
-		console.error('❌ Error:', errorMessage);
-		throw new Error(errorMessage);
-	}
+    // Logs de depuración
+    console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
+    console.log(`📅 Fin suscripción (Bogotá): ${subscriptionEndBogota}`);
+    console.log(
+      `🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
+    );
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error:', errorMessage);
+    throw new Error(errorMessage);
+  }
 }

@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
 
 import TicketModal from './TicketModal';
+
+import 'react-toastify/dist/ReactToastify.css';
 
 // Schema definitions
 const uploadSchema = z.object({
@@ -38,11 +39,11 @@ const rawTicketSchema = z.array(
     assigned_to_id: z.string().optional(),
     creator_name: z.string().optional(),
     creator_email: z.string().optional(),
-    comments: z.string().optional(),
+    comments: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
     time_elapsed_ms: z.number(),
-    cover_image_key: z.string().optional(),
+    cover_image_key: z.union([z.string(), z.null()]).optional(),
     video_key: z.union([z.string(), z.null()]).optional(),
     document_key: z.union([z.string(), z.null()]).optional(),
   })
@@ -208,6 +209,16 @@ export default function TicketsPage() {
   useEffect(() => {
     void fetchTickets();
   }, [fetchTickets]);
+  console.log('✅ Tickets antes del filtro:', tickets);
+  console.log('🔎 Estado de filtros:', {
+    filterType,
+    filterStatus,
+    filterId,
+    filterEmail,
+    filterAssignedTo,
+    filterStartDate,
+    filterEndDate,
+  });
 
   const filteredTickets = tickets.filter((ticket) => {
     const createdDateOnly = ticket.createdAt.toISOString().split('T')[0];

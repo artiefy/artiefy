@@ -1,8 +1,8 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, count, sum } from 'drizzle-orm';
+import { count, eq, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
-import { courses, lessons, enrollments } from '~/server/db/schema';
+import { courses, enrollments,lessons } from '~/server/db/schema';
 
 // Obtener todos los datos de un usuario
 export const getUserData = async (userId: string) => {

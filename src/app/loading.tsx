@@ -1,6 +1,7 @@
  'use client';
 
 import Image from 'next/image';
+
 import '~/styles/loading.css';
 
 export default function Loading() {

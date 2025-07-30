@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,8 +15,9 @@ import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
-import '~/styles/chatmodal.css';
 import { Card } from '~/components/estudiantes/ui/card';
+
+import '~/styles/chatmodal.css';
 import 'react-resizable/css/styles.css';
 
 // Importar StudentChatList.tsx

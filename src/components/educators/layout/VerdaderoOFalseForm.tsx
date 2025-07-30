@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -8,7 +8,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 
-import type { VerdaderoOFlaso, OptionVOF } from '~/types/typesActi';
+import type { OptionVOF,VerdaderoOFlaso } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada
 
@@ -65,27 +65,28 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 	// Función para validar el porcentaje total de las preguntas
 	// Función para validar el porcentaje total de las preguntas
 	// Función para validar el porcentaje total de las preguntas
-const validateTotalPercentage = async (newPesoPregunta: number) => {
-	const response = await fetch(
-		`/api/educadores/question/totalPercentage?activityId=${activityId}`
-	);
-	const data = (await response.json()) as { totalPercentage: number | string };
+	const validateTotalPercentage = async (newPesoPregunta: number) => {
+		const response = await fetch(
+			`/api/educadores/question/totalPercentage?activityId=${activityId}`
+		);
+		const data = (await response.json()) as {
+			totalPercentage: number | string;
+		};
 
-	// 🔧 Asegúrate de convertir todo a número
-	const totalActual = Number(data.totalPercentage);
-	const pesoNuevo = Number(newPesoPregunta);
-	const pesoAnterior = Number(editingQuestion?.pesoPregunta ?? 0);
+		// 🔧 Asegúrate de convertir todo a número
+		const totalActual = Number(data.totalPercentage);
+		const pesoNuevo = Number(newPesoPregunta);
+		const pesoAnterior = Number(editingQuestion?.pesoPregunta ?? 0);
 
-	const totalWithNew = totalActual + pesoNuevo - pesoAnterior;
+		const totalWithNew = totalActual + pesoNuevo - pesoAnterior;
 
-	console.log('Total actual:', totalActual);
-	console.log('Peso nuevo:', pesoNuevo);
-	console.log('Peso anterior (si aplica):', pesoAnterior);
-	console.log('Nuevo total proyectado:', totalWithNew);
+		console.log('Total actual:', totalActual);
+		console.log('Peso nuevo:', pesoNuevo);
+		console.log('Peso anterior (si aplica):', pesoAnterior);
+		console.log('Nuevo total proyectado:', totalWithNew);
 
-	return totalWithNew > 100;
-};
-
+		return totalWithNew > 100;
+	};
 
 	// Función para manejar el envio del formulario
 	const handleSubmit = async (question: VerdaderoOFlaso) => {
@@ -115,7 +116,10 @@ const validateTotalPercentage = async (newPesoPregunta: number) => {
 			const response = await fetch('/api/educadores/question/VerdaderoOFalso', {
 				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ activityId, questionsVOF: question }),
+				body: JSON.stringify({
+					activityId: String(activityId),
+					questionsVOF: question,
+				}),
 			});
 
 			if (!response.ok) {

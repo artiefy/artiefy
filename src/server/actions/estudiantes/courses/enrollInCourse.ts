@@ -1,24 +1,25 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, inArray } from 'drizzle-orm'; // Add inArray import
+import { and, eq } from 'drizzle-orm'; // Quitar inArray
 
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import {
-  users,
+  courses,
   enrollments,
   lessons,
   userLessonsProgress,
-  courses,
+  users,
 } from '~/server/db/schema';
 import { sortLessons } from '~/utils/lessonSorting';
 
-import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
+import type { EnrollmentResponse } from '~/types';
 
 export async function enrollInCourse(
   courseId: number
 ): Promise<EnrollmentResponse> {
-  let course = null; // Declare course variable in function scope
+  let course = null;
 
   try {
     const user = await currentUser();
@@ -32,7 +33,7 @@ export async function enrollInCourse(
 
     const userId = user.id;
 
-    // Get course information first to determine subscription status
+    // Get course information first
     course = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
       with: {
@@ -45,8 +46,7 @@ export async function enrollInCourse(
     }
 
     // Determine subscription status based on course type
-    const subscriptionLevel = course.courseType
-      ?.requiredSubscriptionLevel as SubscriptionLevel;
+    const subscriptionLevel = course.courseType?.requiredSubscriptionLevel ?? 'none';
     const shouldBeActive = subscriptionLevel !== 'none';
 
     // Check if user exists
@@ -142,13 +142,27 @@ export async function enrollInCourse(
       };
     }
 
-    // Crear inscripción y configurar lecciones
+    // Create enrollment
     await db.insert(enrollments).values({
       userId: userId,
       courseId: courseId,
       enrolledAt: new Date(),
       completed: false,
     });
+
+    // Create notification for course enrollment
+    try {
+      await createNotification({
+        userId,
+        type: 'COURSE_ENROLLMENT',
+        title: '¡Inscripción exitosa!',
+        message: `Te has inscrito al curso ${course.title}`,
+        metadata: { courseId },
+      });
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      // Continue execution even if notification fails
+    }
 
     // Configure lesson progress with progressive unlocking
     const courseLessons = await db.query.lessons.findMany({
@@ -158,40 +172,34 @@ export async function enrollInCourse(
     // Sort lessons using our shared sorting utility
     const sortedLessons = sortLessons(courseLessons);
 
-    // Get lesson IDs in correct order
-    const lessonIds = sortedLessons.map((lesson) => lesson.id);
-
-    // Get existing progress records for this user and these specific lessons
+    // Obtén los IDs de las lecciones que ya tienen progreso
     const existingProgress = await db.query.userLessonsProgress.findMany({
-      where: and(
-        eq(userLessonsProgress.userId, userId),
-        inArray(userLessonsProgress.lessonId, lessonIds)
-      ),
+      where: eq(userLessonsProgress.userId, userId),
     });
+    const existingLessonIds = new Set(existingProgress.map((p) => p.lessonId));
 
-    // Create a Set of existing lesson progress for faster lookup
-    const existingProgressSet = new Set(
-      existingProgress.map((progress) => progress.lessonId)
+    // Solo crea progreso para las lecciones que no existen aún
+    const progressValues = sortedLessons
+      .filter((lesson) => !existingLessonIds.has(lesson.id))
+      .map((lesson, index) => ({
+        userId: userId,
+        lessonId: lesson.id,
+        progress: 0,
+        isCompleted: false,
+        isLocked: index !== 0, // Solo la primera desbloqueada si es nueva
+        isNew: index === 0, // Solo la primera es nueva si es nueva
+        lastUpdated: new Date(),
+      }));
+
+    // Inserta solo las nuevas lecciones de una vez
+    await Promise.all(
+      progressValues.map((values) =>
+        db
+          .insert(userLessonsProgress)
+          .values(values)
+          .onConflictDoNothing()
+      )
     );
-
-    // Insert progress only for lessons that don't have progress
-    for (const [index, lesson] of sortedLessons.entries()) {
-      if (!existingProgressSet.has(lesson.id)) {
-        // Check if it's the first lesson OR has "Bienvenida" in title
-        const isFirstOrWelcome =
-          index === 0 || lesson.title.toLowerCase().includes('bienvenida');
-
-        await db.insert(userLessonsProgress).values({
-          userId: userId,
-          lessonId: lesson.id,
-          progress: 0,
-          isCompleted: false,
-          isLocked: !isFirstOrWelcome, // Only unlock first lesson or welcome lesson
-          isNew: true,
-          lastUpdated: new Date(),
-        });
-      }
-    }
 
     return {
       success: true,

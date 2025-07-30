@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,9 +21,9 @@ import {
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import {
 	Card,
-	CardHeader,
 	CardContent,
 	CardFooter,
+	CardHeader,
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 

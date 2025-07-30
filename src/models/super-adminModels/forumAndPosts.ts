@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '../../server/db/index';
-import { forums, posts, users, courses } from '../../server/db/schema';
+import { courses,forums, posts, users } from '../../server/db/schema';
 
 interface Post {
 	id: number;

@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
@@ -8,11 +9,25 @@ import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
+=======
+import { useCallback, useEffect, useState } from 'react';
+
+import Image from 'next/image';
+
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
+import { z } from 'zod';
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
 
 import TicketModal from './TicketModal';
 
+<<<<<<< HEAD
+=======
+import 'react-toastify/dist/ReactToastify.css';
+
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712
 // Schema definitions
 const uploadSchema = z.object({
   url: z.string().url(),
@@ -42,7 +57,11 @@ const rawTicketSchema = z.array(
     created_at: z.string(),
     updated_at: z.string(),
     time_elapsed_ms: z.number(),
+<<<<<<< HEAD
     cover_image_key: z.string().optional(),
+=======
+    cover_image_key: z.union([z.string(), z.null()]).optional(),
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712
     video_key: z.union([z.string(), z.null()]).optional(),
     document_key: z.union([z.string(), z.null()]).optional(),
   })
@@ -1056,7 +1075,11 @@ export default function TicketsPage() {
           onCloseAction={handleCloseModal}
           onSubmitAction={selectedTicket ? handleUpdate : handleCreate}
           ticket={selectedTicket}
+<<<<<<< HEAD
           onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
+=======
+          onUploadFileAction={handleFileUpload}
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712
         />
       </div>
       <ToastContainer position="top-right" autoClose={3000} />

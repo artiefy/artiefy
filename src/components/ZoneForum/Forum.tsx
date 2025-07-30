@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import Image from 'next/image';
 
@@ -11,12 +11,12 @@ import { z } from 'zod';
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
-	DialogTrigger,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';

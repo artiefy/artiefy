@@ -1,12 +1,12 @@
-import { eq, desc } from 'drizzle-orm';
+import { desc,eq } from 'drizzle-orm';
 
 import { db } from '../../server/db/index';
 import {
+	courses,
 	forums,
+	postReplies,
 	posts,
 	users,
-	courses,
-	postReplies,
 } from '../../server/db/schema';
 
 interface Post {

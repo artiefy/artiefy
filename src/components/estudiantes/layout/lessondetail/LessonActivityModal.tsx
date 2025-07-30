@@ -36,9 +36,11 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
 import { formatScoreNumber } from '~/utils/formatScore';
+import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
+
+import { FileUploadForm } from './FileUploadForm';
 
 import '~/styles/arrowactivity.css';
-import { FileUploadForm } from './FileUploadForm';
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -234,6 +236,8 @@ export function LessonActivityModal({
   const [isUrlValid, setIsUrlValid] = useState(false);
   // Add new state for URL uploading
   const [isUploadingUrl, setIsUploadingUrl] = useState(false);
+
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (activity?.content?.questions) {
@@ -1241,8 +1245,87 @@ export function LessonActivityModal({
       <div className="mt-4">
         <div className="rounded-xl bg-slate-900/50">
           <div className="flex flex-col">
+            {/* Action buttons - Moved to top */}
+            <div className="border-b border-gray-700 bg-slate-900/95 p-6">
+              <div className="space-y-2">
+                {shouldShowUnlockButton ? (
+                  <Button
+                    onClick={handleFinishAndNavigate}
+                    disabled={isUnlocking}
+                    className="w-full bg-green-500 text-white hover:bg-green-600"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      {isUnlocking ? (
+                        <>
+                          <Icons.spinner className="h-4 w-4" />
+                          Desbloqueando...
+                        </>
+                      ) : (
+                        <>
+                          Desbloquear Siguiente Clase
+                          <Unlock className="h-4 w-4" />
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={async () => {
+                      if (!isLastActivityInLesson && !activity.isCompleted) {
+                        await markActivityAsCompletedAction();
+                        await onActivityCompletedAction();
+                      }
+                      if (isNewUpload) {
+                        toast.success('Actividad completada');
+                        setIsNewUpload(false);
+                      }
+                      onCloseAction();
+                    }}
+                    className="w-full bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    Cerrar
+                  </Button>
+                )}
+
+                <Button
+                  onClick={() => {
+                    if (uploadedFileInfo?.status === 'reviewed') {
+                      const confirmed = window.confirm(
+                        'Al subir un nuevo documento, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
+                      );
+                      if (!confirmed) return;
+                    }
+
+                    setUploadedFileInfo(null);
+                    setSelectedFile(null);
+                    setFilePreview(null);
+                    setUploadProgress(0);
+                    setShowResults(false);
+                  }}
+                  className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    Subir Documento Nuevamente
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                  </span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Document info and status */}
             <div className="p-6">
-              {/* Document info and status */}
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex flex-col">
                   <h3 className="text-lg font-semibold text-white">Subido</h3>
@@ -1323,84 +1406,6 @@ export function LessonActivityModal({
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="border-t border-gray-700 bg-slate-900/95 p-6">
-              {shouldShowUnlockButton ? (
-                <Button
-                  onClick={handleFinishAndNavigate}
-                  disabled={isUnlocking}
-                  className="w-full bg-green-500 text-white hover:bg-green-600"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    {isUnlocking ? (
-                      <>
-                        <Icons.spinner className="h-4 w-4" />
-                        Desbloqueando...
-                      </>
-                    ) : (
-                      <>
-                        Desbloquear Siguiente Clase
-                        <Unlock className="h-4 w-4" />
-                      </>
-                    )}
-                  </span>
-                </Button>
-              ) : (
-                <Button
-                  onClick={async () => {
-                    if (!isLastActivityInLesson && !activity.isCompleted) {
-                      await markActivityAsCompletedAction();
-                      await onActivityCompletedAction();
-                    }
-                    if (isNewUpload) {
-                      toast.success('Actividad completada');
-                      setIsNewUpload(false);
-                    }
-                    onCloseAction();
-                  }}
-                  className="w-full bg-blue-500 text-white hover:bg-blue-600"
-                >
-                  Cerrar
-                </Button>
-              )}
-
-              <Button
-                onClick={() => {
-                  // Mostrar confirmación antes de reiniciar
-                  if (uploadedFileInfo?.status === 'reviewed') {
-                    const confirmed = window.confirm(
-                      'Al subir un nuevo documento, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                    );
-                    if (!confirmed) return;
-                  }
-
-                  setUploadedFileInfo(null);
-                  setSelectedFile(null);
-                  setFilePreview(null);
-                  setUploadProgress(0);
-                  setShowResults(false);
-                }}
-                className="mt-2 w-full bg-yellow-500 text-white hover:bg-yellow-600"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  Subir Documento Nuevamente
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                </span>
-              </Button>
             </div>
           </div>
         </div>
@@ -1725,12 +1730,8 @@ export function LessonActivityModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Prevent closing if it's a document upload activity
-        if (!open && activity.typeid === 1) {
-          return; // This prevents the modal from closing
-        }
-
-        // For other activity types, use existing logic
+        // Eliminar la lógica que previene el cierre para typeid === 1
+        // Ahora siempre permite cerrar el modal con la X
         if (!open) {
           if (activity.typeid === 1) {
             if (isNewUpload) {
@@ -1762,7 +1763,11 @@ export function LessonActivityModal({
       }}
     >
       <DialogContent
-        className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]"
+        className={`[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex flex-col overflow-hidden ${
+          isMobile
+            ? 'w-full max-w-full rounded-none p-1'
+            : 'max-h-[90vh] sm:max-w-[500px]'
+        }`}
         aria-describedby={MODAL_DESCRIPTION_ID}
       >
         <DialogHeader className="bg-background sticky top-0 z-50">

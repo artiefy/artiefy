@@ -7,11 +7,11 @@ import nodemailer from 'nodemailer';
 import {
 	createPost,
 	deletePostById,
-	getPostsByForo,
 	getPostById,
+	getPostsByForo,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { forums, enrollments, users } from '~/server/db/schema';
+import { enrollments, forums, users } from '~/server/db/schema';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const respondWithError = (message: string, status: number) =>

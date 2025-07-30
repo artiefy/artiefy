@@ -5,15 +5,15 @@ import { eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import {
-	getPostRepliesByPostId,
-	deletePostReplyById,
-	updatePostReplyById,
-	getPostReplyById,
 	createPostReply,
+	deletePostReplyById,
 	getPostById,
+	getPostRepliesByPostId,
+	getPostReplyById,
+	updatePostReplyById,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { forums, enrollments, users } from '~/server/db/schema';
+import { enrollments, forums, users } from '~/server/db/schema';
 
 
 const respondWithError = (message: string, status: number) =>

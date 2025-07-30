@@ -1,175 +1,264 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
+import {
+  enrollmentPrograms,
+  enrollments,
+  lessons,
+  userLessonsProgress,
+  users,
+} from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
+
+function formatDateToClerk(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // mes primero
+  const day = String(date.getDate()).padStart(2, '0'); // luego día
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 export async function POST(request: Request) {
-	try {
-		// Validate request body
-		if (!request.body) {
-			return NextResponse.json(
-				{ error: 'Missing request body' },
-				{ status: 400 }
-			);
-		}
-		const body = (await request.json()) as {
-			courseId?: string;
-			programId?: string;
-			userIds: string[];
-			planType?: string;
-		};
-		const { courseId, programId, userIds } = body;
-		for (const userId of userIds) {
-			const existing = await db
-				.select({ id: users.id })
-				.from(users)
-				.where(eq(users.id, userId))
-				.execute();
+  try {
+    if (!request.body) {
+      return NextResponse.json(
+        { error: 'Missing request body' },
+        { status: 400 }
+      );
+    }
 
-			if (existing.length === 0) {
-				try {
-					const clerk = await clerkClient();
-					const clerkUser = await clerk.users.getUser(userId);
+    const body = (await request.json()) as {
+      courseId?: string;
+      programId?: string;
+      userIds: string[];
+      planType?: string;
+    };
 
-					await db.insert(users).values({
-						id: clerkUser.id,
-						email:
-							clerkUser.emailAddresses?.[0]?.emailAddress ??
-							'sin-email@desconocido.com',
-						name:
-							clerkUser.firstName && clerkUser.lastName
-								? `${clerkUser.firstName} ${clerkUser.lastName}`
-								: (clerkUser.username ?? 'Usuario sin nombre'),
-						role: 'estudiante', // o lo que tenga sentido por defecto
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					});
+    const { courseId, programId, userIds, planType } = body;
+    const allowedPlans = ['Pro', 'Premium', 'Enterprise'];
+    const normalizedPlanType: 'Pro' | 'Premium' | 'Enterprise' | 'none' =
+      planType && allowedPlans.includes(planType)
+        ? (planType as 'Pro' | 'Premium' | 'Enterprise')
+        : 'none';
 
-					console.log(`✅ Usuario creado: ${clerkUser.id}`);
-				} catch (err) {
-					console.error(`❌ Error al obtener/crear el usuario ${userId}:`, err);
-				}
-			}
-		}
+    const subscriptionEndDate = new Date();
+    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
-		if (!Array.isArray(userIds) || userIds.length === 0) {
-			return NextResponse.json(
-				{ error: 'userIds must be a non-empty array' },
-				{ status: 400 }
-			);
-		}
+    for (const userId of userIds) {
+      await db
+        .update(users)
+        .set({
+          planType: normalizedPlanType,
+          subscriptionStatus: 'active',
+          subscriptionEndDate: subscriptionEndDate,
+        })
+        .where(eq(users.id, userId))
+        .execute();
+    }
+    for (const userId of userIds) {
+      const clerk = await clerkClient();
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          planType: normalizedPlanType,
+          subscriptionStatus: 'active',
+          subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
+        },
+      });
+    }
 
-		const parsedCourseId = courseId ? Number(courseId) : undefined;
-		const parsedProgramId = programId ? Number(programId) : undefined;
+    for (const userId of userIds) {
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
 
-		if (courseId && (parsedCourseId === undefined || isNaN(parsedCourseId))) {
-			return NextResponse.json({ error: 'Invalid courseId' }, { status: 400 });
-		}
+      if (existing.length === 0) {
+        try {
+          const clerk = await clerkClient();
+          const clerkUser = await clerk.users.getUser(userId);
 
-		if (
-			programId &&
-			(parsedProgramId === undefined || isNaN(parsedProgramId))
-		) {
-			return NextResponse.json({ error: 'Invalid programId' }, { status: 400 });
-		}
+          await db.insert(users).values({
+            id: clerkUser.id,
+            email:
+              clerkUser.emailAddresses?.[0]?.emailAddress ??
+              'sin-email@desconocido.com',
+            name:
+              clerkUser.firstName && clerkUser.lastName
+                ? `${clerkUser.firstName} ${clerkUser.lastName}`
+                : (clerkUser.username ?? 'Usuario sin nombre'),
+            role: 'estudiante', // o lo que tenga sentido por defecto
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
 
-		if (!parsedCourseId && !parsedProgramId) {
-			return NextResponse.json(
-				{ error: 'At least one of courseId or programId must be provided' },
-				{ status: 400 }
-			);
-		}
+          console.log(`✅ Usuario creado: ${clerkUser.id}`);
+        } catch (err) {
+          console.error(`❌ Error al obtener/crear el usuario ${userId}:`, err);
+        }
+      }
+    }
 
-		// Fetch valid users
-		const existingUsers = await db
-			.select({ id: users.id })
-			.from(users)
-			.where(inArray(users.id, userIds))
-			.execute();
-		console.log('Usuarios encontrados en la base de datos:', existingUsers); // 👈 aquí lo ves en consola
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return NextResponse.json(
+        { error: 'userIds must be a non-empty array' },
+        { status: 400 }
+      );
+    }
 
-		const validUserIds = new Set(existingUsers.map((u) => u.id));
-		const filteredUserIds = userIds.filter((id) => validUserIds.has(id));
+    const parsedCourseId = courseId ? Number(courseId) : undefined;
+    const parsedProgramId = programId ? Number(programId) : undefined;
 
-		if (filteredUserIds.length === 0) {
-			return NextResponse.json(
-				{ error: 'No valid users found' },
-				{ status: 400 }
-			);
-		}
+    if (courseId && (parsedCourseId === undefined || isNaN(parsedCourseId))) {
+      return NextResponse.json({ error: 'Invalid courseId' }, { status: 400 });
+    }
 
-		// Enroll in course if courseId is provided
-		if (parsedCourseId) {
-			const existingEnrollments = await db
-				.select({ userId: enrollments.userId })
-				.from(enrollments)
-				.where(
-					and(
-						eq(enrollments.courseId, parsedCourseId),
-						inArray(enrollments.userId, filteredUserIds)
-					)
-				)
-				.execute();
+    if (
+      programId &&
+      (parsedProgramId === undefined || isNaN(parsedProgramId))
+    ) {
+      return NextResponse.json({ error: 'Invalid programId' }, { status: 400 });
+    }
 
-			const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
-			const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
+    if (!parsedCourseId && !parsedProgramId) {
+      return NextResponse.json(
+        { error: 'At least one of courseId or programId must be provided' },
+        { status: 400 }
+      );
+    }
 
-			if (newUsers.length > 0) {
-				await db.insert(enrollments).values(
-					newUsers.map((userId) => ({
-						userId,
-						courseId: parsedCourseId,
-						enrolledAt: new Date(),
-						completed: false,
-					}))
-				);
-			}
-		}
+    // Fetch valid users
+    const existingUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(inArray(users.id, userIds))
+      .execute();
+    console.log('Usuarios encontrados en la base de datos:', existingUsers); // 👈 aquí lo ves en consola
 
-		// Enroll in program if programId is provided
-		if (parsedProgramId) {
-			const existingProgramEnrollments = await db
-				.select({ userId: enrollmentPrograms.userId })
-				.from(enrollmentPrograms)
-				.where(
-					and(
-						eq(enrollmentPrograms.programaId, parsedProgramId),
-						inArray(enrollmentPrograms.userId, filteredUserIds)
-					)
-				)
-				.execute();
+    const validUserIds = new Set(existingUsers.map((u) => u.id));
+    const filteredUserIds = userIds.filter((id) => validUserIds.has(id));
 
-			const existingProgramUserIds = new Set(
-				existingProgramEnrollments.map((e) => e.userId)
-			);
-			const newProgramUsers = filteredUserIds.filter(
-				(id) => !existingProgramUserIds.has(id)
-			);
+    if (filteredUserIds.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid users found' },
+        { status: 400 }
+      );
+    }
 
-			if (newProgramUsers.length > 0) {
-				await db.insert(enrollmentPrograms).values(
-					newProgramUsers.map((userId) => ({
-						userId,
-						programaId: parsedProgramId,
-						enrolledAt: new Date(),
-						completed: false,
-					}))
-				);
-			}
-		}
+    // Enroll in course if courseId is provided
+    if (parsedCourseId) {
+      const existingEnrollments = await db
+        .select({ userId: enrollments.userId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, parsedCourseId),
+            inArray(enrollments.userId, filteredUserIds)
+          )
+        )
+        .execute();
 
-		return NextResponse.json({
-			success: true,
-			message: 'Enrollment completed successfully',
-		});
-	} catch (error) {
-		console.error('Error in POST /api/enrollments:', error);
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 }
-		);
-	}
+      const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
+      const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
+
+      if (newUsers.length > 0) {
+        await db.insert(enrollments).values(
+          newUsers.map((userId) => ({
+            userId,
+            courseId: parsedCourseId,
+            enrolledAt: new Date(),
+            completed: false,
+          }))
+        );
+
+        // Obtener lecciones del curso
+        const courseLessons = await db.query.lessons.findMany({
+          where: eq(lessons.courseId, parsedCourseId), // asegúrate de usar parsedCourseId aquí
+        });
+
+        const sortedLessons = sortLessons(courseLessons);
+        const lessonIds = sortedLessons.map((lesson) => lesson.id);
+
+        for (const userId of newUsers) {
+          const existingProgress = await db.query.userLessonsProgress.findMany({
+            where: and(
+              eq(userLessonsProgress.userId, userId),
+              inArray(userLessonsProgress.lessonId, lessonIds)
+            ),
+          });
+
+          const existingProgressSet = new Set(
+            existingProgress.map((progress) => progress.lessonId)
+          );
+
+          for (const [index, lesson] of sortedLessons.entries()) {
+            if (!existingProgressSet.has(lesson.id)) {
+              const isFirstOrWelcome =
+                index === 0 ||
+                lesson.title.toLowerCase().includes('bienvenida') ||
+                lesson.title.toLowerCase().includes('clase 1');
+
+              await db.insert(userLessonsProgress).values({
+                userId,
+                lessonId: lesson.id,
+                progress: 0,
+                isCompleted: false,
+                isLocked: !isFirstOrWelcome,
+                isNew: true,
+                lastUpdated: new Date(),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Enroll in program if programId is provided
+    if (parsedProgramId) {
+      const existingProgramEnrollments = await db
+        .select({ userId: enrollmentPrograms.userId })
+        .from(enrollmentPrograms)
+        .where(
+          and(
+            eq(enrollmentPrograms.programaId, parsedProgramId),
+            inArray(enrollmentPrograms.userId, filteredUserIds)
+          )
+        )
+        .execute();
+
+      const existingProgramUserIds = new Set(
+        existingProgramEnrollments.map((e) => e.userId)
+      );
+      const newProgramUsers = filteredUserIds.filter(
+        (id) => !existingProgramUserIds.has(id)
+      );
+
+      if (newProgramUsers.length > 0) {
+        await db.insert(enrollmentPrograms).values(
+          newProgramUsers.map((userId) => ({
+            userId,
+            programaId: parsedProgramId,
+            enrolledAt: new Date(),
+            completed: false,
+          }))
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Enrollment completed successfully',
+    });
+  } catch (error) {
+    console.error('Error in POST /api/enrollments:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

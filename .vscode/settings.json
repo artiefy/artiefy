@@ -19,6 +19,7 @@
     "*.css": "tailwindcss",
     "*.env": "env",
     "*.env.production": "env",
+    "*.jsx": "javascriptreact",
     "*.tsx": "typescriptreact",
     "*.ts": "typescript",
     "*.mjs": "javascript",
@@ -80,20 +81,21 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
+<<<<<<< HEAD
   "eslint.runtime": "C:/Program Files/nodejs/node",
+=======
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/24972_1752934170897/node",
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "typescript",
     "typescriptreact"
   ],
+  "eslint.codeActionsOnSave.mode": "problems",
   "eslint.rules.customizations": [
     {
       "rule": "import/named",
-      "severity": "off"
-    },
-    {
-      "rule": "import/order",
       "severity": "off"
     },
     {
@@ -101,9 +103,13 @@
       "severity": "off"
     },
     {
-      "rule": "@typescript-eslint/no-unused-vars",
+      "rule": "simple-import-sort/imports",
       "severity": "off"
-    }
+    },
+    {
+      "rule": "simple-import-sort/exports",
+      "severity": "off"
+    },
   ],
   // Tailwind CSS Configuration
   "tailwindCSS.includeLanguages": {
@@ -124,5 +130,13 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
+<<<<<<< HEAD
   "workbench.colorTheme": "Beautiful Dracula Normal",
 }
+=======
+  "workbench.colorTheme": "GitHub Dark Default",
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+}
+>>>>>>> 9a3b99785e4f11bd56f718166cb3535a53f0a712

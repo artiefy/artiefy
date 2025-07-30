@@ -1,12 +1,11 @@
 'use client';
 
-import type * as React from 'react';
-
-import { FaLock, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPhone, FaUser } from 'react-icons/fa';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import type { FormData } from '~/types/payu';
+import type * as React from 'react';
 
 interface BuyerInfoFormProps {
 	formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
@@ -73,7 +72,7 @@ export default function BuyerInfoForm({
 					<input
 						type="tel"
 						name="telephone"
-						placeholder="+00 0000000000"
+						placeholder="+000000000000"
 						value={formData.telephone}
 						onChange={onChangeAction}
 						maxLength={14}

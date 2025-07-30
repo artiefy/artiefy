@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect,useRef, useState } from 'react';
 
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { toast } from 'sonner';
+
 import '~/styles/chatmodal.css';
 
 interface CourseChatbotProps {

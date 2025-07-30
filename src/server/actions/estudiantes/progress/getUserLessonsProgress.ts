@@ -4,11 +4,11 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	userLessonsProgress,
 	userActivitiesProgress,
+	userLessonsProgress,
 } from '~/server/db/schema';
 
-import type { UserLessonsProgress, UserActivitiesProgress } from '~/types';
+import type { UserActivitiesProgress,UserLessonsProgress } from '~/types';
 
 // Obtener el progreso de las lecciones del usuario
 const getUserLessonsProgress = async (

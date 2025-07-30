@@ -29,7 +29,7 @@ Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 per
 ```html
 <!-- Aplicar flex solo entre md y xl -->
 <div class="md:max-xl:flex">
-<!-- ... -->
+  <!-- ... -->
 </div>
 ```
 
@@ -87,7 +87,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next @types/next @types/react @eslint/js typescript-eslint` : Dependencias para que funcione el archivo eslint.config.mjs
+10. `npm install --save-dev eslint @eslint/eslintrc typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier @types/react @eslint/js @types/node eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort globals dotenv`: Dependencias para que funcione el archivo eslint.config.mjs
 11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
 12. `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 
@@ -195,4 +195,19 @@ Instalar dependencias globales en una sola :
 
 `npm install -g npm-check-updates@latest npm@latest eslint@latest typescript@latest`
 
+`npm list -g --depth=0` /Chekear las versiones de tus paquetes globales
+
 ---
+
+Pasos en Vim:
+
+Presiona `:wq` y luego Enter para guardar y salir.
+
+---
+
+Configurar localmente tu cuenta de github en tu proyecto
+
+```bash
+git config user.name "artiefy"
+git config user.email "artiefy4@gmail.com"
+```

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '@clerk/nextjs';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
-import { Send, X, MessageCircle } from 'lucide-react';
+import { MessageCircle,Send, X } from 'lucide-react';
 
 import socket from '~/lib/socket';
 

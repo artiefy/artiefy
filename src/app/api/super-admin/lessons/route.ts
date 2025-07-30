@@ -113,10 +113,7 @@ export async function POST(req: NextRequest) {
 			console.log('Faltan campos obligatorios.');
 		}
 
-		return NextResponse.json(
-			{ message: 'Lección creada exitosamente' },
-			{ status: 201 }
-		);
+		return NextResponse.json({ status: 201 });
 	} catch (error) {
 		console.error('Error al crear la lección:', error);
 		const errorMessage =

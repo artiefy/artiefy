@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { setRoleWrapper } from '~/server/wrappers/serverWrappers';

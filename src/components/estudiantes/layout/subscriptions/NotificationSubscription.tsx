@@ -6,13 +6,14 @@ import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
 import {
-  FaCrown,
   FaChevronLeft,
   FaChevronRight,
+  FaCrown,
   FaExclamationTriangle,
 } from 'react-icons/fa';
 
 import { checkSubscriptionStatus } from '~/server/actions/estudiantes/subscriptions/checkSubscriptionStatus';
+
 import './notificationSubscription.css';
 
 export function NotificationSubscription() {
@@ -32,13 +33,20 @@ export function NotificationSubscription() {
       planType: user.publicMetadata.planType as string,
     };
 
-    const status = checkSubscriptionStatus(subscriptionData);
-    if (status?.shouldNotify) {
-      setNotification({
-        message: status.message,
-        severity: status.severity,
-      });
-    }
+    const checkStatus = async () => {
+      const status = await checkSubscriptionStatus(
+        subscriptionData,
+        user.primaryEmailAddress?.emailAddress
+      );
+      if (status?.shouldNotify) {
+        setNotification({
+          message: status.message,
+          severity: status.severity,
+        });
+      }
+    };
+
+    void checkStatus();
   }, [user]);
 
   if (!notification) return null;
