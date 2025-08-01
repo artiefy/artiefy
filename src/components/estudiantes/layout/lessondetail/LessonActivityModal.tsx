@@ -1398,7 +1398,12 @@ export function LessonActivityModal({
     return (
       <div className="mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4">
         <div className="flex items-center gap-3">
-          {getFileIcon(fileExtension)}
+          {/* Ícono más grande */}
+          <span className="flex items-center justify-center">
+            <span className="flex h-10 w-10 items-center justify-center">
+              {getFileIcon(fileExtension)}
+            </span>
+          </span>
           <div>
             <span className="block text-sm font-semibold text-blue-900">
               Archivo de ayuda del educador
