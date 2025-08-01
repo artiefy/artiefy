@@ -87,6 +87,7 @@ interface StoredFileInfo {
   feedback?: string;
   submissionType: 'file' | 'url';
   url?: string;
+  comment?: string; // <-- Añade esta línea para soportar el comentario del educador
 }
 
 interface PresignedResponse {
@@ -1236,8 +1237,6 @@ export function LessonActivityModal({
 
     if (!uploadedFileInfo) return null;
 
-    // Eliminado shouldShowUnlockButton porque ya no se usa aquí
-
     // Solo retorna la info del documento, los botones van ahora arriba del título
     return (
       <div className="mt-4">
@@ -1321,6 +1320,17 @@ export function LessonActivityModal({
                       : '0.0'}
                   </span>
                 </div>
+                {/* Renderizar el comentario si existe */}
+                {uploadedFileInfo.comment && (
+                  <div className="mt-2 px-4">
+                    <span className="block text-sm text-gray-300">
+                      Comentario del educador:
+                    </span>
+                    <span className="block text-sm text-white">
+                      {uploadedFileInfo.comment}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
