@@ -1287,7 +1287,15 @@ export function LessonActivityModal({
 
     if (!uploadedFileInfo) return null;
 
-    // Solo retorna la info del documento, los botones van ahora arriba del título
+    // Determinar el logo según la nota
+    const grade = uploadedFileInfo.grade ?? 0;
+    const logoSrc =
+      grade > 0
+        ? '/contract-filed-line-svgrepo-com.png'
+        : '/contract-pending-line-svgrepo-com.png';
+    const logoAlt = grade > 0 ? 'Revisado' : 'En revisión';
+    const logoClass = grade > 0 ? 'text-green-500' : 'text-yellow-500';
+
     return (
       <div className="mt-4">
         <div className="rounded-xl bg-slate-900/50">
@@ -1300,14 +1308,12 @@ export function LessonActivityModal({
                 </div>
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium ${
-                    uploadedFileInfo.status === 'reviewed'
+                    grade > 0
                       ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {uploadedFileInfo.status === 'reviewed'
-                    ? 'Revisado'
-                    : 'En Revisión'}
+                  {grade > 0 ? 'Revisado' : 'En Revisión'}
                 </span>
               </div>
               {/* Document info with consistent spacing */}
@@ -1320,23 +1326,11 @@ export function LessonActivityModal({
                         Archivo
                       </span>
                       <Image
-                        src={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? '/contract-filed-line-svgrepo-com.png'
-                            : '/contract-pending-line-svgrepo-com.png'
-                        }
-                        alt={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? 'Revisado'
-                            : 'En revisión'
-                        }
+                        src={logoSrc}
+                        alt={logoAlt}
                         width={40}
                         height={40}
-                        className={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? 'text-green-500'
-                            : 'text-yellow-500'
-                        }
+                        className={logoClass}
                       />
                     </div>
                     <div className="px-4">
@@ -1366,14 +1360,10 @@ export function LessonActivityModal({
                   </span>
                   <span
                     className={`text-lg font-bold ${
-                      (uploadedFileInfo?.grade ?? 0) >= 3
-                        ? 'text-green-500'
-                        : 'text-red-500'
+                      grade >= 3 ? 'text-green-500' : 'text-red-500'
                     }`}
                   >
-                    {uploadedFileInfo?.grade
-                      ? formatScore(uploadedFileInfo.grade)
-                      : '0.0'}
+                    {grade ? formatScore(grade) : '0.0'}
                   </span>
                 </div>
                 {/* Renderizar el comentario si existe */}
