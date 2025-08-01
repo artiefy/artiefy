@@ -1247,8 +1247,9 @@ export function CourseHeader({
   const renderTopEnrollmentButton = () => {
     if (localIsEnrolled) {
       return (
-        <div className="mb-0 pt-0 pb-2 sm:mb-0 sm:pt-0 flex justify-center sm:justify-start">
-          <div className="flex flex-col space-y-4 items-center sm:items-start w-full sm:w-auto">
+        <div className="mb-0 flex justify-center pt-0 pb-2 sm:mb-0 sm:justify-center sm:pt-0">
+          {/* Mobile: vertical, Desktop: horizontal y centrado */}
+          <div className="flex w-full flex-col items-center space-y-4 sm:w-auto sm:flex-row sm:items-center sm:justify-center sm:space-y-0 sm:space-x-4">
             <Button
               className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
               disabled
@@ -1275,8 +1276,8 @@ export function CourseHeader({
     }
     // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
     return (
-      <div className="mb-2 pt-0 sm:mb-2 sm:pt-0 flex justify-center sm:justify-start">
-        <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+      <div className="mb-2 flex justify-center pt-0 sm:mb-2 sm:justify-center sm:pt-0">
+        <div className="flex w-full items-center justify-center sm:w-auto sm:justify-center">
           <button
             className="btn"
             onClick={handleEnrollClick}
@@ -1619,7 +1620,7 @@ export function CourseHeader({
           )}
         </div>
         {/* Course type and instructor info */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:-mb-1 mb-6 sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
             <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
               <div>
