@@ -479,6 +479,7 @@ export interface Notification {
   title: string;
   message: string;
   isRead: boolean;
+  isMarked?: boolean; // <-- nuevo campo
   createdAt: Date;
   metadata?: NotificationMetadata;
 }

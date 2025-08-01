@@ -6,7 +6,10 @@ import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Bell, BellRing } from 'lucide-react';
+import { toast } from 'react-toastify';
+import useSWR from 'swr';
 
+import { Dialog } from '~/components/estudiantes/ui/dialog';
 import {
   getNotifications,
   getUnreadCount,
@@ -36,15 +39,26 @@ export function NotificationHeader() {
   const router = useRouter();
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // SWR para notificaciones y contador de no leídas (actualiza cada 10s)
+  // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
+  const { data: notifications = [], mutate } = useSWR(
+    user?.id ? ['/api/notifications', user.id] : null,
+    async () =>
+      user?.id ? await getNotifications(user.id, { limit: 1000 }) : [], // <-- trae todas
+    { refreshInterval: 10000 }
+  );
+  const { data: unreadCount = 0, mutate: mutateUnread } = useSWR(
+    user?.id ? ['/api/notifications/unread', user.id] : null,
+    async () => (user?.id ? await getUnreadCount(user.id) : 0),
+    { refreshInterval: 10000 }
+  );
 
   useEffect(() => {
-    if (user?.id) {
-      void getNotifications(user.id).then(setNotifications);
-      void getUnreadCount(user.id).then(setUnreadCount);
-    }
+    // Ya no necesitas setNotifications ni setUnreadCount aquí, SWR se encarga
   }, [user?.id]);
 
   useEffect(() => {
@@ -65,11 +79,10 @@ export function NotificationHeader() {
 
     if (!isOpen && user?.id && unreadCount > 0) {
       try {
-        // Marca solo las notificaciones no leídas
         await markNotificationsAsRead(user.id);
-        // Actualiza localmente el estado de las notificaciones
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
+        // Refresca los datos con SWR
+        mutate();
+        mutateUnread();
       } catch (error) {
         console.error('Error marking notifications as read:', error);
       }
@@ -127,6 +140,52 @@ export function NotificationHeader() {
     }
   };
 
+  const handleDeleteNotification = async (notificationId: number) => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/notifications/delete?id=${notificationId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      // Tipa la respuesta para evitar el warning de acceso inseguro
+      interface DeleteResponse {
+        success: boolean;
+      }
+      const result: DeleteResponse = await res.json();
+      if (res.ok && result.success) {
+        mutate(); // Refresca la lista de notificaciones con SWR
+        mutateUnread(); // Refresca el contador de no leídas
+        setDeleteId(null);
+      } else {
+        toast.error('No se pudo eliminar la notificación de la base de datos');
+      }
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+      toast.error('Error eliminando notificación');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Filtra notificaciones duplicadas (solo muestra la más reciente por tipo y metadata.activityId/lessonId)
+  const uniqueNotifications = notifications.reduce<Notification[]>(
+    (acc, notif) => {
+      const isDuplicate = acc.some(
+        (n) =>
+          n.type === notif.type &&
+          n.metadata?.activityId === notif.metadata?.activityId &&
+          n.metadata?.lessonId === notif.metadata?.lessonId
+      );
+      if (!isDuplicate) acc.push(notif);
+      return acc;
+    },
+    []
+  );
+
+  // Modal de confirmación para eliminar notificación
+  // Solo renderiza el modal si deleteId !== null
   return (
     <div className="notification-menu">
       <button
@@ -159,11 +218,11 @@ export function NotificationHeader() {
           overflowY: 'auto',
         }}
       >
-        {notifications.length > 0 ? (
-          notifications.map((notification) => (
+        {uniqueNotifications.length > 0 ? (
+          uniqueNotifications.map((notification) => (
             <div
               key={notification.id}
-              className={`notification-item ${
+              className={`notification-item group ${
                 !notification.isRead ? 'notification-unread' : ''
               }`}
               onClick={() => handleNotificationClick(notification)}
@@ -174,6 +233,7 @@ export function NotificationHeader() {
                   handleNotificationClick(notification);
                 }
               }}
+              style={{ position: 'relative' }}
             >
               <div className="notification-content">
                 <div className="notification-title">
@@ -186,6 +246,30 @@ export function NotificationHeader() {
                   {formatRelativeTime(notification.createdAt)}
                 </div>
               </div>
+              {/* Icono de basura visible solo al hacer hover */}
+              <button
+                className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100"
+                title="Eliminar notificación"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteId(notification.id);
+                }}
+                type="button"
+              >
+                <svg
+                  className="h-5 w-5 text-red-500 hover:text-red-700"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
           ))
         ) : (
@@ -197,6 +281,39 @@ export function NotificationHeader() {
           </div>
         )}
       </div>
+      {/* Modal de confirmación para eliminar notificación */}
+      {deleteId !== null && (
+        <Dialog open={true} onOpenChange={(open) => !open && setDeleteId(null)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="w-full max-w-xs rounded-lg bg-white p-6 shadow-lg">
+              <h2 className="mb-4 text-lg font-bold text-gray-900">
+                Eliminar notificación
+              </h2>
+              <p className="mb-6 text-gray-700">
+                ¿Estás seguro que deseas eliminar esta notificación?
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
+                  onClick={() => setDeleteId(null)}
+                  disabled={isDeleting}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                  onClick={() => deleteId && handleDeleteNotification(deleteId)}
+                  disabled={isDeleting}
+                  type="button"
+                >
+                  {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }
