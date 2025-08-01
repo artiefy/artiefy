@@ -28,7 +28,12 @@ import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
+import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
+import {
+  ModalScheduleMeeting,
+  ScheduledMeeting,
+} from '~/components/super-admin/modals/ModalScheduleMeeting';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -58,6 +63,7 @@ interface Course {
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
+  meetings?: ScheduledMeeting[];
 }
 interface Materia {
   id: number;
@@ -224,6 +230,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [scheduledMeetings, setScheduledMeetings] = useState<
+    ScheduledMeeting[]
+  >([]);
+
   const { user } = useUser(); // Ya está dentro del componente
 
   const handleEnrollAndRedirect = async () => {
@@ -386,6 +397,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setSelectedColor(savedColor);
     }
   }, [courseIdNumber]);
+  useEffect(() => {
+    if (course?.meetings) {
+      setScheduledMeetings(course.meetings);
+    }
+  }, [course?.meetings]);
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -1109,6 +1125,30 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       ) : (
         courseIdNumber !== null && (
           <>
+            {/* NUEVO BLOQUE PARA SIMULAR CLASES EN TEAMS */}
+            <div className="mt-12 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-primary text-xl font-bold">
+                  Clases agendadas
+                </h2>
+                <Button
+                  onClick={() => setIsMeetingModalOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  + Agendar clase en Teams
+                </Button>
+              </div>
+              <ScheduledMeetingsList
+                meetings={(scheduledMeetings.length
+                  ? scheduledMeetings
+                  : (course.meetings ?? [])
+                ).map((m) => ({
+                  ...m,
+                  videoUrl: m.videoUrl ?? m.recordingContentUrl ?? null, // asegura que exista
+                }))}
+                color={selectedColor}
+              />
+            </div>
             <LessonsListEducator
               courseId={courseIdNumber}
               selectedColor={selectedColor}
@@ -1116,6 +1156,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </>
         )
       )}
+
+      <ModalScheduleMeeting
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        onMeetingsCreated={() => {
+          setIsMeetingModalOpen(false);
+          fetchCourse(); // 🔄 vuelve a traer el curso con los meetings desde backend
+        }}
+        courseId={courseIdNumber} // <-- aquí lo pasas
+      />
+
       <DashboardEstudiantes
         courseId={courseIdNumber}
         selectedColor={selectedColor}
