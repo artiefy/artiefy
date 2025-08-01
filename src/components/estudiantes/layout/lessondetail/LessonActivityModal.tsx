@@ -11,6 +11,7 @@ import {
   LightBulbIcon,
   StarIcon as StarSolidIcon,
   XCircleIcon,
+  XMarkIcon, // <-- asegúrate de importar esto
 } from '@heroicons/react/24/solid';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
@@ -417,7 +418,7 @@ export function LessonActivityModal({
       setShowResults(true);
 
       const allQuestionsAnswered =
-        Object.keys(userAnswers).length === questions.length;
+        Object.keys(userAnswers).length === (questions?.length ?? 0);
 
       if (!allQuestionsAnswered) {
         toast.error('Debes responder todas las preguntas');
@@ -1235,95 +1236,13 @@ export function LessonActivityModal({
 
     if (!uploadedFileInfo) return null;
 
-    const isFirstSubmission = !activity.isCompleted;
-    const shouldShowUnlockButton =
-      (isFirstSubmission || isNewUpload) &&
-      isLastActivityInLesson &&
-      !isLastLesson;
+    // Eliminado shouldShowUnlockButton porque ya no se usa aquí
 
+    // Solo retorna la info del documento, los botones van ahora arriba del título
     return (
       <div className="mt-4">
         <div className="rounded-xl bg-slate-900/50">
           <div className="flex flex-col">
-            {/* Action buttons - Moved to top */}
-            <div className="border-b border-gray-700 bg-slate-900/95 p-6">
-              <div className="space-y-2">
-                {shouldShowUnlockButton ? (
-                  <Button
-                    onClick={handleFinishAndNavigate}
-                    disabled={isUnlocking}
-                    className="w-full bg-green-500 text-white hover:bg-green-600"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {isUnlocking ? (
-                        <>
-                          <Icons.spinner className="h-4 w-4" />
-                          Desbloqueando...
-                        </>
-                      ) : (
-                        <>
-                          Desbloquear Siguiente Clase
-                          <Unlock className="h-4 w-4" />
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={async () => {
-                      if (!isLastActivityInLesson && !activity.isCompleted) {
-                        await markActivityAsCompletedAction();
-                        await onActivityCompletedAction();
-                      }
-                      if (isNewUpload) {
-                        toast.success('Actividad completada');
-                        setIsNewUpload(false);
-                      }
-                      onCloseAction();
-                    }}
-                    className="w-full bg-blue-500 text-white hover:bg-blue-600"
-                  >
-                    Cerrar
-                  </Button>
-                )}
-
-                <Button
-                  onClick={() => {
-                    if (uploadedFileInfo?.status === 'reviewed') {
-                      const confirmed = window.confirm(
-                        'Al subir un nuevo documento, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                      );
-                      if (!confirmed) return;
-                    }
-
-                    setUploadedFileInfo(null);
-                    setSelectedFile(null);
-                    setFilePreview(null);
-                    setUploadProgress(0);
-                    setShowResults(false);
-                  }}
-                  className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Subir Documento Nuevamente
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                  </span>
-                </Button>
-              </div>
-            </div>
-
             {/* Document info and status */}
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
@@ -1342,7 +1261,6 @@ export function LessonActivityModal({
                     : 'En Revisión'}
                 </span>
               </div>
-
               {/* Document info with consistent spacing */}
               <div className="overflow-hidden rounded-lg">
                 <div className="space-y-4">
@@ -1378,7 +1296,6 @@ export function LessonActivityModal({
                       </span>
                     </div>
                   </div>
-
                   {/* Upload date row */}
                   <div className="flex items-center justify-between px-4 py-2">
                     <span className="text-sm font-medium text-white">
@@ -1392,7 +1309,6 @@ export function LessonActivityModal({
                   </div>
                 </div>
               </div>
-
               {/* Grade section */}
               <div className="mt-6 border-t border-gray-700 pt-4">
                 <div className="flex items-center justify-between px-4">
@@ -1417,6 +1333,14 @@ export function LessonActivityModal({
     const isFileUploadActivity = activity.typeid === 1;
 
     if (isFileUploadActivity) {
+      // Botones arriba del título SOLO si ya hay un documento/url subido
+      const isFirstSubmission = !activity.isCompleted;
+      const shouldShowUnlockButton =
+        (isFirstSubmission || isNewUpload) &&
+        isLastActivityInLesson &&
+        !isLastLesson &&
+        uploadedFileInfo; // Solo si ya hay documento/url subido
+
       return (
         <div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
           <div className="group relative w-full">
@@ -1426,7 +1350,66 @@ export function LessonActivityModal({
               <div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
               <div className="relative p-6">
-                {/* Título y descripción - Modificado */}
+                {/* Botones arriba del título */}
+                <div className="mb-4 flex flex-col gap-2">
+                  {shouldShowUnlockButton && (
+                    <Button
+                      onClick={handleFinishAndNavigate}
+                      disabled={isUnlocking}
+                      className="w-full bg-green-500 text-white hover:bg-green-600"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {isUnlocking ? (
+                          <>
+                            <Icons.spinner className="h-4 w-4" />
+                            Desbloqueando...
+                          </>
+                        ) : (
+                          <>
+                            Desbloquear Siguiente Clase
+                            <Unlock className="h-4 w-4" />
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                  )}
+                  {uploadedFileInfo && (
+                    <Button
+                      onClick={() => {
+                        if (uploadedFileInfo?.status === 'reviewed') {
+                          const confirmed = window.confirm(
+                            'Al subir un nuevo documento, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
+                          );
+                          if (!confirmed) return;
+                        }
+                        setUploadedFileInfo(null);
+                        setSelectedFile(null);
+                        setFilePreview(null);
+                        setUploadProgress(0);
+                        setShowResults(false);
+                      }}
+                      className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        Subir Documento Nuevamente
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                      </span>
+                    </Button>
+                  )}
+                </div>
+                {/* Título y descripción */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex w-full items-center justify-between space-x-4">
@@ -1570,7 +1553,7 @@ export function LessonActivityModal({
                         ) : uploadedFileInfo ? (
                           'Documento ya subido'
                         ) : (
-                          'Subir Documento'
+                          'Cargar Documento'
                         )}
                       </span>
                     </button>
@@ -1711,6 +1694,23 @@ export function LessonActivityModal({
     );
   };
 
+  // Define handleRequestClose aquí
+  const handleRequestClose = async () => {
+    // Si es la última actividad de la lección, no es la última lección, y corresponde desbloquear, desbloquea automáticamente
+    const shouldAutoUnlock =
+      activity.typeid === 1 &&
+      isLastActivityInLesson &&
+      !isLastLesson &&
+      ((uploadedFileInfo && !activity.isCompleted) ?? isNewUpload);
+
+    if (shouldAutoUnlock) {
+      await handleFinishAndNavigate();
+      return;
+    }
+    // Permitir cerrar siempre con la X
+    onCloseAction();
+  };
+
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -1730,36 +1730,9 @@ export function LessonActivityModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Eliminar la lógica que previene el cierre para typeid === 1
-        // Ahora siempre permite cerrar el modal con la X
         if (!open) {
-          if (activity.typeid === 1) {
-            if (isNewUpload) {
-              toast.success('Actividad completada');
-              setIsNewUpload(false);
-            }
-            onCloseAction();
-            return;
-          }
-          if (!canCloseModal) {
-            if (activity.revisada) {
-              const intentosRestantes = attemptsLeft ?? 0;
-              if (intentosRestantes > 0) {
-                toast.error(
-                  `Te quedan ${intentosRestantes} intento${
-                    intentosRestantes !== 1 ? 's' : ''
-                  } para aprobar la actividad. Debes obtener una nota de 3 o superior para aprobar.`
-                );
-              }
-            }
-            return;
-          }
-
-          if (!open && finalScore >= 3 && isLastActivity) {
-            onActivityCompleteAction();
-          }
+          handleRequestClose();
         }
-        onCloseAction();
       }}
     >
       <DialogContent
@@ -1770,23 +1743,26 @@ export function LessonActivityModal({
         }`}
         aria-describedby={MODAL_DESCRIPTION_ID}
       >
-        <DialogHeader className="bg-background sticky top-0 z-50">
-          {' '}
-          {/* Reduced bottom padding from pb-4 to pb-2 */}
+        {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
+        <button
+          type="button"
+          aria-label="Cerrar"
+          onClick={handleRequestClose}
+          className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
+        >
+          <XMarkIcon className="h-6 w-6 text-white" />
+        </button>
+        <DialogHeader className="bg-background sticky top-0 z-40">
           <DialogTitle className="text-center text-3xl font-bold">
             {activity.content?.questionsFilesSubida?.[0] != null
               ? 'SUBIDA DE DOCUMENTO'
               : 'ACTIVIDAD'}
           </DialogTitle>
-          {/* Add description for accessibility */}
           <div id={MODAL_DESCRIPTION_ID} className="sr-only">
             {activity.description ?? 'Actividad del curso'}
           </div>
         </DialogHeader>
-        {/* Add padding to create space between content and scrollbar */}
         <div className="flex-1 overflow-y-auto px-4">
-          {' '}
-          {/* Updated padding */}
           {isUnlocking
             ? renderLoadingState('Desbloqueando Siguiente Clase...')
             : isSavingResults

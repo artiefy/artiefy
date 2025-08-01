@@ -652,7 +652,7 @@ export default function LessonDetails({
 
         {/* Right Sidebar */}
         {!isMobile && (
-          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-72">
+          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-0 md:shadow-sm lg:w-72">
             <LessonActivities
               activities={activities}
               isVideoCompleted={isVideoCompleted}
