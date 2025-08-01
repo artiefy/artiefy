@@ -637,7 +637,7 @@ const Page: React.FC = () => {
       });
 
       router.push(
-        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
+        `/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
       );
     } catch (err: unknown) {
       console.error('Error detallado:', err);
@@ -677,7 +677,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/super-admin"
+              href="/dashboard/educadores"
             >
               Inicio
             </BreadcrumbLink>
@@ -686,7 +686,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/super-admin/cursos"
+              href="/dashboard/educadores/cursos"
             >
               Lista de cursos
             </BreadcrumbLink>
@@ -695,7 +695,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+              href={`/dashboard/educadores/cursos/${courseIdNumber}`}
             >
               Detalles curso
             </BreadcrumbLink>

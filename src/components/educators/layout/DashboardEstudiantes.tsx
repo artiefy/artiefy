@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { usePathname,useRouter } from 'next/navigation';
 
 import { Dialog } from '@headlessui/react';
 import {
@@ -86,6 +86,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
     {}
   );
+  const pathname = usePathname();
+  const isSuperAdmin = pathname?.includes('/dashboard/super-admin/') ?? false;
+
   const [activities, setActivities] = useState<
     {
       id: number;
@@ -756,8 +759,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                   />
                                   <button
                                     onClick={() => {
-                                      // Redirigir a la nueva página para crear actividad
-                                      window.location.href = `/dashboard/super-admin/cursos/${courseId}/newActivity?parametroId=${activity.parametroId}`;
+                                      const basePath = isSuperAdmin
+                                        ? 'super-admin'
+                                        : 'educadores';
+                                      window.location.href = `/dashboard/${basePath}/cursos/${courseId}/newActivity?parametroId=${activity.parametroId}`;
                                     }}
                                     className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
                                   >

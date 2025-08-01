@@ -968,3 +968,19 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
     references: [courses.id],
   }),
 }));
+
+export const classMeetings = pgTable('class_meetings', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id')
+    .notNull()
+    .references(() => courses.id),
+  title: varchar('title', { length: 255 }).notNull(),
+  startDateTime: timestamp('start_datetime', { withTimezone: true }).notNull(),
+  endDateTime: timestamp('end_datetime', { withTimezone: true }).notNull(),
+  joinUrl: varchar('join_url', { length: 1024 }),
+  weekNumber: integer('week_number'),
+  createdAt: timestamp('created_at').defaultNow(),
+  meetingId: varchar('meeting_id', { length: 255 }).notNull(),
+  // 🆕 Agregado: Ruta del video en S3
+  video_key: varchar('video_key', { length: 255 }),
+});
