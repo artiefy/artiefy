@@ -1314,7 +1314,13 @@ export function LessonActivityModal({
                   <span className="text-sm text-gray-300">
                     Calificación del Educador:
                   </span>
-                  <span className="text-lg font-bold text-white">
+                  <span
+                    className={`text-lg font-bold ${
+                      (uploadedFileInfo?.grade ?? 0) >= 3
+                        ? 'text-green-500'
+                        : 'text-red-500'
+                    }`}
+                  >
                     {uploadedFileInfo?.grade
                       ? formatScore(uploadedFileInfo.grade)
                       : '0.0'}
