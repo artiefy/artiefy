@@ -469,6 +469,7 @@ export interface NotificationMetadata {
   creatorId?: string;
   activityId?: number;
   certificateId?: number;
+  openModal?: boolean; // <-- agrega esta línea para permitir el flag openModal
 }
 
 export interface Notification {
@@ -478,6 +479,7 @@ export interface Notification {
   title: string;
   message: string;
   isRead: boolean;
+  isMarked?: boolean; // <-- nuevo campo
   createdAt: Date;
   metadata?: NotificationMetadata;
 }

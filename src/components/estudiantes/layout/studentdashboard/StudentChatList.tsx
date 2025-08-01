@@ -57,7 +57,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
         const ticketItem = ticketData.ticket
           ? {
               id: ticketData.ticket.id,
-              title: ticketData.ticket.description ?? 'Ticket sin descripción',
+              title: 'Ticket de Soporte',
               curso_id: null, // o puedes usar `ticketData.ticket.curso_id` si lo tienes
               tipo: 'ticket', // extra opcional para diferenciarlo de las conversaciones
             }

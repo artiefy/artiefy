@@ -11,6 +11,7 @@ import {
   LightBulbIcon,
   StarIcon as StarSolidIcon,
   XCircleIcon,
+  XMarkIcon, // <-- asegúrate de importar esto
 } from '@heroicons/react/24/solid';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
@@ -86,6 +87,7 @@ interface StoredFileInfo {
   feedback?: string;
   submissionType: 'file' | 'url';
   url?: string;
+  comment?: string; // <-- Añade esta línea para soportar el comentario del educador
 }
 
 interface PresignedResponse {
@@ -192,6 +194,12 @@ const validateUrl = (url: string): boolean => {
   }
 };
 
+// Añade la interfaz HelpFileInfo arriba de los estados
+interface HelpFileInfo {
+  id: string;
+  archivoKey: string;
+}
+
 export function LessonActivityModal({
   isOpen,
   onCloseAction,
@@ -236,6 +244,9 @@ export function LessonActivityModal({
   const [isUrlValid, setIsUrlValid] = useState(false);
   // Add new state for URL uploading
   const [isUploadingUrl, setIsUploadingUrl] = useState(false);
+  // Nuevo estado para el archivo de ayuda del educador
+  const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo | null>(null);
+  const [isLoadingHelpFile, setIsLoadingHelpFile] = useState(false);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -360,6 +371,47 @@ export function LessonActivityModal({
     void loadDocumentInfo();
   }, [activity.id, activity.typeid, userId]);
 
+  // Nuevo useEffect para obtener el archivo de ayuda desde Upstash
+  useEffect(() => {
+    const fetchHelpFile = async () => {
+      if (activity.typeid === 1) {
+        setIsLoadingHelpFile(true);
+        try {
+          const res = await fetch(
+            `/api/activities/getHelpFile?activityId=${activity.id}`
+          );
+          if (res.ok) {
+            // Tipar la respuesta correctamente
+            const data: unknown = await res.json();
+            if (
+              Array.isArray(data) &&
+              data.length > 0 &&
+              typeof data[0] === 'object' &&
+              data[0] !== null &&
+              'id' in data[0] &&
+              'archivoKey' in data[0]
+            ) {
+              const { id, archivoKey } = data[0] as {
+                id: string;
+                archivoKey: string;
+              };
+              setHelpFileInfo({ id, archivoKey });
+            } else {
+              setHelpFileInfo(null);
+            }
+          } else {
+            setHelpFileInfo(null);
+          }
+        } catch {
+          setHelpFileInfo(null);
+        } finally {
+          setIsLoadingHelpFile(false);
+        }
+      }
+    };
+    void fetchHelpFile();
+  }, [activity.id, activity.typeid]);
+
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const canProceedToNext = currentQuestion && userAnswers[currentQuestion.id];
@@ -417,7 +469,7 @@ export function LessonActivityModal({
       setShowResults(true);
 
       const allQuestionsAnswered =
-        Object.keys(userAnswers).length === questions.length;
+        Object.keys(userAnswers).length === (questions?.length ?? 0);
 
       if (!allQuestionsAnswered) {
         toast.error('Debes responder todas las preguntas');
@@ -1235,95 +1287,19 @@ export function LessonActivityModal({
 
     if (!uploadedFileInfo) return null;
 
-    const isFirstSubmission = !activity.isCompleted;
-    const shouldShowUnlockButton =
-      (isFirstSubmission || isNewUpload) &&
-      isLastActivityInLesson &&
-      !isLastLesson;
+    // Determinar el logo según la nota
+    const grade = uploadedFileInfo.grade ?? 0;
+    const logoSrc =
+      grade > 0
+        ? '/contract-filed-line-svgrepo-com.png'
+        : '/contract-pending-line-svgrepo-com.png';
+    const logoAlt = grade > 0 ? 'Revisado' : 'En revisión';
+    const logoClass = grade > 0 ? 'text-green-500' : 'text-yellow-500';
 
     return (
       <div className="mt-4">
         <div className="rounded-xl bg-slate-900/50">
           <div className="flex flex-col">
-            {/* Action buttons - Moved to top */}
-            <div className="border-b border-gray-700 bg-slate-900/95 p-6">
-              <div className="space-y-2">
-                {shouldShowUnlockButton ? (
-                  <Button
-                    onClick={handleFinishAndNavigate}
-                    disabled={isUnlocking}
-                    className="w-full bg-green-500 text-white hover:bg-green-600"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {isUnlocking ? (
-                        <>
-                          <Icons.spinner className="h-4 w-4" />
-                          Desbloqueando...
-                        </>
-                      ) : (
-                        <>
-                          Desbloquear Siguiente Clase
-                          <Unlock className="h-4 w-4" />
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={async () => {
-                      if (!isLastActivityInLesson && !activity.isCompleted) {
-                        await markActivityAsCompletedAction();
-                        await onActivityCompletedAction();
-                      }
-                      if (isNewUpload) {
-                        toast.success('Actividad completada');
-                        setIsNewUpload(false);
-                      }
-                      onCloseAction();
-                    }}
-                    className="w-full bg-blue-500 text-white hover:bg-blue-600"
-                  >
-                    Cerrar
-                  </Button>
-                )}
-
-                <Button
-                  onClick={() => {
-                    if (uploadedFileInfo?.status === 'reviewed') {
-                      const confirmed = window.confirm(
-                        'Al subir un nuevo documento, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                      );
-                      if (!confirmed) return;
-                    }
-
-                    setUploadedFileInfo(null);
-                    setSelectedFile(null);
-                    setFilePreview(null);
-                    setUploadProgress(0);
-                    setShowResults(false);
-                  }}
-                  className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Subir Documento Nuevamente
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                  </span>
-                </Button>
-              </div>
-            </div>
-
             {/* Document info and status */}
             <div className="p-6">
               <div className="mb-6 flex items-center justify-between">
@@ -1332,17 +1308,14 @@ export function LessonActivityModal({
                 </div>
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium ${
-                    uploadedFileInfo.status === 'reviewed'
+                    grade > 0
                       ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {uploadedFileInfo.status === 'reviewed'
-                    ? 'Revisado'
-                    : 'En Revisión'}
+                  {grade > 0 ? 'Revisado' : 'En Revisión'}
                 </span>
               </div>
-
               {/* Document info with consistent spacing */}
               <div className="overflow-hidden rounded-lg">
                 <div className="space-y-4">
@@ -1353,23 +1326,11 @@ export function LessonActivityModal({
                         Archivo
                       </span>
                       <Image
-                        src={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? '/contract-filed-line-svgrepo-com.png'
-                            : '/contract-pending-line-svgrepo-com.png'
-                        }
-                        alt={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? 'Revisado'
-                            : 'En revisión'
-                        }
+                        src={logoSrc}
+                        alt={logoAlt}
                         width={40}
                         height={40}
-                        className={
-                          uploadedFileInfo.status === 'reviewed'
-                            ? 'text-green-500'
-                            : 'text-yellow-500'
-                        }
+                        className={logoClass}
                       />
                     </div>
                     <div className="px-4">
@@ -1378,7 +1339,6 @@ export function LessonActivityModal({
                       </span>
                     </div>
                   </div>
-
                   {/* Upload date row */}
                   <div className="flex items-center justify-between px-4 py-2">
                     <span className="text-sm font-medium text-white">
@@ -1392,19 +1352,31 @@ export function LessonActivityModal({
                   </div>
                 </div>
               </div>
-
               {/* Grade section */}
               <div className="mt-6 border-t border-gray-700 pt-4">
                 <div className="flex items-center justify-between px-4">
                   <span className="text-sm text-gray-300">
                     Calificación del Educador:
                   </span>
-                  <span className="text-lg font-bold text-white">
-                    {uploadedFileInfo?.grade
-                      ? formatScore(uploadedFileInfo.grade)
-                      : '0.0'}
+                  <span
+                    className={`text-lg font-bold ${
+                      grade >= 3 ? 'text-green-500' : 'text-red-500'
+                    }`}
+                  >
+                    {grade ? formatScore(grade) : '0.0'}
                   </span>
                 </div>
+                {/* Renderizar el comentario si existe */}
+                {uploadedFileInfo.comment && (
+                  <div className="mt-2 px-4">
+                    <span className="block text-sm text-gray-300">
+                      Comentario del educador:
+                    </span>
+                    <span className="block text-sm text-white">
+                      {uploadedFileInfo.comment}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1413,10 +1385,50 @@ export function LessonActivityModal({
     );
   };
 
+  // Renderiza el bloque de ayuda para descarga
+  const renderHelpFileBlock = () => {
+    if (!helpFileInfo) return null;
+    // Usa la URL pública del bucket configurada en .env
+    const s3BaseUrl =
+      process.env.NEXT_PUBLIC_AWS_S3_URL ??
+      'https://s3.us-east-2.amazonaws.com/artiefy-upload';
+    const fileUrl = `${s3BaseUrl}/${helpFileInfo.archivoKey}`;
+    const fileName = helpFileInfo.archivoKey.split('/').pop() ?? 'archivo';
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
+    return (
+      <div className="mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4">
+        <div className="flex items-center gap-3">
+          {/* Ícono más grande */}
+          <span className="flex items-center justify-center">
+            <span className="flex h-10 w-10 items-center justify-center">
+              {getFileIcon(fileExtension)}
+            </span>
+          </span>
+          <div>
+            <span className="block text-sm font-semibold text-blue-900">
+              Archivo de ayuda del educador
+            </span>
+            <span className="block text-xs text-blue-700">{fileName}</span>
+          </div>
+        </div>
+        <a
+          href={fileUrl}
+          download={fileName}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+        >
+          Descargar
+        </a>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     const isFileUploadActivity = activity.typeid === 1;
 
     if (isFileUploadActivity) {
+      // Elimina la declaración de isFirstSubmission
       return (
         <div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
           <div className="group relative w-full">
@@ -1426,7 +1438,60 @@ export function LessonActivityModal({
               <div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
               <div className="relative p-6">
-                {/* Título y descripción - Modificado */}
+                {/* Botón de subir documento/URL nuevamente arriba del bloque de ayuda */}
+                {uploadedFileInfo && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    <Button
+                      onClick={() => {
+                        if (uploadedFileInfo.status === 'reviewed') {
+                          const confirmed = window.confirm(
+                            'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
+                          );
+                          if (!confirmed) return;
+                        }
+                        setUploadedFileInfo(null);
+                        setSelectedFile(null);
+                        setFilePreview(null);
+                        setUploadProgress(0);
+                        setShowResults(false);
+                        setDriveUrl('');
+                        setIsUrlValid(false);
+                      }}
+                      className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {activeTab === 'local'
+                          ? 'Subir documento nuevamente'
+                          : 'Subir URL nuevamente'}
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                      </span>
+                    </Button>
+                  </div>
+                )}
+                {/* Renderiza el archivo de ayuda antes de los tabs */}
+                {isLoadingHelpFile ? (
+                  <div className="mb-4 flex items-center gap-2">
+                    <Icons.spinner className="h-5 w-5 text-blue-500" />
+                    <span className="text-sm text-blue-500">
+                      Cargando archivo de ayuda...
+                    </span>
+                  </div>
+                ) : (
+                  renderHelpFileBlock()
+                )}
+                {/* Título y descripción */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex w-full items-center justify-between space-x-4">
@@ -1570,7 +1635,7 @@ export function LessonActivityModal({
                         ) : uploadedFileInfo ? (
                           'Documento ya subido'
                         ) : (
-                          'Subir Documento'
+                          'Cargar Documento'
                         )}
                       </span>
                     </button>
@@ -1711,6 +1776,23 @@ export function LessonActivityModal({
     );
   };
 
+  // Define handleRequestClose aquí
+  const handleRequestClose = async () => {
+    // Si es la última actividad de la lección, no es la última lección, y corresponde desbloquear, desbloquea automáticamente
+    const shouldAutoUnlock =
+      activity.typeid === 1 &&
+      isLastActivityInLesson &&
+      !isLastLesson &&
+      ((uploadedFileInfo && !activity.isCompleted) ?? isNewUpload);
+
+    if (shouldAutoUnlock) {
+      await handleFinishAndNavigate();
+      return;
+    }
+    // Permitir cerrar siempre con la X
+    onCloseAction();
+  };
+
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -1730,36 +1812,9 @@ export function LessonActivityModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Eliminar la lógica que previene el cierre para typeid === 1
-        // Ahora siempre permite cerrar el modal con la X
         if (!open) {
-          if (activity.typeid === 1) {
-            if (isNewUpload) {
-              toast.success('Actividad completada');
-              setIsNewUpload(false);
-            }
-            onCloseAction();
-            return;
-          }
-          if (!canCloseModal) {
-            if (activity.revisada) {
-              const intentosRestantes = attemptsLeft ?? 0;
-              if (intentosRestantes > 0) {
-                toast.error(
-                  `Te quedan ${intentosRestantes} intento${
-                    intentosRestantes !== 1 ? 's' : ''
-                  } para aprobar la actividad. Debes obtener una nota de 3 o superior para aprobar.`
-                );
-              }
-            }
-            return;
-          }
-
-          if (!open && finalScore >= 3 && isLastActivity) {
-            onActivityCompleteAction();
-          }
+          handleRequestClose();
         }
-        onCloseAction();
       }}
     >
       <DialogContent
@@ -1770,23 +1825,26 @@ export function LessonActivityModal({
         }`}
         aria-describedby={MODAL_DESCRIPTION_ID}
       >
-        <DialogHeader className="bg-background sticky top-0 z-50">
-          {' '}
-          {/* Reduced bottom padding from pb-4 to pb-2 */}
+        {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
+        <button
+          type="button"
+          aria-label="Cerrar"
+          onClick={handleRequestClose}
+          className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
+        >
+          <XMarkIcon className="h-6 w-6 text-white" />
+        </button>
+        <DialogHeader className="bg-background sticky top-0 z-40">
           <DialogTitle className="text-center text-3xl font-bold">
             {activity.content?.questionsFilesSubida?.[0] != null
               ? 'SUBIDA DE DOCUMENTO'
               : 'ACTIVIDAD'}
           </DialogTitle>
-          {/* Add description for accessibility */}
           <div id={MODAL_DESCRIPTION_ID} className="sr-only">
             {activity.description ?? 'Actividad del curso'}
           </div>
         </DialogHeader>
-        {/* Add padding to create space between content and scrollbar */}
         <div className="flex-1 overflow-y-auto px-4">
-          {' '}
-          {/* Updated padding */}
           {isUnlocking
             ? renderLoadingState('Desbloqueando Siguiente Clase...')
             : isSavingResults

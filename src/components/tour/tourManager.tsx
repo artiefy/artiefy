@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 
-import { usePathname,useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import 'intro.js/introjs.css';
 import '~/styles/introjs-custom.css';
@@ -76,47 +76,102 @@ const steps = {
 function waitForElements(
   selectors: string[],
   callback: () => void,
-  maxAttempts = 30,
-  interval = 250
+  maxAttempts = 100,
+  interval = 300
 ) {
   let attempts = 0;
   const check = () => {
-    const allExist = selectors.every((sel) => document.querySelector(sel));
-    if (allExist) {
-      callback();
+    console.log(
+      `Verificando elementos - Intento ${attempts + 1}/${maxAttempts}`
+    );
+
+    // Verificar cada selector individualmente
+    const elementStatus = selectors.map((sel) => {
+      const element = document.querySelector(sel) as HTMLElement | null;
+      const rect = element?.getBoundingClientRect();
+      return {
+        selector: sel,
+        exists: !!element,
+        visible: element?.offsetParent !== null,
+        inViewport: rect ? rect.width > 0 && rect.height > 0 : false,
+        element: element,
+      };
+    });
+
+    console.log('Estado detallado de elementos:', elementStatus);
+
+    // Considerar elemento válido si existe y es visible
+    const validElements = elementStatus.filter(
+      (item) => item.exists && item.visible
+    );
+    const missingElements = elementStatus.filter(
+      (item) => !item.exists || !item.visible
+    );
+
+    if (validElements.length === selectors.length) {
+      console.log('✅ Todos los elementos encontrados y válidos');
+      setTimeout(callback, 300);
     } else if (attempts < maxAttempts) {
       attempts++;
+      console.log(
+        `❌ Elementos faltantes (${missingElements.length}):`,
+        missingElements.map((item) => item.selector)
+      );
       setTimeout(check, interval);
+    } else {
+      console.warn('⚠️ Timeout alcanzado. Iniciando con elementos disponibles');
+      console.log('Elementos válidos encontrados:', validElements.length);
+
+      if (validElements.length > 0) {
+        // Crear steps solo con elementos disponibles
+        (window as any).availableElements = validElements.map(
+          (item) => item.selector
+        );
+        callback();
+      } else {
+        console.error('❌ No se encontraron elementos válidos para el tour');
+      }
     }
   };
-  check();
+
+  // Esperar a que el DOM esté completamente cargado
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', check);
+  } else {
+    check();
+  }
 }
+
+// Función para iniciar el tour dinámico fuera del componente
+const startDynamicTour = async () => {
+  console.log('Intentando iniciar tour dinámico');
+  waitForElements(
+    steps.estudiantesDinamicos
+      .map((s) => s.element)
+      .filter((el): el is string => Boolean(el)),
+    async () => {
+      console.log('Elementos dinámicos encontrados, iniciando tour');
+      const introJs = (await import('intro.js')).default;
+      void introJs()
+        .setOptions({
+          steps: steps.estudiantesDinamicos,
+          showProgress: true,
+          showBullets: false,
+          exitOnOverlayClick: false,
+          exitOnEsc: true,
+        })
+        .start();
+    },
+    60,
+    500
+  );
+};
 
 const TourManager = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      pathname === '/estudiantes' &&
-      localStorage.getItem('startEstudiantesTourDinamico') === '1'
-    ) {
-      localStorage.removeItem('startEstudiantesTourDinamico');
-      waitForElements(
-        steps.estudiantesDinamicos
-          .map((s) => s.element)
-          .filter((el): el is string => Boolean(el)),
-        async () => {
-          const introJs = (await import('intro.js')).default;
-          void introJs()
-            .setOptions({ steps: steps.estudiantesDinamicos })
-            .start();
-        }
-      );
-    }
-  }, [pathname]);
-
+  // Tour estático en /estudiantes
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&
@@ -124,21 +179,95 @@ const TourManager = () => {
       localStorage.getItem('startEstudiantesTour') === '1'
     ) {
       localStorage.removeItem('startEstudiantesTour');
-      waitForElements(
-        steps.estudiantesEstaticos
+
+      console.log('🎯 Iniciando tour estático en /estudiantes');
+
+      // Esperar más tiempo y verificar que la página esté completamente cargada
+      setTimeout(() => {
+        console.log('📍 Buscando elementos estáticos...');
+
+        const requiredSelectors = steps.estudiantesEstaticos
           .map((s) => s.element)
-          .filter((el): el is string => Boolean(el)),
-        async () => {
-          const introJs = (await import('intro.js')).default;
-          void introJs()
-            .setOptions({ steps: steps.estudiantesEstaticos })
-            .oncomplete(() => {
-              // Marca que debe lanzarse el tour dinámico
-              localStorage.setItem('startEstudiantesTourDinamico', '1');
-            })
-            .start();
-        }
-      );
+          .filter((el): el is string => Boolean(el));
+
+        console.log('🔍 Selectores requeridos:', requiredSelectors);
+
+        waitForElements(
+          requiredSelectors,
+          async () => {
+            console.log('✨ Iniciando tour estático');
+
+            // Filtrar steps con elementos disponibles
+            const availableSteps = steps.estudiantesEstaticos.filter((step) => {
+              if (!step.element) return true;
+              const element = document.querySelector(
+                step.element
+              ) as HTMLElement | null;
+              const isAvailable = element && element.offsetParent !== null;
+              if (!isAvailable) {
+                console.log(`❌ Elemento no disponible: ${step.element}`);
+              }
+              return isAvailable;
+            });
+
+            console.log(
+              `📊 Steps disponibles: ${availableSteps.length}/${steps.estudiantesEstaticos.length}`
+            );
+
+            if (availableSteps.length === 0) {
+              console.error('❌ No hay steps disponibles para el tour');
+              return;
+            }
+
+            const introJs = (await import('intro.js')).default;
+            void introJs()
+              .setOptions({
+                steps: availableSteps,
+                showProgress: true,
+                showBullets: false,
+                exitOnOverlayClick: false,
+                exitOnEsc: true,
+                highlightClass: 'intro-highlight',
+                tooltipClass: 'intro-tooltip',
+                scrollToElement: true,
+                scrollPadding: 30,
+              })
+              .oncomplete(() => {
+                console.log('✅ Tour estático completado');
+                setTimeout(() => {
+                  startDynamicTour();
+                }, 1000);
+              })
+              .onbeforechange((targetElement: any) => {
+                console.log('🎯 Cambiando a elemento:', targetElement);
+                if (targetElement) {
+                  targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }
+                return true;
+              })
+              .start();
+          },
+          100,
+          400
+        );
+      }, 4000);
+    }
+  }, [pathname]);
+
+  // Tour dinámico en /estudiantes (para casos directos)
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      pathname === '/estudiantes' &&
+      localStorage.getItem('startEstudiantesTourDinamico') === '1'
+    ) {
+      localStorage.removeItem('startEstudiantesTourDinamico');
+      setTimeout(() => {
+        startDynamicTour();
+      }, 1500);
     }
   }, [pathname]);
 
@@ -146,22 +275,30 @@ const TourManager = () => {
     const handleStartTour = () => {
       if (pathname !== '/') {
         void router.push('/');
-        waitForElements(
-          steps.intro
-            .map((s) => s.element)
-            .filter((el): el is string => Boolean(el)),
-          async () => {
-            const introJs = (await import('intro.js')).default;
-            const intro = introJs();
-            void intro
-              .setOptions({ steps: steps.intro })
-              .oncomplete(() => {
-                localStorage.setItem('startEstudiantesTour', '1');
-                void router.push('/estudiantes');
-              })
-              .start();
-          }
-        );
+        setTimeout(() => {
+          waitForElements(
+            steps.intro
+              .map((s) => s.element)
+              .filter((el): el is string => Boolean(el)),
+            async () => {
+              const introJs = (await import('intro.js')).default;
+              const intro = introJs();
+              void intro
+                .setOptions({
+                  steps: steps.intro,
+                  showProgress: true,
+                  showBullets: false,
+                  exitOnOverlayClick: false,
+                  exitOnEsc: true,
+                })
+                .oncomplete(() => {
+                  localStorage.setItem('startEstudiantesTour', '1');
+                  void router.push('/estudiantes');
+                })
+                .start();
+            }
+          );
+        }, 1000);
       } else {
         waitForElements(
           steps.intro
@@ -171,7 +308,13 @@ const TourManager = () => {
             const introJs = (await import('intro.js')).default;
             const intro = introJs();
             void intro
-              .setOptions({ steps: steps.intro })
+              .setOptions({
+                steps: steps.intro,
+                showProgress: true,
+                showBullets: false,
+                exitOnOverlayClick: false,
+                exitOnEsc: true,
+              })
               .oncomplete(() => {
                 localStorage.setItem('startEstudiantesTour', '1');
                 void router.push('/estudiantes');
@@ -184,38 +327,6 @@ const TourManager = () => {
     window.addEventListener('start-tour', handleStartTour);
     return () => window.removeEventListener('start-tour', handleStartTour);
   }, [router, pathname]);
-
-  // Lanzar tour de pasos dinámicos si está pendiente y estamos en /estudiantes
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    function tryStartDynamicTour() {
-      if (
-        typeof window !== 'undefined' &&
-        window.location.pathname === '/estudiantes' &&
-        localStorage.getItem('startEstudiantesTourDinamico') === '1'
-      ) {
-        const allExist = steps.estudiantesDinamicos
-          .map((s) => s.element)
-          .filter((el): el is string => Boolean(el))
-          .every((sel) => document.querySelector(sel));
-        if (allExist) {
-          localStorage.removeItem('startEstudiantesTourDinamico');
-          void import('intro.js').then(({ default: introJs }) => {
-            void introJs()
-              .setOptions({ steps: steps.estudiantesDinamicos })
-              .start();
-          });
-          if (intervalId) clearInterval(intervalId);
-        }
-      }
-    }
-    if (pathname === '/estudiantes') {
-      intervalId = setInterval(tryStartDynamicTour, 400);
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [pathname]);
 
   return null;
 };
