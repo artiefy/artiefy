@@ -133,10 +133,10 @@ const LessonPlayer = ({
                   ref={transcriptionContainerRef}
                   className="relative transition-all duration-300"
                   style={{
-                    maxHeight: '10.2rem',
+                    maxHeight: '16rem', // Permite ver más contenido y usar scroll
                     minHeight: '10.2rem',
-                    height: '10.2rem',
-                    overflowY: 'hidden',
+                    height: 'auto',
+                    overflowY: 'auto', // Habilita scroll manual
                     border: '1px solid #e0e7ff',
                     borderRadius: '0.5rem',
                     background: '#f8fafc',
@@ -144,7 +144,7 @@ const LessonPlayer = ({
                     width: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-start',
                     alignItems: 'center',
                     margin: 0,
                   }}
@@ -158,55 +158,49 @@ const LessonPlayer = ({
                   <div
                     className="relative w-full"
                     style={{
-                      height: '7.8rem',
-                      overflow: 'hidden',
+                      minHeight: '7.8rem',
+                      maxHeight: '14rem',
+                      overflowY: 'auto', // Scroll para toda la transcripción
                       position: 'relative',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
+                      justifyContent: 'flex-start',
                       alignItems: 'center',
                       margin: 0,
                     }}
                   >
-                    <div
-                      style={{
-                        transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
-                        transform: `translateY(calc(3.9rem - ${currentTranscriptionIndex * 2.6}rem))`,
-                      }}
-                    >
-                      {transcription.map((item, idx) => (
-                        <div
-                          key={idx}
-                          data-transcription-idx={idx}
-                          className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
+                    {transcription.map((item, idx) => (
+                      <div
+                        key={idx}
+                        data-transcription-idx={idx}
+                        className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
+                          idx === currentTranscriptionIndex
+                            ? 'bg-indigo-200 font-bold text-indigo-900'
+                            : 'bg-indigo-50 text-indigo-700'
+                        }`}
+                        style={{
+                          opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
+                          textAlign: 'center',
+                          margin: '0.1rem 0',
+                          borderRadius:
+                            idx === currentTranscriptionIndex ? '0.5rem' : '',
+                          boxShadow:
                             idx === currentTranscriptionIndex
-                              ? 'bg-indigo-200 font-bold text-indigo-900'
-                              : 'bg-indigo-50 text-indigo-700'
-                          }`}
-                          style={{
-                            opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
-                            textAlign: 'center',
-                            margin: '0.1rem 0',
-                            borderRadius: idx === currentTranscriptionIndex ? '0.5rem' : '',
-                            boxShadow:
-                              idx === currentTranscriptionIndex
-                                ? '0 2px 8px rgba(99,102,241,0.08), 0 0 0 2px #a5b4fc'
-                                : undefined,
-                            minHeight: '2.6rem',
-                            maxHeight: '3.4rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <span className="mr-2 font-mono text-xs text-indigo-400">
-                            [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
-                          </span>
-                          {item.text}
-                        </div>
-                      ))}
-                    </div>
-                    {/* Elimina el overlay fijo para el resaltado centrado */}
+                              ? '0 2px 8px rgba(99,102,241,0.08), 0 0 0 2px #a5b4fc'
+                              : undefined,
+                          minHeight: '2.6rem',
+                          maxHeight: '3.4rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <span className="mr-2 font-mono text-xs text-indigo-400">
+                          [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                        </span>
+                        {item.text}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
