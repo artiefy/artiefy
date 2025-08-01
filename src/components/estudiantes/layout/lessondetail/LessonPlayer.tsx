@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Lock } from 'lucide-react';
 
@@ -33,11 +33,13 @@ const LessonPlayer = ({
   const [currentTranscriptionIndex, setCurrentTranscriptionIndex] =
     useState<number>(-1);
 
+  // Ref para el contenedor de transcripción
+  const transcriptionContainerRef = useRef<HTMLDivElement>(null);
+
   // Callback para actualizar el tiempo actual del video y sincronizar la transcripción
   const handleVideoTimeUpdate = useCallback(
     (currentTime: number) => {
       if (!transcription || transcription.length === 0) return;
-      // Buscar el índice de la transcripción correspondiente al tiempo actual
       const idx = transcription.findIndex(
         (item) => currentTime >= item.start && currentTime < item.end
       );
@@ -45,6 +47,31 @@ const LessonPlayer = ({
     },
     [transcription]
   );
+
+  // Efecto para centrar el párrafo actual en el contenedor
+  useEffect(() => {
+    if (
+      showTranscription &&
+      transcriptionContainerRef.current &&
+      currentTranscriptionIndex >= 0
+    ) {
+      const container = transcriptionContainerRef.current;
+      const activeElem = container.querySelector(
+        `[data-transcription-idx="${currentTranscriptionIndex}"]`
+      );
+      if (activeElem) {
+        const containerHeight = container.offsetHeight;
+        const elemTop =
+          (activeElem as HTMLElement).offsetTop -
+          container.offsetTop +
+          (activeElem as HTMLElement).offsetHeight / 2;
+        container.scrollTo({
+          top: elemTop - containerHeight / 2,
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [currentTranscriptionIndex, showTranscription]);
 
   if (isLocked) {
     return (
@@ -74,7 +101,6 @@ const LessonPlayer = ({
             onProgressUpdate={handleProgressUpdate}
             isVideoCompleted={progress === 100}
             isLocked={isLocked}
-            // Nuevo callback para sincronizar transcripción
             onTimeUpdate={handleVideoTimeUpdate}
           />
         </div>
@@ -84,14 +110,12 @@ const LessonPlayer = ({
           {lesson.title}
         </h1>
         <p className="font-semibold text-gray-600">{lesson.description}</p>
-        {/* Loading y transcripción debajo de la descripción */}
         {isLoadingTranscription && (
           <div className="mt-4 mb-4 flex items-center gap-2 text-indigo-700">
             <span className="text-base italic">Cargando transcripción...</span>
             <Icons.spinner className="h-5 w-5 text-indigo-500" />
           </div>
         )}
-        {/* Botón para mostrar/ocultar transcripción */}
         {transcription &&
           transcription.length > 0 &&
           !isLoadingTranscription && (
@@ -106,46 +130,55 @@ const LessonPlayer = ({
               </button>
               {showTranscription && (
                 <div
-                  className="space-y-2 transition-all duration-300"
-                  style={
-                    transcription.length > 3
-                      ? {
-                          maxHeight: '16rem',
-                          overflowY: 'auto',
-                          border: '1px solid #e0e7ff',
-                          borderRadius: '0.5rem',
-                          padding: '0.5rem',
-                          background: '#f8fafc',
-                        }
-                      : {}
-                  }
+                  ref={transcriptionContainerRef}
+                  className="relative transition-all duration-300"
+                  style={{
+                    maxHeight: '16rem',
+                    overflowY: 'auto',
+                    border: '1px solid #e0e7ff',
+                    borderRadius: '0.5rem',
+                    padding: '0.5rem',
+                    background: '#f8fafc',
+                  }}
                 >
                   <h2 className="mb-2 text-lg font-semibold text-indigo-700">
                     Transcripción
                   </h2>
-                  {transcription.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className={`rounded px-2 py-1 text-sm italic transition-all duration-300 ${
-                        idx === currentTranscriptionIndex
-                          ? 'bg-indigo-200 font-bold text-indigo-900'
-                          : 'bg-indigo-50 text-indigo-700'
-                      }`}
-                      style={{
-                        opacity: idx <= currentTranscriptionIndex ? 1 : 0.5,
-                      }}
-                    >
-                      <span className="mr-2 font-mono text-xs text-indigo-400">
-                        [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
-                      </span>
-                      {item.text}
-                    </div>
-                  ))}
+                  <div className="flex flex-col items-center">
+                    {transcription.map((item, idx) => (
+                      <div
+                        key={idx}
+                        data-transcription-idx={idx}
+                        className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
+                          idx === currentTranscriptionIndex
+                            ? 'sticky top-1/2 z-10 bg-indigo-200 font-bold text-indigo-900'
+                            : 'bg-indigo-50 text-indigo-700'
+                        }`}
+                        style={
+                          idx === currentTranscriptionIndex
+                            ? {
+                                transform: 'translateY(-50%)',
+                                boxShadow:
+                                  '0 2px 8px rgba(99,102,241,0.08), 0 0 0 2px #a5b4fc',
+                              }
+                            : {
+                                opacity:
+                                  idx < currentTranscriptionIndex ? 0.5 : 1,
+                              }
+                        }
+                      >
+                        <span className="mr-2 font-mono text-xs text-indigo-400">
+                          [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                        </span>
+                        {item.text}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           )}
-        <div className="mt-4 md:-mt-4">
+        <div className="mt-4 md:-mt-2">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-bold text-gray-700">
               Progreso de la clase
