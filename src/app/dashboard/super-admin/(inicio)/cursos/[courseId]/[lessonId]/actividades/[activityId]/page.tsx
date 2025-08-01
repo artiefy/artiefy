@@ -406,7 +406,7 @@ const Page: React.FC = () => {
       <div className="group relative h-auto w-full">
         <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
         <div
-          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
+          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-4 shadow-lg" // Cambia p-8 a p-4
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
           <div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">

@@ -415,12 +415,13 @@ export default function StudentDetails({
               </div>
               <div>
                 <Carousel className="w-full">
-                  <CarouselContent className="">
+                  {/* Agrega gap-x-4 para más espacio entre los cursos */}
+                  <CarouselContent className="gap-x-4">
                     {latestTenCourses.length > 0 ? (
                       latestTenCourses.map((course) => (
                         <CarouselItem
                           key={course.id}
-                          className="basis-full sm:basis-1/2 lg:basis-1/3"
+                          className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-1/3"
                         >
                           <div className="relative aspect-[4/3] w-full">
                             <Image
