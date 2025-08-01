@@ -66,6 +66,7 @@ export async function getOrCreateSuportChat({
       estado: 'abierto',
       tipo: 'bug',
       email: email ?? '',
+      title: 'Ticket de soporte',
     })
     .returning();
 

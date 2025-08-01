@@ -47,6 +47,7 @@ export async function POST(
       coverImageKey: null,
       videoKey: null,
       documentKey: null,
+      title: body.title || 'Ticket de soporte', // Default title if not provided
     } as const;
 
     const [newTicket] = await db.insert(tickets).values(ticketData).returning();
