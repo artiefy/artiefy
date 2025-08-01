@@ -469,6 +469,7 @@ export interface NotificationMetadata {
   creatorId?: string;
   activityId?: number;
   certificateId?: number;
+  openModal?: boolean; // <-- agrega esta línea para permitir el flag openModal
 }
 
 export interface Notification {

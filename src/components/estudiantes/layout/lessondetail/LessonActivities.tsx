@@ -39,6 +39,7 @@ interface LessonActivitiesProps {
   isLastLesson: boolean;
   isLastActivity: boolean;
   lessons: { id: number; title: string; coverVideoKey?: string }[]; // Add coverVideoKey
+  activityModalId?: number; // <-- nuevo prop
 }
 
 interface SavedResults {
@@ -148,6 +149,7 @@ const LessonActivities = ({
   isLastLesson,
   isLastActivity,
   lessons,
+  activityModalId,
 }: LessonActivitiesProps) => {
   const [activitiesState, setActivitiesState] = useState<
     Record<number, ActivityState>
@@ -699,6 +701,16 @@ const LessonActivities = ({
       </div>
     );
   };
+
+  useEffect(() => {
+    if (activityModalId && activities.some((a) => a.id === activityModalId)) {
+      const activity = activities.find((a) => a.id === activityModalId);
+      if (activity) {
+        setSelectedActivity(activity);
+        setIsModalOpen(true);
+      }
+    }
+  }, [activityModalId, activities]);
 
   return (
     <div

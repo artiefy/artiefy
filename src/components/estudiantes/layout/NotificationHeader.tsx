@@ -84,7 +84,6 @@ export function NotificationHeader() {
   const handleNotificationClick = (notification: Notification) => {
     setIsOpen(false);
 
-    // Navegar según el tipo de notificación y metadata
     switch (notification.type) {
       case 'LESSON_UNLOCKED':
         if (notification.metadata?.lessonId) {
@@ -109,7 +108,15 @@ export function NotificationHeader() {
         }
         break;
       case 'ACTIVITY_COMPLETED':
-        if (notification.metadata?.lessonId) {
+        // Si hay lessonId y activityId, navega a la clase y abre el modal de la actividad tipo documento
+        if (
+          notification.metadata?.lessonId &&
+          notification.metadata?.activityId
+        ) {
+          void router.push(
+            `/estudiantes/clases/${notification.metadata.lessonId}?activityId=${notification.metadata.activityId}`
+          );
+        } else if (notification.metadata?.lessonId) {
           void router.push(
             `/estudiantes/clases/${notification.metadata.lessonId}`
           );
