@@ -105,7 +105,21 @@ const LessonPlayer = ({
                   : 'Ver transcripción'}
               </button>
               {showTranscription && (
-                <div className="max-h-64 space-y-2 overflow-y-auto transition-all duration-300">
+                <div
+                  className="space-y-2 transition-all duration-300"
+                  style={
+                    transcription.length > 3
+                      ? {
+                          maxHeight: '16rem',
+                          overflowY: 'auto',
+                          border: '1px solid #e0e7ff',
+                          borderRadius: '0.5rem',
+                          padding: '0.5rem',
+                          background: '#f8fafc',
+                        }
+                      : {}
+                  }
+                >
                   <h2 className="mb-2 text-lg font-semibold text-indigo-700">
                     Transcripción
                   </h2>
