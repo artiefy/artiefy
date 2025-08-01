@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+
 import { Lock } from 'lucide-react';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -24,6 +26,25 @@ const LessonPlayer = ({
   isLoadingTranscription = false,
 }: LessonPlayerProps) => {
   const isLocked = lesson.isLocked === true;
+
+  // Estado para mostrar/ocultar transcripción
+  const [showTranscription, setShowTranscription] = useState(false);
+  // Estado para el índice actual de la transcripción
+  const [currentTranscriptionIndex, setCurrentTranscriptionIndex] =
+    useState<number>(-1);
+
+  // Callback para actualizar el tiempo actual del video y sincronizar la transcripción
+  const handleVideoTimeUpdate = useCallback(
+    (currentTime: number) => {
+      if (!transcription || transcription.length === 0) return;
+      // Buscar el índice de la transcripción correspondiente al tiempo actual
+      const idx = transcription.findIndex(
+        (item) => currentTime >= item.start && currentTime < item.end
+      );
+      setCurrentTranscriptionIndex(idx);
+    },
+    [transcription]
+  );
 
   if (isLocked) {
     return (
@@ -53,6 +74,8 @@ const LessonPlayer = ({
             onProgressUpdate={handleProgressUpdate}
             isVideoCompleted={progress === 100}
             isLocked={isLocked}
+            // Nuevo callback para sincronizar transcripción
+            onTimeUpdate={handleVideoTimeUpdate}
           />
         </div>
       </div>
@@ -68,29 +91,47 @@ const LessonPlayer = ({
             <Icons.spinner className="h-5 w-5 text-indigo-500" />
           </div>
         )}
+        {/* Botón para mostrar/ocultar transcripción */}
         {transcription &&
           transcription.length > 0 &&
           !isLoadingTranscription && (
             <div className="mt-4 mb-4">
-              <h2 className="mb-2 text-lg font-semibold text-indigo-700">
-                Transcripción
-              </h2>
-              <div className="space-y-2">
-                {transcription.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded bg-indigo-50 px-2 py-1 text-sm text-indigo-700 italic"
-                  >
-                    <span className="mr-2 font-mono text-xs text-indigo-400">
-                      [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
-                    </span>
-                    {item.text}
-                  </div>
-                ))}
-              </div>
+              <button
+                className="mb-2 rounded bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 transition hover:bg-indigo-200"
+                onClick={() => setShowTranscription((v) => !v)}
+              >
+                {showTranscription
+                  ? 'Ocultar transcripción'
+                  : 'Ver transcripción'}
+              </button>
+              {showTranscription && (
+                <div className="max-h-64 space-y-2 overflow-y-auto transition-all duration-300">
+                  <h2 className="mb-2 text-lg font-semibold text-indigo-700">
+                    Transcripción
+                  </h2>
+                  {transcription.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={`rounded px-2 py-1 text-sm italic transition-all duration-300 ${
+                        idx === currentTranscriptionIndex
+                          ? 'bg-indigo-200 font-bold text-indigo-900'
+                          : 'bg-indigo-50 text-indigo-700'
+                      }`}
+                      style={{
+                        opacity: idx <= currentTranscriptionIndex ? 1 : 0.5,
+                      }}
+                    >
+                      <span className="mr-2 font-mono text-xs text-indigo-400">
+                        [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                      </span>
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        <div className="mt-4 md:mt-6">
+        <div className="mt-4 md:-mt-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-bold text-gray-700">
               Progreso de la clase
