@@ -130,13 +130,12 @@ const LessonPlayer = ({
               </button>
               {showTranscription && (
                 <div
-                  ref={transcriptionContainerRef}
                   className="relative transition-all duration-300"
                   style={{
-                    maxHeight: '16rem', // Permite ver más contenido y usar scroll
+                    maxHeight: '16rem',
                     minHeight: '10.2rem',
                     height: 'auto',
-                    overflowY: 'auto', // Habilita scroll manual
+                    overflow: 'hidden',
                     border: '1px solid #e0e7ff',
                     borderRadius: '0.5rem',
                     background: '#f8fafc',
@@ -155,52 +154,68 @@ const LessonPlayer = ({
                   >
                     Transcripción
                   </h2>
+                  {/* Lista de transcripción desplazable */}
                   <div
                     className="relative w-full"
                     style={{
                       minHeight: '7.8rem',
                       maxHeight: '14rem',
-                      overflowY: 'auto', // Scroll para toda la transcripción
+                      overflow: 'hidden',
                       position: 'relative',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-start',
                       alignItems: 'center',
                       margin: 0,
+                      height: '10rem',
                     }}
                   >
-                    {transcription.map((item, idx) => (
-                      <div
-                        key={idx}
-                        data-transcription-idx={idx}
-                        className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
-                          idx === currentTranscriptionIndex
-                            ? 'bg-indigo-200 font-bold text-indigo-900'
-                            : 'bg-indigo-50 text-indigo-700'
-                        }`}
-                        style={{
-                          opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
-                          textAlign: 'center',
-                          margin: '0.1rem 0',
-                          borderRadius:
-                            idx === currentTranscriptionIndex ? '0.5rem' : '',
-                          boxShadow:
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: `calc(50% - 1.4rem)`,
+                        left: 0,
+                        width: '100%',
+                        transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
+                        transform: `translateY(-${currentTranscriptionIndex * 2.8}rem)`,
+                        willChange: 'transform',
+                      }}
+                    >
+                      {transcription.map((item, idx) => (
+                        <div
+                          key={idx}
+                          data-transcription-idx={idx}
+                          className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
                             idx === currentTranscriptionIndex
-                              ? '0 2px 8px rgba(99,102,241,0.08), 0 0 0 2px #a5b4fc'
-                              : undefined,
-                          minHeight: '2.6rem',
-                          maxHeight: '3.4rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <span className="mr-2 font-mono text-xs text-indigo-400">
-                          [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
-                        </span>
-                        {item.text}
-                      </div>
-                    ))}
+                              ? 'font-bold text-indigo-900'
+                              : 'text-indigo-700'
+                          }`}
+                          style={{
+                            background:
+                              idx === currentTranscriptionIndex
+                                ? '#a5b4fc'
+                                : '#eef2ff',
+                            opacity:
+                              idx === currentTranscriptionIndex ? 1 : 0.7,
+                            textAlign: 'center',
+                            margin: '0.1rem 0',
+                            borderRadius:
+                              idx === currentTranscriptionIndex ? '0.5rem' : '',
+                            minHeight: '2.6rem',
+                            maxHeight: '3.4rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: idx === currentTranscriptionIndex ? 3 : 1,
+                          }}
+                        >
+                          <span className="mr-2 font-mono text-xs text-indigo-400">
+                            [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                          </span>
+                          {item.text}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
