@@ -66,7 +66,7 @@ export async function getCourseByIdWithTypes(courseId: number) {
   // 🔗 Consultar videos desde el endpoint que acabamos de crear
   console.log('🎥 Haciendo fetch de videos...');
   const videoRes = await fetch(
-    `http://localhost:3000/api/super-admin/teams/video?userId=0843f2fa-3e0b-493f-8bb9-84b0aa1b2417`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/super-admin/teams/video?userId=0843f2fa-3e0b-493f-8bb9-84b0aa1b2417`
   );
 
   const videoData = (await videoRes.json()) as VideoData;
