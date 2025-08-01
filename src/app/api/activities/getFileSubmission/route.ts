@@ -47,14 +47,17 @@ export async function GET(request: NextRequest) {
       lessonId = activityDb.lessonsId;
     }
 
-    // --- Notificación si grade pasa de 0 a >0 ---
+    // --- Notificación si grade pasa de 0 a >0 y status es reviewed ---
     if (
       submission &&
       typeof submission === 'object' &&
       'grade' in submission &&
-      typeof submission.grade === 'number'
+      typeof submission.grade === 'number' &&
+      'status' in submission &&
+      submission.status === 'reviewed'
     ) {
       const lastGrade = progress?.finalGrade ?? 0;
+      // Solo crear notificación si antes era 0 y ahora >0
       if (submission.grade > 0 && lastGrade === 0) {
         await createNotification({
           userId,
@@ -63,8 +66,8 @@ export async function GET(request: NextRequest) {
           message: `El educador ha calificado tu documento en la clase. Revisa tu calificación.`,
           metadata: {
             activityId: parseInt(activityId),
-            lessonId, // <-- para redirigir al modal de la actividad tipo documento
-            openModal: true, // <-- puedes usar este flag si lo necesitas en el frontend
+            lessonId, // para redirigir al modal de la actividad tipo documento
+            openModal: true, // para abrir el modal en el frontend
           },
         });
       }
