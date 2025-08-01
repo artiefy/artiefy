@@ -30,6 +30,7 @@ async function getGraphToken() {
   const tenant = process.env.NEXT_PUBLIC_TENANT_ID!;
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID!;
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET!;
+  void tenant;
 
   const params = new URLSearchParams();
   params.append('grant_type', 'client_credentials');
