@@ -1443,6 +1443,48 @@ export function LessonActivityModal({
               <div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
               <div className="relative p-6">
+                {/* Botón de subir documento/URL nuevamente arriba del bloque de ayuda */}
+                {uploadedFileInfo && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    <Button
+                      onClick={() => {
+                        if (uploadedFileInfo.status === 'reviewed') {
+                          const confirmed = window.confirm(
+                            'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
+                          );
+                          if (!confirmed) return;
+                        }
+                        setUploadedFileInfo(null);
+                        setSelectedFile(null);
+                        setFilePreview(null);
+                        setUploadProgress(0);
+                        setShowResults(false);
+                        setDriveUrl('');
+                        setIsUrlValid(false);
+                      }}
+                      className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {activeTab === 'local'
+                          ? 'Subir documento nuevamente'
+                          : 'Subir URL nuevamente'}
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                      </span>
+                    </Button>
+                  </div>
+                )}
                 {/* Renderiza el archivo de ayuda antes de los tabs */}
                 {isLoadingHelpFile ? (
                   <div className="mb-4 flex items-center gap-2">
