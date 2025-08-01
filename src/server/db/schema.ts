@@ -305,39 +305,41 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
-  id: serial('id').primaryKey(),
-  creatorId: text('creator_id')
-    .references(() => users.id)
-    .notNull(),
-  comments: varchar('comments', { length: 255 }).notNull(),
-  description: text('description').notNull(),
-  estado: text('estado', {
-    enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
-  })
-    .default('abierto')
-    .notNull(),
-  tipo: text('tipo', {
-    enum: ['otro', 'bug', 'revision', 'logs'],
-  }).notNull(),
-  email: text('email').notNull(),
-  coverImageKey: text('cover_image_key'),
-  videoKey: text('video_key'),
-  documentKey: text('document_key'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	id: serial('id').primaryKey(),
+	creatorId: text('creator_id')
+		.references(() => users.id)
+		.notNull(),
+	comments: varchar('comments', { length: 255 }),
+	description: text('description').notNull(),
+	estado: text('estado', {
+		enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
+	})
+		.default('abierto')
+		.notNull(),
+	tipo: text('tipo', {
+		enum: ['otro', 'bug', 'revision', 'logs'],
+	}).notNull(),
+	email: text('email').notNull(),
+	coverImageKey: text('cover_image_key'),
+	videoKey: text('video_key'),
+	documentKey: text('document_key'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	
 });
 
 //Tabla de comentarios de tickets
 export const ticketComments = pgTable('ticket_comments', {
-  id: serial('id').primaryKey(),
-  ticketId: integer('ticket_id')
-    .references(() => tickets.id)
-    .notNull(),
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  content: text('content').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+	id: serial('id').primaryKey(),
+	ticketId: integer('ticket_id')
+		.references(() => tickets.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	sender: text('sender').notNull().default('support'), // Puede ser 'user' o 'admin'
 });
 
 //Tabla de parametros
@@ -840,32 +842,36 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
 
 // Tabla de conversaciones
 export const conversations = pgTable('conversations', {
-  id: serial('id').primaryKey(),
-  senderId: text('sender_id')
-    .references(() => users.id)
-    .notNull(),
-  receiverId: text('receiver_id').references(() => users.id),
-  status: text('status', { enum: ['activo', 'cerrado'] })
-    .default('activo')
-    .notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	id: serial('id').primaryKey(),
+	senderId: text('sender_id')
+		.references(() => users.id)
+		.notNull(),
+	status: text('status', { enum: ['activo', 'cerrado'] })
+		.default('activo')
+		.notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	title: text('title').notNull(),
+	curso_id: integer('curso_id')
+		.references(() => courses.id).unique()
+		.notNull(), // Relación con el curso
 });
 
 // Relación de mensajes con conversaciones
-export const chatMessagesWithConversation = pgTable(
-  'chat_messages_with_conversation',
-  {
-    id: serial('id').primaryKey(),
-    conversationId: integer('conversation_id')
-      .references(() => conversations.id)
-      .notNull(),
-    senderId: text('sender_id')
-      .references(() => users.id)
-      .notNull(),
-    message: text('message').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  }
+export const chat_messages = pgTable(
+	'chat_messages',
+	{
+		id: serial('id').primaryKey(),
+		conversation_id: integer('conversation_id')
+			.references(() => conversations.id)
+			.notNull(),
+		sender: text('sender')
+			.notNull(), // Este campo puede ser el ID del usuario o su nombre
+		senderId: text('sender_id')
+			.references(() => users.id),
+		message: text('message').notNull(),
+		created_at: timestamp('created_at').defaultNow().notNull(),
+	}
 );
 
 // Tabla de roles secundarios

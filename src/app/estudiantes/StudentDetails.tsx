@@ -6,8 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaCrown, FaStar } from 'react-icons/fa';
-import { IoGiftOutline } from 'react-icons/io5';
 
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
@@ -56,14 +54,30 @@ export default function StudentDetails({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
+  const [_text, setText] = useState(''); // índice del mensaje
+  const [index, setIndex] = useState(0); // índice del mensaje
+  const [subIndex, setSubIndex] = useState(0); // índice de la letra
+  const [reverse, setReverse] = useState(false); // si está borrando
+  const [delay, _setDelay] = useState(40); // velocidad de escritura
+  const placeHolderText = useMemo(
+    () => [
+      '¿Que Deseas Crear? Escribe Tu Idea...',
+      '¿Qué quieres crear?',
+      'Desarrollemos esa idea que tienes en mente...',
+      'Estoy para ayudarte, Artiefy impulsa tus sueños',
+      '¿Tienes una idea? ¡Vamos a hacerla realidad!',
+    ],
+    []
+  );
 
   // Memoized values to prevent re-renders
-  const _sortedCourses = useMemo(() => {
-    return [...courses].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, [courses]);
+  // Puedes eliminar _sortedCourses si no lo usas en el JSX
+  // const _sortedCourses = useMemo(() => {
+  //   return [...courses].sort(
+  //     (a, b) =>
+  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //   );
+  // }, [courses]);
 
   // Get ONLY featured courses (is_featured = true), no fallbacks
   const featuredCourses = useMemo(() => {
@@ -139,7 +153,6 @@ export default function StudentDetails({
           const nextSlide = (prevSlide + 1) % latestFiveCourses.length;
           return nextSlide;
         });
-
         // Reset transitioning state after animation completes
         setTimeout(() => {
           setIsTransitioning(false);
@@ -149,6 +162,35 @@ export default function StudentDetails({
 
     return () => clearInterval(interval);
   }, [latestFiveCourses.length, isTransitioning]);
+
+  useEffect(() => {
+    if (index >= placeHolderText.length) return;
+
+    const current = placeHolderText[index];
+
+    setText(current.substring(0, subIndex));
+
+    if (!reverse && subIndex === current.length) {
+      // Espera antes de borrar
+      setTimeout(() => setReverse(true), 1500);
+      return;
+    }
+
+    if (reverse && subIndex === 0) {
+      setReverse(false);
+      setIndex((prev) => (prev + 1) % placeHolderText.length);
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => {
+        setSubIndex((prev) => prev + (reverse ? -1 : 1));
+      },
+      reverse ? 40 : delay
+    );
+
+    return () => clearTimeout(timeout);
+  }, [subIndex, index, reverse, delay, placeHolderText]);
 
   const truncateDescription = (description: string, maxLength: number) => {
     if (description.length <= maxLength) return description;
@@ -164,86 +206,6 @@ export default function StudentDetails({
   };
 
   // Rename to _getCourseTypeIcon to mark as unused
-  const _getCourseTypeIcon = (course: Course) => {
-    // Usamos un valor fijo para pruebas, en producción debería usar la info real del usuario
-    const userPlanType = localStorage.getItem('userPlanType') ?? ''; // Changed to nullish coalescing
-    const hasActiveSubscription =
-      userPlanType === 'Pro' || userPlanType === 'Premium';
-
-    // Si tiene múltiples tipos
-    if (course.courseTypes && course.courseTypes.length > 0) {
-      // Verificar cada tipo por orden de prioridad
-      const hasPurchasable = course.courseTypes.some(
-        (type) => type.isPurchasableIndividually
-      );
-      const hasPremium = course.courseTypes.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
-      );
-      const hasPro = course.courseTypes.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
-      );
-      const _hasFree = course.courseTypes.some(
-        // Prefix with underscore
-        (type) =>
-          type.requiredSubscriptionLevel === 'none' &&
-          !type.isPurchasableIndividually
-      );
-
-      // Si el usuario no tiene suscripción, mostrar según prioridad
-      if (!hasActiveSubscription) {
-        // 1. Individual (si existe)
-        if (hasPurchasable) {
-          return (
-            <div className="flex items-center gap-1 text-blue-500">
-              <FaStar className="text-lg" />
-              <span className="text-xs font-bold">
-                ${course.individualPrice?.toLocaleString() ?? 'COMPRA'}
-              </span>
-            </div>
-          );
-        }
-
-        // 2. Premium (si existe)
-        if (hasPremium) {
-          return (
-            <div className="flex items-center gap-1 text-purple-500">
-              <FaCrown className="text-lg" />
-              <span className="text-xs font-bold">PREMIUM</span>
-            </div>
-          );
-        }
-
-        // 3. Pro (si existe)
-        if (hasPro) {
-          return (
-            <div className="flex items-center gap-1 text-orange-500">
-              <FaCrown className="text-lg" />
-              <span className="text-xs font-bold">PRO</span>
-            </div>
-          );
-        }
-      }
-
-      // Para usuarios con suscripción o si es gratuito
-      if (
-        course.courseTypes.some(
-          (type) =>
-            type.requiredSubscriptionLevel === 'none' &&
-            !type.isPurchasableIndividually
-        )
-      ) {
-        return (
-          <div className="flex items-center gap-1 text-green-500">
-            <IoGiftOutline className="text-lg" />
-            <span className="text-xs font-bold">GRATUITO</span>
-          </div>
-        );
-      }
-    }
-
-    // Fallback a la implementación original
-    return null;
-  };
 
   return (
     <div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
@@ -278,9 +240,7 @@ export default function StudentDetails({
                     }`}
                     name="search"
                     placeholder={
-                      searchBarDisabled
-                        ? 'Procesando consulta...'
-                        : 'Que Deseas Crear? Escribe Tu Idea...'
+                      searchBarDisabled ? 'Procesando consulta...' : _text
                     }
                     type="search"
                     value={searchQuery}

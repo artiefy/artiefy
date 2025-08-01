@@ -1057,7 +1057,7 @@ export default function TicketsPage() {
           onCloseAction={handleCloseModal}
           onSubmitAction={selectedTicket ? handleUpdate : handleCreate}
           ticket={selectedTicket}
-          onUploadFileAction={handleFileUpload}
+          onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
         />
       </div>
       <ToastContainer position="top-right" autoClose={3000} />

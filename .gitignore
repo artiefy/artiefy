@@ -108,3 +108,6 @@ videos/*
 !videos/*.js
 !videos/*.ts
 public/_next-video
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -87,7 +87,7 @@ export default function StudentCategories({
 	};
 
 	return (
-		<section className="mt-16 px-8 sm:px-12 md:px-10 lg:px-20">
+		<section className="mt-16 px-8 sm:px-12 md:px-10 lg:px-20 div-filters">
 			<div className="container mx-auto">
 				<div className="mb-8 flex flex-col items-center justify-between lg:flex-row">
 					<div className="relative mb-4 w-full sm:w-3/4 md:w-1/3 lg:mb-0 lg:w-1/3">
