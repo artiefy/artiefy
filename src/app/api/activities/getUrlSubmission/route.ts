@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { userActivitiesProgress, activities } from '~/server/db/schema';
+import { activities,userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,

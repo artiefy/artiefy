@@ -489,7 +489,7 @@ export default function LessonDetails({
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   // Solo declara activityModalId/setActivityModalId una vez aquí
-  const [activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
+  const [_activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
 
   // Obtener la transcripción al montar el componente
   useEffect(() => {

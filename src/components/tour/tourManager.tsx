@@ -124,9 +124,9 @@ function waitForElements(
 
       if (validElements.length > 0) {
         // Crear steps solo con elementos disponibles
-        (window as any).availableElements = validElements.map(
-          (item) => item.selector
-        );
+        (
+          window as Window & { availableElements?: string[] }
+        ).availableElements = validElements.map((item) => item.selector);
         callback();
       } else {
         console.error('❌ No se encontraron elementos válidos para el tour');
@@ -143,7 +143,7 @@ function waitForElements(
 }
 
 // Función para iniciar el tour dinámico fuera del componente
-const startDynamicTour = async () => {
+const startDynamicTour = () => {
   console.log('Intentando iniciar tour dinámico');
   waitForElements(
     steps.estudiantesDinamicos
@@ -238,9 +238,9 @@ const TourManager = () => {
                   startDynamicTour();
                 }, 1000);
               })
-              .onbeforechange((targetElement: any) => {
+              .onbeforechange((targetElement: HTMLElement | null) => {
                 console.log('🎯 Cambiando a elemento:', targetElement);
-                if (targetElement) {
+                if (targetElement && 'scrollIntoView' in targetElement) {
                   targetElement.scrollIntoView({
                     behavior: 'smooth',
                     block: 'center',

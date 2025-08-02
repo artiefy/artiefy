@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback,useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname,useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
@@ -526,19 +526,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       width:
         typeof window !== 'undefined' && window.innerWidth < 768
           ? window.innerWidth
-          : 500,
+          : 400,
       height:
         typeof window !== 'undefined' && window.innerWidth < 768
           ? window.innerHeight
-          : window.innerHeight,
+          : 500,
     };
     setDimensions(initialDimensions);
 
     // Add resize handler
     const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
       setDimensions({
-        width: window.innerWidth < 768 ? 200 : 400,
-        height: window.innerWidth < 768 ? 400 : 500,
+        width: isMobile ? window.innerWidth : 400,
+        height: isMobile ? window.innerHeight : 500,
       });
     };
 
@@ -911,25 +912,35 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       {/* Mostrar el chat solo cuando isOpen es true */}
       {isOpen && (
         <div
-          className="fixed right-0 bottom-0 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
+          className={`fixed ${
+            isDesktop
+              ? 'right-0 bottom-0'
+              : 'inset-0 top-0 right-0 bottom-0 left-0'
+          }`}
           ref={chatContainerRef}
-          style={{ zIndex: 110000 }} // Aumenta el z-index para que esté por encima del botón de soporte
+          style={{ zIndex: 110000 }}
         >
           <ResizableBox
             width={dimensions.width}
             height={dimensions.height}
             onResize={handleResize}
-            minConstraints={[400, window.innerHeight]} // Smaller minimum size for mobile
-            maxConstraints={[
-              Math.min(window.innerWidth, window.innerWidth - 20),
-              window.innerHeight,
-            ]}
-            resizeHandles={
-              window.innerWidth < 768 ? [] : ['sw'] // Solo permite redimensionar hacia la izquierda abajo en escritorio
+            minConstraints={
+              isDesktop ? [400, 500] : [window.innerWidth, window.innerHeight]
             }
+            maxConstraints={[
+              isDesktop
+                ? Math.min(window.innerWidth, window.innerWidth - 20)
+                : window.innerWidth,
+              isDesktop ? window.innerHeight : window.innerHeight,
+            ]}
+            resizeHandles={isDesktop ? ['sw'] : []}
             className="chat-resizable"
           >
-            <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div
+              className={`relative flex h-full w-full flex-col overflow-hidden ${
+                isDesktop ? 'rounded-lg border border-gray-200' : ''
+              } bg-white`}
+            >
               {/* Logo background */}
 
               <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">

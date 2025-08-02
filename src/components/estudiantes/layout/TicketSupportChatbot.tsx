@@ -1,5 +1,5 @@
 'use client';
-import { useEffect,useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -255,7 +255,7 @@ const TicketSupportChatbot = () => {
 
   return (
     <>
-      {isSignedIn && (isDesktop ? showAnim && !isOpen : true) && (
+      {isSignedIn && !hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
         <div
           className="fixed right-25 bottom-24 z-50 translate-x-1/2 sm:right-10 sm:bottom-40 sm:translate-x-0"
           style={{
@@ -317,8 +317,6 @@ const TicketSupportChatbot = () => {
               user={user}
               inputRef={inputRef as React.RefObject<HTMLInputElement>}
             />
-
-            
           </div>
         </div>
       )}

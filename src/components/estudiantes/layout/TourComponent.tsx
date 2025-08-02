@@ -70,7 +70,7 @@ export const TourComponent = () => {
 
   return (
     <>
-      {(showAnim || !isDesktop) && (
+      {!hideButton && (isDesktop ? showAnim : true) && (
         <div
           className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-40 sm:bottom-25 sm:translate-x-0"
           style={{
