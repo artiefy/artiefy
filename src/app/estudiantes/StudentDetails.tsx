@@ -58,7 +58,7 @@ export default function StudentDetails({
   const [index, setIndex] = useState(0); // índice del mensaje
   const [subIndex, setSubIndex] = useState(0); // índice de la letra
   const [reverse, setReverse] = useState(false); // si está borrando
-  const [delay, _setDelay] = useState(60); // velocidad de escritura
+  const [delay, _setDelay] = useState(40); // velocidad de escritura
   const placeHolderText = useMemo(
     () => [
       '¿Que Deseas Crear? Escribe Tu Idea...',

@@ -489,7 +489,7 @@ export default function LessonDetails({
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   // Solo declara activityModalId/setActivityModalId una vez aquí
-  const [_activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
+  const [activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
 
   // Obtener la transcripción al montar el componente
   useEffect(() => {
@@ -658,6 +658,7 @@ export default function LessonDetails({
                   lesson
                 )}
                 lessons={lessonsState}
+                activityModalId={activityModalId}
               />
             </div>
           )}
@@ -679,6 +680,7 @@ export default function LessonDetails({
               isLastLesson={isLastLesson(lessonsState, lesson.id)}
               isLastActivity={isLastActivity(lessonsState, activities, lesson)}
               lessons={lessonsState}
+              activityModalId={activityModalId}
             />
           </div>
         )}
@@ -689,4 +691,3 @@ export default function LessonDetails({
     </div>
   );
 }
-  

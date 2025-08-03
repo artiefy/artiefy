@@ -47,7 +47,8 @@ export function NotificationHeader() {
   // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
   const { data: notifications = [], mutate } = useSWR(
     user?.id ? ['/api/notifications', user.id] : null,
-    async () => (user?.id ? await getNotifications(user.id) : []), // <-- removido el segundo parámetro
+    async () =>
+      user?.id ? await getNotifications(user.id, { limit: 1000 }) : [], // <-- trae todas
     { refreshInterval: 10000 }
   );
   const { data: unreadCount = 0, mutate: mutateUnread } = useSWR(
