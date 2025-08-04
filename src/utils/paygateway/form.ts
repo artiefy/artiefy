@@ -54,7 +54,7 @@ export function createFormData(
 		taxReturnBase,
 		currency,
 		signature,
-		test: '1',
+		test: '0',
 		buyerEmail,
 		buyerFullName,
 		telephone,
