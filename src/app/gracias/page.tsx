@@ -30,7 +30,7 @@ export default function GraciasPage() {
     if (type === 'curso' && courseId) {
       router.replace(`/estudiantes/cursos/${courseId}`);
     } else {
-      router.replace('/estudiantes/estudiantes');
+      router.replace('/estudiantes');
     }
   };
 

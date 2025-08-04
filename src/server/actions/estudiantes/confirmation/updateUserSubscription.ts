@@ -1,7 +1,6 @@
 import { clerkClient, type User } from '@clerk/nextjs/server';
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { formatInTimeZone } from 'date-fns-tz';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
@@ -45,20 +44,32 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     TIME_ZONE,
     'yyyy-MM-dd HH:mm:ss'
   );
-  const subscriptionEndUtc = toZonedTime(subscriptionEndDate, TIME_ZONE);
 
   try {
-    // Buscar usuario en la base de datos
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email_buyer),
+    // Buscar el usuario en Clerk primero para obtener su ID real
+    const clerk = await clerkClient();
+    const clerkUsers = await clerk.users.getUserList({
+      emailAddress: [email_buyer],
     });
 
-    let userId = existingUser?.id;
+    if (clerkUsers.totalCount === 0) {
+      console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+      return;
+    }
+
+    const clerkUser = clerkUsers.data[0] as User;
+    const clerkUserId = clerkUser.id;
+
+    // Buscar usuario en la base de datos por email Y rol estudiante
+    const existingUser = await db.query.users.findFirst({
+      where: and(eq(users.email, email_buyer), eq(users.role, 'estudiante')),
+    });
 
     if (!existingUser) {
-      userId = uuidv4();
+      // Crear nuevo usuario con el ID de Clerk
       await db.insert(users).values({
-        id: userId,
+        id: clerkUserId,
+        name: clerkUser.fullName ?? 'Usuario',
         email: email_buyer,
         role: 'estudiante',
         subscriptionStatus: 'active',
@@ -68,8 +79,11 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
+      console.log(
+        `✅ Usuario estudiante creado en la base de datos con ID de Clerk: ${email_buyer}`
+      );
     } else {
+      // Actualizar usuario existente (estudiante)
       await db
         .update(users)
         .set({
@@ -79,42 +93,27 @@ export async function updateUserSubscription(paymentData: PaymentData) {
           purchaseDate: new Date(bogotaNow),
           updatedAt: new Date(),
         })
-        .where(eq(users.email, email_buyer));
-      console.log(`✅ Usuario existente actualizado a activo: ${email_buyer}`);
+        .where(and(eq(users.email, email_buyer), eq(users.role, 'estudiante')));
+      console.log(
+        `✅ Usuario estudiante existente actualizado a activo: ${email_buyer}`
+      );
     }
 
     // Actualizar metadata en Clerk
-    const clerk = await clerkClient();
-    const clerkUsers = await clerk.users.getUserList({
-      emailAddress: [email_buyer],
+    await clerk.users.updateUserMetadata(clerkUser.id, {
+      publicMetadata: {
+        subscriptionStatus: 'active',
+        subscriptionEndDate: subscriptionEndBogota,
+        planType: planType,
+      },
     });
 
-    if (clerkUsers.totalCount > 0) {
-      const clerkUser = clerkUsers.data[0] as User | undefined;
-      if (!clerkUser) {
-        console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-        return;
-      }
-
-      await clerk.users.updateUserMetadata(clerkUser.id, {
-        publicMetadata: {
-          subscriptionStatus: 'active',
-          subscriptionEndDate: subscriptionEndBogota,
-          planType: planType,
-        },
-      });
-
-      console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
-    } else {
-      console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-    }
+    console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
 
     // Logs de depuración
     console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
     console.log(`📅 Fin suscripción (Bogotá): ${subscriptionEndBogota}`);
-    console.log(
-      `🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
-    );
+    console.log(`👤 Usuario ID utilizado: ${clerkUserId}`);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
