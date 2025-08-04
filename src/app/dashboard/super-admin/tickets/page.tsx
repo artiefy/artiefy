@@ -197,7 +197,6 @@ export default function TicketsPage() {
       }));
 
       setTickets(mapped);
-      console.log('✅ Tickets mapeados:', mapped);
     } catch (error) {
       console.error(
         'Error fetching tickets:',

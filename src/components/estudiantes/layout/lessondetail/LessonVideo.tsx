@@ -10,6 +10,8 @@ interface VideoPlayerProps {
   onProgressUpdate: (progress: number) => void;
   isVideoCompleted: boolean;
   isLocked?: boolean;
+  // Nuevo prop para sincronizar transcripción
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 // Lista de videos que deben usar el reproductor nativo
@@ -24,6 +26,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onProgressUpdate,
   isVideoCompleted,
   isLocked = false,
+  onTimeUpdate, // Nuevo prop
 }) => {
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -123,6 +126,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
               onProgressUpdate(progress);
             }
+            // Llama al callback para sincronizar transcripción
+            if (onTimeUpdate) {
+              onTimeUpdate(video.currentTime);
+            }
           }}
           style={{
             '--media-primary-color': '#ffff',
@@ -158,6 +165,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 (video.currentTime / video.duration) * 100
               );
               onProgressUpdate(progress);
+            }
+            // Llama al callback para sincronizar transcripción
+            if (onTimeUpdate) {
+              onTimeUpdate(video.currentTime);
             }
           }}
         />

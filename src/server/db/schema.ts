@@ -309,7 +309,7 @@ export const tickets = pgTable('tickets', {
   creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
-  comments: varchar('comments', { length: 255 }).notNull(),
+  comments: varchar('comments', { length: 255 }),
   description: text('description').notNull(),
   estado: text('estado', {
     enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
@@ -325,6 +325,7 @@ export const tickets = pgTable('tickets', {
   documentKey: text('document_key'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  title: varchar('title', { length: 50 }).notNull(),
 });
 
 //Tabla de comentarios de tickets
@@ -338,6 +339,7 @@ export const ticketComments = pgTable('ticket_comments', {
     .notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  sender: text('sender').notNull().default('support'), // Puede ser 'user' o 'admin'
 });
 
 //Tabla de parametros
@@ -844,29 +846,29 @@ export const conversations = pgTable('conversations', {
   senderId: text('sender_id')
     .references(() => users.id)
     .notNull(),
-  receiverId: text('receiver_id').references(() => users.id),
   status: text('status', { enum: ['activo', 'cerrado'] })
     .default('activo')
     .notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  title: text('title').notNull(),
+  curso_id: integer('curso_id')
+    .references(() => courses.id)
+    .unique()
+    .notNull(), // Relación con el curso
 });
 
 // Relación de mensajes con conversaciones
-export const chatMessagesWithConversation = pgTable(
-  'chat_messages_with_conversation',
-  {
-    id: serial('id').primaryKey(),
-    conversationId: integer('conversation_id')
-      .references(() => conversations.id)
-      .notNull(),
-    senderId: text('sender_id')
-      .references(() => users.id)
-      .notNull(),
-    message: text('message').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  }
-);
+export const chat_messages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  conversation_id: integer('conversation_id')
+    .references(() => conversations.id)
+    .notNull(),
+  sender: text('sender').notNull(), // Este campo puede ser el ID del usuario o su nombre
+  senderId: text('sender_id').references(() => users.id),
+  message: text('message').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
 
 // Tabla de roles secundarios
 export const rolesSecundarios = pgTable('roles_secundarios', {
@@ -926,6 +928,7 @@ export const notifications = pgTable('notifications', {
   title: text('title').notNull(),
   message: text('message').notNull(),
   isRead: boolean('is_read').default(false),
+  isMarked: boolean('is_marked').default(false), // <-- nuevo campo para marcar si el usuario la vio
   createdAt: timestamp('created_at').defaultNow(),
   metadata: jsonb('metadata'),
 });

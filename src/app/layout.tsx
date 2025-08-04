@@ -9,6 +9,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
+import TourManager from '~/components/tour/tourManager';
 import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
   getBreadcrumbSchema,
@@ -41,7 +42,6 @@ const merriweather = Merriweather({
   preload: false,
   adjustFontFallback: true,
 });
-
 export async function generateMetadata(): Promise<Metadata> {
   return await getMetadataForRoute();
 }
@@ -155,6 +155,7 @@ export default async function RootLayout({
           </div>
 
           <Providers>
+            <TourManager />
             {children}
             <NotificationSubscription />
           </Providers>
