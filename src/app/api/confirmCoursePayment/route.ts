@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
+		// Solo inscribir si el pago fue aprobado (state_pol === '4')
 		if (paymentData.state_pol === '4') {
 			const match = /^C(\d+)T/.exec(paymentData.reference_sale);
 			if (!match) {
@@ -69,16 +70,23 @@ export async function POST(req: NextRequest) {
 			}
 
 			const courseId = parseInt(match[1], 10);
+			const email = paymentData.email_buyer?.trim().toLowerCase();
+
 			console.log('✅ Processing enrollment:', {
 				courseId,
-				email: paymentData.email_buyer,
+				email,
 			});
 
-			try {
-				const result = await enrollUserInCourse(
-					paymentData.email_buyer,
-					courseId
+			if (!email || !courseId) {
+				console.error('❌ Missing email or courseId for enrollment');
+				return NextResponse.json(
+					{ error: 'Missing email or courseId' },
+					{ status: 400 }
 				);
+			}
+
+			try {
+				const result = await enrollUserInCourse(email, courseId);
 
 				return NextResponse.json({
 					message: 'Course payment confirmed and enrollment successful',
