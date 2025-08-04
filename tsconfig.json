@@ -43,7 +43,8 @@
     "video.d.ts",
     ".next/types/**/*.ts",
     "src/types/**/*.ts",
-    "src/types/**/*.d.ts"
+    "src/types/**/*.d.ts",
+    "drizzle.config.ts"
   ],
   "exclude": [
     "node_modules",
