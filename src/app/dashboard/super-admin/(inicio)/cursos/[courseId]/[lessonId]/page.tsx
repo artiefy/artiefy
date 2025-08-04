@@ -425,11 +425,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   </>
                 )}
               </div>
-              <div className="mt-4 text-center">
+              <div className="col-span-full mt-6 flex justify-center">
                 <a
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
-                  className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                  className="bg-primary focus:ring-secondary rounded-lg px-6 py-3 text-white transition duration-300 hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-none"
                 >
                   Descargar transcripción (.txt)
                 </a>
