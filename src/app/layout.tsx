@@ -89,6 +89,8 @@ export default async function RootLayout({
         />
 
         {/* Meta Pixel Code */}
+        {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
+        {/*
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -103,6 +105,7 @@ export default async function RootLayout({
             fbq('track', 'PageView');
           `}
         </Script>
+        */}
         {/* End Meta Pixel Code */}
 
         {/* Schema.org con componentes Script de Next.js */}

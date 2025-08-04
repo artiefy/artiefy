@@ -106,7 +106,7 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 			const form = document.createElement('form');
 			form.method = 'POST';
 			form.action =
-				'https://checkout.payulatam.com/ppp-web-gateway-payu/';
+				'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/';
 
 			for (const key in data) {
 				if (Object.prototype.hasOwnProperty.call(data, key)) {

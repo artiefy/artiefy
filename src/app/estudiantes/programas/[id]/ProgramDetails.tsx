@@ -5,10 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { FaCheckCircle } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { ProgramHeader } from '~/components/estudiantes/layout/programdetail/ProgramHeader';
-// Remove ProgramContent import since it's used in ProgramHeader
 import { ProgramsBreadcrumbs } from '~/components/estudiantes/layout/programdetail/ProgramsBreadcrumbs';
 import {
   enrollInProgram,
@@ -26,12 +26,12 @@ export default function ProgramDetails({
   program: initialProgram,
 }: ProgramDetailsProps) {
   const [program] = useState(initialProgram);
-  // Remove totalStudents since we're using EnrollmentCount now
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
+  const [showRequirementModal, setShowRequirementModal] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
@@ -74,7 +74,7 @@ export default function ProgramDetails({
     };
 
     void initializeProgram();
-  }, [userId, program.id, checkSubscriptionStatus]); // Added checkSubscriptionStatus to dependencies
+  }, [userId, program.id, checkSubscriptionStatus]);
 
   // Subscription change effect
   useEffect(() => {
@@ -97,23 +97,30 @@ export default function ProgramDetails({
     };
   }, [user]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = (): Promise<void> => {
     if (!isSignedIn) {
       toast.error('Debes iniciar sesión');
       void router.push(`/sign-in?redirect_url=${pathname}`);
-      return;
+      return Promise.resolve();
     }
 
-    // Simplificar la verificación usando isSubscriptionActive
     if (!isSubscriptionActive) {
       toast.error('Se requiere plan Premium activo', {
         description:
           'Necesitas una suscripción Premium activa para inscribirte.',
       });
       void router.push('/planes');
-      return;
+      return Promise.resolve();
     }
 
+    // Mostrar modal de requisito antes de inscribir
+    setShowRequirementModal(true);
+    return Promise.resolve();
+  };
+
+  // Nueva función para confirmar inscripción tras aceptar el modal
+  const confirmEnroll = async () => {
+    setShowRequirementModal(false);
     setIsEnrolling(true);
     try {
       const result = await enrollInProgram(parseInt(program.id));
@@ -151,6 +158,27 @@ export default function ProgramDetails({
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Modal de requisito de 10 meses */}
+      {showRequirementModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
+          <div className="relative flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
+            <FaCheckCircle className="mb-4 text-green-500" size={48} />
+            <h2 className="text-background mb-2 text-center text-xl font-bold">
+              Requisito de Inscripción
+            </h2>
+            <p className="text-background mb-6 text-center">
+              La inscripción a un programa requiere al menos una estancia de{' '}
+              <b>10 meses</b> en Artiefy.
+            </p>
+            <button
+              onClick={confirmEnroll}
+              className="bg-primary hover:bg-primary/90 text-background mt-2 rounded px-6 py-2 font-semibold active:scale-95"
+            >
+              Aceptar y continuar
+            </button>
+          </div>
+        </div>
+      )}
       <main className="mx-auto max-w-7xl pb-4 sm:pt-0 md:pb-6 lg:pb-8">
         <ProgramsBreadcrumbs title={program.title} />
         <ProgramHeader
