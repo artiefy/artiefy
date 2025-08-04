@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-
-import '~/styles/confetti.css';
 
 export default function GraciasPage() {
   const router = useRouter();
@@ -30,7 +27,7 @@ export default function GraciasPage() {
     if (type === 'curso' && courseId) {
       router.replace(`/estudiantes/cursos/${courseId}`);
     } else {
-      router.replace('/estudiantes/mycourses');
+      router.replace('/estudiantes/estudiantes');
     }
   };
 
@@ -54,7 +51,7 @@ export default function GraciasPage() {
         `}
       </Script>
       <noscript>
-        {/*  eslint-disable-next-line @next/next/no-img-element */}
+         {/*  eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"
@@ -63,27 +60,8 @@ export default function GraciasPage() {
           alt=""
         />
       </noscript>
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center">
-        {/* Imagen de fondo usando Next/Image */}
-        <Image
-          alt="Fondo de agradecimiento"
-          src="/login-fondo.webp"
-          fill
-          quality={100}
-          sizes="100vw"
-          style={{
-            objectFit: 'cover',
-            zIndex: 0,
-          }}
-          priority
-        />
-        {/* Confetti wrapper igual que en CertificationStudent */}
-        <div className="confetti z-[10]">
-          {Array.from({ length: 13 }, (_, i) => (
-            <div key={i} className="confetti-piece" />
-          ))}
-        </div>
-        <div className="relative z-[20] flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
+        <div className="relative flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
           <h2 className="text-background mb-4 text-center text-2xl font-bold">
             ¡Muchas gracias por tu compra!
           </h2>
@@ -94,7 +72,7 @@ export default function GraciasPage() {
           </p>
           <button
             onClick={handleContinue}
-            className="bg-secondary text-background mt-2 rounded px-6 py-2 font-semibold hover:bg-[#00A5C0] active:scale-95"
+            className="bg-primary hover:bg-primary/90 mt-2 rounded px-6 py-2 font-semibold text-white active:scale-95"
           >
             Continuar
           </button>
