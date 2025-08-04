@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
+import '~/styles/confetti.css'; // Importa el CSS de confetti
+
 export default function GraciasPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,6 +63,12 @@ export default function GraciasPage() {
         />
       </noscript>
       <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
+        {/* Confetti wrapper igual que en CertificationStudent */}
+        <div className="confetti">
+          {Array.from({ length: 13 }, (_, i) => (
+            <div key={i} className="confetti-piece" />
+          ))}
+        </div>
         <div className="relative flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
           <h2 className="text-background mb-4 text-center text-2xl font-bold">
             ¡Muchas gracias por tu compra!
@@ -72,7 +80,7 @@ export default function GraciasPage() {
           </p>
           <button
             onClick={handleContinue}
-            className="bg-secondary hover:bg-[#00A5C0] text-background mt-2 rounded px-6 py-2 font-semibold active:scale-95"
+            className="bg-secondary text-background mt-2 rounded px-6 py-2 font-semibold hover:bg-[#00A5C0] active:scale-95"
           >
             Continuar
           </button>
