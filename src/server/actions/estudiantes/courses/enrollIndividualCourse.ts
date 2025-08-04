@@ -13,33 +13,43 @@ import {
 import { sortLessons } from '~/utils/lessonSorting';
 
 export async function enrollUserInCourse(userEmail: string, courseId: number) {
-  console.log('📝 Starting enrollment process:', { userEmail, courseId });
+  const normalizedEmail = userEmail.trim().toLowerCase();
+  console.log('📝 Starting enrollment process:', {
+    userEmail: normalizedEmail,
+    courseId,
+  });
 
   try {
     // Buscar específicamente el usuario con rol 'estudiante'
     let user = await db.query.users.findFirst({
-      where: and(eq(users.email, userEmail), eq(users.role, 'estudiante')),
+      where: and(
+        eq(users.email, normalizedEmail),
+        eq(users.role, 'estudiante')
+      ),
     });
 
     // Si no existe el usuario, crearlo
     if (!user) {
-      console.log('👤 User not found, creating new user:', userEmail);
+      console.log('👤 User not found, creating new user:', normalizedEmail);
       const userId = uuidv4();
 
       try {
         await db.insert(users).values({
           id: userId,
-          email: userEmail,
-          name: userEmail.split('@')[0], // Usar la parte inicial del email como nombre
+          email: normalizedEmail,
+          name: normalizedEmail.split('@')[0],
           role: 'estudiante',
-          subscriptionStatus: 'inactive', // Siempre inactivo para cursos individuales
+          subscriptionStatus: 'inactive',
           createdAt: new Date(),
           updatedAt: new Date(),
         });
 
         // Verificar que el usuario se creó correctamente
         user = await db.query.users.findFirst({
-          where: and(eq(users.email, userEmail), eq(users.role, 'estudiante')),
+          where: and(
+            eq(users.email, normalizedEmail),
+            eq(users.role, 'estudiante')
+          ),
         });
 
         if (!user) {
