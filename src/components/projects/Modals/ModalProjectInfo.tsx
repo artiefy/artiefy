@@ -311,11 +311,11 @@ export default function ProjectInfoModal({
             <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-bold text-white">
+                  <div className="min-w-0 flex-1 space-y-2 pr-4">
+                    <h1 className="text-3xl font-bold break-words text-white">
                       {project.name}
                     </h1>
-                    <p className="text-slate-400">
+                    <p className="line-clamp-3 break-words text-slate-400">
                       {project.planteamiento ?? 'Sin planteamiento'}
                     </p>
                   </div>
@@ -324,16 +324,16 @@ export default function ProjectInfoModal({
               <CardContent className="space-y-6">
                 {/* Badges de Estado */}
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="border-cyan-500/30 bg-cyan-500/20 text-cyan-400">
+                  <Badge className="max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20 text-cyan-400">
                     {isOwner ? 'Propio' : 'Público'}
                   </Badge>
-                  <Badge className="border-blue-500/30 bg-blue-500/20 text-blue-400">
+                  <Badge className="max-w-[200px] truncate border-blue-500/30 bg-blue-500/20 text-blue-400">
                     {project.type_project}
                   </Badge>
                   {project.category?.name && (
                     <Button
                       variant="link"
-                      className="border-green-500/30 bg-green-500/20 px-2 py-0 text-green-400 underline underline-offset-2"
+                      className="max-w-[200px] truncate border-green-500/30 bg-green-500/20 px-2 py-0 text-green-400 underline underline-offset-2"
                       onClick={() => setShowCategoria(true)}
                     >
                       {project.category.name}
@@ -350,21 +350,21 @@ export default function ProjectInfoModal({
                 </div>
                 {/* Información del Proyecto */}
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
+                  <div className="min-w-0 space-y-4">
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Users className="h-5 w-5 text-cyan-400" />
+                      <Users className="h-5 w-5 flex-shrink-0 text-cyan-400" />
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
+                        className="truncate rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
                         onClick={() => setShowIntegrantes(true)}
                       >
                         {inscritos} Integrantes
                       </Button>
                     </div>
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Calendar className="h-5 w-5 text-cyan-400" />
-                      <span>
+                      <Calendar className="h-5 w-5 flex-shrink-0 text-cyan-400" />
+                      <span className="text-sm break-words">
                         Fecha de creación:{' '}
                         {typeof project.createdAt === 'string'
                           ? new Date(project.createdAt).toLocaleDateString(
@@ -379,19 +379,21 @@ export default function ProjectInfoModal({
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="min-w-0 space-y-4">
                     <div className="text-slate-300">
                       <span className="font-medium text-cyan-400">Tipo:</span>{' '}
-                      {project.type_project}
+                      <span className="break-words">
+                        {project.type_project}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
-                      <span className="font-medium text-cyan-400">
+                      <span className="flex-shrink-0 font-medium text-cyan-400">
                         Categoría:
                       </span>
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
+                        className="max-w-[200px] truncate rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
                         onClick={() => setShowCategoria(true)}
                       >
                         {project.category?.name ?? 'Sin categoría'}
@@ -407,33 +409,49 @@ export default function ProjectInfoModal({
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
                   <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 rounded-full bg-cyan-400" />
+                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cyan-400" />
                     Planteamiento
                   </h2>
                 </CardHeader>
                 <CardContent>
-                  <p className="leading-relaxed text-slate-300">
-                    {project.planteamiento ?? 'Sin planteamiento'}
-                  </p>
+                  <div className="max-h-40 overflow-y-auto">
+                    <p className="leading-relaxed break-words text-slate-300">
+                      {project.planteamiento ?? 'Sin planteamiento'}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
               {/* Objetivo */}
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
                   <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 rounded-full bg-green-400" />
+                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-green-400" />
                     Objetivo
                   </h2>
                 </CardHeader>
                 <CardContent>
-                  <p className="leading-relaxed text-slate-300">
-                    {project.objetivo_general ?? 'Sin objetivo'}
-                  </p>
+                  <div className="max-h-40 overflow-y-auto">
+                    <p className="leading-relaxed break-words text-slate-300">
+                      {project.objetivo_general ?? 'Sin objetivo'}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
             <div className="flex w-full justify-center gap-3">
-              {isOwner ? (
+              {!userId ? (
+                <Button
+                  className="flex-1 bg-blue-500 text-lg text-white hover:bg-blue-600"
+                  onClick={() => {
+                    onClose();
+                    window.location.href = '/sign-in';
+                  }}
+                >
+                  <span className="w-full text-lg font-semibold">
+                    Iniciar Sesión
+                  </span>
+                </Button>
+              ) : isOwner ? (
                 <Button
                   className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
                   onClick={handleVerProyecto}

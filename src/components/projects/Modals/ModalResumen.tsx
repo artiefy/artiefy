@@ -19,7 +19,7 @@ interface UpdatedProjectData {
   coverImageKey?: string;
   fechaInicio?: string;
   fechaFin?: string;
-  tipoVisualizacion?: 'meses' | 'dias';
+  tipoVisualizacion?: 'meses' | 'dias' | 'horas'; // <-- Agrega 'horas' aquí
 }
 
 // Añade la interfaz SpecificObjective
@@ -49,7 +49,7 @@ interface ModalResumenProps {
   onUpdateProject?: (updatedProject: UpdatedProjectData) => void;
   fechaInicio?: string;
   fechaFin?: string;
-  tipoVisualizacion?: 'meses' | 'dias';
+  tipoVisualizacion?: 'meses' | 'dias' | 'horas';
   actividades?: {
     descripcion: string;
     meses: number[];
@@ -102,9 +102,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
   const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
   const [duracionDias, setDuracionDias] = useState<number>(0);
-  const [tipoVisualizacion, setTipoVisualizacion] = useState<'meses' | 'dias'>(
-    tipoVisualizacionProp ?? 'meses'
-  );
+  const [tipoVisualizacion, setTipoVisualizacion] = useState<
+    'meses' | 'dias' | 'horas'
+  >((tipoVisualizacionProp as 'meses' | 'dias' | 'horas') ?? 'meses');
   const [tipoProyecto, setTipoProyecto] = useState<string>(''); // Por defecto vacío
   const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
@@ -125,6 +125,61 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }>({});
   const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
 
+  // Add handleTextAreaChange function for auto-resize
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    // Resetear la altura para recalcular correctamente
+    textarea.style.height = 'auto';
+
+    // Calcular la altura mínima basada en el contenido
+    const scrollHeight = textarea.scrollHeight;
+    const minHeight = 40; // Altura mínima en píxeles
+    const maxHeight = 100; // Altura máxima en píxeles
+
+    // Aplicar la altura calculada con límites
+    if (scrollHeight <= minHeight) {
+      textarea.style.height = `${minHeight}px`;
+    } else if (scrollHeight >= maxHeight) {
+      textarea.style.height = `${maxHeight}px`;
+      textarea.style.overflowY = 'auto'; // Mostrar scroll si excede el máximo
+    } else {
+      textarea.style.height = `${scrollHeight}px`;
+      textarea.style.overflowY = 'hidden'; // Ocultar scroll si está dentro del rango
+    }
+  };
+
+  // Función para inicializar la altura de textareas existentes
+  const initializeTextAreaHeight = (element: HTMLTextAreaElement) => {
+    if (element && element.value) {
+      const event = {
+        target: element,
+      } as React.ChangeEvent<HTMLTextAreaElement>;
+      handleTextAreaChange(event);
+    }
+  };
+
+  // useEffect para inicializar alturas cuando se abra el modal
+  useEffect(() => {
+    if (isOpen) {
+      // Pequeño delay para asegurar que los elementos estén renderizados
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach((textarea) => {
+          if (textarea instanceof HTMLTextAreaElement) {
+            initializeTextAreaHeight(textarea);
+          }
+        });
+      }, 100);
+    }
+  }, [
+    isOpen,
+    tituloState,
+    planteamientoEditado,
+    justificacionEditada,
+    objetivoGenEditado,
+    objetivosEspEditado,
+  ]);
+
   // Nuevo estado para el filtro de búsqueda por actividad
   const [buscadorResponsable, setBuscadorResponsable] = useState<{
     [key: string]: string;
@@ -134,6 +189,41 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [showDropdownResponsable, setShowDropdownResponsable] = useState<{
     [key: string]: boolean;
   }>({});
+
+  // Nuevo estado para la cantidad de horas por día en el proyecto
+  const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6); // Valor por defecto 6
+
+  // Calcular el total de horas del proyecto
+  const totalHorasProyecto =
+    duracionDias > 0 ? duracionDias * horasPorDiaProyecto : 0;
+
+  // Calcular la cantidad total de actividades (sumando todas las actividades de todos los objetivos)
+  const totalActividades = objetivosEspEditado.reduce(
+    (acc, obj) => acc + obj.activities.length,
+    0
+  );
+
+  // Calcular las horas por actividad (distribución equitativa)
+  const horasPorActividadDistribuidas =
+    totalActividades > 0
+      ? Math.floor(totalHorasProyecto / totalActividades)
+      : 0;
+
+  // Sincronizar automáticamente las horas por actividad distribuidas
+  useEffect(() => {
+    if (totalActividades > 0 && horasPorActividadDistribuidas > 0) {
+      const nuevasHoras: { [key: string]: number } = {};
+      objetivosEspEditado.forEach((obj) => {
+        obj.activities.forEach((_, actIdx) => {
+          const actividadKey = `${obj.id}_${actIdx}`;
+          nuevasHoras[actividadKey] = horasPorActividadDistribuidas;
+        });
+      });
+      setHorasPorActividad(nuevasHoras);
+    }
+    // Solo actualizar cuando cambian las actividades o el cálculo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalActividades, horasPorActividadDistribuidas, objetivosEspEditado]);
 
   useEffect(() => {
     // Cargar todos los usuarios existentes para el selector de responsables
@@ -347,6 +437,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Mantener compatibilidad con el código existente
   const meses: string[] = periodosVisualizacion;
 
+  // Calcular array de horas para el cronograma por horas
+  const horasPorDia = 24;
+  const periodosHoras: string[] =
+    fechaInicio && fechaFin && tipoVisualizacion === 'horas'
+      ? Array.from({ length: duracionDias * horasPorDia }, (_, i) => {
+          const fecha = new Date(fechaInicio);
+          fecha.setHours(0, 0, 0, 0);
+          fecha.setDate(fecha.getDate() + Math.floor(i / horasPorDia));
+          const hora = i % horasPorDia;
+          return (
+            fecha.toLocaleDateString('es-ES') +
+            ' ' +
+            hora.toString().padStart(2, '0') +
+            ':00'
+          );
+        })
+      : [];
+
   // Actualizar numMeses cuando cambien las fechas
   useEffect(() => {
     if (fechaInicio && fechaFin) {
@@ -360,6 +468,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         setDuracionDias(diasCalculados);
       }
     }
+  }, [fechaInicio, fechaFin]);
+
+  // Cambiar automáticamente a visualización por días si la duración es menor a 28 días
+  useEffect(() => {
+    if (fechaInicio && fechaFin) {
+      const dias = calcularDuracionDias(fechaInicio, fechaFin);
+      if (dias > 0 && dias < 28 && tipoVisualizacion !== 'dias') {
+        setTipoVisualizacion('dias');
+      }
+    }
+    // No forzar a "meses" si es >= 28, el usuario puede cambiarlo manualmente
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fechaInicio, fechaFin]);
 
   const toggleMesActividad = (actividad: string, mesIndex: number) => {
@@ -995,19 +1115,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
     >
-      <div className="relative h-full w-[88%] max-w-5xl overflow-y-auto rounded-lg bg-[#0F2940] p-6 text-white shadow-lg">
+      <div className="relative h-full max-h-[95vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-[#0F2940] p-3 text-white shadow-lg sm:p-6">
         <button
           onClick={onClose}
-          className="absolute top-3 right-4 text-2xl font-bold text-white hover:text-red-500"
+          className="absolute top-2 right-2 text-xl font-bold text-white hover:text-red-500 sm:top-3 sm:right-4 sm:text-2xl"
         >
           ✕
         </button>
 
         {/* Espacio para la imagen del proyecto */}
-        <div className="mb-6 flex flex-col items-center">
-          <div className="mb-2 flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg bg-gray-200">
+        <div className="mb-4 flex flex-col items-center sm:mb-6">
+          <div className="mb-2 flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-gray-200 sm:h-40 sm:w-40">
             {previewImagen ? (
               <Image
                 src={previewImagen}
@@ -1031,7 +1151,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <span className="text-gray-500">Sin imagen</span>
             )}
           </div>
-          <label className="cursor-pointer rounded bg-cyan-700 px-4 py-2 text-white hover:bg-cyan-800">
+          <label className="cursor-pointer rounded bg-cyan-700 px-3 py-1 text-sm text-white hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-base">
             {isEditMode ? 'Cambiar imagen' : 'Seleccionar imagen'}
             <input
               type="file"
@@ -1049,58 +1169,145 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
         <br />
         <br />
-        <input
+        <textarea
           value={tituloState}
-          onChange={(e) => setTitulo(e.target.value)}
-          className="mb-6 w-full rounded p-2 text-center text-3xl font-semibold text-cyan-300"
+          onChange={(e) => {
+            setTitulo(e.target.value);
+            handleTextAreaChange(e);
+          }}
+          rows={1}
+          className="mb-4 w-full resize-none overflow-hidden rounded border p-2 text-center text-xl font-semibold text-cyan-300 sm:mb-6 sm:text-2xl md:text-3xl"
           placeholder="Título del Proyecto"
         />
 
-        <form className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="col-span-2">
-            <label>Planteamiento del problema</label>
-            <input
+        <form className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+          <div className="col-span-1 lg:col-span-2">
+            <label className="text-sm sm:text-base">
+              Planteamiento del problema
+            </label>
+            <textarea
               value={planteamientoEditado}
-              onChange={(e) => setPlanteamientoEditado(e.target.value)}
-              className="mt-1 w-full rounded bg-gray-400 p-2 text-black"
+              onChange={(e) => {
+                setPlanteamientoEditado(e.target.value);
+                handleTextAreaChange(e);
+              }}
+              rows={1}
+              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+              placeholder="Describe el planteamiento del problema"
             />
           </div>
 
-          <div className="col-span-2">
-            <label>Justificación</label>
-            <input
+          <div className="col-span-1 lg:col-span-2">
+            <label className="text-sm sm:text-base">Justificación</label>
+            <textarea
               value={justificacionEditada}
-              onChange={(e) => setJustificacionEditada(e.target.value)}
-              className="mt-1 w-full rounded bg-gray-400 p-2 text-black"
+              onChange={(e) => {
+                setJustificacionEditada(e.target.value);
+                handleTextAreaChange(e);
+              }}
+              rows={1}
+              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+              placeholder="Justifica la necesidad del proyecto"
             />
           </div>
 
-          <div className="col-span-2">
-            <label>Objetivo General</label>
-            <input
+          <div className="col-span-1 lg:col-span-2">
+            <label className="text-sm sm:text-base">Objetivo General</label>
+            <textarea
               value={objetivoGenEditado}
-              onChange={(e) => setObjetivoGenEditado(e.target.value)}
-              className="mt-1 w-full rounded bg-gray-400 p-2 text-black"
+              onChange={(e) => {
+                setObjetivoGenEditado(e.target.value);
+                handleTextAreaChange(e);
+              }}
+              rows={1}
+              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+              placeholder="Define el objetivo general del proyecto"
             />
           </div>
 
-          <div className="col-span-2">
-            <label>Objetivos Específicos</label>
-            <div className="flex gap-2">
-              <input
+          {/* Fechas responsive */}
+          <div className="col-span-1">
+            <label className="mb-1 block text-sm font-medium sm:text-base">
+              Fecha de Inicio del Proyecto
+            </label>
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="w-full rounded bg-gray-400 p-2 text-black"
+              required
+            />
+          </div>
+
+          <div className="col-span-1">
+            <label className="mb-1 block text-sm font-medium sm:text-base">
+              Fecha de Fin del Proyecto
+            </label>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              min={fechaInicio}
+              className="w-full rounded bg-gray-400 p-2 text-black"
+              required
+            />
+          </div>
+
+          {/* Horas por día responsive */}
+          {fechaInicio && fechaFin && (
+            <>
+              <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                <label
+                  className="text-sm font-medium text-cyan-300 sm:text-base"
+                  htmlFor="horasPorDiaProyecto"
+                >
+                  Horas por día de trabajo:
+                </label>
+                <input
+                  id="horasPorDiaProyecto"
+                  type="number"
+                  min={1}
+                  max={24}
+                  value={horasPorDiaProyecto}
+                  onChange={(e) =>
+                    setHorasPorDiaProyecto(Number(e.target.value))
+                  }
+                  className="w-full rounded bg-gray-300 p-1 text-black sm:w-24"
+                />
+              </div>
+              <div className="col-span-1 flex items-center">
+                <span className="text-sm font-semibold text-cyan-200 sm:text-base">
+                  Total de horas: {totalHorasProyecto}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Objetivos específicos */}
+          <div className="col-span-1 lg:col-span-2">
+            <label className="text-sm sm:text-base">
+              Objetivos Específicos
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <textarea
                 value={nuevoObjetivo}
-                onChange={(e) => setNuevoObjetivo(e.target.value)}
-                className="flex-1 rounded bg-gray-400 p-2 text-black"
+                onChange={(e) => {
+                  setNuevoObjetivo(e.target.value);
+                  handleTextAreaChange(e);
+                }}
+                rows={1}
+                className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
                 placeholder="Agregar nuevo objetivo..."
               />
               <button
                 type="button"
                 onClick={handleAgregarObjetivo}
-                className="rounded bg-green-600 px-2 text-2xl font-semibold text-white hover:bg-green-700"
+                className="rounded bg-green-600 px-4 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:px-2 sm:text-2xl"
               >
                 +
               </button>
             </div>
+            {/* Lista de objetivos responsive */}
             <div className="m-2 mb-2 gap-2">
               <ul className="mb-2 space-y-4">
                 {objetivosEspEditado.map((obj, idx) => (
@@ -1108,25 +1315,27 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     key={obj.id}
                     className="flex flex-col gap-2 border-b border-gray-600 pb-2"
                   >
-                    <div className="flex gap-2">
-                      <input
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <textarea
                         value={obj.title}
-                        onChange={(e) =>
-                          handleEditarObjetivo(idx, e.target.value)
-                        }
-                        className="flex-1 rounded bg-gray-400 p-2 text-black"
+                        onChange={(e) => {
+                          handleEditarObjetivo(idx, e.target.value);
+                          handleTextAreaChange(e);
+                        }}
+                        rows={1}
+                        className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
                       />
                       <button
                         type="button"
                         onClick={() => handleEliminarObjetivo(idx)}
-                        className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
+                        className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 sm:px-2"
                       >
                         ✕
                       </button>
                     </div>
-                    {/* Actividades para este objetivo */}
-                    <div className="ml-4">
-                      <label className="text-sm text-cyan-300">
+                    {/* Actividades responsive */}
+                    <div className="ml-2 sm:ml-4">
+                      <label className="text-xs text-cyan-300 sm:text-sm">
                         Actividades
                       </label>
                       <ul className="mb-1 space-y-2">
@@ -1139,31 +1348,33 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           );
                           return (
                             <li key={actIdx} className="flex flex-col gap-2">
-                              <div className="flex gap-2">
-                                <input
+                              <div className="flex flex-col gap-2 sm:flex-row">
+                                <textarea
                                   value={act}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
                                     handleEditarActividad(
                                       obj.id,
                                       actIdx,
                                       e.target.value
-                                    )
-                                  }
-                                  className="flex-1 rounded bg-gray-400 p-2 text-black"
+                                    );
+                                    handleTextAreaChange(e);
+                                  }}
+                                  rows={1}
+                                  className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
                                 />
                                 <button
                                   type="button"
                                   onClick={() =>
                                     handleEliminarActividad(obj.id, actIdx)
                                   }
-                                  className="rounded bg-red-600 px-2 font-semibold text-white hover:bg-red-700"
+                                  className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 sm:px-2"
                                 >
                                   ✕
                                 </button>
                               </div>
-                              <div className="mt-1 flex items-center gap-2">
-                                {/* Buscador de responsable con dropdown tipo select tradicional */}
-                                <div className="relative w-64">
+                              {/* Responsable y horas responsive */}
+                              <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <div className="relative w-full sm:w-64">
                                   <input
                                     type="text"
                                     value={
@@ -1270,14 +1481,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 <input
                                   type="number"
                                   min={1}
-                                  value={horasPorActividad[actividadKey] || 1}
+                                  value={
+                                    horasPorActividad[actividadKey] ||
+                                    horasPorActividadDistribuidas
+                                  }
                                   onChange={(e) =>
                                     setHorasPorActividad((prev) => ({
                                       ...prev,
                                       [actividadKey]: Number(e.target.value),
                                     }))
                                   }
-                                  className="w-24 rounded bg-gray-300 p-1 text-black"
+                                  className="w-full rounded bg-gray-300 p-1 text-black sm:w-24"
                                   placeholder="Horas/día"
                                 />
                               </div>
@@ -1285,22 +1499,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           );
                         })}
                       </ul>
-                      <div className="flex gap-2">
-                        <input
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <textarea
                           value={nuevaActividadPorObjetivo[obj.id] || ''}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setNuevaActividadPorObjetivo((prev) => ({
                               ...prev,
                               [obj.id]: e.target.value,
-                            }))
-                          }
-                          className="flex-1 rounded bg-gray-400 p-2 text-black"
+                            }));
+                            handleTextAreaChange(e);
+                          }}
+                          rows={1}
+                          className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
                           placeholder="Agregar nueva actividad..."
                         />
                         <button
                           type="button"
                           onClick={() => handleAgregarActividad(obj.id)}
-                          className="rounded bg-green-600 px-2 text-2xl font-semibold text-white hover:bg-green-700"
+                          className="rounded bg-green-600 px-4 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:px-2 sm:text-2xl"
                         >
                           +
                         </button>
@@ -1312,15 +1528,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
           </div>
 
+          {/* Selectores responsive */}
           <div className="flex flex-col">
-            <label>Categoría</label>
+            <label className="text-sm sm:text-base">Categoría</label>
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
               className="mt-1 rounded border bg-gray-400 p-2 text-black"
               required
             >
-              <option value="">-- Seleccione una Categoría --</option>
+              <option value="" className="text-gray-500">
+                -- Seleccione una Categoría --
+              </option>
               {categorias.map((categoria) => (
                 <option key={categoria.id} value={categoria.id}>
                   {categoria.name}
@@ -1329,9 +1548,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </select>
           </div>
 
-          {/* Selector para el tipo de proyecto */}
           <div className="flex flex-col">
-            <label>Tipo de Proyecto</label>
+            <label className="text-sm sm:text-base">Tipo de Proyecto</label>
             <select
               value={tipoProyecto}
               onChange={(e) => setTipoProyecto(e.target.value)}
@@ -1350,42 +1568,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </select>
           </div>
 
-          {/* Reemplazar el selector de meses con selectores de fechas */}
-          <div className="mb-4">
-            <label className="mb-1 block font-medium">
-              Fecha de Inicio del Proyecto
-            </label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full rounded bg-gray-400 p-2 text-black"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1 block font-medium">
-              Fecha de Fin del Proyecto
-            </label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              min={fechaInicio}
-              className="w-full rounded bg-gray-400 p-2 text-black"
-              required
-            />
-          </div>
-
+          {/* Información de duración responsive */}
           {fechaInicio && fechaFin && (
-            <div className="col-span-2 mb-4">
-              <span className="text-sm text-gray-300">
+            <div className="col-span-1 mb-4 lg:col-span-2">
+              <span className="block text-xs text-gray-300 sm:text-sm">
                 Duración: {formatearDuracion(duracionDias)} ({duracionDias} días
                 en total)
               </span>
-              <br />
-              <span className="text-xs text-gray-400">
+              <span className="block text-xs text-gray-400">
                 Cronograma:{' '}
                 {tipoVisualizacion === 'meses'
                   ? `${calcularMesesEntreFechas(fechaInicio, fechaFin).length} mes${calcularMesesEntreFechas(fechaInicio, fechaFin).length !== 1 ? 'es' : ''}`
@@ -1394,144 +1584,210 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
           )}
 
-          {/* Selector para tipo de visualización del cronograma */}
+          {/* Selector de visualización responsive */}
           {fechaInicio && fechaFin && (
-            <div className="col-span-2 mb-4">
-              <label className="mb-2 block font-medium">
+            <div className="col-span-1 mb-4 lg:col-span-2">
+              <label className="mb-2 block text-sm font-medium sm:text-base">
                 Visualización del Cronograma
               </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value="meses"
-                    checked={tipoVisualizacion === 'meses'}
-                    onChange={(e) =>
-                      setTipoVisualizacion(e.target.value as 'meses' | 'dias')
-                    }
-                    className="text-cyan-500"
-                  />
-                  <span>Por Meses</span>
-                </label>
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                {duracionDias >= 28 && (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="meses"
+                      checked={tipoVisualizacion === 'meses'}
+                      onChange={(e) =>
+                        setTipoVisualizacion(
+                          e.target.value as 'meses' | 'dias' | 'horas'
+                        )
+                      }
+                      className="text-cyan-500"
+                    />
+                    <span className="text-sm sm:text-base">Por Meses</span>
+                  </label>
+                )}
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
                     value="dias"
                     checked={tipoVisualizacion === 'dias'}
                     onChange={(e) =>
-                      setTipoVisualizacion(e.target.value as 'meses' | 'dias')
+                      setTipoVisualizacion(
+                        e.target.value as 'meses' | 'dias' | 'horas'
+                      )
                     }
                     className="text-cyan-500"
                   />
-                  <span>Por Días</span>
+                  <span className="text-sm sm:text-base">Por Días</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="horas"
+                    checked={tipoVisualizacion === 'horas'}
+                    onChange={(e) =>
+                      setTipoVisualizacion(
+                        e.target.value as 'meses' | 'dias' | 'horas'
+                      )
+                    }
+                    className="text-cyan-500"
+                  />
+                  <span className="text-sm sm:text-base">Por Horas</span>
                 </label>
               </div>
             </div>
           )}
         </form>
 
-        {/* Cronograma dinámico con celdas coloreadas */}
-        <div className="mt-6 overflow-x-auto">
-          <h3 className="mb-2 text-lg font-semibold text-white">
-            Cronograma{' '}
-            {tipoVisualizacion === 'meses' ? 'por Meses' : 'por Días'}
-          </h3>
-          {meses.length > 0 ? (
-            <div className="max-h-64 overflow-y-auto">
-              <table className="w-full table-auto border-collapse text-sm text-black">
-                <thead className="sticky top-0 z-10 bg-gray-300">
-                  <tr>
-                    <th className="border px-2 py-2 text-left break-words">
-                      Actividad
-                    </th>
-                    {meses.map((periodo, i) => (
-                      <th
-                        key={i}
-                        className="border px-2 py-2 text-left break-words whitespace-normal"
-                        style={{
-                          minWidth:
-                            tipoVisualizacion === 'dias' ? '80px' : '120px',
-                        }}
-                      >
-                        {periodo}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {objetivosEspEditado.map((obj) => (
-                    <React.Fragment key={obj.id}>
-                      {obj.activities.map((act, idx) => {
-                        const actividadKey = `${obj.id}_${idx}`;
-                        const responsableId =
-                          responsablesPorActividad[actividadKey] || '';
-                        const responsableObj = usuarios.find(
-                          (u) => u.id === responsableId
-                        );
-                        return (
-                          <tr key={idx}>
-                            <td className="border bg-white px-2 py-2 font-medium break-words">
-                              {act}
-                              {responsableObj && (
-                                <div className="text-xs font-semibold text-cyan-700">
-                                  Responsable: {responsableObj.name}
-                                </div>
-                              )}
-                            </td>
-                            {meses.map((_, i) => (
-                              <td
-                                key={i}
-                                onClick={() => toggleMesActividad(act, i)}
-                                className={`cursor-pointer border px-2 py-2 ${
-                                  cronogramaState[act]?.includes(i)
-                                    ? 'bg-cyan-300 font-bold text-white'
-                                    : 'bg-white'
-                                }`}
-                              />
-                            ))}
-                          </tr>
-                        );
-                      })}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-300">
-              Selecciona las fechas de inicio y fin para ver el cronograma
-            </p>
-          )}
-        </div>
-
-        {/* Botón para generar el plan de proyecto */}
-        <div className="mt-4 flex justify-center gap-4">
-          <button
-            type="button"
-            onClick={handleAbrirPlanEnNuevaPagina}
-            className="rounded bg-cyan-700 px-6 py-2 text-lg font-bold text-white hover:bg-cyan-600"
-            disabled={!planGenerado}
-          >
-            Ver en Nueva Página
-          </button>
-        </div>
-
-        {/* Mostrar la información generada directamente en el modal */}
-        {planGenerado && (
-          <div className="mt-6 rounded bg-gray-800 p-4 text-white">
-            <h4 className="mb-2 text-xl font-bold text-cyan-300">
-              Plan Generado
-            </h4>
-            <pre className="text-sm break-words whitespace-pre-wrap">
-              {JSON.stringify(planGenerado, null, 2)}
-            </pre>
+        {/* Cronograma responsive */}
+        {fechaInicio && fechaFin && duracionDias > 0 && (
+          <div className="mt-4 overflow-x-auto sm:mt-6">
+            <h3 className="mb-2 text-base font-semibold text-white sm:text-lg">
+              Cronograma{' '}
+              {tipoVisualizacion === 'meses'
+                ? 'por Meses'
+                : tipoVisualizacion === 'dias'
+                  ? 'por Días'
+                  : 'por Horas'}
+            </h3>
+            {(
+              tipoVisualizacion === 'horas'
+                ? totalActividades > 0
+                : meses.length > 0
+            ) ? (
+              <div className="max-h-64 overflow-y-auto">
+                {tipoVisualizacion === 'horas' ? (
+                  <table className="w-full table-auto border-collapse text-sm text-black">
+                    <thead className="sticky top-0 z-10 bg-gray-300">
+                      <tr>
+                        <th
+                          className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                          style={{ minWidth: 180 }}
+                        >
+                          Actividad
+                        </th>
+                        <th className="border px-2 py-2 text-left break-words">
+                          Total de Horas
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {objetivosEspEditado.map((obj) => (
+                        <React.Fragment key={obj.id}>
+                          {obj.activities.map((act, idx) => {
+                            const actividadKey = `${obj.id}_${idx}`;
+                            const responsableId =
+                              responsablesPorActividad[actividadKey] || '';
+                            const responsableObj = usuarios.find(
+                              (u) => u.id === responsableId
+                            );
+                            const horasActividad =
+                              horasPorActividad[actividadKey] ||
+                              horasPorActividadDistribuidas;
+                            return (
+                              <tr key={idx}>
+                                <td
+                                  className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                                  style={{ minWidth: 180 }}
+                                >
+                                  {act}
+                                  {responsableObj && (
+                                    <div className="text-xs font-semibold text-cyan-700">
+                                      Responsable: {responsableObj.name}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
+                                  {horasActividad}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="w-full table-auto border-collapse text-sm text-black">
+                    <thead className="sticky top-0 z-10 bg-gray-300">
+                      <tr>
+                        <th
+                          className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                          style={{ minWidth: 180 }}
+                        >
+                          Actividad
+                        </th>
+                        {meses.map((periodo, i) => (
+                          <th
+                            key={i}
+                            className="border px-2 py-2 text-left break-words whitespace-normal"
+                            style={{
+                              minWidth:
+                                tipoVisualizacion === 'dias' ? '80px' : '120px',
+                            }}
+                          >
+                            {periodo}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {objetivosEspEditado.map((obj) => (
+                        <React.Fragment key={obj.id}>
+                          {obj.activities.map((act, idx) => {
+                            const actividadKey = `${obj.id}_${idx}`;
+                            const responsableId =
+                              responsablesPorActividad[actividadKey] || '';
+                            const responsableObj = usuarios.find(
+                              (u) => u.id === responsableId
+                            );
+                            return (
+                              <tr key={idx}>
+                                <td
+                                  className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                                  style={{ minWidth: 180 }}
+                                >
+                                  {act}
+                                  {responsableObj && (
+                                    <div className="text-xs font-semibold text-cyan-700">
+                                      Responsable: {responsableObj.name}
+                                    </div>
+                                  )}
+                                </td>
+                                {meses.map((_, i) => (
+                                  <td
+                                    key={i}
+                                    onClick={() => toggleMesActividad(act, i)}
+                                    className={`cursor-pointer border px-2 py-2 ${
+                                      cronogramaState[act]?.includes(i)
+                                        ? 'bg-cyan-300 font-bold text-white'
+                                        : 'bg-white'
+                                    }`}
+                                  />
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-300">
+                Selecciona las fechas de inicio y fin para ver el cronograma
+              </p>
+            )}
           </div>
         )}
 
-        <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
+        {/* Botones responsive */}
+        <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
           <button
             onClick={handleGuardarProyecto}
-            className="rounded bg-green-700 px-6 py-2 text-lg font-bold text-white hover:bg-green-600"
+            className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
             disabled={isUpdating}
           >
             {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
@@ -1539,7 +1795,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded bg-red-700 px-6 py-2 text-lg font-bold text-white hover:bg-red-600"
+            className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
             disabled={isUpdating}
           >
             Cancelar

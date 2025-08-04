@@ -12,6 +12,7 @@ import {
   User,
   Edit,
   Trash2,
+  Download,
 } from 'lucide-react';
 import { Header } from '~/components/estudiantes/layout/Header';
 import Image from 'next/image';
@@ -684,12 +685,119 @@ export default function ProjectDetails() {
     descripcion?: string;
   } | null>(null);
   const [entregaLoading, setEntregaLoading] = useState(false);
+  // Nuevos estados para modo edición
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [datosEntregaEdicion, setDatosEntregaEdicion] = useState<{
+    archivos: {
+      name: string;
+      url: string;
+      type: 'document' | 'image' | 'video' | 'compressed';
+    }[];
+    comentario: string;
+  }>({ archivos: [], comentario: '' });
 
-  const handleAbrirModalEntrega = (actividad: {
-    id?: number;
-    descripcion?: string;
-  }) => {
-    setActividadSeleccionada(actividad);
+  const handleAbrirModalEntrega = (
+    actividad: {
+      id?: number;
+      descripcion?: string;
+    },
+    esEdicion: boolean = false
+  ) => {
+    console.log(
+      '🎯 Abriendo modal para actividad:',
+      actividad,
+      'Edición:',
+      esEdicion
+    );
+
+    // Buscar la actividad completa en el proyecto para asegurar que tenga ID
+    let actividadCompleta = actividad;
+
+    if (!actividad.id && actividad.descripcion) {
+      // Si no tiene ID, buscar por descripción en todas las actividades del proyecto
+      const actividadEncontrada = project?.actividades?.find(
+        (act) => act.descripcion === actividad.descripcion
+      );
+
+      if (actividadEncontrada) {
+        actividadCompleta = {
+          id: actividadEncontrada.id,
+          descripcion: actividadEncontrada.descripcion,
+        };
+        console.log(
+          '✅ Actividad encontrada por descripción:',
+          actividadCompleta
+        );
+      } else {
+        console.error(
+          '❌ No se encontró actividad con descripción:',
+          actividad.descripcion
+        );
+        alert('Error: No se pudo identificar la actividad');
+        return;
+      }
+    }
+
+    if (!actividadCompleta.id) {
+      console.error('❌ La actividad no tiene ID válido:', actividadCompleta);
+      alert('Error: La actividad seleccionada no tiene un ID válido');
+      return;
+    }
+
+    console.log('✅ Actividad seleccionada correctamente:', actividadCompleta);
+    setActividadSeleccionada(actividadCompleta);
+    setModoEdicion(esEdicion);
+
+    // Si es modo edición, preparar los datos existentes
+    if (esEdicion && actividadCompleta.id) {
+      const entregaExistente = entregasActividades[actividadCompleta.id];
+      if (entregaExistente) {
+        const archivos: {
+          name: string;
+          url: string;
+          type: 'document' | 'image' | 'video' | 'compressed';
+        }[] = [];
+
+        // Agregar archivos existentes con sus URLs de descarga
+        if (entregaExistente.documentKey) {
+          archivos.push({
+            name: entregaExistente.documentName || 'Documento',
+            url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.documentKey}`,
+            type: 'document',
+          });
+        }
+        if (entregaExistente.imageKey) {
+          archivos.push({
+            name: entregaExistente.imageName || 'Imagen',
+            url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.imageKey}`,
+            type: 'image',
+          });
+        }
+        if (entregaExistente.videoKey) {
+          archivos.push({
+            name: entregaExistente.videoName || 'Video',
+            url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.videoKey}`,
+            type: 'video',
+          });
+        }
+        if (entregaExistente.compressedFileKey) {
+          archivos.push({
+            name: entregaExistente.compressedFileName || 'Archivo comprimido',
+            url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.compressedFileKey}`,
+            type: 'compressed',
+          });
+        }
+
+        setDatosEntregaEdicion({
+          archivos,
+          comentario: entregaExistente.comentario || '',
+        });
+      }
+    } else {
+      // Limpiar datos de edición si no es modo edición
+      setDatosEntregaEdicion({ archivos: [], comentario: '' });
+    }
+
     setModalEntregaOpen(true);
   };
 
@@ -773,37 +881,351 @@ export default function ProjectDetails() {
     return puedeEditar;
   }, [userId, project, isLoaded]);
 
-  // Cargar entregas existentes
+  // Función para obtener el estado de una actividad basado en las entregas - MEJORADO
+  const getEstadoActividad = (actividadId?: number) => {
+    console.log(`🔍 === getEstadoActividad para ID: ${actividadId} ===`);
+
+    if (!actividadId) {
+      console.log('❌ Sin ID de actividad');
+      return { estado: 'pendiente', entregado: false, aprobado: false };
+    }
+
+    const entrega = entregasActividades[actividadId];
+    console.log(`📦 Entrega encontrada:`, entrega);
+    console.log(`📦 Tipo de entrega:`, typeof entrega);
+    console.log(`📦 Keys de entrega:`, entrega ? Object.keys(entrega) : 'N/A');
+
+    if (!entrega) {
+      console.log(`ℹ️ No hay entrega registrada para actividad ${actividadId}`);
+      return { estado: 'pendiente', entregado: false, aprobado: false };
+    }
+
+    // Log detallado de los campos de aprobación
+    console.log(`📋 Análisis de aprobación:`, {
+      aprobado_raw: entrega.aprobado,
+      aprobado_type: typeof entrega.aprobado,
+      aprobado_string: String(entrega.aprobado),
+      entregado_raw: entrega.entregado,
+      entregado_type: typeof entrega.entregado,
+    });
+
+    // Verificación más robusta del estado de aprobación
+    const aprobadoValue = entrega.aprobado;
+
+    // Estado aprobado (valores truthy para aprobación)
+    if (
+      aprobadoValue === true ||
+      aprobadoValue === 1 ||
+      aprobadoValue === '1' ||
+      aprobadoValue === 'true'
+    ) {
+      console.log(`✅ Actividad ${actividadId} está APROBADA`);
+      return { estado: 'completada', entregado: true, aprobado: true };
+    }
+
+    // Estado rechazado (valores falsy explícitos para rechazo)
+    if (
+      aprobadoValue === false ||
+      aprobadoValue === 0 ||
+      aprobadoValue === '0' ||
+      aprobadoValue === 'false'
+    ) {
+      console.log(`❌ Actividad ${actividadId} está RECHAZADA`);
+      return { estado: 'rechazada', entregado: true, aprobado: false };
+    }
+
+    // Verificar si hay una entrega válida (archivos o comentario)
+    const tieneArchivos = Boolean(
+      entrega.documentKey ||
+        entrega.imageKey ||
+        entrega.videoKey ||
+        entrega.compressedFileKey
+    );
+    const tieneComentario = Boolean(
+      entrega.comentario && entrega.comentario.trim() !== ''
+    );
+    const marcadoComoEntregado = Boolean(
+      entrega.entregado === true ||
+        entrega.entregado === 1 ||
+        entrega.entregado === '1'
+    );
+
+    console.log(`🔍 Verificación de entrega:`, {
+      tieneArchivos,
+      tieneComentario,
+      marcadoComoEntregado,
+    });
+
+    const tieneEntrega =
+      tieneArchivos || tieneComentario || marcadoComoEntregado;
+
+    if (tieneEntrega) {
+      console.log(`📋 Actividad ${actividadId} tiene entrega EN EVALUACIÓN`);
+      return { estado: 'en_evaluacion', entregado: true, aprobado: false };
+    }
+
+    console.log(`⏳ Actividad ${actividadId} está PENDIENTE`);
+    return { estado: 'pendiente', entregado: false, aprobado: false };
+  };
+
+  // Cargar entregas existentes - MEJORADO CON MÁS DEBUGGING
   useEffect(() => {
-    if (!project?.actividades?.length || !userId || !isLoaded) return;
+    if (!project?.actividades?.length || !isLoaded) {
+      console.log(
+        '❌ No se pueden cargar entregas - condiciones no cumplidas:',
+        {
+          hasActividades: !!project?.actividades?.length,
+          actividadesCount: project?.actividades?.length || 0,
+          isLoaded,
+          projectId,
+        }
+      );
+      return;
+    }
 
     const fetchEntregas = async () => {
+      console.log('🔄 === INICIO CARGA DE ENTREGAS ===');
+      console.log('📋 Proyecto completo:', project);
+      console.log('📋 Actividades del proyecto:', project.actividades);
+      console.log('🆔 Project ID:', projectId);
+      console.log('👤 User ID:', userId);
+
       try {
         const entregas: Record<number, any> = {};
+        const resultadosCarga: {
+          actividadId: number;
+          estado: string;
+          datos?: any;
+        }[] = [];
 
         for (const actividad of project.actividades) {
+          console.log(`\n🎯 === PROCESANDO ACTIVIDAD ${actividad.id} ===`);
+          console.log('📝 Descripción:', actividad.descripcion);
+
           if (actividad.id) {
-            const res = await fetch(
-              `/api/projects/${projectId}/activities/${actividad.id}/deliveries`
-            );
-            if (res.ok) {
-              const entrega = await res.json();
-              if (entrega) {
-                entregas[actividad.id] = entrega;
+            const url = `/api/projects/${projectId}/activities/${actividad.id}/deliveries`;
+            console.log('🌐 URL de consulta:', url);
+
+            try {
+              const res = await fetch(url);
+              console.log(`📡 Respuesta HTTP:`, {
+                status: res.status,
+                statusText: res.statusText,
+                ok: res.ok,
+                url: res.url,
+              });
+
+              if (res.ok) {
+                const entrega = await res.json();
+                console.log(`📦 Datos RAW recibidos:`, entrega);
+                console.log(`📦 Tipo de datos:`, typeof entrega);
+                console.log(`📦 Es array:`, Array.isArray(entrega));
+                console.log(`📦 Keys del objeto:`, Object.keys(entrega || {}));
+
+                // MEJORADO: Validación más exhaustiva
+                if (entrega && typeof entrega === 'object') {
+                  // Log de cada campo importante
+                  console.log(`📋 Análisis detallado de entrega:`, {
+                    id: entrega.id,
+                    entregado: entrega.entregado,
+                    aprobado: entrega.aprobado,
+                    documentKey: entrega.documentKey,
+                    imageKey: entrega.imageKey,
+                    videoKey: entrega.videoKey,
+                    compressedFileKey: entrega.compressedFileKey,
+                    comentario: entrega.comentario,
+                    feedback: entrega.feedback,
+                    userId: entrega.userId,
+                    activityId: entrega.activityId,
+                    createdAt: entrega.createdAt,
+                    updatedAt: entrega.updatedAt,
+                  });
+
+                  // Verificar múltiples indicadores de entrega válida
+                  const tieneId = Boolean(entrega.id);
+                  const tieneArchivos = Boolean(
+                    entrega.documentKey ||
+                      entrega.imageKey ||
+                      entrega.videoKey ||
+                      entrega.compressedFileKey
+                  );
+                  const tieneComentario = Boolean(
+                    entrega.comentario && entrega.comentario.trim() !== ''
+                  );
+                  const tieneEstadoEntregado = Boolean(
+                    entrega.entregado === true ||
+                      entrega.entregado === 1 ||
+                      entrega.entregado === '1'
+                  );
+                  const tieneEstadoAprobacion =
+                    entrega.aprobado !== undefined && entrega.aprobado !== null;
+
+                  console.log(`🔍 Validaciones individuales:`, {
+                    tieneId,
+                    tieneArchivos,
+                    tieneComentario,
+                    tieneEstadoEntregado,
+                    tieneEstadoAprobacion,
+                  });
+
+                  const esEntregaValida =
+                    tieneId ||
+                    tieneArchivos ||
+                    tieneComentario ||
+                    tieneEstadoEntregado ||
+                    tieneEstadoAprobacion;
+
+                  console.log(`✅ ¿Es entrega válida?:`, esEntregaValida);
+
+                  if (esEntregaValida) {
+                    // Normalizar y limpiar datos
+                    const entregaNormalizada = {
+                      ...entrega,
+                      // Asegurar que entregado sea boolean
+                      entregado: Boolean(
+                        entrega.entregado === true ||
+                          entrega.entregado === 1 ||
+                          entrega.entregado === '1' ||
+                          tieneArchivos ||
+                          tieneComentario
+                      ),
+                      // Normalizar aprobado
+                      aprobado:
+                        entrega.aprobado === true ||
+                        entrega.aprobado === 1 ||
+                        entrega.aprobado === '1'
+                          ? true
+                          : entrega.aprobado === false ||
+                              entrega.aprobado === 0 ||
+                              entrega.aprobado === '0'
+                            ? false
+                            : null,
+                      // Asegurar campos de archivos
+                      documentKey: entrega.documentKey || null,
+                      imageKey: entrega.imageKey || null,
+                      videoKey: entrega.videoKey || null,
+                      compressedFileKey: entrega.compressedFileKey || null,
+                      comentario: entrega.comentario || '',
+                      feedback: entrega.feedback || null,
+                    };
+
+                    entregas[actividad.id] = entregaNormalizada;
+                    resultadosCarga.push({
+                      actividadId: actividad.id,
+                      estado: 'ENCONTRADA',
+                      datos: entregaNormalizada,
+                    });
+
+                    console.log(
+                      `✅ Entrega VÁLIDA guardada:`,
+                      entregaNormalizada
+                    );
+                  } else {
+                    resultadosCarga.push({
+                      actividadId: actividad.id,
+                      estado: 'DATOS_INSUFICIENTES',
+                      datos: entrega,
+                    });
+                    console.log(`❌ Entrega con datos insuficientes:`, entrega);
+                  }
+                } else {
+                  resultadosCarga.push({
+                    actividadId: actividad.id,
+                    estado: 'RESPUESTA_INVALIDA',
+                    datos: entrega,
+                  });
+                  console.log(
+                    `❌ Respuesta inválida para actividad ${actividad.id}:`,
+                    entrega
+                  );
+                }
+              } else {
+                const errorText = await res.text();
+                resultadosCarga.push({
+                  actividadId: actividad.id,
+                  estado: `ERROR_HTTP_${res.status}`,
+                });
+                console.log(
+                  `❌ Error HTTP ${res.status} para actividad ${actividad.id}:`,
+                  errorText
+                );
               }
+            } catch (fetchError) {
+              resultadosCarga.push({
+                actividadId: actividad.id,
+                estado: 'ERROR_FETCH',
+              });
+              console.error(
+                `❌ Error fetch para actividad ${actividad.id}:`,
+                fetchError
+              );
             }
+          } else {
+            resultadosCarga.push({
+              actividadId: 0,
+              estado: 'SIN_ID',
+            });
+            console.log('⚠️ Actividad sin ID:', actividad);
           }
         }
 
+        console.log('\n📊 === RESUMEN FINAL DE CARGA ===');
+        console.log('📋 Resultados por actividad:', resultadosCarga);
+        console.log('📊 Total actividades procesadas:', resultadosCarga.length);
+        console.log('✅ Entregas encontradas:', Object.keys(entregas).length);
+        console.log('📦 Entregas finales:', entregas);
+
+        // Actualizar estado y forzar re-render
+        console.log('🔄 Actualizando estado de entregas...');
         setEntregasActividades(entregas);
+
+        // Log del estado después de la actualización
+        setTimeout(() => {
+          console.log('🔍 Estado después de actualización:', entregas);
+          console.log('🔄 Forzando re-render adicional...');
+          setEntregasActividades((prev) => {
+            console.log('🔄 Estado previo en re-render:', prev);
+            return { ...prev };
+          });
+        }, 100);
       } catch (error) {
-        console.error('Error cargando entregas:', error);
+        console.error('❌ === ERROR GENERAL EN CARGA DE ENTREGAS ===');
+        console.error('Error completo:', error);
+        console.error('Stack trace:', (error as Error)?.stack);
       }
     };
 
     fetchEntregas();
-  }, [project?.actividades, projectId, userId, isLoaded]);
+  }, [project?.actividades, projectId, isLoaded, userId]); // Agregar userId como dependencia
 
+  // Función de depuración para verificar estado actual
+  const debugEstadoEntregas = () => {
+    console.log('\n🐛 === DEBUG ESTADO ACTUAL ===');
+    console.log('📦 entregasActividades:', entregasActividades);
+    console.log('📋 project.actividades:', project?.actividades);
+
+    if (project?.actividades) {
+      project.actividades.forEach((act) => {
+        if (act.id) {
+          const entrega = entregasActividades[act.id];
+          const estado = getEstadoActividad(act.id);
+          console.log(`🎯 Actividad ${act.id}: ${act.descripcion}`);
+          console.log(`  └─ Entrega:`, entrega);
+          console.log(`  └─ Estado calculado:`, estado);
+        }
+      });
+    }
+  };
+
+  // Llamar debug en desarrollo
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const timer = setTimeout(debugEstadoEntregas, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [entregasActividades, project?.actividades]);
+
+  // Función para entregar actividad (mejor manejo de errores y logs)
   const handleEntregarActividad = async (
     documentFile: File | null,
     imageFile: File | null,
@@ -819,13 +1241,79 @@ export default function ProjectDetails() {
       compressedFile: compressedFile?.name,
       comentario,
     });
+    console.log('Estado actual completo:', {
+      actividadSeleccionada,
+      actividadSeleccionadaId: actividadSeleccionada?.id,
+      actividadSeleccionadaDescripcion: actividadSeleccionada?.descripcion,
+      userId,
+      isLoaded,
+      projectId,
+    });
 
-    if (!actividadSeleccionada?.id || !userId || !isLoaded) {
-      console.log('Validación inicial falló:', {
-        actividadSeleccionada: actividadSeleccionada?.id,
-        userId,
-        isLoaded,
+    // Validación mejorada con más información
+    if (!actividadSeleccionada) {
+      console.error('❌ Error: No hay actividad seleccionada');
+      alert('Error: No hay actividad seleccionada');
+      return;
+    }
+
+    console.log('🔍 Verificando ID de actividad:', {
+      id: actividadSeleccionada.id,
+      tipoId: typeof actividadSeleccionada.id,
+      idEsNumero: typeof actividadSeleccionada.id === 'number',
+      idEsDefinido: actividadSeleccionada.id !== undefined,
+    });
+
+    if (
+      !actividadSeleccionada.id ||
+      typeof actividadSeleccionada.id !== 'number'
+    ) {
+      console.error('❌ Error: La actividad seleccionada no tiene ID válido', {
+        actividadSeleccionada,
+        id: actividadSeleccionada.id,
+        tipo: typeof actividadSeleccionada.id,
       });
+
+      // Intentar buscar la actividad por descripción como fallback
+      if (actividadSeleccionada.descripcion) {
+        console.log('🔄 Intentando buscar actividad por descripción...');
+        const actividadEncontrada = project?.actividades?.find(
+          (act) => act.descripcion === actividadSeleccionada.descripcion
+        );
+
+        if (actividadEncontrada?.id) {
+          console.log(
+            '✅ Actividad encontrada por descripción:',
+            actividadEncontrada
+          );
+          setActividadSeleccionada({
+            id: actividadEncontrada.id,
+            descripcion: actividadEncontrada.descripcion,
+          });
+          // Continuar con la función usando la actividad encontrada
+          actividadSeleccionada.id = actividadEncontrada.id;
+        } else {
+          console.error('❌ No se pudo encontrar actividad por descripción');
+          alert(
+            'Error: No se pudo identificar la actividad. Por favor, recarga la página e intenta nuevamente.'
+          );
+          return;
+        }
+      } else {
+        alert('Error: La actividad seleccionada no tiene un ID válido');
+        return;
+      }
+    }
+
+    if (!userId || !isLoaded) {
+      console.error('❌ Error: Usuario no cargado', { userId, isLoaded });
+      alert('Error: Usuario no autenticado');
+      return;
+    }
+
+    if (!projectId) {
+      console.error('❌ Error: No hay ID de proyecto');
+      alert('Error: No se pudo identificar el proyecto');
       return;
     }
 
@@ -837,10 +1325,24 @@ export default function ProjectDetails() {
     console.log('Actividad encontrada:', actividad);
     console.log('Verificando permisos para entrega...');
 
-    if (!actividad || !puedeEntregarActividad(actividad)) {
+    if (!actividad) {
+      console.error('❌ Error: No se encontró la actividad en el proyecto');
+      alert('Error: No se encontró la actividad en el proyecto');
+      return;
+    }
+
+    if (!puedeEntregarActividad(actividad)) {
+      console.error('❌ Error: Sin permisos para entregar');
       alert('No tienes permisos para entregar esta actividad');
       return;
     }
+
+    console.log('✅ Validaciones pasadas, iniciando proceso de entrega...');
+    console.log('📋 Datos finales para entrega:', {
+      actividadId: actividadSeleccionada.id,
+      userId,
+      projectId,
+    });
 
     setEntregaLoading(true);
 
@@ -856,109 +1358,128 @@ export default function ProjectDetails() {
 
       console.log('=== SUBIENDO ARCHIVOS A S3 ===');
 
-      // Subir cada tipo de archivo si existe
-      if (documentFile) {
-        console.log('Subiendo documento:', documentFile.name);
+      // Función helper para subir archivos usando presigned URL
+      const uploadFileToS3 = async (file: File, fileType: string) => {
+        console.log(`📁 Subiendo ${fileType}:`, file.name);
+
+        // 1. Solicitar presigned POST URL
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: file.type,
+            fileSize: file.size,
+            fileName: file.name,
+          }),
+        });
+
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error(
+            `❌ Error solicitando presigned URL para ${fileType}:`,
+            errorText
+          );
+          throw new Error(
+            `Error solicitando presigned URL para ${fileType}: ${errorText}`
+          );
+        }
+
+        const uploadData = await uploadResponse.json();
+        console.log(`📋 Presigned URL obtenida para ${fileType}:`, uploadData);
+
+        const { url, fields, key, coverImageKey } = uploadData;
+        const finalKey = coverImageKey || key;
+
+        // 2. Subir archivo a S3 usando presigned POST
         const formData = new FormData();
-        formData.append('file', documentFile);
-        const uploadRes = await fetch('/api/projects/upload', {
+        Object.entries(fields).forEach(([k, v]) => {
+          if (typeof v === 'string') {
+            formData.append(k, v);
+          }
+        });
+        formData.append('file', file);
+
+        const s3Upload = await fetch(url, {
           method: 'POST',
           body: formData,
         });
-        console.log('Respuesta upload documento:', uploadRes.status);
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          documentKey = data.key || '';
-          documentName = documentFile.name;
-          console.log('Documento subido exitosamente. Key:', documentKey);
-        } else {
-          console.error('Error subiendo documento:', await uploadRes.text());
+
+        if (!s3Upload.ok) {
+          const errorText = await s3Upload.text();
+          console.error(`❌ Error subiendo ${fileType} a S3:`, errorText);
+          throw new Error(`Error subiendo ${fileType} a S3: ${errorText}`);
         }
+
+        console.log(`✅ ${fileType} subido exitosamente. Key:`, finalKey);
+        return { key: finalKey, name: file.name };
+      };
+
+      // Subir cada tipo de archivo si existe
+      if (documentFile) {
+        const result = await uploadFileToS3(documentFile, 'documento');
+        documentKey = result.key;
+        documentName = result.name;
       }
 
       if (imageFile) {
-        console.log('Subiendo imagen:', imageFile.name);
-        const formData = new FormData();
-        formData.append('file', imageFile);
-        const uploadRes = await fetch('/api/projects/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        console.log('Respuesta upload imagen:', uploadRes.status);
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          imageKey = data.key || '';
-          imageName = imageFile.name;
-          console.log('Imagen subida exitosamente. Key:', imageKey);
-        } else {
-          console.error('Error subiendo imagen:', await uploadRes.text());
-        }
+        const result = await uploadFileToS3(imageFile, 'imagen');
+        imageKey = result.key;
+        imageName = result.name;
       }
 
       if (videoFile) {
-        console.log('Subiendo video:', videoFile.name);
-        const formData = new FormData();
-        formData.append('file', videoFile);
-        const uploadRes = await fetch('/api/projects/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        console.log('Respuesta upload video:', uploadRes.status);
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          videoKey = data.key || '';
-          videoName = videoFile.name;
-          console.log('Video subido exitosamente. Key:', videoKey);
-        } else {
-          console.error('Error subiendo video:', await uploadRes.text());
-        }
+        const result = await uploadFileToS3(videoFile, 'video');
+        videoKey = result.key;
+        videoName = result.name;
       }
 
       if (compressedFile) {
-        console.log('Subiendo archivo comprimido:', compressedFile.name);
-        const formData = new FormData();
-        formData.append('file', compressedFile);
-        const uploadRes = await fetch('/api/projects/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        console.log('Respuesta upload comprimido:', uploadRes.status);
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          compressedFileKey = data.key || '';
-          compressedFileName = compressedFile.name;
-          console.log(
-            'Archivo comprimido subido exitosamente. Key:',
-            compressedFileKey
-          );
-        } else {
-          console.error(
-            'Error subiendo archivo comprimido:',
-            await uploadRes.text()
-          );
-        }
+        const result = await uploadFileToS3(
+          compressedFile,
+          'archivo comprimido'
+        );
+        compressedFileKey = result.key;
+        compressedFileName = result.name;
       }
 
-      console.log('=== TODOS LOS ARCHIVOS SUBIDOS ===');
-      console.log('Keys obtenidas:', {
+      console.log('=== TODOS LOS ARCHIVOS SUBIDOS EXITOSAMENTE ===');
+      console.log('📁 Keys obtenidas:', {
         documentKey,
         imageKey,
         videoKey,
         compressedFileKey,
       });
 
+      // Verificar que al menos un archivo fue subido
+      if (
+        !documentKey &&
+        !imageKey &&
+        !videoKey &&
+        !compressedFileKey &&
+        !comentario.trim()
+      ) {
+        console.warn(
+          '⚠️ Advertencia: No se subió ningún archivo ni comentario'
+        );
+        alert('Debes subir al menos un archivo o agregar un comentario');
+        return;
+      }
+
       // Crear o actualizar la entrega
       const entregaExistente = entregasActividades[actividadSeleccionada.id];
       const method = entregaExistente ? 'PUT' : 'POST';
 
       console.log('=== GUARDANDO EN BASE DE DATOS ===');
-      console.log('Método:', method);
+      console.log('📤 Método:', method);
       console.log(
-        'URL:',
+        '🔗 URL:',
         `/api/projects/${projectId}/activities/${actividadSeleccionada.id}/deliveries`
       );
 
+      // CORREGIDO: Resetear estado de aprobación al editar/reenviar entrega
       const payload = {
+        activityId: actividadSeleccionada.id,
+        userId: userId,
         documentKey,
         documentName,
         imageKey,
@@ -968,8 +1489,12 @@ export default function ProjectDetails() {
         compressedFileKey,
         compressedFileName,
         comentario,
+        // Resetear aprobación y feedback al reenviar
+        aprobado: null,
+        feedback: null,
+        entregado: true, // Marcar como entregado
       };
-      console.log('Payload a enviar:', payload);
+      console.log('📦 Payload a enviar:', payload);
 
       const res = await fetch(
         `/api/projects/${projectId}/activities/${actividadSeleccionada.id}/deliveries`,
@@ -980,34 +1505,47 @@ export default function ProjectDetails() {
         }
       );
 
-      console.log('Respuesta API entrega:', res.status);
+      console.log('📡 Respuesta API entrega:', res.status, res.statusText);
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error('Error de la API:', errorText);
-        throw new Error(`Error guardando entrega: ${errorText}`);
+        console.error('❌ Error de la API:', errorText);
+        throw new Error(`Error ${res.status}: ${errorText}`);
       }
 
       const entregaActualizada = await res.json();
-      console.log('Entrega guardada exitosamente:', entregaActualizada);
+      console.log('✅ Entrega guardada exitosamente:', entregaActualizada);
 
-      // Actualizar estado local
+      // CORREGIDO: Actualizar estado local asegurando que se resetee la aprobación
       setEntregasActividades((prev: Record<number, any>) => ({
         ...prev,
-        [actividadSeleccionada.id!]: entregaActualizada,
+        [actividadSeleccionada.id!]: {
+          ...entregaActualizada,
+          aprobado: null, // Asegurar que se resetee
+          feedback: null, // Asegurar que se resetee
+          entregado: true, // Asegurar que esté marcado como entregado
+        },
       }));
 
       setModalEntregaOpen(false);
       setActividadSeleccionada(null);
 
-      alert('Entrega realizada exitosamente');
+      // CORREGIDO: Mensaje más específico según si es nueva entrega o edición
+      const mensaje = entregaExistente
+        ? '✅ Entrega actualizada exitosamente. La actividad vuelve a estar en evaluación.'
+        : '✅ Entrega realizada exitosamente';
+      alert(mensaje);
       console.log('=== FIN handleEntregarActividad EXITOSO ===');
     } catch (error) {
-      console.error('=== ERROR EN handleEntregarActividad ===');
+      console.error('=== ❌ ERROR EN handleEntregarActividad ===');
       console.error('Error completo:', error);
-      alert('Error al realizar la entrega');
+      console.error('Stack trace:', (error as Error)?.stack);
+      alert(
+        `❌ Error al realizar la entrega: ${(error as Error)?.message || 'Error desconocido'}`
+      );
     } finally {
       setEntregaLoading(false);
+      console.log('🏁 Finalizando handleEntregarActividad');
     }
   };
 
@@ -1053,6 +1591,310 @@ export default function ProjectDetails() {
       alert('Error al procesar la aprobación');
     }
   };
+
+  // Función para eliminar entrega
+  const handleEliminarEntrega = async (actividadId: number) => {
+    if (
+      !confirm(
+        '¿Estás seguro de que deseas eliminar esta entrega? Esta acción eliminará completamente la entrega y todos sus archivos. Esta acción no se puede deshacer.'
+      )
+    ) {
+      return;
+    }
+
+    console.log(
+      '🗑️ Iniciando eliminación completa de entrega para actividad:',
+      actividadId
+    );
+
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/activities/${actividadId}/deliveries`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+
+      const result = await res.json();
+      console.log('✅ Respuesta de eliminación:', result);
+
+      // Actualizar estado local eliminando completamente la entrega
+      setEntregasActividades((prev: Record<number, any>) => {
+        const updated = { ...prev };
+        delete updated[actividadId];
+        return updated;
+      });
+
+      // Mostrar mensaje personalizado según el resultado
+      let mensaje = '✅ Entrega eliminada exitosamente';
+
+      if (result.filesDeleted) {
+        const { total, successful, failed } = result.filesDeleted;
+        if (total > 0) {
+          if (failed > 0) {
+            mensaje += `\n📁 Archivos: ${successful}/${total} eliminados exitosamente`;
+            mensaje += `\n⚠️ ${failed} archivo(s) no se pudieron eliminar de S3`;
+          } else {
+            mensaje += `\n📁 Todos los archivos (${successful}) eliminados exitosamente`;
+          }
+        }
+      }
+
+      alert(mensaje);
+      console.log('🎉 Eliminación completada exitosamente');
+    } catch (error) {
+      console.error('❌ Error eliminando entrega:', error);
+      alert(
+        `❌ Error al eliminar la entrega: ${(error as Error)?.message || 'Error desconocido'}`
+      );
+    }
+  };
+
+  // Función para descargar archivos de entrega
+  const handleDescargarArchivo = async (
+    actividadId: number,
+    tipoArchivo: 'document' | 'image' | 'video' | 'compressed',
+    userId: string
+  ) => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?type=${tipoArchivo}&userId=${encodeURIComponent(userId)}`
+      );
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+
+      const { downloadUrl, fileName } = await res.json();
+
+      // Crear un enlace temporal para la descarga
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      console.log('Descarga iniciada:', fileName);
+    } catch (error) {
+      console.error('Error descargando archivo:', error);
+      alert(
+        `❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`
+      );
+    }
+  };
+
+  // Función mejorada para descargar archivos directamente
+  const handleDescargarArchivoDirecto = async (
+    actividadId: number,
+    fileKey: string,
+    fileName: string,
+    fileType: 'document' | 'image' | 'video' | 'compressed'
+  ) => {
+    try {
+      console.log(`💾 Iniciando descarga de: ${fileName} (${fileType})`);
+
+      // Intentar primero con URL firmada para descarga
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?key=${encodeURIComponent(fileKey)}&type=${fileType}&userId=${encodeURIComponent(userId)}`
+        );
+
+        if (res.ok) {
+          const { downloadUrl, fileName: responseFileName } = await res.json();
+          console.log(`✅ URL de descarga obtenida:`, downloadUrl);
+
+          // Crear enlace de descarga forzada
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = responseFileName || fileName;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          console.log(`✅ Descarga iniciada: ${responseFileName || fileName}`);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('⚠️ Error con API de descarga, intentando método alternativo:', apiError);
+      }
+
+      // Método alternativo: descarga directa desde S3
+      const directUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fileKey}`;
+      console.log(`🔄 Descarga directa desde S3:`, directUrl);
+
+      // Fetch para forzar descarga
+      const response = await fetch(directUrl);
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Limpiar URL del blob
+      window.URL.revokeObjectURL(url);
+
+      console.log(`✅ Descarga completada: ${fileName}`);
+    } catch (error) {
+      console.error('❌ Error en descarga:', error);
+      alert(`❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`);
+    }
+  };
+
+  // Función para visualizar archivos (abre en una nueva pestaña)
+  const handleVerArchivo = (
+    actividadId: number,
+    fileKey: string,
+    fileType: 'document' | 'image' | 'video' | 'compressed',
+    fileName: string
+  ) => {
+    // Construir la URL de S3
+    const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fileKey}`;
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  };
+  
+    // Componente para mostrar archivos de una entrega
+    const ArchivosEntrega = ({
+      actividadId,
+      entrega,
+    }: {
+      actividadId: number;
+      entrega: any;
+    }) => {
+      if (!entrega) {
+        return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+      }
+  
+      const archivos = [];
+  
+      // Recopilar todos los archivos disponibles
+      if (entrega.documentKey && entrega.documentName) {
+        archivos.push({
+          key: entrega.documentKey,
+          name: entrega.documentName,
+          type: 'document' as const,
+          icon: '📄',
+        });
+      }
+  
+      if (entrega.imageKey && entrega.imageName) {
+        archivos.push({
+          key: entrega.imageKey,
+          name: entrega.imageName,
+          type: 'image' as const,
+          icon: '🖼️',
+        });
+      }
+  
+      if (entrega.videoKey && entrega.videoName) {
+        archivos.push({
+          key: entrega.videoKey,
+          name: entrega.videoName,
+          type: 'video' as const,
+          icon: '🎥',
+        });
+      }
+  
+      if (entrega.compressedFileKey && entrega.compressedFileName) {
+        archivos.push({
+          key: entrega.compressedFileKey,
+          name: entrega.compressedFileName,
+          type: 'compressed' as const,
+          icon: '📦',
+        });
+      }
+  
+      if (archivos.length === 0) {
+        // Verificar si hay comentario o URL
+        if (entrega.comentario || entrega.entregaUrl) {
+          return (
+            <div className="space-y-1">
+              {entrega.comentario && (
+                <div className="text-xs text-blue-400">
+                  💬 Comentario incluido
+                </div>
+              )}
+              {entrega.entregaUrl && (
+                <div className="text-xs text-purple-400">🔗 URL incluida</div>
+              )}
+            </div>
+          );
+        }
+        return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+      }
+  
+      return (
+        <div className="max-w-xs space-y-1">
+          {archivos.map((archivo, index) => (
+            <div key={index} className="flex gap-1">
+              <button
+                onClick={() =>
+                  handleVerArchivo(
+                    actividadId,
+                    archivo.key,
+                    archivo.type,
+                    archivo.name
+                  )
+                }
+                className="flex flex-1 items-center gap-2 rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
+                title={`Ver: ${archivo.name}`}
+              >
+                <span>{archivo.icon}</span>
+                <span className="flex-1 truncate">
+                  {archivo.name.length > 15
+                    ? `${archivo.name.substring(0, 15)}...`
+                    : archivo.name}
+                </span>
+              </button>
+  
+              {/* Botón de descarga mejorado */}
+              <button
+                onClick={() => handleDescargarArchivoDirecto(
+                  actividadId,
+                  archivo.key,
+                  archivo.name,
+                  archivo.type
+                )}
+                className="rounded bg-blue-600 p-1 text-xs text-white transition-colors hover:bg-blue-500"
+                title={`Descargar: ${archivo.name}`}
+              >
+                <Download className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+  
+          {/* Mostrar información adicional si existe */}
+          {(entrega.comentario || entrega.entregaUrl) && (
+            <div className="mt-1 border-t border-slate-600 pt-1">
+              {entrega.comentario && (
+                <div className="mb-1 text-xs text-blue-400">
+                  💬 Con comentario
+                </div>
+              )}
+              {entrega.entregaUrl && (
+                <div className="text-xs text-purple-400">🔗 Con URL</div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
 
   // Mostrar loading mientras Clerk carga
   if (!isLoaded || loading) {
@@ -1281,7 +2123,7 @@ export default function ProjectDetails() {
             <CardContent>
               <TabsContent value="horas">
                 <div className="space-y-6">
-                  {/* Render objetivos y actividades en tablas */}
+                  {/* CORREGIDO: Renderizar usando project.actividades en lugar de obj.actividades */}
                   {Array.isArray(project.objetivos_especificos) &&
                   project.objetivos_especificos.length > 0 ? (
                     project.objetivos_especificos.map((obj, idx) => (
@@ -1301,34 +2143,69 @@ export default function ProjectDetails() {
                               <TableHead className="text-gray-300">
                                 RESPONSABLE
                               </TableHead>
-                              {/* Quitar columna CRONOGRAMA */}
                               <TableHead className="text-gray-300">
                                 ENTREGAS
                               </TableHead>
-                              {/* Nueva columna para acciones de entrega */}
+                              <TableHead className="text-gray-300">
+                                ARCHIVOS
+                              </TableHead>
+                              <TableHead className="text-gray-300">
+                                MOTIVO
+                              </TableHead>
                               <TableHead className="text-gray-300">
                                 ACCIONES
                               </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {Array.isArray(obj.actividades) &&
-                            obj.actividades.length > 0 ? (
-                              obj.actividades.map(
-                                (
-                                  act: {
-                                    descripcion: string;
-                                    meses: number[];
-                                    id?: number;
-                                    entregaRealizada?: boolean;
-                                    entregaAprobada?: boolean; // <-- Añadido para evitar error TS
-                                  },
-                                  actIdx: number
-                                ) => {
-                                  const key =
-                                    typeof act.id !== 'undefined'
-                                      ? String(act.id)
-                                      : String(actIdx);
+                            {/* CORREGIDO: Filtrar actividades de project.actividades que pertenecen a este objetivo */}
+                            {(() => {
+                              // Obtener las actividades que pertenecen a este objetivo
+                              const actividadesDelObjetivo = Array.isArray(
+                                obj.actividades
+                              )
+                                ? obj.actividades
+                                    .map((objAct: any) => {
+                                      // Buscar la actividad completa en project.actividades
+                                      const actividadCompleta =
+                                        project.actividades?.find(
+                                          (projectAct) =>
+                                            projectAct.id === objAct.id ||
+                                            projectAct.descripcion ===
+                                              objAct.descripcion
+                                        );
+                                      return actividadCompleta;
+                                    })
+                                    .filter(Boolean) // Remover valores undefined
+                                : [];
+
+                              console.log(
+                                `🔍 Actividades para objetivo "${obj.description}":`,
+                                actividadesDelObjetivo
+                              );
+
+                              if (actividadesDelObjetivo.length === 0) {
+                                return (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={7}
+                                      className="text-gray-400 italic"
+                                    >
+                                      No hay actividades agregadas para este
+                                      objetivo
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }
+
+                              return actividadesDelObjetivo.map(
+                                (act, actIdx) => {
+                                  if (!act) return null;
+
+                                  console.log(
+                                    `🎯 Renderizando actividad CORREGIDA ${act.id}: ${act.descripcion}`,
+                                    act
+                                  );
 
                                   // Usa el id, si no existe busca por descripción
                                   const responsable = getResponsableNombrePorId(
@@ -1336,51 +2213,160 @@ export default function ProjectDetails() {
                                     act.descripcion
                                   );
 
-                                  // Simulación: determinar si hay entrega realizada
-                                  // Reemplaza esto con tu lógica real
-                                  const entregaRealizada =
-                                    act.entregaRealizada ?? false;
+                                  // Obtener el estado real de la actividad basado en las entregas
+                                  const estadoActividad = getEstadoActividad(
+                                    act.id
+                                  );
+
+                                  console.log(
+                                    `🎯 Estado para actividad ${act.id}: ${act.descripcion}`,
+                                    {
+                                      estadoActividad,
+                                      entrega: act.id
+                                        ? entregasActividades[act.id]
+                                        : null,
+                                    }
+                                  );
 
                                   return (
                                     <TableRow
-                                      key={actIdx}
+                                      key={act.id || actIdx}
                                       className="border-slate-600"
                                     >
                                       <TableCell className="text-gray-300">
                                         {act.descripcion}
                                       </TableCell>
-                                      {/* Estado dinámico */}
+                                      {/* Estado dinámico basado en entregas reales */}
                                       <TableCell>
-                                        {entregaRealizada ? (
-                                          <Badge className="bg-green-600">
-                                            Entregado
-                                          </Badge>
-                                        ) : (
-                                          <Badge className="bg-yellow-500 text-black">
-                                            Pendiente
-                                          </Badge>
-                                        )}
+                                        {(() => {
+                                          switch (estadoActividad.estado) {
+                                            case 'completada':
+                                              return (
+                                                <Badge className="bg-green-600 text-white">
+                                                  <CheckCircle className="mr-1 h-3 w-3" />
+                                                  Completada
+                                                </Badge>
+                                              );
+                                            case 'rechazada':
+                                              return (
+                                                <Badge className="bg-red-600 text-white">
+                                                  <AlertCircle className="mr-1 h-3 w-3" />
+                                                  Rechazada
+                                                </Badge>
+                                              );
+                                            case 'en_evaluacion':
+                                              return (
+                                                <Badge className="bg-blue-600 text-white">
+                                                  <Clock className="mr-1 h-3 w-3" />
+                                                  En evaluación
+                                                </Badge>
+                                              );
+                                            default:
+                                              return (
+                                                <Badge className="bg-yellow-500 text-black">
+                                                  <AlertCircle className="mr-1 h-3 w-3" />
+                                                  Pendiente
+                                                </Badge>
+                                              );
+                                          }
+                                        })()}
                                       </TableCell>
                                       <TableCell className="text-gray-300">
                                         {responsable}
                                       </TableCell>
                                       <TableCell>
-                                        {/* Estado de entrega */}
-                                        {!act.entregaRealizada ? (
-                                          <Badge className="bg-gray-500">
-                                            Sin entregar
-                                          </Badge>
-                                        ) : act.entregaAprobada ? (
-                                          <Badge className="bg-green-600">
-                                            Completada
-                                          </Badge>
-                                        ) : (
-                                          <Badge className="bg-blue-600">
-                                            En evaluación
-                                          </Badge>
-                                        )}
+                                        {/* Estado de entrega basado en datos reales */}
+                                        {(() => {
+                                          const entrega = act.id
+                                            ? entregasActividades[act.id]
+                                            : null;
+
+                                          if (!entrega) {
+                                            return (
+                                              <Badge className="bg-gray-500 text-white">
+                                                Sin entregar
+                                              </Badge>
+                                            );
+                                          }
+
+                                          switch (estadoActividad.estado) {
+                                            case 'completada':
+                                              return (
+                                                <Badge className="bg-green-600 text-white">
+                                                  <CheckCircle className="mr-1 h-3 w-3" />
+                                                  Aprobada
+                                                </Badge>
+                                              );
+                                            case 'rechazada':
+                                              return (
+                                                <Badge className="bg-red-600 text-white">
+                                                  <AlertCircle className="mr-1 h-3 w-3" />
+                                                  Rechazada
+                                                </Badge>
+                                              );
+                                            case 'en_evaluacion':
+                                              return (
+                                                <Badge className="bg-blue-600 text-white">
+                                                  <Clock className="mr-1 h-3 w-3" />
+                                                  En evaluación
+                                                </Badge>
+                                              );
+                                            default:
+                                              return (
+                                                <Badge className="bg-gray-500 text-white">
+                                                  Sin entregar
+                                                </Badge>
+                                              );
+                                          }
+                                        })()}
                                       </TableCell>
-                                      {/* Nueva columna de acciones */}
+                                      {/* Nueva columna de ARCHIVOS */}
+                                      <TableCell>
+                                        <ArchivosEntrega
+                                          actividadId={act.id!}
+                                          entrega={
+                                            act.id
+                                              ? entregasActividades[act.id]
+                                              : null
+                                          }
+                                        />
+                                      </TableCell>
+                                      {/* Nueva columna para motivo de rechazo */}
+                                      <TableCell>
+                                        {(() => {
+                                          const entrega = act.id
+                                            ? entregasActividades[act.id]
+                                            : null;
+
+                                          if (!entrega || !entrega.feedback) {
+                                            return (
+                                              <span className="text-sm text-gray-500 italic">
+                                                Sin comentarios
+                                              </span>
+                                            );
+                                          }
+
+                                          const feedbackColor =
+                                            estadoActividad.estado ===
+                                            'completada'
+                                              ? 'text-green-400'
+                                              : estadoActividad.estado ===
+                                                  'rechazada'
+                                                ? 'text-red-400'
+                                                : 'text-blue-400';
+
+                                          return (
+                                            <div className="max-w-xs">
+                                              <p
+                                                className={`text-sm ${feedbackColor} break-words`}
+                                              >
+                                                {entrega.feedback}
+                                              </p>
+                                            </div>
+                                          );
+                                        })()}
+                                      </TableCell>
+                                      {/* Columna de acciones - simplificada */}
                                       <TableCell>
                                         {(() => {
                                           const entrega = act.id
@@ -1391,7 +2377,20 @@ export default function ProjectDetails() {
                                           const puedeAprobar =
                                             puedeAprobarEntregas();
 
-                                          if (entrega?.entregado) {
+                                          console.log(
+                                            `🔧 Acciones CORREGIDAS para actividad ${act.id}:`,
+                                            {
+                                              estadoActividad,
+                                              puedeEntregar,
+                                              puedeAprobar,
+                                              entrega,
+                                            }
+                                          );
+
+                                          const tieneEntrega =
+                                            estadoActividad.entregado;
+
+                                          if (tieneEntrega) {
                                             return (
                                               <div className="flex flex-col gap-2">
                                                 {/* Botones para el responsable de la actividad o del proyecto */}
@@ -1406,18 +2405,37 @@ export default function ProjectDetails() {
                                                             id: act.id,
                                                             descripcion:
                                                               act.descripcion,
-                                                          }
+                                                          },
+                                                          true // Modo edición
                                                         )
                                                       }
                                                     >
-                                                      Editar entrega
+                                                      {estadoActividad.estado ===
+                                                      'rechazada'
+                                                        ? 'Reenviar'
+                                                        : 'Editar entrega'}
+                                                    </Button>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="destructive"
+                                                      onClick={() =>
+                                                        handleEliminarEntrega(
+                                                          act.id!
+                                                        )
+                                                      }
+                                                    >
+                                                      <Trash2 className="mr-1 h-3 w-3" />
+                                                      Eliminar
                                                     </Button>
                                                   </div>
                                                 )}
 
                                                 {/* Botones para el responsable del proyecto (aprobación) */}
                                                 {puedeAprobar &&
-                                                  !entrega.aprobado && (
+                                                  estadoActividad.estado !==
+                                                    'completada' &&
+                                                  estadoActividad.estado !==
+                                                    'rechazada' && (
                                                     <div className="flex gap-2">
                                                       <Button
                                                         size="sm"
@@ -1457,13 +2475,6 @@ export default function ProjectDetails() {
                                                       </Button>
                                                     </div>
                                                   )}
-
-                                                {/* Mostrar estado de aprobación */}
-                                                {entrega.aprobado && (
-                                                  <Badge className="bg-green-600">
-                                                    Aprobada
-                                                  </Badge>
-                                                )}
                                               </div>
                                             );
                                           } else if (puedeEntregar) {
@@ -1472,11 +2483,14 @@ export default function ProjectDetails() {
                                                 size="sm"
                                                 className="bg-teal-600 hover:bg-teal-700"
                                                 onClick={() =>
-                                                  handleAbrirModalEntrega({
-                                                    id: act.id,
-                                                    descripcion:
-                                                      act.descripcion,
-                                                  })
+                                                  handleAbrirModalEntrega(
+                                                    {
+                                                      id: act.id,
+                                                      descripcion:
+                                                        act.descripcion,
+                                                    },
+                                                    false // Modo nueva entrega
+                                                  )
                                                 }
                                               >
                                                 Entregar actividad
@@ -1494,18 +2508,8 @@ export default function ProjectDetails() {
                                     </TableRow>
                                   );
                                 }
-                              )
-                            ) : (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={5}
-                                  className="text-gray-400 italic"
-                                >
-                                  No hay actividades agregadas para este
-                                  objetivo
-                                </TableCell>
-                              </TableRow>
-                            )}
+                              );
+                            })()}
                           </TableBody>
                         </Table>
                       </div>
@@ -1695,6 +2699,8 @@ export default function ProjectDetails() {
           onClose={() => {
             setModalEntregaOpen(false);
             setActividadSeleccionada(null);
+            setModoEdicion(false);
+            setDatosEntregaEdicion({ archivos: [], comentario: '' });
           }}
           onSubmit={(
             documentFile,
@@ -1712,6 +2718,9 @@ export default function ProjectDetails() {
             )
           }
           loading={entregaLoading}
+          isEditing={modoEdicion}
+          activityName={actividadSeleccionada?.descripcion}
+          archivosEntregaEdicion={datosEntregaEdicion.archivos}
         />
       </div>
       {/* Scrollbar color personalizado */}
@@ -1722,6 +2731,37 @@ export default function ProjectDetails() {
           scrollbar-width: thin !important; /* Firefox */
           scrollbar-color: #0f3a6e #041c3c;
           -ms-overflow-style: none !important; /* IE 10+ */
+        }
+
+        /* Estilos para el scroll en WebKit (Chrome, Safari) */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+          html {
+            overflow: -moz-scrollbars-vertical;
+            scrollbar-width: thin;
+          }
+          body {
+            overflow-y: scroll;
+            scrollbar-width: thin;
+          }
+        }
+
+        /* Estilos específicos para el scrollbar en Chrome/Safari */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+          ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          ::-webkit-scrollbar-track {
+            background: #041c3c;
+          }
+          ::-webkit-scrollbar-thumb {
+            background-color: #0f3a6e;
+            border-radius: 10px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background-color: #0a2e4d;
+          }
+        }
       `}</style>
     </div>
   );

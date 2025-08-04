@@ -19,37 +19,40 @@ const ModalPlanteamiento: React.FC<ModalPlanteamientoProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="h-[70%] w-[70%] rounded-lg bg-[#0F2940] p-6 shadow-lg">
-        <h2 className="mb-4 text-center text-2xl font-bold text-cyan-400">
+      <div className="h-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-[#0F2940] p-4 shadow-lg sm:p-6">
+        <h2 className="mb-4 text-center text-xl font-bold text-cyan-400 sm:text-2xl">
           Planteamiento del Problema
         </h2>
-        <div className="flex h-[76%] items-center justify-center rounded-lg bg-[#6c7883] text-2xl">
+        <div className="min-h-[200px] rounded-lg bg-[#6c7883] p-2 text-lg sm:min-h-[300px] sm:p-4 sm:text-xl md:text-2xl">
           <textarea
             name="Planteamiento"
             id="plant"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            className="flex h-[95%] w-[98%] rounded-lg"
+            className="h-full min-h-[160px] w-full resize-none rounded-lg p-2 text-sm sm:min-h-[260px] sm:p-3 sm:text-base"
             placeholder="Descripción del Planteamiento..."
-           />
+          />
         </div>
-        <div className="mt-6 flex justify-between gap-4">
-          <button onClick={onClose} className="rounded px-12 py-2" />
+        <div className="mt-4 flex flex-col justify-between gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+          <button
+            onClick={onClose}
+            className="hidden rounded px-12 py-2 sm:block"
+          />
           <div className="flex justify-center">
             <button
               onClick={onClose}
-              className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+              className="w-full rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 sm:w-auto"
             >
               Cancelar
             </button>
           </div>
           <button
-            className="group flex items-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline"
+            className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
             onClick={onConfirm}
           >
             Justificación

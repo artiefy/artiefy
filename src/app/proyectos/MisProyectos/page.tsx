@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import {
   ArrowLeft,
   Calendar,
@@ -99,6 +99,7 @@ interface SpecificObjective {
 export default function ProyectosPage() {
   const router = useRouter();
   const { userId, isLoaded } = useAuth();
+  const { user } = useUser(); // Agregar useUser para obtener datos del usuario
 
   const [planteamientoOpen, setPlanteamientoOpen] = React.useState(false);
   const [planteamientoTexto, setPlanteamientoTexto] = useState('');
@@ -539,7 +540,7 @@ export default function ProyectosPage() {
               <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
                 <SelectValue placeholder="Tipo de proyecto" />
               </SelectTrigger>
-              <SelectContent className="border-slate-600 bg-slate-800">
+              <SelectContent className="border-slate-600 bg-slate-800 text-white">
                 {projectTypeOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label} ({option.count})
@@ -555,7 +556,7 @@ export default function ProyectosPage() {
               <SelectTrigger className="w-full border-slate-600 bg-slate-800/50 text-white md:w-48">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
-              <SelectContent className="border-slate-600 bg-slate-800">
+              <SelectContent className="border-slate-600 bg-slate-800 text-white">
                 {categories.map((category) => (
                   <SelectItem key={category.value} value={category.value}>
                     {category.label} ({category.count})
@@ -955,6 +956,7 @@ export default function ProyectosPage() {
             onConfirm={handleConfirmarObjetivosEsp}
             texto={ObjetivosEspTexto}
             setTexto={setObjetivosEspTexto}
+            objetivoGen={objetivoGenTexto} // <-- AGREGA ESTA LÍNEA
           />
           <ModalResumen
             isOpen={ResumenOpen}
@@ -979,6 +981,10 @@ export default function ProyectosPage() {
               setModalResumenGeneradoOpen(true); // Abre el modal resumen con los datos generados
             }}
             resetOnOpen={modalGenerarOpen}
+            objetivoGen={objetivoGenTexto}
+            currentUser={{
+              name: user?.fullName || user?.firstName || 'Usuario',
+            }} // Pasar el usuario logueado
           />
 
           {/* Modal de confirmación de eliminación */}

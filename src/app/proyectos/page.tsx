@@ -342,17 +342,20 @@ export default function Component() {
           {/* Sidebar */}
           <div className="space-y-6 lg:col-span-1">
             <div className="relative hidden md:block">
-              <a href="/proyectos/MisProyectos">
+              <a href={userId ? '/proyectos/MisProyectos' : '/sign-in'}>
                 <button className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-cyan-500/30">
                   <div className="flex items-center justify-center space-x-4 rounded-3xl bg-slate-900 px-12 py-6 transition-all duration-300 group-hover:bg-slate-800">
-                    <div className="relative">
-                      <Folder className="h-8 w-8 text-cyan-400 transition-all duration-300 group-hover:text-white" />
-                      <div className="absolute -top-2 -right-2 h-3 w-3 animate-pulse rounded-full bg-gradient-to-r from-cyan-400 to-blue-400"></div>
-                    </div>
+                    {userId && (
+                      <div className="relative">
+                        <Folder className="h-8 w-8 text-cyan-400 transition-all duration-300 group-hover:opacity-0" />
+                        <FaFolderOpen className="absolute top-0 left-0 h-8 w-8 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+                        <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100"></div>
+                      </div>
+                    )}
                     <span className="text-2xl font-bold tracking-wide text-white">
-                      Mis Proyectos
+                      {userId ? 'Mis Proyectos' : 'Iniciar Sesión'}
                     </span>
-                    <ArrowRight className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:translate-x-2 group-hover:text-white" />
+                    <ArrowRight className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:translate-x-2" />
                   </div>
                 </button>
               </a>

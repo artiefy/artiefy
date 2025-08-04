@@ -15,6 +15,8 @@ import {
   Video,
   Archive,
   File,
+  Edit,
+  RefreshCw,
 } from 'lucide-react';
 
 interface ModalEntregaActividadProps {
@@ -28,6 +30,14 @@ interface ModalEntregaActividadProps {
     comentario: string
   ) => Promise<void>;
   loading?: boolean;
+  isEditing?: boolean;
+  activityName?: string;
+  archivosEntregaEdicion?: {
+    name: string;
+    url: string;
+    type: 'document' | 'image' | 'video' | 'compressed';
+  }[];
+  comentarioExistente?: string;
 }
 
 export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
@@ -35,10 +45,42 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
   onClose,
   onSubmit,
   loading = false,
+  isEditing = false,
+  activityName = '',
+  archivosEntregaEdicion = [],
+  comentarioExistente = '',
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [comentario, setComentario] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+
+  // Configuración de textos según el modo
+  const modalConfig = {
+    title: isEditing ? 'Editar Entrega' : 'Entregar Actividad',
+    icon: isEditing ? (
+      <Edit className="h-5 w-5" />
+    ) : (
+      <UploadCloud className="h-5 w-5" />
+    ),
+    submitButtonText: isEditing ? 'Actualizar Entrega' : 'Entregar',
+    submitButtonIcon: isEditing ? <RefreshCw className="h-4 w-4" /> : null,
+    dragText: isEditing
+      ? 'Actualiza los archivos de tu entrega'
+      : 'Haz clic para subir o arrastra archivos',
+    submitLoadingText: isEditing ? 'Actualizando...' : 'Enviando...',
+    filesSectionTitle: isEditing
+      ? 'Archivos actualizados'
+      : 'Seleccionar archivos',
+    commentPlaceholder: isEditing
+      ? 'Actualiza el comentario de tu entrega...'
+      : 'Agrega un comentario sobre tu entrega...',
+    noFilesAlert: isEditing
+      ? 'Por favor selecciona al menos un archivo para actualizar la entrega'
+      : 'Por favor selecciona al menos un archivo para entregar',
+    successMessage: isEditing
+      ? 'Entrega actualizada exitosamente'
+      : 'Entrega realizada exitosamente',
+  };
 
   // Función para determinar el tipo de archivo
   const getFileType = (
@@ -150,8 +192,21 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedFiles.length === 0) {
-      alert('Por favor selecciona al menos un archivo para entregar');
+    // En modo edición, permitir envío sin archivos si hay comentario o archivos existentes
+    if (!isEditing && selectedFiles.length === 0 && !comentario.trim()) {
+      alert(modalConfig.noFilesAlert);
+      return;
+    }
+
+    if (
+      isEditing &&
+      selectedFiles.length === 0 &&
+      !comentario.trim() &&
+      archivosEntregaEdicion.length === 0
+    ) {
+      alert(
+        'Por favor selecciona archivos o agrega un comentario para actualizar la entrega'
+      );
       return;
     }
 
@@ -182,7 +237,11 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
         }
       });
 
-      console.log('Iniciando proceso de entrega...');
+      console.log(
+        isEditing
+          ? 'Iniciando actualización de entrega...'
+          : 'Iniciando proceso de entrega...'
+      );
       console.log('Archivos clasificados:', {
         tieneDocumento: !!documentFile,
         tieneImagen: !!imageFile,
@@ -218,14 +277,55 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
 
       // NO cerrar automáticamente para debug
       alert(
-        'Entrega realizada exitosamente. Revisa la consola para más detalles.'
+        `${modalConfig.successMessage}. Revisa la consola para más detalles.`
       );
       // onClose();
     } catch (error) {
       console.error('Error en handleSubmit:', error);
-      alert('Error al realizar la entrega. Por favor intenta nuevamente.');
+      alert(
+        `Error al ${isEditing ? 'actualizar' : 'realizar'} la entrega. Por favor intenta nuevamente.`
+      );
       // No limpiar el formulario si hay error
     }
+  };
+
+  // Efecto para pre-llenar el comentario en modo edición
+  React.useEffect(() => {
+    if (isEditing && comentarioExistente) {
+      setComentario(comentarioExistente);
+    } else if (!isEditing) {
+      setComentario('');
+    }
+  }, [isEditing, comentarioExistente, isOpen]);
+
+  // Mostrar archivos existentes en modo edición
+  const renderArchivosEdicion = () => {
+    if (!isEditing || archivosEntregaEdicion.length === 0) return null;
+    return (
+      <div className="mb-2">
+        <p className="mb-1 text-xs text-blue-300">
+          Archivos entregados previamente:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {archivosEntregaEdicion.map((archivo, idx) => (
+            <a
+              key={idx}
+              href={archivo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 rounded border border-blue-700 bg-blue-900/40 px-2 py-1 text-xs text-blue-200 hover:bg-blue-900/60"
+              title={archivo.name}
+            >
+              {archivo.type === 'document' && <FileText className="h-4 w-4" />}
+              {archivo.type === 'image' && <Image className="h-4 w-4" />}
+              {archivo.type === 'video' && <Video className="h-4 w-4" />}
+              {archivo.type === 'compressed' && <Archive className="h-4 w-4" />}
+              <span className="max-w-[120px] truncate">{archivo.name}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -233,15 +333,29 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-teal-400">
-            <UploadCloud className="h-5 w-5" />
-            Entregar Actividad
+            {modalConfig.icon}
+            {modalConfig.title}
           </DialogTitle>
+          {activityName && (
+            <p className="text-sm text-gray-400">
+              Actividad: <span className="text-gray-300">{activityName}</span>
+            </p>
+          )}
+          {isEditing && (
+            <div className="mb-2 rounded-md border border-blue-700 bg-blue-900/30 p-3">
+              <p className="text-sm text-blue-200">
+                <strong>Modo edición:</strong> Los archivos que subas
+                reemplazarán completamente la entrega anterior.
+              </p>
+              {renderArchivosEdicion()}
+            </div>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-3">
             <label className="block text-sm font-semibold text-gray-200">
-              Seleccionar archivos
+              {modalConfig.filesSectionTitle}
             </label>
 
             <div className="flex w-full items-center justify-center">
@@ -249,7 +363,9 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                 className={`flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
                   isDragOver
                     ? 'scale-105 border-teal-400 bg-teal-900/30'
-                    : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
+                    : isEditing
+                      ? 'border-blue-500 bg-blue-900/20 hover:bg-blue-800/30'
+                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
                 } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -258,24 +374,25 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <UploadCloud
                     className={`mb-3 h-8 w-8 transition-colors ${
-                      isDragOver ? 'text-teal-300' : 'text-teal-400'
+                      isDragOver
+                        ? 'text-teal-300'
+                        : isEditing
+                          ? 'text-blue-400'
+                          : 'text-teal-400'
                     }`}
                   />
-                  <p className="mb-2 text-sm text-gray-300">
+                  <p className="mb-2 text-center text-sm text-gray-300">
                     {isDragOver ? (
                       <span className="font-semibold text-teal-300">
                         Suelta los archivos aquí
                       </span>
                     ) : (
-                      <>
-                        <span className="font-semibold">
-                          Haz clic para subir
-                        </span>{' '}
-                        o arrastra archivos
-                      </>
+                      <span className="font-semibold">
+                        {modalConfig.dragText}
+                      </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-center text-xs text-gray-400">
                     Documentos, imágenes, videos, archivos comprimidos
                   </p>
                 </div>
@@ -301,12 +418,15 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                     key={index}
                     className="animate-fadeIn flex items-center justify-between rounded border border-slate-600 bg-slate-700 p-2"
                   >
-                    <div className="flex flex-1 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 pr-2">
                       {getFileIcon(file)}
-                      <span className="max-w-[200px] truncate text-sm text-gray-300">
+                      <span
+                        className="truncate text-sm text-gray-300"
+                        title={file.name}
+                      >
                         {file.name}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="flex-shrink-0 text-xs text-gray-400">
                         ({(file.size / 1024 / 1024).toFixed(1)} MB)
                       </span>
                     </div>
@@ -315,7 +435,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFile(index)}
-                      className="p-1 text-red-400 hover:text-red-300"
+                      className="flex-shrink-0 p-1 text-red-400 hover:text-red-300"
                       disabled={loading}
                     >
                       ✕
@@ -328,15 +448,20 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-200">
-              Comentario (opcional)
+              Comentario {isEditing ? '(actualizar)' : '(opcional)'}
             </label>
             <textarea
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
-              className="w-full rounded border border-slate-600 bg-slate-700 p-2 text-white transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500"
+              className={`w-full rounded border p-2 text-white transition focus:ring-2 ${
+                isEditing
+                  ? 'border-blue-600 bg-blue-900/20 focus:border-blue-400 focus:ring-blue-500'
+                  : 'border-slate-600 bg-slate-700 focus:border-teal-400 focus:ring-teal-500'
+              }`}
               rows={3}
-              placeholder="Agrega un comentario sobre tu entrega..."
+              placeholder={modalConfig.commentPlaceholder}
               disabled={loading}
+              style={{ wordBreak: 'break-word' }}
             />
           </div>
 
@@ -346,21 +471,29 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               variant="ghost"
               onClick={onClose}
               disabled={loading}
-              className="border border-slate-600"
+              className="truncate border border-slate-600"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-teal-600 to-teal-400 font-bold text-white hover:from-teal-700 hover:to-teal-500"
+              className={`truncate font-bold text-white ${
+                isEditing
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'
+                  : 'bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-700 hover:to-teal-500'
+              }`}
               disabled={loading || selectedFiles.length === 0}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+                  <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                  {modalConfig.submitLoadingText}
                 </span>
               ) : (
-                'Entregar'
+                <span className="flex items-center gap-2">
+                  {modalConfig.submitButtonIcon}
+                  {modalConfig.submitButtonText}
+                </span>
               )}
             </Button>
           </DialogFooter>

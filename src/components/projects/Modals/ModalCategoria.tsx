@@ -15,20 +15,22 @@ const ModalCategoria: React.FC<ModalRamaInvestigacionProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div />
-      <div className="h-[50%] w-[60%] rounded-lg bg-[#0F2940] p-6 shadow-lg">
+      <div className="h-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-[#0F2940] p-4 shadow-lg sm:p-6">
         <div className="text-cyan-400">
-          <h1 className="mb-4 text-center text-4xl font-semibold">
+          <h1 className="mb-4 text-center text-2xl font-semibold sm:text-3xl md:text-4xl">
             Categoria {categoria?.name ?? 'Sin categoría'}
           </h1>
         </div>
-        <div className="flex h-[80%] items-center justify-center rounded-lg bg-[#6c7883] text-2xl">
-          <span>{categoria?.description ?? 'Sin descripción disponible'}</span>
+        <div className="flex min-h-[200px] items-center justify-center rounded-lg bg-[#6c7883] p-4 text-lg sm:text-xl md:text-2xl">
+          <span className="text-center">
+            {categoria?.description ?? 'Sin descripción disponible'}
+          </span>
         </div>
       </div>
     </div>

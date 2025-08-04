@@ -128,7 +128,7 @@ Crea un plan estructurado de proyecto con base en los requisitos y objetivos def
 ```python
 import requests
 
-url = "http://18.117.124.192:5000/plan_project"
+url = "http://3.142.77.31/plan_project"
 data = {
     "project_type": "Website",
     "industry": "Technology",
