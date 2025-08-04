@@ -43,6 +43,20 @@
       "when": 1753735496983,
       "tag": "0005_mean_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1754323249304,
+      "tag": "0006_aromatic_calypso",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1754329026575,
+      "tag": "0007_overjoyed_shaman",
+      "breakpoints": true
     }
   ]
 }

@@ -291,12 +291,10 @@ export const projectScheduleRelations = relations(
 
 // Tabla de proyectos tomados
 export const projectsTaken = pgTable('projects_taken', {
-  id: serial('id').primaryKey(),
-
+  id: serial('id').primaryKey(), // ID autoincremental
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-
   projectId: integer('project_id')
     .references(() => projects.id)
     .notNull(),
@@ -1044,6 +1042,55 @@ export const projectActivityDeliveriesRelations = relations(
     }),
     user: one(users, {
       fields: [projectActivityDeliveries.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+// Tabla de solicitudes de participación en proyectos
+export const projectParticipationRequests = pgTable(
+  'project_participation_requests',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    projectId: integer('project_id')
+      .references(() => projects.id)
+      .notNull(),
+    requestType: text('request_type', {
+      enum: ['participation', 'resignation'],
+    })
+      .default('participation')
+      .notNull(), // Nuevo campo para el tipo de solicitud
+    status: text('status', {
+      enum: ['pending', 'approved', 'rejected'],
+    })
+      .default('pending')
+      .notNull(),
+    requestMessage: text('request_message'), // Mensaje opcional del solicitante
+    responseMessage: text('response_message'), // Mensaje opcional del responsable del proyecto
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    respondedAt: timestamp('responded_at'),
+    respondedBy: text('responded_by').references(() => users.id), // Quien respondió la solicitud
+  }
+);
+
+// Relaciones para projectParticipationRequests
+export const projectParticipationRequestsRelations = relations(
+  projectParticipationRequests,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [projectParticipationRequests.userId],
+      references: [users.id],
+    }),
+    project: one(projects, {
+      fields: [projectParticipationRequests.projectId],
+      references: [projects.id],
+    }),
+    responder: one(users, {
+      fields: [projectParticipationRequests.respondedBy],
       references: [users.id],
     }),
   })

@@ -165,31 +165,85 @@ export default function ProyectosPage() {
   // Estado para los contadores de inscritos por proyecto
   const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
 
-  // Cargar la cantidad de inscritos para todos los proyectos al cargar la lista
+  // Estado para solicitudes pendientes por proyecto
+  const [solicitudesPendientesMap, setSolicitudesPendientesMap] = useState<
+    Record<number, number>
+  >({});
+
+  // Función para recargar solicitudes pendientes de un proyecto específico
+  const recargarSolicitudesProyecto = async (projectId: number) => {
+    try {
+      const res = await fetch(
+        `/api/projects/solicitudes/count?projectId=${projectId}`
+      );
+      if (res.ok) {
+        const data: { count: number } = await res.json();
+        setSolicitudesPendientesMap((prev) => ({
+          ...prev,
+          [projectId]: data.count ?? 0,
+        }));
+        console.log(
+          `🔔 Proyecto ${projectId} actualizado: ${data.count} solicitudes`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `❌ Error actualizando solicitudes proyecto ${projectId}:`,
+        error
+      );
+    }
+  };
+
+  // Cargar la cantidad de solicitudes pendientes para todos los proyectos
   useEffect(() => {
-    const fetchAllInscritos = async () => {
+    const fetchSolicitudesPendientes = async () => {
+      if (projects.length === 0 || !userId) return;
+
+      console.log(
+        '🔔 Obteniendo solicitudes pendientes para proyectos:',
+        projects.length
+      );
       const newMap: Record<number, number> = {};
+
       await Promise.all(
         projects.map(async (project) => {
-          try {
-            const res = await fetch(
-              `/api/projects/taken/count?projectId=${project.id}`
-            );
-            if (res.ok) {
-              const data: { count: number } = await res.json();
-              newMap[project.id] = data.count ?? 0;
-            } else {
+          // Solo obtener solicitudes para proyectos propios donde el usuario actual es el responsable
+          if (project.projectType === 'own' && project.userId === userId) {
+            try {
+              const res = await fetch(
+                `/api/projects/solicitudes/count?projectId=${project.id}`
+              );
+              if (res.ok) {
+                const data: { count: number } = await res.json();
+                newMap[project.id] = data.count ?? 0;
+                console.log(
+                  `🔔 Proyecto ${project.id}: ${data.count} solicitudes pendientes`
+                );
+              } else {
+                console.log(
+                  `⚠️ Error obteniendo solicitudes para proyecto ${project.id}`
+                );
+                newMap[project.id] = 0;
+              }
+            } catch (error) {
+              console.error(
+                `❌ Error fetch solicitudes proyecto ${project.id}:`,
+                error
+              );
               newMap[project.id] = 0;
             }
-          } catch {
+          } else {
             newMap[project.id] = 0;
           }
         })
       );
-      setInscritosMap(newMap);
+
+      console.log('🔔 Mapa final de solicitudes pendientes:', newMap);
+      setSolicitudesPendientesMap(newMap);
     };
-    if (projects.length > 0) fetchAllInscritos();
-  }, [projects]);
+
+    fetchSolicitudesPendientes();
+  }, [projects, userId]);
 
   // Redireccionar si no está autenticado
   React.useEffect(() => {
@@ -667,8 +721,20 @@ export default function ProyectosPage() {
                 filteredProjects.map((project) => (
                   <Card
                     key={`${project.projectType}-${project.id}`}
-                    className="border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+                    className="relative border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
                   >
+                    {/* Burbuja roja de solicitudes pendientes - SOLO para proyectos propios */}
+                    {project.projectType === 'own' &&
+                      project.userId === userId &&
+                      solicitudesPendientesMap[project.id] > 0 && (
+                        <div
+                          className="absolute -top-2 -right-2 z-10 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg"
+                          title={`${solicitudesPendientesMap[project.id]} solicitudes pendientes`}
+                        >
+                          {solicitudesPendientesMap[project.id]}
+                        </div>
+                      )}
+
                     <CardHeader className="pb-4">
                       {/* Imagen del proyecto */}
                       <div className="relative mb-4 h-48 overflow-hidden rounded-lg">
@@ -859,32 +925,54 @@ export default function ProyectosPage() {
                         {project.projectType === 'taken' && (
                           <Button
                             variant="outline"
-                            className="border-red-500 bg-transparent text-red-400 hover:bg-red-500/10"
+                            className="border-orange-500 bg-transparent text-orange-400 hover:bg-orange-500/10"
                             onClick={async () => {
+                              const mensaje = prompt(
+                                'Motivo de la renuncia (opcional):'
+                              );
+
+                              if (mensaje === null) {
+                                return; // Usuario canceló
+                              }
+
                               try {
-                                const res = await fetch('/api/projects/taken', {
-                                  method: 'DELETE',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    userId,
-                                    projectId: project.id,
-                                  }),
-                                });
+                                const res = await fetch(
+                                  '/api/projects/participation-requests',
+                                  {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      userId,
+                                      projectId: project.id,
+                                      requestType: 'resignation',
+                                      requestMessage: mensaje || null,
+                                    }),
+                                  }
+                                );
+
                                 if (res.ok) {
-                                  setProjects((prev) =>
-                                    prev.filter((p) => p.id !== project.id)
+                                  alert(
+                                    'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
                                   );
+                                  // Opcional: actualizar el estado del proyecto para mostrar "Renuncia Pendiente"
                                 } else {
-                                  alert('No se pudo renunciar al proyecto');
+                                  const errorData = await res.json();
+                                  alert(
+                                    errorData.error ||
+                                      'No se pudo enviar la solicitud de renuncia'
+                                  );
                                 }
-                              } catch {
-                                alert('No se pudo renunciar al proyecto');
+                              } catch (error) {
+                                console.error('Error:', error);
+                                alert(
+                                  'No se pudo enviar la solicitud de renuncia'
+                                );
                               }
                             }}
                           >
-                            Renunciar
+                            Solicitar Renuncia
                           </Button>
                         )}
                       </div>

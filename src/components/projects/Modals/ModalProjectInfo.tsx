@@ -71,6 +71,8 @@ export default function ProjectInfoModal({
   const [alreadyTaken, setAlreadyTaken] = React.useState<boolean>(false);
   const [isOwner, setIsOwner] = React.useState<boolean>(false);
   const [inscritos, setInscritos] = React.useState<number>(0);
+  const [solicitudPendiente, setSolicitudPendiente] = React.useState(false);
+  const [verificandoSolicitud, setVerificandoSolicitud] = React.useState(false);
 
   // Estado para mostrar los modales
   const [showIntegrantes, setShowIntegrantes] = React.useState(false);
@@ -150,6 +152,101 @@ export default function ProjectInfoModal({
     }
   }, [open, userId, project?.id, project?.user?.id]);
 
+  // MEJORADO: Verificar si hay solicitud pendiente con mejor manejo de errores
+  React.useEffect(() => {
+    const checkSolicitudPendiente = async () => {
+      if (!userId || !project?.id || !open) {
+        console.log('🔍 No se puede verificar solicitud - faltan datos:', {
+          userId: !!userId,
+          projectId: !!project?.id,
+          open,
+        });
+        setSolicitudPendiente(false);
+        return;
+      }
+
+      console.log(
+        `🔍 Verificando solicitud pendiente para usuario ${userId} en proyecto ${project.id}`
+      );
+      setVerificandoSolicitud(true);
+
+      try {
+        const url = `/api/projects/participation-requests?projectId=${project.id}&userId=${encodeURIComponent(
+          userId
+        )}`;
+        console.log('🌐 URL de consulta:', url);
+
+        const res = await fetch(url);
+        console.log('📡 Respuesta de verificación:', {
+          status: res.status,
+          statusText: res.statusText,
+          ok: res.ok,
+        });
+
+        if (res.ok) {
+          const solicitud = await res.json();
+          console.log('📋 Datos de solicitud recibidos:', solicitud);
+
+          // MEJORADO: Verificar diferentes estados de solicitud
+          if (!solicitud) {
+            setSolicitudPendiente(false);
+          } else if (
+            solicitud.status === 'pending' ||
+            solicitud.status === 'PENDING'
+          ) {
+            setSolicitudPendiente(true);
+          } else if (solicitud.status === 'approved') {
+            // Si la solicitud fue aprobada, verificar si ya está inscrito
+            setSolicitudPendiente(false);
+            // Forzar re-verificación del estado de inscripción
+            if (userId && project.id) {
+              try {
+                const checkRes = await fetch(
+                  `/api/projects/taken/check?userId=${userId}&projectId=${project.id}`
+                );
+                if (checkRes.ok) {
+                  const checkData: { taken: boolean } = await checkRes.json();
+                  setAlreadyTaken(checkData.taken === true);
+                }
+              } catch (error) {
+                console.warn('Error verificando inscripción:', error);
+              }
+            }
+          } else {
+            // rejected o cualquier otro estado
+            setSolicitudPendiente(false);
+          }
+
+          console.log('✅ Estado final de solicitud:', {
+            solicitudPendiente: solicitud?.status === 'pending',
+            estadoSolicitud: solicitud?.status,
+          });
+        } else if (res.status === 404) {
+          // 404 significa que no hay solicitud, esto es normal
+          console.log('ℹ️ No hay solicitud registrada (404)');
+          setSolicitudPendiente(false);
+        } else {
+          console.warn('⚠️ Error en respuesta:', res.status, res.statusText);
+          setSolicitudPendiente(false);
+        }
+      } catch (error) {
+        console.error('❌ Error verificando solicitud pendiente:', error);
+        setSolicitudPendiente(false);
+      } finally {
+        setVerificandoSolicitud(false);
+      }
+    };
+
+    // Solo ejecutar cuando el modal esté abierto y tengamos los datos necesarios
+    if (open && userId && project?.id) {
+      checkSolicitudPendiente();
+    } else {
+      // Resetear estado si el modal se cierra
+      setSolicitudPendiente(false);
+      setVerificandoSolicitud(false);
+    }
+  }, [open, userId, project?.id]);
+
   const handleInscribirse = async () => {
     if (!userId || !project) {
       setError('Usuario no autenticado o proyecto inválido');
@@ -208,6 +305,136 @@ export default function ProjectInfoModal({
     if (project?.id) {
       onClose();
       router.push(`/proyectos/DetallesProyectos/${project.id}`);
+    }
+  };
+
+  const handleSolicitarParticipacion = async () => {
+    if (!userId || !project) {
+      setError('Usuario no autenticado o proyecto inválido');
+      return;
+    }
+
+    const mensaje = prompt(
+      'Mensaje opcional para el responsable del proyecto (opcional):'
+    );
+
+    console.log('📤 Enviando solicitud de participación:', {
+      userId,
+      projectId: project.id,
+      mensaje: mensaje || 'Sin mensaje',
+    });
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/projects/participation-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          projectId: project.id,
+          requestMessage: mensaje || null,
+        }),
+      });
+
+      console.log('📡 Respuesta de solicitud:', {
+        status: res.status,
+        statusText: res.statusText,
+        ok: res.ok,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('❌ Error en solicitud:', errorData);
+        throw new Error(errorData.error || 'No se pudo enviar la solicitud');
+      }
+
+      const responseData = await res.json();
+      console.log('✅ Solicitud enviada exitosamente:', responseData);
+
+      setSuccess(true);
+      setSolicitudPendiente(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 2000);
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error ? e.message : 'No se pudo enviar la solicitud';
+      console.error('❌ Error final:', errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSolicitarRenuncia = async () => {
+    if (!userId || !project) {
+      setError('Usuario no autenticado o proyecto inválido');
+      return;
+    }
+
+    const mensaje = prompt('Motivo de la renuncia (opcional):');
+
+    if (mensaje === null) {
+      return; // Usuario canceló
+    }
+
+    console.log('📤 Enviando solicitud de renuncia:', {
+      userId,
+      projectId: project.id,
+      mensaje: mensaje || 'Sin mensaje',
+    });
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/projects/participation-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          projectId: project.id,
+          requestType: 'resignation',
+          requestMessage: mensaje || null,
+        }),
+      });
+
+      console.log('📡 Respuesta de solicitud de renuncia:', {
+        status: res.status,
+        statusText: res.statusText,
+        ok: res.ok,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('❌ Error en solicitud:', errorData);
+        throw new Error(
+          errorData.error || 'No se pudo enviar la solicitud de renuncia'
+        );
+      }
+
+      const responseData = await res.json();
+      console.log(
+        '✅ Solicitud de renuncia enviada exitosamente:',
+        responseData
+      );
+
+      setSuccess(true);
+      setSolicitudPendiente(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 2000);
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : 'No se pudo enviar la solicitud de renuncia';
+      console.error('❌ Error final:', errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -473,27 +700,49 @@ export default function ProjectInfoModal({
                     </span>
                   </Button>
                   <Button
-                    className="flex-1 bg-red-500 text-lg text-white hover:bg-red-600"
-                    onClick={handleRenunciar}
-                    disabled={loading}
+                    className="flex-1 bg-orange-500 text-lg text-white hover:bg-orange-600"
+                    onClick={handleSolicitarRenuncia}
+                    disabled={loading || solicitudPendiente}
                   >
                     <span className="w-full text-lg font-semibold">
-                      {loading ? 'Renunciando...' : 'Renunciar'}
+                      {loading
+                        ? 'Enviando solicitud...'
+                        : solicitudPendiente
+                          ? 'Renuncia Pendiente'
+                          : 'Solicitar Renuncia'}
                     </span>
                   </Button>
                 </>
+              ) : verificandoSolicitud ? (
+                <Button
+                  className="flex-1 bg-gray-500 text-lg text-white"
+                  disabled
+                >
+                  <span className="w-full text-lg font-semibold">
+                    Verificando solicitud...
+                  </span>
+                </Button>
+              ) : solicitudPendiente ? (
+                <Button
+                  className="flex-1 bg-yellow-500 text-lg text-black hover:bg-yellow-600"
+                  disabled
+                >
+                  <span className="w-full text-lg font-semibold">
+                    Solicitud Pendiente
+                  </span>
+                </Button>
               ) : (
                 <Button
                   className="flex-1 bg-green-500 text-lg text-white hover:bg-green-600"
-                  onClick={handleInscribirse}
+                  onClick={handleSolicitarParticipacion}
                   disabled={loading || success}
                 >
                   <span className="w-full text-lg font-semibold">
                     {loading
-                      ? 'Inscribiendo...'
+                      ? 'Enviando solicitud...'
                       : success
-                        ? '¡Inscrito!'
-                        : 'Inscribirse'}
+                        ? '¡Solicitud enviada!'
+                        : 'Solicitar participación'}
                   </span>
                 </Button>
               )}

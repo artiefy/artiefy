@@ -45,6 +45,7 @@ import ModalConfirmacionEliminacion from '../../../../components/projects/Modals
 import ModalIntegrantesProyectoInfo from '../../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
 import ModalResumen from '../../../../components/projects/Modals/ModalResumen';
 import ModalEntregaActividad from '~/components/projects/Modals/ModalEntregaActividad';
+import ModalSolicitudesParticipacion from '../../../../components/projects/Modals/ModalSolicitudesParticipacion';
 import {
   getProjectById,
   ProjectDetail,
@@ -88,6 +89,30 @@ export default function ProjectDetails() {
   const [entregasActividades, setEntregasActividades] = useState<
     Record<number, any>
   >({});
+
+  // Estado para el modal de solicitudes de participación
+  const [modalSolicitudesOpen, setModalSolicitudesOpen] = useState(false);
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+
+  // Función para recargar el contador de solicitudes pendientes
+  const recargarSolicitudesPendientes = async () => {
+    try {
+      const res = await fetch(
+        `/api/projects/solicitudes/count?projectId=${projectId}`
+      );
+      if (res.ok) {
+        const data: { count: number } = await res.json();
+        setSolicitudesPendientes(data.count ?? 0);
+        console.log(
+          `🔔 Contador actualizado: ${data.count} solicitudes pendientes`
+        );
+      } else {
+        setSolicitudesPendientes(0);
+      }
+    } catch {
+      setSolicitudesPendientes(0);
+    }
+  };
 
   // Obtener userId de Clerk cuando esté disponible
   useEffect(() => {
@@ -275,6 +300,24 @@ export default function ProjectDetails() {
         }
       };
       fetchIntegrantes();
+
+      // Obtener la cantidad de solicitudes pendientes
+      const fetchSolicitudesPendientes = async () => {
+        try {
+          const res = await fetch(
+            `/api/projects/solicitudes/count?projectId=${projectId}`
+          );
+          if (res.ok) {
+            const data: { count: number } = await res.json();
+            setSolicitudesPendientes(data.count ?? 0);
+          } else {
+            setSolicitudesPendientes(0);
+          }
+        } catch {
+          setSolicitudesPendientes(0);
+        }
+      };
+      fetchSolicitudesPendientes();
     })();
   }, [projectId, isLoaded, userId]); // Agregar isLoaded y userId como dependencias
 
@@ -1703,7 +1746,9 @@ export default function ProjectDetails() {
       // Intentar primero con URL firmada para descarga
       try {
         const res = await fetch(
-          `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?key=${encodeURIComponent(fileKey)}&type=${fileType}&userId=${encodeURIComponent(userId)}`
+          `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?key=${encodeURIComponent(
+            fileKey
+          )}&type=${fileType}&userId=${encodeURIComponent(userId)}`
         );
 
         if (res.ok) {
@@ -1723,7 +1768,10 @@ export default function ProjectDetails() {
           return;
         }
       } catch (apiError) {
-        console.warn('⚠️ Error con API de descarga, intentando método alternativo:', apiError);
+        console.warn(
+          '⚠️ Error con API de descarga, intentando método alternativo:',
+          apiError
+        );
       }
 
       // Método alternativo: descarga directa desde S3
@@ -1753,7 +1801,9 @@ export default function ProjectDetails() {
       console.log(`✅ Descarga completada: ${fileName}`);
     } catch (error) {
       console.error('❌ Error en descarga:', error);
-      alert(`❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`);
+      alert(
+        `❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`
+      );
     }
   };
 
@@ -1768,133 +1818,135 @@ export default function ProjectDetails() {
     const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fileKey}`;
     window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
-  
-    // Componente para mostrar archivos de una entrega
-    const ArchivosEntrega = ({
-      actividadId,
-      entrega,
-    }: {
-      actividadId: number;
-      entrega: any;
-    }) => {
-      if (!entrega) {
-        return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+
+  // Componente para mostrar archivos de una entrega
+  const ArchivosEntrega = ({
+    actividadId,
+    entrega,
+  }: {
+    actividadId: number;
+    entrega: any;
+  }) => {
+    if (!entrega) {
+      return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+    }
+
+    const archivos = [];
+
+    // Recopilar todos los archivos disponibles
+    if (entrega.documentKey && entrega.documentName) {
+      archivos.push({
+        key: entrega.documentKey,
+        name: entrega.documentName,
+        type: 'document' as const,
+        icon: '📄',
+      });
+    }
+
+    if (entrega.imageKey && entrega.imageName) {
+      archivos.push({
+        key: entrega.imageKey,
+        name: entrega.imageName,
+        type: 'image' as const,
+        icon: '🖼️',
+      });
+    }
+
+    if (entrega.videoKey && entrega.videoName) {
+      archivos.push({
+        key: entrega.videoKey,
+        name: entrega.videoName,
+        type: 'video' as const,
+        icon: '🎥',
+      });
+    }
+
+    if (entrega.compressedFileKey && entrega.compressedFileName) {
+      archivos.push({
+        key: entrega.compressedFileKey,
+        name: entrega.compressedFileName,
+        type: 'compressed' as const,
+        icon: '📦',
+      });
+    }
+
+    if (archivos.length === 0) {
+      // Verificar si hay comentario o URL
+      if (entrega.comentario || entrega.entregaUrl) {
+        return (
+          <div className="space-y-1">
+            {entrega.comentario && (
+              <div className="text-xs text-blue-400">
+                💬 Comentario incluido
+              </div>
+            )}
+            {entrega.entregaUrl && (
+              <div className="text-xs text-purple-400">🔗 URL incluida</div>
+            )}
+          </div>
+        );
       }
-  
-      const archivos = [];
-  
-      // Recopilar todos los archivos disponibles
-      if (entrega.documentKey && entrega.documentName) {
-        archivos.push({
-          key: entrega.documentKey,
-          name: entrega.documentName,
-          type: 'document' as const,
-          icon: '📄',
-        });
-      }
-  
-      if (entrega.imageKey && entrega.imageName) {
-        archivos.push({
-          key: entrega.imageKey,
-          name: entrega.imageName,
-          type: 'image' as const,
-          icon: '🖼️',
-        });
-      }
-  
-      if (entrega.videoKey && entrega.videoName) {
-        archivos.push({
-          key: entrega.videoKey,
-          name: entrega.videoName,
-          type: 'video' as const,
-          icon: '🎥',
-        });
-      }
-  
-      if (entrega.compressedFileKey && entrega.compressedFileName) {
-        archivos.push({
-          key: entrega.compressedFileKey,
-          name: entrega.compressedFileName,
-          type: 'compressed' as const,
-          icon: '📦',
-        });
-      }
-  
-      if (archivos.length === 0) {
-        // Verificar si hay comentario o URL
-        if (entrega.comentario || entrega.entregaUrl) {
-          return (
-            <div className="space-y-1">
-              {entrega.comentario && (
-                <div className="text-xs text-blue-400">
-                  💬 Comentario incluido
-                </div>
-              )}
-              {entrega.entregaUrl && (
-                <div className="text-xs text-purple-400">🔗 URL incluida</div>
-              )}
-            </div>
-          );
-        }
-        return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
-      }
-  
-      return (
-        <div className="max-w-xs space-y-1">
-          {archivos.map((archivo, index) => (
-            <div key={index} className="flex gap-1">
-              <button
-                onClick={() =>
-                  handleVerArchivo(
-                    actividadId,
-                    archivo.key,
-                    archivo.type,
-                    archivo.name
-                  )
-                }
-                className="flex flex-1 items-center gap-2 rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
-                title={`Ver: ${archivo.name}`}
-              >
-                <span>{archivo.icon}</span>
-                <span className="flex-1 truncate">
-                  {archivo.name.length > 15
-                    ? `${archivo.name.substring(0, 15)}...`
-                    : archivo.name}
-                </span>
-              </button>
-  
-              {/* Botón de descarga mejorado */}
-              <button
-                onClick={() => handleDescargarArchivoDirecto(
+      return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+    }
+
+    return (
+      <div className="max-w-xs space-y-1">
+        {archivos.map((archivo, index) => (
+          <div key={index} className="flex gap-1">
+            <button
+              onClick={() =>
+                handleVerArchivo(
+                  actividadId,
+                  archivo.key,
+                  archivo.type,
+                  archivo.name
+                )
+              }
+              className="flex flex-1 items-center gap-2 rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
+              title={`Ver: ${archivo.name}`}
+            >
+              <span>{archivo.icon}</span>
+              <span className="flex-1 truncate">
+                {archivo.name.length > 15
+                  ? `${archivo.name.substring(0, 15)}...`
+                  : archivo.name}
+              </span>
+            </button>
+
+            {/* Botón de descarga mejorado */}
+            <button
+              onClick={() =>
+                handleDescargarArchivoDirecto(
                   actividadId,
                   archivo.key,
                   archivo.name,
                   archivo.type
-                )}
-                className="rounded bg-blue-600 p-1 text-xs text-white transition-colors hover:bg-blue-500"
-                title={`Descargar: ${archivo.name}`}
-              >
-                <Download className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-  
-          {/* Mostrar información adicional si existe */}
-          {(entrega.comentario || entrega.entregaUrl) && (
-            <div className="mt-1 border-t border-slate-600 pt-1">
-              {entrega.comentario && (
-                <div className="mb-1 text-xs text-blue-400">
-                  💬 Con comentario
-                </div>
-              )}
-              {entrega.entregaUrl && (
-                <div className="text-xs text-purple-400">🔗 Con URL</div>
-              )}
-            </div>
-          )}
-        </div>
-      );
-    };
+                )
+              }
+              className="rounded bg-blue-600 p-1 text-xs text-white transition-colors hover:bg-blue-500"
+              title={`Descargar: ${archivo.name}`}
+            >
+              <Download className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+
+        {/* Mostrar información adicional si existe */}
+        {(entrega.comentario || entrega.entregaUrl) && (
+          <div className="mt-1 border-t border-slate-600 pt-1">
+            {entrega.comentario && (
+              <div className="mb-1 text-xs text-blue-400">
+                💬 Con comentario
+              </div>
+            )}
+            {entrega.entregaUrl && (
+              <div className="text-xs text-purple-400">🔗 Con URL</div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Mostrar loading mientras Clerk carga
   if (!isLoaded || loading) {
@@ -2043,6 +2095,20 @@ export default function ProjectDetails() {
                     <p className="text-teal-400">{responsable}</p>
                   </div>
                   <div className="flex gap-2">
+                    {puedeEditarProyecto() && (
+                      <Button
+                        className="relative bg-purple-600 hover:bg-purple-700"
+                        onClick={() => setModalSolicitudesOpen(true)}
+                      >
+                        <Users className="mr-1 h-4 w-4" />
+                        Solicitudes
+                        {solicitudesPendientes > 0 && (
+                          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                            {solicitudesPendientes}
+                          </span>
+                        )}
+                      </Button>
+                    )}
                     <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={handleTogglePublicarProyecto}
@@ -2424,7 +2490,7 @@ export default function ProjectDetails() {
                                                         )
                                                       }
                                                     >
-                                                      <Trash2 className="mr-1 h-3 w-3" />
+                                                      <Trash2 className="mr-1 h-3 w-4" />
                                                       Eliminar
                                                     </Button>
                                                   </div>
@@ -2721,6 +2787,14 @@ export default function ProjectDetails() {
           isEditing={modoEdicion}
           activityName={actividadSeleccionada?.descripcion}
           archivosEntregaEdicion={datosEntregaEdicion.archivos}
+        />
+        {/* Modal de solicitudes de participación */}
+        <ModalSolicitudesParticipacion
+          isOpen={modalSolicitudesOpen}
+          onClose={() => setModalSolicitudesOpen(false)}
+          projectId={projectId}
+          userId={userId}
+          onSolicitudProcesada={recargarSolicitudesPendientes}
         />
       </div>
       {/* Scrollbar color personalizado */}
