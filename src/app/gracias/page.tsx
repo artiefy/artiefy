@@ -86,7 +86,7 @@ export default function GraciasPage() {
         <div className="relative z-[20] flex w-full max-w-md flex-col items-center rounded-2xl bg-white/95 p-10 shadow-2xl backdrop-blur-md">
           {/* Logo centrado arriba */}
           <Image
-            src="/artiefy-logo2.jpg"
+            src="/artiefy-logo2.png"
             alt="Artiefy Logo"
             width={130}
             height={130}
