@@ -83,31 +83,34 @@ export default function GraciasPage() {
             <div key={i} className="confetti-piece" />
           ))}
         </div>
-        <div className="relative z-[20] flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
+        <div className="relative z-[20] flex w-full max-w-md flex-col items-center rounded-2xl bg-white/95 p-10 shadow-2xl backdrop-blur-md">
           {/* Logo centrado arriba */}
           <Image
             src="/artiefy-logo2.jpg"
             alt="Artiefy Logo"
-            width={120}
-            height={120}
-            className="mb-4"
+            width={130}
+            height={130}
+            className="mb-6 drop-shadow-lg"
             style={{ objectFit: 'contain' }}
             priority
           />
-          <h2 className="text-background mb-2 text-center text-2xl font-bold">
+          <h2 className="mb-4 text-center text-3xl font-extrabold tracking-tight text-[#0A2540] drop-shadow-sm">
             ¡Muchas gracias por tu compra!
           </h2>
-          <p className="text-background mb-1 text-center font-semibold">
-            Bienvenido a Artiefy
+          <p className="mb-2 text-center text-xl font-semibold tracking-wide text-[#00A5C0]">
+            Bienvenido a{' '}
+            <span className="font-bold text-[#0A2540]">Artiefy</span>
             <br />
-            La educación del futuro
+            <span className="text-lg font-medium text-[#1B3A4B]">
+              La educación del futuro
+            </span>
           </p>
-          <p className="text-background mb-6 text-center">
+          <p className="mt-2 mb-8 text-center text-lg font-medium text-[#0A2540]">
             Tu pago fue procesado correctamente.
           </p>
           <button
             onClick={handleContinue}
-            className="bg-secondary text-background mt-2 rounded px-6 py-2 font-semibold hover:bg-[#00A5C0] active:scale-95"
+            className="mt-2 rounded-lg bg-gradient-to-r from-[#00A5C0] to-[#0A2540] px-8 py-3 text-lg font-bold text-white shadow-md transition-all duration-200 hover:from-[#0A2540] hover:to-[#00A5C0] active:scale-95"
           >
             Continuar
           </button>
