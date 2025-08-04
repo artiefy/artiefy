@@ -1,5 +1,6 @@
 'use server';
 
+import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,7 +21,7 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
   });
 
   try {
-    // Buscar específicamente el usuario con rol 'estudiante'
+    // Buscar usuario en la base de datos
     let user = await db.query.users.findFirst({
       where: and(
         eq(users.email, normalizedEmail),
@@ -28,10 +29,19 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       ),
     });
 
-    // Si no existe el usuario, crearlo
+    // Si no existe el usuario, buscar en Clerk
+    let userId: string | undefined = user?.id;
     if (!user) {
-      console.log('👤 User not found, creating new user:', normalizedEmail);
-      const userId = uuidv4();
+      // Buscar usuario en Clerk
+      const clerk = await clerkClient();
+      const clerkUsers = await clerk.users.getUserList({
+        emailAddress: [normalizedEmail],
+      });
+      if (clerkUsers.totalCount > 0) {
+        userId = clerkUsers.data[0].id;
+      } else {
+        userId = uuidv4();
+      }
 
       try {
         await db.insert(users).values({
