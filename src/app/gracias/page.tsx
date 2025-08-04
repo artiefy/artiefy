@@ -51,7 +51,7 @@ export default function GraciasPage() {
         `}
       </Script>
       <noscript>
-         {/*  eslint-disable-next-line @next/next/no-img-element */}
+        {/*  eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"
@@ -72,7 +72,7 @@ export default function GraciasPage() {
           </p>
           <button
             onClick={handleContinue}
-            className="bg-primary hover:bg-primary/90 mt-2 rounded px-6 py-2 font-semibold text-white active:scale-95"
+            className="bg-secondary hover:bg-[#00A5C0] text-background mt-2 rounded px-6 py-2 font-semibold active:scale-95"
           >
             Continuar
           </button>
