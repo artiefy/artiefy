@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { useUser } from '@clerk/nextjs';
 
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
@@ -11,14 +13,29 @@ import type { FormData, Product } from '~/types/payu';
 
 import '~/styles/form.css';
 
-const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
+const PaymentForm: React.FC<{
+  selectedProduct: Product;
+  requireAuthOnSubmit?: boolean;
+  redirectUrlOnAuth?: string;
+}> = ({
   selectedProduct,
+  requireAuthOnSubmit = false,
+  redirectUrlOnAuth = '',
 }) => {
   const { user } = useUser();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const buyerEmail =
-    user?.emailAddresses[0]?.emailAddress?.trim().toLowerCase() ?? '';
-  const buyerFullName = user?.fullName ?? '';
+
+  // Estados locales para email y nombre si no hay usuario autenticado
+  const [manualEmail, setManualEmail] = useState('');
+  const [manualFullName, setManualFullName] = useState('');
+
+  // Si hay usuario, usar sus datos y bloquear campos; si no, usar los manuales y permitir editar
+  const isLoggedIn = !!user;
+  const buyerEmail = isLoggedIn
+    ? (user.emailAddresses[0]?.emailAddress?.trim().toLowerCase() ?? '')
+    : manualEmail;
+  const buyerFullName = isLoggedIn ? (user.fullName ?? '') : manualFullName;
   const [telephone, setTelephone] = useState('');
   const [loading, setLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -35,6 +52,12 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
     if (name === 'telephone') setTelephone(value);
     if (name === 'termsAndConditions') setTermsAccepted(checked);
     if (name === 'privacyPolicy') setPrivacyAccepted(checked);
+
+    // Permitir editar email y nombre solo si no hay usuario autenticado
+    if (!isLoggedIn) {
+      if (name === 'buyerEmail') setManualEmail(value);
+      if (name === 'buyerFullName') setManualFullName(value);
+    }
 
     if (showErrors) {
       const newErrors = validateFormData(
@@ -61,6 +84,25 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     event.preventDefault();
+
+    // Si requiere autenticación y no hay usuario, redirigir a login
+    if (requireAuthOnSubmit && !isLoggedIn) {
+      // Guardar los datos manuales en sessionStorage para recuperarlos después del login
+      sessionStorage.setItem('pendingBuyerEmail', manualEmail);
+      sessionStorage.setItem('pendingBuyerFullName', manualFullName);
+      sessionStorage.setItem('pendingTelephone', telephone);
+
+      if (redirectUrlOnAuth) {
+        router.push(
+          `/sign-in?redirect_url=${encodeURIComponent(
+            redirectUrlOnAuth
+          )}&plan_id=${selectedProduct.id}`
+        );
+      } else {
+        router.push('/sign-in');
+      }
+      return;
+    }
 
     const newErrors = validateFormData(
       telephone,
@@ -127,6 +169,22 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
     }
   };
 
+  // Recuperar datos manuales después del login y limpiar sessionStorage
+  useEffect(() => {
+    if (isLoggedIn && !manualEmail && !manualFullName) {
+      const pendingEmail = sessionStorage.getItem('pendingBuyerEmail');
+      const pendingFullName = sessionStorage.getItem('pendingBuyerFullName');
+      const pendingTelephone = sessionStorage.getItem('pendingTelephone');
+      if (pendingEmail) setManualEmail(pendingEmail);
+      if (pendingFullName) setManualFullName(pendingFullName);
+      if (pendingTelephone) setTelephone(pendingTelephone ?? '');
+      sessionStorage.removeItem('pendingBuyerEmail');
+      sessionStorage.removeItem('pendingBuyerFullName');
+      sessionStorage.removeItem('pendingTelephone');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
+
   return (
     <form className="form">
       <h3 className="payer-info-title">Datos del pagador</h3>
@@ -139,6 +197,7 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
         errors={errors}
         onSubmitAction={handleSubmit}
         loading={loading}
+        readOnly={isLoggedIn} // Solo lectura si hay usuario autenticado
       />
       {error && <p className="error">{error}</p>}
     </form>

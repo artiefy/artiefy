@@ -2,12 +2,11 @@
 
 import { createElement, useEffect, useState } from 'react';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimes, FaTimesCircle } from 'react-icons/fa';
-import { toast } from 'sonner';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -20,7 +19,6 @@ import '~/styles/buttonPlanes.css';
 
 const PlansPage: React.FC = () => {
   const { isSignedIn } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -40,7 +38,6 @@ const PlansPage: React.FC = () => {
       !hasOpenedModal
     ) {
       const allPlans = [...plansPersonas, ...plansEmpresas];
-      // Convertir ambos a string para comparar correctamente
       const plan = allPlans.find((p) => String(p.id) === String(planId));
       if (plan) {
         setSelectedPlan(plan);
@@ -74,34 +71,14 @@ const PlansPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Permitir abrir el modal siempre
   const handlePlanSelect = (plan: Plan) => {
     if (isProcessing) return;
     setIsProcessing(true);
 
-    if (!isSignedIn) {
-      // Mostrar toast y esperar a que se complete
-      toast.error('Debes iniciar sesión para seleccionar un plan');
-
-      // Redirigir a sign-in con redirect_url y plan_id
-      setTimeout(() => {
-        setIsProcessing(false);
-        const redirectUrl = `${pathname}?plan_id=${plan.id}`;
-        void router.push(
-          `/sign-in?redirect_url=${encodeURIComponent(
-            redirectUrl
-          )}&plan_id=${plan.id}`
-        );
-      }, 2000);
-      return;
-    }
-
-    try {
-      setSelectedPlan(plan);
-      setShowModal(true);
-      toast.success(`Has seleccionado el plan ${plan.name}`);
-    } finally {
-      setIsProcessing(false);
-    }
+    setSelectedPlan(plan);
+    setShowModal(true);
+    setIsProcessing(false);
   };
 
   const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
@@ -254,7 +231,11 @@ const PlansPage: React.FC = () => {
               </button>
             </div>
             <div>
-              <PaymentForm selectedProduct={selectedProduct} />
+              <PaymentForm
+                selectedProduct={selectedProduct}
+                requireAuthOnSubmit={!isSignedIn}
+                redirectUrlOnAuth={`${pathname}?plan_id=${selectedPlan.id}`}
+              />
             </div>
           </div>
         </div>
