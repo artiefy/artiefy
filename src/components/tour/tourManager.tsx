@@ -9,69 +9,94 @@ import '~/styles/introjs-custom.css';
 // Pasos estáticos y dinámicos separados
 const steps = {
   intro: [
-    { intro: '¡Bienvenido a la plataforma Artiefy!' },
-    { intro: 'Te guiaremos paso a paso. ¡Vamos allá!' },
+    { intro: 'Bienvenido a Artiefy la plataforma educativa del futuro' },
+    {
+      intro:
+        'Te daremos un tour completo para que puedas usar Artiefy sin limites',
+    },
+    {
+      element: '.join-button',
+      intro:
+        'Este es el inicio de Artiefy el botón de comienza ya sera tu puerta al conocimiento',
+    },
     {
       element: '.div-header-inicio',
       intro: 'Este es el inicio, donde verás las novedades principales.',
     },
     {
       element: '.div-header-cursos',
-      intro: 'Aquí encontrarás todos los cursos disponibles.',
+      intro:
+        'En cursos encontraras todo el contenido para desarrollar tus ideas y proyectos, desde cursos hasta programas completos.',
     },
     {
       element: '.div-header-proyectos',
-      intro: 'En esta sección verás proyectos interesantes de la comunidad.',
+      intro:
+        'En proyectos Artie IA te ayudara a desarrollar tus ideas y proyectos, y podras compartirlo con la comunidad',
     },
     {
       element: '.div-header-espacios',
-      intro: 'Espacios para interactuar y debatir con otros estudiantes.',
+      intro:
+        'Aquí encontrarás los espacios donde podrás desarrollar tus ideas.',
     },
     {
       element: '.div-header-planes',
-      intro: 'Consulta los diferentes planes de la plataforma.',
+      intro: 'Aqui tendras nuestros planes de pago y sus beneficios.',
     },
     {
-      element: '.test',
+      element: '.perfil-header',
       intro:
-        'Desde aquí accedes a tu perfil y configuración. El simbolo de campaña podrás ver tus notificaciones y mensajes.',
+        'En el perfil, encontraras las configuraciones de artiefy, tus cursos y certificados.',
+    },
+    {
+      element: '.campana-header',
+      intro:
+        'Aquí encontrarás las notificaciones y mensajes para que nunca te pierdas nada importante',
     },
   ],
   estudiantesEstaticos: [
     {
-      element: '.div-main',
+      element: 'main',
       intro:
-        'Aquí puedes ver los últimos cursos añadidos a nuestra plataforma. ¡Mantente al día con las nuevas oportunidades de aprendizaje! 📌',
+        'Bienvenido a tu dashboard de estudiante. Aquí encontrarás todo lo que necesitas para tu aprendizaje.',
     },
     {
-      element: '.div-courses',
+      element: '.header-search-container',
       intro:
-        'Explora nuestra variedad de cursos disponibles. Filtra, busca y encuentra el contenido que más se ajuste a tus intereses y objetivos. 🔍',
+        'En la barra de busqueda superior puedes acceder a un curso en especifico con nuestro chatBot Artie.',
     },
     {
-      element: '.div-programs',
+      element: '.couses-section',
       intro:
-        'En esta sección encontrarás nuestras categorías de cursos organizadas por áreas temáticas. ¡Elige la que más te llame la atención! 📚',
+        'Esta es tu área principal donde puedes explorar cursos, programas y contenido educativo.',
     },
     {
-      element: '.div-filters',
+      element: 'footer, .footer, [class*="footer"]',
       intro:
-        '¿Buscas algo específico? Utiliza los filtros para encontrar cursos por categoría, modalidad o nivel de dificultad. ¡Haz tu búsqueda más eficiente! 🛠️',
+        'En la parte inferior encontrarás información adicional y enlaces útiles.',
     },
   ],
   estudiantesDinamicos: [
     {
-      element: '.div-all',
+      element: 'body',
       intro:
-        'Aquí puedes encontrar todos los cursos disponibles en Artiefy, en Ver Curso puedes desplegar una información más detallada sobre el curso de interes ✍️',
-    },
-    {
-      element: '.div-pagination',
-      intro:
-        'Navega por las páginas de resultados para explorar más cursos. ¡No te pierdas ninguna oportunidad! 📖',
+        'Has completado el tour inicial. Ahora puedes explorar libremente todo el contenido disponible. ¡Disfruta aprendiendo!',
     },
   ],
 };
+
+// Función para buscar elementos con múltiples selectores
+function findElementWithFallbacks(selectors: string): HTMLElement | null {
+  const selectorList = selectors.split(', ');
+  for (const selector of selectorList) {
+    const element = document.querySelector(selector.trim()) as HTMLElement | null;
+    if (element) {
+      console.log(`✅ Elemento encontrado con selector: ${selector.trim()}`);
+      return element;
+    }
+  }
+  console.log(`❌ No se encontró ningún elemento para: ${selectors}`);
+  return null;
+}
 
 function waitForElements(
   selectors: string[],
@@ -82,54 +107,76 @@ function waitForElements(
   let attempts = 0;
   const check = () => {
     console.log(
-      `Verificando elementos - Intento ${attempts + 1}/${maxAttempts}`
+      `🔍 Verificando elementos - Intento ${attempts + 1}/${maxAttempts}`
     );
 
-    // Verificar cada selector individualmente
+    // Verificar cada selector individualmente con más detalle
     const elementStatus = selectors.map((sel) => {
-      const element = document.querySelector(sel) as HTMLElement | null;
+      // Buscar con múltiples selectores si están separados por comas
+      const element = sel.includes(',') 
+        ? findElementWithFallbacks(sel)
+        : document.querySelector(sel) as HTMLElement | null;
+        
       const rect = element?.getBoundingClientRect();
+      const computedStyle = element ? window.getComputedStyle(element) : null;
+      
       return {
         selector: sel,
         exists: !!element,
         visible: element?.offsetParent !== null,
         inViewport: rect ? rect.width > 0 && rect.height > 0 : false,
+        display: computedStyle?.display,
+        visibility: computedStyle?.visibility,
+        opacity: computedStyle?.opacity,
         element: element,
       };
     });
 
-    console.log('Estado detallado de elementos:', elementStatus);
+    console.log('📊 Estado detallado de elementos:', elementStatus);
 
-    // Considerar elemento válido si existe y es visible
-    const validElements = elementStatus.filter(
-      (item) => item.exists && item.visible
+    // Mostrar elementos que existen pero no son visibles
+    const existingButHidden = elementStatus.filter(
+      (item) => item.exists && !item.visible
     );
-    const missingElements = elementStatus.filter(
-      (item) => !item.exists || !item.visible
-    );
+    if (existingButHidden.length > 0) {
+      console.log('👁️ Elementos existentes pero ocultos:', existingButHidden);
+    }
 
-    if (validElements.length === selectors.length) {
-      console.log('✅ Todos los elementos encontrados y válidos');
+    // Mostrar elementos completamente ausentes
+    const missingElements = elementStatus.filter((item) => !item.exists);
+    if (missingElements.length > 0) {
+      console.log('❌ Elementos completamente ausentes:', missingElements.map(item => item.selector));
+    }
+
+    // Considerar elemento válido si existe (independientemente de la visibilidad para el tour de inicio)
+    const validElements = elementStatus.filter((item) => item.exists);
+
+    // Si encontramos al menos el 50% de los elementos o después de muchos intentos, continuar
+    const minRequiredElements = Math.max(1, Math.floor(selectors.length * 0.5));
+    
+    if (validElements.length >= minRequiredElements || attempts >= maxAttempts - 10) {
+      console.log(`✅ Suficientes elementos encontrados: ${validElements.length}/${selectors.length}`);
+      // Almacenar elementos disponibles para filtrar steps
+      (window as Window & { availableElements?: string[] }).availableElements = 
+        validElements.map((item) => item.selector);
       setTimeout(callback, 300);
     } else if (attempts < maxAttempts) {
       attempts++;
       console.log(
-        `❌ Elementos faltantes (${missingElements.length}):`,
-        missingElements.map((item) => item.selector)
+        `⏳ Elementos encontrados: ${validElements.length}/${selectors.length} (mínimo requerido: ${minRequiredElements})`
       );
       setTimeout(check, interval);
     } else {
       console.warn('⚠️ Timeout alcanzado. Iniciando con elementos disponibles');
-      console.log('Elementos válidos encontrados:', validElements.length);
-
+      
       if (validElements.length > 0) {
-        // Crear steps solo con elementos disponibles
-        (
-          window as Window & { availableElements?: string[] }
-        ).availableElements = validElements.map((item) => item.selector);
+        (window as Window & { availableElements?: string[] }).availableElements = 
+          validElements.map((item) => item.selector);
         callback();
       } else {
         console.error('❌ No se encontraron elementos válidos para el tour');
+        // Iniciar tour básico sin elementos específicos
+        callback();
       }
     }
   };
@@ -138,7 +185,7 @@ function waitForElements(
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', check);
   } else {
-    check();
+    setTimeout(check, 500); // Dar más tiempo inicial
   }
 }
 
@@ -197,15 +244,35 @@ const TourManager = () => {
           async () => {
             console.log('✨ Iniciando tour estático');
 
-            // Filtrar steps con elementos disponibles
+            // Filtrar steps con elementos disponibles o usar elementos disponibles del window
+            const availableElements = (window as Window & { availableElements?: string[] }).availableElements ?? [];
+            
             const availableSteps = steps.estudiantesEstaticos.filter((step) => {
               if (!step.element) return true;
-              const element = document.querySelector(
-                step.element
-              ) as HTMLElement | null;
-              const isAvailable = element && element.offsetParent !== null;
+              
+              // Si tenemos lista de elementos disponibles, verificar
+              if (availableElements.length > 0) {
+                return availableElements.some(selector => {
+                  // Para selectores múltiples, verificar si alguno coincide
+                  if (step.element!.includes(',')) {
+                    return step.element!.split(', ').some(sel => 
+                      selector.trim() === sel.trim() || 
+                      document.querySelector(sel.trim())
+                    );
+                  }
+                  return selector === step.element;
+                });
+              }
+              
+              // De lo contrario, verificar manualmente
+              const element = step.element!.includes(',')
+                ? findElementWithFallbacks(step.element!)
+                : document.querySelector(step.element!) as HTMLElement | null;
+              
+              const isAvailable = !!element;
+              
               if (!isAvailable) {
-                console.log(`❌ Elemento no disponible: ${step.element}`);
+                console.log(`❌ Elemento no encontrado: ${step.element}`);
               }
               return isAvailable;
             });
@@ -214,8 +281,31 @@ const TourManager = () => {
               `📊 Steps disponibles: ${availableSteps.length}/${steps.estudiantesEstaticos.length}`
             );
 
+            // Si no hay steps disponibles, crear un tour básico
             if (availableSteps.length === 0) {
-              console.error('❌ No hay steps disponibles para el tour');
+              console.log('🔄 Creando tour básico sin elementos específicos');
+              const basicSteps = [
+                {
+                  intro: 'Bienvenido a tu dashboard de estudiante en Artiefy. Desde aquí podrás acceder a todos los cursos y recursos disponibles. 🎓'
+                },
+                {
+                  intro: 'Explora las diferentes secciones para encontrar el contenido que más se ajuste a tus intereses de aprendizaje. 📚'
+                }
+              ];
+              
+              const introJs = (await import('intro.js')).default;
+              void introJs()
+                .setOptions({
+                  steps: basicSteps,
+                  showProgress: true,
+                  showBullets: false,
+                  exitOnOverlayClick: false,
+                  exitOnEsc: true,
+                })
+                .oncomplete(() => {
+                  console.log('✅ Tour básico completado');
+                })
+                .start();
               return;
             }
 
@@ -250,10 +340,10 @@ const TourManager = () => {
               })
               .start();
           },
-          100,
-          400
+          50, // Menos intentos para ser más rápido
+          500
         );
-      }, 4000);
+      }, 3000); // Menos tiempo de espera inicial
     }
   }, [pathname]);
 
@@ -281,11 +371,29 @@ const TourManager = () => {
               .map((s) => s.element)
               .filter((el): el is string => Boolean(el)),
             async () => {
+              console.log('🚀 Iniciando tour de introducción');
+              
+              // Filtrar steps disponibles para el tour de inicio
+              const availableElements = (window as Window & { availableElements?: string[] }).availableElements ?? [];
+              
+              const availableSteps = steps.intro.filter((step) => {
+                if (!step.element) return true;
+                
+                if (availableElements.length > 0) {
+                  return availableElements.includes(step.element);
+                }
+                
+                const element = document.querySelector(step.element) as HTMLElement | null;
+                return !!element;
+              });
+
+              console.log(`📊 Steps de intro disponibles: ${availableSteps.length}/${steps.intro.length}`);
+
               const introJs = (await import('intro.js')).default;
               const intro = introJs();
               void intro
                 .setOptions({
-                  steps: steps.intro,
+                  steps: availableSteps,
                   showProgress: true,
                   showBullets: false,
                   exitOnOverlayClick: false,
@@ -296,20 +404,37 @@ const TourManager = () => {
                   void router.push('/estudiantes');
                 })
                 .start();
-            }
+            },
+            120, // Más intentos para la página de inicio
+            400
           );
-        }, 1000);
+        }, 2000); // Más tiempo después de la navegación
       } else {
         waitForElements(
           steps.intro
             .map((s) => s.element)
             .filter((el): el is string => Boolean(el)),
           async () => {
+            console.log('🚀 Iniciando tour de introducción (ya en inicio)');
+            
+            const availableElements = (window as Window & { availableElements?: string[] }).availableElements ?? [];
+            
+            const availableSteps = steps.intro.filter((step) => {
+              if (!step.element) return true;
+              
+              if (availableElements.length > 0) {
+                return availableElements.includes(step.element);
+              }
+              
+              const element = document.querySelector(step.element) as HTMLElement | null;
+              return !!element;
+            });
+
             const introJs = (await import('intro.js')).default;
             const intro = introJs();
             void intro
               .setOptions({
-                steps: steps.intro,
+                steps: availableSteps,
                 showProgress: true,
                 showBullets: false,
                 exitOnOverlayClick: false,
@@ -320,10 +445,13 @@ const TourManager = () => {
                 void router.push('/estudiantes');
               })
               .start();
-          }
+          },
+          120,
+          400
         );
       }
     };
+    
     window.addEventListener('start-tour', handleStartTour);
     return () => window.removeEventListener('start-tour', handleStartTour);
   }, [router, pathname]);

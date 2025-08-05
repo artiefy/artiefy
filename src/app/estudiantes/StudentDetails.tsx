@@ -264,7 +264,7 @@ export default function StudentDetails({
               </form>
             </div>
 
-            <div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+            <div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px] couses-section">
               {latestFiveCourses.length > 0 ? (
                 latestFiveCourses.map((course, index) => (
                   <div
