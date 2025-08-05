@@ -198,3 +198,41 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// Eliminar todas las solicitudes de un proyecto
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get('projectId');
+
+    if (!projectId) {
+      return NextResponse.json(
+        { error: 'projectId es requerido' },
+        { status: 400 }
+      );
+    }
+
+    // Eliminar todas las solicitudes del proyecto
+    const deletedRequests = await db
+      .delete(projectParticipationRequests)
+      .where(eq(projectParticipationRequests.projectId, parseInt(projectId)))
+      .returning();
+
+    return NextResponse.json({
+      message: `${deletedRequests.length} solicitudes eliminadas exitosamente`,
+      deletedCount: deletedRequests.length,
+      deletedRequests,
+    });
+  } catch (error) {
+    console.error('Error eliminando solicitudes:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}

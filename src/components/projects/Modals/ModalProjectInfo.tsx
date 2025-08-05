@@ -77,6 +77,8 @@ export default function ProjectInfoModal({
   // Estado para mostrar los modales
   const [showIntegrantes, setShowIntegrantes] = React.useState(false);
   const [showCategoria, setShowCategoria] = React.useState(false);
+  const [categoriaCompleta, setCategoriaCompleta] =
+    React.useState<Category | null>(null);
 
   // Datos simulados para ModalIntegrantesProyectoInfo (ajusta según tu estructura real)
   const integrantes = project?.user
@@ -92,6 +94,7 @@ export default function ProjectInfoModal({
     : [];
 
   const proyectoInfo = {
+    id: project?.id ?? 0, // Añadir el ID del proyecto
     titulo: project?.name ?? '',
     rama: project?.category?.name ?? '',
     especialidades: project?.objetivosEsp?.length ?? 0,
@@ -151,6 +154,57 @@ export default function ProjectInfoModal({
       checkTakenAndOwner();
     }
   }, [open, userId, project?.id, project?.user?.id]);
+
+  // Nuevo useEffect para obtener la descripción completa de la categoría
+  React.useEffect(() => {
+    const fetchCategoriaCompleta = async () => {
+      if (!project?.category?.id) {
+        setCategoriaCompleta(null);
+        return;
+      }
+
+      try {
+        const categoryIdNumber =
+          typeof project.category.id === 'string'
+            ? Number(project.category.id)
+            : project.category.id;
+
+        console.log(
+          '🔍 Obteniendo categoría completa para ID:',
+          categoryIdNumber
+        );
+
+        const res = await fetch(
+          `/api/projects/categoriesProjects?categoryId=${categoryIdNumber}`
+        );
+        if (!res.ok) {
+          console.error('Error al obtener categoría:', res.status);
+          setCategoriaCompleta(null);
+          return;
+        }
+
+        const data = await res.json();
+        console.log('📋 Datos de categoría recibidos:', data);
+
+        if (data && data.length > 0) {
+          setCategoriaCompleta({
+            id: data[0].id,
+            name: data[0].name,
+            description: data[0].description || 'Sin descripción disponible',
+            is_featured: data[0].is_featured || false,
+          });
+          console.log('✅ Categoría completa establecida:', data[0]);
+        }
+      } catch (error) {
+        console.error('❌ Error al obtener categoría completa:', error);
+        setCategoriaCompleta(null);
+      }
+    };
+
+    if (open && project?.category?.id) {
+      fetchCategoriaCompleta();
+    }
+  }, [open, project?.category?.id]);
 
   // MEJORADO: Verificar si hay solicitud pendiente con mejor manejo de errores
   React.useEffect(() => {
@@ -458,21 +512,20 @@ export default function ProjectInfoModal({
   // Progreso simulado (puedes calcularlo si tienes datos)
   const progreso = 100;
 
-  // Adaptar la categoría para ModalCategoria (sin usar any y con id numérico)
-  const categoriaForModal: Category | undefined = project?.category
-    ? {
-        id:
-          typeof project.category.id === 'string'
-            ? Number(project.category.id)
-            : project.category.id,
-        name: project.category.name,
-        description:
-          (project.category as { description?: string }).description ??
-          'Sin descripción disponible',
-        is_featured:
-          (project.category as { is_featured?: boolean }).is_featured ?? false,
-      }
-    : undefined;
+  // Adaptar la categoría para ModalCategoria (usar la información completa obtenida de la API)
+  const categoriaForModal: Category | undefined =
+    categoriaCompleta ||
+    (project?.category
+      ? {
+          id:
+            typeof project.category.id === 'string'
+              ? Number(project.category.id)
+              : project.category.id,
+          name: project.category.name,
+          description: 'Cargando descripción...',
+          is_featured: false,
+        }
+      : undefined);
 
   return (
     <div
@@ -554,18 +607,6 @@ export default function ProjectInfoModal({
                   <Badge className="max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20 text-cyan-400">
                     {isOwner ? 'Propio' : 'Público'}
                   </Badge>
-                  <Badge className="max-w-[200px] truncate border-blue-500/30 bg-blue-500/20 text-blue-400">
-                    {project.type_project}
-                  </Badge>
-                  {project.category?.name && (
-                    <Button
-                      variant="link"
-                      className="max-w-[200px] truncate border-green-500/30 bg-green-500/20 px-2 py-0 text-green-400 underline underline-offset-2"
-                      onClick={() => setShowCategoria(true)}
-                    >
-                      {project.category.name}
-                    </Button>
-                  )}
                 </div>
                 {/* Progreso */}
                 <div className="space-y-2">
@@ -753,7 +794,6 @@ export default function ProjectInfoModal({
             isOpen={showIntegrantes}
             onClose={() => setShowIntegrantes(false)}
             proyecto={proyectoInfo}
-            integrantes={integrantes}
           />
           {/* Modal de Categoría */}
           <ModalCategoria

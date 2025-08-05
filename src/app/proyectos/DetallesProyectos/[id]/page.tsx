@@ -13,6 +13,9 @@ import {
   Edit,
   Trash2,
   Download,
+  RotateCw,
+  EyeOff,
+  Eye, // Agregar ícono de reload
 } from 'lucide-react';
 import { Header } from '~/components/estudiantes/layout/Header';
 import Image from 'next/image';
@@ -89,6 +92,11 @@ export default function ProjectDetails() {
   const [entregasActividades, setEntregasActividades] = useState<
     Record<number, any>
   >({});
+
+  // NUEVO: Estado para controlar qué archivo se está descargando
+  const [descargandoArchivo, setDescargandoArchivo] = useState<string | null>(
+    null
+  );
 
   // Estado para el modal de solicitudes de participación
   const [modalSolicitudesOpen, setModalSolicitudesOpen] = useState(false);
@@ -1677,11 +1685,20 @@ export default function ProjectDetails() {
       let mensaje = '✅ Entrega eliminada exitosamente';
 
       if (result.filesDeleted) {
-        const { total, successful, failed } = result.filesDeleted;
+        const { total, successful, failed, details } = result.filesDeleted;
         if (total > 0) {
           if (failed > 0) {
-            mensaje += `\n📁 Archivos: ${successful}/${total} eliminados exitosamente`;
-            mensaje += `\n⚠️ ${failed} archivo(s) no se pudieron eliminar de S3`;
+            mensaje += `\n⚠️ Advertencia: ${failed} archivo(s) no se pudieron eliminar de S3.`;
+            // Agregar detalles de los archivos fallidos
+            if (Array.isArray(details) && details.length > 0) {
+              mensaje += '\nArchivos no eliminados:\n';
+              details
+                .filter((d: any) => d.success === false)
+                .forEach((d: any, idx: number) => {
+                  mensaje += `  - ${d.file} [${d.type}]\n`;
+                });
+            }
+            mensaje += `\n📁 Archivos eliminados exitosamente: ${successful}/${total}`;
           } else {
             mensaje += `\n📁 Todos los archivos (${successful}) eliminados exitosamente`;
           }
@@ -1740,8 +1757,14 @@ export default function ProjectDetails() {
     fileName: string,
     fileType: 'document' | 'image' | 'video' | 'compressed'
   ) => {
+    // Crear un ID único para esta descarga
+    const downloadId = `${actividadId}-${fileType}-${fileKey}`;
+
     try {
       console.log(`💾 Iniciando descarga de: ${fileName} (${fileType})`);
+
+      // Establecer estado de carga
+      setDescargandoArchivo(downloadId);
 
       // Intentar primero con URL firmada para descarga
       try {
@@ -1804,6 +1827,9 @@ export default function ProjectDetails() {
       alert(
         `❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`
       );
+    } finally {
+      // Limpiar estado de carga
+      setDescargandoArchivo(null);
     }
   };
 
@@ -1819,7 +1845,7 @@ export default function ProjectDetails() {
     window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
 
-  // Componente para mostrar archivos de una entrega
+  // Componente para mostrar archivos de una entrega MEJORADO CON ESTADO DE CARGA
   const ArchivosEntrega = ({
     actividadId,
     entrega,
@@ -1874,14 +1900,16 @@ export default function ProjectDetails() {
       // Verificar si hay comentario o URL
       if (entrega.comentario || entrega.entregaUrl) {
         return (
-          <div className="space-y-1">
+          <div className="max-w-full space-y-1 overflow-hidden">
             {entrega.comentario && (
-              <div className="text-xs text-blue-400">
+              <div className="truncate text-xs text-blue-400">
                 💬 Comentario incluido
               </div>
             )}
             {entrega.entregaUrl && (
-              <div className="text-xs text-purple-400">🔗 URL incluida</div>
+              <div className="truncate text-xs text-purple-400">
+                🔗 URL incluida
+              </div>
             )}
           </div>
         );
@@ -1890,57 +1918,76 @@ export default function ProjectDetails() {
     }
 
     return (
-      <div className="max-w-xs space-y-1">
-        {archivos.map((archivo, index) => (
-          <div key={index} className="flex gap-1">
-            <button
-              onClick={() =>
-                handleVerArchivo(
-                  actividadId,
-                  archivo.key,
-                  archivo.type,
-                  archivo.name
-                )
-              }
-              className="flex flex-1 items-center gap-2 rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
-              title={`Ver: ${archivo.name}`}
-            >
-              <span>{archivo.icon}</span>
-              <span className="flex-1 truncate">
-                {archivo.name.length > 15
-                  ? `${archivo.name.substring(0, 15)}...`
-                  : archivo.name}
-              </span>
-            </button>
+      <div className="max-w-xs space-y-1 overflow-hidden">
+        {archivos.map((archivo, index) => {
+          // ID único para esta descarga
+          const downloadId = `${actividadId}-${archivo.type}-${archivo.key}`;
+          const estaDescargando = descargandoArchivo === downloadId;
 
-            {/* Botón de descarga mejorado */}
-            <button
-              onClick={() =>
-                handleDescargarArchivoDirecto(
-                  actividadId,
-                  archivo.key,
-                  archivo.name,
-                  archivo.type
-                )
-              }
-              className="rounded bg-blue-600 p-1 text-xs text-white transition-colors hover:bg-blue-500"
-              title={`Descargar: ${archivo.name}`}
-            >
-              <Download className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
+          return (
+            <div key={index} className="flex max-w-full gap-1 overflow-hidden">
+              <button
+                onClick={() =>
+                  handleVerArchivo(
+                    actividadId,
+                    archivo.key,
+                    archivo.type,
+                    archivo.name
+                  )
+                }
+                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
+                title={`Ver: ${archivo.name}`}
+              >
+                <span className="flex-shrink-0">{archivo.icon}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {archivo.name.length > 12
+                    ? `${archivo.name.substring(0, 12)}...`
+                    : archivo.name}
+                </span>
+              </button>
+
+              {/* Botón de descarga mejorado con estado de carga */}
+              <button
+                onClick={() =>
+                  handleDescargarArchivoDirecto(
+                    actividadId,
+                    archivo.key,
+                    archivo.name,
+                    archivo.type
+                  )
+                }
+                disabled={estaDescargando}
+                className={`flex-shrink-0 rounded p-1 text-xs text-white transition-colors ${
+                  estaDescargando
+                    ? 'cursor-not-allowed bg-gray-600'
+                    : 'bg-blue-600 hover:bg-blue-500'
+                }`}
+                title={
+                  estaDescargando
+                    ? 'Descargando...'
+                    : `Descargar: ${archivo.name}`
+                }
+              >
+                {estaDescargando ? (
+                  <RotateCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3" />
+                )}
+              </button>
+            </div>
+          );
+        })}
 
         {/* Mostrar información adicional si existe */}
         {(entrega.comentario || entrega.entregaUrl) && (
-          <div className="mt-1 border-t border-slate-600 pt-1">
+          <div className="mt-1 max-w-full overflow-hidden border-t border-slate-600 pt-1">
             {entrega.comentario && (
-              <div className="mb-1 text-xs text-blue-400">
+              <div className="mb-1 truncate text-xs text-blue-400">
                 💬 Con comentario
               </div>
             )}
             {entrega.entregaUrl && (
-              <div className="text-xs text-purple-400">🔗 Con URL</div>
+              <div className="truncate text-xs text-purple-400">🔗 Con URL</div>
             )}
           </div>
         )}
@@ -1996,9 +2043,9 @@ export default function ProjectDetails() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           {/* Project Image and Basic Info */}
-          <div className="lg:col-span-1">
+          <div className="xl:col-span-1">
             <Card className="border-slate-700 bg-slate-800/50">
               <CardContent className="p-6">
                 <div className="mb-4 flex w-full items-center justify-center rounded-lg bg-slate-700/50">
@@ -2019,44 +2066,49 @@ export default function ProjectDetails() {
 
                 <div className="space-y-4">
                   <div>
-                    <h2 className="mb-2 text-2xl font-bold text-teal-400">
+                    <h2 className="mb-2 text-xl font-bold break-words hyphens-auto text-teal-400 md:text-2xl">
                       {project.name}
                     </h2>
-                    <p className="text-gray-300">
+                    <p className="text-sm break-words text-gray-300 md:text-base">
                       Tipo de Proyecto:{' '}
-                      <span className="text-white">{project.type_project}</span>
+                      <span className="break-words text-white">
+                        {project.type_project}
+                      </span>
                     </p>
                   </div>
 
                   <div>
-                    <p className="mb-2 text-gray-400">Categoría:</p>
+                    <p className="mb-2 text-sm text-gray-400">Categoría:</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge className="bg-blue-600 hover:bg-blue-700">
+                      <Badge className="max-w-full truncate bg-blue-600 text-xs hover:bg-blue-700">
                         {_categoria?.name ?? 'Sin categoría'}
                       </Badge>
-                      <Badge className="bg-green-600 hover:bg-green-700">
+                      <Badge className="bg-green-600 text-xs hover:bg-green-700">
                         Creado{' '}
                         {project.createdAt
                           ? new Date(project.createdAt).toLocaleDateString()
                           : ''}
                       </Badge>
-                      <Badge className="bg-teal-600 hover:bg-teal-700">
+                      <Badge className="bg-teal-600 text-xs hover:bg-teal-700">
                         Actualizado{' '}
                         {project.updatedAt
                           ? new Date(project.updatedAt).toLocaleDateString()
                           : ''}
                       </Badge>
-                      <Badge className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700">
-                        <Users className="h-3 w-3" />
+                      <Badge
+                        className="flex cursor-pointer items-center gap-1 bg-purple-600 text-xs transition-colors hover:bg-purple-700"
+                        onClick={() => setIsModalOpen(true)}
+                      >
+                        <Users className="h-3 w-3 flex-shrink-0" />
                         {inscritos} Integrantes
                       </Badge>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Calendar className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <span className="min-w-0 break-words">
                         Fecha de inicio:{' '}
                         {project.fecha_inicio
                           ? new Date(project.fecha_inicio).toLocaleDateString(
@@ -2065,9 +2117,9 @@ export default function ProjectDetails() {
                           : ''}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Clock className="h-4 w-4" />
-                      <span>
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Clock className="h-4 w-4 flex-shrink-0" />
+                      <span className="min-w-0 break-words">
                         Fecha de fin:{' '}
                         {project.fecha_fin
                           ? new Date(project.fecha_fin).toLocaleDateString(
@@ -2083,521 +2135,629 @@ export default function ProjectDetails() {
           </div>
 
           {/* Project Details */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-6 xl:col-span-2">
             {/* Responsible and Actions */}
             <Card className="border-slate-700 bg-slate-800/50">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="mb-1 text-lg font-semibold text-white">
+              <CardContent className="p-4 md:p-6">
+                <div className="mb-4 flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                  <div className="min-w-0 flex-1 pr-4">
+                    <h3 className="mb-1 text-lg font-semibold break-words hyphens-auto text-white">
                       Responsable del Proyecto
                     </h3>
-                    <p className="text-teal-400">{responsable}</p>
+                    <p className="truncate break-words text-teal-400">
+                      {responsable}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
-                    {puedeEditarProyecto() && (
-                      <Button
-                        className="relative bg-purple-600 hover:bg-purple-700"
-                        onClick={() => setModalSolicitudesOpen(true)}
-                      >
-                        <Users className="mr-1 h-4 w-4" />
-                        Solicitudes
-                        {solicitudesPendientes > 0 && (
-                          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                            {solicitudesPendientes}
-                          </span>
-                        )}
-                      </Button>
-                    )}
+                </div>
+                {/* Actions Section - Responsive Layout */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-shrink-0">
+                  {puedeEditarProyecto() && (
                     <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={handleTogglePublicarProyecto}
-                      disabled={!puedeEditarProyecto()}
+                      className="relative truncate bg-purple-600 text-xs hover:bg-purple-700 sm:text-sm"
+                      size="sm"
+                      onClick={() => setModalSolicitudesOpen(true)}
                     >
-                      {project.isPublic
-                        ? 'Despublicar Proyecto'
-                        : 'Publicar Proyecto'}
+                      <Users className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                      <span className="truncate sm:inline">Solicitudes</span>
+
+                      {solicitudesPendientes > 0 && (
+                        <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white sm:h-5 sm:w-5">
+                          {solicitudesPendientes}
+                        </span>
+                      )}
                     </Button>
-                    {puedeEditarProyecto() && (
+                  )}
+
+                  <Button
+                    className="truncate bg-green-600 text-xs hover:bg-green-700 sm:text-sm"
+                    size="sm"
+                    onClick={handleTogglePublicarProyecto}
+                    disabled={!puedeEditarProyecto()}
+                  >
+                    {project.isPublic ? (
                       <>
-                        <Button
-                          className="bg-teal-600 hover:bg-teal-700"
-                          onClick={() => setIsEditModalOpen(true)}
-                        >
-                          <Edit className="mr-1 h-4 w-4" />
-                          Editar Proyecto
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => setConfirmOpen(true)}
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" />
-                          Eliminar
-                        </Button>
+                        <EyeOff className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                        <span className="hidden truncate lg:inline">
+                          Despublicar Proyecto
+                        </span>
+                        <span className="truncate lg:hidden">Despublicar</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                        <span className="hidden truncate lg:inline">
+                          Publicar Proyecto
+                        </span>
+                        <span className="truncate lg:hidden">Publicar</span>
                       </>
                     )}
-                  </div>
+                  </Button>
+
+                  {puedeEditarProyecto() && (
+                    <>
+                      <Button
+                        className="truncate bg-teal-600 text-xs hover:bg-teal-700 sm:text-sm"
+                        size="sm"
+                        onClick={() => setIsEditModalOpen(true)}
+                      >
+                        <Edit className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                        <span className="hidden truncate sm:inline">
+                          Editar Proyecto
+                        </span>
+                        <span className="truncate sm:hidden">Editar</span>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="truncate text-xs sm:text-sm"
+                        onClick={() => setConfirmOpen(true)}
+                      >
+                        <Trash2 className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                        <span className="truncate sm:inline">Eliminar</span>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Problem Statement */}
             <Card className="border-slate-700 bg-slate-800/50">
-              <CardHeader>
-                <CardTitle className="text-white">
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg text-white md:text-xl">
                   Planteamiento del Problema
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-300">{project.planteamiento}</p>
+              <CardContent className="p-4 pt-0 md:p-6">
+                <p className="overflow-wrap-anywhere text-sm break-words hyphens-auto whitespace-pre-wrap text-gray-300 md:text-base">
+                  {project.planteamiento}
+                </p>
               </CardContent>
             </Card>
 
             {/* Justification and General Objective */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card className="border-slate-700 bg-slate-800/50">
-                <CardHeader>
-                  <CardTitle className="text-white">Justificación</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg text-white md:text-xl">
+                    Justificación
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-300">{project.justificacion}</p>
+                <CardContent className="p-4 pt-0 md:p-6">
+                  <p className="overflow-wrap-anywhere text-sm break-words hyphens-auto whitespace-pre-wrap text-gray-300 md:text-base">
+                    {project.justificacion}
+                  </p>
                 </CardContent>
               </Card>
 
               <Card className="border-slate-700 bg-slate-800/50">
-                <CardHeader>
-                  <CardTitle className="text-white">Objetivo General</CardTitle>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg text-white md:text-xl">
+                    Objetivo General
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-300">{project.objetivo_general}</p>
+                <CardContent className="p-4 pt-0 md:p-6">
+                  <p className="overflow-wrap-anywhere text-sm break-words hyphens-auto whitespace-pre-wrap text-gray-300 md:text-base">
+                    {project.objetivo_general}
+                  </p>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
+
         <br />
+
         {/* Specific Objectives, Activities and Timeline */}
         <Card className="border-slate-700 bg-slate-800/50">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-white">
+              <CardTitle className="text-lg text-white md:text-xl">
                 Objetivos Específicos y Actividades
               </CardTitle>
             </div>
           </CardHeader>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <TabsContent value="horas">
                 <div className="space-y-6">
-                  {/* CORREGIDO: Renderizar usando project.actividades en lugar de obj.actividades */}
-                  {Array.isArray(project.objetivos_especificos) &&
-                  project.objetivos_especificos.length > 0 ? (
-                    project.objetivos_especificos.map((obj, idx) => (
-                      <div key={obj.id || idx}>
-                        <h4 className="mb-3 font-semibold text-teal-400">
-                          {obj.description}
-                        </h4>
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-slate-600">
-                              <TableHead className="text-gray-300">
-                                ACTIVIDADES
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                ESTADO
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                RESPONSABLE
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                ENTREGAS
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                ARCHIVOS
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                MOTIVO
-                              </TableHead>
-                              <TableHead className="text-gray-300">
-                                ACCIONES
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {/* CORREGIDO: Filtrar actividades de project.actividades que pertenecen a este objetivo */}
-                            {(() => {
-                              // Obtener las actividades que pertenecen a este objetivo
-                              const actividadesDelObjetivo = Array.isArray(
-                                obj.actividades
-                              )
-                                ? obj.actividades
-                                    .map((objAct: any) => {
+                  {/* CORREGIDO: Renderizar objetivos específicos con mejor validación */}
+                  {(() => {
+                    console.log('🔍 === DEBUGGING OBJETIVOS ESPECÍFICOS ===');
+                    console.log(
+                      'project?.objetivos_especificos:',
+                      project?.objetivos_especificos
+                    );
+                    console.log(
+                      'Es array:',
+                      Array.isArray(project?.objetivos_especificos)
+                    );
+                    console.log(
+                      'Longitud:',
+                      project?.objetivos_especificos?.length
+                    );
+                    console.log('Tipo:', typeof project?.objetivos_especificos);
+
+                    // Verificar si existen objetivos específicos
+                    if (!project?.objetivos_especificos) {
+                      console.log(
+                        '❌ No hay objetivos específicos en el proyecto'
+                      );
+                      return (
+                        <div className="py-8 text-center text-gray-400 italic">
+                          No hay objetivos específicos definidos para este
+                          proyecto
+                        </div>
+                      );
+                    }
+
+                    // Si no es array, intentar convertirlo o manejarlo
+                    let objetivos = project.objetivos_especificos;
+                    if (!Array.isArray(objetivos)) {
+                      console.log(
+                        '⚠️ objetivos_especificos no es array, intentando convertir...'
+                      );
+                      // Si es un objeto, intentar convertirlo a array
+                      if (typeof objetivos === 'object' && objetivos !== null) {
+                        objetivos = Object.values(objetivos);
+                      } else {
+                        console.log(
+                          '❌ No se puede convertir objetivos_especificos a array'
+                        );
+                        return (
+                          <div className="py-8 text-center text-gray-400 italic">
+                            Error: Formato de objetivos específicos no válido
+                          </div>
+                        );
+                      }
+                    }
+
+                    if (objetivos.length === 0) {
+                      console.log(
+                        'ℹ️ Array de objetivos específicos está vacío'
+                      );
+                      return (
+                        <div className="py-8 text-center text-gray-400 italic">
+                          No hay objetivos específicos definidos para este
+                          proyecto
+                        </div>
+                      );
+                    }
+
+                    console.log(
+                      '✅ Renderizando',
+                      objetivos.length,
+                      'objetivos específicos'
+                    );
+
+                    return objetivos.map((obj: any, idx: number) => {
+                      console.log(`🎯 Procesando objetivo ${idx}:`, obj);
+
+                      // Determinar el título del objetivo
+                      let titulo = '';
+                      if (typeof obj === 'string') {
+                        titulo = obj;
+                      } else if (obj && typeof obj === 'object') {
+                        titulo =
+                          obj.description ||
+                          obj.title ||
+                          obj.name ||
+                          `Objetivo Específico ${idx + 1}`;
+                      } else {
+                        titulo = `Objetivo Específico ${idx + 1}`;
+                      }
+
+                      console.log(`📝 Título del objetivo ${idx}:`, titulo);
+
+                      // Obtener actividades del objetivo
+                      let actividades: any[] = [];
+                      if (
+                        obj &&
+                        typeof obj === 'object' &&
+                        Array.isArray(obj.actividades)
+                      ) {
+                        actividades = obj.actividades;
+                      }
+
+                      console.log(
+                        `📋 Actividades del objetivo ${idx}:`,
+                        actividades
+                      );
+
+                      return (
+                        <div
+                          key={obj.id || idx}
+                          className="overflow-hidden rounded-lg border border-slate-600 p-4"
+                        >
+                          <h4 className="mb-3 text-sm font-semibold break-words hyphens-auto text-teal-400 md:text-base">
+                            {titulo}
+                          </h4>
+
+                          {/* Responsive Table Container */}
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="border-slate-600">
+                                  <TableHead className="max-w-[200px] min-w-[150px] text-xs text-gray-300 md:text-sm">
+                                    ACTIVIDADES
+                                  </TableHead>
+                                  <TableHead className="max-w-[100px] min-w-[80px] text-xs text-gray-300 md:text-sm">
+                                    ESTADO
+                                  </TableHead>
+                                  <TableHead className="max-w-[120px] min-w-[100px] text-xs text-gray-300 md:text-sm">
+                                    RESPONSABLE
+                                  </TableHead>
+                                  <TableHead className="max-w-[100px] min-w-[80px] text-xs text-gray-300 md:text-sm">
+                                    ENTREGAS
+                                  </TableHead>
+                                  <TableHead className="max-w-[150px] min-w-[120px] text-xs text-gray-300 md:text-sm">
+                                    ARCHIVOS
+                                  </TableHead>
+                                  <TableHead className="max-w-[120px] min-w-[100px] text-xs text-gray-300 md:text-sm">
+                                    MOTIVO
+                                  </TableHead>
+                                  <TableHead className="max-w-[180px] min-w-[150px] text-xs text-gray-300 md:text-sm">
+                                    ACCIONES
+                                  </TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {actividades.length > 0 ? (
+                                  actividades.map(
+                                    (act: any, actIdx: number) => {
+                                      console.log(
+                                        `🔧 Procesando actividad ${actIdx} del objetivo ${idx}:`,
+                                        act
+                                      );
+
                                       // Buscar la actividad completa en project.actividades
                                       const actividadCompleta =
                                         project.actividades?.find(
                                           (projectAct) =>
-                                            projectAct.id === objAct.id ||
+                                            projectAct.id === act.id ||
                                             projectAct.descripcion ===
-                                              objAct.descripcion
+                                              act.descripcion
                                         );
-                                      return actividadCompleta;
-                                    })
-                                    .filter(Boolean) // Remover valores undefined
-                                : [];
 
-                              console.log(
-                                `🔍 Actividades para objetivo "${obj.description}":`,
-                                actividadesDelObjetivo
-                              );
+                                      const actividadId =
+                                        actividadCompleta?.id || act.id;
 
-                              if (actividadesDelObjetivo.length === 0) {
-                                return (
+                                      if (!actividadId) {
+                                        console.warn(
+                                          `⚠️ Actividad sin ID válido:`,
+                                          act
+                                        );
+                                        return (
+                                          <TableRow
+                                            key={actIdx}
+                                            className="border-slate-600"
+                                          >
+                                            <TableCell
+                                              colSpan={7}
+                                              className="text-center text-red-400 italic"
+                                            >
+                                              Actividad sin ID válido:{' '}
+                                              {act.descripcion ||
+                                                'Sin descripción'}
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      }
+
+                                      const responsable =
+                                        getResponsableNombrePorId(
+                                          actividadId,
+                                          act.descripcion
+                                        );
+                                      const estadoActividad =
+                                        getEstadoActividad(actividadId);
+
+                                      return (
+                                        <TableRow
+                                          key={act.id || actIdx}
+                                          className="border-slate-600"
+                                        >
+                                          <TableCell className="max-w-[200px] text-xs text-gray-300 md:text-sm">
+                                            <div className="overflow-wrap-anywhere break-words hyphens-auto">
+                                              {act.descripcion ||
+                                                `Actividad ${actIdx + 1}`}
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="max-w-[100px]">
+                                            {(() => {
+                                              switch (estadoActividad.estado) {
+                                                case 'completada':
+                                                  return (
+                                                    <Badge className="truncate bg-green-600 text-xs text-white">
+                                                      <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                      <span className="truncate">
+                                                        Completada
+                                                      </span>
+                                                    </Badge>
+                                                  );
+                                                case 'rechazada':
+                                                  return (
+                                                    <Badge className="truncate bg-red-600 text-xs text-white">
+                                                      <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                      <span className="truncate">
+                                                        Rechazada
+                                                      </span>
+                                                    </Badge>
+                                                  );
+                                                case 'en_evaluacion':
+                                                  return (
+                                                    <Badge className="truncate bg-blue-600 text-xs text-white">
+                                                      <Clock className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                      <span className="truncate">
+                                                        En evaluación
+                                                      </span>
+                                                    </Badge>
+                                                  );
+                                                default:
+                                                  return (
+                                                    <Badge className="truncate bg-yellow-500 text-xs text-black">
+                                                      <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                      <span className="truncate">
+                                                        Pendiente
+                                                      </span>
+                                                    </Badge>
+                                                  );
+                                              }
+                                            })()}
+                                          </TableCell>
+                                          <TableCell className="max-w-[120px] text-xs text-gray-300 md:text-sm">
+                                            <div
+                                              className="truncate break-words"
+                                              title={responsable}
+                                            >
+                                              {responsable}
+                                            </div>
+                                          </TableCell>
+                                          <TableCell>
+                                            {/* ...existing entregas logic... */}
+                                          </TableCell>
+                                          <TableCell className="max-w-[150px]">
+                                            <ArchivosEntrega
+                                              actividadId={actividadId}
+                                              entrega={
+                                                entregasActividades[actividadId]
+                                              }
+                                            />
+                                          </TableCell>
+                                          <TableCell className="max-w-[120px]">
+                                            {(() => {
+                                              const entrega =
+                                                entregasActividades[
+                                                  actividadId
+                                                ];
+                                              if (
+                                                !entrega ||
+                                                !entrega.feedback
+                                              ) {
+                                                return (
+                                                  <span className="truncate text-xs text-gray-500 italic">
+                                                    Sin comentarios
+                                                  </span>
+                                                );
+                                              }
+                                              const feedbackColor =
+                                                estadoActividad.estado ===
+                                                'completada'
+                                                  ? 'text-green-400'
+                                                  : estadoActividad.estado ===
+                                                      'rechazada'
+                                                    ? 'text-red-400'
+                                                    : 'text-blue-400';
+                                              return (
+                                                <div
+                                                  className="max-w-[120px]"
+                                                  title={entrega.feedback}
+                                                >
+                                                  <p
+                                                    className={`text-xs ${feedbackColor} truncate break-words`}
+                                                  >
+                                                    {entrega.feedback}
+                                                  </p>
+                                                </div>
+                                              );
+                                            })()}
+                                          </TableCell>
+                                          <TableCell className="max-w-[180px]">
+                                            {(() => {
+                                              const entrega =
+                                                entregasActividades[
+                                                  actividadId
+                                                ];
+                                              const actividadParaPermisos =
+                                                actividadCompleta || act;
+                                              const puedeEntregar =
+                                                puedeEntregarActividad(
+                                                  actividadParaPermisos
+                                                );
+                                              const puedeAprobar =
+                                                puedeAprobarEntregas();
+                                              const tieneEntrega =
+                                                estadoActividad.entregado;
+
+                                              if (tieneEntrega) {
+                                                return (
+                                                  <div className="flex max-w-[180px] min-w-[180px] flex-col gap-1 overflow-hidden">
+                                                    {puedeEntregar && (
+                                                      <div className="flex flex-col gap-1 sm:flex-row">
+                                                        <Button
+                                                          size="sm"
+                                                          className="truncate bg-blue-600 text-xs hover:bg-blue-700"
+                                                          onClick={() =>
+                                                            handleAbrirModalEntrega(
+                                                              {
+                                                                id: actividadId,
+                                                                descripcion:
+                                                                  act.descripcion,
+                                                              },
+                                                              true
+                                                            )
+                                                          }
+                                                        >
+                                                          <span className="truncate">
+                                                            {estadoActividad.estado ===
+                                                            'rechazada'
+                                                              ? 'Reenviar'
+                                                              : 'Editar'}
+                                                          </span>
+                                                        </Button>
+                                                        <Button
+                                                          size="sm"
+                                                          variant="destructive"
+                                                          className="px-2 text-xs"
+                                                          onClick={() =>
+                                                            handleEliminarEntrega(
+                                                              actividadId
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                      </div>
+                                                    )}
+                                                    {puedeAprobar &&
+                                                      estadoActividad.estado !==
+                                                        'completada' &&
+                                                      estadoActividad.estado !==
+                                                        'rechazada' && (
+                                                        <div className="flex flex-col gap-1 sm:flex-row">
+                                                          <Button
+                                                            size="sm"
+                                                            className="truncate bg-green-600 text-xs hover:bg-green-700"
+                                                            onClick={() =>
+                                                              handleAprobarEntrega(
+                                                                actividadId,
+                                                                entrega.userId,
+                                                                true,
+                                                                'Entrega aprobada'
+                                                              )
+                                                            }
+                                                          >
+                                                            <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                            <span className="truncate">
+                                                              Aprobar
+                                                            </span>
+                                                          </Button>
+                                                          <Button
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            className="truncate text-xs"
+                                                            onClick={() => {
+                                                              const feedback =
+                                                                prompt(
+                                                                  'Motivo del rechazo:'
+                                                                );
+                                                              if (feedback) {
+                                                                handleAprobarEntrega(
+                                                                  actividadId,
+                                                                  entrega.userId,
+                                                                  false,
+                                                                  feedback
+                                                                );
+                                                              }
+                                                            }}
+                                                          >
+                                                            <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                            <span className="truncate">
+                                                              Rechazar
+                                                            </span>
+                                                          </Button>
+                                                        </div>
+                                                      )}
+                                                  </div>
+                                                );
+                                              } else if (puedeEntregar) {
+                                                return (
+                                                  <Button
+                                                    size="sm"
+                                                    className="max-w-full truncate bg-teal-600 text-xs hover:bg-teal-700"
+                                                    onClick={() =>
+                                                      handleAbrirModalEntrega(
+                                                        {
+                                                          id: actividadId,
+                                                          descripcion:
+                                                            act.descripcion,
+                                                        },
+                                                        false
+                                                      )
+                                                    }
+                                                  >
+                                                    <span className="truncate">
+                                                      Entregar
+                                                    </span>
+                                                  </Button>
+                                                );
+                                              } else {
+                                                return (
+                                                  <span className="truncate text-xs text-gray-500">
+                                                    Sin permisos
+                                                  </span>
+                                                );
+                                              }
+                                            })()}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    }
+                                  )
+                                ) : (
                                   <TableRow>
                                     <TableCell
                                       colSpan={7}
-                                      className="text-gray-400 italic"
+                                      className="py-8 text-center text-sm text-gray-400 italic"
                                     >
                                       No hay actividades agregadas para este
                                       objetivo
                                     </TableCell>
                                   </TableRow>
-                                );
-                              }
-
-                              return actividadesDelObjetivo.map(
-                                (act, actIdx) => {
-                                  if (!act) return null;
-
-                                  console.log(
-                                    `🎯 Renderizando actividad CORREGIDA ${act.id}: ${act.descripcion}`,
-                                    act
-                                  );
-
-                                  // Usa el id, si no existe busca por descripción
-                                  const responsable = getResponsableNombrePorId(
-                                    act.id,
-                                    act.descripcion
-                                  );
-
-                                  // Obtener el estado real de la actividad basado en las entregas
-                                  const estadoActividad = getEstadoActividad(
-                                    act.id
-                                  );
-
-                                  console.log(
-                                    `🎯 Estado para actividad ${act.id}: ${act.descripcion}`,
-                                    {
-                                      estadoActividad,
-                                      entrega: act.id
-                                        ? entregasActividades[act.id]
-                                        : null,
-                                    }
-                                  );
-
-                                  return (
-                                    <TableRow
-                                      key={act.id || actIdx}
-                                      className="border-slate-600"
-                                    >
-                                      <TableCell className="text-gray-300">
-                                        {act.descripcion}
-                                      </TableCell>
-                                      {/* Estado dinámico basado en entregas reales */}
-                                      <TableCell>
-                                        {(() => {
-                                          switch (estadoActividad.estado) {
-                                            case 'completada':
-                                              return (
-                                                <Badge className="bg-green-600 text-white">
-                                                  <CheckCircle className="mr-1 h-3 w-3" />
-                                                  Completada
-                                                </Badge>
-                                              );
-                                            case 'rechazada':
-                                              return (
-                                                <Badge className="bg-red-600 text-white">
-                                                  <AlertCircle className="mr-1 h-3 w-3" />
-                                                  Rechazada
-                                                </Badge>
-                                              );
-                                            case 'en_evaluacion':
-                                              return (
-                                                <Badge className="bg-blue-600 text-white">
-                                                  <Clock className="mr-1 h-3 w-3" />
-                                                  En evaluación
-                                                </Badge>
-                                              );
-                                            default:
-                                              return (
-                                                <Badge className="bg-yellow-500 text-black">
-                                                  <AlertCircle className="mr-1 h-3 w-3" />
-                                                  Pendiente
-                                                </Badge>
-                                              );
-                                          }
-                                        })()}
-                                      </TableCell>
-                                      <TableCell className="text-gray-300">
-                                        {responsable}
-                                      </TableCell>
-                                      <TableCell>
-                                        {/* Estado de entrega basado en datos reales */}
-                                        {(() => {
-                                          const entrega = act.id
-                                            ? entregasActividades[act.id]
-                                            : null;
-
-                                          if (!entrega) {
-                                            return (
-                                              <Badge className="bg-gray-500 text-white">
-                                                Sin entregar
-                                              </Badge>
-                                            );
-                                          }
-
-                                          switch (estadoActividad.estado) {
-                                            case 'completada':
-                                              return (
-                                                <Badge className="bg-green-600 text-white">
-                                                  <CheckCircle className="mr-1 h-3 w-3" />
-                                                  Aprobada
-                                                </Badge>
-                                              );
-                                            case 'rechazada':
-                                              return (
-                                                <Badge className="bg-red-600 text-white">
-                                                  <AlertCircle className="mr-1 h-3 w-3" />
-                                                  Rechazada
-                                                </Badge>
-                                              );
-                                            case 'en_evaluacion':
-                                              return (
-                                                <Badge className="bg-blue-600 text-white">
-                                                  <Clock className="mr-1 h-3 w-3" />
-                                                  En evaluación
-                                                </Badge>
-                                              );
-                                            default:
-                                              return (
-                                                <Badge className="bg-gray-500 text-white">
-                                                  Sin entregar
-                                                </Badge>
-                                              );
-                                          }
-                                        })()}
-                                      </TableCell>
-                                      {/* Nueva columna de ARCHIVOS */}
-                                      <TableCell>
-                                        <ArchivosEntrega
-                                          actividadId={act.id!}
-                                          entrega={
-                                            act.id
-                                              ? entregasActividades[act.id]
-                                              : null
-                                          }
-                                        />
-                                      </TableCell>
-                                      {/* Nueva columna para motivo de rechazo */}
-                                      <TableCell>
-                                        {(() => {
-                                          const entrega = act.id
-                                            ? entregasActividades[act.id]
-                                            : null;
-
-                                          if (!entrega || !entrega.feedback) {
-                                            return (
-                                              <span className="text-sm text-gray-500 italic">
-                                                Sin comentarios
-                                              </span>
-                                            );
-                                          }
-
-                                          const feedbackColor =
-                                            estadoActividad.estado ===
-                                            'completada'
-                                              ? 'text-green-400'
-                                              : estadoActividad.estado ===
-                                                  'rechazada'
-                                                ? 'text-red-400'
-                                                : 'text-blue-400';
-
-                                          return (
-                                            <div className="max-w-xs">
-                                              <p
-                                                className={`text-sm ${feedbackColor} break-words`}
-                                              >
-                                                {entrega.feedback}
-                                              </p>
-                                            </div>
-                                          );
-                                        })()}
-                                      </TableCell>
-                                      {/* Columna de acciones - simplificada */}
-                                      <TableCell>
-                                        {(() => {
-                                          const entrega = act.id
-                                            ? entregasActividades[act.id]
-                                            : null;
-                                          const puedeEntregar =
-                                            puedeEntregarActividad(act);
-                                          const puedeAprobar =
-                                            puedeAprobarEntregas();
-
-                                          console.log(
-                                            `🔧 Acciones CORREGIDAS para actividad ${act.id}:`,
-                                            {
-                                              estadoActividad,
-                                              puedeEntregar,
-                                              puedeAprobar,
-                                              entrega,
-                                            }
-                                          );
-
-                                          const tieneEntrega =
-                                            estadoActividad.entregado;
-
-                                          if (tieneEntrega) {
-                                            return (
-                                              <div className="flex flex-col gap-2">
-                                                {/* Botones para el responsable de la actividad o del proyecto */}
-                                                {puedeEntregar && (
-                                                  <div className="flex gap-2">
-                                                    <Button
-                                                      size="sm"
-                                                      className="bg-blue-600 hover:bg-blue-700"
-                                                      onClick={() =>
-                                                        handleAbrirModalEntrega(
-                                                          {
-                                                            id: act.id,
-                                                            descripcion:
-                                                              act.descripcion,
-                                                          },
-                                                          true // Modo edición
-                                                        )
-                                                      }
-                                                    >
-                                                      {estadoActividad.estado ===
-                                                      'rechazada'
-                                                        ? 'Reenviar'
-                                                        : 'Editar entrega'}
-                                                    </Button>
-                                                    <Button
-                                                      size="sm"
-                                                      variant="destructive"
-                                                      onClick={() =>
-                                                        handleEliminarEntrega(
-                                                          act.id!
-                                                        )
-                                                      }
-                                                    >
-                                                      <Trash2 className="mr-1 h-3 w-4" />
-                                                      Eliminar
-                                                    </Button>
-                                                  </div>
-                                                )}
-
-                                                {/* Botones para el responsable del proyecto (aprobación) */}
-                                                {puedeAprobar &&
-                                                  estadoActividad.estado !==
-                                                    'completada' &&
-                                                  estadoActividad.estado !==
-                                                    'rechazada' && (
-                                                    <div className="flex gap-2">
-                                                      <Button
-                                                        size="sm"
-                                                        className="bg-green-600 hover:bg-green-700"
-                                                        onClick={() =>
-                                                          handleAprobarEntrega(
-                                                            act.id!,
-                                                            entrega.userId,
-                                                            true,
-                                                            'Entrega aprobada'
-                                                          )
-                                                        }
-                                                      >
-                                                        <CheckCircle className="mr-1 h-3 w-3" />
-                                                        Aprobar
-                                                      </Button>
-                                                      <Button
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        onClick={() => {
-                                                          const feedback =
-                                                            prompt(
-                                                              'Motivo del rechazo:'
-                                                            );
-                                                          if (feedback) {
-                                                            handleAprobarEntrega(
-                                                              act.id!,
-                                                              entrega.userId,
-                                                              false,
-                                                              feedback
-                                                            );
-                                                          }
-                                                        }}
-                                                      >
-                                                        <AlertCircle className="mr-1 h-3 w-3" />
-                                                        Rechazar
-                                                      </Button>
-                                                    </div>
-                                                  )}
-                                              </div>
-                                            );
-                                          } else if (puedeEntregar) {
-                                            return (
-                                              <Button
-                                                size="sm"
-                                                className="bg-teal-600 hover:bg-teal-700"
-                                                onClick={() =>
-                                                  handleAbrirModalEntrega(
-                                                    {
-                                                      id: act.id,
-                                                      descripcion:
-                                                        act.descripcion,
-                                                    },
-                                                    false // Modo nueva entrega
-                                                  )
-                                                }
-                                              >
-                                                Entregar actividad
-                                              </Button>
-                                            );
-                                          } else {
-                                            return (
-                                              <span className="text-sm text-gray-500">
-                                                Sin permisos
-                                              </span>
-                                            );
-                                          }
-                                        })()}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                }
-                              );
-                            })()}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-400 italic">
-                      No hay objetivos específicos
-                    </div>
-                  )}
+                                )}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </TabsContent>
             </CardContent>
           </Tabs>
         </Card>
+
         {/* Cronograma separado */}
         <br />
         <Card className="border-slate-700 bg-slate-800/50">
-          <CardHeader>
-            <CardTitle className="text-white">Cronograma</CardTitle>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-lg text-white md:text-xl">
+              Cronograma
+            </CardTitle>
             {/* Selector de visualización */}
-            <div className="mt-2 flex gap-2">
-              <span className="text-gray-300">Ver en:</span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-300">Ver en:</span>
               <select
                 value={cronogramaTipo}
                 onChange={(e) =>
@@ -2605,7 +2765,7 @@ export default function ProjectDetails() {
                     e.target.value as 'horas' | 'dias' | 'meses'
                   )
                 }
-                className="rounded bg-slate-700 px-2 py-1 text-teal-300"
+                className="rounded bg-slate-700 px-2 py-1 text-sm text-teal-300"
               >
                 <option value="horas">Horas</option>
                 <option value="dias">Días</option>
@@ -2613,80 +2773,100 @@ export default function ProjectDetails() {
               </select>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6">
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-600">
-                    <TableHead
-                      className="sticky left-0 z-10 bg-slate-800 text-gray-300"
-                      style={{ minWidth: 500 }} //ancho de la columna de actividades
-                    >
-                      Actividad
-                    </TableHead>
-                    {cronogramaTipo === 'horas' ? (
-                      <TableHead className="text-center align-middle text-gray-300">
-                        Duración (horas)
-                      </TableHead>
-                    ) : (
-                      unidadesHeader.map((unidad) => (
-                        <TableHead
-                          key={unidad.indice}
-                          className="text-center align-middle text-gray-300"
-                          style={{ minWidth: 80 }}
-                        >
-                          {unidad.etiqueta}
-                          <br />
-                          <span className="text-xs text-gray-400">
-                            {unidad.fecha}
-                          </span>
-                        </TableHead>
-                      ))
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {actividadesOrdenadas.map((act, idx) => {
-                    const orden = getOrdenActividad(act);
-                    return (
-                      <TableRow
-                        key={act.id ?? idx}
-                        className="border-slate-600 transition-colors hover:bg-slate-700/60"
+              <div className="min-w-full">
+                <Table className="w-full table-fixed">
+                  <TableHeader>
+                    <TableRow className="border-slate-600">
+                      <TableHead
+                        className="sticky left-0 z-10 border-r border-slate-600 bg-slate-800 text-xs text-gray-300 md:text-sm"
+                        style={{ width: '40%' }}
                       >
-                        <TableCell
-                          className="sticky left-0 z-10 bg-slate-800 text-gray-300 group-hover:bg-slate-700/60"
-                          style={{ minWidth: 180 }}
+                        <div className="pr-4">Actividad</div>
+                      </TableHead>
+                      {cronogramaTipo === 'horas' ? (
+                        <TableHead
+                          className="text-center align-middle text-xs text-gray-300 md:text-sm"
+                          style={{ width: '60%' }}
                         >
-                          {act.descripcion}
-                        </TableCell>
-                        {cronogramaTipo === 'horas' ? (
-                          <TableCell className="text-center align-middle font-bold text-teal-300">
-                            {act.hoursPerDay ?? '-'}
+                          Duración (horas)
+                        </TableHead>
+                      ) : (
+                        <TableHead
+                          className="p-0 text-xs text-gray-300 md:text-sm"
+                          style={{ width: '60%' }}
+                        >
+                          <div className="flex">
+                            {unidadesHeader.map((unidad) => (
+                              <div
+                                key={unidad.indice}
+                                className="min-w-[60px] flex-1 border-l border-slate-600 p-2 text-center align-middle"
+                              >
+                                <div className="text-xs break-words">
+                                  <div>{unidad.etiqueta}</div>
+                                  <div className="mt-1 text-xs text-gray-400">
+                                    {unidad.fecha}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {actividadesOrdenadas.map((act, idx) => {
+                      return (
+                        <TableRow
+                          key={act.id ?? idx}
+                          className="border-slate-600 transition-colors hover:bg-slate-700/60"
+                        >
+                          <TableCell
+                            className="sticky left-0 z-10 max-w-[200px] border-r border-slate-600 bg-slate-800 text-xs text-gray-300 group-hover:bg-slate-700/60 md:text-sm"
+                            style={{ width: '40%' }}
+                          >
+                            <div className="overflow-wrap-anywhere pr-4 leading-tight break-words hyphens-auto">
+                              {act.descripcion}
+                            </div>
                           </TableCell>
-                        ) : (
-                          unidadesHeader.map((unidad) => (
+                          {cronogramaTipo === 'horas' ? (
                             <TableCell
-                              key={unidad.indice}
-                              className="text-center align-middle"
-                              style={{ minWidth: 80 }}
+                              className="text-center align-middle text-xs font-bold text-teal-300 md:text-sm"
+                              style={{ width: '60%' }}
                             >
-                              {Array.isArray(act.meses) &&
-                              act.meses.includes(unidad.indice) ? (
-                                <div className="mx-auto h-6 w-6 rounded bg-green-600" />
-                              ) : (
-                                <div className="mx-auto h-6 w-6 rounded bg-slate-600" />
-                              )}
+                              {act.hoursPerDay ?? '-'}
                             </TableCell>
-                          ))
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          ) : (
+                            <TableCell className="p-0" style={{ width: '60%' }}>
+                              <div className="flex">
+                                {unidadesHeader.map((unidad) => (
+                                  <div
+                                    key={unidad.indice}
+                                    className="min-w-[60px] flex-1 border-l border-slate-600 p-2 text-center align-middle"
+                                  >
+                                    {Array.isArray(act.meses) &&
+                                    act.meses.includes(unidad.indice) ? (
+                                      <div className="mx-auto h-4 w-4 rounded bg-green-600 md:h-5 md:w-5" />
+                                    ) : (
+                                      <div className="mx-auto h-4 w-4 rounded bg-slate-600 md:h-5 md:w-5" />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </CardContent>
         </Card>
+
         {/* Modals */}
         <ModalCategoria
           isOpen={ModalCategoriaOpen}
@@ -2699,11 +2879,17 @@ export default function ProjectDetails() {
           proyecto={{
             ...project,
             titulo: project.name ?? '',
-            rama: '',
-            especialidades: '',
-            participacion: '',
+            rama: _categoria?.name ?? 'Sin categoría',
+            especialidades: integrantes.length,
+            participacion: 'Activa',
           }}
-          integrantes={integrantes}
+          integrantes={integrantes.map((integrante) => ({
+            id: integrante.id,
+            nombre: integrante.nombre || 'Sin nombre',
+            rol: integrante.rol || 'Integrante',
+            especialidad: integrante.especialidad || 'No especificada',
+            email: integrante.email || '',
+          }))}
         />
         <ModalConfirmacionEliminacion
           isOpen={confirmOpen}

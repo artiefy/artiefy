@@ -13,12 +13,14 @@ import {
   Folder,
   //  Heart,
   ImageIcon,
+  Menu,
   //  MessageCircle,
   MoreHorizontal,
   Search,
   //  Share2,
   TrendingUp,
   Users,
+  X,
 } from 'lucide-react';
 import { FaFolderOpen } from 'react-icons/fa';
 import * as RadixSelect from '@radix-ui/react-select';
@@ -140,6 +142,7 @@ export default function Component() {
     number | null
   >(null);
   const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   // Clerk:
   const { user } = useUser();
   const userId = user?.id;
@@ -332,597 +335,610 @@ export default function Component() {
     if (projects.length > 0) fetchAllInscritos();
   }, [projects]);
 
+  // Close sidebar when clicking outside on mobile
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
       <div className="sticky top-0 z-50 bg-[#041C3C] shadow-md">
         <Header />
       </div>
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* Sidebar */}
-          <div className="space-y-6 lg:col-span-1">
-            <div className="relative hidden md:block">
-              <a href={userId ? '/proyectos/MisProyectos' : '/sign-in'}>
-                <button className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-cyan-500/30">
-                  <div className="flex items-center justify-center space-x-4 rounded-3xl bg-slate-900 px-12 py-6 transition-all duration-300 group-hover:bg-slate-800">
-                    {userId && (
-                      <div className="relative">
-                        <Folder className="h-8 w-8 text-cyan-400 transition-all duration-300 group-hover:opacity-0" />
-                        <FaFolderOpen className="absolute top-0 left-0 h-8 w-8 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100" />
-                        <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100"></div>
-                      </div>
-                    )}
-                    <span className="text-2xl font-bold tracking-wide text-white">
-                      {userId ? 'Mis Proyectos' : 'Iniciar Sesión'}
-                    </span>
-                    <ArrowRight className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:translate-x-2" />
-                  </div>
-                </button>
-              </a>
-            </div>
 
-            <div className="relative hidden md:block">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
-              <Input
-                placeholder="Buscar proyectos, usuarios..."
-                className="w-80 border-slate-600 bg-slate-800/50 pr-10 pl-10 text-slate-200 placeholder-slate-400"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
+      {/* Mobile Header with Search and Menu */}
+      <div className="sticky top-[64px] z-40 border-b border-slate-700 bg-[#041C3C] p-4 md:hidden">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+            className="text-cyan-400 hover:bg-cyan-400/10"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="relative flex-1">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
+            <Input
+              placeholder="Buscar proyectos..."
+              className="w-full border-slate-600 bg-slate-800/50 pr-10 pl-10 text-slate-200 placeholder-slate-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSearch}
+                className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0 text-slate-400 hover:bg-cyan-300 hover:text-black"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="relative flex gap-6">
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-50 bg-black/50 md:hidden"
+              onClick={closeSidebar}
+            />
+          )}
+
+          {/* Sidebar */}
+          <div
+            className={`fixed top-0 left-0 z-50 h-full w-80 transform bg-[#041C3C] transition-transform duration-300 ease-in-out md:relative md:w-auto md:transform-none md:bg-transparent ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} `}
+          >
+            <div className="h-full overflow-y-auto p-4 md:p-0">
+              {/* Mobile close button */}
+              <div className="mb-4 flex justify-end md:hidden">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={clearSearch}
-                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0 text-slate-400 hover:bg-cyan-300 hover:text-black"
+                  onClick={closeSidebar}
+                  className="text-slate-400"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </Button>
-              )}
-            </div>
-
-            {/* Indicadores de filtros activos */}
-            {(searchTerm !== '' ||
-              selectedCategory !== 'all' ||
-              selectedType !== 'all' ||
-              selectedTrending !== 'all') && (
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-slate-300">
-                  Filtros activos:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {searchTerm && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/20"
-                      onClick={clearSearch}
-                    >
-                      Búsqueda: &quot;{searchTerm}&quot; ✕
-                    </Badge>
-                  )}
-
-                  {selectedCategory !== 'all' && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer border-teal-400/50 text-teal-300 hover:bg-teal-400/20"
-                      onClick={() => setSelectedCategory('all')}
-                    >
-                      Categoría: {selectedCategory} ✕
-                    </Badge>
-                  )}
-
-                  {selectedType !== 'all' && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer border-purple-400/50 text-purple-300 hover:bg-purple-400/20"
-                      onClick={() => setSelectedType('all')}
-                    >
-                      Tipo: {selectedType} ✕
-                    </Badge>
-                  )}
-
-                  {selectedTrending !== 'all' && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer border-orange-400/50 text-orange-300 hover:bg-orange-400/20"
-                      onClick={() => setSelectedTrending('all')}
-                    >
-                      Tendencia: {selectedTrending} ✕
-                    </Badge>
-                  )}
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm('');
-                      setSelectedCategory('all');
-                      setSelectedType('all');
-                      setSelectedTrending('all');
-                    }}
-                    className="text-xs text-gray-500 hover:text-gray-300"
-                  >
-                    Limpiar todo
-                  </Button>
-                </div>
               </div>
-            )}
 
-            {/* Filters */}
-            <Card className="border-slate-700 bg-slate-800/50">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Filter className="h-4 w-4 text-cyan-400" />
-                    <h3 className="font-semibold text-slate-200">Filtros</h3>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="border-cyan-400 text-slate-400 hover:bg-cyan-300 hover:text-slate-200"
-                      title="Limpiar filtros"
-                      disabled={!hasActiveFilters}
-                    >
-                      🗑️
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={loadProjects}
-                      disabled={isLoading}
-                      className="border-cyan-400 text-cyan-400 hover:bg-cyan-300 hover:text-black"
-                      title="Recargar proyectos"
-                    >
-                      {isLoading ? '⟳' : '↻'}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-slate-300">
-                      Categorías
-                    </h4>
-                    <RadixSelect.Root
-                      value={selectedCategory}
-                      onValueChange={setSelectedCategory}
-                    >
-                      <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
-                        <RadixSelect.Value />
-                        <RadixSelect.Icon>
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="none"
-                            viewBox="0 0 16 16"
-                          >
-                            <path
-                              d="M4 6l4 4 4-4"
-                              stroke="#94a3b8"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </RadixSelect.Icon>
-                      </RadixSelect.Trigger>
-                      <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
-                        <RadixSelect.Viewport className="p-1">
-                          <SelectItem value="all">
-                            Todas las categorías ({categories.length})
-                          </SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem
-                              key={category.name}
-                              value={category.name}
-                            >
-                              {category.name} ({category.count})
-                            </SelectItem>
-                          ))}
-                        </RadixSelect.Viewport>
-                      </RadixSelect.Content>
-                    </RadixSelect.Root>
-                  </div>
-
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-slate-300">
-                      Tipo de Proyecto
-                    </h4>
-                    <RadixSelect.Root
-                      value={selectedType}
-                      onValueChange={setSelectedType}
-                    >
-                      <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
-                        <RadixSelect.Value />
-                        <RadixSelect.Icon>
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="none"
-                            viewBox="0 0 16 16"
-                          >
-                            <path
-                              d="M4 6l4 4 4-4"
-                              stroke="#94a3b8"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </RadixSelect.Icon>
-                      </RadixSelect.Trigger>
-                      <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
-                        <RadixSelect.Viewport className="p-1">
-                          <SelectItem value="all">
-                            Todos los tipos ({projectTypes.length})
-                          </SelectItem>
-                          {projectTypes.map((type) => (
-                            <SelectItem key={type.name} value={type.name}>
-                              {type.name} ({type.count})
-                            </SelectItem>
-                          ))}
-                        </RadixSelect.Viewport>
-                      </RadixSelect.Content>
-                    </RadixSelect.Root>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Trending */}
-            <Card className="border-slate-700 bg-slate-800/50">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-4 w-4 text-cyan-400" />
-                    <h3 className="font-semibold text-slate-200">Tendencias</h3>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedTrending('all')}
-                      className="border-cyan-400 text-slate-400 hover:bg-cyan-300 hover:text-slate-200"
-                      title="Limpiar filtro de tendencias"
-                      disabled={selectedTrending === 'all'}
-                    >
-                      🗑️
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={loadProjects}
-                      disabled={isLoading}
-                      className="border-cyan-400 text-cyan-400 hover:bg-cyan-300 hover:text-black"
-                      title="Recargar proyectos"
-                    >
-                      {isLoading ? '⟳' : '↻'}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <RadixSelect.Root
-                  value={selectedTrending}
-                  onValueChange={setSelectedTrending}
-                >
-                  <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
-                    <RadixSelect.Value />
-                    <RadixSelect.Icon>
-                      <svg
-                        width="16"
-                        height="16"
-                        fill="none"
-                        viewBox="0 0 16 16"
-                      >
-                        <path
-                          d="M4 6l4 4 4-4"
-                          stroke="#94a3b8"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </RadixSelect.Icon>
-                  </RadixSelect.Trigger>
-                  <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
-                    <RadixSelect.Viewport className="p-1">
-                      <SelectItem value="all">
-                        Todas las tendencias ({trendingTopics.length})
-                      </SelectItem>
-                      {trendingTopics.map((topic) => (
-                        <SelectItem key={topic.name} value={topic.name}>
-                          #{topic.name} ({topic.posts} posts)
-                        </SelectItem>
-                      ))}
-                    </RadixSelect.Viewport>
-                  </RadixSelect.Content>
-                </RadixSelect.Root>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Feed */}
-          <div className="h-[calc(110vh-100px)] lg:col-span-3">
-            <div
-              className="custom-scrollbar h-full overflow-x-hidden overflow-y-auto"
-              style={{
-                height: '100%',
-              }}
-            >
-              <div className="h-full space-y-6">
-                {/* Welcome Message */}
-                <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Users className="h-6 w-6 text-cyan-400" />
-                        <div>
-                          <h2 className="text-xl font-bold text-slate-200">
-                            ¡Bienvenido a Proyectos!
-                          </h2>
-                          <p className="text-slate-400">
-                            Comparte tus proyectos, colabora y aprende con la
-                            comunidad
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right text-sm text-slate-400">
-                        <p>
-                          {filteredProjects.length} de {projects.length}{' '}
-                          proyectos publicados
-                        </p>
-                        {isLoading && (
-                          <p className="text-cyan-400">Actualizando...</p>
+              <div className="space-y-6">
+                {/* My Projects Button */}
+                <div className="relative">
+                  <a href={userId ? '/proyectos/MisProyectos' : '/sign-in'}>
+                    <button className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative w-full rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30">
+                      <div className="flex items-center justify-center space-x-2 rounded-3xl bg-slate-900 px-6 py-4 transition-all duration-300 group-hover:bg-slate-800 md:space-x-4 md:px-12 md:py-6">
+                        {userId && (
+                          <div className="relative">
+                            <Folder className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:opacity-0 md:h-8 md:w-8" />
+                            <FaFolderOpen className="absolute top-0 left-0 h-6 w-6 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100 md:h-8 md:w-8" />
+                            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100"></div>
+                          </div>
                         )}
+                        <span className="text-lg font-bold tracking-wide text-white md:text-2xl">
+                          {userId ? 'Mis Proyectos' : 'Iniciar Sesión'}
+                        </span>
+                        <ArrowRight className="h-5 w-5 text-cyan-400 transition-all duration-300 group-hover:translate-x-2 md:h-6 md:w-6" />
+                      </div>
+                    </button>
+                  </a>
+                </div>
+
+                {/* Desktop Search */}
+                <div className="relative hidden md:block">
+                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-slate-400" />
+                  <Input
+                    placeholder="Buscar proyectos, usuarios..."
+                    className="w-full border-slate-600 bg-slate-800/50 pr-10 pl-10 text-slate-200 placeholder-slate-400"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearSearch}
+                      className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0 text-slate-400 hover:bg-cyan-300 hover:text-black"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+
+                {/* Active Filters */}
+                {(searchTerm !== '' ||
+                  selectedCategory !== 'all' ||
+                  selectedType !== 'all' ||
+                  selectedTrending !== 'all') && (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium text-slate-300">
+                      Filtros activos:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {searchTerm && (
+                        <Badge
+                          variant="outline"
+                          className="cursor-pointer border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/20"
+                          onClick={clearSearch}
+                        >
+                          Búsqueda: &quot;{searchTerm}&quot; ✕
+                        </Badge>
+                      )}
+
+                      {selectedCategory !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="cursor-pointer border-teal-400/50 text-teal-300 hover:bg-teal-400/20"
+                          onClick={() => setSelectedCategory('all')}
+                        >
+                          Categoría: {selectedCategory} ✕
+                        </Badge>
+                      )}
+
+                      {selectedType !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="cursor-pointer border-purple-400/50 text-purple-300 hover:bg-purple-400/20"
+                          onClick={() => setSelectedType('all')}
+                        >
+                          Tipo: {selectedType} ✕
+                        </Badge>
+                      )}
+
+                      {selectedTrending !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="cursor-pointer border-orange-400/50 text-orange-300 hover:bg-orange-400/20"
+                          onClick={() => setSelectedTrending('all')}
+                        >
+                          Tendencia: {selectedTrending} ✕
+                        </Badge>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedCategory('all');
+                          setSelectedType('all');
+                          setSelectedTrending('all');
+                        }}
+                        className="text-xs text-gray-500 hover:text-gray-300"
+                      >
+                        Limpiar todo
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Filters Card */}
+                <Card className="border-slate-700 bg-slate-800/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Filter className="h-4 w-4 text-cyan-400" />
+                        <h3 className="font-semibold text-slate-200">
+                          Filtros
+                        </h3>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearFilters}
+                          className="border-cyan-400 text-slate-400 hover:bg-cyan-300 hover:text-slate-200"
+                          title="Limpiar filtros"
+                          disabled={!hasActiveFilters}
+                        >
+                          🗑️
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={loadProjects}
+                          disabled={isLoading}
+                          className="border-cyan-400 text-cyan-400 hover:bg-cyan-300 hover:text-black"
+                          title="Recargar proyectos"
+                        >
+                          {isLoading ? '⟳' : '↻'}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="mb-2 text-sm font-medium text-slate-300">
+                          Categorías
+                        </h4>
+                        <RadixSelect.Root
+                          value={selectedCategory}
+                          onValueChange={setSelectedCategory}
+                        >
+                          <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                            <RadixSelect.Value />
+                            <RadixSelect.Icon>
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="none"
+                                viewBox="0 0 16 16"
+                              >
+                                <path
+                                  d="M4 6l4 4 4-4"
+                                  stroke="#94a3b8"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </RadixSelect.Icon>
+                          </RadixSelect.Trigger>
+                          <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                            <RadixSelect.Viewport className="p-1">
+                              <SelectItem value="all">
+                                Todas las categorías ({categories.length})
+                              </SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem
+                                  key={category.name}
+                                  value={category.name}
+                                >
+                                  {category.name} ({category.count})
+                                </SelectItem>
+                              ))}
+                            </RadixSelect.Viewport>
+                          </RadixSelect.Content>
+                        </RadixSelect.Root>
+                      </div>
+
+                      <div>
+                        <h4 className="mb-2 text-sm font-medium text-slate-300">
+                          Tipo de Proyecto
+                        </h4>
+                        <RadixSelect.Root
+                          value={selectedType}
+                          onValueChange={setSelectedType}
+                        >
+                          <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                            <RadixSelect.Value />
+                            <RadixSelect.Icon>
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="none"
+                                viewBox="0 0 16 16"
+                              >
+                                <path
+                                  d="M4 6l4 4 4-4"
+                                  stroke="#94a3b8"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </RadixSelect.Icon>
+                          </RadixSelect.Trigger>
+                          <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                            <RadixSelect.Viewport className="p-1">
+                              <SelectItem value="all">
+                                Todos los tipos ({projectTypes.length})
+                              </SelectItem>
+                              {projectTypes.map((type) => (
+                                <SelectItem key={type.name} value={type.name}>
+                                  {type.name} ({type.count})
+                                </SelectItem>
+                              ))}
+                            </RadixSelect.Viewport>
+                          </RadixSelect.Content>
+                        </RadixSelect.Root>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Project Posts */}
-                {filteredProjects.length > 0 ? (
-                  filteredProjects.map((project) => (
-                    <Card
-                      key={project.id}
-                      className="border-slate-700 bg-slate-800/50 transition-colors hover:bg-slate-800/70"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage
-                                src={project.user?.avatar}
-                                alt={project.user?.name ?? 'Usuario'}
-                              />
-                              <AvatarFallback className="bg-slate-600 text-slate-200">
-                                {(project.user?.name ?? 'AN')
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold text-slate-200">
-                                {project.user?.name ?? 'Anónimo'}
-                              </h3>
-                              <div className="flex items-center space-x-2 text-sm text-slate-400">
-                                <span>
-                                  {project.createdAt
-                                    ? new Date(
-                                        project.createdAt
-                                      ).toLocaleDateString('es-ES', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                      })
-                                    : ''}
-                                </span>
-                                <span>•</span>
-                                <Badge
-                                  variant="secondary"
-                                  className="border-cyan-500/30 bg-cyan-500/20 text-cyan-400"
-                                >
-                                  {project.category?.name ?? 'Sin categoría'}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-slate-400 hover:text-slate-200"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4">
-                        <div>
-                          <h2 className="mb-2 text-lg font-bold text-slate-200">
-                            {project.name}
-                          </h2>
-                          <p className="text-sm leading-relaxed text-slate-300">
-                            {project.planteamiento ??
-                              project.justificacion ??
-                              'Sin descripción'}
-                          </p>
-                        </div>
-
-                        <div className="relative overflow-hidden rounded-lg">
-                          {project.image && !imageErrors.has(project.id) ? (
-                            <Image
-                              src={project.image}
-                              alt={project.name}
-                              width={500}
-                              height={300}
-                              className="h-64 w-full object-cover"
-                              unoptimized
-                              onError={() => {
-                                console.error(
-                                  'Error cargando imagen del proyecto:',
-                                  project.name,
-                                  'ID:',
-                                  project.id,
-                                  'URL que falló:',
-                                  project.image
-                                );
-                                handleImageError(project.id);
-                              }}
-                              onLoad={() => {
-                                console.log(
-                                  'Imagen cargada exitosamente para el proyecto:',
-                                  project.name,
-                                  'URL:',
-                                  project.image
-                                );
-                              }}
-                            />
-                          ) : (
-                            <div className="flex h-64 w-full items-center justify-center bg-slate-700">
-                              <div className="text-center text-slate-400">
-                                <ImageIcon className="mx-auto mb-2 h-12 w-12" />
-                                <p className="text-sm">
-                                  {imageErrors.has(project.id)
-                                    ? 'Error al cargar imagen'
-                                    : 'Sin imagen'}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                          <div className="absolute top-3 right-3">
-                            <Button
-                              variant="secondary"
-                              size="icon"
-                              className="border-0 bg-black/50 text-white hover:bg-black/70"
-                            >
-                              <ImageIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {[project.type_project].map((tag, idx) => (
-                            <Badge
-                              key={tag + idx}
-                              variant="outline"
-                              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                            >
-                              #{tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center text-slate-400">
-                          <button
-                            type="button"
-                            onClick={() => setIntegrantesModalOpen(project.id)}
-                            className="flex items-center gap-1 rounded bg-[#1F3246] px-2 py-1 text-xs text-purple-300 hover:scale-105"
-                          >
-                            {inscritosMap[project.id] ?? 0}{' '}
-                            <Users className="inline h-4 w-4 text-purple-300" />{' '}
-                            Integrantes
-                          </button>
-                          {integrantesModalOpen === project.id && (
-                            <ModalIntegrantesProyectoInfo
-                              isOpen={true}
-                              onClose={() => setIntegrantesModalOpen(null)}
-                              proyecto={{
-                                ...project,
-                                titulo: project.name ?? '',
-                                rama: '', // Ajusta si tienes el dato real
-                                especialidades: '', // Ajusta si tienes el dato real
-                                participacion: '', // Ajusta si tienes el dato real
-                              }}
-                              integrantes={[]}
-                            />
-                          )}
-                        </div>
-                        {/* Botón para abrir el modal */}
-                        <div className="pt-2">
-                          <Button
-                            className="w-full bg-gradient-to-r from-teal-500 to-teal-600 font-semibold text-white hover:from-teal-600 hover:to-teal-700"
-                            onClick={() => {
-                              setSelectedProject(project);
-                              setModalOpen(true);
-                            }}
-                          >
-                            Ver más
-                          </Button>
-                        </div>
-                      </CardContent>
-
-                      {/* <CardFooter className="pt-0">
-                        <div className="flex w-full items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-400 hover:bg-red-400/10 hover:text-red-400"
-                            >
-                              <Heart className="mr-1 h-4 w-4" />
-                              {Math.floor(Math.random() * 100)}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-400 hover:bg-cyan-400/10 hover:text-cyan-400"
-                            >
-                              <MessageCircle className="mr-1 h-4 w-4" />
-                              {Math.floor(Math.random() * 20)}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-400 hover:bg-emerald-400/10 hover:text-emerald-400"
-                            >
-                              <Share2 className="mr-1 h-4 w-4" />
-                              {Math.floor(Math.random() * 10)}
-                            </Button>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-slate-400 hover:bg-yellow-400/10 hover:text-yellow-400"
-                          >
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardFooter> */}
-                    </Card>
-                  ))
-                ) : (
-                  <Card className="border-slate-700 bg-slate-800/50">
-                    <CardContent className="p-6 text-center">
-                      <div className="text-slate-400">
-                        <Search className="mx-auto mb-4 h-12 w-12" />
-                        <h3 className="mb-2 text-lg font-semibold">
-                          No se encontraron proyectos
+                {/* Trending Card */}
+                <Card className="border-slate-700 bg-slate-800/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-4 w-4 text-cyan-400" />
+                        <h3 className="font-semibold text-slate-200">
+                          Tendencias
                         </h3>
-                        <p>
-                          Intenta ajustar los filtros o el término de búsqueda
-                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedTrending('all')}
+                          className="border-cyan-400 text-slate-400 hover:bg-cyan-300 hover:text-slate-200"
+                          title="Limpiar filtro de tendencias"
+                          disabled={selectedTrending === 'all'}
+                        >
+                          🗑️
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={loadProjects}
+                          disabled={isLoading}
+                          className="border-cyan-400 text-cyan-400 hover:bg-cyan-300 hover:text-black"
+                          title="Recargar proyectos"
+                        >
+                          {isLoading ? '⟳' : '↻'}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <RadixSelect.Root
+                      value={selectedTrending}
+                      onValueChange={setSelectedTrending}
+                    >
+                      <RadixSelect.Trigger className="flex w-full items-center justify-between rounded-xl bg-slate-700 p-2 text-slate-300">
+                        <RadixSelect.Value />
+                        <RadixSelect.Icon>
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 16 16"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              stroke="#94a3b8"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </RadixSelect.Icon>
+                      </RadixSelect.Trigger>
+                      <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
+                        <RadixSelect.Viewport className="p-1">
+                          <SelectItem value="all">
+                            Todas las tendencias ({trendingTopics.length})
+                          </SelectItem>
+                          {trendingTopics.map((topic) => (
+                            <SelectItem key={topic.name} value={topic.name}>
+                              #{topic.name} ({topic.posts} posts)
+                            </SelectItem>
+                          ))}
+                        </RadixSelect.Viewport>
+                      </RadixSelect.Content>
+                    </RadixSelect.Root>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Feed */}
+          <div className="min-w-0 flex-1">
+            <div className="h-[calc(100vh-180px)] md:h-[calc(100vh-140px)]">
+              <div
+                className="custom-scrollbar h-full overflow-x-hidden overflow-y-auto"
+                style={{
+                  height: '100%',
+                }}
+              >
+                <div className="h-full space-y-4 md:space-y-6">
+                  {/* Welcome Message */}
+                  <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10">
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0">
+                        <div className="flex items-center space-x-3">
+                          <Users className="h-5 w-5 text-cyan-400 md:h-6 md:w-6" />
+                          <div>
+                            <h2 className="text-lg font-bold text-slate-200 md:text-xl">
+                              ¡Bienvenido a Proyectos!
+                            </h2>
+                            <p className="text-sm text-slate-400 md:text-base">
+                              Comparte tus proyectos, colabora y aprende con la
+                              comunidad
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-left text-sm text-slate-400 md:text-right">
+                          <p>
+                            {filteredProjects.length} de {projects.length}{' '}
+                            proyectos publicados
+                          </p>
+                          {isLoading && (
+                            <p className="text-cyan-400">Actualizando...</p>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                )}
 
-                {/* Load More Indicator */}
-                {isLoading && (
-                  <div className="flex justify-center py-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-400" />
-                  </div>
-                )}
+                  {/* Project Posts */}
+                  {filteredProjects.length > 0 ? (
+                    filteredProjects.map((project) => (
+                      <Card
+                        key={project.id}
+                        className="border-slate-700 bg-slate-800/50 transition-colors hover:bg-slate-800/70"
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-8 w-8 md:h-10 md:w-10">
+                                <AvatarImage
+                                  src={project.user?.avatar}
+                                  alt={project.user?.name ?? 'Usuario'}
+                                />
+                                <AvatarFallback className="bg-slate-600 text-slate-200">
+                                  {(project.user?.name ?? 'AN')
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="truncate font-semibold text-slate-200">
+                                  {project.user?.name ?? 'Anónimo'}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 md:text-sm">
+                                  <span>
+                                    {project.createdAt
+                                      ? new Date(
+                                          project.createdAt
+                                        ).toLocaleDateString('es-ES', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                        })
+                                      : ''}
+                                  </span>
+                                  <span className="hidden md:inline">•</span>
+                                  <Badge
+                                    variant="secondary"
+                                    className="border-cyan-500/30 bg-cyan-500/20 text-cyan-400"
+                                  >
+                                    {project.category?.name ?? 'Sin categoría'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-slate-400 hover:text-slate-200"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4">
+                          <div>
+                            <h2 className="mb-2 text-base font-bold text-slate-200 md:text-lg">
+                              {project.name}
+                            </h2>
+                            <p className="line-clamp-3 text-sm leading-relaxed text-slate-300 md:line-clamp-none">
+                              {project.planteamiento ??
+                                project.justificacion ??
+                                'Sin descripción'}
+                            </p>
+                          </div>
+
+                          <div className="relative overflow-hidden rounded-lg">
+                            {project.image && !imageErrors.has(project.id) ? (
+                              <Image
+                                src={project.image}
+                                alt={project.name}
+                                width={500}
+                                height={300}
+                                className="h-48 w-full object-cover md:h-64"
+                                unoptimized
+                                onError={() => {
+                                  console.error(
+                                    'Error cargando imagen del proyecto:',
+                                    project.name,
+                                    'ID:',
+                                    project.id,
+                                    'URL que falló:',
+                                    project.image
+                                  );
+                                  handleImageError(project.id);
+                                }}
+                                onLoad={() => {
+                                  console.log(
+                                    'Imagen cargada exitosamente para el proyecto:',
+                                    project.name,
+                                    'URL:',
+                                    project.image
+                                  );
+                                }}
+                              />
+                            ) : (
+                              <div className="flex h-48 w-full items-center justify-center bg-slate-700 md:h-64">
+                                <div className="text-center text-slate-400">
+                                  <ImageIcon className="mx-auto mb-2 h-8 w-8 md:h-12 md:w-12" />
+                                  <p className="text-xs md:text-sm">
+                                    {imageErrors.has(project.id)
+                                      ? 'Error al cargar imagen'
+                                      : 'Sin imagen'}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute top-3 right-3">
+                              <Button
+                                variant="secondary"
+                                size="icon"
+                                className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                              >
+                                <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {[project.type_project].map((tag, idx) => (
+                              <Badge
+                                key={tag + idx}
+                                variant="outline"
+                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                              >
+                                #{tag}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0">
+                            <Button
+                              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 font-semibold text-white hover:from-teal-600 hover:to-teal-700"
+                              onClick={() => {
+                                setSelectedProject(project);
+                                setModalOpen(true);
+                                closeSidebar(); // Close sidebar on mobile when opening modal
+                              }}
+                            >
+                              Ver más
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <Card className="border-slate-700 bg-slate-800/50">
+                      <CardContent className="p-6 text-center">
+                        <div className="text-slate-400">
+                          <Search className="mx-auto mb-4 h-8 w-8 md:h-12 md:w-12" />
+                          <h3 className="mb-2 text-base font-semibold md:text-lg">
+                            No se encontraron proyectos
+                          </h3>
+                          <p className="text-sm md:text-base">
+                            Intenta ajustar los filtros o el término de búsqueda
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Load More Indicator */}
+                  {isLoading && (
+                    <div className="flex justify-center py-8">
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-cyan-400 md:h-8 md:w-8" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
       {/* Modal de información del proyecto */}
       <ModalProjectInfo
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          closeSidebar();
+        }}
         project={selectedProject}
         userId={userId}
       />
@@ -952,6 +968,23 @@ export default function Component() {
           width: 0 !important;
           height: 0 !important;
           background: transparent !important;
+        }
+
+        /* Line clamp utility for text truncation */
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+          .md\\:line-clamp-none {
+            display: block;
+            -webkit-line-clamp: unset;
+            -webkit-box-orient: unset;
+            overflow: visible;
+          }
         }
       `}</style>
     </div>

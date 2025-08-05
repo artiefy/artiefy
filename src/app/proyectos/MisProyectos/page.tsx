@@ -165,6 +165,16 @@ export default function ProyectosPage() {
   // Estado para los contadores de inscritos por proyecto
   const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
 
+  // NUEVO: Estado para almacenar los integrantes de cada proyecto
+  const [integrantesMap, setIntegrantesMap] = useState<Record<number, any[]>>(
+    {}
+  );
+
+  // NUEVO: Estado para cargar categorías de proyectos
+  const [categoriasMap, setCategoriasMap] = useState<Record<number, string>>(
+    {}
+  );
+
   // Estado para solicitudes pendientes por proyecto
   const [solicitudesPendientesMap, setSolicitudesPendientesMap] = useState<
     Record<number, number>
@@ -244,6 +254,213 @@ export default function ProyectosPage() {
 
     fetchSolicitudesPendientes();
   }, [projects, userId]);
+
+  // NUEVO: Cargar la cantidad de inscritos para todos los proyectos
+  useEffect(() => {
+    const fetchInscritos = async () => {
+      if (projects.length === 0 || !userId) return;
+
+      console.log(
+        '👥 Obteniendo cantidad de inscritos para proyectos:',
+        projects.length
+      );
+      const newMap: Record<number, number> = {};
+
+      await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/taken/count?projectId=${project.id}`
+            );
+            if (res.ok) {
+              const data: { count: number } = await res.json();
+              newMap[project.id] = data.count ?? 0;
+              console.log(`👥 Proyecto ${project.id}: ${data.count} inscritos`);
+            } else {
+              console.log(
+                `⚠️ Error obteniendo inscritos para proyecto ${project.id}`
+              );
+              newMap[project.id] = 0;
+            }
+          } catch (error) {
+            console.error(
+              `❌ Error fetch inscritos proyecto ${project.id}:`,
+              error
+            );
+            newMap[project.id] = 0;
+          }
+        })
+      );
+
+      console.log('👥 Mapa final de inscritos:', newMap);
+      setInscritosMap(newMap);
+    };
+
+    fetchInscritos();
+  }, [projects, userId]);
+
+  // NUEVO: Cargar los integrantes para todos los proyectos
+  useEffect(() => {
+    const fetchIntegrantes = async () => {
+      if (projects.length === 0 || !userId) return;
+
+      console.log('👨‍👩‍👧‍👦 Obteniendo integrantes para proyectos:', projects.length);
+      const newMap: Record<number, any[]> = {};
+
+      await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/taken/list?projectId=${project.id}`
+            );
+            if (res.ok) {
+              const data: unknown = await res.json();
+              console.log(`👨‍👩‍👧‍👦 Integrantes raw proyecto ${project.id}:`, data);
+
+              if (Array.isArray(data)) {
+                const integrantesConInfo = await Promise.all(
+                  data.map(async (item) => {
+                    const obj = item as Record<string, unknown>;
+                    console.log('👤 Integrante original:', obj);
+
+                    // Obtener el ID del usuario
+                    const idValue = obj?.id;
+                    let id: string | number = '';
+                    if (
+                      typeof idValue === 'string' ||
+                      typeof idValue === 'number'
+                    ) {
+                      id = idValue;
+                    } else if (idValue && typeof idValue === 'object') {
+                      id =
+                        typeof (idValue as { id?: unknown })?.id === 'string' ||
+                        typeof (idValue as { id?: unknown })?.id === 'number'
+                          ? (idValue as { id?: string | number }).id!
+                          : '';
+                    }
+
+                    console.log('🔍 Buscando info de usuario para id:', id);
+
+                    // Obtener info del usuario si hay id
+                    let userInfo: {
+                      name?: string;
+                      email?: string;
+                      github?: string;
+                      linkedin?: string;
+                      especialidad?: string;
+                    } = {};
+
+                    if (id) {
+                      try {
+                        const userRes = await fetch(`/api/user?userId=${id}`);
+                        if (userRes.ok) {
+                          userInfo = await userRes.json();
+                          console.log('✅ Info usuario obtenida:', userInfo);
+                        } else {
+                          console.log('⚠️ No se encontró usuario para id:', id);
+                        }
+                      } catch (e) {
+                        console.log('❌ Error al buscar usuario:', id, e);
+                      }
+                    }
+
+                    return {
+                      id,
+                      nombre: (userInfo.name ??
+                        obj?.nombre ??
+                        obj?.name ??
+                        '') as string,
+                      rol: (obj?.rol ?? obj?.role ?? 'Integrante') as string,
+                      especialidad: (userInfo.especialidad ??
+                        obj?.especialidad ??
+                        '') as string,
+                      email: (userInfo.email ?? obj?.email ?? '') as string,
+                      github: (userInfo.github ?? obj?.github ?? '') as string,
+                      linkedin: (userInfo.linkedin ??
+                        obj?.linkedin ??
+                        '') as string,
+                    };
+                  })
+                );
+
+                console.log(
+                  `✅ Integrantes procesados proyecto ${project.id}:`,
+                  integrantesConInfo
+                );
+                newMap[project.id] = integrantesConInfo;
+              } else {
+                console.log(
+                  `⚠️ Respuesta no es array para proyecto ${project.id}`
+                );
+                newMap[project.id] = [];
+              }
+            } else {
+              console.log(
+                `⚠️ Error obteniendo integrantes para proyecto ${project.id}`
+              );
+              newMap[project.id] = [];
+            }
+          } catch (error) {
+            console.error(
+              `❌ Error fetch integrantes proyecto ${project.id}:`,
+              error
+            );
+            newMap[project.id] = [];
+          }
+        })
+      );
+
+      console.log('👨‍👩‍👧‍👦 Mapa final de integrantes:', newMap);
+      setIntegrantesMap(newMap);
+    };
+
+    fetchIntegrantes();
+  }, [projects, userId]);
+
+  // NUEVO: Cargar las categorías para todos los proyectos
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      if (projects.length === 0) return;
+
+      console.log('📂 Obteniendo categorías para proyectos:', projects.length);
+      const newMap: Record<number, string> = {};
+
+      // Obtener IDs únicos de categorías
+      const categoriasIds = [
+        ...new Set(projects.map((p) => p.categoryId).filter(Boolean)),
+      ];
+
+      await Promise.all(
+        categoriasIds.map(async (categoryId) => {
+          try {
+            const res = await fetch(
+              `/api/projects/categoriesProjects?categoryId=${encodeURIComponent(categoryId)}`
+            );
+            if (res.ok) {
+              const categoria = await res.json();
+              const nombreCategoria = Array.isArray(categoria)
+                ? categoria[0]?.name
+                : categoria?.name;
+
+              if (nombreCategoria) {
+                newMap[categoryId] = nombreCategoria;
+                console.log(`📂 Categoría ${categoryId}: ${nombreCategoria}`);
+              }
+            } else {
+              console.log(`⚠️ Error obteniendo categoría ${categoryId}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error fetch categoría ${categoryId}:`, error);
+          }
+        })
+      );
+
+      console.log('📂 Mapa final de categorías:', newMap);
+      setCategoriasMap(newMap);
+    };
+
+    fetchCategorias();
+  }, [projects]);
 
   // Redireccionar si no está autenticado
   React.useEffect(() => {
@@ -872,13 +1089,18 @@ export default function ProyectosPage() {
                                 isOpen={true}
                                 onClose={() => setIntegrantesModalOpen(null)}
                                 proyecto={{
-                                  ...project,
+                                  id: project.id, // Añadir el ID del proyecto
                                   titulo: project.name ?? '',
-                                  rama: '', // Ajusta si tienes el dato real
-                                  especialidades: '', // Ajusta si tienes el dato real
-                                  participacion: '', // Ajusta si tienes el dato real
+                                  rama:
+                                    categoriasMap[project.categoryId] ??
+                                    project.category ??
+                                    'Sin categoría',
+                                  especialidades:
+                                    integrantesMap[project.id]?.length ?? 0,
+                                  participacion: project.isPublic
+                                    ? 'Público'
+                                    : 'Privado',
                                 }}
-                                integrantes={[]}
                               />
                             )}
                           </div>
