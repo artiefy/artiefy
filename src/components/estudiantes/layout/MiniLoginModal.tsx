@@ -301,7 +301,7 @@ export default function MiniLoginModal({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <Icons.spinner className="mx-auto h-5 w-5" />
+                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
                   'Iniciar Sesión'
                 )}
@@ -339,7 +339,7 @@ export default function MiniLoginModal({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <Icons.spinner className="mx-auto h-5 w-5" />
+                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
                   'Restablecer Contraseña'
                 )}
@@ -365,7 +365,7 @@ export default function MiniLoginModal({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <Icons.spinner className="mx-auto h-5 w-5" />
+                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
                   'Enviar Código'
                 )}
@@ -393,7 +393,7 @@ export default function MiniLoginModal({
                 disabled={!!loadingProvider}
               >
                 {loadingProvider === 'oauth_google' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.google />
                 )}
@@ -405,7 +405,7 @@ export default function MiniLoginModal({
                 disabled={!!loadingProvider}
               >
                 {loadingProvider === 'oauth_github' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.gitHub />
                 )}
@@ -417,7 +417,7 @@ export default function MiniLoginModal({
                 disabled={!!loadingProvider}
               >
                 {loadingProvider === 'oauth_facebook' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.facebook />
                 )}
