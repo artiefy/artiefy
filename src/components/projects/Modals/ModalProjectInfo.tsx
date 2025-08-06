@@ -803,6 +803,15 @@ export default function ProjectInfoModal({
           />
         </div>
       </div>
+      {/* Scrollbar color personalizado */}
+      <style jsx global>{`
+        /* Oculta el scroll global del html/body */
+        html,
+        body {
+          scrollbar-width: thin !important; /* Firefox */
+          scrollbar-color: #0f3a6e #041c3c;
+          -ms-overflow-style: none !important; /* IE 10+ */
+      `}</style>
     </div>
   );
 }

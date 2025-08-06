@@ -53,9 +53,24 @@ export async function PATCH(
     const projectId = Number(idParam);
     if (isNaN(projectId)) return respondWithError('ID inválido', 400);
 
-    const body = (await req.json().catch(() => ({}))) as { isPublic?: unknown };
+    // Verifica si el proyecto existe antes de actualizar
+    const project = await getProjectById(projectId);
+    if (!project) return respondWithError('Proyecto no encontrado', 404);
+
+    const body = (await req.json().catch(() => ({}))) as {
+      isPublic?: unknown;
+      publicComment?: unknown;
+      comentario?: unknown; // <-- Para compatibilidad con el frontend
+    };
+    // Permitir recibir el comentario como 'publicComment' o 'comentario'
     const isPublic = typeof body.isPublic === 'boolean' ? body.isPublic : false;
-    const updated = await updateProject(projectId, { isPublic });
+    const publicComment =
+      typeof body.publicComment === 'string'
+        ? body.publicComment
+        : typeof body.comentario === 'string'
+          ? body.comentario
+          : undefined;
+    const updated = await updateProject(projectId, { isPublic, publicComment });
 
     if (!updated)
       return respondWithError(

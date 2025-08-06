@@ -19,22 +19,22 @@ const ModalPlanteamiento: React.FC<ModalPlanteamientoProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="h-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-[#0F2940] p-4 shadow-lg sm:p-6">
-        <h2 className="mb-4 text-center text-xl font-bold text-cyan-400 sm:text-2xl">
+      <div className="h-auto max-h-[95vh] w-full max-w-xs overflow-y-auto rounded-lg bg-[#0F2940] p-3 shadow-lg sm:max-w-lg sm:p-4 md:max-w-2xl lg:max-w-4xl">
+        <h2 className="mb-4 text-center text-lg font-bold text-cyan-400 sm:text-xl md:text-2xl">
           Planteamiento del Problema
         </h2>
-        <div className="min-h-[200px] rounded-lg bg-[#6c7883] p-2 text-lg sm:min-h-[300px] sm:p-4 sm:text-xl md:text-2xl">
+        <div className="min-h-[120px] rounded-lg bg-[#6c7883] p-2 text-base sm:min-h-[200px] sm:p-4 sm:text-lg md:text-xl">
           <textarea
             name="Planteamiento"
             id="plant"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            className="h-full min-h-[160px] w-full resize-none rounded-lg p-2 text-sm sm:min-h-[260px] sm:p-3 sm:text-base"
+            className="h-full min-h-[80px] w-full resize-none rounded-lg p-2 text-sm sm:min-h-[160px] sm:p-3 sm:text-base"
             placeholder="Descripción del Planteamiento..."
           />
         </div>

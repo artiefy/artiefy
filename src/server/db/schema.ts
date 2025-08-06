@@ -211,6 +211,7 @@ export const projects = pgTable('projects', {
     .references(() => categories.id)
     .notNull(),
   isPublic: boolean('is_public').default(false).notNull(),
+  publicComment: text('public_comment'), // <-- Nuevo campo para comentario público
   // Cambia estos campos a snake_case para que Drizzle los mapee correctamente
   fecha_inicio: date('fecha_inicio'),
   fecha_fin: date('fecha_fin'),

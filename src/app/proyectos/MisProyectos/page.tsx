@@ -862,17 +862,6 @@ export default function ProyectosPage() {
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Proyecto
             </Button>
-            <Button
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
-              onClick={() => {
-                setProyectoGenerado(null);
-                setModalResumenGeneradoOpen(false);
-                setModalGenerarOpen(true);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Generar Proyecto con IA
-            </Button>
           </div>
 
           {/* Indicadores de filtros activos */}

@@ -161,12 +161,13 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
   // Maneja la recepción de objetivos generados por IA
   const handleProyectoGenerado = (data: any) => {
-    if (Array.isArray(data?.specific_objectives)) {
+    console.log('Objetivos específicos recibidos en ModalObjetivosEsp:', data); // <-- Nuevo log
+    if (Array.isArray(data?.milestones)) {
       setTexto(
-        data.specific_objectives.map((title: string, idx: number) => ({
+        data.milestones.map((milestone: any, idx: number) => ({
           id: String(idx) + '-' + Date.now(),
-          title,
-          activities: [],
+          title: milestone.milestone_name || `Milestone ${idx + 1}`,
+          activities: Array.isArray(milestone.tasks) ? milestone.tasks : [],
         }))
       );
     }
@@ -180,7 +181,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="flex h-[90vh] w-full max-w-xs flex-col rounded-lg bg-[#0F2940] text-white shadow-lg sm:h-[85vh] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:h-[80vh]">
+      <div className="flex h-[95vh] w-full max-w-xs flex-col rounded-lg bg-[#0F2940] text-white shadow-lg sm:h-[85vh] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:h-[80vh]">
         {/* Header fijo */}
         <div className="flex-shrink-0 p-2 pb-0 sm:p-4 md:p-6">
           <h2 className="mb-3 text-center text-lg font-bold text-cyan-400 sm:mb-4 sm:text-xl md:text-2xl">
@@ -227,7 +228,6 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
         {/* Contenido con scroll */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6">
-
           {/* Objectives cards */}
           <div className="mb-4 space-y-3 sm:mb-6 sm:space-y-4">
             {texto.map((objective) => (
@@ -330,33 +330,30 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         </div>
 
         {/* Footer fijo */}
-        <div className="flex-shrink-0 p-3 pt-0 sm:p-4 md:p-6">
-          <div className="mt-4 flex flex-col justify-between gap-3 sm:mt-6 sm:flex-row sm:gap-4">
-            <Button
-              variant="ghost"
-              onClick={onAnterior}
-              className="group order-2 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-1 sm:px-4"
-            >
-              <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
-              <span className="hidden sm:inline">Objetivo General</span>
-              <span className="sm:hidden">Anterior</span>
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={onClose}
-              className="order-1 rounded px-3 py-2 font-semibold text-white sm:order-2 sm:px-4"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => onConfirm(texto)}
-              className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:px-4"
-            >
-              Resumen
-              <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-            </Button>
-          </div>
+        <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
+          <Button
+            variant="ghost"
+            onClick={onAnterior}
+            className="group order-1 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-1 sm:px-4"
+          >
+            <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
+            <span className="sm:inline">Objetivo General</span>
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onClose}
+            className="order-2 rounded px-3 py-2 font-semibold text-white sm:order-2 sm:px-4"
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onConfirm(texto)}
+            className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-3 sm:px-4"
+          >
+            Resumen
+            <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+          </Button>
         </div>
       </div>
 

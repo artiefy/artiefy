@@ -109,7 +109,7 @@ print(response.json())
 Crea un plan estructurado de proyecto con base en los requisitos y objetivos definidos por el usuario.
 
 **Método:** `POST`
-**URL:** `http://18.117.124.192:5000/plan_project`
+**URL:** `http://3.142.77.31:5000/plan_project`
 
 #### Entrada esperada
 

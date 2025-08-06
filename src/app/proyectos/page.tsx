@@ -819,7 +819,6 @@ export default function Component() {
                             </h2>
                             <p className="line-clamp-3 text-sm leading-relaxed text-slate-300 md:line-clamp-none">
                               {project.planteamiento ??
-                                project.justificacion ??
                                 'Sin descripción'}
                             </p>
                           </div>

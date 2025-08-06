@@ -89,45 +89,31 @@ export default function ModalGenerarProyecto({
   const handleGenerar = async () => {
     setLoading(true);
     setError('');
-    setResultado(null);
+    // Mostrar el cuerpo que se envía
+    console.log('Cuerpo enviado a IA:', form);
     try {
       const res = await fetch('http://3.142.77.31:5000/plan_project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error('Error al generar el proyecto');
+      // Mostrar la respuesta completa
+      console.log('Respuesta completa:', res);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error al generar el proyecto:', errorText);
+        throw new Error('Error al generar el proyecto');
+      }
       const data = await res.json();
+      console.log('Información generada por IA:', data);
       setResultado(data);
-      setShowConfirmModal(true); // Mostrar modal de confirmación
-      // onProyectoGenerado(data); // Solo llamar si se confirma
+      onProyectoGenerado(data);
+      onClose();
     } catch (err) {
       setError('No se pudo generar el proyecto');
+      console.error('Catch error:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCrearProyecto = async () => {
-    setCreating(true);
-    setCreateError('');
-    setCreateSuccess('');
-    try {
-      // Ajusta el endpoint y los datos según tu API
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resultado),
-      });
-      if (!res.ok) throw new Error('Error al crear el proyecto');
-      setCreateSuccess('Proyecto creado exitosamente');
-      onProyectoGenerado(resultado);
-      setShowConfirmModal(false);
-      setResultado(null);
-    } catch (err) {
-      setCreateError('No se pudo crear el proyecto');
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -147,22 +133,17 @@ export default function ModalGenerarProyecto({
 
   // Efecto separado solo para cargar el usuario logueado
   React.useEffect(() => {
-    console.log('DEBUG - currentUser cambió:', currentUser);
-    console.log('DEBUG - currentUser?.name:', currentUser?.name);
-    console.log('DEBUG - typeof currentUser:', typeof currentUser);
-    console.log('DEBUG - currentUser completo:', JSON.stringify(currentUser));
-
-    if (currentUser?.name) {
-      console.log('DEBUG - Actualizando team_members con:', currentUser.name);
+    // Solo actualiza si está vacío
+    if (currentUser?.name && !form.team_members) {
       setForm((prev) => ({
         ...prev,
         team_members: currentUser.name,
       }));
-    } else {
-      console.log('DEBUG - No hay currentUser.name disponible');
-      // Intentar obtener el usuario de otra manera si es necesario
-      // Por ejemplo, desde localStorage o context
     }
+    console.log('DEBUG - currentUser cambió:', currentUser);
+    console.log('DEBUG - currentUser?.name:', currentUser?.name);
+    console.log('DEBUG - typeof currentUser:', typeof currentUser);
+    console.log('DEBUG - currentUser completo:', JSON.stringify(currentUser));
   }, [currentUser]);
 
   // Efecto separado para manejar la apertura del modal
@@ -367,50 +348,6 @@ export default function ModalGenerarProyecto({
                 {loading ? 'Generando...' : 'Generar'}
               </Button>
               <Button variant="outline" onClick={onClose} className="truncate">
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de confirmación para crear el proyecto en la BD */}
-      <Dialog
-        open={showConfirmModal}
-        onOpenChange={() => setShowConfirmModal(false)}
-      >
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="break-words">
-              ¿Crear este proyecto en la base de datos?
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="max-h-64 overflow-auto rounded bg-slate-100 p-2 text-slate-800">
-              <pre className="text-xs break-words whitespace-pre-wrap">
-                {JSON.stringify(resultado, null, 2)}
-              </pre>
-            </div>
-            {createError && (
-              <div className="break-words text-red-500">{createError}</div>
-            )}
-            {createSuccess && (
-              <div className="break-words text-green-600">{createSuccess}</div>
-            )}
-            <div className="flex gap-2 pt-2">
-              <Button
-                className="truncate bg-cyan-600 text-white"
-                onClick={handleCrearProyecto}
-                disabled={creating}
-              >
-                {creating ? 'Creando...' : 'Crear Proyecto'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowConfirmModal(false)}
-                disabled={creating}
-                className="truncate"
-              >
                 Cancelar
               </Button>
             </div>

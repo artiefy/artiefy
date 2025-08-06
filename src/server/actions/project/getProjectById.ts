@@ -11,6 +11,7 @@ import {
 } from '~/server/db/schema';
 
 export interface ProjectDetail {
+  publicComment: boolean;
   id: number;
   name: string;
   planteamiento: string;
@@ -129,6 +130,7 @@ export async function getProjectById(
       ? new Date(project.fecha_fin).toISOString().split('T')[0]
       : undefined,
     tipo_visualizacion: project.tipo_visualizacion ?? undefined,
+    publicComment: false
   };
 
   console.info(`[getProjectById] Returning project:`, projectDetail);

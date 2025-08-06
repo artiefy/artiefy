@@ -31,6 +31,7 @@ interface UpdateProjectData {
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
+  publicComment?: string; // <-- Nuevo campo
 }
 
 export async function updateProject(
@@ -69,6 +70,7 @@ export async function updateProject(
     fecha_inicio?: string | null;
     fecha_fin?: string | null;
     tipo_visualizacion?: 'meses' | 'dias';
+    publicComment?: string;
     updatedAt: Date;
   } = {
     updatedAt: new Date(),
@@ -98,6 +100,8 @@ export async function updateProject(
   if (projectData.tipoVisualizacion !== undefined) {
     updateData.tipo_visualizacion = projectData.tipoVisualizacion;
   }
+  if (projectData.publicComment !== undefined)
+    updateData.publicComment = projectData.publicComment;
 
   // DEBUG: Verifica los datos que se van a actualizar
   console.log('updateData:', updateData);

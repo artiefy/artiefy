@@ -54,6 +54,7 @@ import {
   ProjectDetail,
 } from '~/server/actions/project/getProjectById';
 import { Category } from '~/types';
+import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
 
 export default function ProjectDetails() {
   const { user, isLoaded } = useUser(); // Usar Clerk para obtener usuario
@@ -102,6 +103,14 @@ export default function ProjectDetails() {
   const [modalSolicitudesOpen, setModalSolicitudesOpen] = useState(false);
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
 
+  // Estado para el modal de publicación y el comentario
+  const [modalPublicarOpen, setModalPublicarOpen] = useState(false);
+  const [comentarioPublicar, setComentarioPublicar] = useState('');
+  // Nuevo estado para loading del botón de publicar
+  const [publicandoProyecto, setPublicandoProyecto] = useState(false);
+  // Nuevo estado para despublicar
+  const [despublicandoProyecto, setDespublicandoProyecto] = useState(false);
+
   // Función para recargar el contador de solicitudes pendientes
   const recargarSolicitudesPendientes = async () => {
     try {
@@ -120,6 +129,11 @@ export default function ProjectDetails() {
     } catch {
       setSolicitudesPendientes(0);
     }
+  };
+
+  // Función para abrir el modal de publicar proyecto
+  const handleAbrirModalPublicar = () => {
+    setModalPublicarOpen(true);
   };
 
   // Obtener userId de Clerk cuando esté disponible
@@ -329,6 +343,15 @@ export default function ProjectDetails() {
     })();
   }, [projectId, isLoaded, userId]); // Agregar isLoaded y userId como dependencias
 
+  // Recargar el proyecto desde el backend
+  const reloadProject = async () => {
+    if (!projectId) return;
+    setLoading(true);
+    const data = await getProjectById(projectId);
+    setProject(data);
+    setLoading(false);
+  };
+
   // Construir la URL de la imagen usando la misma lógica que en la página de proyectos
   const projectImageUrl = React.useMemo(() => {
     if (!project?.coverImageKey) return null;
@@ -485,6 +508,7 @@ export default function ProjectDetails() {
   // Publicar o despublicar proyecto
   const handleTogglePublicarProyecto = async () => {
     if (!projectId) return;
+    setDespublicandoProyecto(true); // Mostrar loading
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
@@ -494,14 +518,23 @@ export default function ProjectDetails() {
         body: JSON.stringify({ isPublic: !project?.isPublic }),
       });
       if (res.ok) {
+        const updated = await res.json();
         setProject((prev) =>
-          prev ? { ...prev, isPublic: !prev.isPublic } : prev
+          prev
+            ? {
+                ...prev,
+                isPublic: updated.isPublic,
+                publicComment: updated.publicComment ?? prev.publicComment,
+              }
+            : prev
         );
       } else {
         alert('No se pudo actualizar el estado público del proyecto');
       }
     } catch {
       alert('Error al actualizar el estado público del proyecto');
+    } finally {
+      setDespublicandoProyecto(false); // Ocultar loading
     }
   };
 
@@ -1845,6 +1878,46 @@ export default function ProjectDetails() {
     window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
 
+  // Función para confirmar la publicación del proyecto
+  const handleConfirmarPublicarProyecto = async () => {
+    if (!projectId) return;
+    setPublicandoProyecto(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isPublic: true,
+          publicComment: comentarioPublicar, // <-- Enviar como publicComment
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setModalPublicarOpen(false);
+        setComentarioPublicar('');
+        // Actualiza el estado del proyecto localmente
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                isPublic: updated.isPublic,
+                publicComment: updated.publicComment ?? comentarioPublicar,
+              }
+            : prev
+        );
+        alert('Proyecto publicado exitosamente');
+      } else {
+        alert('No se pudo publicar el proyecto');
+      }
+    } catch {
+      alert('Error al publicar el proyecto');
+    } finally {
+      setPublicandoProyecto(false);
+    }
+  };
+
   // Componente para mostrar archivos de una entrega MEJORADO CON ESTADO DE CARGA
   const ArchivosEntrega = ({
     actividadId,
@@ -2129,6 +2202,18 @@ export default function ProjectDetails() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Mostrar comentario público si el proyecto es público y existe */}
+                  {project.isPublic && project.publicComment && (
+                    <div className="mt-4 rounded bg-blue-900/60 p-3">
+                      <div className="mb-1 text-xs font-semibold text-blue-300">
+                        Comentario al publicar:
+                      </div>
+                      <div className="text-sm break-words whitespace-pre-line text-blue-100">
+                        {project.publicComment}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -2168,11 +2253,20 @@ export default function ProjectDetails() {
                     </Button>
                   )}
 
+                  {/* Modifica el botón para abrir el modal */}
                   <Button
                     className="truncate bg-green-600 text-xs hover:bg-green-700 sm:text-sm"
                     size="sm"
-                    onClick={handleTogglePublicarProyecto}
-                    disabled={!puedeEditarProyecto()}
+                    onClick={
+                      project.isPublic
+                        ? handleTogglePublicarProyecto
+                        : handleAbrirModalPublicar
+                    }
+                    disabled={
+                      !puedeEditarProyecto() ||
+                      publicandoProyecto ||
+                      despublicandoProyecto
+                    }
                   >
                     {project.isPublic ? (
                       <>
@@ -2181,6 +2275,9 @@ export default function ProjectDetails() {
                           Despublicar Proyecto
                         </span>
                         <span className="truncate lg:hidden">Despublicar</span>
+                        {despublicandoProyecto && (
+                          <RotateCw className="ml-2 inline-block h-4 w-4 animate-spin" />
+                        )}
                       </>
                     ) : (
                       <>
@@ -2189,6 +2286,9 @@ export default function ProjectDetails() {
                           Publicar Proyecto
                         </span>
                         <span className="truncate lg:hidden">Publicar</span>
+                        {publicandoProyecto && (
+                          <RotateCw className="ml-2 inline-block h-4 w-4 animate-spin" />
+                        )}
                       </>
                     )}
                   </Button>
@@ -2981,6 +3081,18 @@ export default function ProjectDetails() {
           projectId={projectId}
           userId={userId}
           onSolicitudProcesada={recargarSolicitudesPendientes}
+        />
+        {/* Modal para publicar proyecto con comentario */}
+        <ModalPublicarProyecto
+          isOpen={modalPublicarOpen}
+          onClose={async () => {
+            setModalPublicarOpen(false);
+            await reloadProject();
+          }}
+          comentario={comentarioPublicar}
+          setComentario={setComentarioPublicar}
+          onConfirm={handleConfirmarPublicarProyecto}
+          loading={publicandoProyecto}
         />
       </div>
       {/* Scrollbar color personalizado */}
