@@ -114,7 +114,7 @@ Colores del manual de marca:
 #3AF4EF -primary //variable de tailwindcss
 #00BDD8 -secondary //variable de tailwindcss
 
-## #00A5C0 //color parecido mas oscuro de -secondary para el hover
+#00A5C0 //color parecido mas oscuro de -secondary para el hover
 ```
 
 Lik Del Modo Blur:

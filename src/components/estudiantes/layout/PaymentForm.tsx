@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { useUser } from '@clerk/nextjs';
 
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import { validateFormData } from '~/utils/paygateway/validation';
 
 import type { FormData, Product } from '~/types/payu';
@@ -23,12 +22,14 @@ const PaymentForm: React.FC<{
   redirectUrlOnAuth = '',
 }) => {
   const { user } = useUser();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   // Estados locales para email y nombre si no hay usuario autenticado
   const [manualEmail, setManualEmail] = useState('');
   const [manualFullName, setManualFullName] = useState('');
+
+  // Estados para el mini login modal
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Si hay usuario, usar sus datos y bloquear campos; si no, usar los manuales y permitir editar
   const isLoggedIn = !!user;
@@ -80,45 +81,7 @@ const PaymentForm: React.FC<{
     }
   }, [telephone, termsAccepted, privacyAccepted, showErrors]);
 
-  const handleSubmit = async (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
-    event.preventDefault();
-
-    // Si requiere autenticación y no hay usuario, redirigir a login
-    if (requireAuthOnSubmit && !isLoggedIn) {
-      // Guardar los datos manuales en sessionStorage para recuperarlos después del login
-      sessionStorage.setItem('pendingBuyerEmail', manualEmail);
-      sessionStorage.setItem('pendingBuyerFullName', manualFullName);
-      sessionStorage.setItem('pendingTelephone', telephone);
-
-      if (redirectUrlOnAuth) {
-        router.push(
-          `/sign-in?redirect_url=${encodeURIComponent(
-            redirectUrlOnAuth
-          )}&plan_id=${selectedProduct.id}`
-        );
-      } else {
-        router.push('/sign-in');
-      }
-      return;
-    }
-
-    const newErrors = validateFormData(
-      telephone,
-      termsAccepted,
-      privacyAccepted
-    );
-    if (
-      Object.keys(newErrors).length > 0 ||
-      !termsAccepted ||
-      !privacyAccepted
-    ) {
-      setErrors(newErrors);
-      setShowErrors(true);
-      return;
-    }
-
+  const processPayment = async () => {
     setLoading(true);
 
     try {
@@ -134,8 +97,8 @@ const PaymentForm: React.FC<{
           productId: selectedProduct.id,
           amount: selectedProduct.amount,
           description: selectedProduct.description,
-          buyerEmail,
-          buyerFullName,
+          buyerEmail: isLoggedIn ? buyerEmail : manualEmail,
+          buyerFullName: isLoggedIn ? buyerFullName : manualFullName,
           telephone,
         }),
       });
@@ -148,8 +111,7 @@ const PaymentForm: React.FC<{
 
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action =
-        'https://checkout.payulatam.com/ppp-web-gateway-payu/';
+      form.action = 'https://checkout.payulatam.com/ppp-web-gateway-payu/';
 
       for (const key in data) {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -169,38 +131,110 @@ const PaymentForm: React.FC<{
     }
   };
 
+  const handleSubmit = async (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    event.preventDefault();
+
+    // Validar formulario primero
+    const newErrors = validateFormData(
+      telephone,
+      termsAccepted,
+      privacyAccepted
+    );
+    if (
+      Object.keys(newErrors).length > 0 ||
+      !termsAccepted ||
+      !privacyAccepted
+    ) {
+      setErrors(newErrors);
+      setShowErrors(true);
+      return;
+    }
+
+    // Si requiere autenticación y no hay usuario, mostrar modal de login
+    if (requireAuthOnSubmit && !isLoggedIn) {
+      // Guardar los datos manuales en sessionStorage para recuperarlos después del login
+      sessionStorage.setItem('pendingBuyerEmail', manualEmail);
+      sessionStorage.setItem('pendingBuyerFullName', manualFullName);
+      sessionStorage.setItem('pendingTelephone', telephone);
+      sessionStorage.setItem('pendingTermsAccepted', termsAccepted.toString());
+      sessionStorage.setItem(
+        'pendingPrivacyAccepted',
+        privacyAccepted.toString()
+      );
+
+      setShowLoginModal(true);
+      return;
+    }
+
+    // Si está autenticado o no requiere autenticación, procesar el pago
+    await processPayment();
+  };
+
+  const handleLoginSuccess = async () => {
+    setShowLoginModal(false);
+    // Procesar el pago después del login exitoso
+    await processPayment();
+  };
+
   // Recuperar datos manuales después del login y limpiar sessionStorage
   useEffect(() => {
     if (isLoggedIn && !manualEmail && !manualFullName) {
       const pendingEmail = sessionStorage.getItem('pendingBuyerEmail');
       const pendingFullName = sessionStorage.getItem('pendingBuyerFullName');
       const pendingTelephone = sessionStorage.getItem('pendingTelephone');
+      const pendingTermsAccepted = sessionStorage.getItem(
+        'pendingTermsAccepted'
+      );
+      const pendingPrivacyAccepted = sessionStorage.getItem(
+        'pendingPrivacyAccepted'
+      );
+
       if (pendingEmail) setManualEmail(pendingEmail);
       if (pendingFullName) setManualFullName(pendingFullName);
       if (pendingTelephone) setTelephone(pendingTelephone ?? '');
+      if (pendingTermsAccepted)
+        setTermsAccepted(pendingTermsAccepted === 'true');
+      if (pendingPrivacyAccepted)
+        setPrivacyAccepted(pendingPrivacyAccepted === 'true');
+
+      // Limpiar sessionStorage
       sessionStorage.removeItem('pendingBuyerEmail');
       sessionStorage.removeItem('pendingBuyerFullName');
       sessionStorage.removeItem('pendingTelephone');
+      sessionStorage.removeItem('pendingTermsAccepted');
+      sessionStorage.removeItem('pendingPrivacyAccepted');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
   return (
-    <form className="form">
-      <h3 className="payer-info-title">Datos del pagador</h3>
-      <BuyerInfoForm
-        formData={{ buyerEmail, buyerFullName, telephone }}
-        termsAndConditions={termsAccepted}
-        privacyPolicy={privacyAccepted}
-        onChangeAction={handleInputChange}
-        showErrors={showErrors}
-        errors={errors}
-        onSubmitAction={handleSubmit}
-        loading={loading}
-        readOnly={isLoggedIn} // Solo lectura si hay usuario autenticado
+    <>
+      <form className="form">
+        <h3 className="payer-info-title">Datos del pagador</h3>
+        <BuyerInfoForm
+          formData={{ buyerEmail, buyerFullName, telephone }}
+          termsAndConditions={termsAccepted}
+          privacyPolicy={privacyAccepted}
+          onChangeAction={handleInputChange}
+          showErrors={showErrors}
+          errors={errors}
+          onSubmitAction={handleSubmit}
+          loading={loading}
+          readOnly={isLoggedIn} // Solo lectura si hay usuario autenticado
+        />
+        {error && <p className="error">{error}</p>}
+      </form>
+
+      {/* Mini Login Modal */}
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+        redirectUrl={redirectUrlOnAuth}
       />
-      {error && <p className="error">{error}</p>}
-    </form>
+    </>
   );
 };
 
