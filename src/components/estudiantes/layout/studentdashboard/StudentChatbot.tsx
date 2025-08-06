@@ -295,11 +295,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       console.log(chatMode);
       // Url para la petición según si hay courseTitle
       const urlDefault = {
-        url: 'http://18.191.230.0:5000/root_courses',
+        url: 'http://3.142.77.31:5000/root_courses',
         body: { prompt: query },
       };
       const urlCourses = {
-        url: 'http://18.191.230.0:5000/get_classes',
+        url: 'http://3.142.77.31:5000/get_classes',
         body: {
           user_id: user?.id,
           curso: courseTitle ? courseTitle : chatMode.curso_title,
@@ -526,11 +526,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       width:
         typeof window !== 'undefined' && window.innerWidth < 768
           ? window.innerWidth
-          : 400,
-      height:
-        typeof window !== 'undefined' && window.innerWidth < 768
-          ? window.innerHeight
           : 500,
+      height: window.innerHeight,
     };
     setDimensions(initialDimensions);
 
@@ -538,8 +535,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const handleResize = () => {
       const isMobile = window.innerWidth < 768;
       setDimensions({
-        width: isMobile ? window.innerWidth : 400,
-        height: isMobile ? window.innerHeight : 500,
+        width: isMobile ? window.innerWidth : 500,
+        height: window.innerHeight,
       });
     };
 
@@ -925,7 +922,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             height={dimensions.height}
             onResize={handleResize}
             minConstraints={
-              isDesktop ? [400, 500] : [window.innerWidth, window.innerHeight]
+              isDesktop ? [500, window.innerHeight] : [window.innerWidth, window.innerHeight]
             }
             maxConstraints={[
               isDesktop

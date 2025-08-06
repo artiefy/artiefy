@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useAuth,useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
@@ -105,7 +105,7 @@ export default function HomePage() {
             <div>
               <Button
                 asChild
-                className="border-primary bg-primary text-background hover:border-primary hover:text-primary relative skew-x-[-20deg] rounded-none border py-8 text-2xl font-semibold italic hover:bg-transparent active:scale-95"
+                className="border-primary bg-primary text-background hover:border-primary hover:text-primary join-button relative skew-x-[-20deg] rounded-none border py-8 text-2xl font-semibold italic hover:bg-transparent active:scale-95"
                 style={{
                   boxShadow: '6px 6px 0 black',
                   transition: '0.5s',
