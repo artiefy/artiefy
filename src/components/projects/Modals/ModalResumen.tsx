@@ -57,6 +57,12 @@ interface ModalResumenProps {
     responsibleUserId?: string;
     hoursPerDay?: number;
   }[];
+  responsablesPorActividad?: { [key: string]: string };
+  horasPorActividad?: { [key: string]: number };
+  horasPorDiaProyecto?: number; // <-- Recibe el prop
+  setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
+  tiempoEstimadoProyecto?: number; // <-- Nuevo prop
+  setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo prop
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -81,6 +87,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   fechaFin: fechaFinProp,
   tipoVisualizacion: tipoVisualizacionProp,
   actividades: actividadesProp = [],
+  responsablesPorActividad: responsablesPorActividadProp = {},
+  horasPorActividad: horasPorActividadProp = {},
+  horasPorDiaProyecto: horasPorDiaProyectoProp, // <-- Recibe el prop
+  setHorasPorDiaProyecto, // <-- Recibe el setter
+  tiempoEstimadoProyecto: tiempoEstimadoProyectoProp, // <-- Nuevo prop
+  setTiempoEstimadoProyecto, // <-- Nuevo setter
 }) => {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
@@ -119,10 +131,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Agrega un estado para responsables y horas por actividad
   const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
     [key: string]: string;
-  }>({});
+  }>(responsablesPorActividadProp);
   const [horasPorActividad, setHorasPorActividad] = useState<{
     [key: string]: number;
-  }>({});
+  }>(horasPorActividadProp);
   const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
 
   // Add handleTextAreaChange function for auto-resize
@@ -180,22 +192,63 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     objetivosEspEditado,
   ]);
 
-  // Nuevo estado para el filtro de búsqueda por actividad
-  const [buscadorResponsable, setBuscadorResponsable] = useState<{
-    [key: string]: string;
-  }>({});
-
-  // Estado global para controlar el despliegue del dropdown por actividad
-  const [showDropdownResponsable, setShowDropdownResponsable] = useState<{
-    [key: string]: boolean;
-  }>({});
-
   // Nuevo estado para la cantidad de horas por día en el proyecto
-  const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6); // Valor por defecto 6
+  const [horasPorDiaProyectoState, setHorasPorDiaProyectoState] =
+    useState<number>(horasPorDiaProyectoProp ?? 6); // Valor por defecto 6
+
+  // Si el prop cambia, sincroniza el estado local solo si no hay setter (modo no controlado)
+  useEffect(() => {
+    if (
+      typeof horasPorDiaProyectoProp === 'number' &&
+      !setHorasPorDiaProyecto
+    ) {
+      setHorasPorDiaProyectoState(horasPorDiaProyectoProp);
+    }
+  }, [horasPorDiaProyectoProp, setHorasPorDiaProyecto]);
+
+  // Decide el valor y el setter a usar
+  const horasPorDiaValue =
+    typeof horasPorDiaProyectoProp === 'number' && setHorasPorDiaProyecto
+      ? horasPorDiaProyectoProp
+      : horasPorDiaProyectoState;
+  const handleHorasPorDiaChange = (val: number) => {
+    if (setHorasPorDiaProyecto) {
+      setHorasPorDiaProyecto(val);
+    } else {
+      setHorasPorDiaProyectoState(val);
+    }
+  };
+
+  // Nuevo estado para el tiempo estimado si no es controlado
+  const [tiempoEstimadoProyectoState, setTiempoEstimadoProyectoState] =
+    useState<number>(tiempoEstimadoProyectoProp ?? 0);
+
+  // Si el prop cambia, sincroniza el estado local solo si no hay setter (modo no controlado)
+  useEffect(() => {
+    if (
+      typeof tiempoEstimadoProyectoProp === 'number' &&
+      !setTiempoEstimadoProyecto
+    ) {
+      setTiempoEstimadoProyectoState(tiempoEstimadoProyectoProp);
+    }
+  }, [tiempoEstimadoProyectoProp, setTiempoEstimadoProyecto]);
+
+  // Decide el valor y el setter a usar
+  const tiempoEstimadoValue =
+    typeof tiempoEstimadoProyectoProp === 'number' && setTiempoEstimadoProyecto
+      ? tiempoEstimadoProyectoProp
+      : tiempoEstimadoProyectoState;
+  const handleTiempoEstimadoChange = (val: number) => {
+    if (setTiempoEstimadoProyecto) {
+      setTiempoEstimadoProyecto(val);
+    } else {
+      setTiempoEstimadoProyectoState(val);
+    }
+  };
 
   // Calcular el total de horas del proyecto
   const totalHorasProyecto =
-    duracionDias > 0 ? duracionDias * horasPorDiaProyecto : 0;
+    duracionDias > 0 ? duracionDias * horasPorDiaValue : 0;
 
   // Calcular la cantidad total de actividades (sumando todas las actividades de todos los objetivos)
   const totalActividades = objetivosEspEditado.reduce(
@@ -1182,7 +1235,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
         <form className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
           <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm sm:text-base">
+            <label className="text-sm text-cyan-300 sm:text-base">
               Planteamiento del problema
             </label>
             <textarea
@@ -1198,7 +1251,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           </div>
 
           <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm sm:text-base">Justificación</label>
+            <label className="text-sm text-cyan-300 sm:text-base">
+              Justificación
+            </label>
             <textarea
               value={justificacionEditada}
               onChange={(e) => {
@@ -1212,7 +1267,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           </div>
 
           <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm sm:text-base">Objetivo General</label>
+            <label className="text-sm text-cyan-300 sm:text-base">
+              Objetivo General
+            </label>
             <textarea
               value={objetivoGenEditado}
               onChange={(e) => {
@@ -1225,9 +1282,53 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             />
           </div>
 
+          <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <label
+              className="text-sm font-medium text-cyan-300 sm:text-base"
+              htmlFor="horasPorDiaProyecto"
+            >
+              Horas por día de trabajo:
+            </label>
+            <input
+              id="horasPorDiaProyecto"
+              type="number"
+              min={1}
+              max={24}
+              value={horasPorDiaValue}
+              onChange={(e) => {
+                const num = Number(e.target.value);
+                if (!isNaN(num) && num >= 1 && num <= 24) {
+                  handleHorasPorDiaChange(num);
+                }
+              }}
+              className="rounded bg-gray-400 p-1 text-black"
+            />
+          </div>
+          {/* Izquierda: Horas totales del proyecto*/}
+          <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <label
+              className="text-sm font-medium text-cyan-300 sm:text-base"
+              htmlFor="horasPorProyecto"
+            >
+              Tiempo estimado del proyecto:
+            </label>
+            <input
+              id="horasPorProyecto"
+              type="number"
+              min={0}
+              value={tiempoEstimadoValue}
+              onChange={(e) => {
+                const num = Number(e.target.value);
+                if (!isNaN(num) && num >= 0) {
+                  handleTiempoEstimadoChange(num);
+                }
+              }}
+              className="rounded bg-gray-400 p-1 text-black"
+            />
+          </div>
           {/* Fechas responsive */}
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium sm:text-base">
+            <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Inicio del Proyecto
             </label>
             <input
@@ -1240,7 +1341,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           </div>
 
           <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium sm:text-base">
+            <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Fin del Proyecto
             </label>
             <input
@@ -1256,25 +1357,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           {/* Horas por día responsive */}
           {fechaInicio && fechaFin && (
             <>
-              <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                <label
-                  className="text-sm font-medium text-cyan-300 sm:text-base"
-                  htmlFor="horasPorDiaProyecto"
-                >
-                  Horas por día de trabajo:
-                </label>
-                <input
-                  id="horasPorDiaProyecto"
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={horasPorDiaProyecto}
-                  onChange={(e) =>
-                    setHorasPorDiaProyecto(Number(e.target.value))
-                  }
-                  className="w-full rounded bg-gray-300 p-1 text-black sm:w-24"
-                />
-              </div>
               <div className="col-span-1 flex items-center">
                 <span className="text-sm font-semibold text-cyan-200 sm:text-base">
                   Total de horas: {totalHorasProyecto}
@@ -1285,221 +1367,30 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
           {/* Objetivos específicos */}
           <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm sm:text-base">
+            <label className="text-sm text-cyan-300 sm:text-base">
               Objetivos Específicos
             </label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <textarea
-                value={nuevoObjetivo}
-                onChange={(e) => {
-                  setNuevoObjetivo(e.target.value);
-                  handleTextAreaChange(e);
-                }}
-                rows={1}
-                className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                placeholder="Agregar nuevo objetivo..."
-              />
-              <button
-                type="button"
-                onClick={handleAgregarObjetivo}
-                className="rounded bg-green-600 px-4 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:px-2 sm:text-2xl"
-              >
-                +
-              </button>
-            </div>
             {/* Lista de objetivos responsive */}
             <div className="m-2 mb-2 gap-2">
               <ul className="mb-2 space-y-4">
                 {objetivosEspEditado.map((obj, idx) => (
-                  <li
-                    key={obj.id}
-                    className="flex flex-col gap-2 border-b border-gray-600 pb-2"
-                  >
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <textarea
-                        value={obj.title}
-                        onChange={(e) => {
-                          handleEditarObjetivo(idx, e.target.value);
-                          handleTextAreaChange(e);
-                        }}
-                        rows={1}
-                        className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleEliminarObjetivo(idx)}
-                        className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 sm:px-2"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    {/* Actividades responsive */}
-                    <div className="ml-2 sm:ml-4">
-                      <label className="text-xs text-cyan-300 sm:text-sm">
-                        Actividades
-                      </label>
-                      <ul className="mb-1 space-y-2">
-                        {obj.activities.map((act, actIdx) => {
-                          const actividadKey = `${obj.id}_${actIdx}`;
-                          const responsableId =
-                            responsablesPorActividad[actividadKey] || '';
-                          const responsableObj = usuarios.find(
-                            (u) => u.id === responsableId
-                          );
-                          return (
-                            <li key={actIdx} className="flex flex-col gap-2">
-                              <div className="flex flex-col gap-2 sm:flex-row">
-                                <textarea
-                                  value={act}
-                                  onChange={(e) => {
-                                    handleEditarActividad(
-                                      obj.id,
-                                      actIdx,
-                                      e.target.value
-                                    );
-                                    handleTextAreaChange(e);
-                                  }}
-                                  rows={1}
-                                  className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleEliminarActividad(obj.id, actIdx)
-                                  }
-                                  className="rounded bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 sm:px-2"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                              {/* Responsable y horas responsive */}
-                              <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <div className="relative w-full sm:w-64">
-                                  <input
-                                    type="text"
-                                    value={
-                                      buscadorResponsable[actividadKey] ??
-                                      responsableObj?.name ??
-                                      ''
-                                    }
-                                    onChange={(e) => {
-                                      setBuscadorResponsable((prev) => ({
-                                        ...prev,
-                                        [actividadKey]: e.target.value,
-                                      }));
-                                      setShowDropdownResponsable((prev) => ({
-                                        ...prev,
-                                        [actividadKey]: true,
-                                      }));
-                                    }}
-                                    onFocus={() =>
-                                      setShowDropdownResponsable((prev) => ({
-                                        ...prev,
-                                        [actividadKey]: true,
-                                      }))
-                                    }
-                                    onClick={() =>
-                                      setShowDropdownResponsable((prev) => ({
-                                        ...prev,
-                                        [actividadKey]: true,
-                                      }))
-                                    }
-                                    onBlur={() =>
-                                      setTimeout(() => {
-                                        setShowDropdownResponsable((prev) => ({
-                                          ...prev,
-                                          [actividadKey]: false,
-                                        }));
-                                      }, 150)
-                                    }
-                                    placeholder="Buscar responsable..."
-                                    className="w-full rounded bg-gray-300 p-1 text-black"
-                                    autoComplete="off"
-                                  />
-                                  {/* Lista de sugerencias desplegable */}
-                                  {showDropdownResponsable[actividadKey] && (
-                                    <div className="absolute right-0 left-0 z-10 max-h-60 overflow-y-auto rounded border border-gray-300 bg-white shadow-lg">
-                                      {(buscadorResponsable[actividadKey]
-                                        ? usuarios.filter((u) =>
-                                            u.name
-                                              .toLowerCase()
-                                              .includes(
-                                                buscadorResponsable[
-                                                  actividadKey
-                                                ].toLowerCase()
-                                              )
-                                          )
-                                        : usuarios
-                                      )
-                                        // 🔹 Elimina el .slice(0, 50) para mostrar toda la lista
-                                        .map((u) => (
-                                          <div
-                                            key={u.id}
-                                            className="cursor-pointer px-2 py-1 text-black hover:bg-cyan-100"
-                                            onMouseDown={() => {
-                                              setResponsablesPorActividad(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [actividadKey]: u.id,
-                                                })
-                                              );
-                                              setBuscadorResponsable(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [actividadKey]: u.name,
-                                                })
-                                              );
-                                              setShowDropdownResponsable(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [actividadKey]: false,
-                                                })
-                                              );
-                                            }}
-                                          >
-                                            {u.name}
-                                          </div>
-                                        ))}
-                                      {(buscadorResponsable[actividadKey]
-                                        ? usuarios.filter((u) =>
-                                            u.name
-                                              .toLowerCase()
-                                              .includes(
-                                                buscadorResponsable[
-                                                  actividadKey
-                                                ].toLowerCase()
-                                              )
-                                          ).length === 0
-                                        : usuarios.length === 0) && (
-                                        <div className="px-2 py-1 text-gray-400">
-                                          Sin resultados
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={
-                                    horasPorActividad[actividadKey] ||
-                                    horasPorActividadDistribuidas
-                                  }
-                                  onChange={(e) =>
-                                    setHorasPorActividad((prev) => ({
-                                      ...prev,
-                                      [actividadKey]: Number(e.target.value),
-                                    }))
-                                  }
-                                  className="w-full rounded bg-gray-300 p-1 text-black sm:w-24"
-                                  placeholder="Horas/día"
-                                />
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      <div className="flex flex-col gap-2 sm:flex-row">
+                  <li key={obj.id}>
+                    <div className="mb-2 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
+                      {/* Header objetivo */}
+                      <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
+                        <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
+                          {obj.title}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => handleEliminarObjetivo(idx)}
+                          className="h-7 w-7 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-8 sm:w-8 sm:self-start"
+                        >
+                          <span className="text-xs sm:text-sm">✕</span>
+                        </button>
+                      </div>
+                      {/* Agregar actividad */}
+                      <div className="mb-3 flex flex-col gap-2 sm:flex-row">
                         <textarea
                           value={nuevaActividadPorObjetivo[obj.id] || ''}
                           onChange={(e) => {
@@ -1510,16 +1401,83 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             handleTextAreaChange(e);
                           }}
                           rows={1}
-                          className="flex-1 resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                          placeholder="Agregar nueva actividad..."
+                          className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
+                          placeholder="Nueva actividad para este objetivo..."
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAgregarActividad(obj.id);
+                            }
+                          }}
                         />
                         <button
                           type="button"
                           onClick={() => handleAgregarActividad(obj.id)}
-                          className="rounded bg-green-600 px-4 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:px-2 sm:text-2xl"
+                          className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:w-auto sm:px-4 sm:text-2xl"
                         >
                           +
                         </button>
+                      </div>
+                      {/* Lista de actividades */}
+                      <div className="space-y-2">
+                        {obj.activities.length > 0 && (
+                          <div className="mb-2 text-xs text-gray-300 sm:text-sm">
+                            Actividades ({obj.activities.length}):
+                          </div>
+                        )}
+                        {obj.activities.map((act, actIdx) => {
+                          const actividadKey = `${obj.id}_${actIdx}`;
+                          const responsableId =
+                            responsablesPorActividad[actividadKey] || '';
+                          const responsableObj = usuarios.find(
+                            (u) => u.id === responsableId
+                          );
+                          return (
+                            <div
+                              key={actIdx}
+                              className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
+                            >
+                              <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                                {act}
+                              </span>
+                              {/* Responsable */}
+                              <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                                {responsableObj ? responsableObj.name : ''}
+                              </span>
+                              {/* Horas */}
+                              <input
+                                type="number"
+                                min={1}
+                                value={
+                                  horasPorActividad[actividadKey] ||
+                                  horasPorActividadDistribuidas
+                                }
+                                onChange={(e) =>
+                                  setHorasPorActividad((prev) => ({
+                                    ...prev,
+                                    [actividadKey]: Number(e.target.value),
+                                  }))
+                                }
+                                className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
+                                placeholder="Horas"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleEliminarActividad(obj.id, actIdx)
+                                }
+                                className="h-5 w-5 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-6 sm:w-6 sm:self-start"
+                              >
+                                <span className="text-xs sm:text-sm">✕</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                        {obj.activities.length === 0 && (
+                          <div className="text-xs text-gray-400 italic sm:text-sm">
+                            No hay actividades agregadas para este objetivo
+                          </div>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -1530,7 +1488,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
           {/* Selectores responsive */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base">Categoría</label>
+            <label className="text-sm text-cyan-300 sm:text-base">
+              Categoría
+            </label>
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
@@ -1549,7 +1509,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           </div>
 
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base">Tipo de Proyecto</label>
+            <label className="text-sm text-cyan-300 sm:text-base">
+              Tipo de Proyecto
+            </label>
             <select
               value={tipoProyecto}
               onChange={(e) => setTipoProyecto(e.target.value)}
@@ -1587,7 +1549,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           {/* Selector de visualización responsive */}
           {fechaInicio && fechaFin && (
             <div className="col-span-1 mb-4 lg:col-span-2">
-              <label className="mb-2 block text-sm font-medium sm:text-base">
+              <label className="mb-2 block text-sm font-medium text-cyan-300 sm:text-base">
                 Visualización del Cronograma
               </label>
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
@@ -1643,7 +1605,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         {/* Cronograma responsive */}
         {fechaInicio && fechaFin && duracionDias > 0 && (
           <div className="mt-4 overflow-x-auto sm:mt-6">
-            <h3 className="mb-2 text-base font-semibold text-white sm:text-lg">
+            <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
               Cronograma{' '}
               {tipoVisualizacion === 'meses'
                 ? 'por Meses'

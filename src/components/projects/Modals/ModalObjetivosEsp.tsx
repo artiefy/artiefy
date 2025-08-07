@@ -20,10 +20,20 @@ interface ModalObjetivosEspProps {
   isOpen: boolean;
   onClose: () => void;
   onAnterior: () => void;
-  onConfirm: (objectives: SpecificObjective[]) => void;
+  onConfirm: (data: {
+    objetivos: SpecificObjective[];
+    responsablesPorActividad: { [key: string]: string };
+    horasPorActividad: { [key: string]: number };
+    horasPorDiaProyecto: number; // <-- Nuevo campo
+    tiempoEstimadoProyecto: number; // <-- Nuevo prop
+  }) => void;
   texto: SpecificObjective[];
   setTexto: (value: SpecificObjective[]) => void;
-  objetivoGen?: string; // <-- NUEVO PROP
+  objetivoGen?: string;
+  horasPorDiaProyecto: number; // <-- Nuevo prop
+  setHorasPorDiaProyecto: (value: number) => void; // <-- Nuevo prop
+  tiempoEstimadoProyecto: number; // <-- Nuevo prop
+  setTiempoEstimadoProyecto: (value: number) => void; // <-- Nuevo prop
 }
 
 const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
@@ -33,7 +43,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   onConfirm,
   texto,
   setTexto,
-  objetivoGen, // <-- RECIBE EL PROP
+  objetivoGen,
+  horasPorDiaProyecto, // <-- Recibe prop
+  setHorasPorDiaProyecto, // <-- Recibe prop
+  tiempoEstimadoProyecto,
+  setTiempoEstimadoProyecto,
 }) => {
   const { user } = useUser(); // Obtener el usuario logueado
   const [newObjective, setNewObjective] = useState('');
@@ -42,6 +56,18 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   }>({});
   const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
   const [objetivoGenTexto, setObjetivoGenTexto] = useState(objetivoGen || '');
+
+  // Estados para responsables y horas por actividad
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
+    [key: string]: string;
+  }>({});
+  const [horasPorActividad, setHorasPorActividad] = useState<{
+    [key: string]: number;
+  }>({});
+  const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
+  const [horasPorDiaStr, setHorasPorDiaStr] = useState<string>(
+    (horasPorDiaProyecto ?? 6).toString()
+  );
 
   // Función para auto-resize de textareas
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -77,7 +103,19 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     if (isOpen) {
       setNewObjective('');
       setNewObjectiveActivity({});
-      setObjetivoGenTexto(objetivoGen || ''); // <-- SINCRONIZA AL ABRIR
+      setObjetivoGenTexto(objetivoGen || '');
+      // Siempre mostrar 6 por defecto al abrir
+      setHorasPorDiaStr('6');
+      setHorasPorDiaProyecto(6);
+
+      // Limpiar horasPorActividad si no hay actividades
+      const totalActividadesAlAbrir = texto.reduce(
+        (acc, obj) => acc + obj.activities.length,
+        0
+      );
+      if (totalActividadesAlAbrir === 0) {
+        setHorasPorActividad({});
+      }
 
       // Inicializar alturas de textareas
       setTimeout(() => {
@@ -90,6 +128,26 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       }, 100);
     }
   }, [isOpen, objetivoGen]);
+
+  // Cargar usuarios para el selector de responsables
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        const res = await fetch('/api/projects/UsersResponsable');
+        const data = await res.json();
+        const usuariosFormateados = Array.isArray(data)
+          ? data.map((u: any) => ({
+              id: u.id ?? '',
+              name: u.name && u.name.trim() !== '' ? u.name : (u.email ?? ''),
+            }))
+          : [];
+        setUsuarios(usuariosFormateados);
+      } catch (error) {
+        setUsuarios([]);
+      }
+    };
+    fetchUsuarios();
+  }, []);
 
   const renumerarObjetivos = (objetivos: SpecificObjective[]) => {
     return objetivos.map((obj, idx) => ({
@@ -118,6 +176,29 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   };
 
   const removeObjective = (id: string) => {
+    // Encuentra las actividades asociadas al objetivo a eliminar
+    const objetivo = texto.find((obj) => obj.id === id);
+    const actividadesKeys = objetivo
+      ? objetivo.activities.map((_, idx) => `${id}_${idx}`)
+      : [];
+
+    // Elimina las horas y responsables de las actividades asociadas
+    setHorasPorActividad((prev) => {
+      const nuevo = { ...prev };
+      actividadesKeys.forEach((key) => {
+        delete nuevo[key];
+      });
+      return nuevo;
+    });
+    setResponsablesPorActividad((prev) => {
+      const nuevo = { ...prev };
+      actividadesKeys.forEach((key) => {
+        delete nuevo[key];
+      });
+      return nuevo;
+    });
+
+    // Elimina el objetivo y renumera
     const nuevos = renumerarObjetivos(texto.filter((obj) => obj.id !== id));
     setTexto(nuevos);
   };
@@ -138,7 +219,17 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           : obj
       );
       // Renumerar después de agregar
-      setTexto(renumerarObjetivos(nuevos));
+      const nuevosEnumerados = renumerarObjetivos(nuevos);
+      setTexto(nuevosEnumerados);
+
+      // Inicializa las horas de la nueva actividad en 1 si no existe
+      const objIndex = texto.findIndex((obj) => obj.id === objectiveId);
+      const actividadKey = `${objectiveId}_${texto[objIndex]?.activities.length || 0}`;
+      setHorasPorActividad((prev) => ({
+        ...prev,
+        [actividadKey]: prev[actividadKey] ?? 1,
+      }));
+
       setNewObjectiveActivity((prev) => ({ ...prev, [objectiveId]: '' }));
     }
   };
@@ -147,7 +238,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     objectiveId: string,
     activityIndex: number
   ) => {
-    const updatedObjectives = texto.map((obj, idx) =>
+    // Elimina la actividad del objetivo
+    const updatedObjectives = texto.map((obj) =>
       obj.id === objectiveId
         ? {
             ...obj,
@@ -157,22 +249,84 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     );
     // Renumerar después de eliminar
     setTexto(renumerarObjetivos(updatedObjectives));
+
+    // Elimina la entrada de horas y responsable correspondiente
+    const actividadKey = `${objectiveId}_${activityIndex}`;
+    setHorasPorActividad((prev) => {
+      const nuevo = { ...prev };
+      delete nuevo[actividadKey];
+      return nuevo;
+    });
+    setResponsablesPorActividad((prev) => {
+      const nuevo = { ...prev };
+      delete nuevo[actividadKey];
+      return nuevo;
+    });
   };
 
   // Maneja la recepción de objetivos generados por IA
   const handleProyectoGenerado = (data: any) => {
-    console.log('Objetivos específicos recibidos en ModalObjetivosEsp:', data); // <-- Nuevo log
+    console.log('Objetivos específicos recibidos en ModalObjetivosEsp:', data);
     if (Array.isArray(data?.milestones)) {
-      setTexto(
-        data.milestones.map((milestone: any, idx: number) => ({
+      // Crear los objetivos y actividades
+      const nuevosObjetivos = data.milestones.map(
+        (milestone: any, idx: number) => ({
           id: String(idx) + '-' + Date.now(),
           title: milestone.milestone_name || `Milestone ${idx + 1}`,
           activities: Array.isArray(milestone.tasks) ? milestone.tasks : [],
-        }))
+        })
       );
+
+      // Mapear horas y responsables por actividad usando data.tasks
+      const nuevasHoras: { [key: string]: number } = {};
+      const nuevosResponsables: { [key: string]: string } = {};
+      if (Array.isArray(data.tasks)) {
+        nuevosObjetivos.forEach((obj: SpecificObjective, objIdx: number) => {
+          obj.activities.forEach((act, actIdx) => {
+            // Buscar la tarea correspondiente por nombre
+            const tarea = data.tasks.find(
+              (t: any) =>
+                typeof t.task_name === 'string' &&
+                t.task_name.trim() === act.trim()
+            );
+            const actividadKey = `${obj.id}_${actIdx}`;
+            if (tarea && typeof tarea.estimated_time_hours === 'number') {
+              nuevasHoras[actividadKey] = tarea.estimated_time_hours;
+            }
+            // Asignar responsable logueado
+            if (user?.id) {
+              nuevosResponsables[actividadKey] = user.id;
+            }
+          });
+        });
+      }
+      // Enumerar correctamente los objetivos y actividades generados
+      const objetivosEnumerados = renumerarObjetivos(nuevosObjetivos);
+      setTexto(objetivosEnumerados);
+      setHorasPorActividad(nuevasHoras);
+      setResponsablesPorActividad(nuevosResponsables);
     }
     setModalGenerarOpen(false);
   };
+
+  // Calcular el total de horas del proyecto: 0 si no hay actividades, suma si hay
+  const totalActividades = texto.reduce(
+    (acc, obj) => acc + obj.activities.length,
+    0
+  );
+  const totalHorasProyecto =
+    totalActividades === 0
+      ? 0
+      : Object.values(horasPorActividad).reduce(
+          (acc, val) => acc + (typeof val === 'number' ? val : 0),
+          0
+        );
+
+  // Sincroniza el tiempo estimado con el estado externo
+  useEffect(() => {
+    setTiempoEstimadoProyecto(totalHorasProyecto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalHorasProyecto]);
 
   if (!isOpen) return null;
 
@@ -187,18 +341,49 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           <h2 className="mb-3 text-center text-lg font-bold text-cyan-400 sm:mb-4 sm:text-xl md:text-2xl">
             Objetivos Específicos
           </h2>
-
-          {/* Botón para generar con IA */}
-          <div className="mb-3 flex justify-end sm:mb-4">
-            <Button
-              className="bg-emerald-500 px-3 py-2 text-xs text-white hover:bg-emerald-600 sm:text-sm"
-              onClick={() => setModalGenerarOpen(true)}
-              type="button"
-            >
-              <span className="hidden sm:inline">Generar con IA</span>
-              <span className="sm:hidden">IA</span>
-            </Button>
+          {/* Cambia aquí: flex justify-between para separar izquierda y derecha */}
+          <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            {/* Izquierda: Horas por día */}
+            <div className="flex flex-row items-center gap-2 sm:gap-4">
+              <label
+                className="text-sm font-medium text-cyan-300 sm:text-base"
+                htmlFor="horasPorDiaProyecto"
+              >
+                Horas de trabajo por día:
+              </label>
+              <input
+                id="horasPorDiaProyecto"
+                type="number"
+                min={1}
+                max={24}
+                value={horasPorDiaStr}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setHorasPorDiaStr(val);
+                  if (val === '') {
+                    setHorasPorDiaProyecto(6);
+                  } else {
+                    const num = Number(val);
+                    if (!isNaN(num) && num >= 1 && num <= 24) {
+                      setHorasPorDiaProyecto(num);
+                    }
+                  }
+                }}
+                className="rounded bg-gray-400 p-1 text-black"
+              />
+            </div>
+            {/* Derecha: Botón Generar con IA */}
+            <div className="flex justify-end">
+              <Button
+                className="w-full bg-emerald-500 px-4 hover:bg-emerald-600 sm:w-auto sm:px-6"
+                onClick={() => setModalGenerarOpen(true)}
+                type="button"
+              >
+                <span className="sm:inline">Generar con IA</span>
+              </Button>
+            </div>
           </div>
+
           {/* Add new objective */}
           <div className="flex flex-col gap-2 sm:mb-6 sm:flex-row">
             <textarea
@@ -224,6 +409,31 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
               Agregar
             </Button>
           </div>
+          {/* Izquierda: Horas totales del proyecto*/}
+          <div className="flex flex-row items-center gap-2 sm:gap-4">
+            <label
+              className="text-sm font-medium text-cyan-300 sm:text-base"
+              htmlFor="horasTotalesProyecto"
+            >
+              Tiempo estimado del proyecto:
+            </label>
+            <input
+              id="horasTotalesProyecto"
+              type="number"
+              min={0}
+              value={totalHorasProyecto}
+              readOnly
+              className="rounded bg-gray-400 p-1 text-black"
+              style={{
+                width: `${String(totalHorasProyecto).length + 2}ch`,
+                minWidth: '3ch',
+                maxWidth: '100ch',
+                textAlign: 'center',
+                transition: 'width 0.2s',
+              }}
+            />
+          </div>
+          <br />
         </div>
 
         {/* Contenido con scroll */}
@@ -288,29 +498,54 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                         Actividades ({objective.activities.length}):
                       </div>
                     )}
-                    {objective.activities.map((activity, activityIndex) => (
-                      <div
-                        key={activityIndex}
-                        className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
-                      >
-                        <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                          {activity}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() =>
-                            removeActivityFromObjective(
-                              objective.id,
-                              activityIndex
-                            )
-                          }
-                          className="h-5 w-5 flex-shrink-0 self-end p-0 sm:h-6 sm:w-6 sm:self-start"
+                    {objective.activities.map((activity, activityIndex) => {
+                      const actividadKey = `${objective.id}_${activityIndex}`;
+                      // Mostrar el nombre del usuario logueado como responsable
+                      const responsableName =
+                        user?.fullName || user?.firstName || 'Usuario';
+                      return (
+                        <div
+                          key={activityIndex}
+                          className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
                         >
-                          <X className="h-2 w-2 sm:h-3 sm:w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                          <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                            {activity}
+                          </span>
+                          {/* Responsable */}
+                          <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                            {responsableName}
+                          </span>
+                          {/* Horas */}
+                          <input
+                            type="number"
+                            min={1}
+                            value={horasPorActividad[actividadKey] ?? 1}
+                            onChange={(e) =>
+                              setHorasPorActividad((prev) => ({
+                                ...prev,
+                                [actividadKey]: Number(e.target.value),
+                              }))
+                            }
+                            className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
+                            placeholder="Horas"
+                          />
+                          <br />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              removeActivityFromObjective(
+                                objective.id,
+                                activityIndex
+                              )
+                            }
+                            className="h-5 w-5 flex-shrink-0 self-end p-0 sm:h-6 sm:w-6 sm:self-start"
+                          >
+                            <X className="h-2 w-2 sm:h-3 sm:w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                     {objective.activities.length === 0 && (
                       <div className="text-xs text-gray-400 italic sm:text-sm">
                         No hay actividades agregadas para este objetivo
@@ -348,7 +583,16 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           </Button>
           <Button
             variant="ghost"
-            onClick={() => onConfirm(texto)}
+            // Cambia aquí: pasa también horasPorDiaProyecto
+            onClick={() =>
+              onConfirm({
+                objetivos: texto,
+                responsablesPorActividad,
+                horasPorActividad,
+                horasPorDiaProyecto,
+                tiempoEstimadoProyecto: totalHorasProyecto, // <-- Pasa el valor actual
+              })
+            }
             className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-3 sm:px-4"
           >
             Resumen

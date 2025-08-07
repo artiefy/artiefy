@@ -128,6 +128,20 @@ export default function ProyectosPage() {
     number | null
   >(null);
 
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
+    [key: string]: string;
+  }>({});
+  const [horasPorActividad, setHorasPorActividad] = useState<{
+    [key: string]: number;
+  }>({});
+
+  // Estado para horas por día de trabajo del proyecto (flujo de creación)
+  const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6);
+
+  // Estado para tiempo estimado total del proyecto (flujo de creación)
+  const [tiempoEstimadoProyecto, setTiempoEstimadoProyecto] =
+    useState<number>(0);
+
   const handleConfirmarPlanteamiento = () => {
     setPlanteamientoOpen(false);
     setJustificacionOpen(true);
@@ -152,7 +166,18 @@ export default function ProyectosPage() {
     setObjetivosEspOpen(false);
     setObjetivoGenOpen(true);
   };
-  const handleConfirmarObjetivosEsp = () => {
+  const handleConfirmarObjetivosEsp = (data: {
+    objetivos: SpecificObjective[];
+    responsablesPorActividad: { [key: string]: string };
+    horasPorActividad: { [key: string]: number };
+    horasPorDiaProyecto: number; // <-- Recibe el valor
+    tiempoEstimadoProyecto?: number; // <-- Nuevo campo opcional
+  }) => {
+    setObjetivosEspTexto(data.objetivos);
+    setResponsablesPorActividad(data.responsablesPorActividad || {});
+    setHorasPorActividad(data.horasPorActividad || {});
+    setHorasPorDiaProyecto(data.horasPorDiaProyecto ?? 6);
+    setTiempoEstimadoProyecto(data.tiempoEstimadoProyecto ?? 0); // <-- Guarda el valor
     setObjetivosEspOpen(false);
     setResumenOpen(true);
   };
@@ -1255,7 +1280,11 @@ export default function ProyectosPage() {
             onConfirm={handleConfirmarObjetivosEsp}
             texto={ObjetivosEspTexto}
             setTexto={setObjetivosEspTexto}
-            objetivoGen={objetivoGenTexto} // <-- AGREGA ESTA LÍNEA
+            objetivoGen={objetivoGenTexto}
+            horasPorDiaProyecto={horasPorDiaProyecto}
+            setHorasPorDiaProyecto={setHorasPorDiaProyecto}
+            tiempoEstimadoProyecto={tiempoEstimadoProyecto}
+            setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
           />
           <ModalResumen
             isOpen={ResumenOpen}
@@ -1270,6 +1299,12 @@ export default function ProyectosPage() {
             cronograma={undefined}
             categoriaId={undefined}
             numMeses={undefined}
+            responsablesPorActividad={responsablesPorActividad}
+            horasPorActividad={horasPorActividad}
+            horasPorDiaProyecto={horasPorDiaProyecto}
+            setHorasPorDiaProyecto={setHorasPorDiaProyecto}
+            tiempoEstimadoProyecto={tiempoEstimadoProyecto}
+            setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}
@@ -1331,6 +1366,12 @@ export default function ProyectosPage() {
                 handleUpdateProject(editingProjectId, updatedData);
                 handleCloseEditModal();
               }}
+              responsablesPorActividad={responsablesPorActividad}
+              horasPorActividad={horasPorActividad}
+              horasPorDiaProyecto={horasPorDiaProyecto}
+              setHorasPorDiaProyecto={setHorasPorDiaProyecto}
+              tiempoEstimadoProyecto={tiempoEstimadoProyecto}
+              setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
             />
           )}
 
@@ -1379,6 +1420,8 @@ export default function ProyectosPage() {
               fechaInicio={proyectoGenerado.fechaInicio ?? ''}
               fechaFin={proyectoGenerado.fechaFin ?? ''}
               tipoVisualizacion={'meses'}
+              responsablesPorActividad={responsablesPorActividad}
+              horasPorActividad={horasPorActividad}
             />
           )}
 
