@@ -135,7 +135,7 @@ export default function ProyectosPage() {
     [key: string]: number;
   }>({});
 
-  // Estado para horas por día de trabajo del proyecto (flujo de creación)
+  // Estado para horas por actividad (flujo de creación)
   const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6);
 
   // Estado para tiempo estimado total del proyecto (flujo de creación)
@@ -170,14 +170,49 @@ export default function ProyectosPage() {
     objetivos: SpecificObjective[];
     responsablesPorActividad: { [key: string]: string };
     horasPorActividad: { [key: string]: number };
-    horasPorDiaProyecto: number; // <-- Recibe el valor
-    tiempoEstimadoProyecto?: number; // <-- Nuevo campo opcional
+    horasPorDiaProyecto: number;
+    tiempoEstimadoProyecto: number;
   }) => {
-    setObjetivosEspTexto(data.objetivos);
+    console.log('=== INICIO handleConfirmarObjetivosEsp ===');
+    console.log('Recibiendo datos de ModalObjetivosEsp:', data);
+    console.log('Horas por actividad específicas:', data.horasPorActividad);
+    console.log('Claves de actividades:', Object.keys(data.horasPorActividad));
+
+    // Asegurar que todos los IDs de objetivos están presentes
+    const objetivosConIds = data.objetivos.map((obj) => ({
+      ...obj,
+      id: obj.id || `obj_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    }));
+
+    console.log('Objetivos procesados:', objetivosConIds);
+
+    // Actualizar estados de forma secuencial para evitar problemas de timing
+    setObjetivosEspTexto(objetivosConIds);
     setResponsablesPorActividad(data.responsablesPorActividad || {});
+
+    // IMPORTANTE: Actualizar horasPorActividad inmediatamente
+    console.log(
+      'Estado actual de horasPorActividad antes de actualizar:',
+      horasPorActividad
+    );
+    console.log(
+      'Asignando horas por actividad directamente:',
+      data.horasPorActividad
+    );
     setHorasPorActividad(data.horasPorActividad || {});
+
+    // Verificar el estado después de un tick
+    setTimeout(() => {
+      console.log(
+        'Estado de horasPorActividad después de setear:',
+        horasPorActividad
+      );
+    }, 10);
+
     setHorasPorDiaProyecto(data.horasPorDiaProyecto ?? 6);
-    setTiempoEstimadoProyecto(data.tiempoEstimadoProyecto ?? 0); // <-- Guarda el valor
+    setTiempoEstimadoProyecto(data.tiempoEstimadoProyecto ?? 0);
+
+    console.log('=== Cerrando ModalObjetivosEsp y abriendo ModalResumen ===');
     setObjetivosEspOpen(false);
     setResumenOpen(true);
   };
@@ -881,6 +916,10 @@ export default function ProyectosPage() {
                 setJustificacionTexto('');
                 setObjetivoGenTexto('');
                 setObjetivosEspTexto([]);
+                setHorasPorActividad({}); // <-- Limpia aquí SOLO al crear nuevo proyecto
+                setResponsablesPorActividad({});
+                setHorasPorDiaProyecto(6);
+                setTiempoEstimadoProyecto(0);
                 setPlanteamientoOpen(true);
               }}
             >
@@ -1238,6 +1277,10 @@ export default function ProyectosPage() {
                       setJustificacionTexto('');
                       setObjetivoGenTexto('');
                       setObjetivosEspTexto([]);
+                      setHorasPorActividad({}); // <-- Limpia aquí SOLO al crear nuevo proyecto
+                      setResponsablesPorActividad({});
+                      setHorasPorDiaProyecto(6);
+                      setTiempoEstimadoProyecto(0);
                       setPlanteamientoOpen(true);
                     }}
                   >
@@ -1285,6 +1328,8 @@ export default function ProyectosPage() {
             setHorasPorDiaProyecto={setHorasPorDiaProyecto}
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
+            horasPorActividad={horasPorActividad}
+            setHorasPorActividad={setHorasPorActividad}
           />
           <ModalResumen
             isOpen={ResumenOpen}
@@ -1300,7 +1345,18 @@ export default function ProyectosPage() {
             categoriaId={undefined}
             numMeses={undefined}
             responsablesPorActividad={responsablesPorActividad}
-            horasPorActividad={horasPorActividad}
+            horasPorActividad={(() => {
+              console.log(
+                'Pasando horasPorActividad a ModalResumen:',
+                horasPorActividad
+              );
+              console.log(
+                'Keys que se están pasando:',
+                Object.keys(horasPorActividad)
+              );
+              return horasPorActividad;
+            })()}
+            setHorasPorActividad={setHorasPorActividad}
             horasPorDiaProyecto={horasPorDiaProyecto}
             setHorasPorDiaProyecto={setHorasPorDiaProyecto}
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
@@ -1368,6 +1424,7 @@ export default function ProyectosPage() {
               }}
               responsablesPorActividad={responsablesPorActividad}
               horasPorActividad={horasPorActividad}
+              setHorasPorActividad={setHorasPorActividad}
               horasPorDiaProyecto={horasPorDiaProyecto}
               setHorasPorDiaProyecto={setHorasPorDiaProyecto}
               tiempoEstimadoProyecto={tiempoEstimadoProyecto}
@@ -1438,6 +1495,7 @@ export default function ProyectosPage() {
           )}
         </div>
       </main>
+
       {/* Scrollbar color personalizado */}
       <style jsx global>{`
         /* Oculta el scroll global del html/body */
@@ -1446,6 +1504,7 @@ export default function ProyectosPage() {
           scrollbar-width: thin !important; /* Firefox */
           scrollbar-color: #0f3a6e #041c3c;
           -ms-overflow-style: none !important; /* IE 10+ */
+        }
       `}</style>
     </div>
   );

@@ -34,6 +34,8 @@ interface ModalObjetivosEspProps {
   setHorasPorDiaProyecto: (value: number) => void; // <-- Nuevo prop
   tiempoEstimadoProyecto: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto: (value: number) => void; // <-- Nuevo prop
+  horasPorActividad: { [key: string]: number }; // <-- Nuevo prop
+  setHorasPorActividad: (value: { [key: string]: number }) => void; // <-- Nuevo setter
 }
 
 const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
@@ -48,6 +50,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   setHorasPorDiaProyecto, // <-- Recibe prop
   tiempoEstimadoProyecto,
   setTiempoEstimadoProyecto,
+  horasPorActividad,
+  setHorasPorActividad,
 }) => {
   const { user } = useUser(); // Obtener el usuario logueado
   const [newObjective, setNewObjective] = useState('');
@@ -61,13 +65,56 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
     [key: string]: string;
   }>({});
-  const [horasPorActividad, setHorasPorActividad] = useState<{
-    [key: string]: number;
-  }>({});
   const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
   const [horasPorDiaStr, setHorasPorDiaStr] = useState<string>(
     (horasPorDiaProyecto ?? 6).toString()
   );
+  // Sincroniza el input local con el prop
+  const [tiempoEstimadoStr, setTiempoEstimadoStr] = useState<string>(
+    (tiempoEstimadoProyecto ?? 0).toString()
+  );
+
+  // 1. Mueve el estado y lógica de control de horasPorActividad al inicio del componente, antes de cualquier return o condicional.
+  const [horasPorActividadState, setHorasPorActividadState] = useState<{
+    [key: string]: number;
+  }>(horasPorActividad);
+
+  useEffect(() => {
+    if (horasPorActividad && typeof setHorasPorActividad === 'undefined') {
+      setHorasPorActividadState(horasPorActividad);
+    }
+  }, [horasPorActividad, setHorasPorActividad]);
+
+  const horasPorActividadValue =
+    typeof setHorasPorActividad === 'function'
+      ? horasPorActividad
+      : horasPorActividadState;
+
+  const handleHorasPorActividadChange = (
+    actividadKey: string,
+    value: number
+  ) => {
+    console.log(`Modificando horas actividad ${actividadKey} a ${value}`);
+    console.log('Estado actual antes del cambio:', horasPorActividadValue);
+
+    if (setHorasPorActividad) {
+      const nuevasHoras = {
+        ...horasPorActividadValue,
+        [actividadKey]: value,
+      };
+      console.log('Nuevas horas a establecer:', nuevasHoras);
+      setHorasPorActividad(nuevasHoras);
+    } else {
+      setHorasPorActividadState((prev) => {
+        const nuevasHoras = {
+          ...prev,
+          [actividadKey]: value,
+        };
+        console.log('Nuevas horas (estado local):', nuevasHoras);
+        return nuevasHoras;
+      });
+    }
+  };
 
   // Función para auto-resize de textareas
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -108,16 +155,23 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       setHorasPorDiaStr('6');
       setHorasPorDiaProyecto(6);
 
-      // Limpiar horasPorActividad si no hay actividades
-      const totalActividadesAlAbrir = texto.reduce(
+      // Verificar si hay actividades existentes
+      const totalActividades = texto.reduce(
         (acc, obj) => acc + obj.activities.length,
         0
       );
-      if (totalActividadesAlAbrir === 0) {
-        setHorasPorActividad({});
+
+      // Si no hay actividades, establecer tiempo estimado en 0
+      if (totalActividades === 0) {
+        setTiempoEstimadoStr('0');
+        setTiempoEstimadoProyecto(0);
+      } else {
+        // Si hay actividades, mantener el valor calculado existente
+        setTiempoEstimadoProyecto(tiempoEstimadoProyecto ?? 0);
       }
 
-      // Inicializar alturas de textareas
+      // No reseteamos horasPorActividad para preservar los datos entre modales
+      // Solamente inicializamos las textareas
       setTimeout(() => {
         const textareas = document.querySelectorAll('textarea');
         textareas.forEach((textarea) => {
@@ -127,7 +181,14 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         });
       }, 100);
     }
-  }, [isOpen, objetivoGen]);
+  }, [
+    isOpen,
+    objetivoGen,
+    setHorasPorDiaProyecto,
+    setTiempoEstimadoProyecto,
+    tiempoEstimadoProyecto,
+    texto, // Agregar texto como dependencia para que detecte cambios en actividades
+  ]);
 
   // Cargar usuarios para el selector de responsables
   useEffect(() => {
@@ -163,9 +224,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   // Cambia la función para anteponer "OE. N" al objetivo
   const addObjective = () => {
     if (newObjective.trim()) {
+      // Usamos un formato de ID más estable y predecible
+      const uniqueId = `obj_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const nextNumber = texto.length + 1;
       const newObj: SpecificObjective = {
-        id: Date.now().toString(),
+        id: uniqueId,
         title: `OE ${nextNumber}. ${newObjective.trim()}`,
         activities: [],
       };
@@ -183,13 +246,12 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       : [];
 
     // Elimina las horas y responsables de las actividades asociadas
-    setHorasPorActividad((prev) => {
-      const nuevo = { ...prev };
-      actividadesKeys.forEach((key) => {
-        delete nuevo[key];
-      });
-      return nuevo;
+    const nuevoHorasPorActividad = { ...horasPorActividad };
+    actividadesKeys.forEach((key) => {
+      delete nuevoHorasPorActividad[key];
     });
+    setHorasPorActividad(nuevoHorasPorActividad);
+
     setResponsablesPorActividad((prev) => {
       const nuevo = { ...prev };
       actividadesKeys.forEach((key) => {
@@ -225,10 +287,19 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       // Inicializa las horas de la nueva actividad en 1 si no existe
       const objIndex = texto.findIndex((obj) => obj.id === objectiveId);
       const actividadKey = `${objectiveId}_${texto[objIndex]?.activities.length || 0}`;
-      setHorasPorActividad((prev) => ({
-        ...prev,
-        [actividadKey]: prev[actividadKey] ?? 1,
-      }));
+
+      // Asegúrate de usar la función correcta para actualizar horas
+      if (setHorasPorActividad) {
+        setHorasPorActividad({
+          ...horasPorActividad,
+          [actividadKey]: horasPorActividad[actividadKey] ?? 1,
+        });
+      } else {
+        setHorasPorActividadState((prev) => ({
+          ...prev,
+          [actividadKey]: prev[actividadKey] ?? 1,
+        }));
+      }
 
       setNewObjectiveActivity((prev) => ({ ...prev, [objectiveId]: '' }));
     }
@@ -252,11 +323,10 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
     // Elimina la entrada de horas y responsable correspondiente
     const actividadKey = `${objectiveId}_${activityIndex}`;
-    setHorasPorActividad((prev) => {
-      const nuevo = { ...prev };
-      delete nuevo[actividadKey];
-      return nuevo;
-    });
+    const nuevoHorasPorActividad = { ...horasPorActividad };
+    delete nuevoHorasPorActividad[actividadKey];
+    setHorasPorActividad(nuevoHorasPorActividad);
+
     setResponsablesPorActividad((prev) => {
       const nuevo = { ...prev };
       delete nuevo[actividadKey];
@@ -309,7 +379,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     setModalGenerarOpen(false);
   };
 
-  // Calcular el total de horas del proyecto: 0 si no hay actividades, suma si hay
+  // Calcula el total de horas del proyecto
   const totalActividades = texto.reduce(
     (acc, obj) => acc + obj.activities.length,
     0
@@ -322,8 +392,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           0
         );
 
-  // Sincroniza el tiempo estimado con el estado externo
+  // Sincroniza el valor calculado con el estado externo
   useEffect(() => {
+    setTiempoEstimadoStr(totalHorasProyecto.toString());
     setTiempoEstimadoProyecto(totalHorasProyecto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalHorasProyecto]);
@@ -421,11 +492,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
               id="horasTotalesProyecto"
               type="number"
               min={0}
-              value={totalHorasProyecto}
+              value={tiempoEstimadoStr}
               readOnly
               className="rounded bg-gray-400 p-1 text-black"
               style={{
-                width: `${String(totalHorasProyecto).length + 2}ch`,
+                width: `${String(tiempoEstimadoStr).length + 2}ch`,
                 minWidth: '3ch',
                 maxWidth: '100ch',
                 textAlign: 'center',
@@ -519,12 +590,12 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                           <input
                             type="number"
                             min={1}
-                            value={horasPorActividad[actividadKey] ?? 1}
+                            value={horasPorActividadValue[actividadKey] ?? 1}
                             onChange={(e) =>
-                              setHorasPorActividad((prev) => ({
-                                ...prev,
-                                [actividadKey]: Number(e.target.value),
-                              }))
+                              handleHorasPorActividadChange(
+                                actividadKey,
+                                Number(e.target.value)
+                              )
                             }
                             className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
                             placeholder="Horas"
@@ -583,16 +654,37 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           </Button>
           <Button
             variant="ghost"
-            // Cambia aquí: pasa también horasPorDiaProyecto
-            onClick={() =>
+            // Cambia aquí: pasa horasPorActividadValue en vez de horasPorActividad
+            onClick={() => {
+              // Debug logs para verificar los datos antes de enviar
+              console.log('=== ENVIANDO DATOS DESDE MODAL OBJETIVOS ESP ===');
+              console.log('Objetivos a enviar:', texto);
+              console.log(
+                'Horas por actividad a enviar:',
+                horasPorActividadValue
+              );
+              console.log(
+                'Responsables por actividad:',
+                responsablesPorActividad
+              );
+              console.log(
+                'IDs de actividades:',
+                Object.keys(horasPorActividadValue)
+              );
+              console.log(
+                'Valores de horas:',
+                Object.values(horasPorActividadValue)
+              );
+              console.log('=== FIN DEBUG ENVÍO ===');
+
               onConfirm({
                 objetivos: texto,
                 responsablesPorActividad,
-                horasPorActividad,
+                horasPorActividad: horasPorActividadValue,
                 horasPorDiaProyecto,
-                tiempoEstimadoProyecto: totalHorasProyecto, // <-- Pasa el valor actual
-              })
-            }
+                tiempoEstimadoProyecto,
+              });
+            }}
             className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-3 sm:px-4"
           >
             Resumen

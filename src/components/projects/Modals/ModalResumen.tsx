@@ -59,10 +59,11 @@ interface ModalResumenProps {
   }[];
   responsablesPorActividad?: { [key: string]: string };
   horasPorActividad?: { [key: string]: number };
+  setHorasPorActividad?: (value: { [key: string]: number }) => void; // <-- Nuevo setter
   horasPorDiaProyecto?: number; // <-- Recibe el prop
   setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
-  setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo prop
+  setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -89,11 +90,70 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   actividades: actividadesProp = [],
   responsablesPorActividad: responsablesPorActividadProp = {},
   horasPorActividad: horasPorActividadProp = {},
-  horasPorDiaProyecto: horasPorDiaProyectoProp, // <-- Recibe el prop
-  setHorasPorDiaProyecto, // <-- Recibe el setter
-  tiempoEstimadoProyecto: tiempoEstimadoProyectoProp, // <-- Nuevo prop
-  setTiempoEstimadoProyecto, // <-- Nuevo setter
+  setHorasPorActividad,
+  horasPorDiaProyecto: horasPorDiaProyectoProp,
+  setHorasPorDiaProyecto,
+  tiempoEstimadoProyecto: tiempoEstimadoProyectoProp,
+  setTiempoEstimadoProyecto,
 }) => {
+  // ELIMINAR TODOS LOS ESTADOS DUPLICADOS DE HORAS
+  // const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
+  //   [key: string]: string;
+  // }>(responsablesPorActividadProp);
+  // const [horasPorActividad, setHorasPorActividad] = useState<{
+  //   [key: string]: number;
+  // }>(horasPorActividadProp);
+
+  // Solo mantener un estado local para horas por actividad
+  const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<{
+    [key: string]: number;
+  }>({});
+
+  // Estado para responsables
+  const [responsablesPorActividadLocal, setResponsablesPorActividadLocal] =
+    useState<{
+      [key: string]: string;
+    }>(responsablesPorActividadProp);
+
+  // Inicializar estado local con props
+  useEffect(() => {
+    if (
+      horasPorActividadProp &&
+      Object.keys(horasPorActividadProp).length > 0
+    ) {
+      console.log(
+        'Inicializando horas locales con props:',
+        horasPorActividadProp
+      );
+      setHorasPorActividadLocal(horasPorActividadProp);
+    }
+  }, [horasPorActividadProp]);
+
+  // Valor final a usar (SIMPLIFICADO)
+  const horasPorActividadFinal =
+    typeof setHorasPorActividad === 'function'
+      ? horasPorActividadProp || {}
+      : horasPorActividadLocal;
+
+  // Función de cambio SIMPLIFICADA
+  const handleHorasCambio = (actividadKey: string, value: number) => {
+    console.log(`Cambiando horas ${actividadKey} a ${value}`);
+
+    if (typeof setHorasPorActividad === 'function') {
+      // Modo controlado - usar setter del padre
+      setHorasPorActividad({
+        ...horasPorActividadFinal,
+        [actividadKey]: value,
+      });
+    } else {
+      // Modo no controlado - usar estado local
+      setHorasPorActividadLocal((prev) => ({
+        ...prev,
+        [actividadKey]: value,
+      }));
+    }
+  };
+
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
   const [tituloState, setTitulo] = useState(titulo);
@@ -104,6 +164,61 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [objetivoGenEditado, setObjetivoGenEditado] = useState(objetivoGen);
   const [objetivosEspEditado, setObjetivosEspEditado] =
     useState<SpecificObjective[]>(objetivosEsp);
+
+  // Calcular el total de horas dinámicamente
+  const totalHorasActividadesCalculado = React.useMemo(() => {
+    console.log('=== CALCULANDO TOTAL DE HORAS ===');
+    console.log('Objetivos:', objetivosEspEditado);
+    console.log('Horas finales:', horasPorActividadFinal);
+
+    let total = 0;
+    objetivosEspEditado.forEach((obj) => {
+      obj.activities.forEach((_, actIdx) => {
+        const actividadKey = `${obj.id}_${actIdx}`;
+        const horas = horasPorActividadFinal[actividadKey];
+        const horasValidas = typeof horas === 'number' && horas > 0 ? horas : 1;
+        total += horasValidas;
+        console.log(`${actividadKey}: ${horasValidas}h (acumulado: ${total}h)`);
+      });
+    });
+
+    console.log('Total calculado:', total);
+    return total;
+  }, [objetivosEspEditado, horasPorActividadFinal]);
+
+  // Actualizar tiempo estimado automáticamente
+  useEffect(() => {
+    if (totalHorasActividadesCalculado > 0) {
+      console.log(
+        'Actualizando tiempo estimado a:',
+        totalHorasActividadesCalculado
+      );
+      handleTiempoEstimadoChange(totalHorasActividadesCalculado);
+    }
+  }, [totalHorasActividadesCalculado]);
+
+  // Sincronización cuando se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      console.log('=== MODAL RESUMEN ABIERTO ===');
+      console.log('Objetivos recibidos:', objetivosEsp);
+      console.log('Horas props:', horasPorActividadProp);
+
+      // Sincronizar objetivos
+      if (objetivosEsp && objetivosEsp.length > 0) {
+        setObjetivosEspEditado(objetivosEsp);
+      }
+
+      // Forzar sincronización de horas si hay datos
+      if (
+        horasPorActividadProp &&
+        Object.keys(horasPorActividadProp).length > 0
+      ) {
+        console.log('Forzando sincronización de horas al abrir modal');
+        setHorasPorActividadLocal(horasPorActividadProp);
+      }
+    }
+  }, [isOpen, objetivosEsp, horasPorActividadProp]);
   const [nuevoObjetivo, setNuevoObjetivo] = useState('');
   const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<{
     [id: string]: string;
@@ -129,12 +244,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const tituloRef = useRef<string>(titulo);
 
   // Agrega un estado para responsables y horas por actividad
-  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
-    [key: string]: string;
-  }>(responsablesPorActividadProp);
-  const [horasPorActividad, setHorasPorActividad] = useState<{
-    [key: string]: number;
-  }>(horasPorActividadProp);
   const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
 
   // Add handleTextAreaChange function for auto-resize
@@ -219,7 +328,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   };
 
-  // Nuevo estado para el tiempo estimado si no es controlado
+  // Estado local para tiempo estimado si no es controlado
   const [tiempoEstimadoProyectoState, setTiempoEstimadoProyectoState] =
     useState<number>(tiempoEstimadoProyectoProp ?? 0);
 
@@ -265,17 +374,30 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Sincronizar automáticamente las horas por actividad distribuidas
   useEffect(() => {
     if (totalActividades > 0 && horasPorActividadDistribuidas > 0) {
+      console.log(
+        `Distribuyendo ${horasPorActividadDistribuidas} horas por actividad para ${totalActividades} actividades`
+      );
       const nuevasHoras: { [key: string]: number } = {};
       objetivosEspEditado.forEach((obj) => {
         obj.activities.forEach((_, actIdx) => {
           const actividadKey = `${obj.id}_${actIdx}`;
-          nuevasHoras[actividadKey] = horasPorActividadDistribuidas;
+          // Solo asignar horas automáticas si no tiene horas ya asignadas
+          if (!horasPorActividadFinal[actividadKey]) {
+            nuevasHoras[actividadKey] = horasPorActividadDistribuidas;
+          }
         });
       });
-      setHorasPorActividad(nuevasHoras);
+
+      // Actualizar solo si hay actividades sin asignación previa
+      if (Object.keys(nuevasHoras).length > 0) {
+        console.log('Asignando horas automáticamente:', nuevasHoras);
+        if (typeof setHorasPorActividad === 'function') {
+          setHorasPorActividad({ ...horasPorActividadFinal, ...nuevasHoras });
+        } else {
+          setHorasPorActividadLocal((prev) => ({ ...prev, ...nuevasHoras }));
+        }
+      }
     }
-    // Solo actualizar cuando cambian las actividades o el cálculo
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalActividades, horasPorActividadDistribuidas, objetivosEspEditado]);
 
   useEffect(() => {
@@ -606,12 +728,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       setObjetivosEspEditado(renumerados);
       setObjetivosEsp(renumerados);
       setNuevaActividadPorObjetivo((prev) => ({ ...prev, [objectiveId]: '' }));
-      // Opcional: inicializa responsable y horas para la nueva actividad
+
+      // Inicializar horas para la nueva actividad
       const nuevaActividadIdx =
         renumerados.find((o) => o.id === objectiveId)?.activities.length ?? 1;
       const actividadKey = `${objectiveId}_${nuevaActividadIdx - 1}`;
-      setResponsablesPorActividad((prev) => ({ ...prev, [actividadKey]: '' }));
-      setHorasPorActividad((prev) => ({ ...prev, [actividadKey]: 1 }));
+      setResponsablesPorActividadLocal((prev) => ({
+        ...prev,
+        [actividadKey]: '',
+      }));
+      handleHorasCambio(actividadKey, 1);
     }
   };
 
@@ -678,12 +804,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           const desc =
             typeof descripcion === 'string' ? descripcion.trim() : '';
 
-          // Solo incluir actividades válidas
           if (!desc || desc === 'default') return null;
 
           const actividadKey = `${obj.id}_${idx}`;
-          const responsableId = responsablesPorActividad[actividadKey];
-          const horas = horasPorActividad[actividadKey];
+          const responsableId = responsablesPorActividadLocal[actividadKey];
+          const horas = horasPorActividadFinal[actividadKey];
 
           console.log(`Mapeando actividad ${actividadKey}:`, {
             descripcion: desc,
@@ -700,8 +825,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             responsibleUserId:
               responsableId && responsableId.trim() !== ''
                 ? responsableId
-                : undefined, // Campo correcto del schema
-            hoursPerDay: typeof horas === 'number' && horas > 0 ? horas : 1, // Campo correcto del schema
+                : undefined,
+            hoursPerDay: typeof horas === 'number' && horas > 0 ? horas : 1,
           };
         })
         .filter(
@@ -971,12 +1096,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
       actividadesProp.forEach((act, idx) => {
         if (act.objetivoId) {
-          // Buscar el índice de la actividad dentro del objetivo correspondiente
           const objIdx = objetivosEsp.findIndex(
             (obj) => obj.id === act.objetivoId
           );
           if (objIdx !== -1) {
-            // Buscar el índice real de la actividad dentro del objetivo
             const actIdx = objetivosEsp[objIdx].activities.findIndex(
               (a) => a.trim() === act.descripcion.trim()
             );
@@ -991,94 +1114,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
       });
 
-      setResponsablesPorActividad(nuevosResponsables);
-      setHorasPorActividad(nuevasHoras);
+      setResponsablesPorActividadLocal(nuevosResponsables);
+
+      // Actualizar horas usando la función correcta
+      if (typeof setHorasPorActividad === 'function') {
+        setHorasPorActividad(nuevasHoras);
+      } else {
+        setHorasPorActividadLocal(nuevasHoras);
+      }
     }
   }, [isEditMode, isOpen, actividadesProp, objetivosEsp]);
-
-  // Elimina uno de los useEffect duplicados que sincronizan actividades en modo edición.
-  // Solo deja el siguiente (el que compara antes de setear para evitar bucles infinitos):
-  useEffect(() => {
-    if (
-      isEditMode &&
-      isOpen &&
-      Array.isArray(actividadesProp) &&
-      actividadesProp.length > 0
-    ) {
-      // 1. Reconstruir los objetivos y actividades para el formulario
-      const objetivosMap: { [id: string]: SpecificObjective } = {};
-      actividadesProp.forEach((act) => {
-        if (!act.objetivoId) return;
-        if (!objetivosMap[act.objetivoId]) {
-          // Busca el título del objetivo en los objetivos originales
-          const objetivo = objetivosEsp.find((o) => o.id === act.objetivoId);
-          objetivosMap[act.objetivoId] = {
-            id: act.objetivoId,
-            title: objetivo ? objetivo.title : '',
-            activities: [],
-          };
-        }
-        objetivosMap[act.objetivoId].activities.push(act.descripcion);
-      });
-      // Si no hay actividades, mantener los objetivos originales
-      const nuevosObjetivos =
-        Object.values(objetivosMap).length > 0
-          ? Object.values(objetivosMap)
-          : objetivosEsp;
-
-      setObjetivosEspEditado((prev) => {
-        const prevStr = JSON.stringify(prev);
-        const nextStr = JSON.stringify(nuevosObjetivos);
-        return prevStr !== nextStr ? nuevosObjetivos : prev;
-      });
-
-      // 2. Sincronizar responsables y horas
-      const nuevosResponsables: { [key: string]: string } = {};
-      const nuevasHoras: { [key: string]: number } = {};
-      actividadesProp.forEach((act) => {
-        if (!act.objetivoId) return;
-        const objIdx = nuevosObjetivos.findIndex(
-          (o) => o.id === act.objetivoId
-        );
-        if (objIdx !== -1) {
-          const actIdx = nuevosObjetivos[objIdx].activities.findIndex(
-            (a) => a.trim() === act.descripcion.trim()
-          );
-          const actividadKey = `${act.objetivoId}_${actIdx !== -1 ? actIdx : 0}`;
-          if (act.responsibleUserId) {
-            nuevosResponsables[actividadKey] = act.responsibleUserId;
-          }
-          if (typeof act.hoursPerDay === 'number') {
-            nuevasHoras[actividadKey] = act.hoursPerDay;
-          }
-        }
-      });
-      setResponsablesPorActividad((prev) => {
-        const prevStr = JSON.stringify(prev);
-        const nextStr = JSON.stringify(nuevosResponsables);
-        return prevStr !== nextStr ? nuevosResponsables : prev;
-      });
-      setHorasPorActividad((prev) => {
-        const prevStr = JSON.stringify(prev);
-        const nextStr = JSON.stringify(nuevasHoras);
-        return prevStr !== nextStr ? nuevasHoras : prev;
-      });
-
-      // 3. Sincronizar cronograma
-      const nuevoCronograma: Record<string, number[]> = {};
-      actividadesProp.forEach((act) => {
-        if (act.descripcion && Array.isArray(act.meses)) {
-          nuevoCronograma[act.descripcion] = act.meses;
-        }
-      });
-      setCronograma((prev) => {
-        const prevStr = JSON.stringify(prev);
-        const nextStr = JSON.stringify(nuevoCronograma);
-        return prevStr !== nextStr ? nuevoCronograma : prev;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, isOpen, actividadesProp]);
 
   // Función para generar el plan del proyecto
   const handleGenerarPlanProyecto = async () => {
@@ -1316,15 +1361,20 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               id="horasPorProyecto"
               type="number"
               min={0}
-              value={tiempoEstimadoValue}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (!isNaN(num) && num >= 0) {
-                  handleTiempoEstimadoChange(num);
-                }
-              }}
+              value={totalHorasActividadesCalculado}
+              readOnly
               className="rounded bg-gray-400 p-1 text-black"
+              style={{
+                width: `${String(totalHorasActividadesCalculado).length + 3}ch`,
+                minWidth: '4ch',
+                textAlign: 'center',
+                border: '2px solid #10b981',
+                fontWeight: 'bold',
+              }}
             />
+            <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
+              horas
+            </span>
           </div>
           {/* Fechas responsive */}
           <div className="col-span-1">
@@ -1428,10 +1478,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         {obj.activities.map((act, actIdx) => {
                           const actividadKey = `${obj.id}_${actIdx}`;
                           const responsableId =
-                            responsablesPorActividad[actividadKey] || '';
+                            responsablesPorActividadLocal[actividadKey] || '';
                           const responsableObj = usuarios.find(
                             (u) => u.id === responsableId
                           );
+
+                          // Obtener horas de forma simple
+                          const horasActividad =
+                            horasPorActividadFinal[actividadKey] || 1;
+
                           return (
                             <div
                               key={actIdx}
@@ -1444,20 +1499,23 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
                                 {responsableObj ? responsableObj.name : ''}
                               </span>
-                              {/* Horas */}
+                              {/* Input de horas SIMPLIFICADO */}
                               <input
                                 type="number"
                                 min={1}
-                                value={
-                                  horasPorActividad[actividadKey] ||
-                                  horasPorActividadDistribuidas
-                                }
-                                onChange={(e) =>
-                                  setHorasPorActividad((prev) => ({
-                                    ...prev,
-                                    [actividadKey]: Number(e.target.value),
-                                  }))
-                                }
+                                value={horasActividad}
+                                onChange={(e) => {
+                                  const newValue = Number(e.target.value);
+                                  if (!isNaN(newValue) && newValue >= 1) {
+                                    handleHorasCambio(actividadKey, newValue);
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const value = Number(e.target.value);
+                                  if (value < 1 || isNaN(value)) {
+                                    handleHorasCambio(actividadKey, 1);
+                                  }
+                                }}
                                 className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
                                 placeholder="Horas"
                               />
@@ -1600,169 +1658,188 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               </div>
             </div>
           )}
-        </form>
 
-        {/* Cronograma responsive */}
-        {fechaInicio && fechaFin && duracionDias > 0 && (
-          <div className="mt-4 overflow-x-auto sm:mt-6">
-            <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-              Cronograma{' '}
-              {tipoVisualizacion === 'meses'
-                ? 'por Meses'
-                : tipoVisualizacion === 'dias'
-                  ? 'por Días'
-                  : 'por Horas'}
-            </h3>
-            {(
-              tipoVisualizacion === 'horas'
-                ? totalActividades > 0
-                : meses.length > 0
-            ) ? (
-              <div className="max-h-64 overflow-y-auto">
-                {tipoVisualizacion === 'horas' ? (
-                  <table className="w-full table-auto border-collapse text-sm text-black">
-                    <thead className="sticky top-0 z-10 bg-gray-300">
-                      <tr>
+          {/* Cronograma responsive */}
+          {fechaInicio && fechaFin && duracionDias > 0 && (
+            <div className="mt-4 overflow-x-auto sm:mt-6">
+              <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
+                Cronograma{' '}
+                {tipoVisualizacion === 'meses'
+                  ? 'por Meses'
+                  : tipoVisualizacion === 'dias'
+                    ? 'por Días'
+                    : 'por Horas'}
+              </h3>
+              {tipoVisualizacion === 'horas' ? (
+                <table className="w-full table-auto border-collapse text-sm text-black">
+                  <thead className="sticky top-0 z-10 bg-gray-300">
+                    <tr>
+                      <th
+                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                        style={{ minWidth: 180 }}
+                      >
+                        Actividad
+                      </th>
+                      <th className="border px-2 py-2 text-left break-words">
+                        Total de Horas
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objetivosEspEditado.map((obj) => (
+                      <React.Fragment key={obj.id}>
+                        {obj.activities.map((act, idx) => {
+                          const actividadKey = `${obj.id}_${idx}`;
+                          console.log(
+                            `Buscando horas para actividad ${actividadKey}`
+                          );
+                          /* const responsableId =
+                            responsablesPorActividad[actividadKey] || '';
+                          const responsableObj = usuarios.find(
+                            (u) => u.id === responsableId
+                          ); */
+
+                          // Accede a las horas por actividad de forma segura
+
+                          const horasActividad = (() => {
+                            const val = horasPorActividadFinal[actividadKey];
+                            console.log(
+                              `Actividad ${actividadKey} tiene ${val || 'NO'} horas asignadas`
+                            );
+                            return typeof val === 'number' && val > 0 ? val : 1;
+                          })();
+
+                          return (
+                            <tr key={idx}>
+                              {/* <td
+                                className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                                style={{ minWidth: 180 }}
+                              >
+                                {act}
+                                {responsableObj && (
+                                  <div className="text-xs font-semibold text-cyan-700">
+                                    Responsable: {responsableObj.name}
+                                  </div>
+                                )}
+                              </td> */}
+                              <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
+                                {horasActividad}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full table-auto border-collapse text-sm text-black">
+                  <thead className="sticky top-0 z-10 bg-gray-300">
+                    <tr>
+                      <th
+                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                        style={{ minWidth: 180 }}
+                      >
+                        Actividad
+                      </th>
+                      {meses.map((periodo, i) => (
                         <th
-                          className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                          style={{ minWidth: 180 }}
+                          key={i}
+                          className="border px-2 py-2 text-left break-words whitespace-normal"
+                          style={{
+                            minWidth:
+                              tipoVisualizacion === 'dias' ? '80px' : '120px',
+                          }}
                         >
-                          Actividad
+                          {periodo}
                         </th>
-                        <th className="border px-2 py-2 text-left break-words">
-                          Total de Horas
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {objetivosEspEditado.map((obj) => (
-                        <React.Fragment key={obj.id}>
-                          {obj.activities.map((act, idx) => {
-                            const actividadKey = `${obj.id}_${idx}`;
-                            const responsableId =
-                              responsablesPorActividad[actividadKey] || '';
-                            const responsableObj = usuarios.find(
-                              (u) => u.id === responsableId
-                            );
-                            const horasActividad =
-                              horasPorActividad[actividadKey] ||
-                              horasPorActividadDistribuidas;
-                            return (
-                              <tr key={idx}>
-                                <td
-                                  className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                                  style={{ minWidth: 180 }}
-                                >
-                                  {act}
-                                  {responsableObj && (
-                                    <div className="text-xs font-semibold text-cyan-700">
-                                      Responsable: {responsableObj.name}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
-                                  {horasActividad}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
                       ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className="w-full table-auto border-collapse text-sm text-black">
-                    <thead className="sticky top-0 z-10 bg-gray-300">
-                      <tr>
-                        <th
-                          className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                          style={{ minWidth: 180 }}
-                        >
-                          Actividad
-                        </th>
-                        {meses.map((periodo, i) => (
-                          <th
-                            key={i}
-                            className="border px-2 py-2 text-left break-words whitespace-normal"
-                            style={{
-                              minWidth:
-                                tipoVisualizacion === 'dias' ? '80px' : '120px',
-                            }}
-                          >
-                            {periodo}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {objetivosEspEditado.map((obj) => (
-                        <React.Fragment key={obj.id}>
-                          {obj.activities.map((act, idx) => {
-                            const actividadKey = `${obj.id}_${idx}`;
-                            const responsableId =
-                              responsablesPorActividad[actividadKey] || '';
-                            const responsableObj = usuarios.find(
-                              (u) => u.id === responsableId
-                            );
-                            return (
-                              <tr key={idx}>
+                    </tr>
+                  </thead>
+                  {/* <tbody>
+                    {objetivosEspEditado.map((obj) => (
+                      <React.Fragment key={obj.id}>
+                        {obj.activities.map((act, idx) => {
+                          const actividadKey = `${obj.id}_${idx}`;
+                          const responsableId =
+                            responsablesPorActividad[actividadKey] || '';
+                          const responsableObj = usuarios.find(
+                            (u) => u.id === responsableId
+                          );
+
+                          return (
+                            <tr key={idx}>
+                              <td
+                                className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                                style={{ minWidth: 180 }}
+                              >
+                                {act}
+                                {responsableObj && (
+                                  <div className="text-xs font-semibold text-cyan-700">
+                                    Responsable: {responsableObj.name}
+                                  </div>
+                                )}
+                              </td>
+                              {meses.map((_, i) => (
                                 <td
-                                  className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                                  style={{ minWidth: 180 }}
-                                >
-                                  {act}
-                                  {responsableObj && (
-                                    <div className="text-xs font-semibold text-cyan-700">
-                                      Responsable: {responsableObj.name}
-                                    </div>
-                                  )}
-                                </td>
-                                {meses.map((_, i) => (
-                                  <td
-                                    key={i}
-                                    onClick={() => toggleMesActividad(act, i)}
-                                    className={`cursor-pointer border px-2 py-2 ${
-                                      cronogramaState[act]?.includes(i)
-                                        ? 'bg-cyan-300 font-bold text-white'
-                                        : 'bg-white'
-                                    }`}
-                                  />
-                                ))}
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                                  key={i}
+                                  onClick={() => toggleMesActividad(act, i)}
+                                  className={`cursor-pointer border px-2 py-2 ${
+                                    cronogramaState[act]?.includes(i)
+                                      ? 'bg-cyan-300 font-bold text-white'
+                                      : 'bg-white'
+                                  }`}
+                                />
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </tbody> */}
+                </table>
+              )}
+
+              {/* Botones responsive */}
+              <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+                <button
+                  onClick={handleGuardarProyecto}
+                  className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
+                  disabled={isUpdating}
+                >
+                  {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
+                  disabled={isUpdating}
+                >
+                  Cancelar
+                </button>
               </div>
-            ) : (
-              <p className="text-gray-300">
-                Selecciona las fechas de inicio y fin para ver el cronograma
-              </p>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Botones responsive */}
-        <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
-          <button
-            onClick={handleGuardarProyecto}
-            className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
-            disabled={isUpdating}
-          >
-            {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
-            disabled={isUpdating}
-          >
-            Cancelar
-          </button>
-        </div>
+          {/* Botones responsive */}
+          <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+            <button
+              onClick={handleGuardarProyecto}
+              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
+              disabled={isUpdating}
+            >
+              {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
+              disabled={isUpdating}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
