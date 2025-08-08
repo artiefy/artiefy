@@ -493,7 +493,8 @@ export default async function StudentListCourses({
   };
 
   return (
-    <>
+    // Add an ID to this section so we can scroll to it
+    <div id="courses-list-section">
       <div className="flex justify-center">
         <GradientText className="my-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
           Cursos Artie
@@ -633,6 +634,6 @@ export default async function StudentListCourses({
         category={category}
         searchTerm={searchTerm}
       />
-    </>
+    </div>
   );
 }
