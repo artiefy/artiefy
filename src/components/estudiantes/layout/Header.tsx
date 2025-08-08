@@ -159,7 +159,7 @@ export function Header() {
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         isScrolled
           ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
-          : '-mb-8 md:py-4'
+          : '-mb-0 md:py-4'
       } div-header-nav`}
     >
       <div className="container mx-auto max-w-7xl px-4">
@@ -268,22 +268,22 @@ export function Header() {
             </div>
           )}
         </div>
-        <div className="flex w-full items-center justify-between md:hidden -mt-4 md:mt-0">
-          <div className="mt-[-4px] shrink-0 md:mt-[-8px]">
+        <div className="-mt-6 flex w-full items-center justify-between md:mt-0 md:hidden">
+          <div className="mt-[-20px] shrink-0 md:mt-[-8px]">
             <Link href="/estudiantes">
-              <div className="relative size-[150px]">
+              <div className="relative size-[120px] md:size-[150px]">
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
                   fill
                   priority
-                  className="ml-6 object-contain"
-                  sizes="(max-width: 768px) 150px, 150px"
+                  className="ml-4 object-contain md:ml-6"
+                  sizes="(max-width: 768px) 120px, 150px"
                 />
               </div>
             </Link>
           </div>
-          <label className="hamburger flex h-12 w-12 items-center justify-center">
+          <label className="hamburger mt-[-20px] mr-4 flex h-10 w-10 items-center justify-center md:mt-0 md:h-12 md:w-12">
             <input
               type="checkbox"
               checked={mobileMenuOpen}
