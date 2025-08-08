@@ -387,15 +387,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             throw new Error('Error al generar URL para subir el frame');
           }
 
-          const frameUploadData = await frameUploadResp.json();
+          const frameUploadData = (await frameUploadResp.json()) as {
+            fields: Record<string, string>;
+            url: string;
+            key: string;
+          };
 
           const frameFormData = new FormData();
           Object.entries(frameUploadData.fields).forEach(([key, value]) => {
-            if (value instanceof Blob) {
-              frameFormData.append(key, value);
-            } else {
-              frameFormData.append(key, value as string); // si estás seguro que no será un objeto raro
-            }
+            frameFormData.append(key, value);
           });
 
           frameFormData.append('file', frameImageFile);
@@ -422,7 +422,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }));
 
       // Validar que haya al menos una materia seleccionada
-      if (!selectedSubjects || selectedSubjects.length === 0) {
+      if (selectedSubjects?.length === 0) {
         toast('Error', {
           description: 'Debe seleccionar al menos una materia.',
         });
