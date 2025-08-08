@@ -227,6 +227,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     useState<Record<string, number[]>>(cronograma);
   const [fechaInicio, setFechaInicio] = useState<string>(fechaInicioProp ?? '');
   const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
+
+  // Estado para controlar si la fecha final ha sido editada manualmente
+  const [fechaFinEditadaManualmente, setFechaFinEditadaManualmente] =
+    useState<boolean>(false);
+
+  // Estado para controlar si la fecha inicial ha sido editada manualmente
+  const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
+    useState<boolean>(false);
+
   const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
   const [duracionDias, setDuracionDias] = useState<number>(0);
   const [tipoVisualizacion, setTipoVisualizacion] = useState<
@@ -355,9 +364,27 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   };
 
-  // Calcular el total de horas del proyecto
+  // Nueva función para contar días laborables entre dos fechas (inclusive)
+  const contarDiasLaborables = (inicio: string, fin: string): number => {
+    if (!inicio || !fin) return 0;
+    const fechaInicio = new Date(inicio);
+    const fechaFin = new Date(fin);
+    if (fechaInicio > fechaFin) return 0;
+    let count = 0;
+    let current = new Date(fechaInicio);
+    while (current <= fechaFin) {
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) count++; // lunes a viernes
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  };
+
+  // Calcular el total de horas del proyecto SOLO considerando días laborables
+  const totalDiasLaborables =
+    fechaInicio && fechaFin ? contarDiasLaborables(fechaInicio, fechaFin) : 0;
   const totalHorasProyecto =
-    duracionDias > 0 ? duracionDias * horasPorDiaValue : 0;
+    totalDiasLaborables > 0 ? totalDiasLaborables * horasPorDiaValue : 0;
 
   // Calcular la cantidad total de actividades (sumando todas las actividades de todos los objetivos)
   const totalActividades = objetivosEspEditado.reduce(
@@ -491,6 +518,38 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     return dias;
   };
 
+  // Función para calcular los días laborables entre dos fechas (devuelve array de fechas)
+  const calcularDiasLaborablesEntreFechas = (
+    inicio: string,
+    fin: string
+  ): string[] => {
+    if (!inicio || !fin) return [];
+
+    // Usar fechas en UTC para evitar desfases de zona horaria
+    const fechaInicio = new Date(inicio + 'T00:00:00Z');
+    const fechaFin = new Date(fin + 'T00:00:00Z');
+
+    if (fechaInicio > fechaFin) return [];
+
+    const dias: string[] = [];
+    const fechaActual = new Date(fechaInicio);
+
+    while (fechaActual <= fechaFin) {
+      const day = fechaActual.getUTCDay();
+      if (day !== 0 && day !== 6) {
+        // lunes a viernes
+        dias.push(
+          fechaActual.toLocaleDateString('es-ES', {
+            timeZone: 'UTC',
+          })
+        );
+      }
+      fechaActual.setUTCDate(fechaActual.getUTCDate() + 1);
+    }
+
+    return dias;
+  };
+
   // Función para calcular la duración en días (número)
   const calcularDuracionDias = (inicio: string, fin: string): number => {
     if (!inicio || !fin) return 0;
@@ -559,7 +618,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     if (fechaInicio && fechaFin) {
       const mesesCalculados = calcularMesesEntreFechas(fechaInicio, fechaFin);
-      const diasCalculados = calcularDiasEntreFechas(fechaInicio, fechaFin);
+      // Cambia aquí: si es por días, usa solo días laborables
+      const diasCalculados =
+        tipo === 'dias'
+          ? calcularDiasLaborablesEntreFechas(fechaInicio, fechaFin)
+          : calcularDiasEntreFechas(fechaInicio, fechaFin);
 
       return {
         meses: tipo === 'meses' ? mesesCalculados : diasCalculados,
@@ -907,9 +970,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         actividades: actividadesMapped,
         type_project: tipoProyecto,
         coverImageKey,
-        fechaInicio, // Mantener como está para no afectar el funcionamiento
-        fechaFin, // Mantener como está para no afectar el funcionamiento
-        tipoVisualizacion, // Mantener como está para no afectar el funcionamiento
+        fechaInicio: fechaInicio, // Mantener como está para no afectar el funcionamiento
+        fechaFin: fechaFin, // Mantener como está para no afectar el funcionamiento
+        tipoVisualizacion: tipoVisualizacion, // Mantener como está para no afectar el funcionamiento
         isPublic: false,
       };
 
@@ -1042,10 +1105,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       // Limpiar campos que no vienen de otros modales
       setCategoria('');
       setNumMeses(1);
-      setTipoProyecto(typeProjects[0]?.value || '');
+      setTipoProyecto(''); // Cambiar para que sea vacío en lugar del primer valor
       setImagenProyecto(null);
       setPreviewImagen(null);
-      setFechaInicio('');
+      // NO limpiar fechaInicio aquí, se establece en otro useEffect
       setFechaFin('');
       setTipoVisualizacion('meses');
     }
@@ -1207,6 +1270,138 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+  // Función para calcular la fecha final basada en horas totales y horas por día
+  const calcularFechaFinal = (
+    fechaInicio: string,
+    totalHoras: number,
+    horasPorDia: number
+  ): string => {
+    if (!fechaInicio || totalHoras <= 0 || horasPorDia <= 0) return '';
+
+    const fecha = new Date(fechaInicio);
+    const diasNecesarios = Math.ceil(totalHoras / horasPorDia);
+
+    // Contar días laborables necesarios empezando desde la fecha inicial
+    let diasContados = 0;
+    let fechaActual = new Date(fechaInicio);
+
+    while (diasContados < diasNecesarios) {
+      const diaSemana = fechaActual.getDay();
+
+      // Si es día laborable (lunes a viernes), contarlo
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        // 0 = domingo, 6 = sábado
+        diasContados++;
+      }
+
+      // Si ya contamos todos los días necesarios, no avanzar más
+      if (diasContados < diasNecesarios) {
+        fechaActual.setDate(fechaActual.getDate() + 1);
+      }
+    }
+
+    return fechaActual.toISOString().split('T')[0];
+  };
+
+  // Función para obtener la fecha actual en formato YYYY-MM-DD
+  const obtenerFechaActual = (): string => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Función para manejar cambio manual de fecha inicial
+  const handleFechaInicioChange = (nuevaFecha: string) => {
+    setFechaInicio(nuevaFecha);
+    // Marcar que la fecha inicial ha sido editada manualmente
+    const fechaActual = obtenerFechaActual();
+    setFechaInicioEditadaManualmente(nuevaFecha !== fechaActual);
+    // Resetear el flag de edición manual para permitir recálculo automático
+    setFechaFinEditadaManualmente(false);
+  };
+
+  // Función para manejar cambio manual de fecha final
+  const handleFechaFinChange = (nuevaFecha: string) => {
+    setFechaFin(nuevaFecha);
+    // Marcar que la fecha final ha sido editada manualmente
+    setFechaFinEditadaManualmente(true);
+  };
+
+  // Función para volver a la fecha actual
+  const volverAFechaActual = () => {
+    const fechaActual = obtenerFechaActual();
+    setFechaInicio(fechaActual);
+    setFechaInicioEditadaManualmente(false);
+    setFechaFinEditadaManualmente(false);
+  };
+
+  // Función para volver al cálculo automático
+  const volverACalculoAutomatico = () => {
+    setFechaFinEditadaManualmente(false);
+    // Forzar recálculo inmediato
+    if (
+      fechaInicio &&
+      totalHorasActividadesCalculado > 0 &&
+      horasPorDiaValue > 0
+    ) {
+      const nuevaFechaFin = calcularFechaFinal(
+        fechaInicio,
+        totalHorasActividadesCalculado,
+        horasPorDiaValue
+      );
+      if (nuevaFechaFin) {
+        setFechaFin(nuevaFechaFin);
+      }
+    }
+  };
+
+  // Efecto para calcular fecha final automáticamente (solo si no ha sido editada manualmente)
+  useEffect(() => {
+    if (
+      !fechaFinEditadaManualmente &&
+      fechaInicio &&
+      totalHorasActividadesCalculado > 0 &&
+      horasPorDiaValue > 0
+    ) {
+      const nuevaFechaFin = calcularFechaFinal(
+        fechaInicio,
+        totalHorasActividadesCalculado,
+        horasPorDiaValue
+      );
+
+      if (nuevaFechaFin && nuevaFechaFin !== fechaFin) {
+        console.log('Calculando nueva fecha final automáticamente:', {
+          fechaInicio,
+          totalHoras: totalHorasActividadesCalculado,
+          horasPorDia: horasPorDiaValue,
+          fechaFinal: nuevaFechaFin,
+        });
+        setFechaFin(nuevaFechaFin);
+      }
+    }
+  }, [
+    fechaInicio,
+    totalHorasActividadesCalculado,
+    horasPorDiaValue,
+    fechaFinEditadaManualmente,
+  ]);
+
+  // Limpiar el flag de edición manual cuando se abre el modal en modo crear
+  useEffect(() => {
+    if (!isEditMode && isOpen) {
+      setFechaFinEditadaManualmente(false);
+      setFechaInicioEditadaManualmente(false);
+    }
+  }, [isEditMode, isOpen]);
+
+  // Efecto para establecer fecha inicial automáticamente en modo crear
+  useEffect(() => {
+    if (!isEditMode && isOpen && !fechaInicio) {
+      const fechaActual = obtenerFechaActual();
+      console.log('Estableciendo fecha actual como inicial:', fechaActual);
+      setFechaInicio(fechaActual);
+      setFechaInicioEditadaManualmente(false);
+    }
+  }, [isEditMode, isOpen, fechaInicio]);
 
   if (!isOpen) return null;
 
@@ -1380,36 +1575,96 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Inicio del Proyecto
+              {fechaInicioEditadaManualmente && (
+                <span className="ml-2 text-xs text-orange-300">
+                  (Editada manualmente)
+                </span>
+              )}
             </label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full rounded bg-gray-400 p-2 text-black"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => handleFechaInicioChange(e.target.value)}
+                className="w-full rounded bg-gray-400 p-2 text-black"
+                required
+                title={
+                  fechaInicioEditadaManualmente
+                    ? "Fecha editada manualmente. Usa el botón 'Hoy' para volver a la fecha actual"
+                    : 'Fecha inicial del proyecto. Se establece automáticamente como hoy'
+                }
+              />
+              {fechaInicioEditadaManualmente && (
+                <button
+                  type="button"
+                  onClick={volverAFechaActual}
+                  className="flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 sm:text-sm"
+                  title="Volver a la fecha actual"
+                >
+                  Hoy
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Fin del Proyecto
+              {!fechaFinEditadaManualmente && (
+                <span className="ml-2 text-xs text-gray-300">
+                  (Calculada automáticamente)
+                </span>
+              )}
+              {fechaFinEditadaManualmente && (
+                <span className="ml-2 text-xs text-orange-300">
+                  (Editada manualmente)
+                </span>
+              )}
             </label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              min={fechaInicio}
-              className="w-full rounded bg-gray-400 p-2 text-black"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={fechaFin}
+                onChange={(e) => handleFechaFinChange(e.target.value)}
+                min={fechaInicio}
+                className="w-full rounded bg-gray-400 p-2 text-black"
+                required
+                title={
+                  fechaFinEditadaManualmente
+                    ? "Fecha editada manualmente. Usa el botón 'Auto' para volver al cálculo automático"
+                    : 'Esta fecha se calcula automáticamente. Puedes editarla manualmente si lo deseas'
+                }
+              />
+              {fechaFinEditadaManualmente && (
+                <button
+                  type="button"
+                  onClick={volverACalculoAutomatico}
+                  className="flex-shrink-0 rounded bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700 sm:text-sm"
+                  title="Volver al cálculo automático"
+                >
+                  Auto
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Horas por día responsive */}
+          {/* Horas por día responsive con información adicional */}
           {fechaInicio && fechaFin && (
             <>
               <div className="col-span-1 flex items-center">
                 <span className="text-sm font-semibold text-cyan-200 sm:text-base">
                   Total de horas: {totalHorasProyecto}
+                </span>
+              </div>
+              <div className="col-span-1 flex items-center">
+                <span className="text-sm font-semibold text-green-300 sm:text-base">
+                  Días laborables necesarios:{' '}
+                  {Math.ceil(totalHorasActividadesCalculado / horasPorDiaValue)}
+                  {fechaFinEditadaManualmente && (
+                    <span className="ml-2 text-xs text-orange-300">
+                      (Fecha manual activa)
+                    </span>
+                  )}
                 </span>
               </div>
             </>
@@ -1420,6 +1675,36 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <label className="text-sm text-cyan-300 sm:text-base">
               Objetivos Específicos
             </label>
+
+            {/* Sección para agregar nuevo objetivo */}
+            <div className="mb-4 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <textarea
+                  value={nuevoObjetivo}
+                  onChange={(e) => {
+                    setNuevoObjetivo(e.target.value);
+                    handleTextAreaChange(e);
+                  }}
+                  rows={1}
+                  className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
+                  placeholder="Agregar nuevo objetivo específico..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAgregarObjetivo();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAgregarObjetivo}
+                  className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             {/* Lista de objetivos responsive */}
             <div className="m-2 mb-2 gap-2">
               <ul className="mb-2 space-y-4">
@@ -1576,12 +1861,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               className="mt-1 rounded border bg-gray-400 p-2 text-black"
               required
             >
+              <option value="" className="text-gray-500">
+                -- Seleccione un tipo de proyecto --
+              </option>
               {typeProjects.map((tp) => (
-                <option
-                  key={tp.value}
-                  value={tp.value}
-                  disabled={tp.value === ''}
-                >
+                <option key={tp.value} value={tp.value}>
                   {tp.label}
                 </option>
               ))}
@@ -1658,188 +1942,134 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               </div>
             </div>
           )}
-
-          {/* Cronograma responsive */}
-          {fechaInicio && fechaFin && duracionDias > 0 && (
-            <div className="mt-4 overflow-x-auto sm:mt-6">
-              <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-                Cronograma{' '}
-                {tipoVisualizacion === 'meses'
-                  ? 'por Meses'
-                  : tipoVisualizacion === 'dias'
-                    ? 'por Días'
-                    : 'por Horas'}
-              </h3>
-              {tipoVisualizacion === 'horas' ? (
-                <table className="w-full table-auto border-collapse text-sm text-black">
-                  <thead className="sticky top-0 z-10 bg-gray-300">
-                    <tr>
-                      <th
-                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                        style={{ minWidth: 180 }}
-                      >
-                        Actividad
-                      </th>
-                      <th className="border px-2 py-2 text-left break-words">
-                        Total de Horas
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {objetivosEspEditado.map((obj) => (
-                      <React.Fragment key={obj.id}>
-                        {obj.activities.map((act, idx) => {
-                          const actividadKey = `${obj.id}_${idx}`;
-                          console.log(
-                            `Buscando horas para actividad ${actividadKey}`
-                          );
-                          /* const responsableId =
-                            responsablesPorActividad[actividadKey] || '';
-                          const responsableObj = usuarios.find(
-                            (u) => u.id === responsableId
-                          ); */
-
-                          // Accede a las horas por actividad de forma segura
-
-                          const horasActividad = (() => {
-                            const val = horasPorActividadFinal[actividadKey];
-                            console.log(
-                              `Actividad ${actividadKey} tiene ${val || 'NO'} horas asignadas`
-                            );
-                            return typeof val === 'number' && val > 0 ? val : 1;
-                          })();
-
-                          return (
-                            <tr key={idx}>
-                              {/* <td
-                                className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                                style={{ minWidth: 180 }}
-                              >
-                                {act}
-                                {responsableObj && (
-                                  <div className="text-xs font-semibold text-cyan-700">
-                                    Responsable: {responsableObj.name}
-                                  </div>
-                                )}
-                              </td> */}
-                              <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
-                                {horasActividad}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <table className="w-full table-auto border-collapse text-sm text-black">
-                  <thead className="sticky top-0 z-10 bg-gray-300">
-                    <tr>
-                      <th
-                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                        style={{ minWidth: 180 }}
-                      >
-                        Actividad
-                      </th>
-                      {meses.map((periodo, i) => (
-                        <th
-                          key={i}
-                          className="border px-2 py-2 text-left break-words whitespace-normal"
-                          style={{
-                            minWidth:
-                              tipoVisualizacion === 'dias' ? '80px' : '120px',
-                          }}
-                        >
-                          {periodo}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  {/* <tbody>
-                    {objetivosEspEditado.map((obj) => (
-                      <React.Fragment key={obj.id}>
-                        {obj.activities.map((act, idx) => {
-                          const actividadKey = `${obj.id}_${idx}`;
-                          const responsableId =
-                            responsablesPorActividad[actividadKey] || '';
-                          const responsableObj = usuarios.find(
-                            (u) => u.id === responsableId
-                          );
-
-                          return (
-                            <tr key={idx}>
-                              <td
-                                className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                                style={{ minWidth: 180 }}
-                              >
-                                {act}
-                                {responsableObj && (
-                                  <div className="text-xs font-semibold text-cyan-700">
-                                    Responsable: {responsableObj.name}
-                                  </div>
-                                )}
-                              </td>
-                              {meses.map((_, i) => (
-                                <td
-                                  key={i}
-                                  onClick={() => toggleMesActividad(act, i)}
-                                  className={`cursor-pointer border px-2 py-2 ${
-                                    cronogramaState[act]?.includes(i)
-                                      ? 'bg-cyan-300 font-bold text-white'
-                                      : 'bg-white'
-                                  }`}
-                                />
-                              ))}
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </tbody> */}
-                </table>
-              )}
-
-              {/* Botones responsive */}
-              <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
-                <button
-                  onClick={handleGuardarProyecto}
-                  className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
-                  disabled={isUpdating}
-                >
-                  {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
-                  disabled={isUpdating}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Botones responsive */}
-          <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
-            <button
-              onClick={handleGuardarProyecto}
-              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
-              disabled={isUpdating}
-            >
-              {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
-              disabled={isUpdating}
-            >
-              Cancelar
-            </button>
-          </div>
         </form>
+
+        {/* Cronograma responsive */}
+        <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
+          Cronograma{' '}
+          {tipoVisualizacion === 'meses'
+            ? 'por Meses'
+            : tipoVisualizacion === 'dias'
+              ? 'por Días'
+              : ' por Horas'}
+        </h3>
+        {fechaInicio && fechaFin && duracionDias > 0 && (
+          <div className="mt-4 overflow-x-auto sm:mt-6">
+            {tipoVisualizacion === 'horas' ? (
+              <table className="w-full table-auto border-collapse text-sm text-black">
+                <thead className="sticky top-0 z-10 bg-gray-300">
+                  <tr>
+                    <th
+                      className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                      style={{ minWidth: 180 }}
+                    >
+                      Actividad
+                    </th>
+                    <th className="border px-2 py-2 text-left break-words">
+                      Total de Horas
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {objetivosEspEditado.map((obj) =>
+                    obj.activities.map((act, idx) => {
+                      const actividadKey = `${obj.id}_${idx}`;
+                      const horasActividad =
+                        typeof horasPorActividadFinal[actividadKey] ===
+                          'number' && horasPorActividadFinal[actividadKey] > 0
+                          ? horasPorActividadFinal[actividadKey]
+                          : 1;
+                      return (
+                        <tr key={actividadKey}>
+                          <td
+                            className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                            style={{ minWidth: 250, maxWidth: 300 }}
+                          >
+                            {act}
+                          </td>
+                          <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
+                            {horasActividad}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full table-auto border-collapse text-sm text-black">
+                <thead className="sticky top-0 z-10 bg-gray-300">
+                  <tr>
+                    <th
+                      className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                      style={{ minWidth: 500, maxWidth: 500 }}
+                    >
+                      Actividad
+                    </th>
+                    {meses.map((periodo, i) => (
+                      <th
+                        key={i}
+                        className="border px-2 py-2 text-left break-words whitespace-normal"
+                        style={{
+                          minWidth:
+                            tipoVisualizacion === 'dias' ? '80px' : '120px',
+                        }}
+                      >
+                        {periodo}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {objetivosEspEditado.map((obj) =>
+                    obj.activities.map((act, idx) => (
+                      <tr key={obj.id + '_' + idx}>
+                        <td
+                          className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                          style={{ minWidth: 250, maxWidth: 300 }}
+                        >
+                          {act}
+                        </td>
+                        {meses.map((_, i) => (
+                          <td
+                            key={i}
+                            className={`cursor-pointer border px-2 py-2 text-center ${
+                              cronogramaState[act]?.includes(i)
+                                ? 'bg-cyan-300 font-bold text-white'
+                                : 'bg-white'
+                            }`}
+                            onClick={() => toggleMesActividad(act, i)}
+                          >
+                            {cronogramaState[act]?.includes(i) ? '✔️' : ''}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* Botones responsive */}
+        <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+          <button
+            onClick={handleGuardarProyecto}
+            className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
+            disabled={isUpdating}
+          >
+            {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
+            disabled={isUpdating}
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   );
