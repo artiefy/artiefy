@@ -1002,7 +1002,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               </div>
 
               {chatMode.status ? (
-                user ? (
+                
                   <ChatMessages
                     idea={idea}
                     setIdea={setIdea}
@@ -1018,7 +1018,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     setInputText={setInputText}
                     handleSendMessage={handleSendMessage}
                     isLoading={isLoading}
-                    user={user}
                     messagesEndRef={
                       messagesEndRef as React.RefObject<HTMLDivElement>
                     }
@@ -1026,7 +1025,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     inputRef={inputRef as React.RefObject<HTMLInputElement>}
                     renderMessage={renderMessage}
                   />
-                ) : null
+                
               ) : (
                 <ChatList
                   setChatMode={setChatMode}

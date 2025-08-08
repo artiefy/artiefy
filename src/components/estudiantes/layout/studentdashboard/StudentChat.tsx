@@ -5,6 +5,7 @@ import { useEffect, useRef,useState } from 'react';
 import Image from 'next/image';
 import { usePathname,useRouter } from 'next/navigation';
 
+import {  useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
@@ -13,7 +14,7 @@ import {
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 
-import type { UserResource } from '@clerk/types';
+
 
 // Props for the chat component
 interface ChatProps {
@@ -45,7 +46,6 @@ interface ChatProps {
   setInputText: (text: string) => void;
   handleSendMessage: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
-  user: UserResource;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   isSignedIn?: boolean;
   inputRef?: React.RefObject<HTMLInputElement>;
@@ -72,7 +72,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
   setInputText,
   handleSendMessage,
   isLoading,
-  user,
   messagesEndRef,
   isSignedIn = false,
   inputRef,
@@ -84,6 +83,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
+
+  const { user } = useUser();
 
   const [conversation] = useState<{ id: number }>({
     id: chatMode.idChat ?? courseId ?? 0,
@@ -217,7 +218,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
             if (courseId != null) {
               void getOrCreateConversation({
-                senderId: user.id,
+                senderId: user?.id ?? '',
                 cursoId: courseId,
                 title:
                   'Curso - ' +
@@ -252,7 +253,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
     pathname,
     setChatMode,
     setMessages,
-    user.id,
+    user?.id,
   ]);
 
   return (
