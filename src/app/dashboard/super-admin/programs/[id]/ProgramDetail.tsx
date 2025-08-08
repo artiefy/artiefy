@@ -330,14 +330,16 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     subjects: { id: number }[],
     programId: number,
     isActive: boolean,
-    courseTypeId: number[], // 🆕 nuevo parámetro
-    individualPrice: number | null // 🆕 nuevo parámetro
+    courseTypeId: number[],
+    individualPrice: number | null
   ) => {
     if (!user) return;
 
     try {
       setUploading(true);
       void id;
+
+      let videoKey = '';
 
       if (file) {
         const uploadResponse = await fetch('/api/upload', {
@@ -352,7 +354,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `Error: al iniciar la carga: ${uploadResponse.statusText}`
+            `Error al iniciar la carga: ${uploadResponse.statusText}`
           );
         }
 
@@ -363,16 +365,28 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           fileName: string;
         };
 
-        coverImageKey = uploadData.key;
-        fileName = uploadData.fileName;
-
         const formData = new FormData();
         Object.entries(uploadData.fields).forEach(([key, value]) => {
           formData.append(key, value);
         });
         formData.append('file', file);
 
-        await fetch(uploadData.url, { method: 'POST', body: formData });
+        const uploadResult = await fetch(uploadData.url, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResult.ok) {
+          throw new Error('Error al subir el archivo');
+        }
+
+        videoKey = uploadData.key;
+        fileName = uploadData.fileName;
+
+        // ⚠️ Solo sobrescribimos coverImageKey si NO viene desde ModalFormCourse
+        if (!coverImageKey) {
+          coverImageKey = uploadData.key;
+        }
       }
 
       const response = await fetch('/api/educadores/courses/cursoMateria', {
@@ -382,6 +396,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           title,
           description,
           coverImageKey,
+          videoKey, // ✅ se guarda por separado
           fileName,
           categoryid,
           modalidadesid,
@@ -402,9 +417,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         console.log('📌 Respuesta de la API al crear curso:', responseData);
 
         responseData.forEach(async (data) => {
-          console.log(`Curso creado con ID: ${data.id}`); // Log each created course ID
+          console.log(`Curso creado con ID: ${data.id}`);
 
-          // If addParametros is true, assign parameters for each course
           if (addParametros) {
             for (const parametro of editParametros) {
               try {
@@ -434,7 +448,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                 });
               } catch (error) {
                 toast.error('Error al crear el parámetro', {
-                  description: `Error al crear el parámetro para el curso ID ${data.id}: ${(error as Error).message}`,
+                  description: `Error en el curso ID ${data.id}: ${(error as Error).message}`,
                 });
               }
             }
@@ -446,9 +460,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
             .map((r) => r.id)
             .join(', ')}`,
         });
-        await fetchProgram(); // 🔥 refresca los cursos
-        setSubjects([]); // limpiar las materias en el estado
-        setIsCourseModalOpen(false); // cierra el modal
+
+        await fetchProgram(); // refresca la lista de cursos
+        setSubjects([]); // limpia materias
+        setIsCourseModalOpen(false); // cierra modal
       } else {
         const errorData = (await response.json()) as { error?: string };
         toast.error('Error', {
@@ -459,7 +474,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     } catch (error) {
       console.error('Error during course creation:', error);
       toast.error('Error', {
-        description: `Error during course creation: ${
+        description: `Error al crear curso: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       });

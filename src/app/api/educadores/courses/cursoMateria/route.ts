@@ -17,7 +17,7 @@ import {
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { db } from '~/server/db';
-import { courseCourseTypes,courses, users } from '~/server/db/schema'; // Add users import
+import { courseCourseTypes, courses, users } from '~/server/db/schema'; // Add users import
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +110,9 @@ export async function POST(request: Request) {
       courseTypeId: number[]; // 👉 ahora puede ser múltiple
       isActive: boolean;
       individualPrice?: number; // ✅ se añade acá para que no rompa TS
+      videoKey?: string; // ✅ igual que el frontend
     };
+    console.log('📽️ Video key recibida:', data.videoKey);
 
     const createdCourses = [];
     const isMultipleModalities = data.modalidadesid.length > 1;
@@ -147,6 +149,7 @@ export async function POST(request: Request) {
           creatorId: userId,
           coverImageKey: data.coverImageKey,
           categoryid: data.categoryid,
+          coverVideoCourseKey: data.videoKey ?? null, // ✅ Guarda el video
           rating: data.rating,
           modalidadesid: modalidadId,
           nivelid: data.nivelid,
