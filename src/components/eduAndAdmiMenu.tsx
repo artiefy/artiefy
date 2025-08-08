@@ -73,6 +73,24 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'roles-secundarios',
       link: '/dashboard/super-admin/usuariosRoles',
     },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Formulario de inscripción',
+      id: 'formulario-inscripcion',
+      link: '/dashboard/super-admin/form-inscription',
+    },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Fechas inscritas',
+      id: 'formulario-fechas',
+      link: '/dashboard/super-admin/form-inscription/dates',
+    },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Comerciales registrados',
+      id: 'formulario-comerciales',
+      link: '/dashboard/super-admin/form-inscription/comercials',
+    },
   ];
 
   const navItemsEducator = [
