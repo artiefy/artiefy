@@ -676,14 +676,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const meses: string[] = periodosVisualizacion;
 
   // Calcular array de horas para el cronograma por horas
-  const horasPorDia = 24;
+  const horasPorDiaConst = 24;
   const periodosHoras: string[] =
     fechaInicio && fechaFin && tipoVisualizacion === 'horas'
-      ? Array.from({ length: duracionDias * horasPorDia }, (_, i) => {
+      ? Array.from({ length: duracionDias * horasPorDiaConst }, (_, i) => {
           const fecha = new Date(fechaInicio);
           fecha.setHours(0, 0, 0, 0);
-          fecha.setDate(fecha.getDate() + Math.floor(i / horasPorDia));
-          const hora = i % horasPorDia;
+          fecha.setDate(fecha.getDate() + Math.floor(i / horasPorDiaConst));
+          const hora = i % horasPorDiaConst;
           return (
             fecha.toLocaleDateString('es-ES') +
             ' ' +
@@ -1291,7 +1291,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
       // Si es día laborable (lunes a viernes), contarlo
       if (diaSemana !== 0 && diaSemana !== 6) {
-        // 0 = domingo, 6 = sábado
         diasContados++;
       }
 
@@ -1355,8 +1354,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   };
 
   // Efecto para calcular fecha final automáticamente (solo si no ha sido editada manualmente)
+  // MODIFICADO: recalcula también al abrir el modal si hay datos y no fue editada manualmente
   useEffect(() => {
     if (
+      isOpen && // <-- Solo cuando el modal está abierto
       !fechaFinEditadaManualmente &&
       fechaInicio &&
       totalHorasActividadesCalculado > 0 &&
@@ -1369,16 +1370,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       );
 
       if (nuevaFechaFin && nuevaFechaFin !== fechaFin) {
-        console.log('Calculando nueva fecha final automáticamente:', {
-          fechaInicio,
-          totalHoras: totalHorasActividadesCalculado,
-          horasPorDia: horasPorDiaValue,
-          fechaFinal: nuevaFechaFin,
-        });
         setFechaFin(nuevaFechaFin);
       }
     }
   }, [
+    isOpen, // <-- Añadido para recalcular al abrir el modal
     fechaInicio,
     totalHorasActividadesCalculado,
     horasPorDiaValue,
@@ -1403,6 +1399,123 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isEditMode, isOpen, fechaInicio]);
 
+  // Calcula los días asignados a cada actividad según las horas y responsable
+  const diasLaborables = tipoVisualizacion === 'dias' ? meses : [];
+  const horasPorDia = horasPorDiaValue > 0 ? horasPorDiaValue : 6;
+
+  const calcularDiasPorActividad = React.useCallback(() => {
+    const actividadesOrdenadas: {
+      key: string;
+      responsable: string;
+      horas: number;
+    }[] = [];
+    objetivosEspEditado.forEach((obj) => {
+      obj.activities.forEach((act, idx) => {
+        const key = `${obj.id}_${idx}`;
+        const responsable = responsablesPorActividadLocal[key] || '';
+        const horas =
+          typeof horasPorActividadFinal[key] === 'number' &&
+          horasPorActividadFinal[key] > 0
+            ? horasPorActividadFinal[key]
+            : 1;
+        actividadesOrdenadas.push({ key, responsable, horas });
+      });
+    });
+
+    const asignacion: { [actividadKey: string]: number[] } = {};
+    let diaIndex = 0;
+    let horasRestantesDia = horasPorDia;
+    let responsableAnterior = '';
+
+    for (let i = 0; i < actividadesOrdenadas.length; i++) {
+      const { key, responsable, horas } = actividadesOrdenadas[i];
+      let horasPendientes = horas;
+      asignacion[key] = [];
+
+      // Si el responsable cambia, inicia en nuevo día
+      if (responsableAnterior !== responsable && responsableAnterior !== '') {
+        if (horasRestantesDia < horasPorDia) {
+          diaIndex++;
+          horasRestantesDia = horasPorDia;
+        }
+      }
+
+      while (horasPendientes > 0 && diaIndex < diasLaborables.length) {
+        // Si no hay horas restantes en el día, avanza al siguiente día
+        if (horasRestantesDia === 0) {
+          diaIndex++;
+          horasRestantesDia = horasPorDia;
+          if (diaIndex >= diasLaborables.length) break;
+        }
+
+        // Asignar las horas posibles en el día actual
+        const horasAsignadas = Math.min(horasPendientes, horasRestantesDia);
+
+        // Marcar el día actual si se asignan horas (aunque sea parcial)
+        if (
+          asignacion[key].length === 0 || // siempre marca el primer día
+          horasRestantesDia === horasPorDia || // si es un nuevo día, marca el día
+          horasPendientes < horasPorDia // si las horas pendientes son menos que el día, marca el día
+        ) {
+          asignacion[key].push(diaIndex);
+        }
+
+        horasPendientes -= horasAsignadas;
+        horasRestantesDia -= horasAsignadas;
+      }
+
+      responsableAnterior = responsable;
+    }
+
+    return asignacion;
+  }, [
+    objetivosEspEditado,
+    responsablesPorActividadLocal,
+    horasPorActividadFinal,
+    horasPorDia,
+    diasLaborables,
+  ]);
+
+  const diasPorActividad =
+    tipoVisualizacion === 'dias' ? calcularDiasPorActividad() : {};
+
+  // --- CORRECCIÓN DE RENDERIZADO DEL CRONOGRAMA POR DÍAS ---
+  // El problema es que el cronograma solo muestra columnas para las fechas existentes en el rango,
+  // pero si solo hay dos fechas, el segundo día no se muestra hasta que hay una tercera.
+  // Solución: Asegúrate de que el array 'meses' (que representa los días laborables) siempre tenga
+  // al menos tantos días como el máximo índice asignado en diasPorActividad + 1.
+
+  // Justo antes del render del cronograma, fuerza el tamaño de 'meses' si es necesario:
+  const maxDiaAsignado = React.useMemo(() => {
+    if (tipoVisualizacion !== 'dias') return 0;
+    let max = 0;
+    Object.values(diasPorActividad).forEach((arr) => {
+      arr.forEach((idx) => {
+        if (idx > max) max = idx;
+      });
+    });
+    return max;
+  }, [diasPorActividad, tipoVisualizacion]);
+
+  const mesesRender = React.useMemo(() => {
+    if (tipoVisualizacion !== 'dias') return meses;
+    // Si el cronograma requiere más días que los calculados, extiende el array
+    if (meses.length <= maxDiaAsignado) {
+      const extendidos = [...meses];
+      let lastDate =
+        meses.length > 0
+          ? new Date(meses[meses.length - 1].split('/').reverse().join('-'))
+          : new Date();
+      for (let i = meses.length; i <= maxDiaAsignado; i++) {
+        lastDate.setDate(lastDate.getDate() + 1);
+        extendidos.push(lastDate.toLocaleDateString('es-ES'));
+      }
+      return extendidos;
+    }
+    return meses;
+  }, [meses, maxDiaAsignado, tipoVisualizacion]);
+
+  // Mueve el early return aquí, después de todos los hooks
   if (!isOpen) return null;
 
   return (
@@ -1945,16 +2058,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         </form>
 
         {/* Cronograma responsive */}
-        <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-          Cronograma{' '}
-          {tipoVisualizacion === 'meses'
-            ? 'por Meses'
-            : tipoVisualizacion === 'dias'
-              ? 'por Días'
-              : ' por Horas'}
-        </h3>
         {fechaInicio && fechaFin && duracionDias > 0 && (
           <div className="mt-4 overflow-x-auto sm:mt-6">
+            <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
+              Cronograma{' '}
+              {tipoVisualizacion === 'meses'
+                ? 'por Meses'
+                : tipoVisualizacion === 'dias'
+                  ? 'por Días'
+                  : ' por Horas'}
+            </h3>
             {tipoVisualizacion === 'horas' ? (
               <table className="w-full table-auto border-collapse text-sm text-black">
                 <thead className="sticky top-0 z-10 bg-gray-300">
@@ -2002,11 +2115,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   <tr>
                     <th
                       className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                      style={{ minWidth: 500, maxWidth: 500 }}
+                      style={{ minWidth: 180 }}
                     >
                       Actividad
                     </th>
-                    {meses.map((periodo, i) => (
+                    {/* Cambia aquí: */}
+                    {mesesRender.map((periodo, i) => (
                       <th
                         key={i}
                         className="border px-2 py-2 text-left break-words whitespace-normal"
@@ -2022,29 +2136,42 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 </thead>
                 <tbody>
                   {objetivosEspEditado.map((obj) =>
-                    obj.activities.map((act, idx) => (
-                      <tr key={obj.id + '_' + idx}>
-                        <td
-                          className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                          style={{ minWidth: 250, maxWidth: 300 }}
-                        >
-                          {act}
-                        </td>
-                        {meses.map((_, i) => (
+                    obj.activities.map((act, idx) => {
+                      const actividadKey = `${obj.id}_${idx}`;
+                      return (
+                        <tr key={actividadKey}>
                           <td
-                            key={i}
-                            className={`cursor-pointer border px-2 py-2 text-center ${
-                              cronogramaState[act]?.includes(i)
-                                ? 'bg-cyan-300 font-bold text-white'
-                                : 'bg-white'
-                            }`}
-                            onClick={() => toggleMesActividad(act, i)}
+                            className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                            style={{ minWidth: 180 }}
                           >
-                            {cronogramaState[act]?.includes(i) ? '✔️' : ''}
+                            {act}
                           </td>
-                        ))}
-                      </tr>
-                    ))
+                          {/* Cambia aquí: */}
+                          {mesesRender.map((_, i) => (
+                            <td
+                              key={i}
+                              className={`border px-2 py-2 text-center ${
+                                tipoVisualizacion === 'dias' &&
+                                diasPorActividad[actividadKey]?.includes(i)
+                                  ? 'bg-cyan-300 font-bold text-white'
+                                  : cronogramaState[act]?.includes(i)
+                                    ? 'bg-cyan-300 font-bold text-white'
+                                    : 'bg-white'
+                              }`}
+                            >
+                              {tipoVisualizacion === 'dias' &&
+                              diasPorActividad[actividadKey]?.includes(i)
+                                ? '✔️'
+                                : ''}
+                              {tipoVisualizacion !== 'dias' &&
+                              cronogramaState[act]?.includes(i)
+                                ? '✔️'
+                                : ''}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

@@ -142,6 +142,8 @@ export default function ProyectosPage() {
   const [tiempoEstimadoProyecto, setTiempoEstimadoProyecto] =
     useState<number>(0);
 
+  const [tipoProyectoResumen, setTipoProyectoResumen] = useState<string>(''); // <-- Nuevo estado
+
   const handleConfirmarPlanteamiento = () => {
     setPlanteamientoOpen(false);
     setJustificacionOpen(true);
@@ -172,6 +174,7 @@ export default function ProyectosPage() {
     horasPorActividad: { [key: string]: number };
     horasPorDiaProyecto: number;
     tiempoEstimadoProyecto: number;
+    tipoProyecto?: string;
   }) => {
     console.log('=== INICIO handleConfirmarObjetivosEsp ===');
     console.log('Recibiendo datos de ModalObjetivosEsp:', data);
@@ -184,35 +187,20 @@ export default function ProyectosPage() {
       id: obj.id || `obj_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     }));
 
-    console.log('Objetivos procesados:', objetivosConIds);
-
-    // Actualizar estados de forma secuencial para evitar problemas de timing
-    setObjetivosEspTexto(objetivosConIds);
+    // Actualizar estados correctamente
+    setObjetivosEspTexto(objetivosConIds); // <-- Esto es lo que se pasa a ModalResumen
     setResponsablesPorActividad(data.responsablesPorActividad || {});
-
-    // IMPORTANTE: Actualizar horasPorActividad inmediatamente
-    console.log(
-      'Estado actual de horasPorActividad antes de actualizar:',
-      horasPorActividad
-    );
-    console.log(
-      'Asignando horas por actividad directamente:',
-      data.horasPorActividad
-    );
     setHorasPorActividad(data.horasPorActividad || {});
-
-    // Verificar el estado después de un tick
-    setTimeout(() => {
-      console.log(
-        'Estado de horasPorActividad después de setear:',
-        horasPorActividad
-      );
-    }, 10);
-
     setHorasPorDiaProyecto(data.horasPorDiaProyecto ?? 6);
     setTiempoEstimadoProyecto(data.tiempoEstimadoProyecto ?? 0);
 
-    console.log('=== Cerrando ModalObjetivosEsp y abriendo ModalResumen ===');
+    // Nuevo: guarda el tipo de proyecto si viene de IA
+    if (data.tipoProyecto) {
+      setTipoProyectoResumen(data.tipoProyecto);
+    } else {
+      setTipoProyectoResumen('');
+    }
+
     setObjetivosEspOpen(false);
     setResumenOpen(true);
   };
@@ -1337,7 +1325,7 @@ export default function ProyectosPage() {
             planteamiento={planteamientoTexto}
             justificacion={justificacionTexto}
             objetivoGen={objetivoGenTexto}
-            objetivosEsp={ObjetivosEspTexto}
+            objetivosEsp={ObjetivosEspTexto} // <-- Aquí se pasan los objetivos correctos
             actividad={[]} // Ya no se usa, pero el prop es requerido
             setObjetivosEsp={setObjetivosEspTexto}
             setActividades={() => {}} // Ya no se usa, pero el prop es requerido
@@ -1361,6 +1349,7 @@ export default function ProyectosPage() {
             setHorasPorDiaProyecto={setHorasPorDiaProyecto}
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
+            tipoProyecto={tipoProyectoResumen} // <-- Pasa el tipo de proyecto aquí
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}
@@ -1473,7 +1462,7 @@ export default function ProyectosPage() {
               setObjetivosEsp={() => {}}
               setActividades={() => {}}
               coverImageKey={undefined}
-              tipoProyecto={proyectoGenerado.project_type ?? ''}
+              tipoProyecto={proyectoGenerado.project_type ?? ''} // <-- PASA EL TIPO DE PROYECTO DEL USUARIO
               fechaInicio={proyectoGenerado.fechaInicio ?? ''}
               fechaFin={proyectoGenerado.fechaFin ?? ''}
               tipoVisualizacion={'meses'}

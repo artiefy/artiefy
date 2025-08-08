@@ -106,8 +106,10 @@ export default function ModalGenerarProyecto({
       }
       const data = await res.json();
       console.log('Información generada por IA:', data);
-      setResultado(data);
-      onProyectoGenerado(data);
+      // Añade el tipo de proyecto seleccionado por el usuario al objeto enviado al resumen
+      const resultadoFinal = { ...data, project_type: form.project_type };
+      setResultado(resultadoFinal);
+      onProyectoGenerado(resultadoFinal);
       onClose();
     } catch (err) {
       setError('No se pudo generar el proyecto');

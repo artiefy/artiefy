@@ -26,6 +26,7 @@ interface ModalObjetivosEspProps {
     horasPorActividad: { [key: string]: number };
     horasPorDiaProyecto: number; // <-- Nuevo campo
     tiempoEstimadoProyecto: number; // <-- Nuevo prop
+    tipoProyecto?: string; // <-- Añadido para permitir tipoProyecto
   }) => void;
   texto: SpecificObjective[];
   setTexto: (value: SpecificObjective[]) => void;
@@ -60,6 +61,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   }>({});
   const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
   const [objetivoGenTexto, setObjetivoGenTexto] = useState(objetivoGen || '');
+  const [tipoProyecto, setTipoProyecto] = useState<string>(''); // <-- Nuevo estado para tipo de proyecto
 
   // Estados para responsables y horas por actividad
   const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
@@ -337,6 +339,10 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   // Maneja la recepción de objetivos generados por IA
   const handleProyectoGenerado = (data: any) => {
     console.log('Objetivos específicos recibidos en ModalObjetivosEsp:', data);
+    // Guarda el tipo de proyecto generado por IA si existe
+    if (data.project_type) {
+      setTipoProyecto(data.project_type);
+    }
     if (Array.isArray(data?.milestones)) {
       // Crear los objetivos y actividades
       const nuevosObjetivos = data.milestones.map(
@@ -654,7 +660,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           </Button>
           <Button
             variant="ghost"
-            // Cambia aquí: pasa horasPorActividadValue en vez de horasPorActividad
+            // Cambia aquí: pasa tipoProyecto en el callback
             onClick={() => {
               // Debug logs para verificar los datos antes de enviar
               console.log('=== ENVIANDO DATOS DESDE MODAL OBJETIVOS ESP ===');
@@ -683,6 +689,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                 horasPorActividad: horasPorActividadValue,
                 horasPorDiaProyecto,
                 tiempoEstimadoProyecto,
+                tipoProyecto, // <-- Añade tipoProyecto aquí
               });
             }}
             className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-3 sm:px-4"
