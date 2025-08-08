@@ -1751,29 +1751,29 @@ export function CourseHeader({
           </div>
         )}
         {/* Add Materias section below description */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-cyan-300">
-            Materias asociadas:
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {course.materias
-              ? // Filter to only show unique materia titles
-                Array.from(
-                  new Map(
-                    course.materias.map((materia) => [materia.title, materia])
-                  ).values()
-                ).map((materia: CourseMateria, index: number) => (
-                  <Badge
-                    key={materia.id}
-                    variant="secondary"
-                    className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
-                  >
-                    {materia.title}
-                  </Badge>
-                ))
-              : null}
+        {course.materias && course.materias.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-cyan-300">
+              Materias asociadas:
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {/* Filter to only show unique materia titles */}
+              {Array.from(
+                new Map(
+                  course.materias.map((materia) => [materia.title, materia])
+                ).values()
+              ).map((materia: CourseMateria, index: number) => (
+                <Badge
+                  key={materia.id}
+                  variant="secondary"
+                  className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
+                >
+                  {materia.title}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         {/* Course lessons */}
         <CourseContent
           course={course}
