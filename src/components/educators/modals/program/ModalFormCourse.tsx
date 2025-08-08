@@ -46,8 +46,9 @@ interface CourseFormProps {
     subjects: { id: number }[], // ✅ Solo `id` y `courseId`
     programId: number, // ✅ También asegurarnos de enviarlo en la función
     isActive: boolean,
-	courseTypeId: number[], // <-- ✅ agrega esto
-  individualPrice: number | null
+    courseTypeId: number[], // <-- ✅ agrega esto
+    individualPrice: number | null,
+    videoKey: string // ✅ <-- aquí lo agregas
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -126,6 +127,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   instructor,
 }) => {
   const [file, setFile] = useState<File | null>(null); // Estado para el archivo
+  const [frameImageFile, setFrameImageFile] = useState<File | null>(null); // frame capturado
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
   const [fileSize, setFileSize] = useState<number | null>(null); // Estado para el tamaño del archivo
   const [progress, setProgress] = useState(0); // Estado para el progreso
@@ -224,7 +226,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
   const safeCourseTypeId = selectedCourseType ?? [];
 
-  const [courseTypes, setCourseTypes] = useState<{ id: number; name: string }[]>([]);
+  const [courseTypes, setCourseTypes] = useState<
+    { id: number; name: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchCourseTypes = async () => {
@@ -364,6 +368,50 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           body: formData,
         });
 
+        // Si es un video y hay frame seleccionado, subimos el frame
+        if (file.type.startsWith('video/') && frameImageFile) {
+          const baseName = uploadedFileName.split('.').slice(0, -1).join('.');
+          const frameFileName = `${baseName}-frame.jpg`;
+
+          const frameUploadResp = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contentType: frameImageFile.type,
+              fileSize: frameImageFile.size,
+              fileName: frameFileName,
+            }),
+          });
+
+          if (!frameUploadResp.ok) {
+            throw new Error('Error al generar URL para subir el frame');
+          }
+
+          const frameUploadData = (await frameUploadResp.json()) as {
+            fields: Record<string, string>;
+            url: string;
+            key: string;
+          };
+
+          const frameFormData = new FormData();
+          Object.entries(frameUploadData.fields).forEach(([key, value]) => {
+            frameFormData.append(key, value);
+          });
+
+          frameFormData.append('file', frameImageFile);
+
+          const frameUploadResult = await fetch(frameUploadData.url, {
+            method: 'POST',
+            body: frameFormData,
+          });
+
+          if (!frameUploadResult.ok) {
+            throw new Error('Error al subir frame del video');
+          }
+
+          coverImageKey = frameUploadData.key;
+        }
+
         if (!uploadFileResponse.ok) {
           throw new Error('Failed to upload file.');
         }
@@ -374,7 +422,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }));
 
       // Validar que haya al menos una materia seleccionada
-      if (!selectedSubjects || selectedSubjects.length === 0) {
+      if (selectedSubjects?.length === 0) {
         toast('Error', {
           description: 'Debe seleccionar al menos una materia.',
         });
@@ -395,11 +443,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         subjects: selectedSubjects,
         fileName: uploadedFileName,
         courseTypeId: selectedCourseType,
-        isActive, individualPrice,
-
+        isActive,
+        individualPrice,
       };
 
       console.log('Payload to send:', payload);
+      let videoKey = '';
+
+      if (file && file.type.startsWith('video/')) {
+        videoKey = coverImageKey; // o uploadData.key si separas la lógica
+      }
 
       await onSubmitAction(
         editingCourseId ? editingCourseId.toString() : '',
@@ -415,7 +468,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         fileName ?? '', // Ensure fileName is a string
         selectedSubjects,
         programId,
-        isActive,   selectedCourseType, individualPrice
+        isActive,
+        selectedCourseType,
+        individualPrice,
+        videoKey
       );
 
       if (controller.signal.aborted) {
@@ -541,7 +597,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setModalidadesid([...modalidadesid]);
       setNivelid(nivelid);
       setCoverImage(coverImageKey);
-	  setIndividualPrice(individualPrice);
+      setIndividualPrice(individualPrice);
     }
   }, [editingCourseId]);
 
@@ -561,7 +617,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setCoverImage('');
       setRating(0);
       setParametrosAction([]);
-	  setIndividualPrice(null);
+      setIndividualPrice(null);
     }
   }, [isOpen, editingCourseId]);
 
@@ -733,10 +789,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </label>
               <Select
                 options={courseTypes.map((type) => ({
-  value: type.id.toString(),
-  label: type.name,
-}))
-}
+                  value: type.id.toString(),
+                  label: type.name,
+                }))}
                 onChange={(selectedOptions) =>
                   setSelectedCourseType(
                     selectedOptions.map((opt) => Number(opt.value))
@@ -747,24 +802,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 className="mt-1 w-full"
               />
             </div>
-			{safeCourseTypeId.includes(4) && (
-  <div className="mx-auto flex w-10/12 flex-col gap-2">
-    <label
-      htmlFor="individualPrice"
-      className="text-primary text-left text-lg font-medium"
-    >
-      Precio Individual
-    </label>
-    <Input
-      type="number"
-      min={0}
-      placeholder="Ingrese el precio"
-      value={individualPrice ?? ''}
-      onChange={(e) => setIndividualPrice(Number(e.target.value))}
-      className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
-    />
-  </div>
-)}
+            {safeCourseTypeId.includes(4) && (
+              <div className="mx-auto flex w-10/12 flex-col gap-2">
+                <label
+                  htmlFor="individualPrice"
+                  className="text-primary text-left text-lg font-medium"
+                >
+                  Precio Individual
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="Ingrese el precio"
+                  value={individualPrice ?? ''}
+                  onChange={(e) => setIndividualPrice(Number(e.target.value))}
+                  className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
+                />
+              </div>
+            )}
 
             <div className="mx-auto flex w-10/12 flex-col gap-2">
               <label
@@ -844,15 +899,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     o haz clic para seleccionar un archivo desde tu computadora
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Supports: JPG, PNG, GIF (Max size: 5MB)
+                    Soporta: Imágenes (JPG, PNG, GIF) y Videos (MP4, MOV, WEBM)
+                    — Tamaño máx: 100MB
                   </p>
+
                   <input
                     type="file"
-                    accept="image/*"
-                    className={`hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+                    accept="image/*,video/*"
+                    className="hidden"
                     onChange={handleFileChange}
                     id="file-upload"
                   />
+
                   <label
                     htmlFor="file-upload"
                     className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
@@ -862,13 +920,69 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </>
               ) : (
                 <div className="relative overflow-hidden rounded-lg bg-gray-100">
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt="preview"
-                    width={500}
-                    height={200}
-                    className="h-48 w-full object-cover"
-                  />
+                  {file.type.startsWith('video/') ? (
+                    <div className="flex flex-col">
+                      <video
+                        id="video-player"
+                        src={URL.createObjectURL(file)}
+                        controls
+                        className="h-48 w-full object-cover"
+                      />
+
+                      <div className="mt-4 flex flex-col items-start gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Capturar frame del video como imagen de portada
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const video = document.getElementById(
+                              'video-player'
+                            ) as HTMLVideoElement | null;
+                            if (!video) return;
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                              ctx.drawImage(
+                                video,
+                                0,
+                                0,
+                                canvas.width,
+                                canvas.height
+                              );
+                              canvas.toBlob((blob) => {
+                                if (blob) {
+                                  const captured = new File(
+                                    [blob],
+                                    'frame.jpg',
+                                    { type: 'image/jpeg' }
+                                  );
+                                  setFrameImageFile(captured);
+                                  toast.success(
+                                    'Frame capturado como imagen de portada'
+                                  );
+                                }
+                              }, 'image/jpeg');
+                            }
+                          }}
+                          className="mt-2 rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700"
+                        >
+                          Capturar Frame
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Image
+                      src={URL.createObjectURL(file)}
+                      alt="preview"
+                      width={500}
+                      height={200}
+                      className="h-48 w-full object-cover"
+                    />
+                  )}
+
                   <button
                     onClick={() => {
                       setFile(null);
