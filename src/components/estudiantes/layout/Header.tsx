@@ -133,15 +133,15 @@ export function Header() {
             <SignedIn>
               <div className="flex items-center gap-2">
                 <div className="perfil-header">
-                <Suspense
-                  fallback={
-                    <div className="flex min-w-[180px] items-center justify-start">
-                      <Icons.spinner className="text-primary ml-2 h-5 w-5" />
-                    </div>
-                  }
-                >
-                  <UserButtonWrapper />
-                </Suspense>
+                  <Suspense
+                    fallback={
+                      <div className="flex min-w-[180px] items-center justify-start">
+                        <Icons.spinner className="text-primary ml-2 h-5 w-5" />
+                      </div>
+                    }
+                  >
+                    <UserButtonWrapper />
+                  </Suspense>
                 </div>
                 <div className="campana-header relative">
                   <NotificationHeader /> {/* Remove count prop */}
@@ -159,7 +159,7 @@ export function Header() {
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         isScrolled
           ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
-          : 'py-4'
+          : '-mb-8 md:py-4'
       } div-header-nav`}
     >
       <div className="container mx-auto max-w-7xl px-4">
@@ -268,8 +268,8 @@ export function Header() {
             </div>
           )}
         </div>
-        <div className="flex w-full items-center justify-between md:hidden">
-          <div className="mt-[-8px] shrink-0">
+        <div className="flex w-full items-center justify-between md:hidden -mt-4 md:mt-0">
+          <div className="mt-[-4px] shrink-0 md:mt-[-8px]">
             <Link href="/estudiantes">
               <div className="relative size-[150px]">
                 <Image
