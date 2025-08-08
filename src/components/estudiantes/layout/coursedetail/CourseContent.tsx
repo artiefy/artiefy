@@ -13,6 +13,7 @@ import {
   FaChevronUp,
   FaCrown,
   FaLock,
+  FaTimes,
 } from 'react-icons/fa';
 
 import {
@@ -351,12 +352,19 @@ export function CourseContent({
           <h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
             Contenido del curso
           </h2>
-          {isSignedIn && isSubscriptionReallyActive && (
+          {isSignedIn && (
             <div className="flex flex-col items-end gap-1">
-              <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-6">
-                <FaCheck className="size-4" />
-                <span className="font-medium">Suscripción Activa</span>
-              </div>
+              {isSubscriptionReallyActive ? (
+                <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-6">
+                  <FaCheck className="size-4" />
+                  <span className="font-medium">Suscripción Activa</span>
+                </div>
+              ) : (
+                <div className="mt-0 flex items-center gap-2 text-red-500 sm:mt-6">
+                  <FaTimes className="size-4" />
+                  <span className="font-medium">Suscripción Inactiva</span>
+                </div>
+              )}
               {subscriptionEndDate && (
                 <p className="text-sm text-red-500">
                   Finaliza: {formatDate(subscriptionEndDate)}

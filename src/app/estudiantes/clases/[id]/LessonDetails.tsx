@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
+import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
@@ -14,6 +15,8 @@ import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonC
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Progress } from '~/components/estudiantes/ui/progress';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -275,11 +278,29 @@ export default function LessonDetails({
       await handleProgressUpdate(100);
       setIsVideoCompleted(true);
 
+      // Mensaje diferente según si tiene actividades o no
+      const hasActivities = activities.length > 0;
       toast.success('Clase completada', {
-        description: activities.length
+        description: hasActivities
           ? 'Ahora completa la actividad para continuar'
           : 'Video completado exitosamente',
       });
+
+      // Si no tiene actividades, actualizar el progreso localmente a 100%
+      if (!hasActivities) {
+        setProgress(100);
+        setLessonsState((prevLessons) =>
+          prevLessons.map((l) =>
+            l.id === lesson.id
+              ? {
+                  ...l,
+                  porcentajecompletado: 100,
+                  isCompleted: true,
+                }
+              : l
+          )
+        );
+      }
     } catch (error) {
       console.error('Error al completar la lección:', error);
       toast.error('Error al marcar la lección como completada');
@@ -489,7 +510,9 @@ export default function LessonDetails({
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
   // Solo declara activityModalId/setActivityModalId una vez aquí
-  const [activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
+  const [activityModalId, setActivityModalId] = useState<number | undefined>(
+    undefined
+  );
 
   // Obtener la transcripción al montar el componente
   useEffect(() => {
@@ -548,7 +571,10 @@ export default function LessonDetails({
     };
     window.addEventListener('open-activity-modal', handler as EventListener);
     return () => {
-      window.removeEventListener('open-activity-modal', handler as EventListener);
+      window.removeEventListener(
+        'open-activity-modal',
+        handler as EventListener
+      );
     };
   }, [setActivityModalId]);
 
@@ -573,6 +599,17 @@ export default function LessonDetails({
 
   // Mueve todos los hooks useEffect fuera de condicionales
   // (No hay hooks dentro de condicionales en el código actual, pero si tienes alguno, sácalo fuera)
+
+  // Add these functions inside your component before the return statement
+  const handleCompletedActivityClick = (activity: Activity) => {
+    // If activityModalId is defined, open the modal
+    setActivityModalId(activity.id);
+  };
+
+  const handleOpenActivity = (activity: Activity) => {
+    // Open the activity modal directly
+    setActivityModalId(activity.id);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -631,20 +668,114 @@ export default function LessonDetails({
               </div>
             )}
           </div>
-          <LessonPlayer
-            lesson={lesson}
-            progress={progress}
-            handleVideoEnd={handleVideoEnd}
-            handleProgressUpdate={handleProgressUpdate}
-            transcription={transcription}
-            isLoadingTranscription={isLoadingTranscription}
-          />
+
+          {/* ACTIVIDADES EN EL CENTRO CUANDO NO HAY VIDEO */}
+          {!isMobile && lesson.coverVideoKey === 'none' ? (
+            <div className="mx-auto w-full max-w-4xl rounded-lg bg-white shadow">
+              <div className="rounded-lg bg-white p-4 shadow-xs md:p-6">
+                <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
+                  {lesson.title}
+                </h1>
+                <p className="font-semibold text-gray-600">
+                  {lesson.description}
+                </p>
+                <div className="mt-8">
+                  {/* Tarjetas de actividades con el mismo diseño del sidebar derecho */}
+                  <div className="space-y-4">
+                    {activities.length > 0 ? (
+                      activities.map((activity, index) => {
+                        const isLocked = !isVideoCompleted && index > 0;
+                        return (
+                          <div
+                            key={activity.id}
+                            className={`rounded-lg border bg-white p-4 shadow-sm ${
+                              isLocked ? 'bg-gray-100 opacity-60' : 'bg-white'
+                            }`}
+                          >
+                            <div className="mb-2 flex items-center justify-between">
+                              <h3 className="font-semibold text-gray-900">
+                                {activity.name}
+                              </h3>
+                              <div className="ml-2 rounded-full bg-blue-100 p-1">
+                                {activity.isCompleted ? (
+                                  <FaCheckCircle className="text-green-500" />
+                                ) : isLocked ? (
+                                  <FaLock className="text-gray-400" />
+                                ) : (
+                                  <div className="text-blue-500">
+                                    {index === 0 ? 'Disponible' : 'Pendiente'}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <p className="mb-4 text-sm text-gray-600">
+                              {activity.description}
+                            </p>
+                            <div className="flex justify-center">
+                              <Button
+                                onClick={() => {
+                                  if (activity.isCompleted) {
+                                    handleCompletedActivityClick(activity);
+                                  } else if (!isLocked) {
+                                    handleOpenActivity(activity);
+                                  }
+                                }}
+                                disabled={isLocked}
+                                className={`rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 font-medium text-white hover:from-blue-600 hover:to-indigo-700 ${
+                                  isLocked
+                                    ? 'cursor-not-allowed opacity-60'
+                                    : ''
+                                }`}
+                              >
+                                {activity.isCompleted
+                                  ? 'Ver Resultados'
+                                  : isLocked
+                                    ? 'Bloqueada'
+                                    : 'Iniciar Actividad'}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
+                        <p className="text-gray-600">
+                          No hay actividades disponibles para esta clase.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="font-bold text-gray-700">
+                        Progreso de la clase
+                      </span>
+                      <span className="text-gray-600">{progress}%</span>
+                    </div>
+                    <Progress value={progress} showPercentage={true} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <LessonPlayer
+              lesson={lesson}
+              progress={progress}
+              handleVideoEnd={handleVideoEnd}
+              handleProgressUpdate={handleProgressUpdate}
+              transcription={transcription}
+              isLoadingTranscription={isLoadingTranscription}
+            />
+          )}
+
           {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
           {isMobile && (
             <div className="mt-4">
               <LessonActivities
                 activities={activities}
-                isVideoCompleted={isVideoCompleted}
+                isVideoCompleted={
+                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
+                }
                 isActivityCompleted={isActivityCompleted}
                 handleActivityCompletion={handleActivityCompletion}
                 userId={userId}
@@ -665,23 +796,55 @@ export default function LessonDetails({
           <LessonComments lessonId={lesson.id} />
         </div>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - SOLO calificaciones y recursos cuando no hay video */}
         {!isMobile && (
           <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-0 md:shadow-sm lg:w-72">
-            <LessonActivities
-              activities={activities}
-              isVideoCompleted={isVideoCompleted}
-              isActivityCompleted={isActivityCompleted}
-              handleActivityCompletion={handleActivityCompletion}
-              userId={userId}
-              onLessonUnlocked={handleLessonUnlocked}
-              courseId={lesson.courseId}
-              lessonId={lesson.id}
-              isLastLesson={isLastLesson(lessonsState, lesson.id)}
-              isLastActivity={isLastActivity(lessonsState, activities, lesson)}
-              lessons={lessonsState}
-              activityModalId={activityModalId}
-            />
+            {lesson.coverVideoKey === 'none' ? (
+              <>
+                <div className="mt-4">
+                  <LessonActivities
+                    activities={[]} // No mostrar actividades aquí
+                    isVideoCompleted={true}
+                    isActivityCompleted={isActivityCompleted}
+                    handleActivityCompletion={handleActivityCompletion}
+                    userId={userId}
+                    onLessonUnlocked={handleLessonUnlocked}
+                    courseId={lesson.courseId}
+                    lessonId={lesson.id}
+                    isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                    isLastActivity={isLastActivity(
+                      lessonsState,
+                      activities,
+                      lesson
+                    )}
+                    lessons={lessonsState}
+                    activityModalId={activityModalId}
+                    inMainContent={false}
+                  />
+                </div>
+              </>
+            ) : (
+              <LessonActivities
+                activities={activities}
+                isVideoCompleted={
+                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
+                }
+                isActivityCompleted={isActivityCompleted}
+                handleActivityCompletion={handleActivityCompletion}
+                userId={userId}
+                onLessonUnlocked={handleLessonUnlocked}
+                courseId={lesson.courseId}
+                lessonId={lesson.id}
+                isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                isLastActivity={isLastActivity(
+                  lessonsState,
+                  activities,
+                  lesson
+                )}
+                lessons={lessonsState}
+                activityModalId={activityModalId}
+              />
+            )}
           </div>
         )}
 

@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import useSWR from 'swr';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import { LessonActivityModal } from './LessonActivityModal';
@@ -38,8 +39,9 @@ interface LessonActivitiesProps {
   lessonId: number;
   isLastLesson: boolean;
   isLastActivity: boolean;
-  lessons: { id: number; title: string; coverVideoKey?: string }[]; // Add coverVideoKey
-  activityModalId?: number; // <-- nuevo prop
+  lessons: { id: number; title: string; coverVideoKey?: string }[];
+  activityModalId?: number;
+  inMainContent?: boolean; // Nuevo prop para indicar si está en el contenido principal
 }
 
 interface SavedResults {
@@ -140,8 +142,8 @@ const extractLessonNumber = (title: string): number => {
 const LessonActivities = ({
   activities = [],
   isVideoCompleted,
-  isActivityCompleted: _isActivityCompleted,
-  handleActivityCompletion,
+  isActivityCompleted: propIsActivityCompleted, // Rename to avoid confusion
+  handleActivityCompletion: onActivityCompleted, // Rename the prop to avoid duplicate
   userId,
   onLessonUnlocked,
   courseId,
@@ -150,6 +152,7 @@ const LessonActivities = ({
   isLastActivity,
   lessons,
   activityModalId,
+  inMainContent = false, // Valor por defecto
 }: LessonActivitiesProps) => {
   const [activitiesState, setActivitiesState] = useState<
     Record<number, ActivityState>
@@ -163,6 +166,10 @@ const LessonActivities = ({
   const [isGradesLoading, setIsGradesLoading] = useState(true);
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
+  );
+  // Add underscore prefix to mark as intentionally unused local state
+  const [_isActivityCompleted, setIsActivityCompleted] = useState(
+    propIsActivityCompleted
   );
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [showAll, setShowAll] = useState(false);
@@ -712,15 +719,66 @@ const LessonActivities = ({
     }
   }, [activityModalId, activities]);
 
+  // Handle activity completion event
+  const handleActivityCompletion = async () => {
+    if (!activities.length) return;
+
+    try {
+      await completeActivity(activities[0].id, userId);
+      setIsActivityCompleted(true);
+
+      // Actualizar el progreso de la lección cuando se completa una actividad
+      // Verificar si todas las actividades están completadas
+      const allActivitiesCompleted = activities.every(
+        (activity) =>
+          activitiesState[activity.id]?.isCompleted ||
+          activity.id === activities[0].id
+      );
+
+      if (allActivitiesCompleted) {
+        // Actualizar el progreso de la lección a 100% en el backend
+        // Esto automáticamente desbloqueará la siguiente lección si corresponde
+        const lessonProgressResponse = await fetch(
+          '/api/lessons/update-progress',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonId,
+              progress: 100,
+              allActivitiesCompleted: true,
+            }),
+          }
+        );
+
+        if (lessonProgressResponse.ok) {
+          toast.success(
+            '¡Todas las actividades completadas! Clase finalizada.'
+          );
+        }
+      } else {
+        toast.success('¡Actividad completada!');
+      }
+
+      // Call the parent component's handler to update the parent state
+      await onActivityCompleted();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al completar la actividad');
+    }
+  };
+
   return (
     <div
       className={
-        isMobile
-          ? 'm-0 w-full rounded-none bg-transparent p-0'
-          : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4'
+        inMainContent
+          ? 'w-full bg-transparent p-0'
+          : isMobile
+            ? 'm-0 w-full rounded-none bg-transparent p-0'
+            : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4'
       }
       style={
-        isMobile
+        isMobile || inMainContent
           ? {
               maxHeight: 'none',
               overflow: 'visible',
@@ -734,13 +792,13 @@ const LessonActivities = ({
       <div className="flex items-center justify-between">
         <h2
           className={`text-primary mb-4 font-bold ${
-            isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'
+            isMobile || inMainContent ? 'px-2 text-lg' : 'text-xl md:text-2xl'
           }`}
         >
-          Actividades
+          {inMainContent ? 'Contenido de la Clase' : 'Actividades'}
         </h2>
         {/* Botón de retraer/expandir solo en móvil */}
-        {isMobile && (
+        {isMobile && !inMainContent && (
           <button
             className="-mt-5 mr-2 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
             onClick={() => setCollapsed((prev) => !prev)}
