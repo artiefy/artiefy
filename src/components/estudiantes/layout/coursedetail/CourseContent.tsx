@@ -270,12 +270,30 @@ export function CourseContent({
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    // Cambiar a formato año/día/mes
+
     const date = new Date(dateString);
+
+    // Array of month names in Spanish
+    const monthNames = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
     const year = date.getFullYear();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${year}/${day}/${month}`;
+
+    return `${day} de ${month} de ${year}`;
   };
 
   // Helper to parse ISO, yyyy/dd/MM, yyyy-dd-MM, yyyy-dd-MM HH:mm:ss
