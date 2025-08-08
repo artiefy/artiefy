@@ -91,7 +91,7 @@ const LessonPlayer = ({
           </div>
           <h3 className="text-2xl font-bold text-white">Clase Bloqueada</h3>
           <p className="max-w-sm text-gray-300">
-            Completa las clases anteriores para desbloquear esta lección
+            Completa las clases anteriores para desbloquear esta clase.
           </p>
           <div className="mt-2 h-1 w-16 rounded bg-yellow-500" />
         </div>
