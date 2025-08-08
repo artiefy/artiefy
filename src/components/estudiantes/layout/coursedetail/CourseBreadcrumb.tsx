@@ -25,7 +25,7 @@ export function CourseBreadcrumb({
   programInfo,
 }: CourseBreadcrumbProps) {
   return (
-    <div className="relative z-[60] w-full backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
+    <div className="relative z-20 w-full backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
       <Breadcrumb className="w-full overflow-x-auto pt-2 pb-2 md:pt-0">
         <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 px-4 whitespace-nowrap md:px-0">
           <BreadcrumbItem>

@@ -156,17 +156,17 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-10 w-full transition-all duration-300 ${
         isScrolled
-          ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
-          : '-mb-0 md:py-4'
+          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
+          : 'md:py-3'
       } div-header-nav`}
     >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
           {!isScrolled ? (
             <div className="flex w-full items-center justify-between">
-              <div className="mt-[-13px] shrink-0">
+              <div className="shrink-0">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
                     <Image
@@ -198,7 +198,7 @@ export function Header() {
             </div>
           ) : (
             <div className="flex w-full items-center">
-              <div className="mt-[-13px] shrink-0">
+              <div className="shrink-0">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
                     <Image
@@ -268,22 +268,22 @@ export function Header() {
             </div>
           )}
         </div>
-        <div className="-mt-6 flex w-full items-center justify-between md:mt-0 md:hidden">
-          <div className="mt-[-20px] shrink-0 md:mt-[-8px]">
+        <div className="flex w-full items-center justify-between md:hidden">
+          <div className="shrink-0">
             <Link href="/estudiantes">
-              <div className="relative size-[120px] md:size-[150px]">
+              <div className="relative size-[100px] md:size-[150px]">
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
                   fill
                   priority
-                  className="ml-4 object-contain md:ml-6"
-                  sizes="(max-width: 768px) 120px, 150px"
+                  className="ml-2 object-contain md:ml-6"
+                  sizes="(max-width: 768px) 100px, 150px"
                 />
               </div>
             </Link>
           </div>
-          <label className="hamburger mt-[-20px] mr-4 flex h-10 w-10 items-center justify-center md:mt-0 md:h-12 md:w-12">
+          <label className="hamburger mr-2 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
             <input
               type="checkbox"
               checked={mobileMenuOpen}
