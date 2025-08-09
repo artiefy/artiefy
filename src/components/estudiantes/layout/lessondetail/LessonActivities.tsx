@@ -855,6 +855,34 @@ const LessonActivities = ({
               (activity, index) => renderActivityCard(activity, index)
             )}
           </div>
+        ) : // Cambia el mensaje y agrega flecha solo si no hay actividades y NO está en el contenido principal
+        !inMainContent ? (
+          <div className="flex flex-col items-center justify-center rounded-lg bg-white p-4 shadow-lg">
+            <p className="mb-2 font-semibold text-blue-600">
+              Actividad disponible
+            </p>
+            <div className="animate-bounce">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="text-blue-500"
+                style={{ transform: 'rotate(-90deg)' }}
+              >
+                <path
+                  d="M12 19V5M12 19L5 12M12 19L19 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="mt-2 text-center text-xs text-gray-500">
+              Las actividades están en el centro de la página
+            </span>
+          </div>
         ) : (
           <div className="rounded-lg bg-white p-4 shadow-lg">
             <p className="text-gray-600">No hay actividades disponibles</p>

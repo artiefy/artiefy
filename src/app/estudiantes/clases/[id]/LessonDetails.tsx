@@ -758,14 +758,17 @@ export default function LessonDetails({
               </div>
             </div>
           ) : (
-            <LessonPlayer
-              lesson={lesson}
-              progress={progress}
-              handleVideoEnd={handleVideoEnd}
-              handleProgressUpdate={handleProgressUpdate}
-              transcription={transcription}
-              isLoadingTranscription={isLoadingTranscription}
-            />
+            // Solo mostrar LessonPlayer si hay video o si NO es móvil
+            (lesson.coverVideoKey !== 'none' || !isMobile) && (
+              <LessonPlayer
+                lesson={lesson}
+                progress={progress}
+                handleVideoEnd={handleVideoEnd}
+                handleProgressUpdate={handleProgressUpdate}
+                transcription={transcription}
+                isLoadingTranscription={isLoadingTranscription}
+              />
+            )
           )}
 
           {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
