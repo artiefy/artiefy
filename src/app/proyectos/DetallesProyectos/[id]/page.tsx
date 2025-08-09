@@ -55,6 +55,8 @@ import {
 } from '~/server/actions/project/getProjectById';
 import { Category } from '~/types';
 import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
+import Loading from '~/app/loading';
+
 
 export default function ProjectDetails() {
   const { user, isLoaded } = useUser(); // Usar Clerk para obtener usuario
@@ -2008,7 +2010,7 @@ export default function ProjectDetails() {
                     archivo.name
                   )
                 }
-                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
+                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded bg-slate-700/50 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
                 title={`Ver: ${archivo.name}`}
               >
                 <span className="flex-shrink-0">{archivo.icon}</span>
@@ -2070,11 +2072,7 @@ export default function ProjectDetails() {
 
   // Mostrar loading mientras Clerk carga
   if (!isLoaded || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-teal-900 to-slate-800 text-white">
-        {!isLoaded ? 'Cargando autenticación...' : 'Cargando proyecto...'}
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!project) {

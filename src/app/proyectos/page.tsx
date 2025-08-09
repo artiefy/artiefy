@@ -8,16 +8,12 @@ import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import {
   ArrowRight,
-  //  Bookmark,
   Filter,
   Folder,
-  //  Heart,
   ImageIcon,
   Menu,
-  //  MessageCircle,
   MoreHorizontal,
   Search,
-  //  Share2,
   TrendingUp,
   Users,
   X,
@@ -38,13 +34,10 @@ import { Button } from '~/components/projects/ui/button';
 import {
   Card,
   CardContent,
-  //  CardFooter,
   CardHeader,
 } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
 import { ScrollArea } from '~/components/projects/ui/scroll-area';
-// Si usas NextAuth:
-// import { useSession } from "next-auth/react";
 
 // Define el tipo para los proyectos públicos
 interface PublicProject {

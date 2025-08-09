@@ -44,6 +44,7 @@ import ModalObjetivosEsp from '../../../components/projects/Modals/ModalObjetivo
 import ModalPlanteamiento from '../../../components/projects/Modals/ModalPlanteamiento';
 import ModalResumen from '../../../components/projects/Modals/ModalResumen';
 import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
+import Loading from '~/app/loading';
 
 // Actualizar la interfaz para incluir el tipo de proyecto
 interface Project {
@@ -776,11 +777,7 @@ export default function ProyectosPage() {
 
   // Mostrar loading mientras se autentica
   if (!isLoaded || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-900">
-        <div className="text-xl text-white">Cargando...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
