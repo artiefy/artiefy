@@ -16,15 +16,10 @@ const sharedOpenGraph = {
   type: 'website',
 };
 
-// Función para obtener el pathname actual
+// Solo usar x-invoke-path para obtener el pathname actual
 export async function getCurrentPath() {
   const headersList = await headers();
-  // Usar pathname del header o URL actual
-  const pathname =
-    headersList.get('x-invoke-path') ??
-    headersList.get('x-original-url') ??
-    headersList.get('x-pathname') ??
-    '/';
+  const pathname = headersList.get('x-invoke-path') ?? '/';
   return pathname;
 }
 
@@ -34,7 +29,8 @@ const defaultMetadata: Metadata = {
     template: '%s | Artiefy - Tu Plataforma Educativa',
     default: 'Artiefy - Cursos Online | Aprende a Tu Ritmo',
   },
-  description: 'Cursos online de calidad en diferentes áreas del conocimiento.',
+  description:
+    'Explora Artiefy, tu plataforma de aprendizaje online con cursos de alta calidad impartidos por profesionales. Desarrolla nuevas habilidades, avanza en tu carrera y expande tus horizontes con contenido educativo actualizado y accesible desde cualquier lugar. Únete a nuestra comunidad de estudiantes y transforma tu futuro profesional.',
   keywords: [
     'artiefy',
     'cursos online',
@@ -83,6 +79,12 @@ const defaultMetadata: Metadata = {
   },
 };
 
+// Helper para canonical
+function getCanonical(pathname: string) {
+  if (pathname === '/') return 'https://artiefy.com';
+  return `https://artiefy.com${pathname}`;
+}
+
 // Route-specific metadata mejorado
 export async function getMetadataForRoute(): Promise<Metadata> {
   const pathname = await getCurrentPath();
@@ -101,7 +103,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         ...baseMetadata,
         title: 'Artiefy - Cursos Online | Impulsa tu Futuro Profesional',
         description:
-          'Cursos online de calidad en diferentes áreas del conocimiento.',
+          'Descubre Artiefy, la plataforma educativa líder que ofrece cursos online de calidad impartidos por expertos del sector. Aprende a tu ritmo, accede a contenidos actualizados y desarrolla habilidades relevantes para el mercado laboral actual. Transforma tu potencial profesional con nuestra metodología innovadora.',
         keywords: [
           'artiefy',
           'artiefy plataforma',
@@ -112,11 +114,11 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'educación digital',
           'aprendizaje online',
         ],
-        alternates: { canonical: 'https://artiefy.com' },
+        alternates: { canonical: getCanonical('/') },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Cursos Online',
-          url: 'https://artiefy.com',
+          url: getCanonical('/'),
         },
       };
 
@@ -125,7 +127,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         ...baseMetadata,
         title: 'Cursos Online | Formación Integral en Artiefy',
         description:
-          'Explora nuestra biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional.',
+          'Explora nuestra completa biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional. Con más de 100 cursos especializados, encuentras formación actualizada en tecnología, negocios, marketing digital, idiomas y muchas áreas más. Aprende con metodologías prácticas y certificados reconocidos en el mercado.',
         keywords: [
           'artiefy cursos',
           'programas artiefy',
@@ -135,11 +137,11 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'cursos digitales',
           'programas educativos',
         ],
-        alternates: { canonical: 'https://artiefy.com/estudiantes' },
+        alternates: { canonical: getCanonical('/estudiantes') },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Cursos',
-          url: 'https://artiefy.com/estudiantes',
+          url: getCanonical('/estudiantes'),
         },
       };
 
@@ -149,7 +151,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         title:
           'Planes de Suscripción Educativos | Invierte en tu Futuro con Artiefy',
         description:
-          'Encuentra el plan perfecto para tu formación. Acceso ilimitado a contenido educativo de calidad.',
+          'Encuentra el plan perfecto para tu formación en Artiefy. Desde suscripciones básicas hasta planes premium con acceso ilimitado a cursos, proyectos prácticos, mentoría personalizada y certificados digitales. Invierte en tu educación continua con precios accesibles y contenido de calidad que impulsa tu carrera profesional.',
         keywords: [
           'planes artiefy',
           'suscripción artiefy',
@@ -159,16 +161,23 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'suscripción cursos online',
           'planes de estudio',
         ],
-        alternates: { canonical: 'https://artiefy.com/planes' },
+        alternates: { canonical: getCanonical('/planes') },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Planes de Suscripción',
-          url: 'https://artiefy.com/planes',
+          url: getCanonical('/planes'),
         },
       };
 
     default:
-      return baseMetadata;
+      return {
+        ...baseMetadata,
+        alternates: { canonical: getCanonical(pathname) },
+        openGraph: {
+          ...baseMetadata.openGraph,
+          url: getCanonical(pathname),
+        },
+      };
   }
 }
 

@@ -90,10 +90,12 @@ export const courses = pgTable('courses', {
     .notNull(),
   courseTypeId: integer('course_type_id')
     .references(() => courseTypes.id)
-    .notNull(),
+    .default(sql`NULL`),
   individualPrice: integer('individual_price'),
   requiresProgram: boolean('requires_program').default(false),
   isActive: boolean('is_active').default(true),
+  is_top: boolean('is_top').default(false),
+  is_featured: boolean('is_featured').default(false),
 });
 
 // Tabla de tipos de actividades
@@ -387,7 +389,7 @@ export const tickets = pgTable('tickets', {
   creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
-  comments: varchar('comments', { length: 255 }).notNull(),
+  comments: varchar('comments', { length: 255 }),
   description: text('description').notNull(),
   estado: text('estado', {
     enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
@@ -403,6 +405,7 @@ export const tickets = pgTable('tickets', {
   documentKey: text('document_key'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  title: varchar('title', { length: 50 }).notNull(),
 });
 
 //Tabla de comentarios de tickets
@@ -416,6 +419,7 @@ export const ticketComments = pgTable('ticket_comments', {
     .notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  sender: text('sender').notNull().default('support'), // Puede ser 'user' o 'admin'
 });
 
 //Tabla de parametros
@@ -514,6 +518,22 @@ export const userCredentials = pgTable('user_credentials', {
   password: text('password').notNull(),
   clerkUserId: text('clerk_user_id').notNull(),
   email: text('email').notNull(),
+});
+
+// Tabla de certificados
+export const certificates = pgTable('certificates', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  grade: real('grade').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  // Puedes agregar un código público para validación si lo deseas
+  publicCode: varchar('public_code', { length: 32 }),
+  studentName: varchar('student_name', { length: 255 }), // <-- Nuevo campo para el nombre original
 });
 
 // Relaciones de programas
@@ -907,29 +927,29 @@ export const conversations = pgTable('conversations', {
   senderId: text('sender_id')
     .references(() => users.id)
     .notNull(),
-  receiverId: text('receiver_id').references(() => users.id),
   status: text('status', { enum: ['activo', 'cerrado'] })
     .default('activo')
     .notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  title: text('title').notNull(),
+  curso_id: integer('curso_id')
+    .references(() => courses.id)
+    .unique()
+    .notNull(), // Relación con el curso
 });
 
 // Relación de mensajes con conversaciones
-export const chatMessagesWithConversation = pgTable(
-  'chat_messages_with_conversation',
-  {
-    id: serial('id').primaryKey(),
-    conversationId: integer('conversation_id')
-      .references(() => conversations.id)
-      .notNull(),
-    senderId: text('sender_id')
-      .references(() => users.id)
-      .notNull(),
-    message: text('message').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  }
-);
+export const chat_messages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  conversation_id: integer('conversation_id')
+    .references(() => conversations.id)
+    .notNull(),
+  sender: text('sender').notNull(), // Este campo puede ser el ID del usuario o su nombre
+  senderId: text('sender_id').references(() => users.id),
+  message: text('message').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
 
 // Tabla de roles secundarios
 export const rolesSecundarios = pgTable('roles_secundarios', {
@@ -968,9 +988,7 @@ export const roleSecundarioPermisos = pgTable(
       .references(() => permisos.id)
       .notNull(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
-  })
+  (table) => [primaryKey({ columns: [table.roleId, table.permisoId] })]
 );
 
 export const userCustomFields = pgTable('user_custom_fields', {
@@ -991,6 +1009,7 @@ export const notifications = pgTable('notifications', {
   title: text('title').notNull(),
   message: text('message').notNull(),
   isRead: boolean('is_read').default(false),
+  isMarked: boolean('is_marked').default(false), // <-- nuevo campo para marcar si el usuario la vio
   createdAt: timestamp('created_at').defaultNow(),
   metadata: jsonb('metadata'),
 });
@@ -1048,6 +1067,33 @@ export const projectActivityDeliveriesRelations = relations(
   })
 );
 
+export const courseCourseTypes = pgTable(
+  'course_course_types',
+  {
+    courseId: integer('course_id')
+      .references(() => courses.id)
+      .notNull(),
+    courseTypeId: integer('course_type_id')
+      .references(() => courseTypes.id)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.courseId, table.courseTypeId] })]
+);
+
+export const courseCourseTypesRelations = relations(
+  courseCourseTypes,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [courseCourseTypes.courseId],
+      references: [courses.id],
+    }),
+    courseType: one(courseTypes, {
+      fields: [courseCourseTypes.courseTypeId],
+      references: [courseTypes.id],
+    }),
+  })
+);
+
 // Tabla de solicitudes de participación en proyectos
 export const projectParticipationRequests = pgTable(
   'project_participation_requests',
@@ -1096,3 +1142,30 @@ export const projectParticipationRequestsRelations = relations(
     }),
   })
 );
+// Añadir esta nueva relación cerca de las demás relaciones
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [certificates.courseId],
+    references: [courses.id],
+  }),
+}));
+
+export const classMeetings = pgTable('class_meetings', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id')
+    .notNull()
+    .references(() => courses.id),
+  title: varchar('title', { length: 255 }).notNull(),
+  startDateTime: timestamp('start_datetime', { withTimezone: true }).notNull(),
+  endDateTime: timestamp('end_datetime', { withTimezone: true }).notNull(),
+  joinUrl: varchar('join_url', { length: 1024 }),
+  weekNumber: integer('week_number'),
+  createdAt: timestamp('created_at').defaultNow(),
+  meetingId: varchar('meeting_id', { length: 255 }).notNull(),
+  // 🆕 Agregado: Ruta del video en S3
+  video_key: varchar('video_key', { length: 255 }),
+});

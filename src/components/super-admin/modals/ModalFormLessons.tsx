@@ -370,110 +370,110 @@ const ModalFormLessons = ({
     }
   };
 
- const handleSubmit = async () => {
-  console.log('Iniciando handleSubmit');
-  const controller = new AbortController();
-  setUploadController(controller);
-  setIsUploading(true);
-  try {
-    const { coverimage, covervideo, resourcefiles } = formData;
+  const handleSubmit = async () => {
+    console.log('Iniciando handleSubmit');
+    const controller = new AbortController();
+    setUploadController(controller);
+    setIsUploading(true);
+    try {
+      const { coverimage, covervideo, resourcefiles } = formData;
 
-    const resourceKeys: string[] = [];
-    const fileNames: string[] = [];
+      const resourceKeys: string[] = [];
+      const fileNames: string[] = [];
 
-    // Subir archivos principales
-    if (resourcefiles.length > 0) {
-      const results = await Promise.all(resourcefiles.map(uploadFile));
-      results.forEach(({ key, fileName }) => {
-        resourceKeys.push(key); // Guardamos la clave generada
-        fileNames.push(fileName); // Guardamos el nombre original del archivo
-      });
-    }
-
-    // Subir imágenes adicionales y meterlas como recursos
-    if (formData.additionalImages.length > 0) {
-      const results = await Promise.all(
-        formData.additionalImages.map(uploadFile)
-      );
-      results.forEach(({ key, fileName }) => {
-        resourceKeys.push(key);
-        fileNames.push(fileName);
-      });
-    }
-
-    // Meter enlaces externos como si fueran recursos
-    if (formData.externalLinks.length > 0) {
-      formData.externalLinks.forEach((link) => {
-        resourceKeys.push(link);
-        fileNames.push(link); // En el caso de enlaces, agregarlos como nombres de archivo
-      });
-    }
-
-    let coverImageKey = formData.cover_image_key;
-    let coverVideoKey = formData.cover_video_key;
-
-    // Manejar el video según needsVideo
-    if (!needsVideo) {
-      coverVideoKey = 'none';
-    } else if (covervideo) {
-      const videoResult = await uploadFile(covervideo);
-      coverVideoKey = videoResult.key;
-    }
-
-    // Subir imagen de portada
-    if (coverimage) {
-      const result = await uploadFile(coverimage);
-      coverImageKey = result.key;
-    }
-
-    const method = isEditing ? 'PUT' : 'POST';
-    const endpoint = '/api/educadores/lessons';
-
-    const requestBody = {
-      ...(isEditing && { lessonId: editingLesson?.id }),
-      title: formData.title,
-      description: formData.description,
-      duration: Number(formData.duration),
-      coverImageKey: coverImageKey || undefined,
-      coverVideoKey: coverVideoKey || undefined,
-      resourceKey: resourceKeys.length > 0 ? resourceKeys : undefined, // Enviar solo si tiene recursos
-      resourceNames: fileNames.length > 0 ? fileNames : undefined, // Enviar solo si tiene nombres
-      courseId: Number(courseId),
-    };
-
-    const response = await fetch(endpoint, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    });
-
-    const responseData = (await response.json()) as { message?: string };
-
-    if (response.ok) {
-      toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
-      onCloseAction();
-      if (onUpdateSuccess) {
-        onUpdateSuccess();
+      // Subir archivos principales
+      if (resourcefiles.length > 0) {
+        const results = await Promise.all(resourcefiles.map(uploadFile));
+        results.forEach(({ key, fileName }) => {
+          resourceKeys.push(key); // Guardamos la clave generada
+          fileNames.push(fileName); // Guardamos el nombre original del archivo
+        });
       }
-    } else {
-      throw new Error(responseData.message ?? 'Error al guardar la lección');
-    }
-  } catch (error) {
-    console.error('Error en handleSubmit:', error);
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.log('Upload cancelled');
-      return;
-    }
-    toast.error('Error', {
-      description:
-        error instanceof Error ? error.message : 'Error desconocido',
-    });
-  } finally {
-    setIsUploading(false);
-    console.log('HandleSubmit finalizado');
-  }
-};
 
+      // Subir imágenes adicionales y meterlas como recursos
+      if (formData.additionalImages.length > 0) {
+        const results = await Promise.all(
+          formData.additionalImages.map(uploadFile)
+        );
+        results.forEach(({ key, fileName }) => {
+          resourceKeys.push(key);
+          fileNames.push(fileName);
+        });
+      }
+
+      // Meter enlaces externos como si fueran recursos
+      if (formData.externalLinks.length > 0) {
+        formData.externalLinks.forEach((link) => {
+          resourceKeys.push(link);
+          fileNames.push(link); // En el caso de enlaces, agregarlos como nombres de archivo
+        });
+      }
+
+      let coverImageKey = formData.cover_image_key;
+      let coverVideoKey = formData.cover_video_key;
+
+      // Manejar el video según needsVideo
+      if (!needsVideo) {
+        coverVideoKey = 'none';
+      } else if (covervideo) {
+        const videoResult = await uploadFile(covervideo);
+        coverVideoKey = videoResult.key;
+      }
+
+      // Subir imagen de portada
+      if (coverimage) {
+        const result = await uploadFile(coverimage);
+        coverImageKey = result.key;
+      }
+
+      const method = isEditing ? 'PUT' : 'POST';
+      const endpoint = '/api/educadores/lessons';
+
+      const requestBody = {
+        ...(isEditing && { lessonId: editingLesson?.id }),
+        title: formData.title,
+        description: formData.description,
+        duration: Number(formData.duration),
+        coverImageKey: coverImageKey || undefined,
+        coverVideoKey: coverVideoKey || undefined,
+        resourceKey:
+          resourceKeys.length > 0 ? resourceKeys.join(',') : undefined,
+        resourceNames: fileNames.length > 0 ? fileNames.join(',') : undefined,
+        courseId: Number(courseId),
+      };
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseData = (await response.json()) as { message?: string };
+
+      if (response.ok) {
+        toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
+        onCloseAction();
+        if (onUpdateSuccess) {
+          onUpdateSuccess();
+        }
+      } else {
+        throw new Error(responseData.message ?? 'Error al guardar la lección');
+      }
+    } catch (error) {
+      console.error('Error en handleSubmit:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Upload cancelled');
+        return;
+      }
+      toast.error('Error', {
+        description:
+          error instanceof Error ? error.message : 'Error desconocido',
+      });
+    } finally {
+      setIsUploading(false);
+      console.log('HandleSubmit finalizado');
+    }
+  };
 
   // Manejador para cancelar la carga de archivos
   const handleCancel = () => {

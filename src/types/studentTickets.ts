@@ -18,4 +18,5 @@ export interface CreateStudentTicketDTO {
   description: string;
   tipo: StudentTicket['tipo'];
   estado: StudentTicket['estado'];
+  title?: string; // Optional title for the ticket
 }

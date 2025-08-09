@@ -441,8 +441,9 @@ const ModalFormLessons = ({
         duration: Number(formData.duration),
         coverImageKey: coverImageKey || undefined,
         coverVideoKey: coverVideoKey || undefined,
-        resourceKey: resourceKeys.length > 0 ? resourceKeys : undefined, // Enviar solo si tiene recursos
-        resourceNames: fileNames.length > 0 ? fileNames : undefined, // Enviar solo si tiene nombres
+        resourceKey:
+          resourceKeys.length > 0 ? resourceKeys.join(',') : undefined,
+        resourceNames: fileNames.length > 0 ? fileNames.join(',') : undefined,
         courseId: Number(courseId),
       };
 

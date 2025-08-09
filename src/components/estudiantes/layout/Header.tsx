@@ -31,7 +31,6 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
-
   const navItems = [
     { href: '/', label: 'Inicio' },
     { href: '/estudiantes', label: 'Cursos' },
@@ -133,16 +132,18 @@ export function Header() {
 
             <SignedIn>
               <div className="flex items-center gap-2">
-                <Suspense
-                  fallback={
-                    <div className="flex min-w-[180px] items-center justify-start">
-                      <Icons.spinner className="text-primary ml-2 h-5 w-5" />
-                    </div>
-                  }
-                >
-                  <UserButtonWrapper />
-                </Suspense>
-                <div className="relative">
+                <div className="perfil-header">
+                  <Suspense
+                    fallback={
+                      <div className="flex min-w-[180px] items-center justify-start">
+                        <Icons.spinner className="text-primary ml-2 h-5 w-5" />
+                      </div>
+                    }
+                  >
+                    <UserButtonWrapper />
+                  </Suspense>
+                </div>
+                <div className="campana-header relative">
                   <NotificationHeader /> {/* Remove count prop */}
                 </div>
               </div>
@@ -155,17 +156,17 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-10 w-full transition-all duration-300 ${
         isScrolled
-          ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
-          : 'py-4'
-      }`}
+          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
+          : 'md:py-3'
+      } div-header-nav`}
     >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
           {!isScrolled ? (
             <div className="flex w-full items-center justify-between">
-              <div className="mt-[-13px] shrink-0">
+              <div className="shrink-0">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
                     <Image
@@ -179,22 +180,25 @@ export function Header() {
                   </div>
                 </Link>
               </div>
-              <div className="flex gap-24">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+              <div className="div-header-nav flex gap-24">
+                {navItems.map((item) => {
+                  const extraClass = `div-header-${item.label.toLowerCase()}`;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
               <div className="flex justify-end">{renderAuthButton()}</div>
             </div>
           ) : (
             <div className="flex w-full items-center">
-              <div className="mt-[-13px] shrink-0">
+              <div className="shrink-0">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
                     <Image
@@ -265,21 +269,21 @@ export function Header() {
           )}
         </div>
         <div className="flex w-full items-center justify-between md:hidden">
-          <div className="mt-[-8px] shrink-0">
+          <div className="shrink-0">
             <Link href="/estudiantes">
-              <div className="relative size-[150px]">
+              <div className="relative size-[100px] md:size-[150px]">
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
                   fill
                   priority
-                  className="ml-6 object-contain"
-                  sizes="(max-width: 768px) 150px, 150px"
+                  className="ml-2 object-contain md:ml-6"
+                  sizes="(max-width: 768px) 100px, 150px"
                 />
               </div>
             </Link>
           </div>
-          <label className="hamburger flex h-12 w-12 items-center justify-center">
+          <label className="hamburger mr-2 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
             <input
               type="checkbox"
               checked={mobileMenuOpen}
@@ -341,7 +345,7 @@ export function Header() {
               ))}
             </ul>
           </nav>
-          <div className="mt-6 flex items-center justify-center">
+          <div className="div-auth mt-6 flex items-center justify-center">
             <Suspense
               fallback={
                 <div className="flex min-w-[180px] items-center justify-start">

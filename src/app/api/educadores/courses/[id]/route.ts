@@ -12,9 +12,23 @@ import {
   updateCourse,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
-import { materias } from '~/server/db/schema';
+import {
+  classMeetings,
+  courseCourseTypes,
+  courses,
+  courseTypes,
+  materias,
+} from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
+
+interface VideoData {
+  videos: {
+    meetingId: string;
+    videoUrl: string;
+  }[];
+}
+
 interface PutRequestBody {
   title?: string;
   description?: string;
@@ -31,6 +45,70 @@ interface PutRequestBody {
   individualPrice?: number | null;
 }
 
+export async function getCourseByIdWithTypes(courseId: number) {
+  console.log('📘 Buscando curso con ID:', courseId);
+
+  const course = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .then((res) => res[0]);
+
+  console.log('✅ Curso obtenido:', course);
+
+  const meetings = await db
+    .select()
+    .from(classMeetings)
+    .where(eq(classMeetings.courseId, courseId));
+
+  console.log('📅 Reuniones encontradas:', meetings);
+
+  // 🔗 Consultar videos desde el endpoint que acabamos de crear
+  console.log('🎥 Haciendo fetch de videos...');
+  const videoRes = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/super-admin/teams/video?userId=0843f2fa-3e0b-493f-8bb9-84b0aa1b2417`
+  );
+
+  const videoData = (await videoRes.json()) as VideoData;
+  console.log('📦 Datos de video recibidos:', videoData);
+
+  const videos = videoData?.videos ?? [];
+  console.log('🎬 Lista de videos extraída:', videos);
+
+  const meetingsWithVideo = meetings.map((meeting) => {
+    const match = videos.find((v) =>
+      decodeURIComponent(meeting.joinUrl ?? '').includes(v.meetingId)
+    );
+
+    console.log(`🔍 Buscando video para reunión ${meeting.id}:`, {
+      joinUrl: meeting.joinUrl,
+      videoMatch: match,
+    });
+
+    return {
+      ...meeting,
+      videoUrl: match?.videoUrl ?? null,
+    };
+  });
+
+  const courseTypesList = await db
+    .select({
+      typeId: courseTypes.id,
+      typeName: courseTypes.name,
+    })
+    .from(courseCourseTypes)
+    .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
+    .where(eq(courseCourseTypes.courseId, courseId));
+
+  console.log('🏷️ Tipos de curso:', courseTypesList);
+
+  return {
+    ...course,
+    courseTypes: courseTypesList,
+    meetings: meetingsWithVideo,
+  };
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -45,7 +123,7 @@ export async function GET(
       );
     }
 
-    const course = await getCourseById(courseId);
+    const course = await getCourseByIdWithTypes(courseId);
     if (!course) {
       return NextResponse.json(
         { error: 'Curso no encontrado' },
@@ -53,7 +131,6 @@ export async function GET(
       );
     }
 
-    // Return course directly without modifying the instructor name
     return NextResponse.json(course);
   } catch (error) {
     console.error('Error al obtener el curso:', error);
@@ -91,7 +168,6 @@ export async function PUT(
     }
 
     const data = (await request.json()) as PutRequestBody;
-    console.log('📦 Datos recibidos en el request PUT:');
     console.log(JSON.stringify(data, null, 2));
     // Create update data object with type checking
     const updateData = {
@@ -107,7 +183,7 @@ export async function PUT(
       nivelid: data.nivelid ? Number(data.nivelid) : undefined,
       instructor: data.instructorId, // Changed to match schema's instructor field
       rating: data.rating ? Number(data.rating) : undefined,
-      courseTypeId: data.courseTypeId !== null ? data.courseTypeId : undefined,
+      courseTypeId: Array.isArray(data.courseTypeId) ? data.courseTypeId : [],
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
     };
 

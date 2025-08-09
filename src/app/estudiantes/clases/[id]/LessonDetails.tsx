@@ -102,6 +102,7 @@ export default function LessonDetails({
 
   const searchParams = useSearchParams();
   const { start, stop } = useProgress();
+  // Cambia el estado a undefined por defecto
 
   // Add isInitialized ref to prevent infinite loop
   const isInitialized = useRef(false);
@@ -192,37 +193,28 @@ export default function LessonDetails({
     restoreScrollPosition();
   }, [lesson?.id]);
 
-  // Redirect if the lesson is locked
+  // Mueve la lógica de redirección fuera del condicional
   useEffect(() => {
-    let redirectTimeout: NodeJS.Timeout;
+    let redirectTimeout: NodeJS.Timeout | undefined;
 
     if (lesson?.isLocked) {
-      // Usar una única función para manejar el toast y la redirección
-      const handleLockedLesson = () => {
-        // Limpiar cualquier timeout existente
-        if (redirectTimeout) clearTimeout(redirectTimeout);
+      // Mostrar un único toast
+      toast.error('Lección bloqueada', {
+        description:
+          'Completa las lecciones anteriores para desbloquear esta clase.',
+        id: 'lesson-locked',
+      });
 
-        // Mostrar un único toast
-        toast.error('Lección bloqueada', {
-          description:
-            'Completa las lecciones anteriores para desbloquear esta clase.',
-          // Evitar que el toast se muestre múltiples veces
-          id: 'lesson-locked',
-        });
-
-        // Configurar la redirección con un nuevo timeout
-        redirectTimeout = setTimeout(() => {
-          void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
-        }, 2000);
-      };
-
-      handleLockedLesson();
-
-      // Limpiar el timeout si el componente se desmonta
-      return () => {
-        if (redirectTimeout) clearTimeout(redirectTimeout);
-      };
+      // Configurar la redirección con un nuevo timeout
+      redirectTimeout = setTimeout(() => {
+        void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+      }, 2000);
     }
+
+    // Limpiar el timeout si el componente se desmonta
+    return () => {
+      if (redirectTimeout) clearTimeout(redirectTimeout);
+    };
   }, [lesson?.isLocked, lesson.courseId, router]);
 
   // Verificar si el usuario está inscrito en el curso
@@ -318,7 +310,7 @@ export default function LessonDetails({
     }
   }, [lesson, isVideoCompleted]);
 
-  // Update handleNavigationClick to use await
+  // Update handleNavigationClick to use await y solo navegar si la clase destino está desbloqueada
   const handleNavigationClick = async (direction: 'prev' | 'next') => {
     if (isNavigating) return;
     const sortedLessons = sortLessons(lessonsState);
@@ -326,15 +318,20 @@ export default function LessonDetails({
       (l) => l.id === selectedLessonId
     );
 
-    const targetLesson =
-      direction === 'prev'
-        ? sortedLessons
-            .slice(0, currentIndex)
-            .reverse()
-            .find((l) => !l.isLocked)
-        : sortedLessons.slice(currentIndex + 1).find((l) => !l.isLocked);
+    let targetLesson: LessonWithProgress | undefined;
+    if (direction === 'prev') {
+      targetLesson = sortedLessons
+        .slice(0, currentIndex)
+        .reverse()
+        .find((l) => !l.isLocked);
+    } else {
+      targetLesson = sortedLessons
+        .slice(currentIndex + 1)
+        .find((l) => !l.isLocked);
+    }
 
-    if (targetLesson) {
+    // Solo navegar si la clase destino está desbloqueada
+    if (targetLesson && !targetLesson.isLocked) {
       await navigateWithProgress(targetLesson.id);
     }
   };
@@ -485,8 +482,75 @@ export default function LessonDetails({
     }
   }, [user, course, router]);
 
-  // Detectar si es móvil (pantalla <= 768px) - MOVER ARRIBA
+  // Estado para la transcripción (hook debe ir arriba, nunca en condicional)
+  const [transcription, setTranscription] = useState<
+    { start: number; end: number; text: string }[]
+  >([]);
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  // Solo declara activityModalId/setActivityModalId una vez aquí
+  const [activityModalId, setActivityModalId] = useState<number | undefined>(undefined);
+
+  // Obtener la transcripción al montar el componente
+  useEffect(() => {
+    const fetchTranscription = async () => {
+      setIsLoadingTranscription(true);
+      try {
+        const res = await fetch(
+          `/api/lessons/getTranscription?lessonId=${lesson.id}`
+        );
+        if (!res.ok) {
+          setTranscription([]);
+          setIsLoadingTranscription(false);
+          return;
+        }
+        // Tipar la respuesta
+        interface TranscriptionResponse {
+          transcription?:
+            | string
+            | { start: number; end: number; text: string }[];
+        }
+        const data: TranscriptionResponse = await res.json();
+        let parsed: { start: number; end: number; text: string }[] = [];
+        if (typeof data.transcription === 'string') {
+          try {
+            parsed = JSON.parse(data.transcription) as {
+              start: number;
+              end: number;
+              text: string;
+            }[];
+          } catch {
+            parsed = [];
+          }
+        } else if (Array.isArray(data.transcription)) {
+          parsed = data.transcription;
+        }
+        setTranscription(parsed);
+      } catch {
+        setTranscription([]);
+      } finally {
+        setIsLoadingTranscription(false);
+      }
+    };
+    fetchTranscription();
+  }, [lesson.id]);
+
+  // En el efecto que lee el query param, asigna undefined si no existe
+  useEffect(() => {
+    const activityIdParam = searchParams.get('activityId');
+    setActivityModalId(activityIdParam ? Number(activityIdParam) : undefined);
+  }, [searchParams, setActivityModalId]);
+
+  // En el evento global, asigna undefined si no existe activityId
+  useEffect(() => {
+    const handler = (event: CustomEvent<{ activityId: number }>) => {
+      setActivityModalId(event.detail?.activityId ?? undefined);
+    };
+    window.addEventListener('open-activity-modal', handler as EventListener);
+    return () => {
+      window.removeEventListener('open-activity-modal', handler as EventListener);
+    };
+  }, [setActivityModalId]);
 
   if (!lesson) {
     return (
@@ -506,6 +570,9 @@ export default function LessonDetails({
       )
     );
   };
+
+  // Mueve todos los hooks useEffect fuera de condicionales
+  // (No hay hooks dentro de condicionales en el código actual, pero si tienes alguno, sácalo fuera)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -569,6 +636,8 @@ export default function LessonDetails({
             progress={progress}
             handleVideoEnd={handleVideoEnd}
             handleProgressUpdate={handleProgressUpdate}
+            transcription={transcription}
+            isLoadingTranscription={isLoadingTranscription}
           />
           {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
           {isMobile && (
@@ -589,6 +658,7 @@ export default function LessonDetails({
                   lesson
                 )}
                 lessons={lessonsState}
+                activityModalId={activityModalId}
               />
             </div>
           )}
@@ -597,7 +667,7 @@ export default function LessonDetails({
 
         {/* Right Sidebar */}
         {!isMobile && (
-          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-72">
+          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-0 md:shadow-sm lg:w-72">
             <LessonActivities
               activities={activities}
               isVideoCompleted={isVideoCompleted}
@@ -610,6 +680,7 @@ export default function LessonDetails({
               isLastLesson={isLastLesson(lessonsState, lesson.id)}
               isLastActivity={isLastActivity(lessonsState, activities, lesson)}
               lessons={lessonsState}
+              activityModalId={activityModalId}
             />
           </div>
         )}

@@ -74,7 +74,7 @@ const StudentPagination = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-col items-center justify-between space-y-4 py-8">
+    <div className="flex flex-col items-center justify-between space-y-4 py-8 div-pagination">
       <p className="text-sm text-gray-600">
         Mostrando {startItem}-{endItem} de {totalCourses} cursos
       </p>

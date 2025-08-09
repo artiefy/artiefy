@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
 
-import { env } from '~/env.js'; // <-- Importa el validador de variables de entorno
+import { env } from '~/env';
 import { checkAndUpdateSubscriptions } from '~/server/actions/estudiantes/subscriptions/checkAndUpdateSubscriptions';
 
 export const dynamic = 'force-dynamic';

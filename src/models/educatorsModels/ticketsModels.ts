@@ -38,6 +38,7 @@ export async function createTicket({
 			email,
 			creatorId: userId, // <-- corregido aquí
 			tipo: 'otro', // <-- falta en tu insert porque "tipo" es obligatorio en la tabla
+      title: 'Ticket de soporte', // <-- título por defecto
 		});
 	} catch (error) {
 		console.error('Error al crear el ticket:', error);

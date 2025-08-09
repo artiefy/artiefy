@@ -59,6 +59,10 @@ export default function Page() {
     }[]
   >([]); // interfaz de cursos
   const [subjects, setSubjects] = useState<{ id: number }[]>([]);
+  // --- NUEVOS ESTADOS ---
+  const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
+  const [individualPrice, setIndividualPrice] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(true);
 
   // Función para cargar los cursos by userId
   const fetchCourses = useCallback(async () => {
@@ -230,6 +234,9 @@ export default function Page() {
         creatorId: user.id,
         nivelid,
         rating, // Añadir esta línea
+        courseTypeId: courseTypeId ?? [],
+        individualPrice,
+        isActive,
       }),
     });
 
@@ -294,6 +301,9 @@ export default function Page() {
     setIsModalOpen(false);
     setEditingCourse(null);
     setParametrosList([]);
+    setCourseTypeId([]);
+    setIndividualPrice(null);
+    setIsActive(true);
   };
 
   // Manejo del título del curso en el modal si no es null
@@ -441,18 +451,22 @@ export default function Page() {
               setRating={setRating}
               subjects={subjects}
               setSubjects={setSubjects}
-              // ⬇ Agregar estos valores por ahora (null o default)
-			  coverVideoCourseKey={null}
-setCoverVideoCourseKey={(_val) => null}
-individualPrice={null}
-setIndividualPrice={(_val) => null}
-courseTypeId={null}
-setCourseTypeId={(_val) => null}
-isActive={true}
-setIsActive={(_val) => null}
-instructor=""
-setInstructor={(_val) => null}
-educators={[]}	  
+              // --- NUEVOS PROPS ---
+              coverVideoCourseKey={null}
+              setCoverVideoCourseKey={(_val) => null}
+              courseTypeId={courseTypeId}
+              setCourseTypeId={setCourseTypeId}
+              individualPrice={individualPrice}
+              setIndividualPrice={setIndividualPrice}
+              isActive={isActive}
+              setIsActive={setIsActive}
+              instructor={editingCourse?.instructor ?? ''}
+              setInstructor={(instructor: string) =>
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, instructor } : prev
+                )
+              }
+              educators={[]}
             />
           )}
         </div>

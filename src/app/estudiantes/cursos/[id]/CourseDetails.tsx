@@ -116,82 +116,21 @@ export default function CourseDetails({
     }
 
     if (isEnrolling) return;
+
     setIsEnrolling(true);
 
     try {
-      // Verificar si el curso es gratuito
-      if (initialCourse.courseType?.requiredSubscriptionLevel === 'none') {
-        const result = await enrollInCourse(course.id);
-        if (result.success) {
-          setTotalStudents((prev) => prev + 1);
-          setIsEnrolled(true);
-          toast.success('¡Te has inscrito exitosamente!');
+      console.log('Enrolling user in course', { courseId: course.id });
 
-          // Actualizar curso y progreso desde la BD
-          const updatedCourse = await getCourseById(course.id, userId);
-          const lessons = updatedCourse
-            ? await getLessonsByCourseId(course.id, userId)
-            : [];
-          if (updatedCourse) {
-            setCourse({
-              ...updatedCourse,
-              lessons:
-                lessons?.map((lesson) => ({
-                  ...lesson,
-                  isLocked: lesson.isLocked,
-                  porcentajecompletado: lesson.userProgress,
-                  isNew: lesson.isNew,
-                })) ?? [],
-            });
-          }
-        } else if (result.message === 'Ya estás inscrito en este curso') {
-          setIsEnrolled(true);
-          const updatedCourse = await getCourseById(course.id, userId);
-          const lessons = updatedCourse
-            ? await getLessonsByCourseId(course.id, userId)
-            : [];
-          if (updatedCourse) {
-            setCourse({
-              ...updatedCourse,
-              lessons:
-                lessons?.map((lesson) => ({
-                  ...lesson,
-                  isLocked: lesson.isLocked,
-                  porcentajecompletado: lesson.userProgress,
-                  isNew: lesson.isNew,
-                })) ?? [],
-            });
-          }
-        }
-        return;
-      }
-
-      // Para cursos no gratuitos, verificar suscripción
-      const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-      const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-        | string
-        | null;
-      const isSubscriptionActive =
-        subscriptionStatus === 'active' &&
-        (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-
-      if (!isSubscriptionActive) {
-        toast.error('Suscripción requerida', {
-          description: 'Necesitas una suscripción activa para inscribirte.',
-        });
-        window.open('/planes', '_blank');
-        return;
-      }
-
+      // Call the server action directly
       const result = await enrollInCourse(course.id);
-      if (
-        result.success ||
-        result.message === 'Ya estás inscrito en este curso'
-      ) {
+
+      if (result.success) {
         setTotalStudents((prev) => prev + 1);
         setIsEnrolled(true);
         toast.success('¡Te has inscrito exitosamente!');
 
+        // Actualizar curso y progreso desde la BD
         const updatedCourse = await getCourseById(course.id, userId);
         const lessons = updatedCourse
           ? await getLessonsByCourseId(course.id, userId)
@@ -208,11 +147,57 @@ export default function CourseDetails({
               })) ?? [],
           });
         }
+      } else {
+        // Handle specific enrollment errors
+        if (result.message === 'Ya estás inscrito en este curso') {
+          setIsEnrolled(true);
+          toast.info('Ya estás inscrito en este curso');
+
+          // Update course data to reflect enrollment
+          const updatedCourse = await getCourseById(course.id, userId);
+          const lessons = updatedCourse
+            ? await getLessonsByCourseId(course.id, userId)
+            : [];
+          if (updatedCourse) {
+            setCourse({
+              ...updatedCourse,
+              lessons:
+                lessons?.map((lesson) => ({
+                  ...lesson,
+                  isLocked: lesson.isLocked,
+                  porcentajecompletado: lesson.userProgress,
+                  isNew: lesson.isNew,
+                })) ?? [],
+            });
+          }
+        } else if (result.requiresSubscription) {
+          toast.error('Suscripción requerida', {
+            description: 'Necesitas una suscripción activa para inscribirte.',
+          });
+          window.open('/planes', '_blank');
+        } else {
+          toast.error('Error en la inscripción', {
+            description: result.message,
+          });
+        }
       }
     } catch (error) {
       console.error('Error en la inscripción:', error);
+      toast.error('Error al inscribirse al curso');
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  const onEnrollAction = async () => {
+    try {
+      console.log('onEnrollAction called');
+      // IMPORTANT: This function is called by CourseHeader for ALL course types
+      // Directly call handleEnroll to ensure the user gets enrolled
+      await handleEnroll();
+    } catch (error) {
+      console.error('Error en onEnrollAction:', error);
+      toast.error('Error al procesar la inscripción');
     }
   };
 
@@ -261,7 +246,7 @@ export default function CourseDetails({
 
   return (
     <div className="bg-background min-h-screen">
-      <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
+      <main className="mx-auto max-w-7xl pt-0 pb-4 md:pb-6 lg:pb-8">
         <CourseBreadcrumb
           title={course.title}
           programInfo={
@@ -283,7 +268,7 @@ export default function CourseDetails({
           subscriptionEndDate={
             user?.publicMetadata?.subscriptionEndDate as string | null
           }
-          onEnrollAction={handleEnroll}
+          onEnrollAction={onEnrollAction}
           onUnenrollAction={handleUnenroll}
           isCheckingEnrollment={isCheckingEnrollment}
         />

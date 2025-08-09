@@ -23,22 +23,28 @@ const LessonNavigation = ({
   lessonOrder,
   isNavigating,
 }: LessonNavigationProps) => {
-  // Sort lessons by title
+  // Ordenar lecciones por título (puedes cambiar por sortLessons si lo prefieres)
   const sortedLessons = [...lessonsState].sort((a, b) =>
     a.title.localeCompare(b.title)
   );
 
-  // Find current index using lessonOrder
+  // Encontrar el índice de la lección actual
   const currentIndex = sortedLessons.findIndex((l) => l.id === lessonOrder);
 
-  // Check for available lessons before/after current
-  const hasPreviousLesson = sortedLessons
+  // Buscar la lección anterior desbloqueada
+  const previousLesson = sortedLessons
     .slice(0, currentIndex)
-    .some((lesson) => !lesson.isLocked);
+    .reverse()
+    .find((lesson) => !lesson.isLocked);
 
-  const hasNextLesson = sortedLessons
+  // Buscar la siguiente lección desbloqueada
+  const nextLesson = sortedLessons
     .slice(currentIndex + 1)
-    .some((lesson) => !lesson.isLocked);
+    .find((lesson) => !lesson.isLocked);
+
+  // Determinar si los botones deben estar habilitados
+  const hasPreviousLesson = !!previousLesson;
+  const hasNextLesson = !!nextLesson;
 
   return (
     <div className="mb-2 flex flex-col gap-2 md:mb-4 md:flex-row md:justify-between md:gap-0">

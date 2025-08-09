@@ -14,7 +14,7 @@ import {
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
-  fields: z.record(z.unknown()),
+  fields: z.record(z.string(), z.unknown()),
 });
 
 export async function PATCH(req: Request) {

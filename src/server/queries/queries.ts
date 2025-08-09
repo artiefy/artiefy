@@ -410,6 +410,7 @@ export interface CourseData {
   programas?: { id: number; title: string }[];
   instructorName?: string; // Add instructorName as an optional property
   coverVideoCourseKey?: string | null;
+  individualPrice?: number | null; // <-- añade esto
 }
 
 export interface Materia {
@@ -724,7 +725,6 @@ export async function updateUserInClerk({
       lastName,
       publicMetadata: newMetadata,
     });
-    
 
     await db
       .update(users)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -62,7 +62,19 @@ export default function SignInPage() {
     }
   };
 
-  const redirectUrl = getRedirectUrl();
+  // Extraer plan_id de los query params
+  const planId = searchParams?.get('plan_id');
+
+  // Modificar redirectUrl para incluir plan_id si existe
+  const redirectUrl = (() => {
+    let url = getRedirectUrl();
+    if (planId && !url.includes('plan_id=')) {
+      // Añadir plan_id como query param
+      const separator = url.includes('?') ? '&' : '?';
+      url = `${url}${separator}plan_id=${planId}`;
+    }
+    return url;
+  })();
 
   console.log('✅ Redirect URL detectada:', redirectUrl);
 
@@ -494,8 +506,15 @@ export default function SignInPage() {
               <div className="mt-6 text-sm">
                 <Link
                   href={`/sign-up${
-                    searchParams?.get('redirect_url')
-                      ? `?redirect_url=${searchParams.get('redirect_url')}`
+                    searchParams?.get('redirect_url') || planId
+                      ? `?${[
+                          searchParams?.get('redirect_url')
+                            ? `redirect_url=${encodeURIComponent(searchParams.get('redirect_url')!)}`
+                            : '',
+                          planId ? `plan_id=${planId}` : '',
+                        ]
+                          .filter(Boolean)
+                          .join('&')}`
                       : ''
                   }`}
                   className="text-primary decoration-primary hover:text-secondary font-medium underline-offset-4 outline-hidden hover:underline focus-visible:underline"

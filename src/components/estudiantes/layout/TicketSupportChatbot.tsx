@@ -1,43 +1,85 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { BsPersonCircle } from 'react-icons/bs';
 import { IoMdClose } from 'react-icons/io';
 import { MdSupportAgent } from 'react-icons/md';
 import { toast } from 'sonner';
 
-import type {
-  CreateStudentTicketDTO,
-  StudentTicket,
-} from '~/types/studentTickets';
+import { useExtras } from '~/app/estudiantes/StudentContext';
+import {
+  getTicketWithMessages,
+  SaveTicketMessage,
+} from '~/server/actions/estudiantes/chats/suportChatBot';
+
+import { SuportChat } from './SuportChat';
 
 import '~/styles/ticketSupportButton.css';
 
-interface Message {
+interface TicketMessage {
   id: number;
-  text: string;
-  sender: 'user' | 'support';
+  content: string;
+  description?: string;
+  sender: string;
+}
+
+interface ChatDetail {
+  id: number;
 }
 
 const TicketSupportChatbot = () => {
+  const { showExtras } = useExtras();
+  const [isDesktop, setIsDesktop] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     { id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' },
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ticketId, setTicketId] = useState<number | null>(null);
-  const [ticketCreated, setTicketCreated] = useState(false); // Nuevo estado
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const ANIMATION_DURATION = 350; // ms
+  const [showAnim, setShowAnim] = useState(false);
+
+  useEffect(() => {
+    // Solo se ejecuta en el cliente
+    setIsDesktop(window.innerWidth > 768);
+
+    // Si quieres que se actualice al redimensionar:
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const [hideButton, setHideButton] = useState(false);
+
+  useEffect(() => {
+    const handleHideButton = () => setHideButton(true);
+    const handleShowButton = () => setHideButton(false);
+    window.addEventListener('student-chat-open', handleHideButton);
+    window.addEventListener('student-chat-close', handleShowButton);
+    return () => {
+      window.removeEventListener('student-chat-open', handleHideButton);
+      window.removeEventListener('student-chat-close', handleShowButton);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showExtras && !hideButton) {
+      setShowAnim(true);
+    } else if (hideButton) {
+      setShowAnim(false); // Oculta inmediatamente al abrir el chat
+    } else if (showAnim) {
+      const timeout = setTimeout(() => setShowAnim(false), ANIMATION_DURATION);
+      return () => clearTimeout(timeout);
+    }
+  }, [showExtras, hideButton, showAnim]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -46,42 +88,105 @@ const TicketSupportChatbot = () => {
   }, [isOpen]);
 
   useEffect(() => {
+    const handleChatOpen = (e: CustomEvent<ChatDetail>) => {
+      const fetchMessages = async () => {
+        const chats: {
+          ticket: { id: number; content: string; sender: string }[];
+        } = { ticket: [] };
+
+        console.log(chats);
+        try {
+          if (e.detail !== null && user?.id) {
+            const ticketData = await getTicketWithMessages(
+              e.detail.id,
+              user.id
+            );
+
+            if (ticketData?.ticket) {
+              // Si tienes un array de mensajes, usa ese array aquí
+              // Aquí se asume que los mensajes están en ticketData.ticket.messages
+              console.log('Entro al ticketData.ticket');
+              console.log('Mensajes del ticket:', ticketData);
+              chats.ticket = ticketData.messages.map((msg: TicketMessage) => ({
+                id: msg.id,
+                content: msg.content ?? msg.description ?? '',
+                sender: msg.sender ?? 'user',
+              }));
+            }
+          }
+
+          const botMessage = {
+            id: 1,
+            text: '¡Hola! ¿En qué puedo ayudarte?',
+            sender: 'support',
+          };
+
+          // Mapear mensajes del ticket
+          const loadedMessages = chats.ticket.map(
+            (msg: { id: number; content: string; sender: string }) => ({
+              id: msg.id,
+              text: msg.content,
+              sender: msg.sender,
+            })
+          );
+
+          // Si el primer mensaje NO es el del bot, lo agregamos al inicio
+          if (
+            loadedMessages.length === 0 ||
+            loadedMessages[0].sender !== 'bot'
+          ) {
+            setMessages([botMessage, ...loadedMessages]);
+          } else {
+            setMessages(loadedMessages);
+          }
+
+          console.log('Mensajes: ', messages);
+        } catch (error) {
+          console.error('Error al obtener los mensajes:', error);
+        }
+      };
+      void fetchMessages();
+      setIsOpen(true);
+    };
+
+    // 👇 Ojo con el tipo de evento
+    window.addEventListener(
+      'support-open-chat',
+      handleChatOpen as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'support-open-chat',
+        handleChatOpen as EventListener
+      );
+    };
+  }, [messages, user?.id]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (ticketId && isOpen) {
-      interval = setInterval(async () => {
-        const response = await fetch(`/api/estudiantes/tickets/${ticketId}`);
-        if (response.ok) {
-          const ticket = (await response.json()) as StudentTicket;
-          if (
-            ticket.comments &&
-            ticket.comments !== messages[messages.length - 1]?.text
-          ) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: prev.length + 1,
-                text: ticket.comments ?? 'Sin comentarios', // Use nullish coalescing
-                sender: 'support' as const,
-              },
-            ]);
-          }
-        }
-      }, 30000);
-    }
-    return () => clearInterval(interval);
-  }, [ticketId, isOpen, messages]);
+  // Ya no es necesario controlar hideButton, la animación depende de showExtras
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const saveUserMessage = (trimmedInput: string, sender: string) => {
+    if (isOpen && isSignedIn && user?.id) {
+      console.log('Guardando mensaje del usuario:', trimmedInput);
+      void SaveTicketMessage(user.id, trimmedInput, sender);
+    } else {
+      console.log(
+        'No está entrando al chat para guardar el mensaje del usuario'
+      );
+    }
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSignedIn || !user) {
+    if (!isSignedIn) {
       toast.error('Debes iniciar sesión para enviar tickets');
       return;
     }
@@ -96,52 +201,29 @@ const TicketSupportChatbot = () => {
 
     setMessages((prev) => [...prev, newUserMessage]);
     setInputText('');
+    saveUserMessage(inputText.trim(), 'user');
     setIsLoading(true);
 
     try {
-      // Solo crear ticket si aún no se ha creado uno en esta sesión de chat
-      if (!ticketCreated) {
-        const response = await fetch('/api/estudiantes/tickets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: user.emailAddresses[0]?.emailAddress,
-            description: inputText,
-            tipo: 'otro' as const,
-            estado: 'abierto' as const,
-          } satisfies CreateStudentTicketDTO),
-        });
-
-        const data = (await response.json()) as StudentTicket;
-        setTicketId(data.id);
-        setTicketCreated(true);
-
+      // Aquí iría la lógica para enviar el ticket al backend
+      setTimeout(() => {
         setMessages((prev) => [
           ...prev,
           {
             id: prev.length + 1,
-            text: `Gracias por reportar el problema. Tu ticket #${data.id} ha sido creado y será revisado pronto. Te notificaremos cuando haya una respuesta.`,
+            text: 'Gracias por reportar el problema. Un administrador revisará tu ticket pronto.',
             sender: 'support' as const,
           },
         ]);
-      }
-      // Si ya hay un ticket creado, solo responder como soporte
-      else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            text: '¡Gracias! Hemos recibido tu mensaje y lo sumaremos a tu ticket abierto. Pronto recibirás una respuesta.',
-            sender: 'support' as const,
-          },
-        ]);
-      }
+        setIsLoading(false);
+        saveUserMessage(
+          'Gracias por reportar el problema. Un administrador revisará tu ticket pronto.',
+          'support'
+        );
+      }, 1000);
     } catch (error) {
       console.error('Error al enviar el ticket:', error);
       toast.error('Error al enviar el ticket');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -167,18 +249,43 @@ const TicketSupportChatbot = () => {
     }, 300);
   };
 
+  // if (!isDesktop) return null; // Solo se muestra si showExtras es true
+
+  console.log('Datos: ' + isOpen, showExtras, isSignedIn, isOpen, isDesktop);
+
   return (
     <>
-      <button
-        onClick={handleClick}
-        className={`ticket-button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
-      >
-        <MdSupportAgent className="ticket-button__icon" />
-      </button>
-
+      {isSignedIn && !hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
+        <div
+          className="fixed right-25 bottom-24 z-50 translate-x-1/2 sm:right-10 sm:bottom-40 sm:translate-x-0"
+          style={{
+            animationName: isDesktop
+              ? showExtras
+                ? 'fadeInUp'
+                : 'fadeOutDown'
+              : undefined,
+            animationDuration: isDesktop
+              ? `${ANIMATION_DURATION}ms`
+              : undefined,
+            animationTimingFunction: isDesktop ? 'ease' : undefined,
+            animationFillMode: isDesktop ? 'forwards' : undefined,
+          }}
+        >
+          <button
+            onClick={handleClick}
+            className={`relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]`}
+          >
+            <MdSupportAgent className="text-xl text-white opacity-90" />
+            <span className="hidden font-medium tracking-wide sm:inline">
+              Soporte técnico
+            </span>
+            <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
+          </button>
+        </div>
+      )}
       {/* Chatbot */}
       {isOpen && isSignedIn && (
-        <div className="chat-support-container">
+        <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
           <div className="support-chat">
             {/* Header */}
             <div className="support-chat-header">
@@ -196,83 +303,20 @@ const TicketSupportChatbot = () => {
               </button>
             </div>
 
-            {/* Messages */}
-            <div className="support-chat-messages">
-              {messages.map((message) => (
-                <div key={message.id}>
-                  <div
-                    className={`flex ${
-                      message.sender === 'user'
-                        ? 'justify-end'
-                        : 'justify-start'
-                    } mb-4`}
-                  >
-                    <div
-                      className={`flex max-w-[80%] items-start space-x-2 ${
-                        message.sender === 'user'
-                          ? 'flex-row-reverse space-x-reverse'
-                          : 'flex-row'
-                      }`}
-                    >
-                      {message.sender === 'support' ? (
-                        <MdSupportAgent className="text-secondary mt-2 text-xl" />
-                      ) : user?.imageUrl ? (
-                        <Image
-                          src={user.imageUrl}
-                          alt={user.fullName ?? 'User'}
-                          width={24}
-                          height={24}
-                          className="mt-2 rounded-full"
-                          // Removido o priority já que estas imagens se carregam dinamicamente
-                        />
-                      ) : (
-                        <BsPersonCircle className="mt-2 text-xl text-gray-500" />
-                      )}
-                      <div
-                        className={`rounded-lg p-3 ${
-                          message.sender === 'user'
-                            ? 'bg-secondary text-white'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {message.text}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="rounded-lg bg-gray-100 p-3">
-                    <div className="flex space-x-2">
-                      <div className="loading-dot" />
-                      <div className="loading-dot" />
-                      <div className="loading-dot" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Form - Modificado para ser más compacto en móvil */}
-            <form onSubmit={handleSendMessage} className="support-chat-input">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Describe el problema..."
-                className="text-background focus:ring-secondary flex-1 rounded-lg border p-1 text-sm focus:ring-2 focus:outline-none sm:p-2 sm:text-base"
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="bg-secondary rounded-lg px-3 py-1 text-sm text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300 sm:px-4 sm:py-2 sm:text-base"
-              >
-                Enviar
-              </button>
-            </form>
+            <SuportChat
+              messages={messages}
+              setMessages={setMessages}
+              isOpen={isOpen}
+              setIsOpen={setIsOpen}
+              isSignedIn={isSignedIn}
+              handleSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
+              inputText={inputText}
+              setInputText={setInputText}
+              user={user}
+              inputRef={inputRef as React.RefObject<HTMLInputElement>}
+            />
           </div>
         </div>
       )}
