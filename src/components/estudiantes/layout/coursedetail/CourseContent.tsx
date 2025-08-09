@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useUser } from '@clerk/nextjs';
 import { PencilRuler } from 'lucide-react';
 import {
   FaCheck,
@@ -51,6 +52,7 @@ export function CourseContent({
 }: CourseContentProps) {
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
   const router = useRouter();
+  const { user } = useUser();
 
   const toggleLesson = useCallback(
     (lessonId: number) => {
@@ -336,6 +338,38 @@ export function CourseContent({
     return null;
   };
 
+  // Determina si la suscripción está activa según los metadatos
+  const subscriptionStatusInfo = useMemo(() => {
+    if (!isSignedIn) return null;
+
+    // Check subscription status from metadata first
+    const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
+      | string
+      | undefined;
+    const isStatusInactive = subscriptionStatus === 'inactive';
+
+    // Then check end date
+    if (!subscriptionEndDate)
+      return isStatusInactive ? { active: false, endDate: null } : null;
+
+    const endDate = parseSubscriptionDate(subscriptionEndDate);
+    if (!endDate)
+      return isStatusInactive ? { active: false, endDate: null } : null;
+
+    const now = new Date();
+    const isDateExpired = endDate <= now;
+
+    // Either inactive status OR expired date makes subscription inactive
+    return {
+      active: !isStatusInactive && !isDateExpired,
+      endDate,
+    };
+  }, [
+    isSignedIn,
+    subscriptionEndDate,
+    user?.publicMetadata?.subscriptionStatus,
+  ]);
+
   // Use this for subscription active logic
   const isSubscriptionReallyActive = useMemo(() => {
     if (!isEnrolled) return false;
@@ -352,20 +386,21 @@ export function CourseContent({
           <h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
             Contenido del curso
           </h2>
-          {isSignedIn && (
+          {isSignedIn && subscriptionStatusInfo && (
             <div className="flex flex-col items-end gap-1">
-              {isSubscriptionReallyActive ? (
+              {subscriptionStatusInfo.active && (
                 <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-6">
                   <FaCheck className="size-4" />
                   <span className="font-medium">Suscripción Activa</span>
                 </div>
-              ) : (
+              )}
+              {!subscriptionStatusInfo.active && (
                 <div className="mt-0 flex items-center gap-2 text-red-500 sm:mt-6">
                   <FaTimes className="size-4" />
                   <span className="font-medium">Suscripción Inactiva</span>
                 </div>
               )}
-              {subscriptionEndDate && (
+              {subscriptionStatusInfo.endDate && (
                 <p className="text-sm text-red-500">
                   Finaliza: {formatDate(subscriptionEndDate)}
                 </p>
