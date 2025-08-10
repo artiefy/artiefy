@@ -855,8 +855,8 @@ const LessonActivities = ({
               (activity, index) => renderActivityCard(activity, index)
             )}
           </div>
-        ) : // Cambia el mensaje y agrega flecha solo si no hay actividades y NO está en el contenido principal
-        !inMainContent ? (
+        ) : // Solo mostrar el mensaje de "Actividad disponible" y flecha si NO es móvil y NO está en el contenido principal
+        !inMainContent && !isMobile ? (
           <div className="flex flex-col items-center justify-center rounded-lg bg-white p-4 shadow-lg">
             <p className="mb-2 font-semibold text-blue-600">
               Actividad disponible
