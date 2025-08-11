@@ -221,6 +221,8 @@ git config user.email "artiefy4@gmail.com"
 - pre-commit --version
 - pre-commit autoupdate
 - pre-commit run --all-files
+- pre-commit install -t commit-msg
+- git-conventional-commits.yaml
 - npx git-conventional-commits - changelog para generar el changelog automáticamente.
 - npx git-conventional-commits - version para determinar la versión según los commits.
 
