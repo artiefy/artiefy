@@ -1,5 +1,5 @@
 'use client';
-
+// By Jean
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
@@ -295,11 +295,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       console.log(chatMode);
       // Url para la petición según si hay courseTitle
       const urlDefault = {
-        url: 'http://3.142.77.31:5000/root_courses',
+        url: '/api/chat/courses',
         body: { prompt: query },
       };
       const urlCourses = {
-        url: 'http://3.142.77.31:5000/get_classes',
+        url: '/api/chat/info/',
         body: {
           user_id: user?.id,
           curso: courseTitle ? courseTitle : chatMode.curso_title,
@@ -360,7 +360,29 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           body: JSON.stringify(fetchConfig.body),
         });
 
-        const data = (await result.json()) as BotResponse;
+        // Verificar si la respuesta es exitosa
+        if (!result.ok) {
+          const errorText = await result.text();
+          console.error(
+            `HTTP error! status: ${result.status}, response: ${errorText}`
+          );
+          throw new Error(`HTTP error! status: ${result.status}`);
+        }
+
+        // Verificar si hay contenido antes de parsear JSON
+        const contentType = result.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const responseText = await result.text();
+          console.error('Response is not JSON:', responseText);
+          throw new Error('La respuesta no es JSON válido');
+        }
+
+        const text = await result.text();
+        if (!text) {
+          throw new Error('Respuesta vacía del servidor');
+        }
+
+        const data = JSON.parse(text) as BotResponse;
 
         console.log('Respuesta del servidor:', data);
 
@@ -368,7 +390,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
         if (
           Array.isArray(data.result) &&
-          fetchConfig.url.includes('root_courses')
+          fetchConfig.url.includes('/api/chat/courses')
         ) {
           console.log('Ingreso a mapear cursos');
           const cursos: Curso[] = data.result;
@@ -427,16 +449,29 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       } catch (error) {
         console.error('Error getting bot response:', error);
 
+        let errorMessage =
+          'Lo siento, ocurrió un error al procesar tu solicitud.';
+
+        if (error instanceof Error) {
+          if (error.message.includes('404')) {
+            errorMessage =
+              'El servicio de consultas del curso no está disponible temporalmente.';
+          } else if (error.message.includes('503')) {
+            errorMessage =
+              'Los servicios están temporalmente no disponibles. Intenta más tarde.';
+          }
+        }
+
         setMessages((prev) => [
           ...prev,
           {
             id: Date.now() + Math.random(),
-            text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
+            text: errorMessage,
             sender: 'bot' as const,
           },
         ]);
 
-        saveBotMessage('Lo siento, ocurrió un error al procesar tu solicitud.'); // Guarda el error como mensaje del bot
+        saveBotMessage(errorMessage);
       } finally {
         setIsLoading(false);
         setProcessingQuery(false);
