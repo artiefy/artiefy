@@ -211,3 +211,105 @@ Configurar localmente tu cuenta de github en tu proyecto
 git config user.name "artiefy"
 git config user.email "artiefy4@gmail.com"
 ```
+
+---
+
+## Precommit config
+
+- pip install pre-commit
+- pre-commit --version
+- pre-commit autoupdate
+- npx git-conventional-commits - changelog para generar el changelog automáticamente.
+- npx git-conventional-commits - version para determinar la versión según los commits.
+
+## generar automáticamente el changelog y calcular la versión del proyecto usando comandos como
+
+- npx git-conventional-commits changelog
+
+- npx git-conventional-commits version
+
+---
+
+## .releaserc
+
+- branches: ["main"]: Indica que solo se publicarán versiones desde la rama main.
+- "plugins": Lista de plugins que definen el flujo de publicación:
+- @semantic-release/npm: Publica el paquete en npm (en tu caso, con "npmPublish": false, solo actualiza la versión en package.json, no publica).
+- @semantic-release/release-notes-generator: Genera notas de la versión automáticamente.
+- @semantic-release/github: Crea un release en GitHub.
+- @semantic-release/commit-analyzer: Analiza los commits para decidir el tipo de versión.
+- @semantic-release/git: Hace commits automáticos de los archivos generados (como el changelog).
+- @semantic-release/changelog: Actualiza el archivo CHANGELOG.md con los cambios.
+
+### Plugins a instalar
+
+- "@semantic-release/commit-analyzer",
+- "@semantic-release/release-notes-generator",
+- "@semantic-release/changelog",
+- "@semantic-release/npm",
+- "@semantic-release/git"
+- "@semantic-release/github"
+
+En resumen:
+Este archivo automatiza y estandariza el proceso de lanzar nuevas versiones de tu proyecto, generando changelogs y releases en GitHub de forma automática según tus commits.
+
+---
+
+## Ts Reset
+
+¿Para qué sirve y qué ventajas tiene usar ts-reset?
+
+Función:
+
+ts-reset mejora los tipos de TypeScript en tu proyecto, corrigiendo comportamientos inseguros o poco precisos en funciones comunes como JSON.parse, .filter(Boolean), .includes, etc.
+
+Ventajas:
+
+Evita el uso de any en operaciones críticas, haciendo tu código más seguro.
+Mejora la experiencia de desarrollo, mostrando errores antes de que ocurran en tiempo de ejecución.
+
+Hace que el tipado de TypeScript sea más estricto y confiable en todo el proyecto.
+Reduce bugs y facilita el mantenimiento del código.
+
+---
+
+## renovate.json
+
+¿Para qué sirve y qué ventajas tiene usar renovate.json?
+Función:
+
+renovate.json configura Renovate Bot, una herramienta que revisa y actualiza automáticamente las dependencias de tu proyecto.
+Ventajas:
+
+Mantiene tus dependencias siempre actualizadas y seguras.
+
+Automatiza la creación de Pull Requests para actualizar paquetes.
+
+Te avisa de vulnerabilidades en tus dependencias.
+
+Reduce el trabajo manual y el riesgo de tener dependencias obsoletas o inseguras.
+
+Facilita el mantenimiento y la calidad del proyecto a largo plazo.
+
+---
+
+## Tailwind 4
+
+- @layer base {
+  input::placeholder,
+  textarea::placeholder {
+  color: var(--color-gray-400);
+  }
+  }
+
+- @layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+  cursor: pointer;
+  }
+  }
+
+- @theme inline {
+  --font-display: var(--font-delius);
+  --font-table-text: var(--font-lexend);
+  }

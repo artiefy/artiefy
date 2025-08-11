@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
-    "preview": "next build && next start"
+    "preview": "next build && next start",
+    "precommit:check": "pre-commit run --all-files"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.863.0",
@@ -176,6 +177,10 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"
+  },
+  "engines": {
+    "node": "22.18.0",
+    "npm": "11.5.2"
   },
   "packageManager": "npm@11.5.2"
 }
