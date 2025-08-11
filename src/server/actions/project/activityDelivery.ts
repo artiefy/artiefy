@@ -36,11 +36,11 @@ export async function entregarActividad({
 
   if (existing.length > 0) {
     // update
-    const result = await db
+    const _result = await db
       .update(projectActivityDeliveries)
       .set({
         entregado: true,
-        entregaUrl: entregaUrl || s3Key, // usar s3Key si no hay entregaUrl
+        entregaUrl: entregaUrl ?? s3Key, // usar s3Key si no hay entregaUrl
         comentario,
         entregadoAt: new Date(),
         aprobado: false, // al volver a entregar, se pone en evaluación
@@ -56,14 +56,14 @@ export async function entregarActividad({
       );
 
     console.log(`✅ ENTREGA ACTUALIZADA - S3 Key: ${s3Key}`);
-    console.log(`📝 Comentario: ${comentario || 'Sin comentario'}`);
+    console.log(`📝 Comentario: ${comentario ?? 'Sin comentario'}`);
   } else {
     // insert
-    const result = await db.insert(projectActivityDeliveries).values({
+    const _result = await db.insert(projectActivityDeliveries).values({
       activityId,
       userId,
       entregado: true,
-      entregaUrl: entregaUrl || s3Key, // usar s3Key si no hay entregaUrl
+      entregaUrl: entregaUrl ?? s3Key, // usar s3Key si no hay entregaUrl
       comentario,
       entregadoAt: new Date(),
       aprobado: false,
@@ -71,7 +71,7 @@ export async function entregarActividad({
     });
 
     console.log(`🆕 NUEVA ENTREGA CREADA - S3 Key: ${s3Key}`);
-    console.log(`📝 Comentario: ${comentario || 'Sin comentario'}`);
+    console.log(`📝 Comentario: ${comentario ?? 'Sin comentario'}`);
   }
 
   console.log(

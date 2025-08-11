@@ -1,18 +1,14 @@
-// @ts-check
-
 import { withNextVideo } from 'next-video/process';
-
 import withPlaiceholder from '@plaiceholder/next';
-import createJiti from 'jiti';
-import { fileURLToPath } from 'url';
+import { createJiti } from 'jiti';
+import { fileURLToPath } from 'node:url';
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
-await jiti.import('./src/env');
+// Validar variables de entorno
+jiti('./src/env.ts');
 
-/**
- * @type {import('next').NextConfig}
- */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {

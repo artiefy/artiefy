@@ -7,14 +7,12 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
-  ArrowLeft,
   Calendar,
   Edit,
   Eye,
   ImageIcon,
   Plus,
   Search,
-  //  Trash2,
   Users,
 } from 'lucide-react';
 
@@ -96,6 +94,21 @@ interface SpecificObjective {
   activities: string[];
 }
 
+// Define el tipo para los proyectos generados por IA
+interface ProyectoGenerado {
+  project_name?: string;
+  project_description?: string;
+  justification?: string;
+  general_objective?: string;
+  specific_objectives?: string[];
+  tasks?: { task_name: string }[];
+  categoryId?: number;
+  numMeses?: number;
+  project_type?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+}
+
 export default function ProyectosPage() {
   const router = useRouter();
   const { userId, isLoaded } = useAuth();
@@ -113,7 +126,8 @@ export default function ProyectosPage() {
   >([]);
   const [ResumenOpen, setResumenOpen] = React.useState(false);
   const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
-  const [proyectoGenerado, setProyectoGenerado] = useState<any>(null);
+  const [proyectoGenerado, setProyectoGenerado] =
+    useState<ProyectoGenerado | null>(null);
   const [modalResumenGeneradoOpen, setModalResumenGeneradoOpen] =
     useState(false);
 
@@ -128,8 +142,12 @@ export default function ProyectosPage() {
     number | null
   >(null);
 
-  const [responsablesPorActividad, setResponsablesPorActividad] = useState<Record<string, string>>({});
-  const [horasPorActividad, setHorasPorActividad] = useState<Record<string, number>>({});
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<
+    Record<string, string>
+  >({});
+  const [horasPorActividad, setHorasPorActividad] = useState<
+    Record<string, number>
+  >({});
 
   // Estado para horas por actividad (flujo de creación)
   const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6);
@@ -210,9 +228,20 @@ export default function ProyectosPage() {
   const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
 
   // NUEVO: Estado para almacenar los integrantes de cada proyecto
-  const [integrantesMap, setIntegrantesMap] = useState<Record<number, any[]>>(
-    {}
-  );
+  const [integrantesMap, setIntegrantesMap] = useState<
+    Record<
+      number,
+      {
+        id: string | number;
+        nombre: string;
+        rol: string;
+        especialidad: string;
+        email: string;
+        github: string;
+        linkedin: string;
+      }[]
+    >
+  >({});
 
   // NUEVO: Estado para cargar categorías de proyectos
   const [categoriasMap, setCategoriasMap] = useState<Record<number, string>>(
@@ -223,30 +252,6 @@ export default function ProyectosPage() {
   const [solicitudesPendientesMap, setSolicitudesPendientesMap] = useState<
     Record<number, number>
   >({});
-
-  // Función para recargar solicitudes pendientes de un proyecto específico
-  const recargarSolicitudesProyecto = async (projectId: number) => {
-    try {
-      const res = await fetch(
-        `/api/projects/solicitudes/count?projectId=${projectId}`
-      );
-      if (res.ok) {
-        const data: { count: number } = await res.json();
-        setSolicitudesPendientesMap((prev) => ({
-          ...prev,
-          [projectId]: data.count ?? 0,
-        }));
-        console.log(
-          `🔔 Proyecto ${projectId} actualizado: ${data.count} solicitudes`
-        );
-      }
-    } catch (error) {
-      console.error(
-        `❌ Error actualizando solicitudes proyecto ${projectId}:`,
-        error
-      );
-    }
-  };
 
   // Cargar la cantidad de solicitudes pendientes para todos los proyectos
   useEffect(() => {
@@ -281,7 +286,7 @@ export default function ProyectosPage() {
               }
             } catch (error) {
               console.error(
-                `❌ Error fetch solicitudes proyecto ${project.id}:`,
+                `❌ Error actualizando solicitudes proyecto ${project.id}:`,
                 error
               );
               newMap[project.id] = 0;
@@ -349,7 +354,20 @@ export default function ProyectosPage() {
       if (projects.length === 0 || !userId) return;
 
       console.log('👨‍👩‍👧‍👦 Obteniendo integrantes para proyectos:', projects.length);
-      const newMap: Record<number, any[]> = {};
+      // Cambia any[] por el tipo correcto
+      // newMap debe ser Record<number, Array<...>>
+      const newMap: Record<
+        number,
+        {
+          id: string | number;
+          nombre: string;
+          rol: string;
+          especialidad: string;
+          email: string;
+          github: string;
+          linkedin: string;
+        }[]
+      > = {};
 
       await Promise.all(
         projects.map(async (project) => {
@@ -410,19 +428,38 @@ export default function ProyectosPage() {
 
                     return {
                       id,
-                      nombre: (userInfo.name ??
-                        obj?.nombre ??
-                        obj?.name ??
-                        '') as string,
-                      rol: (obj?.rol ?? obj?.role ?? 'Integrante') as string,
-                      especialidad: (userInfo.especialidad ??
-                        obj?.especialidad ??
-                        '') as string,
-                      email: (userInfo.email ?? obj?.email ?? '') as string,
-                      github: (userInfo.github ?? obj?.github ?? '') as string,
-                      linkedin: (userInfo.linkedin ??
-                        obj?.linkedin ??
-                        '') as string,
+                      nombre: (typeof userInfo.name === 'string'
+                        ? userInfo.name
+                        : typeof obj?.nombre === 'string'
+                          ? obj.nombre
+                          : typeof obj?.name === 'string'
+                            ? obj.name
+                            : '') as string,
+                      rol: (typeof obj?.rol === 'string'
+                        ? obj.rol
+                        : typeof obj?.role === 'string'
+                          ? obj.role
+                          : 'Integrante') as string,
+                      especialidad: (typeof userInfo.especialidad === 'string'
+                        ? userInfo.especialidad
+                        : typeof obj?.especialidad === 'string'
+                          ? obj.especialidad
+                          : '') as string,
+                      email: (typeof userInfo.email === 'string'
+                        ? userInfo.email
+                        : typeof obj?.email === 'string'
+                          ? obj.email
+                          : '') as string,
+                      github: (typeof userInfo.github === 'string'
+                        ? userInfo.github
+                        : typeof obj?.github === 'string'
+                          ? obj.github
+                          : '') as string,
+                      linkedin: (typeof userInfo.linkedin === 'string'
+                        ? userInfo.linkedin
+                        : typeof obj?.linkedin === 'string'
+                          ? obj.linkedin
+                          : '') as string,
                     };
                   })
                 );
@@ -482,9 +519,26 @@ export default function ProyectosPage() {
             );
             if (res.ok) {
               const categoria = await res.json();
-              const nombreCategoria = Array.isArray(categoria)
-                ? categoria[0]?.name
-                : categoria?.name;
+              // Safe access to .name property
+              let nombreCategoria: string | undefined;
+              if (Array.isArray(categoria)) {
+                const cat0 = categoria[0];
+                if (
+                  cat0 &&
+                  typeof cat0 === 'object' &&
+                  'name' in cat0 &&
+                  typeof (cat0 as { name?: unknown }).name === 'string'
+                ) {
+                  nombreCategoria = (cat0 as { name: string }).name;
+                }
+              } else if (
+                categoria &&
+                typeof categoria === 'object' &&
+                'name' in categoria &&
+                typeof (categoria as { name?: unknown }).name === 'string'
+              ) {
+                nombreCategoria = (categoria as { name: string }).name;
+              }
 
               if (nombreCategoria) {
                 newMap[categoryId] = nombreCategoria;
@@ -1126,14 +1180,22 @@ export default function ProyectosPage() {
                                 isOpen={true}
                                 onClose={() => setIntegrantesModalOpen(null)}
                                 proyecto={{
-                                  id: project.id, // Añadir el ID del proyecto
-                                  titulo: project.name ?? '',
+                                  id: project.id,
+                                  titulo:
+                                    typeof project.name === 'string'
+                                      ? project.name
+                                      : '',
                                   rama:
                                     categoriasMap[project.categoryId] ??
-                                    project.category ??
+                                    (typeof project.category === 'string'
+                                      ? project.category
+                                      : '') ??
                                     'Sin categoría',
-                                  especialidades:
-                                    integrantesMap[project.id]?.length ?? 0,
+                                  especialidades: Array.isArray(
+                                    integrantesMap[project.id]
+                                  )
+                                    ? integrantesMap[project.id].length
+                                    : 0,
                                   participacion: project.isPublic
                                     ? 'Público'
                                     : 'Privado',
@@ -1206,11 +1268,12 @@ export default function ProyectosPage() {
                                       userId,
                                       projectId: project.id,
                                       requestType: 'resignation',
-                                      requestMessage: mensaje || null,
+                                      requestMessage: mensaje ?? null,
                                     }),
                                   }
                                 );
 
+                                // Corrige acceso inseguro a .error en fetch de renuncia
                                 if (res.ok) {
                                   alert(
                                     'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
@@ -1219,8 +1282,13 @@ export default function ProyectosPage() {
                                 } else {
                                   const errorData = await res.json();
                                   alert(
-                                    errorData.error ||
-                                      'No se pudo enviar la solicitud de renuncia'
+                                    typeof errorData === 'object' &&
+                                      errorData &&
+                                      'error' in errorData &&
+                                      typeof (errorData as { error?: unknown })
+                                        .error === 'string'
+                                      ? (errorData as { error: string }).error
+                                      : 'No se pudo enviar la solicitud de renuncia'
                                   );
                                 }
                               } catch (error) {
@@ -1321,10 +1389,10 @@ export default function ProyectosPage() {
             planteamiento={planteamientoTexto}
             justificacion={justificacionTexto}
             objetivoGen={objetivoGenTexto}
-            objetivosEsp={ObjetivosEspTexto} // <-- Aquí se pasan los objetivos correctos
-            actividad={[]} // Ya no se usa, pero el prop es requerido
-            setObjetivosEsp={setObjetivosEspTexto}
-            setActividades={() => {}} // Ya no se usa, pero el prop es requerido
+            objetivosEsp={ObjetivosEspTexto}
+            actividad={[]}
+            setObjetivosEsp={() => undefined}
+            setActividades={() => undefined}
             cronograma={undefined}
             categoriaId={undefined}
             numMeses={undefined}
@@ -1345,12 +1413,12 @@ export default function ProyectosPage() {
             setHorasPorDiaProyecto={setHorasPorDiaProyecto}
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
-            tipoProyecto={tipoProyectoResumen} // <-- Pasa el tipo de proyecto aquí
+            tipoProyecto={tipoProyectoResumen}
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}
             onClose={() => setModalGenerarOpen(false)}
-            onProyectoGenerado={(data) => {
+            onProyectoGenerado={(data: ProyectoGenerado) => {
               setProyectoGenerado(data);
               setModalGenerarOpen(false);
               setModalResumenGeneradoOpen(true); // Abre el modal resumen con los datos generados
@@ -1358,7 +1426,7 @@ export default function ProyectosPage() {
             resetOnOpen={modalGenerarOpen}
             objetivoGen={objetivoGenTexto}
             currentUser={{
-              name: user?.fullName || user?.firstName || 'Usuario',
+              name: user?.fullName ?? user?.firstName ?? 'Usuario',
             }} // Pasar el usuario logueado
           />
 
@@ -1398,8 +1466,8 @@ export default function ProyectosPage() {
               cronograma={cronogramaEdicion}
               categoriaId={editingProjectDetails.categoryId}
               numMeses={maxMesesEdicion}
-              setActividades={() => {}}
-              setObjetivosEsp={() => {}}
+              setActividades={() => undefined}
+              setObjetivosEsp={() => undefined}
               projectId={editingProjectId}
               coverImageKey={editingProjectDetails.coverImageKey}
               tipoProyecto={editingProjectDetails.type_project}
@@ -1422,12 +1490,12 @@ export default function ProyectosPage() {
             <ModalResumen
               isOpen={modalResumenGeneradoOpen}
               onClose={() => setModalResumenGeneradoOpen(false)}
-              titulo={proyectoGenerado.project_name ?? ''}
-              planteamiento={proyectoGenerado.project_description ?? ''}
-              justificacion={proyectoGenerado.justification ?? ''}
-              objetivoGen={proyectoGenerado.general_objective ?? ''}
+              titulo={proyectoGenerado?.project_name ?? ''}
+              planteamiento={proyectoGenerado?.project_description ?? ''}
+              justificacion={proyectoGenerado?.justification ?? ''}
+              objetivoGen={proyectoGenerado?.general_objective ?? ''}
               objetivosEsp={
-                Array.isArray(proyectoGenerado.specific_objectives)
+                Array.isArray(proyectoGenerado?.specific_objectives)
                   ? proyectoGenerado.specific_objectives.map(
                       (title: string, idx: number) => ({
                         id: String(idx) + '-' + Date.now(),
@@ -1438,29 +1506,31 @@ export default function ProyectosPage() {
                   : []
               }
               actividad={
-                Array.isArray(proyectoGenerado.tasks)
-                  ? proyectoGenerado.tasks.map((t: any) => t.task_name)
+                Array.isArray(proyectoGenerado?.tasks)
+                  ? proyectoGenerado.tasks.map((t) => t.task_name)
                   : []
               }
               cronograma={
-                Array.isArray(proyectoGenerado.tasks)
-                  ? proyectoGenerado.tasks.reduce(
-                      (acc: any, t: any, idx: number) => {
-                        acc[t.task_name] = [idx];
+                Array.isArray(proyectoGenerado?.tasks)
+                  ? proyectoGenerado.tasks.reduce<Record<string, number[]>>(
+                      (acc, t, idx) => {
+                        if (t && typeof t.task_name === 'string') {
+                          acc[t.task_name] = [idx];
+                        }
                         return acc;
                       },
                       {}
                     )
                   : {}
               }
-              categoriaId={proyectoGenerado.categoryId ?? undefined}
-              numMeses={proyectoGenerado.numMeses ?? 1}
-              setObjetivosEsp={() => {}}
-              setActividades={() => {}}
+              categoriaId={proyectoGenerado?.categoryId}
+              numMeses={proyectoGenerado?.numMeses}
+              setObjetivosEsp={() => undefined} // función vacía del tipo (value: SpecificObjective[]) => void
+              setActividades={() => undefined} // función vacía del tipo (value: string[]) => void
               coverImageKey={undefined}
-              tipoProyecto={proyectoGenerado.project_type ?? ''} // <-- PASA EL TIPO DE PROYECTO DEL USUARIO
-              fechaInicio={proyectoGenerado.fechaInicio ?? ''}
-              fechaFin={proyectoGenerado.fechaFin ?? ''}
+              tipoProyecto={proyectoGenerado?.project_type ?? ''}
+              fechaInicio={proyectoGenerado?.fechaInicio ?? ''}
+              fechaFin={proyectoGenerado?.fechaFin ?? ''}
               tipoVisualizacion={'meses'}
               responsablesPorActividad={responsablesPorActividad}
               horasPorActividad={horasPorActividad}

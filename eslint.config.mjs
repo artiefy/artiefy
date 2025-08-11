@@ -1,7 +1,4 @@
-// @ts-check
-
 import eslintPluginNext from '@next/eslint-plugin-next';
-
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import drizzlePlugin from 'eslint-plugin-drizzle';
@@ -13,10 +10,12 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default [
+  // Base configurations
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
 
+  // Global ignores
   {
     ignores: [
       '**/node_modules/**',
@@ -36,12 +35,13 @@ export default [
     ],
   },
 
+  // Main configuration
   {
     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json', // Cambia projectService por project
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
@@ -60,7 +60,7 @@ export default [
       'simple-import-sort': simpleImportSort,
       '@next/next': eslintPluginNext,
       import: importPlugin,
-      drizzle: drizzlePlugin, // <-- Agrega el plugin Drizzle aquí
+      drizzle: drizzlePlugin,
     },
     settings: {
       react: {
@@ -150,7 +150,7 @@ export default [
       'prefer-const': 'warn',
       'no-var': 'error',
 
-      // ===== IMPORT SORTING RULES (AUTO-ORGANIZE) =====
+      // ===== IMPORT SORTING RULES =====
       'simple-import-sort/imports': [
         'warn',
         {
@@ -171,17 +171,17 @@ export default [
             // Same-folder imports
             ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
 
-            // Type imports (should be last)
+            // Type imports
             ['^.+\\u0000$'],
 
-            // Style imports (CSS, SCSS, etc.)
+            // Style imports
             ['^.+\\.s?css$'],
           ],
         },
       ],
       'simple-import-sort/exports': 'warn',
 
-      // Additional import rules for better organization
+      // Additional import rules
       'import/newline-after-import': 'error',
       'import/no-duplicates': 'off',
       'import/first': 'error',
@@ -208,7 +208,7 @@ export default [
     ...tseslint.configs.disableTypeChecked,
   },
 
-  // Configuration for test files
+  // Test files configuration
   {
     files: ['**/*.test.{js,jsx,ts,tsx}', '**/*.spec.{js,jsx,ts,tsx}'],
     rules: {
@@ -217,7 +217,7 @@ export default [
     },
   },
 
-  // Configuration for config files
+  // Config files configuration
   {
     files: [
       '*.config.{js,ts,mjs}',
@@ -229,5 +229,7 @@ export default [
       'import/no-anonymous-default-export': 'off',
     },
   },
+
+  // Prettier should be last
   prettier,
 ];
