@@ -17,12 +17,14 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 
-import type { Course, Enrollment } from '~/types';
+import type { ClassMeeting, Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
   course: initialCourse,
+  classMeetings = [],
 }: {
   course: Course;
+  classMeetings?: ClassMeeting[];
 }) {
   const [course, setCourse] = useState<Course>(initialCourse);
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -271,6 +273,7 @@ export default function CourseDetails({
           onEnrollAction={onEnrollAction}
           onUnenrollAction={handleUnenroll}
           isCheckingEnrollment={isCheckingEnrollment}
+          classMeetings={classMeetings} // <-- Pass meetings here
         />
 
         <div className="mt-8 space-y-8">

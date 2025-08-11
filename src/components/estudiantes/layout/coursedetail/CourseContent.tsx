@@ -27,7 +27,7 @@ import { Progress } from '~/components/estudiantes/ui/progress';
 import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
 
-import type { Course } from '~/types';
+import type { ClassMeeting, Course } from '~/types';
 
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
@@ -37,7 +37,8 @@ interface CourseContentProps {
   isEnrolled: boolean;
   isSubscriptionActive: boolean;
   subscriptionEndDate: string | null;
-  isSignedIn: boolean; // Add this prop
+  isSignedIn: boolean;
+  classMeetings?: ClassMeeting[]; // <-- Cambia any[] por ClassMeeting[]
 }
 
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,8 @@ export function CourseContent({
   isEnrolled,
   isSubscriptionActive,
   subscriptionEndDate,
-  isSignedIn, // Add this to destructuring
+  isSignedIn,
+  classMeetings = [],
 }: CourseContentProps) {
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
   const router = useRouter();
@@ -379,9 +381,40 @@ export function CourseContent({
     return endDate > new Date();
   }, [isEnrolled, isSubscriptionActive, subscriptionEndDate]);
 
+  // --- NUEVO: Clases en vivo (Teams) ---
+  const upcomingMeetings: ClassMeeting[] = useMemo(() => {
+    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
+    const now = new Date();
+    return classMeetings
+      .filter(
+        (m): m is ClassMeeting =>
+          typeof m.startDateTime === 'string' && new Date(m.startDateTime) > now
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime).getTime() -
+          new Date(b.startDateTime).getTime()
+      );
+  }, [classMeetings]);
+
+  // --- NUEVO: Clases grabadas (video_key) ---
+  const recordedMeetings: ClassMeeting[] = useMemo(() => {
+    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
+    return classMeetings
+      .filter(
+        (m): m is ClassMeeting =>
+          typeof m.video_key === 'string' && m.video_key.length > 0
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime).getTime() -
+          new Date(b.startDateTime).getTime()
+      );
+  }, [classMeetings]);
+
   return (
     <div className="relative rounded-lg border bg-white p-6 shadow-sm">
-      <div className="mb-6 flex flex-col gap-4">
+      <div className="mb-6">
         <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
             Contenido del curso
@@ -409,6 +442,178 @@ export function CourseContent({
           )}
         </div>
       </div>
+
+      {/* --- CLASES EN VIVO (TEAMS) --- */}
+      {upcomingMeetings.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-2 text-xl font-bold text-blue-700">
+            Clases en Vivo (Teams)
+          </h2>
+          <div className="space-y-3">
+            {upcomingMeetings.map((meeting) => (
+              <div
+                key={meeting.id}
+                className="flex flex-col rounded-lg border border-blue-300 bg-blue-50 p-4 shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-blue-900">
+                      {meeting.title}
+                    </h3>
+                    <p className="text-sm text-blue-800">
+                      {typeof meeting.startDateTime === 'string'
+                        ? new Date(meeting.startDateTime).toLocaleString(
+                            'es-CO',
+                            {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )
+                        : ''}
+                      {' - '}
+                      {typeof meeting.endDateTime === 'string'
+                        ? new Date(meeting.endDateTime).toLocaleString(
+                            'es-CO',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )
+                        : ''}
+                    </p>
+                  </div>
+                  {meeting.joinUrl && (
+                    <a
+                      href={meeting.joinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-4 rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
+                    >
+                      Unirse a la Clase
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* --- CLASES GRABADAS --- */}
+      {recordedMeetings.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-2 text-xl font-bold text-green-700">
+            Clases Grabadas
+          </h2>
+          <div className="space-y-3">
+            {recordedMeetings.map((meeting) => (
+              <div
+                key={meeting.id}
+                className="overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100"
+              >
+                <div className="flex w-full items-center justify-between px-6 py-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-500">
+                      <FaCheckCircle className="mr-2 size-5" />
+                    </span>
+                    <span className="text-background font-medium">
+                      {meeting.title}{' '}
+                      <span className="ml-2 text-sm text-gray-500">
+                        (
+                        {typeof meeting.startDateTime === 'string'
+                          ? new Date(meeting.startDateTime).toLocaleDateString(
+                              'es-CO'
+                            )
+                          : ''}
+                        )
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Link href={`/estudiantes/clases/${meeting.id}`}>
+                      <button className="buttonclass text-background transition-none active:scale-95">
+                        <div className="outline" />
+                        <div className="state state--default">
+                          <div className="icon">{/* ...SVG icon... */}</div>
+                          <p>
+                            <span style={{ '--i': 0 } as React.CSSProperties}>
+                              V
+                            </span>
+                            <span style={{ '--i': 1 } as React.CSSProperties}>
+                              e
+                            </span>
+                            <span style={{ '--i': 2 } as React.CSSProperties}>
+                              r
+                            </span>
+                            <span style={{ '--i': 3 } as React.CSSProperties}>
+                              {' '}
+                            </span>
+                            <span style={{ '--i': 4 } as React.CSSProperties}>
+                              C
+                            </span>
+                            <span style={{ '--i': 5 } as React.CSSProperties}>
+                              l
+                            </span>
+                            <span style={{ '--i': 6 } as React.CSSProperties}>
+                              a
+                            </span>
+                            <span style={{ '--i': 7 } as React.CSSProperties}>
+                              s
+                            </span>
+                            <span style={{ '--i': 8 } as React.CSSProperties}>
+                              e
+                            </span>
+                          </p>
+                        </div>
+                        <div className="state state--sent">
+                          <div className="icon">{/* ...SVG icon... */}</div>
+                          <p>
+                            <span style={{ '--i': 5 } as React.CSSProperties}>
+                              V
+                            </span>
+                            <span style={{ '--i': 6 } as React.CSSProperties}>
+                              i
+                            </span>
+                            <span style={{ '--i': 7 } as React.CSSProperties}>
+                              s
+                            </span>
+                            <span style={{ '--i': 8 } as React.CSSProperties}>
+                              t
+                            </span>
+                            <span style={{ '--i': 9 } as React.CSSProperties}>
+                              o
+                            </span>
+                            <span style={{ '--i': 10 } as React.CSSProperties}>
+                              !
+                            </span>
+                          </p>
+                        </div>
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+                {/* Barra de progreso (si quieres mostrarla, aquí ejemplo fijo al 100%) */}
+                <div className="border-t bg-white px-6 py-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-700">
+                      Progreso De La Clase:
+                    </p>
+                  </div>
+                  <Progress
+                    value={100}
+                    showPercentage={true}
+                    className="transition-none"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isEnrolled && isFullyCompleted && (
         <div className="artiefy-check-container mb-4">

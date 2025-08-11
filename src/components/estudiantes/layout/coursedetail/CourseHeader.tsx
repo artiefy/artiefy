@@ -11,11 +11,11 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
   FaCheck,
+  FaCheckCircle,
   FaClock,
   FaCrown,
   FaExpand,
   FaStar,
-  FaTimes,
   FaTrophy,
   FaUserGraduate,
   FaVolumeMute,
@@ -25,7 +25,6 @@ import { IoGiftOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
-import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -39,13 +38,12 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
-import { type Product } from '~/types/payu';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
 import { GradeModal } from './CourseGradeModal';
 
-import type { Course, CourseMateria } from '~/types';
+import type { ClassMeeting, Course, CourseMateria } from '~/types';
 
 import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
@@ -69,6 +67,7 @@ interface CourseHeaderProps {
   onEnrollAction: () => Promise<void>;
   onUnenrollAction: () => Promise<void>;
   isCheckingEnrollment?: boolean;
+  classMeetings?: ClassMeeting[];
 }
 
 const BADGE_GRADIENTS = [
@@ -113,14 +112,15 @@ export function CourseHeader({
   subscriptionEndDate,
   onEnrollAction,
   onUnenrollAction,
+  classMeetings = [],
 }: CourseHeaderProps) {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [programToastShown, setProgramToastShown] = useState(false);
   // Add state to track local enrollment status to hide the top button after enrolling
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
@@ -911,8 +911,8 @@ export function CourseHeader({
         console.log('Created course product:', courseProduct);
 
         // Set the product and show the modal
-        setSelectedProduct(courseProduct);
-        setShowPaymentModal(true);
+        // setSelectedProduct(courseProduct);
+        // setShowPaymentModal(true);
         return;
       }
 
@@ -995,14 +995,11 @@ export function CourseHeader({
           // Generate product if needed and show the modal
           if (courseProduct) {
             console.log('Using course product from useMemo');
-            setSelectedProduct(courseProduct);
-            setShowPaymentModal(true);
+            // setSelectedProduct(courseProduct);
+            // setShowPaymentModal(true);
           } else {
-            // Fallback to create product directly if useMemo didn't work
+            // Fallback to create product directly as fallback
             console.log('Creating product directly as fallback');
-            const fallbackProduct = createProductFromCourse(course);
-            setSelectedProduct(fallbackProduct);
-            setShowPaymentModal(true);
           }
         }
       } catch (error) {
@@ -1304,6 +1301,19 @@ export function CourseHeader({
         </div>
       </div>
     );
+  };
+
+  // Helper to format meeting date/time
+  const formatMeetingDateTime = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleString('es-CO', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -1774,6 +1784,188 @@ export function CourseHeader({
             </div>
           </div>
         )}
+        {/* --- MUEVE AQUÍ CLASES EN VIVO Y GRABADAS --- */}
+        {(classMeetings?.length ?? 0) > 0 && (
+          <>
+            {/* Clases en Vivo */}
+            {(() => {
+              const now = new Date();
+              const upcomingMeetings = classMeetings
+                .filter(
+                  (m) =>
+                    typeof m.startDateTime === 'string' &&
+                    new Date(m.startDateTime) > now
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(a.startDateTime).getTime() -
+                    new Date(b.startDateTime).getTime()
+                );
+              return upcomingMeetings.length > 0 ? (
+                <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow">
+                  <div className="flex items-center gap-3">
+                    <FaCrown className="h-6 w-6 text-blue-500" />
+                    <div>
+                      <h3 className="text-lg font-bold">Clase en Vivo</h3>
+                      <p className="text-sm">
+                        <strong>{upcomingMeetings[0].title}</strong>
+                        <br />
+                        {formatMeetingDateTime(
+                          upcomingMeetings[0].startDateTime
+                        )}{' '}
+                        &mdash;{' '}
+                        {formatMeetingDateTime(upcomingMeetings[0].endDateTime)}
+                      </p>
+                      {upcomingMeetings[0].joinUrl && (
+                        <a
+                          href={upcomingMeetings[0].joinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
+                        >
+                          Unirse a la Clase en Teams
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+            {/* Clases Grabadas */}
+            {(() => {
+              const recordedMeetings = classMeetings
+                .filter(
+                  (m) =>
+                    typeof m.video_key === 'string' && m.video_key.length > 0
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(b.startDateTime).getTime() -
+                    new Date(a.startDateTime).getTime()
+                );
+              return recordedMeetings.length > 0 ? (
+                <div className="mb-4 rounded-lg border border-green-400 bg-green-50 p-4 text-green-900 shadow">
+                  <div className="flex items-center gap-3">
+                    <FaCheckCircle className="h-6 w-6 text-green-500" />
+                    <div>
+                      <h3 className="text-lg font-bold">
+                        Clase Grabada Disponible
+                      </h3>
+                      <p className="text-sm">
+                        <strong>{recordedMeetings[0].title}</strong>
+                        <br />
+                        {formatMeetingDateTime(
+                          recordedMeetings[0].startDateTime
+                        )}
+                      </p>
+                      <video
+                        controls
+                        className="mt-2 w-full max-w-lg rounded shadow"
+                        src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${recordedMeetings[0].video_key}`}
+                      >
+                        Tu navegador no soporta el video.
+                      </video>
+                      <div className="mt-2 flex justify-end">
+                        <Link
+                          href={`/estudiantes/clases/${recordedMeetings[0].id}`}
+                        >
+                          <button className="buttonclass text-background transition-none active:scale-95">
+                            <div className="outline" />
+                            <div className="state state--default">
+                              <div className="icon">{/* ...SVG icon... */}</div>
+                              <p>
+                                <span
+                                  style={{ '--i': 0 } as React.CSSProperties}
+                                >
+                                  V
+                                </span>
+                                <span
+                                  style={{ '--i': 1 } as React.CSSProperties}
+                                >
+                                  e
+                                </span>
+                                <span
+                                  style={{ '--i': 2 } as React.CSSProperties}
+                                >
+                                  r
+                                </span>
+                                <span
+                                  style={{ '--i': 3 } as React.CSSProperties}
+                                >
+                                  {' '}
+                                </span>
+                                <span
+                                  style={{ '--i': 4 } as React.CSSProperties}
+                                >
+                                  C
+                                </span>
+                                <span
+                                  style={{ '--i': 5 } as React.CSSProperties}
+                                >
+                                  l
+                                </span>
+                                <span
+                                  style={{ '--i': 6 } as React.CSSProperties}
+                                >
+                                  a
+                                </span>
+                                <span
+                                  style={{ '--i': 7 } as React.CSSProperties}
+                                >
+                                  s
+                                </span>
+                                <span
+                                  style={{ '--i': 8 } as React.CSSProperties}
+                                >
+                                  e
+                                </span>
+                              </p>
+                            </div>
+                            <div className="state state--sent">
+                              <div className="icon">{/* ...SVG icon... */}</div>
+                              <p>
+                                <span
+                                  style={{ '--i': 5 } as React.CSSProperties}
+                                >
+                                  V
+                                </span>
+                                <span
+                                  style={{ '--i': 6 } as React.CSSProperties}
+                                >
+                                  i
+                                </span>
+                                <span
+                                  style={{ '--i': 7 } as React.CSSProperties}
+                                >
+                                  s
+                                </span>
+                                <span
+                                  style={{ '--i': 8 } as React.CSSProperties}
+                                >
+                                  t
+                                </span>
+                                <span
+                                  style={{ '--i': 9 } as React.CSSProperties}
+                                >
+                                  o
+                                </span>
+                                <span
+                                  style={{ '--i': 10 } as React.CSSProperties}
+                                >
+                                  !
+                                </span>
+                              </p>
+                            </div>
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+          </>
+        )}
         {/* Course lessons */}
         <CourseContent
           course={course}
@@ -1844,31 +2036,6 @@ export function CourseHeader({
           userId={user?.id ?? ''} // Pass dynamic user ID
         />
       </CardContent>
-      {showPaymentModal && (courseProduct ?? selectedProduct) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg bg-gray-800 p-4 text-white">
-            {' '}
-            {/* Cambiado a fondo oscuro */}
-            <div className="relative mb-4 flex items-center justify-between">
-              <h3 className="w-full text-center text-xl font-semibold text-white">
-                Datos de Facturacion
-                <br />
-                <span className="font-bold">{course.title}</span>
-              </h3>
-              <button
-                onClick={() => {
-                  console.log('Closing payment modal');
-                  setShowPaymentModal(false);
-                }}
-                className="absolute top-0 right-0 mt-2 mr-2 text-gray-300 hover:text-white"
-              >
-                <FaTimes className="h-6 w-6" />
-              </button>
-            </div>
-            <PaymentForm selectedProduct={selectedProduct ?? courseProduct!} />
-          </div>
-        </div>
-      )}
     </Card>
   );
 }

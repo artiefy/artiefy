@@ -495,3 +495,16 @@ export interface Certificate {
   user?: User;
   course?: Course;
 }
+
+export interface ClassMeeting {
+  id: number;
+  courseId: number;
+  title: string;
+  startDateTime: string; // ISO string
+  endDateTime: string; // ISO string
+  joinUrl?: string | null;
+  weekNumber?: number | null;
+  createdAt?: string | null;
+  meetingId: string;
+  video_key?: string | null;
+}

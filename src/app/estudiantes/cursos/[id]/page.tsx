@@ -8,6 +8,7 @@ import { auth } from '@clerk/nextjs/server';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 
@@ -165,10 +166,27 @@ async function CourseContent({ id }: { id: string }) {
         isNew: lesson.isNew,
       })) ?? [];
 
+    // Fetch class meetings for this course
+    const rawClassMeetings = await getClassMeetingsByCourseId(courseId);
+
+    // Convert Date fields to ISO strings for type compatibility
+    const classMeetings = rawClassMeetings.map((meeting) => ({
+      ...meeting,
+      startDateTime: meeting.startDateTime
+        ? new Date(meeting.startDateTime).toISOString()
+        : '',
+      endDateTime: meeting.endDateTime
+        ? new Date(meeting.endDateTime).toISOString()
+        : '',
+      createdAt: meeting.createdAt
+        ? new Date(meeting.createdAt).toISOString()
+        : null,
+    }));
+
     const courseForDetails: Course = {
       ...course,
       totalStudents: course.enrollments?.length ?? 0,
-      lessons, // Usar las lecciones sincronizadas con progreso real
+      lessons,
       category: course.category
         ? {
             id: course.category.id,
@@ -187,7 +205,10 @@ async function CourseContent({ id }: { id: string }) {
 
     return (
       <section>
-        <CourseDetails course={courseForDetails} />
+        <CourseDetails
+          course={courseForDetails}
+          classMeetings={classMeetings}
+        />
       </section>
     );
   } catch (error) {
