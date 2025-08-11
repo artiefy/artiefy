@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { projectActivityDeliveries, users } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });

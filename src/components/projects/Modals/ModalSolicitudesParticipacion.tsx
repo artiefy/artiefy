@@ -1,6 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect,useState } from 'react';
+
+import { Check, Clock, MessageSquare, Trash2,X } from 'lucide-react';
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '~/components/projects/ui/avatar';
+import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
 import {
   Card,
@@ -8,13 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/projects/ui/card';
-import { Badge } from '~/components/projects/ui/badge';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '~/components/projects/ui/avatar';
-import { Check, X, Clock, MessageSquare, Trash2 } from 'lucide-react';
 
 interface SolicitudParticipacion {
   id: number;

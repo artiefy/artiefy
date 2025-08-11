@@ -57,9 +57,9 @@ interface ModalResumenProps {
     responsibleUserId?: string;
     hoursPerDay?: number;
   }[];
-  responsablesPorActividad?: { [key: string]: string };
-  horasPorActividad?: { [key: string]: number };
-  setHorasPorActividad?: (value: { [key: string]: number }) => void; // <-- Nuevo setter
+  responsablesPorActividad?: Record<string, string>;
+  horasPorActividad?: Record<string, number>;
+  setHorasPorActividad?: (value: Record<string, number>) => void; // <-- Nuevo setter
   horasPorDiaProyecto?: number; // <-- Recibe el prop
   setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
@@ -105,15 +105,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // }>(horasPorActividadProp);
 
   // Solo mantener un estado local para horas por actividad
-  const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<{
-    [key: string]: number;
-  }>({});
+  const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<Record<string, number>>({});
 
   // Estado para responsables
   const [responsablesPorActividadLocal, setResponsablesPorActividadLocal] =
-    useState<{
-      [key: string]: string;
-    }>(responsablesPorActividadProp);
+    useState<Record<string, string>>(responsablesPorActividadProp);
 
   // Inicializar estado local con props
   useEffect(() => {
@@ -220,9 +216,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isOpen, objetivosEsp, horasPorActividadProp]);
   const [nuevoObjetivo, setNuevoObjetivo] = useState('');
-  const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<{
-    [id: string]: string;
-  }>({});
+  const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<Record<string, string>>({});
   const [cronogramaState, setCronograma] =
     useState<Record<string, number[]>>(cronograma);
   const [fechaInicio, setFechaInicio] = useState<string>(fechaInicioProp ?? '');
@@ -240,7 +234,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [duracionDias, setDuracionDias] = useState<number>(0);
   const [tipoVisualizacion, setTipoVisualizacion] = useState<
     'meses' | 'dias' | 'horas'
-  >((tipoVisualizacionProp as 'meses' | 'dias' | 'horas') ?? 'meses');
+  >((tipoVisualizacionProp!) ?? 'meses');
   const [tipoProyecto, setTipoProyecto] = useState<string>(''); // Por defecto vacío
   const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
@@ -371,7 +365,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const fechaFin = new Date(fin);
     if (fechaInicio > fechaFin) return 0;
     let count = 0;
-    let current = new Date(fechaInicio);
+    const current = new Date(fechaInicio);
     while (current <= fechaFin) {
       const day = current.getDay();
       if (day !== 0 && day !== 6) count++; // lunes a viernes
@@ -404,7 +398,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       console.log(
         `Distribuyendo ${horasPorActividadDistribuidas} horas por actividad para ${totalActividades} actividades`
       );
-      const nuevasHoras: { [key: string]: number } = {};
+      const nuevasHoras: Record<string, number> = {};
       objetivosEspEditado.forEach((obj) => {
         obj.activities.forEach((_, actIdx) => {
           const actividadKey = `${obj.id}_${actIdx}`;
@@ -1154,8 +1148,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Sincronizar responsables y horas de actividades en modo edición
   useEffect(() => {
     if (isEditMode && isOpen && Array.isArray(actividadesProp)) {
-      const nuevosResponsables: { [key: string]: string } = {};
-      const nuevasHoras: { [key: string]: number } = {};
+      const nuevosResponsables: Record<string, string> = {};
+      const nuevasHoras: Record<string, number> = {};
 
       actividadesProp.forEach((act, idx) => {
         if (act.objetivoId) {
@@ -1284,7 +1278,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     // Contar días laborables necesarios empezando desde la fecha inicial
     let diasContados = 0;
-    let fechaActual = new Date(fechaInicio);
+    const fechaActual = new Date(fechaInicio);
 
     while (diasContados < diasNecesarios) {
       const diaSemana = fechaActual.getDay();
@@ -1422,7 +1416,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       });
     });
 
-    const asignacion: { [actividadKey: string]: number[] } = {};
+    const asignacion: Record<string, number[]> = {};
     let diaIndex = 0;
     let horasRestantesDia = horasPorDia;
     let responsableAnterior = '';
@@ -1502,7 +1496,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     // Si el cronograma requiere más días que los calculados, extiende el array
     if (meses.length <= maxDiaAsignado) {
       const extendidos = [...meses];
-      let lastDate =
+      const lastDate =
         meses.length > 0
           ? new Date(meses[meses.length - 1].split('/').reverse().join('-'))
           : new Date();

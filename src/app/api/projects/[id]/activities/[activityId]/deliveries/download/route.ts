@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { db } from '~/server/db';
-import {
-  projectActivityDeliveries,
-  projects,
-  projectActivities,
-} from '~/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { auth } from '@clerk/nextjs/server';
+import { and,eq } from 'drizzle-orm';
+
+import { db } from '~/server/db';
+import {
+  projectActivities,
+  projectActivityDeliveries,
+  projects,
+} from '~/server/db/schema';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,

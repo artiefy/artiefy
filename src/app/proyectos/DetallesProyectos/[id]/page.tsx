@@ -1,25 +1,31 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs'; // Importar useUser de Clerk
-import {
-  ArrowLeft,
-  Users,
-  Calendar,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  User,
-  Edit,
-  Trash2,
-  Download,
-  RotateCw,
-  EyeOff,
-  Eye, // Agregar ícono de reload
-} from 'lucide-react';
-import { Header } from '~/components/estudiantes/layout/Header';
+
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs'; // Importar useUser de Clerk
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Download,
+  Edit,
+  Eye, // Agregar ícono de reload
+  EyeOff,
+  RotateCw,
+  Trash2,
+  User,
+  Users,
+} from 'lucide-react';
+
+import { Header } from '~/components/estudiantes/layout/Header';
+import ModalEntregaActividad from '~/components/projects/Modals/ModalEntregaActividad';
+import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
+import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
 import {
   Card,
@@ -27,13 +33,6 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/projects/ui/card';
-import { Badge } from '~/components/projects/ui/badge';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '~/components/projects/ui/tabs';
 import {
   Table,
   TableBody,
@@ -42,19 +41,23 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/projects/ui/table';
-
-import ModalCategoria from '../../../../components/projects/Modals/ModalCategoria';
-import ModalConfirmacionEliminacion from '../../../../components/projects/Modals/ModalConfirmacionEliminacion';
-import ModalIntegrantesProyectoInfo from '../../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
-import ModalResumen from '../../../../components/projects/Modals/ModalResumen';
-import ModalEntregaActividad from '~/components/projects/Modals/ModalEntregaActividad';
-import ModalSolicitudesParticipacion from '../../../../components/projects/Modals/ModalSolicitudesParticipacion';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '~/components/projects/ui/tabs';
 import {
   getProjectById,
   ProjectDetail,
 } from '~/server/actions/project/getProjectById';
 import { Category } from '~/types';
-import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
+
+import ModalCategoria from '../../../../components/projects/Modals/ModalCategoria';
+import ModalConfirmacionEliminacion from '../../../../components/projects/Modals/ModalConfirmacionEliminacion';
+import ModalIntegrantesProyectoInfo from '../../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalResumen from '../../../../components/projects/Modals/ModalResumen';
+import ModalSolicitudesParticipacion from '../../../../components/projects/Modals/ModalSolicitudesParticipacion';
 
 export default function ProjectDetails() {
   const { user, isLoaded } = useUser(); // Usar Clerk para obtener usuario
@@ -435,7 +438,7 @@ export default function ProjectDetails() {
       const fechaFin = new Date(fechaFinStr);
 
       let i = 0;
-      let fechaActual = new Date(fechaInicio);
+      const fechaActual = new Date(fechaInicio);
       while (fechaActual <= fechaFin) {
         unidades.push({
           indice: i,
@@ -681,7 +684,7 @@ export default function ProjectDetails() {
   ) {
     if (id) {
       const act = actividadesPorId[String(id)];
-      if (act && act.responsibleUserId) {
+      if (act?.responsibleUserId) {
         const responsable = usersResponsables.find(
           (u) => String(u.id) === String(act.responsibleUserId)
         );
@@ -693,7 +696,7 @@ export default function ProjectDetails() {
       const act = Object.values(actividadesPorId).find(
         (a) => a.descripcion === descripcion
       );
-      if (act && act.responsibleUserId) {
+      if (act?.responsibleUserId) {
         const responsable = usersResponsables.find(
           (u) => String(u.id) === String(act.responsibleUserId)
         );
@@ -785,7 +788,7 @@ export default function ProjectDetails() {
       id?: number;
       descripcion?: string;
     },
-    esEdicion: boolean = false
+    esEdicion = false
   ) => {
     console.log(
       '🎯 Abriendo modal para actividad:',
@@ -2651,8 +2654,7 @@ export default function ProjectDetails() {
                                                   actividadId
                                                 ];
                                               if (
-                                                !entrega ||
-                                                !entrega.feedback
+                                                !entrega?.feedback
                                               ) {
                                                 return (
                                                   <span className="truncate text-xs text-gray-500 italic">

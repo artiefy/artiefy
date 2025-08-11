@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
   projectParticipationRequests,
   projectsTaken,
   users,
 } from '~/server/db/schema';
-import { auth } from '@clerk/nextjs/server';
 
 // Crear solicitud de participación
 export async function POST(request: Request) {

@@ -1,5 +1,5 @@
 import { UserButton } from '@clerk/nextjs';
-import { UserCircleIcon, AcademicCapIcon, FolderIcon } from '@heroicons/react/24/solid';
+import { AcademicCapIcon, FolderIcon,UserCircleIcon } from '@heroicons/react/24/solid';
 
 
 export function UserButtonWrapper() {

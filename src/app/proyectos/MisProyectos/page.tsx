@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { Header } from '~/components/estudiantes/layout/Header';
+import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
 import {
@@ -43,7 +44,6 @@ import ModalObjetivoGen from '../../../components/projects/Modals/ModalObjetivoG
 import ModalObjetivosEsp from '../../../components/projects/Modals/ModalObjetivosEsp';
 import ModalPlanteamiento from '../../../components/projects/Modals/ModalPlanteamiento';
 import ModalResumen from '../../../components/projects/Modals/ModalResumen';
-import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
 
 // Actualizar la interfaz para incluir el tipo de proyecto
 interface Project {
@@ -128,12 +128,8 @@ export default function ProyectosPage() {
     number | null
   >(null);
 
-  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
-    [key: string]: string;
-  }>({});
-  const [horasPorActividad, setHorasPorActividad] = useState<{
-    [key: string]: number;
-  }>({});
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<Record<string, string>>({});
+  const [horasPorActividad, setHorasPorActividad] = useState<Record<string, number>>({});
 
   // Estado para horas por actividad (flujo de creación)
   const [horasPorDiaProyecto, setHorasPorDiaProyecto] = useState<number>(6);
@@ -170,8 +166,8 @@ export default function ProyectosPage() {
   };
   const handleConfirmarObjetivosEsp = (data: {
     objetivos: SpecificObjective[];
-    responsablesPorActividad: { [key: string]: string };
-    horasPorActividad: { [key: string]: number };
+    responsablesPorActividad: Record<string, string>;
+    horasPorActividad: Record<string, number>;
     horasPorDiaProyecto: number;
     tiempoEstimadoProyecto: number;
     tipoProyecto?: string;

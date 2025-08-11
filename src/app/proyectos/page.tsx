@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 // Si usas Clerk:
 import { useUser } from '@clerk/nextjs';
+import * as RadixSelect from '@radix-ui/react-select';
 import {
   ArrowRight,
   //  Bookmark,
@@ -23,7 +24,6 @@ import {
   X,
 } from 'lucide-react';
 import { FaFolderOpen } from 'react-icons/fa';
-import * as RadixSelect from '@radix-ui/react-select';
 
 import { Header } from '~/components/estudiantes/layout/Header';
 import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
@@ -414,7 +414,7 @@ export default function Component() {
                           <div className="relative">
                             <Folder className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:opacity-0 md:h-8 md:w-8" />
                             <FaFolderOpen className="absolute top-0 left-0 h-6 w-6 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100 md:h-8 md:w-8" />
-                            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100"></div>
+                            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100" />
                           </div>
                         )}
                         <span className="text-lg font-bold tracking-wide text-white md:text-2xl">

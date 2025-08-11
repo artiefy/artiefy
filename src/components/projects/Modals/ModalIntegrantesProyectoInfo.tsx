@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Mail, Users, X, Loader2 } from 'lucide-react';
+import { Loader2,Mail, Users, X } from 'lucide-react';
 
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';

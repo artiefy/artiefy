@@ -1,6 +1,7 @@
 import { Dialog } from '@headlessui/react';
-import { Button } from '~/components/projects/ui/button';
 import { RotateCw } from 'lucide-react';
+
+import { Button } from '~/components/projects/ui/button';
 
 interface ModalPublicarProyectoProps {
   isOpen: boolean;

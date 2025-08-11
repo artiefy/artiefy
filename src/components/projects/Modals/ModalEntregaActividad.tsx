@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
+
+import {
+  Archive,
+  Edit,
+  File,
+  FileText,
+  Image,
+  Loader2,
+  RefreshCw,
+  UploadCloud,
+  Video,
+} from 'lucide-react';
+
+import { Button } from '~/components/projects/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '~/components/projects/ui/dialog';
-import { Button } from '~/components/projects/ui/button';
-import {
-  Loader2,
-  UploadCloud,
-  FileText,
-  Image,
-  Video,
-  Archive,
-  File,
-  Edit,
-  RefreshCw,
-} from 'lucide-react';
 
 interface ModalEntregaActividadProps {
   isOpen: boolean;

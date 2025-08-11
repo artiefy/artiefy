@@ -1,14 +1,16 @@
 // ModalObjetivosEsp.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
+
 import { useUser } from '@clerk/nextjs'; // Agregar import
-import { Button } from '~/components/projects/ui/button';
-import { Input } from '~/components/projects/ui/input';
-import { Card, CardContent } from '~/components/projects/ui/card';
 import { X } from 'lucide-react';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+
 import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
+import { Button } from '~/components/projects/ui/button';
+import { Card, CardContent } from '~/components/projects/ui/card';
+import { Input } from '~/components/projects/ui/input';
 
 interface SpecificObjective {
   id: string;
@@ -22,8 +24,8 @@ interface ModalObjetivosEspProps {
   onAnterior: () => void;
   onConfirm: (data: {
     objetivos: SpecificObjective[];
-    responsablesPorActividad: { [key: string]: string };
-    horasPorActividad: { [key: string]: number };
+    responsablesPorActividad: Record<string, string>;
+    horasPorActividad: Record<string, number>;
     horasPorDiaProyecto: number; // <-- Nuevo campo
     tiempoEstimadoProyecto: number; // <-- Nuevo prop
     tipoProyecto?: string; // <-- Añadido para permitir tipoProyecto
@@ -35,8 +37,8 @@ interface ModalObjetivosEspProps {
   setHorasPorDiaProyecto: (value: number) => void; // <-- Nuevo prop
   tiempoEstimadoProyecto: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto: (value: number) => void; // <-- Nuevo prop
-  horasPorActividad: { [key: string]: number }; // <-- Nuevo prop
-  setHorasPorActividad: (value: { [key: string]: number }) => void; // <-- Nuevo setter
+  horasPorActividad: Record<string, number>; // <-- Nuevo prop
+  setHorasPorActividad: (value: Record<string, number>) => void; // <-- Nuevo setter
 }
 
 const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
@@ -56,17 +58,13 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 }) => {
   const { user } = useUser(); // Obtener el usuario logueado
   const [newObjective, setNewObjective] = useState('');
-  const [newObjectiveActivity, setNewObjectiveActivity] = useState<{
-    [key: string]: string;
-  }>({});
+  const [newObjectiveActivity, setNewObjectiveActivity] = useState<Record<string, string>>({});
   const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
   const [objetivoGenTexto, setObjetivoGenTexto] = useState(objetivoGen || '');
   const [tipoProyecto, setTipoProyecto] = useState<string>(''); // <-- Nuevo estado para tipo de proyecto
 
   // Estados para responsables y horas por actividad
-  const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
-    [key: string]: string;
-  }>({});
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<Record<string, string>>({});
   const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
   const [horasPorDiaStr, setHorasPorDiaStr] = useState<string>(
     (horasPorDiaProyecto ?? 6).toString()
@@ -77,9 +75,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   );
 
   // 1. Mueve el estado y lógica de control de horasPorActividad al inicio del componente, antes de cualquier return o condicional.
-  const [horasPorActividadState, setHorasPorActividadState] = useState<{
-    [key: string]: number;
-  }>(horasPorActividad);
+  const [horasPorActividadState, setHorasPorActividadState] = useState<Record<string, number>>(horasPorActividad);
 
   useEffect(() => {
     if (horasPorActividad && typeof setHorasPorActividad === 'undefined') {
@@ -354,8 +350,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       );
 
       // Mapear horas y responsables por actividad usando data.tasks
-      const nuevasHoras: { [key: string]: number } = {};
-      const nuevosResponsables: { [key: string]: string } = {};
+      const nuevasHoras: Record<string, number> = {};
+      const nuevosResponsables: Record<string, string> = {};
       if (Array.isArray(data.tasks)) {
         nuevosObjetivos.forEach((obj: SpecificObjective, objIdx: number) => {
           obj.activities.forEach((act, actIdx) => {

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+
 import { Button } from '~/components/projects/ui/button';
-import { Input } from '~/components/projects/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '~/components/projects/ui/dialog';
+import { Input } from '~/components/projects/ui/input';
 import { typeProjects } from '~/server/actions/project/typeProject';
 
 interface ModalGenerarProyectoProps {

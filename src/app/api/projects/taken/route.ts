@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { and, eq, sql } from 'drizzle-orm';
 
-import { db } from '~/server/db';
-import { projectsTaken, projects, users } from '~/server/db/schema';
 import { createTaken } from '~/server/actions/project/taken/createTaken';
+import { db } from '~/server/db';
+import { projects, projectsTaken, users } from '~/server/db/schema';
 
 export async function POST(request: Request) {
   try {

@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { FileText,Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Schema definitions
 const uploadSchema = z.object({
   url: z.string().url(),
-  fields: z.record(z.string()),
+  fields: z.record(z.string(), z.string()),
   key: z.string(),
   uploadType: z.union([z.literal('simple'), z.literal('put')]),
 });
@@ -39,7 +39,7 @@ const rawTicketSchema = z.array(
     assigned_to_id: z.string().optional(),
     creator_name: z.string().optional(),
     creator_email: z.string().optional(),
-    comments: z.string().optional(),
+    comments: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
     time_elapsed_ms: z.number(),
@@ -196,7 +196,6 @@ export default function TicketsPage() {
       }));
 
       setTickets(mapped);
-      console.log('✅ Tickets mapeados:', mapped);
     } catch (error) {
       console.error(
         'Error fetching tickets:',

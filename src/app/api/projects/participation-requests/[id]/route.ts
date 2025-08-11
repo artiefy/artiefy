@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
   projectParticipationRequests,
-  projectsTaken,
   projects,
+  projectsTaken,
 } from '~/server/db/schema';
-import { auth } from '@clerk/nextjs/server';
 
 export async function PATCH(
   request: Request,

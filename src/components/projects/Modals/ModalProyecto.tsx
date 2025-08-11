@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { FaUsers, FaHashtag } from 'react-icons/fa';
+import { FaHashtag,FaUsers } from 'react-icons/fa';
 
-import ModalConfirmacionRegistro from './ModalConfirmacionIscripcion';
 import ModalRamaInvestigacion from './ModalCategoria';
+import ModalConfirmacionRegistro from './ModalConfirmacionIscripcion';
 
 interface ModalProyectoProps {
   isOpen: boolean;
