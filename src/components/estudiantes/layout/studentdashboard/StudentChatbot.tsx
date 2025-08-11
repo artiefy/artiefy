@@ -1,5 +1,5 @@
 'use client';
-
+// By Jean
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
