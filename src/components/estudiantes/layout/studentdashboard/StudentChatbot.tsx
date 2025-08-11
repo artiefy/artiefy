@@ -369,7 +369,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
         // Verificar si hay contenido antes de parsear JSON
         const contentType = result.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType?.includes('application/json')) {
           const responseText = await result.text();
           console.error('Response is not JSON:', responseText);
           throw new Error('La respuesta no es JSON válido');

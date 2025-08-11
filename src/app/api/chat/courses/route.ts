@@ -1,6 +1,11 @@
 // app/api/root-courses/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
+interface BackendResponse {
+  result?: unknown;
+  [key: string]: unknown;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -27,11 +32,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await backendResponse.json();
+    const data = await backendResponse.json() as BackendResponse;
 
-    // Forzar siempre el formato { result: [...] }
+    // Validar y estructurar la respuesta
+    const result = data.result ?? data;
+    const formattedResult = Array.isArray(result) ? result : [result];
+
     return NextResponse.json(
-      { result: Array.isArray(data.result) ? data.result : [data.result] },
+      { result: formattedResult },
       { status: 200 }
     );
 

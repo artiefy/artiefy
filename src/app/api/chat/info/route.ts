@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface BackendResponse {
+  result?: unknown;
+  [key: string]: unknown;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Obtener los datos del cuerpo de la petición
@@ -18,8 +23,8 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_id: user_id || 'anonymous',
-        curso: curso || 'general',
+        user_id: user_id ?? 'anonymous',
+        curso: curso ?? 'general',
         prompt,
       }),
     });
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Manejo si la respuesta está vacía
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = response.headers.get('content-type') ?? '';
     if (!contentType.includes('application/json')) {
       const text = await response.text();
       console.warn('Backend no devolvió JSON. Texto recibido:', text);
@@ -43,10 +48,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Parsear JSON normalmente
-    const data = await response.json();
+    const data = (await response.json()) as BackendResponse;
 
     return NextResponse.json(
-      { result: data?.result ?? data },
+      { result: data.result ?? data },
       { status: 200 }
     );
   } catch (error) {
