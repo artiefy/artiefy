@@ -4,9 +4,10 @@ import { Lock } from 'lucide-react';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
-import { type LessonWithProgress } from '~/types';
 
-import VideoPlayer from './LessonVideo';
+import VideoPlayer, { LessonVideo } from './LessonVideo';
+
+import type { ClassMeeting, LessonWithProgress } from '~/types';
 
 interface LessonPlayerProps {
   lesson: LessonWithProgress;
@@ -106,7 +107,7 @@ const LessonPlayer = ({
         <div className="absolute inset-0 flex items-center justify-center">
           <VideoPlayer
             videoKey={lesson.coverVideoKey}
-            onVideoEnd={handleVideoEndWrapper} // Usa el wrapper
+            onVideoEnd={handleVideoEndWrapper}
             onProgressUpdate={handleProgressUpdate}
             isVideoCompleted={progress === 100}
             isLocked={isLocked}
@@ -290,5 +291,16 @@ const LessonPlayer = ({
     </div>
   );
 };
+
+export function LessonPlayerMeeting({ meeting }: { meeting: ClassMeeting }) {
+  if (!meeting?.video_key) return null;
+  // Usa LessonVideo correctamente
+  return (
+    <div className="lesson-player">
+      <LessonVideo meeting={meeting} />
+      {/* Puedes agregar controles adicionales aquí */}
+    </div>
+  );
+}
 
 export default LessonPlayer;

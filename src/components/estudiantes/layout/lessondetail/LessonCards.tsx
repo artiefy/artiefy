@@ -6,6 +6,8 @@ import {
   useEffect,
 } from 'react';
 
+import Link from 'next/link';
+
 import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 import useSWR from 'swr';
@@ -17,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/estudiantes/ui/select';
-import { type LessonWithProgress } from '~/types';
+import { type LessonWithProgress, ClassMeeting } from '~/types';
 import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
@@ -431,5 +433,39 @@ const LessonCards = ({
     </div>
   );
 };
+
+// Recibe las clases grabadas como prop
+export function LessonCardsRecorded({
+  recordedMeetings,
+}: {
+  recordedMeetings: ClassMeeting[];
+}) {
+  return (
+    <div>
+      <h2 className="mb-2 text-xl font-bold text-green-700">Clases Grabadas</h2>
+      <div className="space-y-3">
+        {recordedMeetings.map((meeting: ClassMeeting) => (
+          <div key={meeting.id} className="rounded border bg-gray-50 p-4">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">{meeting.title}</span>
+              <Link href={`/estudiantes/clases/${meeting.id}`}>
+                <button className="buttonclass text-background transition-none active:scale-95">
+                  Ver Clase
+                </button>
+              </Link>
+            </div>
+            <video
+              controls
+              className="mt-2 w-full max-w-lg rounded shadow"
+              src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key ?? ''}`}
+            >
+              Tu navegador no soporta el video.
+            </video>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default LessonCards;

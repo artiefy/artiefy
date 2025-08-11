@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,12 +12,15 @@ import {
   FaCalendar,
   FaCheck,
   FaCheckCircle,
+  FaChevronDown,
+  FaChevronUp,
   FaClock,
   FaCrown,
   FaExpand,
   FaStar,
   FaTrophy,
   FaUserGraduate,
+  FaVideo,
   FaVolumeMute,
   FaVolumeUp,
 } from 'react-icons/fa';
@@ -34,6 +37,7 @@ import {
   CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { Progress } from '~/components/estudiantes/ui/progress';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { type GradesApiResponse } from '~/lib/utils2';
@@ -1316,6 +1320,40 @@ export function CourseHeader({
     });
   };
 
+  // Helper para calcular duración en minutos
+  const getDurationMinutes = (meeting: ClassMeeting) =>
+    meeting.startDateTime && meeting.endDateTime
+      ? Math.round(
+          (new Date(meeting.endDateTime).getTime() -
+            new Date(meeting.startDateTime).getTime()) /
+            60000
+        )
+      : 5;
+
+  // --- Clases grabadas organizadas ---
+  const recordedMeetings: ClassMeeting[] = useMemo(() => {
+    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
+    return classMeetings
+      .filter(
+        (m): m is ClassMeeting =>
+          typeof m.video_key === 'string' && m.video_key.length > 0
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime).getTime() -
+          new Date(b.startDateTime).getTime()
+      );
+  }, [classMeetings]);
+
+  // Estado para expandir/cerrar clases grabadas
+  const [expandedRecorded, setExpandedRecorded] = useState<number | null>(null);
+  const toggleRecorded = useCallback(
+    (meetingId: number) => {
+      setExpandedRecorded(expandedRecorded === meetingId ? null : meetingId);
+    },
+    [expandedRecorded]
+  );
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {/* Cambia el CardHeader para reducir el espacio en móviles */}
@@ -1804,7 +1842,8 @@ export function CourseHeader({
               return upcomingMeetings.length > 0 ? (
                 <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow">
                   <div className="flex items-center gap-3">
-                    <FaCrown className="h-6 w-6 text-blue-500" />
+                    <FaVideo className="h-6 w-6 text-blue-600" />{' '}
+                    {/* Icono sala en vivo */}
                     <div>
                       <h3 className="text-lg font-bold">Clase en Vivo</h3>
                       <p className="text-sm">
@@ -1831,139 +1870,94 @@ export function CourseHeader({
                 </div>
               ) : null;
             })()}
-            {/* Clases Grabadas */}
-            {(() => {
-              const recordedMeetings = classMeetings
-                .filter(
-                  (m) =>
-                    typeof m.video_key === 'string' && m.video_key.length > 0
-                )
-                .sort(
-                  (a, b) =>
-                    new Date(b.startDateTime).getTime() -
-                    new Date(a.startDateTime).getTime()
-                );
-              return recordedMeetings.length > 0 ? (
-                <div className="mb-4 rounded-lg border border-green-400 bg-green-50 p-4 text-green-900 shadow">
-                  <div className="flex items-center gap-3">
-                    <FaCheckCircle className="h-6 w-6 text-green-500" />
-                    <div>
-                      <h3 className="text-lg font-bold">
-                        Clase Grabada Disponible
-                      </h3>
-                      <p className="text-sm">
-                        <strong>{recordedMeetings[0].title}</strong>
-                        <br />
-                        {formatMeetingDateTime(
-                          recordedMeetings[0].startDateTime
-                        )}
-                      </p>
-                      <video
-                        controls
-                        className="mt-2 w-full max-w-lg rounded shadow"
-                        src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${recordedMeetings[0].video_key}`}
+            {/* --- Clases grabadas debajo de la clase en vivo --- */}
+            {recordedMeetings.length > 0 && (
+              <div className="mb-6">
+                <h2 className="mb-2 text-xl font-bold text-green-700">
+                  Clases Grabadas
+                </h2>
+                <div className="space-y-3">
+                  {recordedMeetings.map((meeting) => {
+                    const isExpanded = expandedRecorded === meeting.id;
+                    const handleClick = (
+                      e: React.MouseEvent<HTMLAnchorElement>
+                    ) => {
+                      e.preventDefault();
+                      router.push(`/estudiantes/clases/${meeting.id}`);
+                    };
+                    const durationMinutes = getDurationMinutes(meeting);
+                    return (
+                      <div
+                        key={meeting.id}
+                        className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
                       >
-                        Tu navegador no soporta el video.
-                      </video>
-                      <div className="mt-2 flex justify-end">
-                        <Link
-                          href={`/estudiantes/clases/${recordedMeetings[0].id}`}
+                        <button
+                          className="flex w-full items-center justify-between px-6 py-4"
+                          onClick={() => toggleRecorded(meeting.id)}
                         >
-                          <button className="buttonclass text-background transition-none active:scale-95">
-                            <div className="outline" />
-                            <div className="state state--default">
-                              <div className="icon">{/* ...SVG icon... */}</div>
-                              <p>
-                                <span
-                                  style={{ '--i': 0 } as React.CSSProperties}
-                                >
-                                  V
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                              <span className="text-background font-medium">
+                                {meeting.title}{' '}
+                                <span className="ml-2 text-sm text-gray-500">
+                                  ({durationMinutes} mins)
                                 </span>
-                                <span
-                                  style={{ '--i': 1 } as React.CSSProperties}
-                                >
-                                  e
-                                </span>
-                                <span
-                                  style={{ '--i': 2 } as React.CSSProperties}
-                                >
-                                  r
-                                </span>
-                                <span
-                                  style={{ '--i': 3 } as React.CSSProperties}
-                                >
-                                  {' '}
-                                </span>
-                                <span
-                                  style={{ '--i': 4 } as React.CSSProperties}
-                                >
-                                  C
-                                </span>
-                                <span
-                                  style={{ '--i': 5 } as React.CSSProperties}
-                                >
-                                  l
-                                </span>
-                                <span
-                                  style={{ '--i': 6 } as React.CSSProperties}
-                                >
-                                  a
-                                </span>
-                                <span
-                                  style={{ '--i': 7 } as React.CSSProperties}
-                                >
-                                  s
-                                </span>
-                                <span
-                                  style={{ '--i': 8 } as React.CSSProperties}
-                                >
-                                  e
-                                </span>
-                              </p>
+                              </span>
                             </div>
-                            <div className="state state--sent">
-                              <div className="icon">{/* ...SVG icon... */}</div>
-                              <p>
-                                <span
-                                  style={{ '--i': 5 } as React.CSSProperties}
-                                >
-                                  V
-                                </span>
-                                <span
-                                  style={{ '--i': 6 } as React.CSSProperties}
-                                >
-                                  i
-                                </span>
-                                <span
-                                  style={{ '--i': 7 } as React.CSSProperties}
-                                >
-                                  s
-                                </span>
-                                <span
-                                  style={{ '--i': 8 } as React.CSSProperties}
-                                >
-                                  t
-                                </span>
-                                <span
-                                  style={{ '--i': 9 } as React.CSSProperties}
-                                >
-                                  o
-                                </span>
-                                <span
-                                  style={{ '--i': 10 } as React.CSSProperties}
-                                >
-                                  !
-                                </span>
-                              </p>
+                            <div className="flex items-center space-x-2">
+                              {isExpanded ? (
+                                <FaChevronUp className="text-gray-400" />
+                              ) : (
+                                <FaChevronDown className="text-gray-400" />
+                              )}
                             </div>
-                          </button>
-                        </Link>
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="border-t bg-white px-6 py-4">
+                            <p className="mb-4 text-gray-700">
+                              {
+                                'Clase grabada disponible para repaso y consulta.'
+                              }
+                            </p>
+                            <div className="mb-4">
+                              <div className="mb-2 flex items-center justify-between">
+                                <p className="text-sm font-semibold text-gray-700">
+                                  Progreso De La Clase:
+                                </p>
+                              </div>
+                              <Progress
+                                value={100}
+                                showPercentage={true}
+                                className="transition-none"
+                              />
+                            </div>
+                            <Link
+                              href={`/estudiantes/clases/${meeting.id}`}
+                              onClick={handleClick}
+                            >
+                              <button className="buttonclass text-background transition-none active:scale-95">
+                                Ver Clase
+                              </button>
+                            </Link>
+                            <div className="mt-4">
+                              <video
+                                controls
+                                className="w-full max-w-lg rounded shadow"
+                                src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key ?? ''}`}
+                              >
+                                Tu navegador no soporta el video.
+                              </video>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
-              ) : null;
-            })()}
+              </div>
+            )}
           </>
         )}
         {/* Course lessons */}

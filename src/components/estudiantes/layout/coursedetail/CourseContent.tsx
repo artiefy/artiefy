@@ -12,9 +12,9 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaChevronUp,
-  FaCrown,
   FaLock,
   FaTimes,
+  FaVideo, // <-- Importa FaVideo para sala en vivo
 } from 'react-icons/fa';
 
 import {
@@ -53,6 +53,7 @@ export function CourseContent({
   classMeetings = [],
 }: CourseContentProps) {
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
+  const [expandedRecorded, setExpandedRecorded] = useState<number | null>(null);
   const router = useRouter();
   const { user } = useUser();
 
@@ -63,6 +64,13 @@ export function CourseContent({
       }
     },
     [expandedLesson, isEnrolled]
+  );
+
+  const toggleRecorded = useCallback(
+    (meetingId: number) => {
+      setExpandedRecorded(expandedRecorded === meetingId ? null : meetingId);
+    },
+    [expandedRecorded]
   );
 
   const memoizedLessons = useMemo(() => {
@@ -241,6 +249,135 @@ export function CourseContent({
     course.courseType?.requiredSubscriptionLevel,
   ]);
 
+  // --- NUEVO: Clases grabadas organizadas por numeración ---
+  const recordedMeetings: ClassMeeting[] = useMemo(() => {
+    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
+    return classMeetings
+      .filter(
+        (m): m is ClassMeeting =>
+          typeof m.video_key === 'string' && m.video_key.length > 0
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime).getTime() -
+          new Date(b.startDateTime).getTime()
+      );
+  }, [classMeetings]);
+
+  // Renderiza las clases grabadas como filas expandibles
+  const memoizedRecorded = useMemo(() => {
+    return recordedMeetings.map((meeting) => {
+      const isExpanded = expandedRecorded === meeting.id;
+      const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        router.push(`/estudiantes/clases/${meeting.id}`);
+      };
+      // Calcula duración en minutos
+      const durationMinutes =
+        meeting.startDateTime && meeting.endDateTime
+          ? Math.round(
+              (new Date(meeting.endDateTime).getTime() -
+                new Date(meeting.startDateTime).getTime()) /
+                60000
+            )
+          : 5;
+      return (
+        <div
+          key={meeting.id}
+          className={`overflow-hidden rounded-lg border transition-colors ${'bg-gray-50 hover:bg-gray-100'}`}
+        >
+          <button
+            className="flex w-full items-center justify-between px-6 py-4"
+            onClick={() => toggleRecorded(meeting.id)}
+          >
+            <div className="flex w-full items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                <span className="text-background font-medium">
+                  {meeting.title}{' '}
+                  <span className="ml-2 text-sm text-gray-500">
+                    ({durationMinutes} mins)
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                {isExpanded ? (
+                  <FaChevronUp className="text-gray-400" />
+                ) : (
+                  <FaChevronDown className="text-gray-400" />
+                )}
+              </div>
+            </div>
+          </button>
+          {isExpanded && (
+            <div className="border-t bg-white px-6 py-4">
+              <p className="mb-4 text-gray-700">
+                {/* Usa una descripción por defecto */}
+                {'Clase grabada disponible para repaso y consulta.'}
+              </p>
+              <div className="mb-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-700">
+                    Progreso De La Clase:
+                  </p>
+                </div>
+                <Progress
+                  value={100}
+                  showPercentage={true}
+                  className="transition-none"
+                />
+              </div>
+              <Link
+                href={`/estudiantes/clases/${meeting.id}`}
+                onClick={handleClick}
+              >
+                <button className="buttonclass text-background transition-none active:scale-95">
+                  <div className="outline" />
+                  <div className="state state--default">
+                    <div className="icon">{/* ...SVG icon... */}</div>
+                    <p>
+                      <span style={{ '--i': 0 } as React.CSSProperties}>V</span>
+                      <span style={{ '--i': 1 } as React.CSSProperties}>e</span>
+                      <span style={{ '--i': 2 } as React.CSSProperties}>r</span>
+                      <span style={{ '--i': 3 } as React.CSSProperties}> </span>
+                      <span style={{ '--i': 4 } as React.CSSProperties}>C</span>
+                      <span style={{ '--i': 5 } as React.CSSProperties}>l</span>
+                      <span style={{ '--i': 6 } as React.CSSProperties}>a</span>
+                      <span style={{ '--i': 7 } as React.CSSProperties}>s</span>
+                      <span style={{ '--i': 8 } as React.CSSProperties}>e</span>
+                    </p>
+                  </div>
+                  <div className="state state--sent">
+                    <div className="icon">{/* ...SVG icon... */}</div>
+                    <p>
+                      <span style={{ '--i': 5 } as React.CSSProperties}>V</span>
+                      <span style={{ '--i': 6 } as React.CSSProperties}>i</span>
+                      <span style={{ '--i': 7 } as React.CSSProperties}>s</span>
+                      <span style={{ '--i': 8 } as React.CSSProperties}>t</span>
+                      <span style={{ '--i': 9 } as React.CSSProperties}>o</span>
+                      <span style={{ '--i': 10 } as React.CSSProperties}>
+                        !
+                      </span>
+                    </p>
+                  </div>
+                </button>
+              </Link>
+              <div className="mt-4">
+                <video
+                  controls
+                  className="w-full max-w-lg rounded shadow"
+                  src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key ?? ''}`}
+                >
+                  Tu navegador no soporta el video.
+                </video>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    });
+  }, [recordedMeetings, expandedRecorded, router, toggleRecorded]);
+
   const isFullyCompleted = useMemo(() => {
     return course.lessons?.every(
       (lesson) => lesson.porcentajecompletado === 100
@@ -397,21 +534,6 @@ export function CourseContent({
       );
   }, [classMeetings]);
 
-  // --- NUEVO: Clases grabadas (video_key) ---
-  const recordedMeetings: ClassMeeting[] = useMemo(() => {
-    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
-    return classMeetings
-      .filter(
-        (m): m is ClassMeeting =>
-          typeof m.video_key === 'string' && m.video_key.length > 0
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.startDateTime).getTime() -
-          new Date(b.startDateTime).getTime()
-      );
-  }, [classMeetings]);
-
   return (
     <div className="relative rounded-lg border bg-white p-6 shadow-sm">
       <div className="mb-6">
@@ -457,7 +579,9 @@ export function CourseContent({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-blue-900">
+                    <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
+                      <FaVideo className="text-blue-600" />{' '}
+                      {/* Icono sala en vivo */}
                       {meeting.title}
                     </h3>
                     <p className="text-sm text-blue-800">
@@ -503,115 +627,13 @@ export function CourseContent({
         </div>
       )}
 
-      {/* --- CLASES GRABADAS --- */}
+      {/* --- CLASES GRABADAS EN FILAS --- */}
       {recordedMeetings.length > 0 && (
         <div className="mb-6">
           <h2 className="mb-2 text-xl font-bold text-green-700">
             Clases Grabadas
           </h2>
-          <div className="space-y-3">
-            {recordedMeetings.map((meeting) => (
-              <div
-                key={meeting.id}
-                className="overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100"
-              >
-                <div className="flex w-full items-center justify-between px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-500">
-                      <FaCheckCircle className="mr-2 size-5" />
-                    </span>
-                    <span className="text-background font-medium">
-                      {meeting.title}{' '}
-                      <span className="ml-2 text-sm text-gray-500">
-                        (
-                        {typeof meeting.startDateTime === 'string'
-                          ? new Date(meeting.startDateTime).toLocaleDateString(
-                              'es-CO'
-                            )
-                          : ''}
-                        )
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Link href={`/estudiantes/clases/${meeting.id}`}>
-                      <button className="buttonclass text-background transition-none active:scale-95">
-                        <div className="outline" />
-                        <div className="state state--default">
-                          <div className="icon">{/* ...SVG icon... */}</div>
-                          <p>
-                            <span style={{ '--i': 0 } as React.CSSProperties}>
-                              V
-                            </span>
-                            <span style={{ '--i': 1 } as React.CSSProperties}>
-                              e
-                            </span>
-                            <span style={{ '--i': 2 } as React.CSSProperties}>
-                              r
-                            </span>
-                            <span style={{ '--i': 3 } as React.CSSProperties}>
-                              {' '}
-                            </span>
-                            <span style={{ '--i': 4 } as React.CSSProperties}>
-                              C
-                            </span>
-                            <span style={{ '--i': 5 } as React.CSSProperties}>
-                              l
-                            </span>
-                            <span style={{ '--i': 6 } as React.CSSProperties}>
-                              a
-                            </span>
-                            <span style={{ '--i': 7 } as React.CSSProperties}>
-                              s
-                            </span>
-                            <span style={{ '--i': 8 } as React.CSSProperties}>
-                              e
-                            </span>
-                          </p>
-                        </div>
-                        <div className="state state--sent">
-                          <div className="icon">{/* ...SVG icon... */}</div>
-                          <p>
-                            <span style={{ '--i': 5 } as React.CSSProperties}>
-                              V
-                            </span>
-                            <span style={{ '--i': 6 } as React.CSSProperties}>
-                              i
-                            </span>
-                            <span style={{ '--i': 7 } as React.CSSProperties}>
-                              s
-                            </span>
-                            <span style={{ '--i': 8 } as React.CSSProperties}>
-                              t
-                            </span>
-                            <span style={{ '--i': 9 } as React.CSSProperties}>
-                              o
-                            </span>
-                            <span style={{ '--i': 10 } as React.CSSProperties}>
-                              !
-                            </span>
-                          </p>
-                        </div>
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-                {/* Barra de progreso (si quieres mostrarla, aquí ejemplo fijo al 100%) */}
-                <div className="border-t bg-white px-6 py-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-700">
-                      Progreso De La Clase:
-                    </p>
-                  </div>
-                  <Progress
-                    value={100}
-                    showPercentage={true}
-                    className="transition-none"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-3">{memoizedRecorded}</div>
         </div>
       )}
 
@@ -673,4 +695,5 @@ export function CourseContent({
   );
 }
 
+// No se requieren cambios aquí si el prop course.lessons ya viene sincronizado desde la BD.
 // No se requieren cambios aquí si el prop course.lessons ya viene sincronizado desde la BD.

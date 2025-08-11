@@ -1,13 +1,16 @@
 import { Suspense } from 'react';
 
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
+import { FaCheckCircle } from 'react-icons/fa';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
+import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
@@ -129,16 +132,75 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
       userProgress: activity.userProgress ?? 0,
     }));
 
+    // Obtén la clase actual y todas las clases grabadas del curso
+    const classMeeting = await getClassMeetingsByCourseId(course.id);
+    const recordedMeetings = classMeeting.filter(
+      (m) => typeof m.video_key === 'string' && m.video_key.length > 0
+    );
+
     return (
-      <LessonDetails
-        lesson={lesson}
-        activities={activitiesWithProgress}
-        lessons={sortedLessonsWithProgress}
-        userLessonsProgress={lessonsProgress}
-        userActivitiesProgress={activitiesProgress}
-        userId={userId}
-        course={course}
-      />
+      <>
+        <LessonDetails
+          lesson={lesson}
+          activities={activitiesWithProgress}
+          lessons={sortedLessonsWithProgress}
+          userLessonsProgress={lessonsProgress}
+          userActivitiesProgress={activitiesProgress}
+          userId={userId}
+          course={course}
+        />
+        <section>
+          {/* Renderiza todas las clases grabadas */}
+          <h2 className="mb-2 text-xl font-bold text-green-700">
+            Clases Grabadas
+          </h2>
+          <div className="space-y-3">
+            {recordedMeetings.map((meeting) => (
+              <div
+                key={meeting.id}
+                className="overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100"
+              >
+                <div className="flex w-full items-center justify-between px-6 py-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-500">
+                      <FaCheckCircle className="mr-2 size-5" />
+                    </span>
+                    <span className="text-background font-medium">
+                      {meeting.title}{' '}
+                      <span className="ml-2 text-sm text-gray-500">
+                        (
+                        {typeof meeting.startDateTime === 'string'
+                          ? new Date(meeting.startDateTime).toLocaleDateString(
+                              'es-CO'
+                            )
+                          : ''}
+                        )
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Link href={`/estudiantes/clases/${meeting.id}`}>
+                      <button className="buttonclass text-background transition-none active:scale-95">
+                        {/* ...botón igual que en CourseContent... */}
+                        Ver Clase
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+                <div className="border-t bg-white px-6 py-4">
+                  <video
+                    controls
+                    className="mt-2 w-full max-w-lg rounded shadow"
+                    src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key}`}
+                  >
+                    Tu navegador no soporta el video.
+                  </video>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </>
     );
   } catch (error: unknown) {
     console.error(
