@@ -3,8 +3,18 @@
 import { useState } from 'react';
 import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
 
+// ⬇️ añade esto arriba del archivo (después de imports)
+type UIMeeting = ScheduledMeeting & {
+  id: number;
+  meetingId: string;
+  joinUrl?: string | null;
+  recordingContentUrl?: string | null;
+  videoUrl?: string | null;
+  video_key?: string | null;
+};
+
 interface ScheduledMeetingsListProps {
-  meetings: (ScheduledMeeting & { videoUrl?: string | null })[];
+  meetings: UIMeeting[];
   color: string;
 }
 
@@ -13,6 +23,8 @@ export const ScheduledMeetingsList = ({
 }: ScheduledMeetingsListProps) => {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
+  console.log('📌 Meetings recibidas en ScheduledMeetingsList:', meetings);
+  const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
 
   if (!meetings?.length) {
     return <p className="text-muted text-sm">No hay clases agendadas.</p>;
@@ -99,6 +111,23 @@ export const ScheduledMeetingsList = ({
                         const isValidStart = !isNaN(start.getTime());
                         const isValidEnd = !isNaN(end.getTime());
 
+                        // ✅ arma una única URL de video
+                        const key = (m as any).video_key as
+                          | string
+                          | null
+                          | undefined;
+                        const finalVideo =
+                          m.videoUrl ??
+                          (key ? `${aws}/video_clase/${key}` : null);
+
+                        console.log('🎯 Meeting video resolve:', {
+                          id: (m as any).id,
+                          meetingId: (m as any).meetingId,
+                          videoUrl: m.videoUrl,
+                          video_key: key,
+                          finalVideo,
+                        });
+
                         return (
                           <li key={idx} className="text-sm text-gray-300">
                             <p>
@@ -120,10 +149,20 @@ export const ScheduledMeetingsList = ({
                                 href={m.joinUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-block text-blue-400 underline transition hover:text-blue-300"
+                                className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
                               >
                                 🔗 Enlace de clase
                               </a>
+                            )}
+
+                            {finalVideo && (
+                              <button
+                                type="button"
+                                onClick={() => setVideoToShow(finalVideo)}
+                                className="mt-2 inline-block rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500"
+                              >
+                                ▶ Ver grabación
+                              </button>
                             )}
                           </li>
                         );

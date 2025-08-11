@@ -25,6 +25,7 @@ export interface ScheduledMeeting {
   joinUrl?: string;
   videoUrl?: string | null;
   recordingContentUrl?: string | null;
+  video_key?: string | null; // ⬅️ nuevo
 }
 
 const weekDays = [

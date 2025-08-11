@@ -84,6 +84,14 @@ export interface Parametros {
   courseId: number;
 }
 
+type UIMeeting = ScheduledMeeting & {
+  id: number;
+  meetingId: string;
+  joinUrl?: string | null;
+  recordingContentUrl?: string | null;
+  videoUrl?: string | null;
+  video_key?: string | null;
+};
 // Add these interfaces after the existing interfaces
 interface Educator {
   id: string;
@@ -1142,10 +1150,32 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 meetings={(scheduledMeetings.length
                   ? scheduledMeetings
                   : (course.meetings ?? [])
-                ).map((m) => ({
-                  ...m,
-                  videoUrl: m.videoUrl ?? m.recordingContentUrl ?? null, // asegura que exista
-                }))}
+                ).map((m) => {
+                  const aws = (
+                    process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''
+                  ).replace(/\/+$/, '');
+                  const fromKey = (m as any).video_key
+                    ? `${aws}/video_clase/${(m as any).video_key}`
+                    : null;
+                  const finalVideoUrl =
+                    (m as any).videoUrl ??
+                    (m as any).recordingContentUrl ??
+                    fromKey;
+
+                  console.log('🎯 Meeting video resolve:', {
+                    id: (m as any).id,
+                    meetingId: (m as any).meetingId,
+                    video_key: (m as any).video_key,
+                    videoUrl: (m as any).videoUrl,
+                    recordingContentUrl: (m as any).recordingContentUrl,
+                    finalVideoUrl,
+                  });
+
+                  return {
+                    ...(m as any),
+                    videoUrl: finalVideoUrl,
+                  } as UIMeeting;
+                })}
                 color={selectedColor}
               />
             </div>
