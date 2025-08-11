@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { courses,enrollments } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { courses, enrollments } from "~/server/db/schema";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const userId = url.searchParams.get('userId');
+  const userId = url.searchParams.get("userId");
   if (!userId) {
-    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+    return NextResponse.json({ error: "Falta userId" }, { status: 400 });
   }
   const rows = await db
     .select({

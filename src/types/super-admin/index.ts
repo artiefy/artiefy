@@ -1,312 +1,312 @@
 export interface User {
-	id: string;
-	role: string;
-	name: string | null;
-	email: string;
-	createdAt: Date;
-	updatedAt: Date;
-	phone?: string | null;
-	country?: string | null;
-	city?: string | null;
-	address?: string | null;
-	age?: number | null;
-	birthDate?: Date | null;
+  id: string;
+  role: string;
+  name: string | null;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  phone?: string | null;
+  country?: string | null;
+  city?: string | null;
+  address?: string | null;
+  age?: number | null;
+  birthDate?: Date | null;
 }
 
 // Create a new type for basic course data
 export interface BaseCourse {
-	id: number;
-	title: string;
-	description: string | null;
-	coverImageKey: string | null;
-	categoryid: number;
-	instructor: string;
-	createdAt: string | number | Date;
-	updatedAt: string | number | Date;
-	creatorId: string;
-	rating: number | null;
-	modalidadesid: number;
-	nivelid: number;
-	category?: Category;
-	modalidad?: Modalidad;
-	isActive: boolean | null; // Changed from optional boolean to nullable boolean
+  id: number;
+  title: string;
+  description: string | null;
+  coverImageKey: string | null;
+  categoryid: number;
+  instructor: string;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
+  creatorId: string;
+  rating: number | null;
+  modalidadesid: number;
+  nivelid: number;
+  category?: Category;
+  modalidad?: Modalidad;
+  isActive: boolean | null; // Changed from optional boolean to nullable boolean
 }
 
 // Add this type
-export type SubscriptionLevel = 'none' | 'pro' | 'premium';
+export type SubscriptionLevel = "none" | "pro" | "premium";
 
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
-	totalStudents: number;
-	lessons: Lesson[];
-	nivel?: Nivel;
-	enrollments?: Enrollment[] | { length: number };
-	creator?: User;
-	isNew?: boolean;
-	requerimientos?: string[];
-	materias?: CourseMateria[];
-	isFree?: boolean;
-	requiresSubscription?: boolean;
-	courseTypeId: number; // Add this field
-	courseType?: {
-		requiredSubscriptionLevel: SubscriptionLevel;
-		isPurchasableIndividually: boolean | null; // Updated to allow null
-		price?: number | null; // Add price property
-	};
-	individualPrice?: number | null;
-	requiresProgram: boolean;
-	isActive: boolean;
+  totalStudents: number;
+  lessons: Lesson[];
+  nivel?: Nivel;
+  enrollments?: Enrollment[] | { length: number };
+  creator?: User;
+  isNew?: boolean;
+  requerimientos?: string[];
+  materias?: CourseMateria[];
+  isFree?: boolean;
+  requiresSubscription?: boolean;
+  courseTypeId: number; // Add this field
+  courseType?: {
+    requiredSubscriptionLevel: SubscriptionLevel;
+    isPurchasableIndividually: boolean | null; // Updated to allow null
+    price?: number | null; // Add price property
+  };
+  individualPrice?: number | null;
+  requiresProgram: boolean;
+  isActive: boolean;
 }
 
 // Add new interface for course materias
 export interface CourseMateria {
-	id: number;
-	title: string;
-	description: string | null;
-	programaId: number;
-	courseid: number | null; // Changed from number to number | null to match DB schema
-	totalStudents: number;
-	lessons: Lesson[];
-	category?: Category;
-	modalidad?: Modalidad;
-	Nivel?: Nivel;
-	enrollments?: Enrollment[] | { length: number };
-	creator?: User;
-	Nivelid?: number; // Made optional
+  id: number;
+  title: string;
+  description: string | null;
+  programaId: number;
+  courseid: number | null; // Changed from number to number | null to match DB schema
+  totalStudents: number;
+  lessons: Lesson[];
+  category?: Category;
+  modalidad?: Modalidad;
+  Nivel?: Nivel;
+  enrollments?: Enrollment[] | { length: number };
+  creator?: User;
+  Nivelid?: number; // Made optional
 }
 
 export interface Category {
-	id: number;
-	name: string;
-	description: string | null;
-	courses?: { length: number };
-	preferences?: Preference[];
-	is_featured: boolean | null;
+  id: number;
+  name: string;
+  description: string | null;
+  courses?: { length: number };
+  preferences?: Preference[];
+  is_featured: boolean | null;
 }
 
 export interface Preference {
-	id: number;
-	name: string;
-	area_cono: string | null;
-	userId: string;
-	categoryid: number;
-	user?: User;
-	category?: Category;
+  id: number;
+  name: string;
+  area_cono: string | null;
+  userId: string;
+  categoryid: number;
+  user?: User;
+  category?: Category;
 }
 
 export interface CourseTaken {
-	id: number;
-	userId: string;
-	courseId: number;
-	user?: User;
-	course?: Course;
+  id: number;
+  userId: string;
+  courseId: number;
+  user?: User;
+  course?: Course;
 }
 
 export interface Lesson {
-	id: number;
-	title: string;
-	description: string | null;
-	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
-	courseId: number;
-	createdAt: Date;
-	updatedAt: Date;
-	porcentajecompletado: number;
-	resourceKey: string;
-	userProgress: number;
-	isCompleted: boolean;
-	lastUpdated: Date;
-	course?: Course;
-	activities?: Activity[];
-	isLocked: boolean | null;
-	resourceNames: string[];
-	isNew: boolean; // Agregar propiedad isNew
+  id: number;
+  title: string;
+  description: string | null;
+  duration: number;
+  coverImageKey: string;
+  coverVideoKey: string;
+  courseId: number;
+  createdAt: Date;
+  updatedAt: Date;
+  porcentajecompletado: number;
+  resourceKey: string;
+  userProgress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
+  course?: Course;
+  activities?: Activity[];
+  isLocked: boolean | null;
+  resourceNames: string[];
+  isNew: boolean; // Agregar propiedad isNew
 }
 
 export interface LessonWithProgress extends Lesson {
-	porcentajecompletado: number;
-	isCompleted: boolean;
-	isLocked: boolean;
-	courseTitle: string;
-	resourceNames: string[];
-	courseId: number;
-	createdAt: Date;
-	content?: {
-		questions?: Question[];
-	};
-	isNew: boolean;
+  porcentajecompletado: number;
+  isCompleted: boolean;
+  isLocked: boolean;
+  courseTitle: string;
+  resourceNames: string[];
+  courseId: number;
+  createdAt: Date;
+  content?: {
+    questions?: Question[];
+  };
+  isNew: boolean;
 }
 
 export interface UserLessonsProgress {
-	userId: string;
-	lessonId: number;
-	progress: number;
-	isCompleted: boolean;
-	isLocked: boolean | null;
-	isNew: boolean;
-	lastUpdated: Date;
+  userId: string;
+  lessonId: number;
+  progress: number;
+  isCompleted: boolean;
+  isLocked: boolean | null;
+  isNew: boolean;
+  lastUpdated: Date;
 }
 
 export interface UserActivitiesProgress {
-	userId: string;
-	activityId: number;
-	progress: number;
-	isCompleted: boolean;
-	lastUpdated: Date;
-	revisada: boolean; // Changed to non-nullable boolean
-	attemptCount: number;
-	finalGrade: number | null;
-	lastAttemptAt: Date | null;
+  userId: string;
+  activityId: number;
+  progress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
+  revisada: boolean; // Changed to non-nullable boolean
+  attemptCount: number;
+  finalGrade: number | null;
+  lastAttemptAt: Date | null;
 }
 
 export interface Modalidad {
-	id?: number;
-	name: string;
-	description?: string | null;
-	courses?: Course[];
+  id?: number;
+  name: string;
+  description?: string | null;
+  courses?: Course[];
 }
 
 export interface Score {
-	id: number;
-	score: number;
-	userId: string;
-	categoryid: number;
-	user?: User;
-	category?: Category;
+  id: number;
+  score: number;
+  userId: string;
+  categoryid: number;
+  user?: User;
+  category?: Category;
 }
 
 // Changed from Dificultad to Nivel
 export interface Nivel {
-	id?: number;
-	name: string;
-	description?: string;
+  id?: number;
+  name: string;
+  description?: string;
 }
 export interface Activity {
-	id: number;
-	name: string;
-	description: string | null;
-	lastUpdated: Date;
-	lessonsId: number;
-	revisada: boolean | null; // Cambiado de boolean a boolean | null
-	porcentaje: number | null;
-	parametroId: number | null;
-	typeActi?: TypeActi;
-	userActivitiesProgress?: UserActivitiesProgress[];
-	content?: {
-		questions: Question[];
-	};
-	typeid: number;
-	isCompleted: boolean;
-	userProgress: number;
-	createdAt?: Date; // Make createdAt optional
-	attemptLimit: number;
-	currentAttempts: number;
-	finalGrade?: number;
-	lastAttemptAt?: Date;
-	pesoPregunta?: number;
-	fechaMaximaEntrega: Date | null;
+  id: number;
+  name: string;
+  description: string | null;
+  lastUpdated: Date;
+  lessonsId: number;
+  revisada: boolean | null; // Cambiado de boolean a boolean | null
+  porcentaje: number | null;
+  parametroId: number | null;
+  typeActi?: TypeActi;
+  userActivitiesProgress?: UserActivitiesProgress[];
+  content?: {
+    questions: Question[];
+  };
+  typeid: number;
+  isCompleted: boolean;
+  userProgress: number;
+  createdAt?: Date; // Make createdAt optional
+  attemptLimit: number;
+  currentAttempts: number;
+  finalGrade?: number;
+  lastAttemptAt?: Date;
+  pesoPregunta?: number;
+  fechaMaximaEntrega: Date | null;
 }
 
 export interface Question {
-	id: string;
-	text: string;
-	type: 'VOF' | 'OM' | 'COMPLETAR';
-	correctOptionId?: string;
-	options?: Option[];
-	correctAnswer?: string;
-	answer?: string;
-	pesoPregunta: number; // Add weight for question
+  id: string;
+  text: string;
+  type: "VOF" | "OM" | "COMPLETAR";
+  correctOptionId?: string;
+  options?: Option[];
+  correctAnswer?: string;
+  answer?: string;
+  pesoPregunta: number; // Add weight for question
 }
 
 export interface Option {
-	id: string;
-	text: string;
+  id: string;
+  text: string;
 }
 
 export interface TypeActi {
-	id: number;
-	name: string;
-	description: string | null;
-	activities?: Activity[];
+  id: number;
+  name: string;
+  description: string | null;
+  activities?: Activity[];
 }
 
 export interface Enrollment {
-	id: number;
-	userId: string;
-	courseId: number;
-	enrolledAt: Date;
-	completed: boolean | null;
-	isPermanent: boolean | null; // Changed from optional to nullable
+  id: number;
+  userId: string;
+  courseId: number;
+  enrolledAt: Date;
+  completed: boolean | null;
+  isPermanent: boolean | null; // Changed from optional to nullable
 }
 
 export interface Project {
-	id: number;
-	name: string;
-	description: string | null;
-	coverImageKey: string | null;
-	coverVideoKey: string | null;
-	type_project: string;
-	userId: string;
-	categoryid: number;
-	category?: Category;
-	user?: User;
+  id: number;
+  name: string;
+  description: string | null;
+  coverImageKey: string | null;
+  coverVideoKey: string | null;
+  type_project: string;
+  userId: string;
+  categoryid: number;
+  category?: Category;
+  user?: User;
 }
 
 export interface ProjectTaken {
-	id: number;
-	userId: string;
-	projectId: number;
-	user?: User;
-	project?: Project;
+  id: number;
+  userId: string;
+  projectId: number;
+  user?: User;
+  project?: Project;
 }
 
 export interface PaginatedCourses {
-	courses: Course[];
-	total: number;
-	page: number;
-	pageSize: number;
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface GetCoursesResponse {
-	courses: Course[];
-	total: number;
-	page: number;
-	pageSize: number;
-	totalPages: number;
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface GetCoursesParams {
-	pagenum?: number;
-	pageSize?: number;
-	categoryId?: number;
-	searchTerm?: string;
+  pagenum?: number;
+  pageSize?: number;
+  categoryId?: number;
+  searchTerm?: string;
 }
 
 export interface Program {
-	id: string;
-	title: string;
-	description: string | null;
-	coverImageKey: string | null;
-	createdAt: Date | null; // Allow null
-	updatedAt: Date | null; // Allow null
-	creatorId: string;
-	rating: number | null; // Allow null
-	categoryid: number;
-	creator?: User;
-	category?: Category;
-	materias?: MateriaWithCourse[];
-	enrollmentPrograms?: EnrollmentProgram[];
+  id: string;
+  title: string;
+  description: string | null;
+  coverImageKey: string | null;
+  createdAt: Date | null; // Allow null
+  updatedAt: Date | null; // Allow null
+  creatorId: string;
+  rating: number | null; // Allow null
+  categoryid: number;
+  creator?: User;
+  category?: Category;
+  materias?: MateriaWithCourse[];
+  enrollmentPrograms?: EnrollmentProgram[];
 }
 
 // New interface for Materia with optional course
 export interface MateriaWithCourse {
-	id: number;
-	title: string;
-	description: string | null;
-	programaId: number | null; // Allow null here
-	courseid: number | null;
-	curso?: BaseCourse; // Simplified this type
+  id: number;
+  title: string;
+  description: string | null;
+  programaId: number | null; // Allow null here
+  courseid: number | null;
+  curso?: BaseCourse; // Simplified this type
 }
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
@@ -315,92 +315,92 @@ export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
 export type CategoryWithPreferences = Category & { preferences: Preference[] };
 
 export interface SavedAnswer {
-	questionId: string;
-	answer: string;
-	isCorrect: boolean;
-	pesoPregunta: number;
+  questionId: string;
+  answer: string;
+  isCorrect: boolean;
+  pesoPregunta: number;
 }
 
 export interface ActivityResults {
-	score: number;
-	answers: Record<string, SavedAnswer>;
-	passed: boolean;
-	submittedAt: string;
-	attemptCount?: number; // Add attempt counter
-	finalGrade: number;
-	parameterId?: number;
-	revisada?: boolean;
-	courseId?: number;
+  score: number;
+  answers: Record<string, SavedAnswer>;
+  passed: boolean;
+  submittedAt: string;
+  attemptCount?: number; // Add attempt counter
+  finalGrade: number;
+  parameterId?: number;
+  revisada?: boolean;
+  courseId?: number;
 }
 
 // Original Materia interface
 export interface Materia {
-	id: number;
-	title: string;
-	description: string | null;
-	programaId: number;
-	courseid: number | null;
-	curso: Course; // Make curso required instead of optional
+  id: number;
+  title: string;
+  description: string | null;
+  programaId: number;
+  courseid: number | null;
+  curso: Course; // Make curso required instead of optional
 }
 
 export interface EnrollmentProgram {
-	id: number;
-	programaId: number;
-	userId: string;
-	enrolledAt: Date;
-	completed: boolean;
-	user?: User;
-	programa?: Program;
+  id: number;
+  programaId: number;
+  userId: string;
+  enrolledAt: Date;
+  completed: boolean;
+  user?: User;
+  programa?: Program;
 }
 
 // Add new interface for grades
 export interface GradeReport {
-	materiaId: number;
-	materiaName: string;
-	grade: number;
-	activities: {
-		activityId: number;
-		name: string;
-		grade: number;
-		weight: number;
-	}[];
-	parameters: ParameterGrade[];
+  materiaId: number;
+  materiaName: string;
+  grade: number;
+  activities: {
+    activityId: number;
+    name: string;
+    grade: number;
+    weight: number;
+  }[];
+  parameters: ParameterGrade[];
 }
 
 export interface MateriaGrade {
-	id: number;
-	materiaId: number;
-	userId: string;
-	grade: number;
-	updatedAt: Date;
-	materia?: Materia;
-	user?: User;
+  id: number;
+  materiaId: number;
+  userId: string;
+  grade: number;
+  updatedAt: Date;
+  materia?: Materia;
+  user?: User;
 }
 
 export interface ParameterGrade {
-	id: number;
-	parameterId: number;
-	userId: string;
-	grade: number;
-	updatedAt: Date;
-	parameterName: string;
-	weight: number;
-	parameter?: Parameter;
-	user?: User;
+  id: number;
+  parameterId: number;
+  userId: string;
+  grade: number;
+  updatedAt: Date;
+  parameterName: string;
+  weight: number;
+  parameter?: Parameter;
+  user?: User;
 }
 
 export interface Parameter {
-	id: number;
-	name: string;
-	description: string;
-	porcentaje: number;
-	courseId: number;
-	course?: Course;
+  id: number;
+  name: string;
+  description: string;
+  porcentaje: number;
+  courseId: number;
+  course?: Course;
 }
 
 // Add new type for enrollment response
 export interface EnrollmentResponse {
-	success: boolean;
-	message: string;
-	requiresSubscription?: boolean;
+  success: boolean;
+  message: string;
+  requiresSubscription?: boolean;
 }

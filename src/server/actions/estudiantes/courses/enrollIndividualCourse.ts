@@ -1,21 +1,21 @@
-'use server';
+"use server";
 
-import { clerkClient } from '@clerk/nextjs/server';
-import { and, eq, inArray } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { clerkClient } from "@clerk/nextjs/server";
+import { and, eq, inArray } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import {
   enrollments,
   lessons,
   userLessonsProgress,
   users,
-} from '~/server/db/schema';
-import { sortLessons } from '~/utils/lessonSorting';
+} from "~/server/db/schema";
+import { sortLessons } from "~/utils/lessonSorting";
 
 export async function enrollUserInCourse(userEmail: string, courseId: number) {
   const normalizedEmail = userEmail.trim().toLowerCase();
-  console.log('📝 Starting enrollment process:', {
+  console.log("📝 Starting enrollment process:", {
     userEmail: normalizedEmail,
     courseId,
   });
@@ -25,7 +25,7 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
     let user = await db.query.users.findFirst({
       where: and(
         eq(users.email, normalizedEmail),
-        eq(users.role, 'estudiante')
+        eq(users.role, "estudiante"),
       ),
     });
 
@@ -47,9 +47,9 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
         await db.insert(users).values({
           id: userId,
           email: normalizedEmail,
-          name: normalizedEmail.split('@')[0],
-          role: 'estudiante',
-          subscriptionStatus: 'inactive',
+          name: normalizedEmail.split("@")[0],
+          role: "estudiante",
+          subscriptionStatus: "inactive",
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -58,22 +58,22 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
         user = await db.query.users.findFirst({
           where: and(
             eq(users.email, normalizedEmail),
-            eq(users.role, 'estudiante')
+            eq(users.role, "estudiante"),
           ),
         });
 
         if (!user) {
-          throw new Error('Error al crear el usuario en la base de datos');
+          throw new Error("Error al crear el usuario en la base de datos");
         }
 
-        console.log('✅ New user created:', { id: user.id, email: user.email });
+        console.log("✅ New user created:", { id: user.id, email: user.email });
       } catch (error) {
-        console.error('❌ Error creating user:', error);
-        throw new Error('Error al crear el usuario en la base de datos');
+        console.error("❌ Error creating user:", error);
+        throw new Error("Error al crear el usuario en la base de datos");
       }
     }
 
-    console.log('✅ Found student user:', {
+    console.log("✅ Found student user:", {
       id: user.id,
       email: user.email,
       role: user.role,
@@ -83,13 +83,13 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
         eq(enrollments.userId, user.id),
-        eq(enrollments.courseId, courseId)
+        eq(enrollments.courseId, courseId),
       ),
     });
 
     if (existingEnrollment) {
-      console.log('ℹ️ User already enrolled:', { userEmail, courseId });
-      return { success: true, message: 'Usuario ya inscrito' };
+      console.log("ℹ️ User already enrolled:", { userEmail, courseId });
+      return { success: true, message: "Usuario ya inscrito" };
     }
 
     // Crear inscripción con el ID del usuario estudiante
@@ -116,13 +116,13 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
     const existingProgress = await db.query.userLessonsProgress.findMany({
       where: and(
         eq(userLessonsProgress.userId, user.id),
-        inArray(userLessonsProgress.lessonId, lessonIds)
+        inArray(userLessonsProgress.lessonId, lessonIds),
       ),
     });
 
     // Crear un conjunto de progreso de lecciones existentes para una búsqueda más rápida
     const existingProgressSet = new Set(
-      existingProgress.map((progress) => progress.lessonId)
+      existingProgress.map((progress) => progress.lessonId),
     );
 
     // Insertar progreso solo para lecciones que no tienen progreso
@@ -131,8 +131,8 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
         // Verificar si es la primera lección O tiene "Bienvenida" en el título
         const isFirstOrWelcome =
           index === 0 ||
-          lesson.title.toLowerCase().includes('bienvenida') ||
-          lesson.title.toLowerCase().includes('clase 1');
+          lesson.title.toLowerCase().includes("bienvenida") ||
+          lesson.title.toLowerCase().includes("clase 1");
 
         await db.insert(userLessonsProgress).values({
           userId: user.id,
@@ -146,15 +146,15 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       }
     }
 
-    console.log('✅ Enrollment successful for student:', {
+    console.log("✅ Enrollment successful for student:", {
       userId: user.id,
       email: user.email,
       courseId,
     });
 
-    return { success: true, message: 'Inscripción exitosa' };
+    return { success: true, message: "Inscripción exitosa" };
   } catch (error) {
-    console.error('❌ Enrollment error:', error);
+    console.error("❌ Enrollment error:", error);
     throw error;
   }
 }

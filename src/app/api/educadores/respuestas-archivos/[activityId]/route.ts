@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { Redis } from '@upstash/redis';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -41,68 +41,68 @@ interface Respuesta {
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
-  const activityId = url.pathname.split('/').pop();
+  const activityId = url.pathname.split("/").pop();
 
   if (!activityId) {
     return NextResponse.json(
-      { error: 'Falta el ID de actividad' },
-      { status: 400 }
+      { error: "Falta el ID de actividad" },
+      { status: 400 },
     );
   }
 
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   // ✅ Cargar preguntas (si existen)
   let preguntas: Pregunta[] = [];
   try {
     const rawPreguntas = await redis.get(
-      `activity:${activityId}:questionsFilesSubida`
+      `activity:${activityId}:questionsFilesSubida`,
     );
-    console.log('🧾 rawPreguntas:', rawPreguntas);
+    console.log("🧾 rawPreguntas:", rawPreguntas);
 
-    if (typeof rawPreguntas === 'string') {
+    if (typeof rawPreguntas === "string") {
       try {
         const parsed: unknown = JSON.parse(rawPreguntas);
         if (Array.isArray(parsed)) {
           const valid = parsed.every(
             (item): item is Pregunta =>
-              typeof item === 'object' &&
+              typeof item === "object" &&
               item !== null &&
-              'id' in item &&
-              'text' in item &&
-              typeof (item as Record<string, unknown>).id === 'string' &&
-              typeof (item as Record<string, unknown>).text === 'string'
+              "id" in item &&
+              "text" in item &&
+              typeof (item as Record<string, unknown>).id === "string" &&
+              typeof (item as Record<string, unknown>).text === "string",
           );
           if (valid) {
             preguntas = parsed;
           } else {
-            console.warn('⚠️ Preguntas parseadas no son válidas.');
+            console.warn("⚠️ Preguntas parseadas no son válidas.");
           }
         }
       } catch (err) {
-        console.warn('❌ No se pudo parsear rawPreguntas JSON:', err);
+        console.warn("❌ No se pudo parsear rawPreguntas JSON:", err);
       }
     } else if (Array.isArray(rawPreguntas)) {
       const valid = rawPreguntas.every(
         (item): item is Pregunta =>
-          typeof item === 'object' &&
+          typeof item === "object" &&
           item !== null &&
-          'id' in item &&
-          'text' in item &&
-          typeof (item as Record<string, unknown>).id === 'string' &&
-          typeof (item as Record<string, unknown>).text === 'string'
+          "id" in item &&
+          "text" in item &&
+          typeof (item as Record<string, unknown>).id === "string" &&
+          typeof (item as Record<string, unknown>).text === "string",
       );
       if (valid) {
         preguntas = rawPreguntas;
       } else {
-        console.warn('⚠️ Preguntas en Redis no son válidas.');
+        console.warn("⚠️ Preguntas en Redis no son válidas.");
       }
     }
   } catch (error) {
-    console.error('❌ Error al cargar preguntas:', error);
+    console.error("❌ Error al cargar preguntas:", error);
   }
 
   // ✅ Cargar respuestas
@@ -110,30 +110,30 @@ export async function GET(request: NextRequest) {
 
   try {
     const allKeys = await redis.keys(
-      `activity:${activityId}:user:*:submission`
+      `activity:${activityId}:user:*:submission`,
     );
-    console.log('🗝️ Claves encontradas:', allKeys.length, allKeys);
+    console.log("🗝️ Claves encontradas:", allKeys.length, allKeys);
 
     for (const key of allKeys) {
       const rawDoc = await redis.get<RawSubmission>(key);
 
-      if (!rawDoc || typeof rawDoc !== 'object' || Array.isArray(rawDoc)) {
-        console.log('📭 Documento vacío o inválido:', key);
+      if (!rawDoc || typeof rawDoc !== "object" || Array.isArray(rawDoc)) {
+        console.log("📭 Documento vacío o inválido:", key);
         continue;
       }
 
       const fileName =
-        typeof rawDoc.fileName === 'string' ? rawDoc.fileName : '';
+        typeof rawDoc.fileName === "string" ? rawDoc.fileName : "";
       const submittedAt =
-        typeof rawDoc.uploadDate === 'string'
+        typeof rawDoc.uploadDate === "string"
           ? rawDoc.uploadDate
           : new Date().toISOString();
       const fileContent =
-        typeof rawDoc.fileUrl === 'string' ? rawDoc.fileUrl : '';
+        typeof rawDoc.fileUrl === "string" ? rawDoc.fileUrl : "";
       const status =
-        typeof rawDoc.status === 'string' ? rawDoc.status : 'pendiente';
+        typeof rawDoc.status === "string" ? rawDoc.status : "pendiente";
       const userIdFromKey =
-        typeof rawDoc.userId === 'string' ? rawDoc.userId : key.split(':')[3];
+        typeof rawDoc.userId === "string" ? rawDoc.userId : key.split(":")[3];
 
       // 🔥 Nuevo: obtener nombre desde Clerk
       let userName = userIdFromKey;
@@ -150,20 +150,20 @@ export async function GET(request: NextRequest) {
       } catch (err) {
         console.error(
           `❌ No se pudo obtener nombre desde Clerk para ${userIdFromKey}:`,
-          err
+          err,
         );
       }
 
       let grade: number | null = null;
-      if (typeof rawDoc.grade === 'number') {
+      if (typeof rawDoc.grade === "number") {
         grade = rawDoc.grade;
       } else if (
-        typeof rawDoc.grade === 'string' &&
+        typeof rawDoc.grade === "string" &&
         !isNaN(Number(rawDoc.grade))
       ) {
         grade = Number(rawDoc.grade);
       }
-      const comment = typeof rawDoc.comment === 'string' ? rawDoc.comment : '';
+      const comment = typeof rawDoc.comment === "string" ? rawDoc.comment : "";
 
       respuestas[key] = {
         fileName,
@@ -177,16 +177,16 @@ export async function GET(request: NextRequest) {
       };
     }
   } catch (error) {
-    console.error('❌ Error al cargar respuestas:', error);
+    console.error("❌ Error al cargar respuestas:", error);
     return NextResponse.json(
-      { error: 'Error interno al procesar las respuestas' },
-      { status: 500 }
+      { error: "Error interno al procesar las respuestas" },
+      { status: 500 },
     );
   }
 
   console.log(
-    '✅ Total respuestas encontradas:',
-    Object.keys(respuestas).length
+    "✅ Total respuestas encontradas:",
+    Object.keys(respuestas).length,
   );
   return NextResponse.json({ respuestas, preguntas });
 }

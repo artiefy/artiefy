@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import Image from 'next/image';
+import Image from "next/image";
 
 import {
   Calendar,
@@ -13,123 +13,123 @@ import {
   Search,
   Tag,
   User,
-} from 'lucide-react';
+} from "lucide-react";
 
 export default function Component() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const spaces = [
     {
       id: 1,
-      title: 'Sistema de Monitoreo Solar',
+      title: "Sistema de Monitoreo Solar",
       description:
-        'Desarrollo de una plataforma IoT para monitorear paneles solares en tiempo real con análisis predictivo.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Energía Renovable',
-      author: 'María González',
-      date: '2024-01-15',
-      tags: ['IoT', 'Solar', 'Python', 'React'],
+        "Desarrollo de una plataforma IoT para monitorear paneles solares en tiempo real con análisis predictivo.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Energía Renovable",
+      author: "María González",
+      date: "2024-01-15",
+      tags: ["IoT", "Solar", "Python", "React"],
       views: 1250,
-      status: 'Completado',
+      status: "Completado",
     },
     {
       id: 2,
-      title: 'App de Gestión Energética',
+      title: "App de Gestión Energética",
       description:
-        'Aplicación móvil para optimizar el consumo energético en hogares inteligentes.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Tecnología',
-      author: 'Carlos Ruiz',
-      date: '2024-02-20',
-      tags: ['Mobile', 'Flutter', 'AI', 'Smart Home'],
+        "Aplicación móvil para optimizar el consumo energético en hogares inteligentes.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Tecnología",
+      author: "Carlos Ruiz",
+      date: "2024-02-20",
+      tags: ["Mobile", "Flutter", "AI", "Smart Home"],
       views: 890,
-      status: 'En Desarrollo',
+      status: "En Desarrollo",
     },
     {
       id: 3,
-      title: 'Análisis de Datos Climáticos',
+      title: "Análisis de Datos Climáticos",
       description:
-        'Espacio de machine learning para predecir patrones climáticos y su impacto en la generación de energía.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Data Science',
-      author: 'Ana Martínez',
-      date: '2024-03-10',
-      tags: ['ML', 'Python', 'Climate', 'Analytics'],
+        "Espacio de machine learning para predecir patrones climáticos y su impacto en la generación de energía.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Data Science",
+      author: "Ana Martínez",
+      date: "2024-03-10",
+      tags: ["ML", "Python", "Climate", "Analytics"],
       views: 2100,
-      status: 'Completado',
+      status: "Completado",
     },
     {
       id: 4,
-      title: 'Simulador de Redes Eléctricas',
+      title: "Simulador de Redes Eléctricas",
       description:
-        'Herramienta de simulación para diseñar y optimizar redes de distribución eléctrica.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Ingeniería',
-      author: 'Roberto Silva',
-      date: '2024-02-05',
-      tags: ['Simulation', 'Electrical', 'MATLAB', 'Engineering'],
+        "Herramienta de simulación para diseñar y optimizar redes de distribución eléctrica.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Ingeniería",
+      author: "Roberto Silva",
+      date: "2024-02-05",
+      tags: ["Simulation", "Electrical", "MATLAB", "Engineering"],
       views: 750,
-      status: 'En Desarrollo',
+      status: "En Desarrollo",
     },
     {
       id: 5,
-      title: 'Dashboard de Sostenibilidad',
+      title: "Dashboard de Sostenibilidad",
       description:
-        'Panel de control interactivo para visualizar métricas de sostenibilidad empresarial.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Sostenibilidad',
-      author: 'Laura Pérez',
-      date: '2024-01-28',
-      tags: ['Dashboard', 'D3.js', 'Sustainability', 'Visualization'],
+        "Panel de control interactivo para visualizar métricas de sostenibilidad empresarial.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Sostenibilidad",
+      author: "Laura Pérez",
+      date: "2024-01-28",
+      tags: ["Dashboard", "D3.js", "Sustainability", "Visualization"],
       views: 1450,
-      status: 'Completado',
+      status: "Completado",
     },
     {
       id: 6,
-      title: 'Blockchain para Energía Verde',
+      title: "Blockchain para Energía Verde",
       description:
-        'Plataforma blockchain para certificar y comercializar créditos de energía renovable.',
-      image: '/placeholder.svg?height=200&width=350',
-      category: 'Blockchain',
-      author: 'Diego Morales',
-      date: '2024-03-15',
-      tags: ['Blockchain', 'Smart Contracts', 'Green Energy', 'Web3'],
+        "Plataforma blockchain para certificar y comercializar créditos de energía renovable.",
+      image: "/placeholder.svg?height=200&width=350",
+      category: "Blockchain",
+      author: "Diego Morales",
+      date: "2024-03-15",
+      tags: ["Blockchain", "Smart Contracts", "Green Energy", "Web3"],
       views: 980,
-      status: 'En Desarrollo',
+      status: "En Desarrollo",
     },
   ];
 
   const categories = [
-    { value: 'all', label: 'Todas las categorías', count: spaces.length },
-    { value: 'energia', label: 'Energía Renovable', count: 1 },
-    { value: 'tecnologia', label: 'Tecnología', count: 1 },
-    { value: 'data', label: 'Data Science', count: 1 },
-    { value: 'ingenieria', label: 'Ingeniería', count: 1 },
-    { value: 'sostenibilidad', label: 'Sostenibilidad', count: 1 },
-    { value: 'blockchain', label: 'Blockchain', count: 1 },
+    { value: "all", label: "Todas las categorías", count: spaces.length },
+    { value: "energia", label: "Energía Renovable", count: 1 },
+    { value: "tecnologia", label: "Tecnología", count: 1 },
+    { value: "data", label: "Data Science", count: 1 },
+    { value: "ingenieria", label: "Ingeniería", count: 1 },
+    { value: "sostenibilidad", label: "Sostenibilidad", count: 1 },
+    { value: "blockchain", label: "Blockchain", count: 1 },
   ];
 
   const filteredspaces = spaces.filter((space) => {
     const matchesCategory =
-      selectedCategory === 'all' ||
+      selectedCategory === "all" ||
       space.category.toLowerCase().includes(selectedCategory.toLowerCase());
     const matchesSearch =
       space.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       space.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       space.tags.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     return matchesCategory && matchesSearch;
   });
 
   const selectedCategoryLabel =
     categories.find((cat) => cat.value === selectedCategory)?.label ??
-    'Todas las categorías';
+    "Todas las categorías";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0f1729' }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#0f1729" }}>
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Search and Filters */}
@@ -157,7 +157,7 @@ export default function Component() {
                   <span>{selectedCategoryLabel}</span>
                 </div>
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {isDropdownOpen && (
@@ -200,7 +200,7 @@ export default function Component() {
             >
               <div className="relative">
                 <Image
-                  src={space.image ?? '/placeholder.svg'}
+                  src={space.image ?? "/placeholder.svg"}
                   alt={space.title}
                   width={350}
                   height={200}
@@ -209,9 +209,9 @@ export default function Component() {
                 <div className="absolute top-3 right-3">
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      space.status === 'Completado'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-orange-600 text-white'
+                      space.status === "Completado"
+                        ? "bg-green-600 text-white"
+                        : "bg-orange-600 text-white"
                     }`}
                   >
                     {space.status}
@@ -260,7 +260,7 @@ export default function Component() {
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {new Date(space.date).toLocaleDateString('es-ES')}
+                        {new Date(space.date).toLocaleDateString("es-ES")}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">

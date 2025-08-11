@@ -1,11 +1,9 @@
-'use server';
+"use server";
 
-import { db } from '~/server/db';
-import { chat_messages } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { chat_messages } from "~/server/db/schema";
 
-import { getOrCreateConversation } from './saveChat';
-
-
+import { getOrCreateConversation } from "./saveChat";
 
 export async function saveMessages(
   senderId: string,
@@ -14,7 +12,7 @@ export async function saveMessages(
     text: string;
     sender: string;
     sender_id: string;
-  }[]
+  }[],
 ) {
   const conversation = await getOrCreateConversation({
     senderId,
@@ -27,6 +25,6 @@ export async function saveMessages(
       conversation_id: conversation.id,
       sender: msg.sender,
       message: msg.text,
-    }))
+    })),
   );
 }

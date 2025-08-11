@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { FaEnvelope, FaLock, FaPhone, FaUser } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPhone, FaUser } from "react-icons/fa";
 
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Icons } from "~/components/estudiantes/ui/icons";
 
-import type { FormData } from '~/types/payu';
-import type * as React from 'react';
+import type { FormData } from "~/types/payu";
+import type * as React from "react";
 
 interface BuyerInfoFormProps {
-  formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
+  formData: Pick<FormData, "buyerEmail" | "buyerFullName" | "telephone">;
   termsAndConditions: boolean;
   privacyPolicy: boolean;
   onChangeAction: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -78,7 +78,7 @@ export default function BuyerInfoForm({
             value={formData.telephone}
             onChange={onChangeAction}
             maxLength={14}
-            className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
+            className={`input-field ${showErrors && errors.telephone ? "input-error" : ""}`}
             required
           />
           <FaPhone className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
@@ -132,14 +132,14 @@ export default function BuyerInfoForm({
           <>
             <Icons.spinner
               className="text-background mr-2"
-              style={{ width: '25px', height: '25px' }}
+              style={{ width: "25px", height: "25px" }}
             />
             <span className="text-background font-bold">
               Redirigiendo a PayU...
             </span>
           </>
         ) : (
-          'Enviar'
+          "Enviar"
         )}
       </button>
     </div>

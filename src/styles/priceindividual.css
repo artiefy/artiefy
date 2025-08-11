@@ -1,55 +1,55 @@
 /* removing default button style */
 .priceindividual {
-	margin: 0;
-	height: auto;
-	background: transparent;
-	padding: 0;
-	border: none;
-	cursor: pointer;
+  margin: 0;
+  height: auto;
+  background: transparent;
+  padding: 0;
+  border: none;
+  cursor: pointer;
 }
 
 /* button styling */
 .priceindividual {
-	--border-right: 8px;
-	--text-stroke-color: rgba(30, 144, 255, 0.6);
-	--animation-color: #1e90ff;
-	--fs-size: 2em;
-	letter-spacing: 3px;
-  font-family: 'Courier New', Courier, monospace;
+  --border-right: 8px;
+  --text-stroke-color: rgba(30, 144, 255, 0.6);
+  --animation-color: #1e90ff;
+  --fs-size: 2em;
+  letter-spacing: 3px;
+  font-family: "Courier New", Courier, monospace;
   font-weight: 700;
-	text-decoration: none;
-	font-size: var(--fs-size);
-	position: relative;
-	text-transform: uppercase;
-	color: transparent;
-	-webkit-text-stroke: 2px var(--text-stroke-color);
+  text-decoration: none;
+  font-size: var(--fs-size);
+  position: relative;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--text-stroke-color);
 }
 
 /* hover text */
 .hover-text {
-	position: absolute;
-	box-sizing: border-box;
-	content: attr(data-text);
-	color: var(--animation-color);
-	width: 0%;
-	inset: 0;
-	border-right: var(--border-right) solid var(--animation-color);
-	overflow: hidden;
-	transition: 0.5s;
-	-webkit-text-stroke: 1px var(--animation-color);
+  position: absolute;
+  box-sizing: border-box;
+  content: attr(data-text);
+  color: var(--animation-color);
+  width: 0%;
+  inset: 0;
+  border-right: var(--border-right) solid var(--animation-color);
+  overflow: hidden;
+  transition: 0.5s;
+  -webkit-text-stroke: 1px var(--animation-color);
 }
 
 /* hover */
 .priceindividual:hover .hover-text {
-	width: 100%;
-	filter: drop-shadow(0 0 23px var(--animation-color));
+  width: 100%;
+  filter: drop-shadow(0 0 23px var(--animation-color));
 }
 
 /* zoom out effect for all buttons */
 .zoom-out-effect {
-	transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
 }
 
 .zoom-out-effect:active {
-	transform: scale(0.95);
+  transform: scale(0.95);
 }

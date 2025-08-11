@@ -1,114 +1,114 @@
-'use server';
+"use server";
 
-import { Redis } from '@upstash/redis';
+import { Redis } from "@upstash/redis";
 
-import { getRelatedActivities } from '~/server/actions/estudiantes/activities/getRelatedActivities';
+import { getRelatedActivities } from "~/server/actions/estudiantes/activities/getRelatedActivities";
 
-import { getUserActivityProgress } from './getUserActivityProgress';
+import { getUserActivityProgress } from "./getUserActivityProgress";
 
-import type { Activity, Question } from '~/types';
+import type { Activity, Question } from "~/types";
 
 const redis = new Redis({
-	url: process.env.UPSTASH_REDIS_REST_URL!,
-	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
 const getActivityContent = async (
-	lessonId: number,
-	userId: string
+  lessonId: number,
+  userId: string,
 ): Promise<Activity[]> => {
-	try {
-		console.log(`Fetching related activities for lesson ${lessonId}`);
-		const relatedActivities = await getRelatedActivities(lessonId);
+  try {
+    console.log(`Fetching related activities for lesson ${lessonId}`);
+    const relatedActivities = await getRelatedActivities(lessonId);
 
-		console.log('Related activities:', relatedActivities);
+    console.log("Related activities:", relatedActivities);
 
-		// Limit to 3 activities per lesson
-		if (relatedActivities.length > 3) {
-			console.warn(
-				`Lesson ${lessonId} has more than 3 activities, limiting to first 3`
-			);
-			relatedActivities.splice(3);
-		}
+    // Limit to 3 activities per lesson
+    if (relatedActivities.length > 3) {
+      console.warn(
+        `Lesson ${lessonId} has more than 3 activities, limiting to first 3`,
+      );
+      relatedActivities.splice(3);
+    }
 
-		// Sort activities by creation date to ensure consistent order
-		relatedActivities.sort(
-			(a, b) =>
-				new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime()
-		);
+    // Sort activities by creation date to ensure consistent order
+    relatedActivities.sort(
+      (a, b) =>
+        new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(),
+    );
 
-		if (relatedActivities.length === 0) {
-			console.log(`No related activities found for lesson ${lessonId}`);
-			return [];
-		}
+    if (relatedActivities.length === 0) {
+      console.log(`No related activities found for lesson ${lessonId}`);
+      return [];
+    }
 
-		const userProgress = await getUserActivityProgress(userId);
+    const userProgress = await getUserActivityProgress(userId);
 
-		const activitiesWithContent = await Promise.all(
-			relatedActivities.map(async (activity, index) => {
-				const questionTypes = ['VOF', 'OM', 'ACompletar'] as const;
-				let allQuestions: Question[] = [];
+    const activitiesWithContent = await Promise.all(
+      relatedActivities.map(async (activity, index) => {
+        const questionTypes = ["VOF", "OM", "ACompletar"] as const;
+        let allQuestions: Question[] = [];
 
-				for (const type of questionTypes) {
-					const contentKey = `activity:${activity.id}:questions${type}`;
-					console.log(`Fetching ${type} questions with key: ${contentKey}`);
+        for (const type of questionTypes) {
+          const contentKey = `activity:${activity.id}:questions${type}`;
+          console.log(`Fetching ${type} questions with key: ${contentKey}`);
 
-					try {
-						const content = await redis.get(contentKey);
-						if (content) {
-							const parsedQuestions = (
-								typeof content === 'string' ? JSON.parse(content) : content
-							) as Omit<Question, 'type'>[];
+          try {
+            const content = await redis.get(contentKey);
+            if (content) {
+              const parsedQuestions = (
+                typeof content === "string" ? JSON.parse(content) : content
+              ) as Omit<Question, "type">[];
 
-							const questionsWithType = parsedQuestions.map(
-								(q) =>
-									({
-										...q,
-										type:
-											type === 'VOF'
-												? 'VOF'
-												: type === 'OM'
-													? 'OM'
-													: 'COMPLETAR',
-									}) as Question
-							);
+              const questionsWithType = parsedQuestions.map(
+                (q) =>
+                  ({
+                    ...q,
+                    type:
+                      type === "VOF"
+                        ? "VOF"
+                        : type === "OM"
+                          ? "OM"
+                          : "COMPLETAR",
+                  }) as Question,
+              );
 
-							allQuestions = [...allQuestions, ...questionsWithType];
-						}
-					} catch (error) {
-						console.error(`Error fetching ${type} questions:`, error);
-					}
-				}
+              allQuestions = [...allQuestions, ...questionsWithType];
+            }
+          } catch (error) {
+            console.error(`Error fetching ${type} questions:`, error);
+          }
+        }
 
-				const activityProgress = userProgress.find(
-					(progress) => progress.activityId === activity.id
-				);
+        const activityProgress = userProgress.find(
+          (progress) => progress.activityId === activity.id,
+        );
 
-				const isLastActivityInLesson = index === relatedActivities.length - 1;
+        const isLastActivityInLesson = index === relatedActivities.length - 1;
 
-				return {
-					...activity,
-					content: {
-						questions: allQuestions,
-					},
-					isCompleted: activityProgress?.isCompleted ?? false,
-					userProgress: activityProgress?.progress ?? 0,
-					createdAt: activity.lastUpdated,
-					isLastInLesson: isLastActivityInLesson, // Add this flag
-				} as Activity;
-			})
-		);
+        return {
+          ...activity,
+          content: {
+            questions: allQuestions,
+          },
+          isCompleted: activityProgress?.isCompleted ?? false,
+          userProgress: activityProgress?.progress ?? 0,
+          createdAt: activity.lastUpdated,
+          isLastInLesson: isLastActivityInLesson, // Add this flag
+        } as Activity;
+      }),
+    );
 
-		const validActivities = activitiesWithContent.filter(
-			(activity): activity is Activity => activity !== null
-		);
+    const validActivities = activitiesWithContent.filter(
+      (activity): activity is Activity => activity !== null,
+    );
 
-		console.log('Final activities with content:', validActivities);
-		return validActivities;
-	} catch (error) {
-		console.error('Error in getActivityContent:', error);
-		throw error;
-	}
+    console.log("Final activities with content:", validActivities);
+    return validActivities;
+  } catch (error) {
+    console.error("Error in getActivityContent:", error);
+    throw error;
+  }
 };
 
 export { getActivityContent };

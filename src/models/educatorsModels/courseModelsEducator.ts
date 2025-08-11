@@ -1,6 +1,6 @@
-import { and, count, eq, isNotNull, ne as neq, sum } from 'drizzle-orm';
+import { and, count, eq, isNotNull, ne as neq, sum } from "drizzle-orm";
 
-import { db } from '~/server/db/index';
+import { db } from "~/server/db/index";
 import {
   categories,
   certificates,
@@ -13,11 +13,11 @@ import {
   modalidades,
   nivel,
   users,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
-import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
-import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
-import { deleteParametroByCourseId } from './parametrosModels'; // Importar la función para eliminar parámetros
+import { deleteForumByCourseId } from "./forumAndPosts"; // Importar la función para eliminar foros
+import { deleteLessonsByCourseId } from "./lessonsModels"; // Importar la función para eliminar lecciones
+import { deleteParametroByCourseId } from "./parametrosModels"; // Importar la función para eliminar parámetros
 
 export interface Lesson {
   id: number;
@@ -82,17 +82,17 @@ interface ApiError {
 
 function isApiError(error: unknown): error is ApiError {
   return (
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'message' in error &&
-    typeof (error as ApiError).message === 'string'
+    "message" in error &&
+    typeof (error as ApiError).message === "string"
   );
 }
 
 export async function createCourse(data: CreateCourseData) {
   try {
     if (!data.instructor) {
-      throw new Error('Instructor ID is required');
+      throw new Error("Instructor ID is required");
     }
 
     // 👇 le damos tipo explícito
@@ -117,7 +117,7 @@ export async function createCourse(data: CreateCourseData) {
 
     if (normalizedTypes.includes(4) && finalPrice !== null && finalPrice < 0) {
       throw new Error(
-        'Individual price must be a non-negative number for course type 4'
+        "Individual price must be a non-negative number for course type 4",
       );
     }
 
@@ -142,7 +142,7 @@ export async function createCourse(data: CreateCourseData) {
       .returning()
       .then((res) => res[0]);
 
-    console.log('✅ Curso creado:', createdCourse);
+    console.log("✅ Curso creado:", createdCourse);
 
     // Si hay múltiples tipos, insertamos en tabla intermedia
     if (normalizedTypes.length > 1 && createdCourse?.id) {
@@ -157,7 +157,7 @@ export async function createCourse(data: CreateCourseData) {
 
     return createdCourse;
   } catch (error) {
-    console.error('❌ Database error creating course:', error);
+    console.error("❌ Database error creating course:", error);
     throw error;
   }
 }
@@ -291,8 +291,8 @@ export const getCourseById = async (courseId: number) => {
 
     return {
       ...course,
-      instructor: course.instructorName ?? 'Sin nombre',
-      instructorEmail: course.instructorEmail ?? 'No disponible',
+      instructor: course.instructorName ?? "Sin nombre",
+      instructorEmail: course.instructorEmail ?? "No disponible",
       categoryName: category,
       modalidadName: modalidad,
       nivelName,
@@ -302,7 +302,7 @@ export const getCourseById = async (courseId: number) => {
   } catch (err: unknown) {
     console.error(
       `❌ Error al obtener el curso con ID ${courseId}:`,
-      err instanceof Error ? err.message : 'Error desconocido'
+      err instanceof Error ? err.message : "Error desconocido",
     );
     return null;
   }
@@ -347,7 +347,7 @@ export const updateCourse = async (
     coverVideoCourseKey?: string;
     individualPrice?: number | null;
     courseTypeId?: number[];
-  }
+  },
 ) => {
   try {
     // 🔄 Sincroniza courseTypeId en tabla intermedia si existe
@@ -362,7 +362,7 @@ export const updateCourse = async (
         updateData.courseTypeId.map((typeId) => ({
           courseId,
           courseTypeId: typeId,
-        }))
+        })),
       );
     }
 
@@ -371,7 +371,7 @@ export const updateCourse = async (
 
     // 🧹 Limpia valores undefined
     const cleanedData = Object.fromEntries(
-      Object.entries(rest).filter(([_, v]) => v !== undefined)
+      Object.entries(rest).filter(([_, v]) => v !== undefined),
     );
 
     // ⏱️ Agrega updatedAt
@@ -389,14 +389,14 @@ export const updateCourse = async (
 
     return result[0];
   } catch (error) {
-    console.error('❌ Error al actualizar el curso:', error);
+    console.error("❌ Error al actualizar el curso:", error);
     throw error;
   }
 };
 
 export async function updateMateria(
   id: number,
-  data: { courseid: number; title?: string; description?: string }
+  data: { courseid: number; title?: string; description?: string },
 ) {
   try {
     const existingMateria = await db
@@ -414,7 +414,7 @@ export async function updateMateria(
     // 🔁 Si ya tiene mismo courseId, omitir
     if (existingMateria.courseid === data.courseid) {
       console.log(
-        `⏭️ Materia ID ${existingMateria.id} ya tiene el mismo courseId ${data.courseid}, se omite`
+        `⏭️ Materia ID ${existingMateria.id} ya tiene el mismo courseId ${data.courseid}, se omite`,
       );
       return;
     }
@@ -427,8 +427,8 @@ export async function updateMateria(
         and(
           eq(materias.title, existingMateria.title.trim()),
           eq(materias.programaId, existingMateria.programaId ?? 0),
-          eq(materias.courseid, data.courseid)
-        )
+          eq(materias.courseid, data.courseid),
+        ),
       )
       .then((r) => r.length > 0);
 
@@ -440,14 +440,14 @@ export async function updateMateria(
         .where(eq(materias.id, id));
 
       console.log(
-        `✅ Materia actualizada ID ${existingMateria.id} → courseId: ${data.courseid}`
+        `✅ Materia actualizada ID ${existingMateria.id} → courseId: ${data.courseid}`,
       );
     }
     // 🧬 Si ya tenía otro courseId → clonar si no existe
     else if (!yaExiste) {
       await db.insert(materias).values({
         title: existingMateria.title,
-        description: existingMateria.description ?? '',
+        description: existingMateria.description ?? "",
         courseid: data.courseid,
         ...(existingMateria.programaId
           ? { programaId: existingMateria.programaId }
@@ -455,11 +455,11 @@ export async function updateMateria(
       });
 
       console.log(
-        `📋 Materia duplicada desde ID ${existingMateria.id} → nuevo courseId: ${data.courseid}`
+        `📋 Materia duplicada desde ID ${existingMateria.id} → nuevo courseId: ${data.courseid}`,
       );
     } else {
       console.log(
-        `⏭️ Ya existe una materia con mismo título, programa y courseId. Se omite duplicado.`
+        `⏭️ Ya existe una materia con mismo título, programa y courseId. Se omite duplicado.`,
       );
     }
 
@@ -472,15 +472,15 @@ export async function updateMateria(
           eq(materias.title, existingMateria.title),
           neq(materias.id, existingMateria.id),
           isNotNull(materias.programaId),
-          neq(materias.courseid, data.courseid)
-        )
+          neq(materias.courseid, data.courseid),
+        ),
       );
 
     for (const materia of materiasIguales) {
       // 🛑 Si ya tiene ese courseId → omitir
       if (materia.courseid === data.courseid) {
         console.log(
-          `⏭️ Materia ID ${materia.id} ya tiene courseId ${data.courseid}, se omite`
+          `⏭️ Materia ID ${materia.id} ya tiene courseId ${data.courseid}, se omite`,
         );
         continue;
       }
@@ -493,25 +493,25 @@ export async function updateMateria(
           and(
             eq(materias.title, materia.title),
             eq(materias.programaId, materia.programaId ?? 0),
-            eq(materias.courseid, data.courseid)
-          )
+            eq(materias.courseid, data.courseid),
+          ),
         )
         .then((r) => r.length > 0);
 
       if (!yaExisteRelacionada) {
         await db.insert(materias).values({
           title: materia.title,
-          description: materia.description ?? '',
+          description: materia.description ?? "",
           ...(materia.programaId ? { programaId: materia.programaId } : {}),
           courseid: data.courseid,
         });
 
         console.log(
-          `🧬 Materia relacionada duplicada desde ID ${materia.id} → nuevo courseId: ${data.courseid}`
+          `🧬 Materia relacionada duplicada desde ID ${materia.id} → nuevo courseId: ${data.courseid}`,
         );
       } else {
         console.log(
-          `⏭️ Materia ID ${materia.id} ya fue clonada previamente para courseId ${data.courseid}, se omite`
+          `⏭️ Materia ID ${materia.id} ya fue clonada previamente para courseId ${data.courseid}, se omite`,
         );
       }
     }
@@ -522,8 +522,8 @@ export async function updateMateria(
       .where(
         and(
           eq(materias.title, existingMateria.title),
-          isNotNull(materias.programaId)
-        )
+          isNotNull(materias.programaId),
+        ),
       );
 
     for (const { programaId } of programasConEsaMateria) {
@@ -536,70 +536,70 @@ export async function updateMateria(
           and(
             eq(materias.title, existingMateria.title),
             eq(materias.programaId, programaId),
-            eq(materias.courseid, data.courseid)
-          )
+            eq(materias.courseid, data.courseid),
+          ),
         )
         .then((r) => r.length > 0);
 
       if (!yaExisteEnCurso) {
         await db.insert(materias).values({
           title: existingMateria.title,
-          description: existingMateria.description ?? '',
+          description: existingMateria.description ?? "",
           programaId,
           courseid: data.courseid,
         });
 
         console.log(
-          `📚 Materia '${existingMateria.title}' clonada para programaId ${programaId} y courseId ${data.courseid}`
+          `📚 Materia '${existingMateria.title}' clonada para programaId ${programaId} y courseId ${data.courseid}`,
         );
       }
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.error('❌ Error al procesar materia:', error.message);
+      console.error("❌ Error al procesar materia:", error.message);
     } else {
-      console.error('❌ Error desconocido al procesar materia:', error);
+      console.error("❌ Error desconocido al procesar materia:", error);
     }
-    throw new Error('Error al procesar la materia');
+    throw new Error("Error al procesar la materia");
   }
 }
 
 // Eliminar un curso y sus datos asociado
 export const deleteCourse = async (courseId: number) => {
-  console.log('[🔄] Iniciando eliminación del curso:', courseId);
+  console.log("[🔄] Iniciando eliminación del curso:", courseId);
 
   try {
     // [1] Eliminar inscripciones
-    console.log('[1] 🧾 Eliminando enrollments...');
+    console.log("[1] 🧾 Eliminando enrollments...");
     await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
 
     // [2] Eliminar parámetros y dependencias
-    console.log('[2] ⚙️ Eliminando parámetros y dependencias...');
+    console.log("[2] ⚙️ Eliminando parámetros y dependencias...");
     await deleteParametroByCourseId(courseId);
 
     // [3] Eliminar foros del curso
-    console.log('[3] 💬 Eliminando foro...');
+    console.log("[3] 💬 Eliminando foro...");
     await deleteForumByCourseId(courseId);
 
     // [4] Eliminar lecciones del curso
-    console.log('[4] 📚 Eliminando lecciones...');
+    console.log("[4] 📚 Eliminando lecciones...");
     await deleteLessonsByCourseId(courseId);
 
     // [5] Eliminar registros en courseCourseTypes
-    console.log('[5] 🗂️ Eliminando courseCourseTypes...');
+    console.log("[5] 🗂️ Eliminando courseCourseTypes...");
     await db
       .delete(courseCourseTypes)
       .where(eq(courseCourseTypes.courseId, courseId));
-    console.log('[5.1] 🎓 Eliminando certificados...');
+    console.log("[5.1] 🎓 Eliminando certificados...");
     await db.delete(certificates).where(eq(certificates.courseId, courseId)); // 🧠 El fix
     // [6] Eliminar curso
-    console.log('[6] 🗑️ Eliminando curso...');
+    console.log("[6] 🗑️ Eliminando curso...");
     await db.delete(courses).where(eq(courses.id, courseId));
 
-    console.log('[✅] Curso eliminado exitosamente:', courseId);
+    console.log("[✅] Curso eliminado exitosamente:", courseId);
     return { success: true };
   } catch (error) {
-    console.error('❌ Error final al eliminar curso:', error);
+    console.error("❌ Error final al eliminar curso:", error);
     throw error;
   }
 };
@@ -630,7 +630,7 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
   } catch (error) {
     const errorMessage = isApiError(error)
       ? error.message
-      : 'Unknown error occurred';
+      : "Unknown error occurred";
     throw new Error(`Error al obtener los cursos: ${errorMessage}`);
   }
 };

@@ -219,6 +219,7 @@ git config user.email "artiefy4@gmail.com"
 - pip install pre-commit
 - pre-commit --version
 - pre-commit autoupdate
+- pre-commit run --all-files
 - npx git-conventional-commits - changelog para generar el changelog automáticamente.
 - npx git-conventional-commits - version para determinar la versión según los commits.
 

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { useSignIn } from '@clerk/nextjs';
-import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
-import { FaTimes } from 'react-icons/fa';
+import { useSignIn } from "@clerk/nextjs";
+import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
+import { type ClerkAPIError, type OAuthStrategy } from "@clerk/types";
+import { FaTimes } from "react-icons/fa";
 
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Icons } from "~/components/estudiantes/ui/icons";
 
 interface MiniLoginModalProps {
   isOpen: boolean;
@@ -20,18 +20,18 @@ export default function MiniLoginModal({
   isOpen,
   onClose,
   onLoginSuccess,
-  redirectUrl = '/',
+  redirectUrl = "/",
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [successfulCreation, setSuccessfulCreation] = useState(false);
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
-    null
+    null,
   );
 
   if (!isOpen) return null;
@@ -41,8 +41,8 @@ export default function MiniLoginModal({
     if (!signIn) {
       setErrors([
         {
-          code: 'sign_in_undefined',
-          message: 'SignIn no está definido',
+          code: "sign_in_undefined",
+          message: "SignIn no está definido",
           meta: {},
         },
       ]);
@@ -53,16 +53,16 @@ export default function MiniLoginModal({
       setLoadingProvider(strategy);
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sign-up/sso-callback',
+        redirectUrl: "/sign-up/sso-callback",
         redirectUrlComplete: redirectUrl,
       });
     } catch (err) {
       setLoadingProvider(null);
-      console.error('❌ Error en OAuth:', err);
+      console.error("❌ Error en OAuth:", err);
       setErrors([
         {
-          code: 'oauth_error',
-          message: 'Error en el inicio de sesión con OAuth',
+          code: "oauth_error",
+          message: "Error en el inicio de sesión con OAuth",
           meta: {},
         },
       ]);
@@ -82,22 +82,22 @@ export default function MiniLoginModal({
         password,
       });
 
-      if (signInAttempt.status === 'complete') {
+      if (signInAttempt.status === "complete") {
         if (setActive) {
           await setActive({ session: signInAttempt.createdSessionId });
         }
         onLoginSuccess();
-      } else if (signInAttempt.status === 'needs_first_factor') {
+      } else if (signInAttempt.status === "needs_first_factor") {
         const supportedStrategies =
           signInAttempt.supportedFirstFactors?.map(
-            (factor) => factor.strategy
+            (factor) => factor.strategy,
           ) ?? [];
-        if (!supportedStrategies.includes('password')) {
+        if (!supportedStrategies.includes("password")) {
           setErrors([
             {
-              code: 'invalid_strategy',
-              message: 'Estrategia de verificación inválida',
-              longMessage: 'Estrategia de verificación inválida',
+              code: "invalid_strategy",
+              message: "Estrategia de verificación inválida",
+              longMessage: "Estrategia de verificación inválida",
               meta: {},
             },
           ]);
@@ -105,9 +105,9 @@ export default function MiniLoginModal({
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
         ]);
@@ -118,9 +118,9 @@ export default function MiniLoginModal({
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
         ]);
@@ -139,7 +139,7 @@ export default function MiniLoginModal({
     try {
       if (!signIn) return;
       await signIn.create({
-        strategy: 'reset_password_email_code',
+        strategy: "reset_password_email_code",
         identifier: email,
       });
       setSuccessfulCreation(true);
@@ -150,9 +150,9 @@ export default function MiniLoginModal({
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
         ]);
@@ -172,9 +172,9 @@ export default function MiniLoginModal({
       if (!signIn) {
         setErrors([
           {
-            code: 'sign_in_undefined',
-            message: 'SignIn no está definido',
-            longMessage: 'SignIn no está definido',
+            code: "sign_in_undefined",
+            message: "SignIn no está definido",
+            longMessage: "SignIn no está definido",
             meta: {},
           },
         ]);
@@ -182,12 +182,12 @@ export default function MiniLoginModal({
         return;
       }
       const result = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
+        strategy: "reset_password_email_code",
         code,
         password,
       });
 
-      if (result.status === 'complete') {
+      if (result.status === "complete") {
         if (setActive) {
           await setActive({ session: result.createdSessionId });
         }
@@ -195,9 +195,9 @@ export default function MiniLoginModal({
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
         ]);
@@ -208,9 +208,9 @@ export default function MiniLoginModal({
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
         ]);
@@ -221,10 +221,10 @@ export default function MiniLoginModal({
   };
 
   const emailError = errors?.some(
-    (error) => error.code === 'form_identifier_not_found'
+    (error) => error.code === "form_identifier_not_found",
   );
   const passwordError = errors?.some(
-    (error) => error.code === 'form_password_incorrect'
+    (error) => error.code === "form_password_incorrect",
   );
 
   return (
@@ -249,10 +249,10 @@ export default function MiniLoginModal({
           <div className="mb-4">
             {errors.map((el, index) => (
               <p key={index} className="text-sm text-red-500">
-                {el.code === 'form_password_incorrect'
-                  ? 'Contraseña incorrecta. Inténtalo de nuevo.'
-                  : el.code === 'form_identifier_not_found'
-                    ? 'No se pudo encontrar tu cuenta.'
+                {el.code === "form_password_incorrect"
+                  ? "Contraseña incorrecta. Inténtalo de nuevo."
+                  : el.code === "form_identifier_not_found"
+                    ? "No se pudo encontrar tu cuenta."
                     : el.longMessage}
               </p>
             ))}
@@ -274,8 +274,8 @@ export default function MiniLoginModal({
                   required
                   className={`w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none ${
                     emailError
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-secondary focus:border-secondary'
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-secondary focus:border-secondary"
                   }`}
                 />
               </div>
@@ -290,8 +290,8 @@ export default function MiniLoginModal({
                   required
                   className={`w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none ${
                     passwordError
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-secondary focus:border-secondary'
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-secondary focus:border-secondary"
                   }`}
                 />
               </div>
@@ -303,7 +303,7 @@ export default function MiniLoginModal({
                 {isSubmitting ? (
                   <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
-                  'Iniciar Sesión'
+                  "Iniciar Sesión"
                 )}
               </button>
             </form>
@@ -341,7 +341,7 @@ export default function MiniLoginModal({
                 {isSubmitting ? (
                   <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
-                  'Restablecer Contraseña'
+                  "Restablecer Contraseña"
                 )}
               </button>
             </form>
@@ -367,7 +367,7 @@ export default function MiniLoginModal({
                 {isSubmitting ? (
                   <Icons.spinner className="text-background mx-auto h-5 w-5" />
                 ) : (
-                  'Enviar Código'
+                  "Enviar Código"
                 )}
               </button>
             </form>
@@ -388,11 +388,11 @@ export default function MiniLoginModal({
             <div className="mt-4 flex justify-center space-x-4">
               <button
                 type="button"
-                onClick={() => signInWith('oauth_google')}
+                onClick={() => signInWith("oauth_google")}
                 className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
                 disabled={!!loadingProvider}
               >
-                {loadingProvider === 'oauth_google' ? (
+                {loadingProvider === "oauth_google" ? (
                   <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.google />
@@ -400,11 +400,11 @@ export default function MiniLoginModal({
               </button>
               <button
                 type="button"
-                onClick={() => signInWith('oauth_github')}
+                onClick={() => signInWith("oauth_github")}
                 className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
                 disabled={!!loadingProvider}
               >
-                {loadingProvider === 'oauth_github' ? (
+                {loadingProvider === "oauth_github" ? (
                   <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.gitHub />
@@ -412,11 +412,11 @@ export default function MiniLoginModal({
               </button>
               <button
                 type="button"
-                onClick={() => signInWith('oauth_facebook')}
+                onClick={() => signInWith("oauth_facebook")}
                 className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
                 disabled={!!loadingProvider}
               >
-                {loadingProvider === 'oauth_facebook' ? (
+                {loadingProvider === "oauth_facebook" ? (
                   <Icons.spinner className="text-background h-6 w-6" />
                 ) : (
                   <Icons.facebook />

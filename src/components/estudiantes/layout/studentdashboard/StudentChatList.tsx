@@ -1,13 +1,13 @@
 // components/ChatList.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-import { useUser } from '@clerk/nextjs';
-import { Button } from '@headlessui/react';
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { useUser } from "@clerk/nextjs";
+import { Button } from "@headlessui/react";
+import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
-import { getConversationByUserId } from '~/server/actions/estudiantes/chats/saveChat';
-import { getTicketByUser } from '~/server/actions/estudiantes/chats/suportChatBot';
+import { getConversationByUserId } from "~/server/actions/estudiantes/chats/saveChat";
+import { getTicketByUser } from "~/server/actions/estudiantes/chats/suportChatBot";
 
 // Database methods
 
@@ -50,16 +50,16 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
         const result = await getConversationByUserId(user.id);
         const ticketData = await getTicketByUser(user.id);
 
-        console.log('Ticket:', ticketData);
-        console.log('User id:', user.id);
+        console.log("Ticket:", ticketData);
+        console.log("User id:", user.id);
 
         // Crear el objeto del ticket (solo si existe)
         const ticketItem = ticketData.ticket
           ? {
               id: ticketData.ticket.id,
-              title: 'Ticket de Soporte',
+              title: "Ticket de Soporte",
               curso_id: null, // o puedes usar `ticketData.ticket.curso_id` si lo tienes
-              tipo: 'ticket', // extra opcional para diferenciarlo de las conversaciones
+              tipo: "ticket", // extra opcional para diferenciarlo de las conversaciones
             }
           : null;
 
@@ -67,10 +67,10 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
         const conversationItems = result.conversations.map(
           (conv: Conversation) => ({
             id: conv.id,
-            title: conv.title ?? 'Sin título',
+            title: conv.title ?? "Sin título",
             curso_id: conv.curso_id ?? null,
-            tipo: 'conversation', // opcional, si quieres diferenciarlos
-          })
+            tipo: "conversation", // opcional, si quieres diferenciarlos
+          }),
         );
 
         // Combinar ticket primero, luego las conversaciones
@@ -81,9 +81,9 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
         // Setear en el estado
         setChats(allChats);
 
-        console.log('Chats obtenidos:', allChats);
+        console.log("Chats obtenidos:", allChats);
       } catch (error) {
-        console.error('Error al traer chats:', error);
+        console.error("Error al traer chats:", error);
         setChats([]);
       }
     };
@@ -113,10 +113,10 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
                     });
                   } else {
                     window.dispatchEvent(
-                      new CustomEvent('support-open-chat', { detail: chat })
+                      new CustomEvent("support-open-chat", { detail: chat }),
                     );
                   }
-                  console.log('Chat seleccionado:', chat);
+                  console.log("Chat seleccionado:", chat);
                 }}
                 className="w-full border-b border-gray-100 bg-gray-50 px-4 py-3 text-left transition-transform duration-200 ease-in-out hover:scale-[1.02]"
               >
@@ -124,16 +124,16 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
                   {chat.title}
                 </div>
                 <div className="truncate text-sm text-gray-500">
-                  {chat.curso_id ? 'Ver curso' : 'Ver Ticket'}
+                  {chat.curso_id ? "Ver curso" : "Ver Ticket"}
                 </div>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                   className={
                     chat.curso_id
-                      ? 'flex w-27 items-center gap-1 rounded-2xl bg-blue-500 px-3 py-1 text-sm text-white shadow-md hover:bg-blue-600'
-                      : 'flex w-27 items-center gap-1 rounded-2xl bg-yellow-500 px-3 py-1 text-sm text-white shadow-md hover:bg-yellow-600'
+                      ? "flex w-27 items-center gap-1 rounded-2xl bg-blue-500 px-3 py-1 text-sm text-white shadow-md hover:bg-blue-600"
+                      : "flex w-27 items-center gap-1 rounded-2xl bg-yellow-500 px-3 py-1 text-sm text-white shadow-md hover:bg-yellow-600"
                   }
                 >
                   Ver más
@@ -160,7 +160,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="flex w-27 items-center gap-1 rounded-2xl bg-purple-500 px-3 py-1 text-sm text-white shadow-md hover:bg-purple-600"
               >
                 Ver más
@@ -177,7 +177,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="flex w-27 items-center gap-1 rounded-2xl bg-purple-500 px-3 py-1 text-sm text-white shadow-md hover:bg-purple-600"
               >
                 Ver más
@@ -194,7 +194,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="flex w-27 items-center gap-1 rounded-2xl bg-purple-500 px-3 py-1 text-sm text-white shadow-md hover:bg-purple-600"
               >
                 Ver más
@@ -211,7 +211,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="flex w-27 items-center gap-1 rounded-2xl bg-purple-500 px-3 py-1 text-sm text-white shadow-md hover:bg-purple-600"
               >
                 Ver más
@@ -228,7 +228,7 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="flex w-27 items-center gap-1 rounded-2xl bg-purple-500 px-3 py-1 text-sm text-white shadow-md hover:bg-purple-600"
               >
                 Ver más

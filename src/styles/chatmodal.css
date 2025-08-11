@@ -1,469 +1,468 @@
 /* Renombrar y actualizar estilos del botón */
 .button-circular {
-	cursor: pointer;
-	border: 2px solid #2ecc71;
-	background: #00a5c0;
-	color: #fff;
-	width: 100px;
-	height: 100px;
-	border-radius: 50%;
-	overflow: hidden;
-	position: fixed;
-	bottom: 20px;
-	right: 10px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	font-weight: 600;
-	z-index: 1000;
-	box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+  cursor: pointer;
+  border: 2px solid #2ecc71;
+  background: #00a5c0;
+  color: #fff;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: fixed;
+  bottom: 20px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
 }
 
 .button-circular.minimized {
-	transform: scale(0.6) translate(30px, -30px);
-	box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
+  transform: scale(0.6) translate(30px, -30px);
+  box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
 }
 
 .button-circular__text {
-	position: absolute;
-	inset: -1px; /* Ajustado para pantallas grandes */
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	animation: text-rotation 8s linear infinite;
-	pointer-events: none;
+  position: absolute;
+  inset: -1px; /* Ajustado para pantallas grandes */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: text-rotation 8s linear infinite;
+  pointer-events: none;
 }
 
 .button-circular__text > span {
-	position: absolute !important;
-	transform: rotate(calc(20deg * var(--index)));
-	inset: 2px;
-	font-size: 0.85rem;
-	letter-spacing: 0.5px; /* Reducido el espaciado entre letras */
-	text-transform: uppercase;
+  position: absolute !important;
+  transform: rotate(calc(20deg * var(--index)));
+  inset: 2px;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px; /* Reducido el espaciado entre letras */
+  text-transform: uppercase;
 }
 
 .button-circular__inner {
-	position: relative;
-	width: 40px;
-	height: 40px;
-	overflow: hidden;
-	background: #212121;
-	color: #3af4ef;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background: #212121;
+  color: #3af4ef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button-circular__icon {
-	font-size: 20px;
-	position: relative;
-	z-index: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  font-size: 20px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button-circular__icon--copy {
-	position: absolute;
-	transform: translate(-150%, 150%);
+  position: absolute;
+  transform: translate(-150%, 150%);
 }
 
 .button-circular:hover {
-	background: #000;
-	transform: scale(1.05);
-	border: 2px solid #fff;
-	box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+  background: #000;
+  transform: scale(1.05);
+  border: 2px solid #fff;
+  box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
 }
 
 .button-circular:hover.minimized {
-	transform: scale(0.65) translate(30px, -30px);
+  transform: scale(0.65) translate(30px, -30px);
 }
 
 .button-circular:hover .button-circular__icon {
-	color: #fff;
+  color: #fff;
 }
 
 .button-circular:hover .button-circular__icon:first-child {
-	transition: transform 0.3s ease-in-out;
-	transform: translate(150%, -150%);
+  transition: transform 0.3s ease-in-out;
+  transform: translate(150%, -150%);
 }
 
 .button-circular:hover .button-circular__icon--copy {
-	transition: transform 0.3s ease-in-out 0.1s;
-	transform: translate(0);
+  transition: transform 0.3s ease-in-out 0.1s;
+  transform: translate(0);
 }
 
 @keyframes text-rotation {
-	to {
-		rotate: 360deg;
-	}
+  to {
+    rotate: 360deg;
+  }
 }
 
 .button-circular:active {
-	transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 /* Estilos adicionales para el modal del chat */
 .chat-modal {
-	background: rgba(0, 0, 0, 0.5);
-	position: fixed;
-	inset: 0;
-	z-index: 50;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 1rem;
-	transform-origin: bottom right;
-	animation: slideIn 0.3s ease-out;
+  background: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  transform-origin: bottom right;
+  animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
-	from {
-		opacity: 0;
-		transform: translateY(20px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .chat-container {
-	background: white;
-	border-radius: 0.5rem;
-	width: 100%;
-	max-width: 28rem;
-	max-height: 80vh;
-	display: flex;
-	flex-direction: column;
-	box-shadow:
-		0 20px 25px -5px rgba(0, 0, 0, 0.1),
-		0 10px 10px -5px rgba(0, 0, 0, 0.04);
-	background-color: white;
-	width: 320px;
-	height: 450px;
-	overflow: hidden;
+  background: white;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 28rem;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background-color: white;
+  width: 320px;
+  height: 450px;
+  overflow: hidden;
 }
 
 .chat-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 1rem;
-	border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .messages-container {
-	flex: 1;
-	overflow-y: auto;
-	padding: 1rem;
-	flex-grow: 1;
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  flex-grow: 1;
 }
 
 .input-container {
-	border-top: 1px solid #e5e7eb;
-	padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
 }
 
 @keyframes bounce {
-	0%,
-	100% {
-		transform: translateY(0);
-	}
-	50% {
-		transform: translateY(-5px);
-	}
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .loading-dot {
-	width: 8px;
-	height: 8px;
-	background-color: #00bdd8;
-	border-radius: 50%;
-	display: inline-block;
-	margin: 0 2px;
+  width: 8px;
+  height: 8px;
+  background-color: #00bdd8;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
 }
 
 .loading-dot:nth-child(1) {
-	animation: bounce 0.8s infinite 0.1s;
+  animation: bounce 0.8s infinite 0.1s;
 }
 
 .loading-dot:nth-child(2) {
-	animation: bounce 0.9s infinite 0.2s;
+  animation: bounce 0.9s infinite 0.2s;
 }
 
 .loading-dot:nth-child(3) {
-	animation: bounce 1s infinite 0.3s;
+  animation: bounce 1s infinite 0.3s;
 }
 
 .react-resizable {
-	position: relative;
-	background: white;
-	border-radius: 0.5rem;
-	overflow: hidden;
+  position: relative;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 /* Update resize handle styles */
 .react-resizable-handle {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	background: transparent !important;
-	opacity: 0.8;
-	transition: opacity 0.2s;
-	z-index: 10;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: transparent !important;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  z-index: 10;
 }
 
 .react-resizable-handle::before {
-	content: '⋮⋮';
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
-	color: #00a5c0;
-	font-size: 14px;
-	letter-spacing: -2px;
+  content: "⋮⋮";
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #00a5c0;
+  font-size: 14px;
+  letter-spacing: -2px;
 }
 
 /* Fix rotations for each handle */
 .react-resizable-handle-n::before,
 .react-resizable-handle-s::before {
-	transform: rotate(0deg); /* Horizontal dots */
+  transform: rotate(0deg); /* Horizontal dots */
 }
 
 .react-resizable-handle-e::before,
 .react-resizable-handle-w::before {
-	transform: rotate(90deg); /* Vertical dots for sides */
+  transform: rotate(90deg); /* Vertical dots for sides */
 }
 
 .react-resizable-handle-ne::before,
 .react-resizable-handle-sw::before {
-	transform: rotate(-45deg); /* Diagonal dots */
+  transform: rotate(-45deg); /* Diagonal dots */
 }
 
 .react-resizable-handle-nw::before,
 .react-resizable-handle-se::before {
-	transform: rotate(-45deg); /* Diagonal dots */
+  transform: rotate(-45deg); /* Diagonal dots */
 }
 
 /* Remove any extra pseudo-elements but keep our dots */
 .react-resizable-handle::after {
-	display: none !important;
+  display: none !important;
 }
 
 .react-resizable-handle:hover {
-	opacity: 1;
+  opacity: 1;
 }
 
 .react-resizable-handle *,
 .react-resizable-handle::after {
-	display: none !important;
+  display: none !important;
 }
 
 .chat-resizable {
-	position: relative;
-	border-radius: 0.5rem;
-	overflow: hidden;
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 /* New loader styles */
 .loader {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	--color: #212121;
-	--animation: 2s ease-in-out infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  --color: #212121;
+  --animation: 2s ease-in-out infinite;
 }
 
 .loader .circle {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-	width: 16px; /* Reduced from 20px */
-	height: 16px; /* Reduced from 20px */
-	border: solid 2px var(--color);
-	border-radius: 50%;
-	margin: 0 6px; /* Reduced from 10px */
-	background-color: transparent;
-	animation: circle-keys var(--animation);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 16px; /* Reduced from 20px */
+  height: 16px; /* Reduced from 20px */
+  border: solid 2px var(--color);
+  border-radius: 50%;
+  margin: 0 6px; /* Reduced from 10px */
+  background-color: transparent;
+  animation: circle-keys var(--animation);
 }
 
 .loader .circle .dot {
-	position: absolute;
-	transform: translate(-50%, -50%);
-	width: 12px; /* Reduced from 16px */
-	height: 12px; /* Reduced from 16px */
-	border-radius: 50%;
-	background-color: var(--color);
-	animation: dot-keys var(--animation);
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 12px; /* Reduced from 16px */
+  height: 12px; /* Reduced from 16px */
+  border-radius: 50%;
+  background-color: var(--color);
+  animation: dot-keys var(--animation);
 }
 
 .loader .circle .outline {
-	position: absolute;
-	transform: translate(-50%, -50%);
-	width: 16px; /* Reduced from 20px */
-	height: 16px; /* Reduced from 20px */
-	border-radius: 50%;
-	animation: outline-keys var(--animation);
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 16px; /* Reduced from 20px */
+  height: 16px; /* Reduced from 20px */
+  border-radius: 50%;
+  animation: outline-keys var(--animation);
 }
 
 .circle:nth-child(2) {
-	animation-delay: 0.3s;
+  animation-delay: 0.3s;
 }
 
 .circle:nth-child(3) {
-	animation-delay: 0.6s;
+  animation-delay: 0.6s;
 }
 
 .circle:nth-child(2) .dot {
-	animation-delay: 0.3s;
+  animation-delay: 0.3s;
 }
 
 .circle:nth-child(3) .dot {
-	animation-delay: 0.6s;
+  animation-delay: 0.6s;
 }
 
 .circle:nth-child(1) .outline {
-	animation-delay: 0.9s;
+  animation-delay: 0.9s;
 }
 
 .circle:nth-child(2) .outline {
-	animation-delay: 1.2s;
+  animation-delay: 1.2s;
 }
 
 .circle:nth-child(3) .outline {
-	animation-delay: 1.5s;
+  animation-delay: 1.5s;
 }
 
 @keyframes circle-keys {
-	0% {
-		transform: scale(1);
-		opacity: 1;
-	}
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
 
-	50% {
-		transform: scale(1.5);
-		opacity: 0.5;
-	}
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
 
-	100% {
-		transform: scale(1);
-		opacity: 1;
-	}
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes dot-keys {
-	0% {
-		transform: scale(1);
-	}
+  0% {
+    transform: scale(1);
+  }
 
-	50% {
-		transform: scale(0);
-	}
+  50% {
+    transform: scale(0);
+  }
 
-	100% {
-		transform: scale(1);
-	}
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes outline-keys {
-	0% {
-		transform: scale(0);
-		outline: solid 20px var(--color);
-		outline-offset: 0;
-		opacity: 1;
-	}
+  0% {
+    transform: scale(0);
+    outline: solid 20px var(--color);
+    outline-offset: 0;
+    opacity: 1;
+  }
 
-	100% {
-		transform: scale(1);
-		outline: solid 0 transparent;
-		outline-offset: 20px;
-		opacity: 0;
-	}
+  100% {
+    transform: scale(1);
+    outline: solid 0 transparent;
+    outline-offset: 20px;
+    opacity: 0;
+  }
 }
 
 /* Add responsive styles */
 @media (max-width: 767px) {
-	.button-circular {
-		width: 80px;
-		height: 80px;
-		right: 5px;
-		bottom: 15px;
-	}
+  .button-circular {
+    width: 80px;
+    height: 80px;
+    right: 5px;
+    bottom: 15px;
+  }
 
-	.button-circular__text {
-		inset: -3px; /* Mantener el valor expandido para móviles */
-	}
+  .button-circular__text {
+    inset: -3px; /* Mantener el valor expandido para móviles */
+  }
 
-	.button-circular__text > span {
-		font-size: 0.75rem; /* Texto ligeramente más pequeño en móviles */
-		inset: 4px; /* Ajustado para móviles */
-		letter-spacing: 0.5px; /* Menos espacio entre letras para mejor ajuste */
-	}
+  .button-circular__text > span {
+    font-size: 0.75rem; /* Texto ligeramente más pequeño en móviles */
+    inset: 4px; /* Ajustado para móviles */
+    letter-spacing: 0.5px; /* Menos espacio entre letras para mejor ajuste */
+  }
 
-	/* Modify minimized state for mobile */
-	.button-circular.minimized {
-		transform: scale(0.7); /* Solo escala, sin traslación */
-		transform-origin: center; /* Asegura que la escala sea desde el centro */
-	}
+  /* Modify minimized state for mobile */
+  .button-circular.minimized {
+    transform: scale(0.7); /* Solo escala, sin traslación */
+    transform-origin: center; /* Asegura que la escala sea desde el centro */
+  }
 
-	.button-circular:hover.minimized {
-		transform: scale(0.75); /* Un poco más grande al hover */
-	}
+  .button-circular:hover.minimized {
+    transform: scale(0.75); /* Un poco más grande al hover */
+  }
 
-	.chat-container {
-		width: 100%;
-		max-width: calc(100vw - 20px);
-		height: calc(100vh - 120px);
-		margin: 10px;
-	}
+  .chat-container {
+    width: 100%;
+    max-width: calc(100vw - 20px);
+    height: calc(100vh - 120px);
+    margin: 10px;
+  }
 
-	.chat-resizable {
-		font-size: 14px; /* Smaller font for mobile */
-	}
+  .chat-resizable {
+    font-size: 14px; /* Smaller font for mobile */
+  }
 
-	/* Adjust message bubbles for mobile */
-	.messages-container {
-		padding: 0.75rem;
-	}
+  /* Adjust message bubbles for mobile */
+  .messages-container {
+    padding: 0.75rem;
+  }
 
-	/* Adjust input area for mobile */
-	.input-container {
-		padding: 0.75rem;
-	}
+  /* Adjust input area for mobile */
+  .input-container {
+    padding: 0.75rem;
+  }
 
-	/* Make header more compact on mobile */
-	.chat-header {
-		padding: 0.75rem;
-	}
+  /* Make header more compact on mobile */
+  .chat-header {
+    padding: 0.75rem;
+  }
 }
 
 @media (min-width: 768px) {
+  .button-circular__text {
+    inset: 0; /* Reducir la expansión del texto en desktop */
+  }
 
-	.button-circular__text {
-		inset: 0; /* Reducir la expansión del texto en desktop */
-	}
+  .button-circular__text > span {
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    inset: 3px;
+  }
 
-	.button-circular__text > span {
-		font-size: 0.85rem;
-		letter-spacing: 0.5px;
-		inset: 3px;
-	}
+  .button-circular.minimized {
+    transform: scale(0.6); /* Solo escalar sin trasladar en desktop */
+    transform-origin: center; /* Asegurar que escale desde el centro */
+  }
 
-	.button-circular.minimized {
-		transform: scale(0.6); /* Solo escalar sin trasladar en desktop */
-		transform-origin: center; /* Asegurar que escale desde el centro */
-	}
-
-	.button-circular:hover.minimized {
-		transform: scale(
-			0.65
-		); /* Un poco más grande al hover pero sin traslación */
-	}
+  .button-circular:hover.minimized {
+    transform: scale(
+      0.65
+    ); /* Un poco más grande al hover pero sin traslación */
+  }
 }

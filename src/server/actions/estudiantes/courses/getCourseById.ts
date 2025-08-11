@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import {
   categories,
   courseCourseTypes,
@@ -12,9 +12,9 @@ import {
   nivel,
   userLessonsProgress,
   users,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
-import type { Activity, Course, Lesson } from '~/types';
+import type { Activity, Course, Lesson } from "~/types";
 
 // Update interface with all required fields
 interface CourseDetailQueryResult {
@@ -38,12 +38,12 @@ interface CourseDetailQueryResult {
 
 export async function getCourseById(
   courseId: number | string,
-  userId: string | null = null
+  userId: string | null = null,
 ): Promise<Course | null> {
   try {
     const parsedCourseId = Number(courseId);
     if (isNaN(parsedCourseId)) {
-      console.error('Invalid course ID:', courseId);
+      console.error("Invalid course ID:", courseId);
       return null;
     }
 
@@ -138,7 +138,7 @@ export async function getCourseById(
       .sort((a, b) => a.title.localeCompare(b.title))
       .map((lesson) => {
         const lessonProgress = userLessonsProgressData.find(
-          (progress) => progress.lessonId === lesson.id
+          (progress) => progress.lessonId === lesson.id,
         );
 
         // Fix activity transformation with proper typing
@@ -170,7 +170,7 @@ export async function getCourseById(
           isCompleted: lessonProgress?.isCompleted ?? false,
           userProgress: lessonProgress?.progress ?? 0,
           porcentajecompletado: lessonProgress?.progress ?? 0,
-          resourceNames: lesson.resourceNames.split(','),
+          resourceNames: lesson.resourceNames.split(","),
           isNew: lessonProgress?.isNew ?? true,
           activities,
         };
@@ -204,10 +204,10 @@ export async function getCourseById(
           }
         : undefined,
       isFree: associatedCourseTypes.some(
-        (ct) => ct.courseType?.requiredSubscriptionLevel === 'none'
+        (ct) => ct.courseType?.requiredSubscriptionLevel === "none",
       ),
       requiresSubscription: associatedCourseTypes.some(
-        (ct) => ct.courseType?.requiredSubscriptionLevel !== 'none'
+        (ct) => ct.courseType?.requiredSubscriptionLevel !== "none",
       ),
       courseType: course.courseType
         ? {
@@ -230,15 +230,15 @@ export async function getCourseById(
       requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
       isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
       instructor: courseData.instructor,
-      instructorName: courseData.instructorName ?? 'Instructor no encontrado',
+      instructorName: courseData.instructorName ?? "Instructor no encontrado",
       courseTypeId: courseData.courseTypeId ?? 0, // Ensure courseTypeId is always a number
     };
 
     return transformedCourse;
   } catch (error) {
     console.error(
-      'Error fetching course:',
-      error instanceof Error ? error.message : 'Unknown error'
+      "Error fetching course:",
+      error instanceof Error ? error.message : "Unknown error",
     );
     return null;
   }

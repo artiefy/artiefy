@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
-import { useAuth, useUser } from '@clerk/nextjs';
-import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
-import { MessageCircle, Zap } from 'lucide-react';
-import { GoArrowLeft } from 'react-icons/go';
-import { HiMiniCpuChip } from 'react-icons/hi2';
-import { IoMdClose } from 'react-icons/io';
-import { ResizableBox } from 'react-resizable';
-import { toast } from 'sonner';
+import { useAuth, useUser } from "@clerk/nextjs";
+import { ArrowRightCircleIcon } from "@heroicons/react/24/solid";
+import { MessageCircle, Zap } from "lucide-react";
+import { GoArrowLeft } from "react-icons/go";
+import { HiMiniCpuChip } from "react-icons/hi2";
+import { IoMdClose } from "react-icons/io";
+import { ResizableBox } from "react-resizable";
+import { toast } from "sonner";
 
 // Importar StudentChat
-import { useExtras } from '~/app/estudiantes/StudentContext';
-import { Card } from '~/components/estudiantes/ui/card';
+import { useExtras } from "~/app/estudiantes/StudentContext";
+import { Card } from "~/components/estudiantes/ui/card";
 // Importar StudentChatList.tsx
-import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
-import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
+import { getOrCreateConversation } from "~/server/actions/estudiantes/chats/saveChat";
+import { saveMessages } from "~/server/actions/estudiantes/chats/saveMessages";
 
-import { ChatMessages } from './StudentChat';
-import { ChatList } from './StudentChatList';
+import { ChatMessages } from "./StudentChat";
+import { ChatList } from "./StudentChatList";
 
-import '~/styles/chatmodal.css';
-import 'react-resizable/css/styles.css';
+import "~/styles/chatmodal.css";
+import "react-resizable/css/styles.css";
 
 interface StudentChatbotProps {
   className?: string;
@@ -70,7 +70,7 @@ interface ChatMessage {
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
   className,
-  initialSearchQuery = '',
+  initialSearchQuery = "",
   isAlwaysVisible = false,
   showChat = false,
   onSearchComplete,
@@ -83,16 +83,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: Date.now(),
-      text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-      sender: 'bot',
+      text: "¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎",
+      sender: "bot",
       buttons: [
-        { label: '📚 Crear Proyecto', action: 'new_project' },
-        { label: '💬 Nueva Idea', action: 'new_idea' },
-        { label: '🛠 Soporte Técnico', action: 'contact_support' },
+        { label: "📚 Crear Proyecto", action: "new_project" },
+        { label: "💬 Nueva Idea", action: "new_idea" },
+        { label: "🛠 Soporte Técnico", action: "contact_support" },
       ],
     },
   ]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [processingQuery, setProcessingQuery] = useState(false);
   const [dimensions, setDimensions] = useState({
@@ -115,7 +115,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     idChat: number | null;
     status: boolean;
     curso_title: string;
-  }>({ idChat: null, status: true, curso_title: '' });
+  }>({ idChat: null, status: true, curso_title: "" });
 
   // Saber si el chatlist esta abierto
 
@@ -125,7 +125,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const [idea, setIdea] = useState<{ selected: boolean; idea: string }>({
     selected: false,
-    idea: '',
+    idea: "",
   });
 
   const [isHovered, setIsHovered] = useState(false);
@@ -140,8 +140,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
     // Si quieres que se actualice al redimensionar:
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -150,13 +150,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   useEffect(() => {
     const handleNewIdea = () => {
-      setIdea({ selected: true, idea: '' });
+      setIdea({ selected: true, idea: "" });
     };
 
-    window.addEventListener('new-idea', handleNewIdea);
+    window.addEventListener("new-idea", handleNewIdea);
 
     return () => {
-      window.removeEventListener('new-idea', handleNewIdea);
+      window.removeEventListener("new-idea", handleNewIdea);
     };
   }, []);
 
@@ -165,25 +165,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [chatMode]);
 
   const pathname = usePathname();
-  const isChatPage = pathname === '/';
+  const isChatPage = pathname === "/";
 
   const newChatMessage = () => {
-    setChatMode({ idChat: null, status: true, curso_title: '' });
+    setChatMode({ idChat: null, status: true, curso_title: "" });
     setShowChatList(false);
     setMessages([
       {
         id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-        sender: 'bot',
+        text: "¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎",
+        sender: "bot",
         buttons: [
-          { label: '📚 Crear Proyecto', action: 'new_project' },
-          { label: '💬 Nueva Idea', action: 'new_idea' },
-          { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          { label: "📚 Crear Proyecto", action: "new_project" },
+          { label: "💬 Nueva Idea", action: "new_idea" },
+          { label: "🛠 Soporte Técnico", action: "contact_support" },
         ],
       },
     ]);
 
-    setInputText('');
+    setInputText("");
     setIsOpen(true);
     initialSearchDone.current = false;
     setProcessingQuery(false);
@@ -192,10 +192,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       inputRef.current.focus();
     }
 
-    console.log('Nuevo mensaje de chat creado');
+    console.log("Nuevo mensaje de chat creado");
     if (ideaRef.current.selected) {
       // Si se está esperando una idea, se guarda el mensaje del usuario como idea
-      setIdea({ selected: false, idea: '' });
+      setIdea({ selected: false, idea: "" });
     }
 
     if (chatContainerRef.current) {
@@ -203,38 +203,38 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
 
     console.log(
-      'Nuevo mensaje de chat creado con ref',
-      chatModeRef.current.idChat
+      "Nuevo mensaje de chat creado con ref",
+      chatModeRef.current.idChat,
     );
-    console.log('Nuevo mensaje de chat creado chatId', chatMode.idChat);
+    console.log("Nuevo mensaje de chat creado chatId", chatMode.idChat);
 
     // Parseo fe fecha para el título del chat
 
     const timestamp = Date.now();
     const fecha = new Date(timestamp);
 
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // ¡Ojo! Los meses van de 0 a 11
+    const dia = String(fecha.getDate()).padStart(2, "0");
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // ¡Ojo! Los meses van de 0 a 11
     const anio = fecha.getFullYear();
 
-    const hora = String(fecha.getHours()).padStart(2, '0');
-    const minuto = String(fecha.getMinutes()).padStart(2, '0');
+    const hora = String(fecha.getHours()).padStart(2, "0");
+    const minuto = String(fecha.getMinutes()).padStart(2, "0");
 
     const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
 
     // Función para crear el nuevo chat en la base de datos
 
     getOrCreateConversation({
-      senderId: user?.id ?? '',
+      senderId: user?.id ?? "",
       cursoId: courseId ?? +Math.round(Math.random() * 100 + 1), // Genera un ID único si no hay cursoId
-      title: courseTitle ?? 'Nuevo Chat ' + resultado,
+      title: courseTitle ?? "Nuevo Chat " + resultado,
     })
       .then((response) => {
-        console.log('Nuevo chat creado con ID:', response.id);
-        setChatMode({ idChat: response.id, status: true, curso_title: '' });
+        console.log("Nuevo chat creado con ID:", response.id);
+        setChatMode({ idChat: response.id, status: true, curso_title: "" });
       })
       .catch((error) => {
-        console.error('Error creando nuevo chat:', error);
+        console.error("Error creando nuevo chat:", error);
       });
   };
 
@@ -243,21 +243,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
     if (currentChatId) {
       console.log(
-        'Guardando mensaje del bot:',
+        "Guardando mensaje del bot:",
         trimmedInput,
-        'en chat ID:',
-        currentChatId
+        "en chat ID:",
+        currentChatId,
       );
       void saveMessages(
-        'bot', // senderId
+        "bot", // senderId
         currentChatId, // cursoId
         [
           {
             text: trimmedInput,
-            sender: 'bot',
-            sender_id: 'bot',
+            sender: "bot",
+            sender_id: "bot",
           },
-        ]
+        ],
       );
     }
   };
@@ -276,18 +276,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const modoActual = chatModeRef.current;
       const courseTitle = modoActual.curso_title;
 
-      console.log('Modo actual del chat:', modoActual);
+      console.log("Modo actual del chat:", modoActual);
 
-      if (courseTitle.includes('Nuevo Chat')) {
-        console.log('Ingreso al titlenewChat');
+      if (courseTitle.includes("Nuevo Chat")) {
+        console.log("Ingreso al titlenewChat");
         booleanVar = true;
       }
       // Obtener url y ver si esta dentro de un curso
 
-      if (pathname.includes('cursos') || pathname.includes('curso')) {
-        console.log('Ingreso al if');
+      if (pathname.includes("cursos") || pathname.includes("curso")) {
+        console.log("Ingreso al if");
         if (isEnrolled) {
-          console.log('Usuario está inscrito en el curso');
+          console.log("Usuario está inscrito en el curso");
           inCourse = true;
         }
       }
@@ -295,11 +295,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       console.log(chatMode);
       // Url para la petición según si hay courseTitle
       const urlDefault = {
-        url: 'http://3.142.77.31:5000/root_courses',
+        url: "http://3.142.77.31:5000/root_courses",
         body: { prompt: query },
       };
       const urlCourses = {
-        url: 'http://3.142.77.31:5000/get_classes',
+        url: "http://3.142.77.31:5000/get_classes",
         body: {
           user_id: user?.id,
           curso: courseTitle ? courseTitle : chatMode.curso_title,
@@ -307,43 +307,43 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         },
       };
       const urlSales = {
-        url: '/api/sales',
+        url: "/api/sales",
         body: {
-          userMessage: query ? query : 'Precios generales de los programas',
+          userMessage: query ? query : "Precios generales de los programas",
         },
       };
 
-      console.log('Titulo del chat de curso: ' + courseTitle);
-      console.log('Var to fetching:', booleanVar, courseTitle, isSignedIn);
-      console.log('InCourse:', inCourse);
+      console.log("Titulo del chat de curso: " + courseTitle);
+      console.log("Var to fetching:", booleanVar, courseTitle, isSignedIn);
+      console.log("InCourse:", inCourse);
       let fetchConfig;
 
       if (
-        (!courseTitle.includes('Nuevo Chat') &&
-          !courseTitle.includes('Sin título') &&
+        (!courseTitle.includes("Nuevo Chat") &&
+          !courseTitle.includes("Sin título") &&
           courseTitle) ||
         inCourse
       ) {
-        console.log('1');
+        console.log("1");
         fetchConfig = urlCourses;
       } else if (
         isSignedIn ||
-        courseTitle.includes('Nuevo Chat') ||
-        courseTitle.includes('Sin título') ||
+        courseTitle.includes("Nuevo Chat") ||
+        courseTitle.includes("Sin título") ||
         booleanVar
       ) {
-        console.log('2');
+        console.log("2");
         fetchConfig = urlDefault;
       } else if (!isSignedIn && !courseTitle) {
-        console.log('3');
+        console.log("3");
         fetchConfig = urlSales;
       }
 
       if (fetchConfig) {
-        console.log('Fetching URL:', fetchConfig.url);
-        console.log('Fetching body:', fetchConfig.body);
+        console.log("Fetching URL:", fetchConfig.url);
+        console.log("Fetching body:", fetchConfig.body);
       } else {
-        console.error('fetchConfig is undefined. Cannot proceed with fetch.');
+        console.error("fetchConfig is undefined. Cannot proceed with fetch.");
         setIsLoading(false);
         setProcessingQuery(false);
         searchRequestInProgress.current = false;
@@ -353,90 +353,90 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
       try {
         const result = await fetch(fetchConfig.url, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(fetchConfig.body),
         });
 
         const data = (await result.json()) as BotResponse;
 
-        console.log('Respuesta del servidor:', data);
+        console.log("Respuesta del servidor:", data);
 
-        console.log('respuesta del bot:', data.result);
+        console.log("respuesta del bot:", data.result);
 
         if (
           Array.isArray(data.result) &&
-          fetchConfig.url.includes('root_courses')
+          fetchConfig.url.includes("root_courses")
         ) {
-          console.log('Ingreso a mapear cursos');
+          console.log("Ingreso a mapear cursos");
           const cursos: Curso[] = data.result;
 
           if (cursos.length > 0) {
             const cursosTexto = cursos
               .map(
-                (curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`
+                (curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`,
               )
-              .join('\n\n');
+              .join("\n\n");
 
             const introText =
               cursosTexto.length !== 0
-                ? 'Aquí tienes algunos cursos recomendados:'
-                : 'No se encontraron cursos recomendados. Intenta con otra consulta.';
+                ? "Aquí tienes algunos cursos recomendados:"
+                : "No se encontraron cursos recomendados. Intenta con otra consulta.";
 
             setMessages((prev) => [
               ...prev,
               {
                 id: Date.now() + Math.random(),
                 text: `${introText}\n\n${cursosTexto}`,
-                sender: 'bot' as const,
+                sender: "bot" as const,
               },
             ]);
           } else {
-            console.log('Ingreso a otros');
+            console.log("Ingreso a otros");
             setMessages((prev) => [
               ...prev,
               {
                 id: Date.now() + Math.random(),
-                text: 'No se encontraron cursos.',
-                sender: 'bot' as const,
+                text: "No se encontraron cursos.",
+                sender: "bot" as const,
               },
             ]);
           }
         } else {
-          console.log('Ingreso afuera del mapeo de cursos');
+          console.log("Ingreso afuera del mapeo de cursos");
           setMessages((prev) => [
             ...prev,
             {
               id: Date.now() + Math.random(),
               text:
-                typeof data.result === 'string'
+                typeof data.result === "string"
                   ? data.result
                   : JSON.stringify(data.result),
-              sender: 'bot' as const,
+              sender: "bot" as const,
             },
           ]);
         }
 
         saveBotMessage(
-          typeof data.result === 'string'
+          typeof data.result === "string"
             ? data.result
-            : JSON.stringify(data.result)
+            : JSON.stringify(data.result),
         );
       } catch (error) {
-        console.error('Error getting bot response:', error);
+        console.error("Error getting bot response:", error);
 
         setMessages((prev) => [
           ...prev,
           {
             id: Date.now() + Math.random(),
-            text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
-            sender: 'bot' as const,
+            text: "Lo siento, ocurrió un error al procesar tu solicitud.",
+            sender: "bot" as const,
           },
         ]);
 
-        saveBotMessage('Lo siento, ocurrió un error al procesar tu solicitud.'); // Guarda el error como mensaje del bot
+        saveBotMessage("Lo siento, ocurrió un error al procesar tu solicitud."); // Guarda el error como mensaje del bot
       } finally {
         setIsLoading(false);
         setProcessingQuery(false);
@@ -452,7 +452,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       isSignedIn,
       pathname,
       user?.id,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -486,7 +486,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         {
           id: Date.now() + 1,
           text: initialSearchQuery.trim(),
-          sender: 'user',
+          sender: "user",
         },
       ]);
 
@@ -524,7 +524,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     // Set initial dimensions based on window size
     const initialDimensions = {
       width:
-        typeof window !== 'undefined' && window.innerWidth < 768
+        typeof window !== "undefined" && window.innerWidth < 768
           ? window.innerWidth
           : 500,
       height: window.innerHeight,
@@ -540,39 +540,39 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       });
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
 
   const scrollToBottom = () => {
-    void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    void messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const saveUserMessage = (trimmedInput: string, sender: string) => {
     const currentChatId = chatMode.idChat;
     console.log(
-      'Guardando mensaje del usuario:',
+      "Guardando mensaje del usuario:",
       trimmedInput,
-      'en chat ID:',
-      currentChatId
+      "en chat ID:",
+      currentChatId,
     );
     if (currentChatId) {
       void saveMessages(
-        user?.id ?? '', // senderId
+        user?.id ?? "", // senderId
         currentChatId, // cursoId
         [
           {
             text: trimmedInput,
             sender: sender,
-            sender_id: user?.id ?? '',
+            sender_id: user?.id ?? "",
           },
-        ]
+        ],
       );
     } else {
       console.log(
-        'No está entrando al chat para guardar el mensaje del usuario'
+        "No está entrando al chat para guardar el mensaje del usuario",
       );
     }
   };
@@ -592,14 +592,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const newUserMessage = {
       id: Date.now(),
       text: trimmedInput,
-      sender: 'user' as const,
+      sender: "user" as const,
     };
 
     // Lógica para almacenar el mensaje del usuario en la base de datos
-    saveUserMessage(trimmedInput, 'user');
+    saveUserMessage(trimmedInput, "user");
 
     setMessages((prev) => [...prev, newUserMessage]);
-    setInputText('');
+    setInputText("");
 
     if (ideaRef.current.selected) {
       // Si se está esperando una idea, se guarda el mensaje del usuario como idea
@@ -613,16 +613,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     setMessages([
       {
         id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-        sender: 'bot',
+        text: "¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎",
+        sender: "bot",
         buttons: [
-          { label: '📚 Crear Proyecto', action: 'new_project' },
-          { label: '💬 Nueva Idea', action: 'new_idea' },
-          { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          { label: "📚 Crear Proyecto", action: "new_project" },
+          { label: "💬 Nueva Idea", action: "new_idea" },
+          { label: "🛠 Soporte Técnico", action: "contact_support" },
         ],
       },
     ]);
-    setInputText('');
+    setInputText("");
     initialSearchDone.current = false;
     setProcessingQuery(false);
     onSearchComplete?.();
@@ -654,37 +654,37 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     (_e: React.SyntheticEvent, data: ResizeData) => {
       setDimensions(data.size);
     },
-    []
+    [],
   );
 
   // Añade el manejador para los botones del mensaje inicial
   const handleBotButtonClick = (action: string) => {
-    if (action === 'new_project') {
+    if (action === "new_project") {
       // Lógica para crear proyecto
       if (!isSignedIn) {
         // Redirigir a la página de planes
 
         router.push(`/planes`);
       }
-    } else if (action === 'new_idea') {
-      setIdea({ selected: true, idea: '' });
+    } else if (action === "new_idea") {
+      setIdea({ selected: true, idea: "" });
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now(),
-          text: '¡Cuéntame tu nueva idea!',
-          sender: 'bot',
+          text: "¡Cuéntame tu nueva idea!",
+          sender: "bot",
         },
       ]);
-    } else if (action === 'contact_support') {
-      toast.info('Redirigiendo a soporte técnico');
+    } else if (action === "contact_support") {
+      toast.info("Redirigiendo a soporte técnico");
       // Aquí puedes redirigir o abrir modal de soporte
     }
   };
 
   const renderMessage = (message: ChatMessage) => {
-    if (message.sender === 'bot') {
-      const parts = message.text.split('\n\n');
+    if (message.sender === "bot") {
+      const parts = message.text.split("\n\n");
       const introText = parts[0];
       const courseTexts = parts.slice(1);
 
@@ -701,7 +701,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         })
         .filter(
           (course): course is { number: number; title: string; id: number } =>
-            Boolean(course)
+            Boolean(course),
         );
 
       // ⚠️ Si no hay cursos, mostramos todo el texto directamente
@@ -709,11 +709,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return (
           <div className="flex flex-col space-y-4">
             <div className="space-y-3">
-              {message.text.split('\n').map((line, index) => {
+              {message.text.split("\n").map((line, index) => {
                 // Si la línea parece un título (por ejemplo: "Carreras Técnicas")
                 if (
                   /^(Carreras|Diplomados|Cursos|Financiación)/i.test(
-                    line.trim()
+                    line.trim(),
                   )
                 ) {
                   return (
@@ -736,7 +736,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 }
 
                 // Línea vacía = espacio
-                if (line.trim() === '') {
+                if (line.trim() === "") {
                   return <div key={index} className="h-2" />;
                 }
 
@@ -803,7 +803,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           <div className="mt-2 flex flex-wrap gap-2">
             {message.buttons
               .filter(
-                (btn) => !(btn.action === 'contact_support' && !isSignedIn)
+                (btn) => !(btn.action === "contact_support" && !isSignedIn),
               )
               .map((btn) => (
                 <button
@@ -824,9 +824,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   // Emitir eventos globales para ocultar/mostrar el botón de soporte
   useEffect(() => {
     if (isOpen) {
-      window.dispatchEvent(new CustomEvent('student-chat-open'));
+      window.dispatchEvent(new CustomEvent("student-chat-open"));
     } else {
-      window.dispatchEvent(new CustomEvent('student-chat-close'));
+      window.dispatchEvent(new CustomEvent("student-chat-close"));
     }
   }, [isOpen]);
 
@@ -835,7 +835,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       {isAlwaysVisible && (
         <div className="fixed right-6 bottom-6 z-50">
           <button
-            className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+            className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? "minimized" : ""} `}
             onMouseEnter={() => {
               setIsHovered(true);
               show(); // Muestra tour y soporte por 5s
@@ -851,7 +851,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               {/* Icon container */}
               <div className="relative">
                 <MessageCircle
-                  className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                  className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? "scale-110" : ""} `}
                 />
 
                 {/* Animated spark effect */}
@@ -866,7 +866,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               style={{
                 background:
-                  'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                  "conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)",
               }}
             />
 
@@ -911,8 +911,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         <div
           className={`fixed ${
             isDesktop
-              ? 'right-0 bottom-0'
-              : 'inset-0 top-0 right-0 bottom-0 left-0'
+              ? "right-0 bottom-0"
+              : "inset-0 top-0 right-0 bottom-0 left-0"
           }`}
           ref={chatContainerRef}
           style={{ zIndex: 110000 }}
@@ -922,7 +922,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             height={dimensions.height}
             onResize={handleResize}
             minConstraints={
-              isDesktop ? [500, window.innerHeight] : [window.innerWidth, window.innerHeight]
+              isDesktop
+                ? [500, window.innerHeight]
+                : [window.innerWidth, window.innerHeight]
             }
             maxConstraints={[
               isDesktop
@@ -930,12 +932,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 : window.innerWidth,
               isDesktop ? window.innerHeight : window.innerHeight,
             ]}
-            resizeHandles={isDesktop ? ['sw'] : []}
+            resizeHandles={isDesktop ? ["sw"] : []}
             className="chat-resizable"
           >
             <div
               className={`relative flex h-full w-full flex-col overflow-hidden ${
-                isDesktop ? 'rounded-lg border border-gray-200' : ''
+                isDesktop ? "rounded-lg border border-gray-200" : ""
               } bg-white`}
             >
               {/* Logo background */}
@@ -984,7 +986,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                               setChatMode({
                                 idChat: null,
                                 status: showChatList ? true : false,
-                                curso_title: '',
+                                curso_title: "",
                               })
                             }
                           />
@@ -1002,30 +1004,28 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               </div>
 
               {chatMode.status ? (
-                
-                  <ChatMessages
-                    idea={idea}
-                    setIdea={setIdea}
-                    setShowChatList={setShowChatList}
-                    courseId={courseId}
-                    isEnrolled={isEnrolled}
-                    courseTitle={courseTitle}
-                    messages={messages}
-                    setMessages={setMessages}
-                    chatMode={chatMode}
-                    setChatMode={setChatMode}
-                    inputText={inputText}
-                    setInputText={setInputText}
-                    handleSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                    messagesEndRef={
-                      messagesEndRef as React.RefObject<HTMLDivElement>
-                    }
-                    isSignedIn={isSignedIn}
-                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                    renderMessage={renderMessage}
-                  />
-                
+                <ChatMessages
+                  idea={idea}
+                  setIdea={setIdea}
+                  setShowChatList={setShowChatList}
+                  courseId={courseId}
+                  isEnrolled={isEnrolled}
+                  courseTitle={courseTitle}
+                  messages={messages}
+                  setMessages={setMessages}
+                  chatMode={chatMode}
+                  setChatMode={setChatMode}
+                  inputText={inputText}
+                  setInputText={setInputText}
+                  handleSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  messagesEndRef={
+                    messagesEndRef as React.RefObject<HTMLDivElement>
+                  }
+                  isSignedIn={isSignedIn}
+                  inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                  renderMessage={renderMessage}
+                />
               ) : (
                 <ChatList
                   setChatMode={setChatMode}

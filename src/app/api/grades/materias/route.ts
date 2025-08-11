@@ -1,70 +1,70 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { materiaGrades, materias } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { materiaGrades, materias } from "~/server/db/schema";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface MateriaWithGrade {
-	id: number;
-	title: string;
-	grade: number;
-	courseTitle: string;
+  id: number;
+  title: string;
+  grade: number;
+  courseTitle: string;
 }
 
 export async function GET(request: NextRequest) {
-	try {
-		const { searchParams } = new URL(request.url);
-		const userId = searchParams.get('userId');
-		const courseId = searchParams.get('courseId');
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const courseId = searchParams.get("courseId");
 
-		if (!userId || !courseId) {
-			return NextResponse.json(
-				{ error: 'Missing required parameters' },
-				{ status: 400 }
-			);
-		}
+    if (!userId || !courseId) {
+      return NextResponse.json(
+        { error: "Missing required parameters" },
+        { status: 400 },
+      );
+    }
 
-		const materiasGrades = await db
-			.select({
-				materiaId: materiaGrades.materiaId,
-				grade: materiaGrades.grade,
-			})
-			.from(materiaGrades)
-			.where(eq(materiaGrades.userId, userId));
+    const materiasGrades = await db
+      .select({
+        materiaId: materiaGrades.materiaId,
+        grade: materiaGrades.grade,
+      })
+      .from(materiaGrades)
+      .where(eq(materiaGrades.userId, userId));
 
-		const courseMaterias = await db.query.materias.findMany({
-			where: eq(materias.courseid, parseInt(courseId)),
-			with: {
-				curso: {
-					columns: {
-						title: true,
-					},
-				},
-			},
-		});
+    const courseMaterias = await db.query.materias.findMany({
+      where: eq(materias.courseid, parseInt(courseId)),
+      with: {
+        curso: {
+          columns: {
+            title: true,
+          },
+        },
+      },
+    });
 
-		const formattedResults: MateriaWithGrade[] = courseMaterias.map(
-			(materia) => {
-				const gradeRecord = materiasGrades.find(
-					(g) => g.materiaId === materia.id
-				);
-				return {
-					id: materia.id,
-					title: materia.title,
-					grade: Number((gradeRecord?.grade ?? 0).toFixed(2)),
-					courseTitle: materia.curso?.title ?? 'Curso sin nombre',
-				};
-			}
-		);
+    const formattedResults: MateriaWithGrade[] = courseMaterias.map(
+      (materia) => {
+        const gradeRecord = materiasGrades.find(
+          (g) => g.materiaId === materia.id,
+        );
+        return {
+          id: materia.id,
+          title: materia.title,
+          grade: Number((gradeRecord?.grade ?? 0).toFixed(2)),
+          courseTitle: materia.curso?.title ?? "Curso sin nombre",
+        };
+      },
+    );
 
-		return NextResponse.json({ materias: formattedResults });
-	} catch (_error) {
-		return NextResponse.json(
-			{ error: 'Failed to fetch grades' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json({ materias: formattedResults });
+  } catch (_error) {
+    return NextResponse.json(
+      { error: "Failed to fetch grades" },
+      { status: 500 },
+    );
+  }
 }

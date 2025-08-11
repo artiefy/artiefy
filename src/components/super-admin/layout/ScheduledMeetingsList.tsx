@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
+import { ScheduledMeeting } from "../modals/ModalScheduleMeeting";
 
 interface ScheduledMeetingsListProps {
   meetings: (ScheduledMeeting & { videoUrl?: string | null })[];
@@ -19,16 +19,16 @@ export const ScheduledMeetingsList = ({
     return <p className="text-muted text-sm">No hay clases agendadas.</p>;
   }
 
-  const formatter = new Intl.DateTimeFormat('es-CO', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
+  const formatter = new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeStyle: "short",
   });
 
   const groupedMeetings = meetings.reduce<
     Record<string, (ScheduledMeeting & { videoUrl?: string | null })[]>
   >((acc, meeting) => {
-    const rawTitle = meeting.title || 'Sin título';
-    const baseTitle = rawTitle.split('(Clase')[0]?.trim() || 'Sin título';
+    const rawTitle = meeting.title || "Sin título";
+    const baseTitle = rawTitle.split("(Clase")[0]?.trim() || "Sin título";
     if (!acc[baseTitle]) acc[baseTitle] = [];
     acc[baseTitle].push(meeting);
     return acc;
@@ -54,15 +54,15 @@ export const ScheduledMeetingsList = ({
               }
               className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-500"
             >
-              {openGroup === titleBase ? 'Ocultar' : 'Ver más'}
+              {openGroup === titleBase ? "Ocultar" : "Ver más"}
             </button>
           </div>
 
           <div
             className={`grid overflow-hidden transition-all duration-500 ${
               openGroup === titleBase
-                ? 'mt-6 scale-100 grid-cols-1 gap-4 opacity-100'
-                : 'max-h-0 scale-95 opacity-0'
+                ? "mt-6 scale-100 grid-cols-1 gap-4 opacity-100"
+                : "max-h-0 scale-95 opacity-0"
             }`}
           >
             {groupMeetings.map((m, idx) => {
@@ -87,8 +87,8 @@ export const ScheduledMeetingsList = ({
 
                   {isValidStart && isValidEnd ? (
                     <p className="mb-2 text-sm text-gray-300">
-                      🕒 {formatter.format(start)} →{' '}
-                      {end.toLocaleTimeString('es-CO')}
+                      🕒 {formatter.format(start)} →{" "}
+                      {end.toLocaleTimeString("es-CO")}
                     </p>
                   ) : (
                     <p className="mb-2 text-sm text-red-400">

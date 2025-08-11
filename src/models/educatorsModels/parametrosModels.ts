@@ -1,11 +1,11 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from "drizzle-orm";
 
-import { db } from '~/server/db/index';
+import { db } from "~/server/db/index";
 import {
   activities,
   parametros,
   userActivitiesProgress,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
 export interface Parametros {
   id: number;
@@ -43,7 +43,7 @@ export async function getParametros() {
 
 // Obtener parámetros por ID de curso
 export async function getParametrosByCourseId(
-  courseId: number
+  courseId: number,
 ): Promise<Parametros[]> {
   try {
     const result: Parametros[] = await db
@@ -52,8 +52,8 @@ export async function getParametrosByCourseId(
       .where(eq(parametros.courseId, courseId));
     return result;
   } catch (error) {
-    console.error('Error al obtener los parámetros:', error);
-    throw new Error('Error al obtener los parámetros');
+    console.error("Error al obtener los parámetros:", error);
+    throw new Error("Error al obtener los parámetros");
   }
 }
 
@@ -87,7 +87,7 @@ export const updateParametro = async ({
       .where(eq(parametros.id, id));
     return parametroActualizado;
   } catch (error) {
-    console.error('Error al actualizar el parámetro:', error);
+    console.error("Error al actualizar el parámetro:", error);
     throw error;
   }
 };
@@ -112,7 +112,7 @@ export const deleteParametroByCourseId = async (courseId: number) => {
     console.log(`[2] 📋 Parámetros encontrados:`, ids);
 
     if (ids.length === 0) {
-      console.log('[3] ⚠️ No hay parámetros que eliminar.');
+      console.log("[3] ⚠️ No hay parámetros que eliminar.");
       return;
     }
 
@@ -127,43 +127,43 @@ export const deleteParametroByCourseId = async (courseId: number) => {
 
     // Borrar userActivitiesProgress si hay actividades relacionadas
     if (actIds.length > 0) {
-      console.log('[5] 🧽 Borrando user_activities_progress...');
+      console.log("[5] 🧽 Borrando user_activities_progress...");
       await db
         .delete(userActivitiesProgress)
         .where(inArray(userActivitiesProgress.activityId, actIds));
     }
 
     // Borrar actividades
-    console.log('[6] 🧨 Borrando actividades...');
+    console.log("[6] 🧨 Borrando actividades...");
     await db.delete(activities).where(inArray(activities.parametroId, ids));
 
     if (Array.isArray(ids) && ids.length > 0) {
-      console.log('[7] 🧮 Borrando parameter_grades...');
-      console.log('[7-debug] ids a eliminar:', ids);
+      console.log("[7] 🧮 Borrando parameter_grades...");
+      console.log("[7-debug] ids a eliminar:", ids);
 
       if (ids.length > 0) {
-        console.log('[7-debug] ids a eliminar:', ids);
+        console.log("[7-debug] ids a eliminar:", ids);
 
         const rawIds = sql.join(
           ids.map((id) => sql.raw(String(id))),
-          sql.raw(', ')
+          sql.raw(", "),
         );
 
         await db.execute(
-          sql`DELETE FROM parameter_grades WHERE parameter_id IN (${rawIds})`
+          sql`DELETE FROM parameter_grades WHERE parameter_id IN (${rawIds})`,
         );
       }
     } else {
-      console.log('[7] ⚠️ No hay parámetros para eliminar en parameter_grades');
+      console.log("[7] ⚠️ No hay parámetros para eliminar en parameter_grades");
     }
 
     // Finalmente, borrar parámetros
-    console.log('[8] 🗑️ Borrando parámetros...');
+    console.log("[8] 🗑️ Borrando parámetros...");
     await db.delete(parametros).where(eq(parametros.courseId, courseId));
 
-    console.log('[9] ✅ Eliminación exitosa para courseId:', courseId);
+    console.log("[9] ✅ Eliminación exitosa para courseId:", courseId);
   } catch (error) {
-    console.error('❌ Error al eliminar parámetros y dependencias:\n', error);
+    console.error("❌ Error al eliminar parámetros y dependencias:\n", error);
     throw error;
   }
 };

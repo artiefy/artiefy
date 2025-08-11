@@ -1,13 +1,13 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql } from "drizzle-orm";
 
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import {
   activities,
   materias,
   userActivitiesProgress,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
 interface UpdateGradesRequest {
   courseId: number;
@@ -16,7 +16,7 @@ interface UpdateGradesRequest {
   finalGrade: number;
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,10 +111,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating grades:', error);
+    console.error("Error updating grades:", error);
     return NextResponse.json(
-      { success: false, error: 'Error updating grades' },
-      { status: 500 }
+      { success: false, error: "Error updating grades" },
+      { status: 500 },
     );
   }
 }

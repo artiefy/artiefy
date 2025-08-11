@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Button } from '~/components/educators/ui/button';
+import { Button } from "~/components/educators/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '~/components/educators/ui/dialog';
+} from "~/components/educators/ui/dialog";
 
 interface ModalScheduleMeetingProps {
   isOpen: boolean;
@@ -34,9 +34,9 @@ export const ModalScheduleMeeting = ({
   onMeetingsCreated,
   courseId,
 }: ModalScheduleMeetingProps) => {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [duration, setDuration] = useState(60);
   const [repeatCount, setRepeatCount] = useState(1);
 
@@ -44,10 +44,10 @@ export const ModalScheduleMeeting = ({
     try {
       const startDateTime = `${date}T${time}`; // string local sin Z
 
-      const res = await fetch('/api/super-admin/teams', {
-        method: 'POST',
+      const res = await fetch("/api/super-admin/teams", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           courseId,
@@ -59,7 +59,7 @@ export const ModalScheduleMeeting = ({
       });
 
       if (!res.ok) {
-        throw new Error('No se pudieron crear las clases');
+        throw new Error("No se pudieron crear las clases");
       }
 
       const data = (await res.json()) as { meetings: ScheduledMeeting[] };
@@ -67,8 +67,8 @@ export const ModalScheduleMeeting = ({
 
       onClose();
     } catch (error) {
-      console.error('Error al crear clases:', error);
-      alert('Ocurrió un error al crear las clases.');
+      console.error("Error al crear clases:", error);
+      alert("Ocurrió un error al crear las clases.");
     }
   };
 

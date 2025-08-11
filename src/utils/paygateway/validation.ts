@@ -7,7 +7,7 @@ interface ValidationErrors {
 export function validateFormData(
   telephone: string,
   termsAndConditions: boolean,
-  privacyPolicy: boolean
+  privacyPolicy: boolean,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -15,13 +15,13 @@ export function validateFormData(
   const phonePattern = /^\+\d{1,3}\d{10}$/;
 
   if (!phonePattern.test(telephone)) {
-    errors.telephone = 'Formato de teléfono inválido. Debe ser +573000000000';
+    errors.telephone = "Formato de teléfono inválido. Debe ser +573000000000";
   }
   if (!termsAndConditions || !privacyPolicy) {
     errors.termsAndConditions =
-      'Debe aceptar los términos y condiciones y la política de privacidad';
+      "Debe aceptar los términos y condiciones y la política de privacidad";
     errors.privacyPolicy =
-      'Debe aceptar los términos y condiciones y la política de privacidad';
+      "Debe aceptar los términos y condiciones y la política de privacidad";
   }
 
   return errors;

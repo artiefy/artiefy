@@ -1,14 +1,13 @@
-import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
+import ResponsiveSidebar from "~/components/eduAndAdmiMenu";
 
 export default function DashboardLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-
-	return (
-		<section>
-			<ResponsiveSidebar>{children}</ResponsiveSidebar>
-		</section>
-	);
+  return (
+    <section>
+      <ResponsiveSidebar>{children}</ResponsiveSidebar>
+    </section>
+  );
 }

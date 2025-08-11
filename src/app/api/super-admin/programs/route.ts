@@ -1,26 +1,26 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
-import { z } from 'zod';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { z } from "zod";
 
 import {
   createProgram,
   updateProgram,
-} from '~/models/super-adminModels/programModelsSuperAdmin';
-import { db } from '~/server/db';
-import { materias, users } from '~/server/db/schema';
+} from "~/models/super-adminModels/programModelsSuperAdmin";
+import { db } from "~/server/db";
+import { materias, users } from "~/server/db/schema";
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = (await auth()) as { userId: string | null };
-    console.log('✅ Usuario autenticado:', userId);
-    console.log('📌 Recibiendo solicitud POST...');
+    console.log("✅ Usuario autenticado:", userId);
+    console.log("📌 Recibiendo solicitud POST...");
     if (!userId) {
-      console.error('❌ Error: Usuario no autenticado.');
+      console.error("❌ Error: Usuario no autenticado.");
       return NextResponse.json(
-        { error: 'Usuario no autenticado.' },
-        { status: 401 }
+        { error: "Usuario no autenticado." },
+        { status: 401 },
       );
     }
 
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
       const clerkUser = await clerk.users.getUser(userId);
       await db.insert(users).values({
         id: userId,
-        role: 'super-admin',
-        name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
-        email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+        role: "super-admin",
+        name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim(),
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -64,15 +64,15 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!title || !description || !categoryid) {
-      console.error('❌ Error: Campos requeridos faltantes.');
+      console.error("❌ Error: Campos requeridos faltantes.");
       return NextResponse.json(
-        { error: 'Faltan campos requeridos: title, description, categoryid.' },
-        { status: 400 }
+        { error: "Faltan campos requeridos: title, description, categoryid." },
+        { status: 400 },
       );
     }
 
     // Crear el programa en la base de datos
-    console.log('📤 Insertando programa en la base de datos...');
+    console.log("📤 Insertando programa en la base de datos...");
     const newProgram = await createProgram({
       title,
       description,
@@ -81,24 +81,24 @@ export async function POST(req: NextRequest) {
       rating: rating ? Number(rating) : null,
       creatorId: userId,
     });
-    console.log('✅ Programa insertado con ID:', newProgram.id);
+    console.log("✅ Programa insertado con ID:", newProgram.id);
 
     // Obtener las materias seleccionadas del cuerpo de la solicitud
     // 📌 Extraer subjectIds del request
 
     if (
       !Array.isArray(subjectIds) ||
-      subjectIds.some((id) => typeof id !== 'number')
+      subjectIds.some((id) => typeof id !== "number")
     ) {
-      console.error('❌ Error: subjectIds no es un array válido de números');
+      console.error("❌ Error: subjectIds no es un array válido de números");
       return NextResponse.json(
-        { error: 'subjectIds debe ser un array de números.' },
-        { status: 400 }
+        { error: "subjectIds debe ser un array de números." },
+        { status: 400 },
       );
     }
     // 📌 Validar y actualizar materias
     if (subjectIds.length > 0) {
-      console.log('📌 Actualizando materias:', subjectIds);
+      console.log("📌 Actualizando materias:", subjectIds);
 
       // Validar que las materias existan antes de actualizar
       const existingMaterias = await db
@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
 
       if (existingMaterias.length === 0) {
         return NextResponse.json(
-          { error: 'No existen materias con los IDs proporcionados' },
-          { status: 400 }
+          { error: "No existen materias con los IDs proporcionados" },
+          { status: 400 },
         );
       }
 
@@ -135,8 +135,8 @@ export async function POST(req: NextRequest) {
                 eq(materias.title, materia.title),
                 isNotNull(materias.courseid),
                 isNotNull(materias.programaId),
-                ne(materias.programaId, newProgram.id)
-              )
+                ne(materias.programaId, newProgram.id),
+              ),
             );
 
           if (materiasConCurso.length > 0) {
@@ -178,16 +178,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log('✅ Materias asignadas al programa:', subjectIds);
+    console.log("✅ Materias asignadas al programa:", subjectIds);
 
-    console.log('✅ Programa insertado:', newProgram);
+    console.log("✅ Programa insertado:", newProgram);
     return NextResponse.json(newProgram, { status: 201 });
   } catch (error) {
     const errorMessage = (error as Error).message;
-    console.error('❌ Error al crear el programa:', errorMessage);
+    console.error("❌ Error al crear el programa:", errorMessage);
     return NextResponse.json(
-      { error: 'Error al crear el programa', details: errorMessage },
-      { status: 500 }
+      { error: "Error al crear el programa", details: errorMessage },
+      { status: 500 },
     );
   }
 }
@@ -197,8 +197,8 @@ export async function PUT(req: NextRequest) {
     const { userId } = (await auth()) as { userId: string | null };
     if (!userId) {
       return NextResponse.json(
-        { error: 'Usuario no autenticado.' },
-        { status: 401 }
+        { error: "Usuario no autenticado." },
+        { status: 401 },
       );
     }
 
@@ -213,9 +213,9 @@ export async function PUT(req: NextRequest) {
       const clerkUser = await clerk.users.getUser(userId);
       await db.insert(users).values({
         id: userId,
-        role: 'super-admin',
-        name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
-        email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+        role: "super-admin",
+        name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim(),
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -223,12 +223,12 @@ export async function PUT(req: NextRequest) {
 
     // Get programId from query params
     const { searchParams } = new URL(req.url);
-    const programId = searchParams.get('programId');
+    const programId = searchParams.get("programId");
 
     if (!programId) {
       return NextResponse.json(
-        { error: 'ID de programa requerido' },
-        { status: 400 }
+        { error: "ID de programa requerido" },
+        { status: 400 },
       );
     }
 
@@ -273,7 +273,7 @@ export async function PUT(req: NextRequest) {
 
       // Filter out subjects that are already associated
       const newSubjectIds = subjectIds.filter(
-        (id) => !existingSubjectIds.includes(id)
+        (id) => !existingSubjectIds.includes(id),
       );
 
       // Process only new subjects
@@ -304,8 +304,8 @@ export async function PUT(req: NextRequest) {
                 eq(materias.title, materia.title),
                 isNotNull(materias.courseid),
                 isNotNull(materias.programaId),
-                ne(materias.programaId, Number(updatedProgram.id))
-              )
+                ne(materias.programaId, Number(updatedProgram.id)),
+              ),
             );
 
           if (materiasConCurso.length > 0) {
@@ -338,10 +338,10 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(updatedProgram);
   } catch (error) {
-    console.error('Error al actualizar el programa:', error);
+    console.error("Error al actualizar el programa:", error);
     return NextResponse.json(
-      { error: 'Error al actualizar el programa' },
-      { status: 500 }
+      { error: "Error al actualizar el programa" },
+      { status: 500 },
     );
   }
 }
@@ -349,12 +349,12 @@ export async function PUT(req: NextRequest) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const programId = searchParams.get('programId'); // Obtener el programId de los parámetros
+    const programId = searchParams.get("programId"); // Obtener el programId de los parámetros
 
     if (!programId) {
       return NextResponse.json(
-        { error: 'El programId es obligatorio' },
-        { status: 400 }
+        { error: "El programId es obligatorio" },
+        { status: 400 },
       );
     }
 
@@ -366,9 +366,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json(filteredMaterias);
   } catch (error) {
-    console.error('❌ Error fetching subjects:', error);
+    console.error("❌ Error fetching subjects:", error);
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

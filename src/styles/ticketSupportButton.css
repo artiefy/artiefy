@@ -1,250 +1,262 @@
 .ticket-button {
-	position: fixed;
-	bottom: 140px;
-	right: 20px;
-	width: 50px; /* Círculo exterior más pequeño */
-	height: 50px; /* Círculo exterior más pequeño */
-	border-radius: 50%;
-	background: #3b82f6;
-	color: white;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	transition: all 0.3s;
-	z-index: 1000;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	border: 2px solid #60a5fa;
+  position: fixed;
+  bottom: 140px;
+  right: 20px;
+  width: 50px; /* Círculo exterior más pequeño */
+  height: 50px; /* Círculo exterior más pequeño */
+  border-radius: 50%;
+  background: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #60a5fa;
 }
 
 /* Update tooltip styles */
 .ticket-button::before {
-	content: 'Soporte Artiefy';
-	position: absolute;
-	top: 50%;
-	right: calc(100% + 10px); /* Position to the left of the button */
-	transform: translateY(-50%); /* Center vertically */
-	background: white;
-	color: black;
-	padding: 4px 8px; /* Reduced padding */
-	border-radius: 4px;
-	font-size: 12px; /* Smaller font size */
-	white-space: nowrap;
-	opacity: 0;
-	visibility: hidden;
-	transition: all 0.3s ease;
+  content: "Soporte Artiefy";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px); /* Position to the left of the button */
+  transform: translateY(-50%); /* Center vertically */
+  background: white;
+  color: black;
+  padding: 4px 8px; /* Reduced padding */
+  border-radius: 4px;
+  font-size: 12px; /* Smaller font size */
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
 }
 
 /* Update arrow position for left side */
 .ticket-button::after {
-	content: '';
-	position: absolute;
-	top: 50%;
-	right: calc(100% + 2px);
-	transform: translateY(-50%) rotate(-90deg); /* Rotate arrow to point right */
-	border: 4px solid transparent; /* Smaller arrow */
-	border-top-color: rgba(0, 0, 0, 0.8);
-	opacity: 0;
-	visibility: hidden;
-	transition: all 0.3s ease;
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 2px);
+  transform: translateY(-50%) rotate(-90deg); /* Rotate arrow to point right */
+  border: 4px solid transparent; /* Smaller arrow */
+  border-top-color: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
 }
 
 /* Show tooltip on hover */
 .ticket-button:hover::before,
 .ticket-button:hover::after {
-	opacity: 1;
-	visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 .ticket-button__icon {
-	font-size: 35px; /* Icono más grande */
-	color: white;
-	transition: transform 0.3s;
+  font-size: 35px; /* Icono más grande */
+  color: white;
+  transition: transform 0.3s;
 }
 
 .ticket-button:hover {
-	background: #2563eb;
-	transform: scale(1.05);
+  background: #2563eb;
+  transform: scale(1.05);
 }
 
 .ticket-button:hover .ticket-button__icon {
-	transform: rotate(360deg);
+  transform: rotate(360deg);
 }
 
 /* Chat container styles */
 .chat-support-container {
-	position: fixed;
-	bottom: 160px; /* Ajustado de 200px a 160px para bajar más el chatbot */
-	right: 80px; /* Movido más a la izquierda */
-	z-index: 1000;
-	width: 400px;
-	height: 500px;
+  position: fixed;
+  bottom: 160px; /* Ajustado de 200px a 160px para bajar más el chatbot */
+  right: 80px; /* Movido más a la izquierda */
+  z-index: 1000;
+  width: 400px;
+  height: 500px;
 }
 
 .support-chat {
-	background: white;
-	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .support-chat-header {
-	padding: 1rem;
-	border-bottom: 1px solid #e5e7eb;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	background: white;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
 }
 
 .support-chat-messages {
-	flex: 1;
-	overflow-y: auto;
-	padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
 }
 
 .support-chat-input {
-	padding: 1rem 1.2rem; /* Aumentado el padding horizontal */
-	border-top: 1px solid #e5e7eb;
-	display: flex;
-	gap: 0.5rem;
-	background: white;
-	align-items: center;
+  padding: 1rem 1.2rem; /* Aumentado el padding horizontal */
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  align-items: center;
 }
 
 .support-chat-input input {
-	width: calc(90% - 70px); /* Ajustado para dar más espacio al botón */
+  width: calc(90% - 70px); /* Ajustado para dar más espacio al botón */
 }
 
 .support-chat-input button {
-	min-width: 70px; /* Ancho mínimo para el botón */
-	padding: 0.5rem 1rem; /* Padding aumentado */
+  min-width: 70px; /* Ancho mínimo para el botón */
+  padding: 0.5rem 1rem; /* Padding aumentado */
 }
 
 .close-button {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	padding: 8px;
-	background: transparent;
-	border: none;
-	border-radius: 50%;
-	cursor: pointer;
-	transition: background-color 0.2s;
-	z-index: 10;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  z-index: 10;
 }
 
 .close-button:hover {
-	background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Loading dots animation */
 .loading-dot {
-	width: 8px;
-	height: 8px;
-	background: #3b82f6;
-	border-radius: 50%;
-	display: inline-block;
-	margin: 0 2px;
-	animation: bounce 0.5s ease-in-out infinite;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+  animation: bounce 0.5s ease-in-out infinite;
 }
 
 .loading-dot:nth-child(2) {
-	animation-delay: 0.1s;
+  animation-delay: 0.1s;
 }
 
 .loading-dot:nth-child(3) {
-	animation-delay: 0.2s;
+  animation-delay: 0.2s;
 }
 
 @keyframes bounce {
-	0%,
-	100% {
-		transform: translateY(0);
-	}
-	50% {
-		transform: translateY(-5px);
-	}
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* Zoom out effect */
 .ticket-button.clicked {
-	animation: zoomOutEffect 0.3s ease forwards;
+  animation: zoomOutEffect 0.3s ease forwards;
 }
 
 @keyframes zoomOutEffect {
-	0% {
-		transform: scale(1);
-	}
-	50% {
-		transform: scale(0.8);
-	}
-	100% {
-		transform: scale(1);
-	}
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Responsive styles */
 @media (max-width: 767px) {
-	.ticket-button {
-		width: 40px;
-		height: 40px;
-		right: 90px;
-		bottom: 15px;
-	}
+  .ticket-button {
+    width: 40px;
+    height: 40px;
+    right: 90px;
+    bottom: 15px;
+  }
 
-	.ticket-button__icon {
-		font-size: 22px;
-	}
+  .ticket-button__icon {
+    font-size: 22px;
+  }
 
-	.chat-support-container {
-		position: fixed;
-		width: 90%;
-		height: 400px; /* Altura fija más pequeña */
-		max-height: 80vh; /* Límite máximo relativo a la ventana */
-		bottom: 70px;
-		right: 10px;
-		margin: 0;
-		transform-origin: bottom right;
-	}
+  .chat-support-container {
+    position: fixed;
+    width: 90%;
+    height: 400px; /* Altura fija más pequeña */
+    max-height: 80vh; /* Límite máximo relativo a la ventana */
+    bottom: 70px;
+    right: 10px;
+    margin: 0;
+    transform-origin: bottom right;
+  }
 
-	.support-chat {
-		font-size: 13px;
-		height: 100%;
-		max-height: 100%;
-		display: flex;
-		flex-direction: column;
-	}
+  .support-chat {
+    font-size: 13px;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 
-	.support-chat-header {
-		padding: 0.5rem;
-		min-height: 40px;
-		flex-shrink: 0;
-	}
+  .support-chat-header {
+    padding: 0.5rem;
+    min-height: 40px;
+    flex-shrink: 0;
+  }
 
-	.support-chat-messages {
-		padding: 0.5rem;
-		flex: 1;
-		overflow-y: auto;
-		min-height: 0; /* Importante para permitir que flex funcione correctamente */
-	}
+  .support-chat-messages {
+    padding: 0.5rem;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* Importante para permitir que flex funcione correctamente */
+  }
 
-	.support-chat-input {
-		padding: 0.5rem;
-		min-height: 40px;
-		flex-shrink: 0;
-	}
+  .support-chat-input {
+    padding: 0.5rem;
+    min-height: 40px;
+    flex-shrink: 0;
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px);}
-  to   { opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @keyframes fadeOutDown {
-  from { opacity: 1; transform: translateY(0);}
-  to   { opacity: 0; transform: translateY(40px);}
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(40px);
+  }
 }

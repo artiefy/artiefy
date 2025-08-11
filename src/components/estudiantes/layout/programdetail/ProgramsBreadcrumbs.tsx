@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { FaHome, FaUserGraduate } from 'react-icons/fa';
+import { FaHome, FaUserGraduate } from "react-icons/fa";
 
 import {
   Breadcrumb,
@@ -9,7 +9,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '~/components/estudiantes/ui/breadcrumb';
+} from "~/components/estudiantes/ui/breadcrumb";
 
 interface ProgramsBreadcrumbsProps {
   title: string;

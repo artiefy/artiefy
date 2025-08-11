@@ -1,20 +1,20 @@
 // src/app/api/super-admin/enroll_user_program/programsUser/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { enrollmentPrograms, programas } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { enrollmentPrograms, programas } from "~/server/db/schema";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const userId = url.searchParams.get('userId');
+    const userId = url.searchParams.get("userId");
     if (!userId) {
       return NextResponse.json(
-        { error: 'Falta userId en la query string' },
-        { status: 400 }
+        { error: "Falta userId en la query string" },
+        { status: 400 },
       );
     }
 
@@ -33,15 +33,15 @@ export async function GET(req: Request) {
 
     // eliminamos duplicados por id de programa
     const uniquePrograms = Array.from(
-      new Map(rows.map((r) => [r.id, r])).values()
+      new Map(rows.map((r) => [r.id, r])).values(),
     );
 
     return NextResponse.json({ programs: uniquePrograms });
   } catch (err) {
-    console.error('Error al cargar programas de usuario:', err);
+    console.error("Error al cargar programas de usuario:", err);
     return NextResponse.json(
-      { error: 'Error interno al cargar programas' },
-      { status: 500 }
+      { error: "Error interno al cargar programas" },
+      { status: 500 },
     );
   }
 }

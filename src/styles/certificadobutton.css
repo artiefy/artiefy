@@ -30,7 +30,7 @@
 
 .certificacion::before {
   position: absolute;
-  content: '';
+  content: "";
   color: #ffd277;
   display: flex;
   align-items: center;

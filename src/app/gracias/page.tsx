@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Script from 'next/script';
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import Script from "next/script";
 
-import '~/styles/confetti.css';
+import "~/styles/confetti.css";
 
 export default function GraciasPage() {
   const router = useRouter();
@@ -15,22 +15,22 @@ export default function GraciasPage() {
 
   // Solo permitir acceso si viene de PayU (from=payu)
   useEffect(() => {
-    if (searchParams.get('from') === 'payu') {
+    if (searchParams.get("from") === "payu") {
       setShowModal(true);
     } else {
-      router.replace('/'); // Redirigir si no viene de PayU
+      router.replace("/"); // Redirigir si no viene de PayU
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const type = searchParams.get('type');
-  const courseId = searchParams.get('courseId');
+  const type = searchParams.get("type");
+  const courseId = searchParams.get("courseId");
 
   const handleContinue = () => {
-    if (type === 'curso' && courseId) {
+    if (type === "curso" && courseId) {
       router.replace(`/estudiantes/cursos/${courseId}`);
     } else {
-      router.replace('/estudiantes');
+      router.replace("/estudiantes");
     }
   };
 
@@ -58,7 +58,7 @@ export default function GraciasPage() {
         <img
           height="1"
           width="1"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           src="https://www.facebook.com/tr?id=967037655459857&ev=Purchase&noscript=1"
           alt=""
         />
@@ -72,7 +72,7 @@ export default function GraciasPage() {
           quality={100}
           sizes="100vw"
           style={{
-            objectFit: 'cover',
+            objectFit: "cover",
             zIndex: 0,
           }}
           priority
@@ -91,14 +91,14 @@ export default function GraciasPage() {
             width={130}
             height={130}
             className="mb-6 drop-shadow-lg"
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
             priority
           />
           <h2 className="mb-4 text-center text-3xl font-extrabold tracking-tight text-[#0A2540] drop-shadow-sm">
             ¡Muchas gracias por tu compra!
           </h2>
           <p className="mb-2 text-center text-xl font-semibold tracking-wide text-[#00A5C0]">
-            Bienvenido a{' '}
+            Bienvenido a{" "}
             <span className="font-bold text-[#0A2540]">Artiefy</span>
             <br />
             <span className="text-lg font-medium text-[#1B3A4B]">

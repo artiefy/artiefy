@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
-import { useUser } from '@clerk/nextjs';
-import { Bell, BellRing } from 'lucide-react';
-import { toast } from 'react-toastify';
-import useSWR from 'swr';
+import { useUser } from "@clerk/nextjs";
+import { Bell, BellRing } from "lucide-react";
+import { toast } from "react-toastify";
+import useSWR from "swr";
 
-import { Dialog } from '~/components/estudiantes/ui/dialog';
+import { Dialog } from "~/components/estudiantes/ui/dialog";
 import {
   getNotifications,
   getUnreadCount,
-} from '~/server/actions/estudiantes/notifications/getNotifications';
-import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
+} from "~/server/actions/estudiantes/notifications/getNotifications";
+import { markNotificationsAsRead } from "~/server/actions/estudiantes/notifications/markNotificationsAsRead";
 
-import type { Notification } from '~/types';
+import type { Notification } from "~/types";
 
-import '~/styles/menuNotification.css';
+import "~/styles/menuNotification.css";
 
 function formatRelativeTime(date: Date) {
   const now = new Date();
@@ -28,11 +28,11 @@ function formatRelativeTime(date: Date) {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (days > 0) return `Hace ${days} ${days === 1 ? 'día' : 'días'}`;
-  if (hours > 0) return `Hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+  if (days > 0) return `Hace ${days} ${days === 1 ? "día" : "días"}`;
+  if (hours > 0) return `Hace ${hours} ${hours === 1 ? "hora" : "horas"}`;
   if (minutes > 0)
-    return `Hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
-  return 'Hace un momento';
+    return `Hace ${minutes} ${minutes === 1 ? "minuto" : "minutos"}`;
+  return "Hace un momento";
 }
 
 export function NotificationHeader() {
@@ -46,15 +46,15 @@ export function NotificationHeader() {
   // SWR para notificaciones y contador de no leídas (actualiza cada 10s)
   // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
   const { data: notifications = [], mutate } = useSWR(
-    user?.id ? ['/api/notifications', user.id] : null,
+    user?.id ? ["/api/notifications", user.id] : null,
     async () =>
       user?.id ? await getNotifications(user.id, { limit: 1000 }) : [], // <-- trae todas
-    { refreshInterval: 10000 }
+    { refreshInterval: 10000 },
   );
   const { data: unreadCount = 0, mutate: mutateUnread } = useSWR(
-    user?.id ? ['/api/notifications/unread', user.id] : null,
+    user?.id ? ["/api/notifications/unread", user.id] : null,
     async () => (user?.id ? await getUnreadCount(user.id) : 0),
-    { refreshInterval: 10000 }
+    { refreshInterval: 10000 },
   );
 
   useEffect(() => {
@@ -64,13 +64,13 @@ export function NotificationHeader() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.notification-menu')) {
+      if (!target.closest(".notification-menu")) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Optimizado: marca solo las notificaciones no leídas como leídas al abrir el menú
@@ -84,7 +84,7 @@ export function NotificationHeader() {
         mutate();
         mutateUnread();
       } catch (error) {
-        console.error('Error marking notifications as read:', error);
+        console.error("Error marking notifications as read:", error);
       }
     }
 
@@ -98,45 +98,45 @@ export function NotificationHeader() {
     setIsOpen(false);
 
     switch (notification.type) {
-      case 'LESSON_UNLOCKED':
+      case "LESSON_UNLOCKED":
         if (notification.metadata?.lessonId) {
           void router.push(
-            `/estudiantes/clases/${notification.metadata.lessonId}`
+            `/estudiantes/clases/${notification.metadata.lessonId}`,
           );
         }
         break;
-      case 'COURSE_ENROLLMENT':
-      case 'NEW_COURSE_ADDED':
+      case "COURSE_ENROLLMENT":
+      case "NEW_COURSE_ADDED":
         if (notification.metadata?.courseId) {
           void router.push(
-            `/estudiantes/cursos/${notification.metadata.courseId}`
+            `/estudiantes/cursos/${notification.metadata.courseId}`,
           );
         }
         break;
-      case 'PROGRAM_ENROLLMENT':
+      case "PROGRAM_ENROLLMENT":
         if (notification.metadata?.programId) {
           void router.push(
-            `/estudiantes/programas/${notification.metadata.programId}`
+            `/estudiantes/programas/${notification.metadata.programId}`,
           );
         }
         break;
-      case 'ACTIVITY_COMPLETED':
+      case "ACTIVITY_COMPLETED":
         // Si hay lessonId y activityId, navega a la clase y abre el modal de la actividad tipo documento
         if (
           notification.metadata?.lessonId &&
           notification.metadata?.activityId
         ) {
           void router.push(
-            `/estudiantes/clases/${notification.metadata.lessonId}?activityId=${notification.metadata.activityId}`
+            `/estudiantes/clases/${notification.metadata.lessonId}?activityId=${notification.metadata.activityId}`,
           );
         } else if (notification.metadata?.lessonId) {
           void router.push(
-            `/estudiantes/clases/${notification.metadata.lessonId}`
+            `/estudiantes/clases/${notification.metadata.lessonId}`,
           );
         }
         break;
       default:
-        console.log('Tipo de notificación no manejado:', notification.type);
+        console.log("Tipo de notificación no manejado:", notification.type);
     }
   };
 
@@ -146,8 +146,8 @@ export function NotificationHeader() {
       const res = await fetch(
         `/api/notifications/delete?id=${notificationId}`,
         {
-          method: 'DELETE',
-        }
+          method: "DELETE",
+        },
       );
       // Tipa la respuesta para evitar el warning de acceso inseguro
       interface DeleteResponse {
@@ -159,11 +159,11 @@ export function NotificationHeader() {
         mutateUnread(); // Refresca el contador de no leídas
         setDeleteId(null);
       } else {
-        toast.error('No se pudo eliminar la notificación de la base de datos');
+        toast.error("No se pudo eliminar la notificación de la base de datos");
       }
     } catch (error) {
-      console.error('Error eliminando notificación:', error);
-      toast.error('Error eliminando notificación');
+      console.error("Error eliminando notificación:", error);
+      toast.error("Error eliminando notificación");
     } finally {
       setIsDeleting(false);
     }
@@ -176,12 +176,12 @@ export function NotificationHeader() {
         (n) =>
           n.type === notif.type &&
           n.metadata?.activityId === notif.metadata?.activityId &&
-          n.metadata?.lessonId === notif.metadata?.lessonId
+          n.metadata?.lessonId === notif.metadata?.lessonId,
       );
       if (!isDuplicate) acc.push(notif);
       return acc;
     },
-    []
+    [],
   );
 
   // Modal de confirmación para eliminar notificación
@@ -190,7 +190,7 @@ export function NotificationHeader() {
     <div className="notification-menu">
       <button
         className={`group md:hover:bg-primary notification-button relative ml-2 rounded-full p-2 transition-colors hover:bg-gray-800 ${
-          isAnimating ? 'active' : ''
+          isAnimating ? "active" : ""
         }`}
         type="button"
         aria-label="Notificaciones"
@@ -212,10 +212,10 @@ export function NotificationHeader() {
       </button>
 
       <div
-        className={`notification-options ${isOpen ? 'show' : ''}`}
+        className={`notification-options ${isOpen ? "show" : ""}`}
         style={{
-          maxHeight: '350px',
-          overflowY: 'auto',
+          maxHeight: "350px",
+          overflowY: "auto",
         }}
       >
         {uniqueNotifications.length > 0 ? (
@@ -223,24 +223,24 @@ export function NotificationHeader() {
             <div
               key={notification.id}
               className={`notification-item group ${
-                !notification.isRead ? 'notification-unread' : ''
+                !notification.isRead ? "notification-unread" : ""
               }`}
               onClick={() => handleNotificationClick(notification)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   handleNotificationClick(notification);
                 }
               }}
-              style={{ position: 'relative' }}
+              style={{ position: "relative" }}
             >
               <div className="notification-content">
                 <div className="notification-title">
-                  {notification.title.replace('lección', 'clase')}
+                  {notification.title.replace("lección", "clase")}
                 </div>
                 <div className="notification-description">
-                  {notification.message.replace('lección', 'clase')}
+                  {notification.message.replace("lección", "clase")}
                 </div>
                 <div className="notification-time">
                   {formatRelativeTime(notification.createdAt)}
@@ -307,7 +307,7 @@ export function NotificationHeader() {
                   disabled={isDeleting}
                   type="button"
                 >
-                  {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                  {isDeleting ? "Eliminando..." : "Eliminar"}
                 </button>
               </div>
             </div>

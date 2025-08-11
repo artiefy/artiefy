@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 
-import { ChevronRightIcon } from '@heroicons/react/24/solid';
-import { SquarePlay } from 'lucide-react';
-import { FaBook, FaHome, FaUserGraduate } from 'react-icons/fa';
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { SquarePlay } from "lucide-react";
+import { FaBook, FaHome, FaUserGraduate } from "react-icons/fa";
 
 interface LessonBreadcrumbsProps {
   courseTitle: string;
@@ -48,7 +48,7 @@ const LessonBreadcrumbs = ({
             className="hover:text-primary flex items-center break-words whitespace-normal hover:underline focus:ring-0 focus:outline-none"
             title={courseTitle}
           >
-            <FaBook className="mr-1" />{' '}
+            <FaBook className="mr-1" />{" "}
             <span
               className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
               title={courseTitle}
@@ -64,7 +64,7 @@ const LessonBreadcrumbs = ({
           className="text-primary mb-2 flex items-center pr-2 font-bold sm:mb-0"
           title={lessonTitle}
         >
-          <SquarePlay className="mr-1 size-5" />{' '}
+          <SquarePlay className="mr-1 size-5" />{" "}
           <span
             className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
             title={lessonTitle}

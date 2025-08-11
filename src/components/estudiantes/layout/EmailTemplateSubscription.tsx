@@ -59,13 +59,13 @@ export function EmailTemplateSubscription({
                 alt="Artiefy Logo"
                 style="width:60px;height:auto;max-width:100%;display:block;margin:0 auto 32px auto;"
               />
-              <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
+              <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ""}!</h1>
               <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">
                 Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.
               </p>
               <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">
                 ${
-                  timeLeft === 'hoy'
+                  timeLeft === "hoy"
                     ? '<span style="color:#3B82F6;font-weight:600;">¡Hoy es el último día!</span>'
                     : `Quedan <span style='color:#3B82F6;font-weight:600;'>${timeLeft}</span> para renovar tu acceso.`
                 }

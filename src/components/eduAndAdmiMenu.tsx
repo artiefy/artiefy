@@ -1,11 +1,11 @@
-'use client';
-import { type JSX, useEffect, useState } from 'react';
+"use client";
+import { type JSX, useEffect, useState } from "react";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { UserButton, useUser } from "@clerk/clerk-react";
 import {
   FiBook,
   FiChevronDown,
@@ -18,11 +18,11 @@ import {
   FiShieldOff,
   FiUser,
   FiX,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
-import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
+import { cn } from "~/lib/utils"; // Asegúrate de tener la función 'cn' para clases condicionales.
 
-import { ModalError } from './educators/modals/modalError';
+import { ModalError } from "./educators/modals/modalError";
 
 interface ResponsiveSidebarProps {
   children: React.ReactNode;
@@ -44,119 +44,119 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const navItemsSuperAdmin = [
     {
       icon: <FiHome size={24} />,
-      title: 'Usuarios y Roles',
-      id: 'users',
-      link: '/dashboard/super-admin',
+      title: "Usuarios y Roles",
+      id: "users",
+      link: "/dashboard/super-admin",
     },
     {
       icon: <FiMessageSquare size={24} />,
-      title: 'Foro',
-      id: 'foro',
-      link: '/dashboard/super-admin/foro',
+      title: "Foro",
+      id: "foro",
+      link: "/dashboard/super-admin/foro",
     },
     {
       icon: <FiMessageSquare size={24} />,
-      title: 'Tickets',
-      id: 'tickets',
-      link: '/dashboard/super-admin/tickets',
+      title: "Tickets",
+      id: "tickets",
+      link: "/dashboard/super-admin/tickets",
     },
     {
       icon: <FiShieldOff size={24} />,
-      title: 'Roles Secundarios',
-      id: 'roles-secundarios',
-      link: '/dashboard/super-admin/usuariosRoles',
+      title: "Roles Secundarios",
+      id: "roles-secundarios",
+      link: "/dashboard/super-admin/usuariosRoles",
     },
   ];
 
   const navItemsEducator = [
     {
       icon: <FiHome size={24} />,
-      title: 'Inicio',
-      id: 'home',
-      link: '/dashboard/educadores',
+      title: "Inicio",
+      id: "home",
+      link: "/dashboard/educadores",
     },
     {
       icon: <FiBook size={24} />,
-      title: 'Cursos',
-      id: 'coursesd',
-      link: '/dashboard/educadores/cursos',
+      title: "Cursos",
+      id: "coursesd",
+      link: "/dashboard/educadores/cursos",
     },
     {
       icon: <FiFileText size={24} />,
-      title: 'Proyectos',
-      id: 'resources',
-      link: '/dashboard/educadores/proyectos',
+      title: "Proyectos",
+      id: "resources",
+      link: "/dashboard/educadores/proyectos",
     },
     {
       icon: <FiMessageSquare size={24} />,
-      title: 'Foros',
-      id: 'forum',
-      link: '/dashboard/educadores/foro',
+      title: "Foros",
+      id: "forum",
+      link: "/dashboard/educadores/foro",
     },
-    { icon: <FiUser size={24} />, title: 'Perfil', id: 'profile', link: '/' },
+    { icon: <FiUser size={24} />, title: "Perfil", id: "profile", link: "/" },
     {
       icon: <FiShieldOff size={24} />,
-      title: 'Reportar errores',
-      id: 'errores',
+      title: "Reportar errores",
+      id: "errores",
       onClick: () => setIsModalOpen(true),
     },
     {
       icon: <FiSettings size={24} />,
-      title: 'Configuraciones',
-      id: 'settings',
-      link: '/',
+      title: "Configuraciones",
+      id: "settings",
+      link: "/",
     },
   ];
 
   const navItemsAdmin = [
     {
       icon: <FiHome size={24} />,
-      title: 'Home',
-      id: 'home',
-      link: '/dashboard/admin',
+      title: "Home",
+      id: "home",
+      link: "/dashboard/admin",
     },
     {
       icon: <FiBook size={24} />,
-      title: 'Cursos',
-      id: 'courses',
-      link: '/dashboard/admin/cursos',
+      title: "Cursos",
+      id: "courses",
+      link: "/dashboard/admin/cursos",
     },
     {
       icon: <FiFileText size={24} />,
-      title: 'Proyectos',
-      id: 'Proyectos',
-      link: '/dashboard/admin2/app/proyectos',
+      title: "Proyectos",
+      id: "Proyectos",
+      link: "/dashboard/admin2/app/proyectos",
     },
     {
       icon: <FiUser size={24} />,
-      title: 'Perfil',
-      id: 'profile',
-      link: '/dashboard/admin2/app/perfil',
+      title: "Perfil",
+      id: "profile",
+      link: "/dashboard/admin2/app/perfil",
     },
     {
       icon: <FiSettings size={24} />,
-      title: 'Configuraciones',
-      id: 'settings',
-      link: '/dashboard/admin2/app/configuracion',
+      title: "Configuraciones",
+      id: "settings",
+      link: "/dashboard/admin2/app/configuracion",
     },
     {
       icon: <FiMessageSquare size={24} />,
-      title: 'Foro',
-      id: 'foro',
-      link: '/dashboard/admin/foro',
+      title: "Foro",
+      id: "foro",
+      link: "/dashboard/admin/foro",
     },
     {
       icon: <FiMessageSquare size={24} />,
-      title: 'Tickets',
-      id: 'tickets',
-      link: '/dashboard/admin/tickets',
+      title: "Tickets",
+      id: "tickets",
+      link: "/dashboard/admin/tickets",
     },
   ];
 
@@ -168,14 +168,14 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     link?: string;
     onClick?: () => void;
   }[] = [];
-  if (user?.publicMetadata?.role === 'admin') {
+  if (user?.publicMetadata?.role === "admin") {
     navItems = navItemsAdmin;
-  } else if (user?.publicMetadata?.role === 'educador') {
+  } else if (user?.publicMetadata?.role === "educador") {
     navItems = navItemsEducator;
-  } else if (user?.publicMetadata?.role === 'super-admin') {
+  } else if (user?.publicMetadata?.role === "super-admin") {
     navItems = navItemsSuperAdmin;
   }
-  const [activeItem, setActiveItem] = useState('home');
+  const [activeItem, setActiveItem] = useState("home");
 
   return (
     <div className="bg-background min-h-screen">
@@ -222,8 +222,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-background fixed top-0 left-0 z-30 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
-          !isOpen && '-translate-x-full'
+          "bg-background fixed top-0 left-0 z-30 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800",
+          !isOpen && "-translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -232,30 +232,30 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             {navItems.map((item) => (
               <li key={item.id} onClick={item.onClick}>
                 <Link
-                  href={item.link ?? '#'}
+                  href={item.link ?? "#"}
                   onClick={() => setActiveItem(item.id)}
                   className={cn(
-                    'group hover:bg-primary flex w-full items-center rounded-lg p-2 text-white',
-                    activeItem === item.id ? 'bg-primary text-black' : ''
+                    "group hover:bg-primary flex w-full items-center rounded-lg p-2 text-white",
+                    activeItem === item.id ? "bg-primary text-black" : "",
                   )}
                 >
                   <span
                     className={cn(
                       `text-gray-300 transition duration-75 group-hover:text-gray-900`,
-                      activeItem === item.id ? 'text-black' : ''
+                      activeItem === item.id ? "text-black" : "",
                     )}
                   >
                     {item.icon}
                   </span>
                   <span
-                    className={cn('ml-3', !isOpen && isMobile ? 'hidden' : '')}
+                    className={cn("ml-3", !isOpen && isMobile ? "hidden" : "")}
                   >
                     {item.title}
                   </span>
                 </Link>
               </li>
             ))}
-            {user?.publicMetadata?.role === 'super-admin' && (
+            {user?.publicMetadata?.role === "super-admin" && (
               <>
                 <li>
                   <button
@@ -279,7 +279,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/cursos"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/cursos" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Todos los Cursos
                         </Link>
@@ -289,9 +289,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           href="/dashboard/super-admin/courses/topFeature"
                           className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
                             pathname ===
-                            '/dashboard/super-admin/courses/topFeature'
-                              ? 'bg-primary text-[#01142B]'
-                              : ''
+                            "/dashboard/super-admin/courses/topFeature"
+                              ? "bg-primary text-[#01142B]"
+                              : ""
                           }`}
                         >
                           Top / Destacados
@@ -301,7 +301,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/categories"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/categories" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Categorías
                         </Link>
@@ -309,7 +309,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/modalities"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/modalities" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Modalidades
                         </Link>
@@ -317,7 +317,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/difficulties"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/difficulties" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Niveles
                         </Link>
@@ -347,7 +347,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/programs"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/programs" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Todos los programas
                         </Link>
@@ -355,7 +355,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/materias"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/modalities" ? "bg-primary text-[#01142B]" : ""}`}
                         >
                           Materias
                         </Link>
@@ -365,9 +365,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           href="/dashboard/super-admin/programs/enrolled_users"
                           className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
                             pathname ===
-                            '/dashboard/super-admin/programs/enrolled_users'
-                              ? 'bg-primary text-[#01142B]'
-                              : ''
+                            "/dashboard/super-admin/programs/enrolled_users"
+                              ? "bg-primary text-[#01142B]"
+                              : ""
                           }`}
                         >
                           Matricular Estudiantes
@@ -384,7 +384,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
       {/* Main Content */}
       <div
-        className={`pt-20 transition-all duration-300 ${isOpen ? 'sm:ml-64' : ''}`}
+        className={`pt-20 transition-all duration-300 ${isOpen ? "sm:ml-64" : ""}`}
       >
         {children}
       </div>

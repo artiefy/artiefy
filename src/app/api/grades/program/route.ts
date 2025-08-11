@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { materiaGrades, materias } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { materiaGrades, materias } from "~/server/db/schema";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface MateriaWithGrade {
   id: number;
@@ -17,13 +17,13 @@ interface MateriaWithGrade {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const programId = searchParams.get('programId');
+    const userId = searchParams.get("userId");
+    const programId = searchParams.get("programId");
 
     if (!userId || !programId) {
       return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
+        { error: "Missing required parameters" },
+        { status: 400 },
       );
     }
 
@@ -52,22 +52,22 @@ export async function GET(request: NextRequest) {
     const formattedResults: MateriaWithGrade[] = programMaterias.map(
       (materia) => {
         const gradeRecord = materiasGrades.find(
-          (g) => g.materiaId === materia.id
+          (g) => g.materiaId === materia.id,
         );
         return {
           id: materia.id,
           title: materia.title,
           grade: Number((gradeRecord?.grade ?? 0).toFixed(2)),
-          courseTitle: materia.curso?.title ?? 'Curso sin nombre',
+          courseTitle: materia.curso?.title ?? "Curso sin nombre",
         };
-      }
+      },
     );
 
     return NextResponse.json({ materias: formattedResults });
   } catch (_error) {
     return NextResponse.json(
-      { error: 'Failed to fetch program grades' },
-      { status: 500 }
+      { error: "Failed to fetch program grades" },
+      { status: 500 },
     );
   }
 }

@@ -1,14 +1,14 @@
-import CourseDetail from './CourseDetail';
+import CourseDetail from "./CourseDetail";
 
 export default function CourseDetailPage({
-	params,
+  params,
 }: {
-	params: { id: string };
+  params: { id: string };
 }) {
-	// Renderiza el detallado del curso y se le pasa el id de este
-	return (
-		<>
-			<CourseDetail courseId={parseInt(params.id)} />
-		</>
-	);
+  // Renderiza el detallado del curso y se le pasa el id de este
+  return (
+    <>
+      <CourseDetail courseId={parseInt(params.id)} />
+    </>
+  );
 }

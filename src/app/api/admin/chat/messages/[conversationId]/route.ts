@@ -1,20 +1,20 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { asc,eq } from 'drizzle-orm';
+import { asc, eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { chat_messages, users } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { chat_messages, users } from "~/server/db/schema";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { conversationId: string } }
+  context: { params: { conversationId: string } },
 ) {
   const { conversationId } = context.params;
   void req;
   if (!conversationId || isNaN(Number(conversationId))) {
     return NextResponse.json(
-      { error: 'ID de conversación inválido' },
-      { status: 400 }
+      { error: "ID de conversación inválido" },
+      { status: 400 },
     );
   }
 
@@ -37,10 +37,10 @@ export async function GET(
 
     return NextResponse.json({ messages });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.error("Error fetching messages:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { error: "Error interno del servidor" },
+      { status: 500 },
     );
   }
 }

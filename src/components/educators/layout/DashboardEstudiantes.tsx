@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-import { usePathname,useRouter } from 'next/navigation';
+import { usePathname, useRouter } from "next/navigation";
 
-import { Dialog } from '@headlessui/react';
+import { Dialog } from "@headlessui/react";
 import {
   BarElement,
   CategoryScale,
@@ -13,11 +13,11 @@ import {
   LinearScale,
   Title,
   Tooltip,
-} from 'chart.js';
-import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
-import { Bar } from 'react-chartjs-2';
+} from "chart.js";
+import { ChevronLeft, ChevronRight, Eye, Loader2 } from "lucide-react";
+import { Bar } from "react-chartjs-2";
 
-import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
+import { getUsersEnrolledInCourse } from "~/server/queries/queriesEducator";
 
 // Registro de los plugins de ChartJS que son para las estadísticas de los estudiantes 'No terminado'
 ChartJS.register(
@@ -26,7 +26,7 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 // Interfaz para el progreso de las lecciones
@@ -71,23 +71,23 @@ interface LessonsListProps {
 const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const [users, setUsers] = useState<User[]>([]);
   // 🔍 Estados de búsqueda y filtros
-  const [searchQuery, setSearchQuery] = useState(''); // Búsqueda por nombre o correo
+  const [searchQuery, setSearchQuery] = useState(""); // Búsqueda por nombre o correo
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado del modal
   const [selectedUser, setSelectedUser] = useState<User | null>(null); // Usuario seleccionado
   // justo arriba de los filtros y la paginación
-  const [activeTab, setActiveTab] = useState<'actuales' | 'completos'>(
-    'actuales'
+  const [activeTab, setActiveTab] = useState<"actuales" | "completos">(
+    "actuales",
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 2️⃣ Grades y activities (mantener aquí)
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
-    {}
+    {},
   );
   const pathname = usePathname();
-  const isSuperAdmin = pathname?.includes('/dashboard/super-admin/') ?? false;
+  const isSuperAdmin = pathname?.includes("/dashboard/super-admin/") ?? false;
 
   const [activities, setActivities] = useState<
     {
@@ -111,7 +111,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const isStudentCompleted = (user: User): boolean => {
     const userGrades = grades[user.id] ?? {};
     const hasAllGrades = activities.every(
-      (act) => typeof userGrades[act.id] === 'number'
+      (act) => typeof userGrades[act.id] === "number",
     );
     return user.completed || (user.averageProgress === 100 && hasAllGrades);
   };
@@ -119,18 +119,18 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   // ———————— Filtrado en 3 pasos ————————
   // 1) Por pestaña
   const tabFilteredUsers = users.filter((user) =>
-    activeTab === 'completos'
+    activeTab === "completos"
       ? isStudentCompleted(user)
-      : !isStudentCompleted(user)
+      : !isStudentCompleted(user),
   );
 
   // 2) Por búsqueda
   const searchedUsers = tabFilteredUsers.filter(
     (user) =>
-      searchQuery === '' ||
+      searchQuery === "" ||
       user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // 3️⃣ Calcular paginación
@@ -142,7 +142,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const handleGradeChange = (
     userId: string,
     activityId: number,
-    newGrade: number
+    newGrade: number,
   ) => {
     setGrades((prev) => ({
       ...prev,
@@ -156,16 +156,16 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const saveGrade = async (
     userId: string,
     activityId: number,
-    grade: number
+    grade: number,
   ) => {
     try {
-      await fetch('/api/activities/getFileSubmission/getNotaEstudiantes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/activities/getFileSubmission/getNotaEstudiantes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, activityId, grade }),
       });
     } catch (err) {
-      console.error('Error guardando la nota', err);
+      console.error("Error guardando la nota", err);
     }
   };
 
@@ -178,14 +178,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
       const formattedUsers = rawUsers.map((user) => {
         const totalProgress = user.lessonsProgress.reduce(
           (acc, lesson) => acc + lesson.progress,
-          0
+          0,
         );
         const averageProgress =
           user.lessonsProgress.length > 0
             ? totalProgress / user.lessonsProgress.length
             : 0;
 
-        let tiempoEnCurso = 'Desconocido';
+        let tiempoEnCurso = "Desconocido";
         if (user.enrolledAt) {
           const enrolledDate = new Date(user.enrolledAt);
           const now = new Date();
@@ -196,14 +196,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
 
         return {
           ...user,
-          firstName: user.firstName ?? 'Nombre no disponible',
-          lastName: user.lastName ?? 'Apellido no disponible',
-          email: user.email ?? 'Correo no disponible',
+          firstName: user.firstName ?? "Nombre no disponible",
+          lastName: user.lastName ?? "Apellido no disponible",
+          email: user.email ?? "Correo no disponible",
           averageProgress,
           lastConnection:
-            typeof user.lastConnection === 'number'
+            typeof user.lastConnection === "number"
               ? new Date(user.lastConnection).toLocaleDateString()
-              : (user.lastConnection ?? 'Fecha no disponible'),
+              : (user.lastConnection ?? "Fecha no disponible"),
           tiempoEnCurso,
           parameterGrades: user.parameterGrades,
         };
@@ -262,17 +262,17 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           parametroId: data.parametroId,
           parametroPeso: data.parametroPeso,
           actividadPeso: data.actividadPeso,
-        })
+        }),
       );
 
       parametroMap.forEach((param, parametroId) => {
         const yaExiste = allActivities.some(
-          (act) => act.parametro === param.parametroName
+          (act) => act.parametro === param.parametroName,
         );
         if (!yaExiste) {
           allActivities.push({
             id: -parametroId, // ids negativos para distinguir
-            name: 'Sin actividad',
+            name: "Sin actividad",
             parametroId,
             parametro: param.parametroName,
             parametroPeso: param.parametroPeso,
@@ -284,10 +284,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
       setActivities(allActivities);
       setGrades(gradesMap);
       setUsers(formattedUsers);
-      console.log('✅ Usuarios con actividades + parámetros:', formattedUsers);
+      console.log("✅ Usuarios con actividades + parámetros:", formattedUsers);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching enrolled users:', err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
+      console.error("Error fetching enrolled users:", err);
     } finally {
       setLoading(false);
     }
@@ -309,14 +309,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const getChartData = (user: User) => {
     return {
       labels: user.lessonsProgress.map(
-        (lesson) => `Lección ${lesson.lessonId}`
+        (lesson) => `Lección ${lesson.lessonId}`,
       ),
       datasets: [
         {
-          label: 'Progreso',
+          label: "Progreso",
           data: user.lessonsProgress.map((lesson) => lesson.progress),
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: "rgba(54, 162, 235, 0.6)",
+          borderColor: "rgba(54, 162, 235, 1)",
           borderWidth: 1,
         },
       ],
@@ -420,29 +420,29 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           <h1>📊 Estadísticas de Estudiantes</h1>
         </header>
         <div className="relative z-20 mt-4 flex justify-center space-x-4">
-          {' '}
+          {" "}
           <button
             onClick={() => {
-              setActiveTab('actuales');
+              setActiveTab("actuales");
               setCurrentPage(1);
             }}
             className={`rounded-lg px-4 py-2 ${
-              activeTab === 'actuales'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              activeTab === "actuales"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
             Estudiantes Actuales
           </button>
           <button
             onClick={() => {
-              setActiveTab('completos');
+              setActiveTab("completos");
               setCurrentPage(1);
             }}
             className={`rounded-lg px-4 py-2 ${
-              activeTab === 'completos'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              activeTab === "completos"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
             Estudiantes calificación al 100%
@@ -489,7 +489,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             notasArray.reduce((a, b) => a + b, 0) /
                             notasArray.length
                           ).toFixed(2)
-                        : 'N/D';
+                        : "N/D";
 
                     return (
                       <div
@@ -523,15 +523,15 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                         {/* Última conexión y tiempo en grid 2 cols */}
                         <div className="mt-2 grid grid-cols-2 gap-x-2 text-[11px] text-gray-400">
                           <div className="truncate">
-                            Última:{' '}
+                            Última:{" "}
                             <span className="text-white">
-                              {user.lastConnection ?? 'N/D'}
+                              {user.lastConnection ?? "N/D"}
                             </span>
                           </div>
                           <div className="truncate">
-                            Tiempo:{' '}
+                            Tiempo:{" "}
                             <span className="text-white">
-                              {user.tiempoEnCurso ?? 'N/D'}
+                              {user.tiempoEnCurso ?? "N/D"}
                             </span>
                           </div>
                         </div>
@@ -551,20 +551,20 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                 max={100}
                                 step={0.5}
                                 className="w-12 rounded bg-gray-600 p-[2px] text-center text-xs text-white"
-                                value={grades[user.id]?.[activity.id] ?? ''}
+                                value={grades[user.id]?.[activity.id] ?? ""}
                                 placeholder="--"
                                 onChange={(e) =>
                                   handleGradeChange(
                                     user.id,
                                     activity.id,
-                                    parseFloat(e.target.value)
+                                    parseFloat(e.target.value),
                                   )
                                 }
                                 onBlur={() =>
                                   saveGrade(
                                     user.id,
                                     activity.id,
-                                    grades[user.id]?.[activity.id] ?? 0
+                                    grades[user.id]?.[activity.id] ?? 0,
                                   )
                                 }
                               />
@@ -592,13 +592,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                     );
                   })}
                 </div>
-                {activeTab === 'actuales' && (
+                {activeTab === "actuales" && (
                   <button
                     disabled={!selectedIds.length}
                     onClick={async () => {
-                      const res = await fetch('/api/enrollments/markComplete', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
+                      const res = await fetch("/api/enrollments/markComplete", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           userIds: selectedIds,
                           courseId,
@@ -614,14 +614,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                     Marcar como completos
                   </button>
                 )}
-                {activeTab === 'completos' && (
+                {activeTab === "completos" && (
                   <button
                     disabled={!selectedIds.length}
                     onClick={async () => {
-                      await fetch('/api/enrollments/markIncomplete', {
-                        method: 'PATCH',
+                      await fetch("/api/enrollments/markIncomplete", {
+                        method: "PATCH",
                         headers: {
-                          'Content-Type': 'application/json',
+                          "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
                           userIds: selectedIds,
@@ -707,7 +707,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                 setSelectedIds((prev) =>
                                   e.target.checked
                                     ? [...prev, user.id]
-                                    : prev.filter((id) => id !== user.id)
+                                    : prev.filter((id) => id !== user.id),
                                 );
                               }}
                             />
@@ -733,10 +733,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             </div>
                           </td>
                           <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
-                            {user.lastConnection ?? 'N/D'}
+                            {user.lastConnection ?? "N/D"}
                           </td>
                           <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
-                            {user.tiempoEnCurso ?? 'N/D'}
+                            {user.tiempoEnCurso ?? "N/D"}
                           </td>
 
                           {activities.map((activity) => (
@@ -744,14 +744,15 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                               key={`${user.id}-${activity.id}`}
                               className="hidden px-4 py-2 text-center text-xs whitespace-nowrap lg:table-cell"
                             >
-                              {activity.name === 'Sin actividad' ? (
+                              {activity.name === "Sin actividad" ? (
                                 <div className="flex items-center justify-center space-x-2">
                                   <input
                                     type="number"
                                     value={
                                       user.parameterGrades.find(
                                         (p) =>
-                                          p.parametroName === activity.parametro
+                                          p.parametroName ===
+                                          activity.parametro,
                                       )?.grade ?? 0
                                     }
                                     disabled
@@ -760,8 +761,8 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                   <button
                                     onClick={() => {
                                       const basePath = isSuperAdmin
-                                        ? 'super-admin'
-                                        : 'educadores';
+                                        ? "super-admin"
+                                        : "educadores";
                                       window.location.href = `/dashboard/${basePath}/cursos/${courseId}/newActivity?parametroId=${activity.parametroId}`;
                                     }}
                                     className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
@@ -776,19 +777,19 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                   max={100}
                                   step={0.5}
                                   className="w-16 rounded bg-gray-700 p-1 text-center text-white"
-                                  value={grades[user.id]?.[activity.id] ?? ''}
+                                  value={grades[user.id]?.[activity.id] ?? ""}
                                   onChange={(e) =>
                                     handleGradeChange(
                                       user.id,
                                       activity.id,
-                                      parseFloat(e.target.value)
+                                      parseFloat(e.target.value),
                                     )
                                   }
                                   onBlur={() =>
                                     saveGrade(
                                       user.id,
                                       activity.id,
-                                      grades[user.id]?.[activity.id] ?? 0
+                                      grades[user.id]?.[activity.id] ?? 0,
                                     )
                                   }
                                 />
@@ -798,7 +799,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
 
                           <td className="px-4 py-2 text-center text-sm font-semibold whitespace-nowrap text-green-300">
                             {(() => {
-                              if (!user) return 'N/D';
+                              if (!user) return "N/D";
 
                               interface ActivityType {
                                 id: number;
@@ -818,12 +819,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                   actividadesPorParametro[act.parametro] = [];
                                 }
                                 actividadesPorParametro[act.parametro].push(
-                                  act
+                                  act,
                                 );
                               });
 
                               const notasParametros = Object.entries(
-                                actividadesPorParametro
+                                actividadesPorParametro,
                               ).map(([parametroName, acts]) => {
                                 let sumNotas = 0;
                                 let sumPesos = 0;
@@ -867,10 +868,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             </button>
                             <button
                               onClick={async () => {
-                                await fetch('/api/enrollments/markComplete', {
-                                  method: 'PATCH',
+                                await fetch("/api/enrollments/markComplete", {
+                                  method: "PATCH",
                                   headers: {
-                                    'Content-Type': 'application/json',
+                                    "Content-Type": "application/json",
                                   },
                                   body: JSON.stringify({
                                     userIds: [user.id],

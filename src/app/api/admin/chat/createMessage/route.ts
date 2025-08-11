@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { auth } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { chat_messages,conversations } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { chat_messages, conversations } from "~/server/db/schema";
 
 interface ChatRequestBody {
   receiverId?: string;
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     let conversationId: number;
@@ -27,14 +27,14 @@ export async function POST(req: NextRequest) {
     if (clientConversationId) {
       conversationId = clientConversationId;
     } else {
-      if (!receiverId || receiverId === 'new') {
+      if (!receiverId || receiverId === "new") {
         const result = await db
           .insert(conversations)
           .values({
             senderId: userId,
             curso_id: 1,
-            status: 'activo',
-            title: 'Nueva conversación',
+            status: "activo",
+            title: "Nueva conversación",
           })
           .returning();
         conversationId = result[0].id;
@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
           .from(conversations)
           .where(
             and(
-              eq(conversations.status, 'activo'),
-              eq(conversations.senderId, userId)
-            )
+              eq(conversations.status, "activo"),
+              eq(conversations.senderId, userId),
+            ),
           );
 
         if (existing.length > 0) {
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
             .values({
               senderId: userId,
               curso_id: parseInt(receiverId) || 1,
-              status: 'activo',
-              title: 'Nueva conversación',
+              status: "activo",
+              title: "Nueva conversación",
             })
             .returning();
           conversationId = result[0].id;
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
 
     const io = typedReq.socket?.server?.io;
     if (io && receiverId && receiverId !== userId) {
-      io.emit('notification', {
-        type: 'new_message',
+      io.emit("notification", {
+        type: "new_message",
         from: userId,
         receiverId,
         message,
@@ -104,10 +104,10 @@ export async function POST(req: NextRequest) {
       receiverId,
     });
   } catch (error) {
-    console.error('Error creating message:', error);
+    console.error("Error creating message:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { error: "Error interno del servidor" },
+      { status: 500 },
     );
   }
 }

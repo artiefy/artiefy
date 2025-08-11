@@ -1,15 +1,15 @@
 // src/app/api/super-admin/enroll_user_program/programsFilter/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { enrollmentPrograms, programas, users } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { enrollmentPrograms, programas, users } from "~/server/db/schema";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const programId = url.searchParams.get('programId');
+    const programId = url.searchParams.get("programId");
 
     // 1. Obtener todos los programas
     const allPrograms = await db
@@ -37,10 +37,10 @@ export async function GET(req: Request) {
     // Si no se solicita ningún programa, solo devolvemos la lista de programas
     return NextResponse.json({ programs: allPrograms });
   } catch (error) {
-    console.error('❌ Error en programsFilter:', error);
+    console.error("❌ Error en programsFilter:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { error: "Error interno del servidor" },
+      { status: 500 },
     );
   }
 }

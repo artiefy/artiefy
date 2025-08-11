@@ -3,11 +3,7 @@
   "display": "Next.js",
   "compilerOptions": {
     "target": "ESNext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -24,9 +20,7 @@
     "allowImportingTsExtensions": false,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./src/*"
-      ]
+      "~/*": ["./src/*"]
     },
     "plugins": [
       {
@@ -34,7 +28,7 @@
       }
     ]
   },
-  "include": 
+  "include": [
     "**/*",
     ".*/**/*",
     "./**/.*",
@@ -46,12 +40,5 @@
     "src/types/**/*.d.ts",
     "drizzle.config.ts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "build",
-    "dist",
-    ".vercel",
-    "coverage"
-  ]
+  "exclude": ["node_modules", ".next", "build", "dist", ".vercel", "coverage"]
 }

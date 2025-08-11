@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { useUser } from "@clerk/nextjs";
+import { StarIcon } from "@heroicons/react/24/solid";
 import {
   FaCalendar,
   FaCheck,
@@ -20,36 +20,36 @@ import {
   FaUserGraduate,
   FaVolumeMute,
   FaVolumeUp,
-} from 'react-icons/fa';
-import { IoGiftOutline } from 'react-icons/io5';
-import { toast } from 'sonner';
-import useSWR from 'swr';
+} from "react-icons/fa";
+import { IoGiftOutline } from "react-icons/io5";
+import { toast } from "sonner";
+import useSWR from "swr";
 
-import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import PaymentForm from "~/components/estudiantes/layout/PaymentForm";
+import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
+import { Badge } from "~/components/estudiantes/ui/badge";
+import { Button } from "~/components/estudiantes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { blurDataURL } from '~/lib/blurDataUrl';
-import { cn } from '~/lib/utils';
-import { type GradesApiResponse } from '~/lib/utils2';
-import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
-import { type Product } from '~/types/payu';
-import { createProductFromCourse } from '~/utils/paygateway/products';
+} from "~/components/estudiantes/ui/card";
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { blurDataURL } from "~/lib/blurDataUrl";
+import { cn } from "~/lib/utils";
+import { type GradesApiResponse } from "~/lib/utils2";
+import { isUserEnrolledInProgram } from "~/server/actions/estudiantes/programs/enrollInProgram";
+import { type Product } from "~/types/payu";
+import { createProductFromCourse } from "~/utils/paygateway/products";
 
-import { CourseContent } from './CourseContent';
-import { GradeModal } from './CourseGradeModal';
+import { CourseContent } from "./CourseContent";
+import { GradeModal } from "./CourseGradeModal";
 
-import type { Course, CourseMateria } from '~/types';
+import type { Course, CourseMateria } from "~/types";
 
-import '~/styles/certificadobutton.css';
-import '~/styles/paybutton2.css';
-import '~/styles/priceindividual.css';
+import "~/styles/certificadobutton.css";
+import "~/styles/paybutton2.css";
+import "~/styles/priceindividual.css";
 
 export const revalidate = 3600;
 
@@ -72,13 +72,13 @@ interface CourseHeaderProps {
 }
 
 const BADGE_GRADIENTS = [
-  'from-pink-500 via-red-500 to-yellow-500',
-  'from-green-300 via-blue-500 to-purple-600',
-  'from-pink-300 via-purple-300 to-indigo-400',
-  'from-yellow-400 via-pink-500 to-red-500',
-  'from-blue-400 via-indigo-500 to-purple-600',
-  'from-green-400 via-cyan-500 to-blue-500',
-  'from-orange-400 via-pink-500 to-red-500',
+  "from-pink-500 via-red-500 to-yellow-500",
+  "from-green-300 via-blue-500 to-purple-600",
+  "from-pink-300 via-purple-300 to-indigo-400",
+  "from-yellow-400 via-pink-500 to-red-500",
+  "from-blue-400 via-indigo-500 to-purple-600",
+  "from-green-400 via-cyan-500 to-blue-500",
+  "from-orange-400 via-pink-500 to-red-500",
 ];
 
 const getBadgeGradient = (index: number) => {
@@ -88,7 +88,7 @@ const getBadgeGradient = (index: number) => {
 // Update fetcher with explicit typing
 const fetcher = async (url: string): Promise<GradesApiResponse> => {
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Error fetching grades');
+  if (!res.ok) throw new Error("Error fetching grades");
   const data = (await res.json()) as GradesApiResponse;
   return data;
 };
@@ -100,7 +100,7 @@ interface FetchError {
 }
 
 const _isVideoMedia = (coverImageKey: string | null | undefined): boolean => {
-  return !!coverImageKey?.toLowerCase().endsWith('.mp4');
+  return !!coverImageKey?.toLowerCase().endsWith(".mp4");
 };
 
 export function CourseHeader({
@@ -134,7 +134,7 @@ export function CourseHeader({
     if (!video) return;
     if (video.paused) {
       video.play().catch((e) => {
-        console.warn('Video play() error:', e);
+        console.warn("Video play() error:", e);
       });
     } else {
       video.pause();
@@ -148,18 +148,18 @@ export function CourseHeader({
     if (video.requestFullscreen) {
       void video.requestFullscreen();
     } else if (
-      'webkitRequestFullscreen' in video &&
+      "webkitRequestFullscreen" in video &&
       typeof (
         video as unknown as { webkitRequestFullscreen: () => Promise<void> }
-      ).webkitRequestFullscreen === 'function'
+      ).webkitRequestFullscreen === "function"
     ) {
       void (
         video as unknown as { webkitRequestFullscreen: () => Promise<void> }
       ).webkitRequestFullscreen();
     } else if (
-      'msRequestFullscreen' in video &&
+      "msRequestFullscreen" in video &&
       typeof (video as unknown as { msRequestFullscreen: () => Promise<void> })
-        .msRequestFullscreen === 'function'
+        .msRequestFullscreen === "function"
     ) {
       void (
         video as unknown as { msRequestFullscreen: () => Promise<void> }
@@ -180,7 +180,7 @@ export function CourseHeader({
     {
       refreshInterval: 5000, // Poll every 5 seconds
       revalidateOnFocus: true,
-    }
+    },
   );
 
   const currentFinalGrade = useMemo(() => {
@@ -191,7 +191,7 @@ export function CourseHeader({
       gradesData.materias.reduce((acc, materia) => acc + materia.grade, 0) /
       gradesData.materias.length;
 
-    console.log('Cálculo de nota:', {
+    console.log("Cálculo de nota:", {
       materias: gradesData.materias,
       promedio: average,
       mostrarCertificado: average >= 3,
@@ -209,11 +209,11 @@ export function CourseHeader({
   // Debug logs
   // Debug logs with proper error handling
   useEffect(() => {
-    console.log('SWR State:', {
+    console.log("SWR State:", {
       gradesData,
       currentFinalGrade,
       isLoadingGrade,
-      error: gradesError?.message ?? 'No error',
+      error: gradesError?.message ?? "No error",
       shouldShowCertificate:
         isEnrolled &&
         course.progress === 100 &&
@@ -232,7 +232,7 @@ export function CourseHeader({
   // Add debug log for all conditions
   // Add debug log with safer type checking
   useEffect(() => {
-    console.log('Debug Certificate Button Conditions:', {
+    console.log("Debug Certificate Button Conditions:", {
       isEnrolled,
       courseProgress: course.progress,
       currentFinalGrade,
@@ -250,17 +250,17 @@ export function CourseHeader({
   useEffect(() => {
     const checkProgramEnrollment = async () => {
       const programMateria = course.materias?.find(
-        (materia) => materia.programaId !== null
+        (materia) => materia.programaId !== null,
       );
 
       if (programMateria?.programaId && user?.id && !isEnrolled) {
         try {
           // Check if course has both PRO and PREMIUM types
           const hasPremiumType = course.courseTypes?.some(
-            (type) => type.requiredSubscriptionLevel === 'premium'
+            (type) => type.requiredSubscriptionLevel === "premium",
           );
           const hasProType = course.courseTypes?.some(
-            (type) => type.requiredSubscriptionLevel === 'pro'
+            (type) => type.requiredSubscriptionLevel === "pro",
           );
 
           // If course has both types, don't redirect to program
@@ -270,21 +270,21 @@ export function CourseHeader({
 
           const isProgramEnrolled = await isUserEnrolledInProgram(
             programMateria.programaId,
-            user.id
+            user.id,
           );
 
           if (!isProgramEnrolled && !programToastShown) {
             // Only show toast if we haven't shown it yet
             setProgramToastShown(true); // Update state to prevent duplicate toasts
-            toast.warning('Este curso requiere inscripción al programa', {
-              id: 'program-enrollment', // Add an ID to prevent duplicates
+            toast.warning("Este curso requiere inscripción al programa", {
+              id: "program-enrollment", // Add an ID to prevent duplicates
             });
             router.push(`/estudiantes/programas/${programMateria.programaId}`);
           }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : 'Error desconocido';
-          console.error('Error checking program enrollment:', errorMessage);
+            error instanceof Error ? error.message : "Error desconocido";
+          console.error("Error checking program enrollment:", errorMessage);
         }
       }
     };
@@ -304,8 +304,8 @@ export function CourseHeader({
     // Cambiar a formato año/día/mes
     const d = new Date(date);
     const year = d.getFullYear();
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
     return `${year}/${day}/${month}`;
   };
 
@@ -324,40 +324,40 @@ export function CourseHeader({
     const userPlanType = user?.publicMetadata?.planType as string;
     const hasActiveSubscription =
       isSignedIn &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium') &&
+      (userPlanType === "Pro" || userPlanType === "Premium") &&
       isSubscriptionActive;
 
     // Si el curso tiene múltiples tipos, determinar cuál mostrar según la suscripción
     if (course.courseTypes && course.courseTypes.length > 0) {
       // Verificar cada tipo por orden de prioridad
       const hasPurchasable = course.courseTypes.some(
-        (type) => type.isPurchasableIndividually
+        (type) => type.isPurchasableIndividually,
       );
       const hasPremium = course.courseTypes.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
+        (type) => type.requiredSubscriptionLevel === "premium",
       );
       const hasPro = course.courseTypes.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
+        (type) => type.requiredSubscriptionLevel === "pro",
       );
       const hasFree = course.courseTypes.some(
         (type) =>
-          type.requiredSubscriptionLevel === 'none' &&
-          !type.isPurchasableIndividually
+          type.requiredSubscriptionLevel === "none" &&
+          !type.isPurchasableIndividually,
       );
 
       // Crear un array con los tipos adicionales para la etiqueta "Incluido en"
       const includedInPlans: string[] = [];
 
       if (course.courseTypes.length > 1) {
-        if (hasPremium) includedInPlans.push('PREMIUM');
-        if (hasPro) includedInPlans.push('PRO');
-        if (hasFree) includedInPlans.push('GRATUITO');
+        if (hasPremium) includedInPlans.push("PREMIUM");
+        if (hasPro) includedInPlans.push("PRO");
+        if (hasFree) includedInPlans.push("GRATUITO");
       }
 
       // LÓGICA PARA USUARIO CON SESIÓN Y SUSCRIPCIÓN ACTIVA
       if (hasActiveSubscription) {
         // Mostrar el tipo de acuerdo a la suscripción del usuario
-        if (userPlanType === 'Premium' && hasPremium) {
+        if (userPlanType === "Premium" && hasPremium) {
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -367,18 +367,18 @@ export function CourseHeader({
                 </span>
               </div>
               {includedInPlans.length > 0 &&
-                includedInPlans.filter((p) => p !== 'PREMIUM').length > 0 && (
+                includedInPlans.filter((p) => p !== "PREMIUM").length > 0 && (
                   <Badge
                     className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {includedInPlans
-                      .filter((p) => p !== 'PREMIUM')
+                      .filter((p) => p !== "PREMIUM")
                       .map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                   </Badge>
@@ -387,7 +387,7 @@ export function CourseHeader({
           );
         }
 
-        if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
+        if ((userPlanType === "Pro" || userPlanType === "Premium") && hasPro) {
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -395,18 +395,18 @@ export function CourseHeader({
                 <span className="text-base font-bold text-orange-500">PRO</span>
               </div>
               {includedInPlans.length > 0 &&
-                includedInPlans.filter((p) => p !== 'PRO').length > 0 && (
+                includedInPlans.filter((p) => p !== "PRO").length > 0 && (
                   <Badge
                     className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {includedInPlans
-                      .filter((p) => p !== 'PRO')
+                      .filter((p) => p !== "PRO")
                       .map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                   </Badge>
@@ -425,18 +425,18 @@ export function CourseHeader({
                 </span>
               </div>
               {includedInPlans.length > 0 &&
-                includedInPlans.filter((p) => p !== 'GRATUITO').length > 0 && (
+                includedInPlans.filter((p) => p !== "GRATUITO").length > 0 && (
                   <Badge
                     className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {includedInPlans
-                      .filter((p) => p !== 'GRATUITO')
+                      .filter((p) => p !== "GRATUITO")
                       .map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                   </Badge>
@@ -448,19 +448,19 @@ export function CourseHeader({
         // Si tiene suscripción pero ningún tipo coincide, mostrar opción de compra individual si está disponible
         if (hasPurchasable) {
           const purchasableType = course.courseTypes.find(
-            (type) => type.isPurchasableIndividually
+            (type) => type.isPurchasableIndividually,
           );
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
-                  ${' '}
+                  ${" "}
                   {(
                     course.individualPrice ??
                     purchasableType?.price ??
                     0
-                  ).toLocaleString('es-CO', {
+                  ).toLocaleString("es-CO", {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
@@ -473,11 +473,11 @@ export function CourseHeader({
                     className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {includedInPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
                         {p}
-                        {idx < arr.length - 1 ? ', ' : ''}
+                        {idx < arr.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
@@ -487,11 +487,11 @@ export function CourseHeader({
                       className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                       onClick={handlePlanBadgeClick}
                     >
-                      Incluido en:{' '}
+                      Incluido en:{" "}
                       {includedInPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                     </Badge>
@@ -507,19 +507,19 @@ export function CourseHeader({
         // 1. Individual (si existe)
         if (hasPurchasable) {
           const purchasableType = course.courseTypes.find(
-            (type) => type.isPurchasableIndividually
+            (type) => type.isPurchasableIndividually,
           );
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
-                  ${' '}
+                  ${" "}
                   {(
                     course.individualPrice ??
                     purchasableType?.price ??
                     0
-                  ).toLocaleString('es-CO', {
+                  ).toLocaleString("es-CO", {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
@@ -532,11 +532,11 @@ export function CourseHeader({
                     className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {includedInPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
                         {p}
-                        {idx < arr.length - 1 ? ', ' : ''}
+                        {idx < arr.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
@@ -546,11 +546,11 @@ export function CourseHeader({
                       className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                       onClick={handlePlanBadgeClick}
                     >
-                      Incluido en:{' '}
+                      Incluido en:{" "}
                       {includedInPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                     </Badge>
@@ -563,7 +563,7 @@ export function CourseHeader({
 
         // 2. Premium (si existe)
         if (hasPremium) {
-          const otherPlans = includedInPlans.filter((p) => p !== 'PREMIUM');
+          const otherPlans = includedInPlans.filter((p) => p !== "PREMIUM");
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -579,11 +579,11 @@ export function CourseHeader({
                     className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
                         {p}
-                        {idx < arr.length - 1 ? ', ' : ''}
+                        {idx < arr.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
@@ -593,11 +593,11 @@ export function CourseHeader({
                       className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                       onClick={handlePlanBadgeClick}
                     >
-                      Incluido en:{' '}
+                      Incluido en:{" "}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                     </Badge>
@@ -610,7 +610,7 @@ export function CourseHeader({
 
         // 3. Pro (si existe)
         if (hasPro) {
-          const otherPlans = includedInPlans.filter((p) => p !== 'PRO');
+          const otherPlans = includedInPlans.filter((p) => p !== "PRO");
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -624,11 +624,11 @@ export function CourseHeader({
                     className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
                         {p}
-                        {idx < arr.length - 1 ? ', ' : ''}
+                        {idx < arr.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
@@ -638,11 +638,11 @@ export function CourseHeader({
                       className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                       onClick={handlePlanBadgeClick}
                     >
-                      Incluido en:{' '}
+                      Incluido en:{" "}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                     </Badge>
@@ -655,7 +655,7 @@ export function CourseHeader({
 
         // 4. Free (si existe)
         if (hasFree) {
-          const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
+          const otherPlans = includedInPlans.filter((p) => p !== "GRATUITO");
           return (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -671,11 +671,11 @@ export function CourseHeader({
                     className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
                     onClick={handlePlanBadgeClick}
                   >
-                    Incluido en:{' '}
+                    Incluido en:{" "}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
                         {p}
-                        {idx < arr.length - 1 ? ', ' : ''}
+                        {idx < arr.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
@@ -685,11 +685,11 @@ export function CourseHeader({
                       className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
                       onClick={handlePlanBadgeClick}
                     >
-                      Incluido en:{' '}
+                      Incluido en:{" "}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
                           {p}
-                          {idx < arr.length - 1 ? ', ' : ''}
+                          {idx < arr.length - 1 ? ", " : ""}
                         </span>
                       ))}
                     </Badge>
@@ -714,8 +714,8 @@ export function CourseHeader({
         <div className="flex items-center gap-1">
           <FaStar className="text-lg text-blue-500" />
           <span className="text-base font-bold text-blue-500">
-            ${' '}
-            {course.individualPrice.toLocaleString('es-CO', {
+            ${" "}
+            {course.individualPrice.toLocaleString("es-CO", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}
@@ -726,7 +726,7 @@ export function CourseHeader({
 
     const { requiredSubscriptionLevel } = courseType;
 
-    if (requiredSubscriptionLevel === 'none') {
+    if (requiredSubscriptionLevel === "none") {
       return (
         <div className="flex items-center gap-1">
           <IoGiftOutline className="text-lg text-green-500" />
@@ -736,9 +736,9 @@ export function CourseHeader({
     }
 
     const color =
-      requiredSubscriptionLevel === 'premium'
-        ? 'text-purple-500'
-        : 'text-orange-500';
+      requiredSubscriptionLevel === "premium"
+        ? "text-purple-500"
+        : "text-orange-500";
 
     return (
       <div className={`flex items-center gap-1 ${color}`}>
@@ -757,20 +757,20 @@ export function CourseHeader({
         course.courseTypeId === 4 ||
         course.courseTypes?.some((type) => type.isPurchasableIndividually)
       ) {
-        console.log('Storing pending purchase before login redirect');
+        console.log("Storing pending purchase before login redirect");
         const pendingPurchase: PendingPurchase = {
           courseId: course.id,
-          type: 'individual',
+          type: "individual",
         };
         localStorage.setItem(
-          'pendingPurchase',
-          JSON.stringify(pendingPurchase)
+          "pendingPurchase",
+          JSON.stringify(pendingPurchase),
         );
       }
 
       // Show toast first
-      toast.error('Inicio de sesión requerido', {
-        description: 'Debes iniciar sesión para inscribirte en este curso',
+      toast.error("Inicio de sesión requerido", {
+        description: "Debes iniciar sesión para inscribirte en este curso",
         duration: 3000,
       });
 
@@ -786,11 +786,11 @@ export function CourseHeader({
     }
 
     // *** DEBUGGING - Log what's happening at this point ***
-    console.log('Button clicked, course details:', {
+    console.log("Button clicked, course details:", {
       courseTypeId: course.courseTypeId,
       individualPrice: course.individualPrice,
       hasPurchasableType: course.courseTypes?.some(
-        (type) => type.isPurchasableIndividually
+        (type) => type.isPurchasableIndividually,
       ),
       isPurchasable:
         course.courseTypeId === 4 ||
@@ -805,28 +805,28 @@ export function CourseHeader({
 
       // Check if the user's subscription level gives them access
       const hasPremiumType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
+        (type) => type.requiredSubscriptionLevel === "premium",
       );
       const hasProType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
+        (type) => type.requiredSubscriptionLevel === "pro",
       );
 
       // Fix this line - use logical OR instead of nullish coalescing
 
       const userCanAccessWithSubscription =
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        (userPlanType === 'Premium' && hasPremiumType) ||
-        ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+        (userPlanType === "Premium" && hasPremiumType) ||
+        ((userPlanType === "Pro" || userPlanType === "Premium") && hasProType);
 
       // If user has subscription access and subscription is active, proceed with direct enrollment
       if (userCanAccessWithSubscription && isSubscriptionActive) {
         console.log(
-          'User has subscription access to this course. Proceeding with direct enrollment.'
+          "User has subscription access to this course. Proceeding with direct enrollment.",
         );
 
         // Check if course requires program enrollment first
         const programMateria = course.materias?.find(
-          (materia) => materia.programaId !== null
+          (materia) => materia.programaId !== null,
         );
 
         if (programMateria?.programaId) {
@@ -835,12 +835,12 @@ export function CourseHeader({
             if (hasPremiumType && hasProType) {
               // Skip program check for courses with both types
               console.log(
-                'Course has both PRO and PREMIUM types - skipping program redirect'
+                "Course has both PRO and PREMIUM types - skipping program redirect",
               );
             } else {
               const isProgramEnrolled = await isUserEnrolledInProgram(
                 programMateria.programaId,
-                user?.id ?? ''
+                user?.id ?? "",
               );
 
               if (!isProgramEnrolled) {
@@ -850,29 +850,29 @@ export function CourseHeader({
                   `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
                   {
                     description:
-                      'Serás redirigido a la página del programa para inscribirte.',
+                      "Serás redirigido a la página del programa para inscribirte.",
                     duration: 4000,
-                    id: 'program-enrollment',
-                  }
+                    id: "program-enrollment",
+                  },
                 );
 
                 // Wait a moment for the toast to be visible
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 router.push(
-                  `/estudiantes/programas/${programMateria.programaId}`
+                  `/estudiantes/programas/${programMateria.programaId}`,
                 );
                 return;
               }
             }
           } catch (error) {
-            console.error('Error checking program enrollment:', error);
-            toast.error('Error al verificar la inscripción al programa');
+            console.error("Error checking program enrollment:", error);
+            toast.error("Error al verificar la inscripción al programa");
             return;
           }
         }
 
         // If we get here, proceed with enrollment via subscription
-        console.log('Calling onEnrollAction for subscription user');
+        console.log("Calling onEnrollAction for subscription user");
         await onEnrollAction();
         return;
       }
@@ -884,7 +884,7 @@ export function CourseHeader({
         course.courseTypes?.some((type) => type.isPurchasableIndividually);
 
       if (isPurchasable) {
-        console.log('Course is purchasable - showing payment modal');
+        console.log("Course is purchasable - showing payment modal");
 
         let price: number | null = null;
 
@@ -892,13 +892,13 @@ export function CourseHeader({
           price = course.individualPrice;
         } else {
           const purchasableType = course.courseTypes?.find(
-            (type) => type.isPurchasableIndividually
+            (type) => type.isPurchasableIndividually,
           );
           price = course.individualPrice ?? purchasableType?.price ?? null;
         }
 
         if (!price) {
-          toast.error('Error en el precio del curso');
+          toast.error("Error en el precio del curso");
           return;
         }
 
@@ -908,7 +908,7 @@ export function CourseHeader({
           individualPrice: price,
         });
 
-        console.log('Created course product:', courseProduct);
+        console.log("Created course product:", courseProduct);
 
         // Set the product and show the modal
         setSelectedProduct(courseProduct);
@@ -918,15 +918,15 @@ export function CourseHeader({
 
       // For free courses and other non-purchasable courses
       console.log(
-        'Course is not purchasable - calling onEnrollAction directly'
+        "Course is not purchasable - calling onEnrollAction directly",
       );
       await onEnrollAction();
       setLocalIsEnrolled(true); // Mark as enrolled locally after successful enrollment
     } catch (error) {
-      console.error('Error in handleEnrollClick:', error);
+      console.error("Error in handleEnrollClick:", error);
       const errorMessage =
-        error instanceof Error ? error.message : 'Error desconocido';
-      toast.error('Error al procesar la acción', {
+        error instanceof Error ? error.message : "Error desconocido";
+      toast.error("Error al procesar la acción", {
         description: errorMessage,
       });
     } finally {
@@ -943,7 +943,7 @@ export function CourseHeader({
 
     // Also handle courses with purchasable types in the new system
     const purchasableType = course.courseTypes?.find(
-      (type) => type.isPurchasableIndividually
+      (type) => type.isPurchasableIndividually,
     );
     if (purchasableType && (course.individualPrice || purchasableType.price)) {
       const price = course.individualPrice ?? purchasableType.price;
@@ -961,20 +961,20 @@ export function CourseHeader({
   // Add this interface near the top of the file with other interfaces
   interface PendingPurchase {
     courseId: number;
-    type: 'individual';
+    type: "individual";
   }
 
   // Update the useEffect that checks for pending purchase to log more details
   useEffect(() => {
     // Check for pending purchase after login
-    const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
+    const pendingPurchaseStr = localStorage.getItem("pendingPurchase");
     if (pendingPurchaseStr && isSignedIn) {
       try {
         const pendingPurchase = JSON.parse(
-          pendingPurchaseStr
+          pendingPurchaseStr,
         ) as PendingPurchase;
 
-        console.log('Found pending purchase after login:', {
+        console.log("Found pending purchase after login:", {
           pendingPurchase,
           currentCourseId: course.id,
           hasCourseProduct: !!courseProduct,
@@ -986,27 +986,27 @@ export function CourseHeader({
 
         if (
           pendingPurchase.courseId === course.id &&
-          pendingPurchase.type === 'individual'
+          pendingPurchase.type === "individual"
         ) {
           // Clear the pending purchase
-          localStorage.removeItem('pendingPurchase');
-          console.log('Removed pending purchase, opening payment modal');
+          localStorage.removeItem("pendingPurchase");
+          console.log("Removed pending purchase, opening payment modal");
 
           // Generate product if needed and show the modal
           if (courseProduct) {
-            console.log('Using course product from useMemo');
+            console.log("Using course product from useMemo");
             setSelectedProduct(courseProduct);
             setShowPaymentModal(true);
           } else {
             // Fallback to create product directly if useMemo didn't work
-            console.log('Creating product directly as fallback');
+            console.log("Creating product directly as fallback");
             const fallbackProduct = createProductFromCourse(course);
             setSelectedProduct(fallbackProduct);
             setShowPaymentModal(true);
           }
         }
       } catch (error) {
-        console.error('Error processing pending purchase:', error);
+        console.error("Error processing pending purchase:", error);
       }
     }
   }, [isSignedIn, course.id, courseProduct, course]);
@@ -1014,7 +1014,7 @@ export function CourseHeader({
   // Añade aquí la obtención de las keys
   const coverImageKey = course.coverImageKey;
   const coverVideoCourseKey =
-    typeof course === 'object' && 'coverVideoCourseKey' in course
+    typeof course === "object" && "coverVideoCourseKey" in course
       ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
       : undefined;
 
@@ -1039,20 +1039,20 @@ export function CourseHeader({
                 // intentionally empty: autoplay fallback
               });
             }
-            window.removeEventListener('pointerdown', onUserGesture);
-            window.removeEventListener('keydown', onUserGesture);
+            window.removeEventListener("pointerdown", onUserGesture);
+            window.removeEventListener("keydown", onUserGesture);
           };
-          window.addEventListener('pointerdown', onUserGesture, { once: true });
-          window.addEventListener('keydown', onUserGesture, { once: true });
+          window.addEventListener("pointerdown", onUserGesture, { once: true });
+          window.addEventListener("keydown", onUserGesture, { once: true });
         });
       };
       if (video.readyState >= 2) {
         tryPlay();
       } else {
-        video.addEventListener('canplay', tryPlay, { once: true });
+        video.addEventListener("canplay", tryPlay, { once: true });
       }
       return () => {
-        video.removeEventListener('canplay', tryPlay);
+        video.removeEventListener("canplay", tryPlay);
       };
     }
   }, [coverVideoCourseKey, videoVolume, isMuted]);
@@ -1102,7 +1102,7 @@ export function CourseHeader({
     const userHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium');
+      (userPlanType === "Pro" || userPlanType === "Premium");
 
     // For individually purchasable courses
     const isPurchasableIndividually =
@@ -1111,20 +1111,20 @@ export function CourseHeader({
 
     // Check if the user's subscription covers this course
     const hasPremiumType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
+      (type) => type.requiredSubscriptionLevel === "premium",
     );
     const hasProType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
+      (type) => type.requiredSubscriptionLevel === "pro",
     );
 
     const userCanAccessWithSubscription =
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      (userPlanType === 'Premium' && hasPremiumType) ||
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+      (userPlanType === "Premium" && hasPremiumType) ||
+      ((userPlanType === "Pro" || userPlanType === "Premium") && hasProType);
 
     // Always show "Comprar Curso" for individual courses without active subscription
     if (isPurchasableIndividually && !userCanAccessWithSubscription) {
-      return 'Comprar Curso';
+      return "Comprar Curso";
     }
 
     // For logged-in users with subscription that covers this course
@@ -1133,47 +1133,47 @@ export function CourseHeader({
       userHasActiveSubscription &&
       userCanAccessWithSubscription
     ) {
-      return 'Inscribirse al Curso';
+      return "Inscribirse al Curso";
     }
 
     // For users without a session, show appropriate text based on course type
     if (!isSignedIn) {
       if (course.courseTypes && course.courseTypes.length > 0) {
-        if (hasPremiumType) return 'Plan Premium';
-        if (hasProType) return 'Plan Pro';
+        if (hasPremiumType) return "Plan Premium";
+        if (hasProType) return "Plan Pro";
         if (
           course.courseTypes.some(
             (type) =>
-              type.requiredSubscriptionLevel === 'none' &&
-              !type.isPurchasableIndividually
+              type.requiredSubscriptionLevel === "none" &&
+              !type.isPurchasableIndividually,
           )
         )
-          return 'Inscribirse Gratis';
+          return "Inscribirse Gratis";
       }
 
       // Fallback to course.courseType
       if (course.courseType) {
-        if (course.courseType.requiredSubscriptionLevel === 'premium')
-          return 'Plan Premium';
-        if (course.courseType.requiredSubscriptionLevel === 'pro')
-          return 'Plan Pro';
-        if (course.courseType.requiredSubscriptionLevel === 'none')
-          return 'Inscribirse Gratis';
+        if (course.courseType.requiredSubscriptionLevel === "premium")
+          return "Plan Premium";
+        if (course.courseType.requiredSubscriptionLevel === "pro")
+          return "Plan Pro";
+        if (course.courseType.requiredSubscriptionLevel === "none")
+          return "Inscribirse Gratis";
       }
 
-      return 'Iniciar Sesión';
+      return "Iniciar Sesión";
     }
 
     // For logged in users
-    if (course.courseType?.requiredSubscriptionLevel === 'none') {
-      return 'Inscribirse Gratis';
+    if (course.courseType?.requiredSubscriptionLevel === "none") {
+      return "Inscribirse Gratis";
     }
 
     if (!isSubscriptionActive) {
-      return 'Obtener Suscripción';
+      return "Obtener Suscripción";
     }
 
-    return 'Inscribirse al Curso';
+    return "Inscribirse al Curso";
   };
 
   // Get price display function - update to respect subscription status
@@ -1182,20 +1182,20 @@ export function CourseHeader({
     const buttonUserHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium');
+      (buttonUserPlanType === "Pro" || buttonUserPlanType === "Premium");
 
     // Check if the user's subscription covers this course
     const buttonHasPremiumType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
+      (type) => type.requiredSubscriptionLevel === "premium",
     );
     const buttonHasProType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
+      (type) => type.requiredSubscriptionLevel === "pro",
     );
 
     const userCanAccessWithSubscription =
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ||
-      ((buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium') &&
+      (buttonUserPlanType === "Premium" && buttonHasPremiumType) ||
+      ((buttonUserPlanType === "Pro" || buttonUserPlanType === "Premium") &&
         buttonHasProType);
 
     // Don't show price if user has subscription access
@@ -1206,8 +1206,8 @@ export function CourseHeader({
     // Show price for purchase type courses
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
-        '$ ' +
-        course.individualPrice.toLocaleString('es-CO', {
+        "$ " +
+        course.individualPrice.toLocaleString("es-CO", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
         })
@@ -1216,13 +1216,13 @@ export function CourseHeader({
 
     // For individually purchasable courses via courseTypes
     const purchasableType = course.courseTypes?.find(
-      (type) => type.isPurchasableIndividually
+      (type) => type.isPurchasableIndividually,
     );
     if (purchasableType?.price || course.individualPrice) {
       const price = course.individualPrice ?? purchasableType?.price ?? 0;
       return (
-        '$ ' +
-        price.toLocaleString('es-CO', {
+        "$ " +
+        price.toLocaleString("es-CO", {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
         })
@@ -1234,7 +1234,7 @@ export function CourseHeader({
 
   // Add a function to handle plan badge click
   const handlePlanBadgeClick = () => {
-    window.open('/planes', '_blank', 'noopener,noreferrer');
+    window.open("/planes", "_blank", "noopener,noreferrer");
   };
 
   // Update local enrollment status when the prop changes
@@ -1264,10 +1264,10 @@ export function CourseHeader({
               {isUnenrolling ? (
                 <Icons.spinner
                   className="text-white"
-                  style={{ width: '35px', height: '35px' }}
+                  style={{ width: "35px", height: "35px" }}
                 />
               ) : (
-                'Cancelar Suscripción'
+                "Cancelar Suscripción"
               )}
             </Button>
           </div>
@@ -1331,15 +1331,15 @@ export function CourseHeader({
                   poster={
                     coverImageKey
                       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                      : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
                   }
                   onClick={handleVideoClick}
                   // Forzar el navegador a usar el tamaño y renderizado óptimo
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    imageRendering: "auto", // No afecta mucho a video, pero asegura que no haya suavizado innecesario
                   }}
                 />
                 {/* Botón de volumen y pantalla completa */}
@@ -1347,7 +1347,7 @@ export function CourseHeader({
                   {/* Botón mute/unmute */}
                   <button
                     type="button"
-                    aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                    aria-label={isMuted ? "Activar sonido" : "Silenciar"}
                     onClick={handleToggleMute}
                     className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
                   >
@@ -1407,7 +1407,7 @@ export function CourseHeader({
         {/* Removed mobile metadata section from here */}
       </CardHeader>
       <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
-        {' '}
+        {" "}
         {/* <-- Ensure no top margin/padding */}
         {/* Course titles - desktop and mobile */}
         <div className="w-full">
@@ -1439,57 +1439,57 @@ export function CourseHeader({
                 if (course.courseTypes && course.courseTypes.length > 0) {
                   // Determinar el tipo predominante
                   const hasPremium = course.courseTypes.some(
-                    (type) => type.requiredSubscriptionLevel === 'premium'
+                    (type) => type.requiredSubscriptionLevel === "premium",
                   );
                   const hasPro = course.courseTypes.some(
-                    (type) => type.requiredSubscriptionLevel === 'pro'
+                    (type) => type.requiredSubscriptionLevel === "pro",
                   );
                   const hasFree = course.courseTypes.some(
                     (type) =>
-                      type.requiredSubscriptionLevel === 'none' &&
-                      !type.isPurchasableIndividually
+                      type.requiredSubscriptionLevel === "none" &&
+                      !type.isPurchasableIndividually,
                   );
                   const hasPurchasable = course.courseTypes.some(
-                    (type) => type.isPurchasableIndividually
+                    (type) => type.isPurchasableIndividually,
                   );
 
                   // Determinar tipo principal
-                  let mainType = '';
+                  let mainType = "";
                   let mainIcon = null;
-                  let mainColor = '';
+                  let mainColor = "";
 
                   if (hasPurchasable) {
                     const purchasableType = course.courseTypes.find(
-                      (type) => type.isPurchasableIndividually
+                      (type) => type.isPurchasableIndividually,
                     );
                     const price =
                       course.individualPrice ?? purchasableType?.price ?? 0;
-                    mainType = `$${price.toLocaleString('es-CO')}`;
+                    mainType = `$${price.toLocaleString("es-CO")}`;
                     mainIcon = <FaStar className="text-xs text-blue-500" />;
-                    mainColor = 'text-blue-500';
+                    mainColor = "text-blue-500";
                   } else if (hasPremium) {
-                    mainType = 'PREMIUM';
+                    mainType = "PREMIUM";
                     mainIcon = <FaCrown className="text-xs text-purple-500" />;
-                    mainColor = 'text-purple-500';
+                    mainColor = "text-purple-500";
                   } else if (hasPro) {
-                    mainType = 'PRO';
+                    mainType = "PRO";
                     mainIcon = <FaCrown className="text-xs text-orange-500" />;
-                    mainColor = 'text-orange-500';
+                    mainColor = "text-orange-500";
                   } else if (hasFree) {
-                    mainType = 'GRATUITO';
+                    mainType = "GRATUITO";
                     mainIcon = (
                       <IoGiftOutline className="text-xs text-green-500" />
                     );
-                    mainColor = 'text-green-500';
+                    mainColor = "text-green-500";
                   }
 
                   // Crear lista de tipos incluidos (excluyendo el principal)
                   const includedTypes = [];
-                  if (hasPremium && mainType !== 'PREMIUM')
-                    includedTypes.push('PREMIUM');
-                  if (hasPro && mainType !== 'PRO') includedTypes.push('PRO');
-                  if (hasFree && mainType !== 'GRATUITO')
-                    includedTypes.push('GRATUITO');
+                  if (hasPremium && mainType !== "PREMIUM")
+                    includedTypes.push("PREMIUM");
+                  if (hasPro && mainType !== "PRO") includedTypes.push("PRO");
+                  if (hasFree && mainType !== "GRATUITO")
+                    includedTypes.push("GRATUITO");
 
                   return (
                     <div className="flex flex-wrap items-center gap-1">
@@ -1510,9 +1510,9 @@ export function CourseHeader({
                             className="cursor-pointer bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500"
                             onClick={handlePlanBadgeClick}
                           >
-                            Incluido en:{' '}
+                            Incluido en:{" "}
                             <span className="font-bold">
-                              {includedTypes.join(', ')}
+                              {includedTypes.join(", ")}
                             </span>
                           </Badge>
                         </div>
@@ -1527,7 +1527,7 @@ export function CourseHeader({
                     <div className="flex items-center gap-0.5 font-bold text-blue-500">
                       <FaStar className="text-xs" />
                       <span className="text-xs">
-                        ${course.individualPrice.toLocaleString('es-CO')}
+                        ${course.individualPrice.toLocaleString("es-CO")}
                       </span>
                     </div>
                   );
@@ -1597,8 +1597,8 @@ export function CourseHeader({
               <div className="flex items-center sm:-mt-1">
                 <FaUserGraduate className="mr-2 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-600 sm:text-base">
-                  {Math.max(0, totalStudents)}{' '}
-                  {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
+                  {Math.max(0, totalStudents)}{" "}
+                  {totalStudents === 1 ? "Estudiante" : "Estudiantes"}
                 </span>
               </div>
               <div className="flex items-center sm:-mt-1">
@@ -1607,8 +1607,8 @@ export function CourseHeader({
                     key={index}
                     className={`h-4 w-4 sm:h-5 sm:w-5 ${
                       index < Math.floor(course.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
+                        ? "text-yellow-400"
+                        : "text-gray-300"
                     }`}
                   />
                 ))}
@@ -1626,7 +1626,7 @@ export function CourseHeader({
               <div>
                 <h3 className="text-base font-extrabold text-white sm:text-lg">
                   {/* Cambiado a blanco */}
-                  {course.instructorName ?? 'Instructor no encontrado'}
+                  {course.instructorName ?? "Instructor no encontrado"}
                 </h3>
                 <em className="text-sm font-bold text-cyan-300 sm:text-base">
                   {/* Color brillante para "Educador" */}
@@ -1657,27 +1657,27 @@ export function CourseHeader({
               onClick={() => setIsGradeModalOpen(true)}
               disabled={!canAccessGrades}
               className={cn(
-                'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
+                "mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto", // <-- aumenta el mt aquí
                 canAccessGrades
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-400 text-white'
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-gray-400 text-white",
               )}
               aria-label={
                 !isEnrolled
-                  ? 'Debes inscribirte al curso'
-                  : 'Completa todas las clases para ver tus calificaciones'
+                  ? "Debes inscribirte al curso"
+                  : "Completa todas las clases para ver tus calificaciones"
               }
             >
               <FaTrophy
                 className={cn(
-                  'mr-2 h-4 w-4',
-                  !canAccessGrades ? 'text-black' : ''
+                  "mr-2 h-4 w-4",
+                  !canAccessGrades ? "text-black" : "",
                 )}
               />
               <span
                 className={cn(
-                  'text-sm font-bold',
-                  !canAccessGrades ? 'text-black' : ''
+                  "text-sm font-bold",
+                  !canAccessGrades ? "text-black" : "",
                 )}
               >
                 Mis Calificaciones
@@ -1693,8 +1693,8 @@ export function CourseHeader({
                 <button onClick={handleEnrollClick} className="btn">
                   <strong>
                     <span>
-                      ${' '}
-                      {course.individualPrice.toLocaleString('es-CO', {
+                      ${" "}
+                      {course.individualPrice.toLocaleString("es-CO", {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       })}
@@ -1720,7 +1720,7 @@ export function CourseHeader({
           <div className="prose flex-1">
             <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-white sm:text-base">
               {/* Cambiado a blanco */}
-              {course.description ?? 'No hay descripción disponible.'}
+              {course.description ?? "No hay descripción disponible."}
             </p>
           </div>
           {/* Eliminar el botón de compra de aquí */}
@@ -1760,8 +1760,8 @@ export function CourseHeader({
               {/* Filter to only show unique materia titles */}
               {Array.from(
                 new Map(
-                  course.materias.map((materia) => [materia.title, materia])
-                ).values()
+                  course.materias.map((materia) => [materia.title, materia]),
+                ).values(),
               ).map((materia: CourseMateria, index: number) => (
                 <Badge
                   key={materia.id}
@@ -1801,10 +1801,10 @@ export function CourseHeader({
                   {isUnenrolling ? (
                     <Icons.spinner
                       className="text-white"
-                      style={{ width: '35px', height: '35px' }}
+                      style={{ width: "35px", height: "35px" }}
                     />
                   ) : (
-                    'Cancelar Suscripción'
+                    "Cancelar Suscripción"
                   )}
                 </Button>
               </div>
@@ -1841,13 +1841,13 @@ export function CourseHeader({
           onCloseAction={() => setIsGradeModalOpen(false)}
           courseTitle={course.title}
           courseId={course.id}
-          userId={user?.id ?? ''} // Pass dynamic user ID
+          userId={user?.id ?? ""} // Pass dynamic user ID
         />
       </CardContent>
       {showPaymentModal && (courseProduct ?? selectedProduct) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-lg rounded-lg bg-gray-800 p-4 text-white">
-            {' '}
+            {" "}
             {/* Cambiado a fondo oscuro */}
             <div className="relative mb-4 flex items-center justify-between">
               <h3 className="w-full text-center text-xl font-semibold text-white">
@@ -1857,7 +1857,7 @@ export function CourseHeader({
               </h3>
               <button
                 onClick={() => {
-                  console.log('Closing payment modal');
+                  console.log("Closing payment modal");
                   setShowPaymentModal(false);
                 }}
                 className="absolute top-0 right-0 mt-2 mr-2 text-gray-300 hover:text-white"

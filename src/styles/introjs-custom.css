@@ -1,11 +1,11 @@
-
-
 .introjs-tooltip {
   background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
   color: #e0eaff;
   border-radius: 18px;
   font-size: 1.13rem;
-  box-shadow: 0 8px 32px 0 rgba(0,189,216,0.25), 0 1.5px 8px 0 #00a5c0;
+  box-shadow:
+    0 8px 32px 0 rgba(0, 189, 216, 0.25),
+    0 1.5px 8px 0 #00a5c0;
   border: 2px solid #00eaff;
   padding: 22px 28px 18px 28px;
   text-shadow: 0 1px 8px #00eaff33;
@@ -31,7 +31,10 @@
   margin: 0 6px;
   font-size: 1rem;
   box-shadow: 0 2px 8px #00eaff33;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
   text-shadow: none;
 }
 
@@ -44,7 +47,9 @@
 .introjs-helperLayer {
   background: rgba(0, 189, 216, 0.13);
   border-radius: 16px;
-  box-shadow: 0 0 0 5px #00eaff, 0 0 24px 2px #00eaff55;
+  box-shadow:
+    0 0 0 5px #00eaff,
+    0 0 24px 2px #00eaff55;
   transition: box-shadow 0.3s;
 }
 
@@ -59,7 +64,7 @@
 }
 
 .introjs-tooltiptext {
-  font-family: 'Orbitron', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  font-family: "Orbitron", "Montserrat", "Segoe UI", Arial, sans-serif;
   letter-spacing: 0.03em;
 }
 

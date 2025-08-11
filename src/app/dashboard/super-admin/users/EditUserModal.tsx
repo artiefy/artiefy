@@ -1,11 +1,11 @@
-import React from 'react';
+import React from "react";
 
-import Image from 'next/image';
+import Image from "next/image";
 
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 
 function formatDateForBackend(dateString: string): string {
-  if (!dateString) return '';
+  if (!dateString) return "";
   return dateString; // El input[type="date"] ya da formato 'YYYY-MM-DD'
 }
 
@@ -19,7 +19,7 @@ interface User {
   profileImage?: string;
   permissions?: string[];
   subscriptionEndDate?: string | null;
-  planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
+  planType?: "none" | "Pro" | "Premium" | "Enterprise";
 }
 
 interface EditUserModalProps {
@@ -30,11 +30,11 @@ interface EditUserModalProps {
 }
 
 const availablePermissions = [
-  { id: 'create_course', label: 'Crear Cursos' },
-  { id: 'edit_course', label: 'Editar Cursos' },
-  { id: 'delete_course', label: 'Eliminar Cursos' },
-  { id: 'manage_users', label: 'Gestionar Usuarios' },
-  { id: 'view_reports', label: 'Ver Reportes' },
+  { id: "create_course", label: "Crear Cursos" },
+  { id: "edit_course", label: "Editar Cursos" },
+  { id: "delete_course", label: "Eliminar Cursos" },
+  { id: "manage_users", label: "Gestionar Usuarios" },
+  { id: "view_reports", label: "Ver Reportes" },
 ];
 
 export default function EditUserModal({
@@ -44,47 +44,46 @@ export default function EditUserModal({
   onSave,
 }: EditUserModalProps) {
   function parseSubscriptionEndDateForInput(
-    dateStr: string | null | undefined
+    dateStr: string | null | undefined,
   ): string {
-    if (!dateStr) return '';
-    const [datePart] = dateStr.split(' '); // por si viene con hora
+    if (!dateStr) return "";
+    const [datePart] = dateStr.split(" "); // por si viene con hora
     return datePart; // asumir que ya viene en formato 'YYYY-MM-DD'
   }
 
   const [editedUser, setEditedUser] = React.useState({
     ...user,
     subscriptionEndDate: parseSubscriptionEndDateForInput(
-      user.subscriptionEndDate
+      user.subscriptionEndDate,
     ),
-    planType: user.planType ?? 'none',
+    planType: user.planType ?? "none",
   });
 
   const [selectedPermissions, setSelectedPermissions] = React.useState<
     string[]
   >(user.permissions ?? []);
-  console.log('sosa planes:', user.planType);
+  console.log("sosa planes:", user.planType);
 
   React.useEffect(() => {
     setEditedUser({
       ...user,
       subscriptionEndDate: parseSubscriptionEndDateForInput(
-        user.subscriptionEndDate
+        user.subscriptionEndDate,
       ),
-      planType: user.planType ?? 'none',
+      planType: user.planType ?? "none",
     });
 
     setSelectedPermissions(user.permissions ?? []);
   }, [user]);
 
   if (!isOpen) return null;
-  console.log('User data:', user);
+  console.log("User data:", user);
 
   return (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
       onClick={onClose}
     >
-      
       <div
         className="relative mx-auto my-4 h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-[#01142B] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -238,7 +237,7 @@ export default function EditUserModal({
                     <input
                       type="date"
                       value={
-                        editedUser.subscriptionEndDate?.substring(0, 10) ?? ''
+                        editedUser.subscriptionEndDate?.substring(0, 10) ?? ""
                       }
                       onChange={(e) =>
                         setEditedUser({
@@ -258,17 +257,17 @@ export default function EditUserModal({
                       onChange={(e) => {
                         const value = e.target.value;
                         if (
-                          ['none', 'Pro', 'Premium', 'Enterprise'].includes(
-                            value
+                          ["none", "Pro", "Premium", "Enterprise"].includes(
+                            value,
                           )
                         ) {
                           setEditedUser({
                             ...editedUser,
                             planType: value as
-                              | 'none'
-                              | 'Pro'
-                              | 'Premium'
-                              | 'Enterprise',
+                              | "none"
+                              | "Pro"
+                              | "Premium"
+                              | "Enterprise",
                           });
                         }
                       }}
@@ -302,8 +301,8 @@ export default function EditUserModal({
                             e.target.checked
                               ? [...selectedPermissions, permission.id]
                               : selectedPermissions.filter(
-                                  (p) => p !== permission.id
-                                )
+                                  (p) => p !== permission.id,
+                                ),
                           );
                         }}
                         className="rounded border-white/20 bg-white/5 text-[#3AF4EF]"
@@ -333,7 +332,7 @@ export default function EditUserModal({
                   subscriptionEndDate: editedUser.subscriptionEndDate
                     ? formatDateForBackend(editedUser.subscriptionEndDate)
                     : null,
-                  planType: editedUser.planType ?? 'none', // ✅ AÑADIDO AQUÍ
+                  planType: editedUser.planType ?? "none", // ✅ AÑADIDO AQUÍ
                 };
                 onSave(formattedUser, selectedPermissions);
               }}

@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { env } from '~/env';
-import { getAuthConfig } from '~/utils/paygateway/auth';
-import { createFormData } from '~/utils/paygateway/form';
+import { env } from "~/env";
+import { getAuthConfig } from "~/utils/paygateway/auth";
+import { createFormData } from "~/utils/paygateway/form";
 
 interface RequestBody {
   productId: number;
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     // Limpiar la descripción - quitar "Curso Individual:"
     const cleanDescription = body.description.replace(
       /^Curso Individual:\s*/i,
-      ''
+      "",
     );
 
     const auth = getAuthConfig();
@@ -38,16 +38,16 @@ export async function POST(req: NextRequest) {
       body.buyerFullName,
       body.telephone,
       `${env.NEXT_PUBLIC_BASE_URL}/gracias?type=curso&courseId=${body.productId}&from=payu`, // Añade from=payu
-      'course'
+      "course",
     );
 
-    console.log('Generated payment data:', formData);
+    console.log("Generated payment data:", formData);
     return NextResponse.json(formData);
   } catch (error) {
-    console.error('Error generating payment data:', error);
+    console.error("Error generating payment data:", error);
     return NextResponse.json(
-      { error: 'Failed to generate payment data' },
-      { status: 500 }
+      { error: "Failed to generate payment data" },
+      { status: 500 },
     );
   }
 }

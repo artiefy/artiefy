@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-import Image from 'next/image';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { useProgress } from '@bprogress/next';
-import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { FiCode } from 'react-icons/fi';
-import useSWR from 'swr';
+import { useProgress } from "@bprogress/next";
+import { FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { FiCode } from "react-icons/fi";
+import useSWR from "swr";
 
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Input } from '~/components/estudiantes/ui/input';
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { Input } from "~/components/estudiantes/ui/input";
 import {
   restoreScrollPosition as _restoreScrollPosition,
   saveScrollPosition,
-} from '~/utils/scrollPosition';
+} from "~/utils/scrollPosition";
 
-import type { Category } from '~/types';
+import type { Category } from "~/types";
 
 interface CourseCategoriesProps {
   allCategories: Category[];
@@ -40,11 +40,11 @@ export default function StudentCategories({
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState(
-    searchParams?.get('query') ?? ''
+    searchParams?.get("query") ?? "",
   );
 
   // Usar SWR para el fetching y caching de datos
-  const { data: categoriesData } = useSWR<CategoriesData>('/api/categories', {
+  const { data: categoriesData } = useSWR<CategoriesData>("/api/categories", {
     fallbackData: { allCategories, featuredCategories },
     revalidateOnFocus: false, // Solo revalidar cuando sea necesario
     revalidateOnReconnect: false,
@@ -53,10 +53,10 @@ export default function StudentCategories({
   const handleCategorySelect = (category: string | null) => {
     saveScrollPosition();
     start();
-    setLoadingCategory(category ?? 'all');
+    setLoadingCategory(category ?? "all");
     const params = new URLSearchParams();
     if (category) {
-      params.set('category', category);
+      params.set("category", category);
     }
     router.push(`${pathname}?${params.toString()}`);
   };
@@ -65,7 +65,7 @@ export default function StudentCategories({
     saveScrollPosition();
     const params = new URLSearchParams();
     if (searchQuery) {
-      params.set('query', searchQuery);
+      params.set("query", searchQuery);
     }
     start();
     setIsSearching(true);
@@ -81,19 +81,19 @@ export default function StudentCategories({
     // restoreScrollPosition();
 
     // If we've completed a search or category filter, scroll to the results
-    if (searchParams?.has('query') || searchParams?.has('category')) {
+    if (searchParams?.has("query") || searchParams?.has("category")) {
       // Use setTimeout to ensure the DOM has been updated with results first
       setTimeout(() => {
-        const resultsSection = document.getElementById('courses-list-section');
+        const resultsSection = document.getElementById("courses-list-section");
         if (resultsSection) {
-          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, 300);
     }
   }, [searchParams, stop]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleSearch();
     }
@@ -108,7 +108,7 @@ export default function StudentCategories({
             <select
               className="focus:border-primary focus:ring-primary block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900"
               onChange={(e) => handleCategorySelect(e.target.value || null)}
-              value={searchParams?.get('category') ?? ''}
+              value={searchParams?.get("category") ?? ""}
               aria-label="Seleccionar categoría"
             >
               <option value="">Todas las categorías</option>
@@ -152,7 +152,7 @@ export default function StudentCategories({
           {/* Botón "Todos los cursos" solo visible en desktop */}
           <div
             className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 ${
-              loadingCategory === 'all' ? 'pr-4' : ''
+              loadingCategory === "all" ? "pr-4" : ""
             }`}
             onClick={() => handleCategorySelect(null)}
             role="button"
@@ -160,7 +160,7 @@ export default function StudentCategories({
             aria-label="Mostrar todos los cursos"
           >
             <div className="flex h-full flex-col items-center justify-center">
-              {loadingCategory === 'all' ? (
+              {loadingCategory === "all" ? (
                 <>
                   <Icons.spinner
                     className="text-background size-8"
@@ -212,20 +212,20 @@ export default function StudentCategories({
                         <Image
                           src={`/${
                             index === 0
-                              ? 'alembic-svgrepo-com.svg'
+                              ? "alembic-svgrepo-com.svg"
                               : index === 1
-                                ? 'list-svgrepo-com.svg'
+                                ? "list-svgrepo-com.svg"
                                 : index === 2
-                                  ? 'brush-svgrepo-com.svg'
+                                  ? "brush-svgrepo-com.svg"
                                   : index === 3
-                                    ? 'web-page-browser-analysis-screen-svgrepo-com.svg'
+                                    ? "web-page-browser-analysis-screen-svgrepo-com.svg"
                                     : index === 4
-                                      ? 'database-svgrepo-com.svg'
+                                      ? "database-svgrepo-com.svg"
                                       : index === 5
-                                        ? 'api-interface-svgrepo-com.png'
+                                        ? "api-interface-svgrepo-com.png"
                                         : index === 6
-                                          ? 'cloud-computing-ai-svgrepo-com.png'
-                                          : 'code-svgrepo-com.svg'
+                                          ? "cloud-computing-ai-svgrepo-com.png"
+                                          : "code-svgrepo-com.svg"
                           }`}
                           alt={category.name}
                           width={36}
@@ -238,7 +238,7 @@ export default function StudentCategories({
                       </h3>
                       <p className="mt-1 text-xs text-gray-500">
                         {`${category.courses?.length ?? 0} curso${
-                          category.courses?.length !== 1 ? 's' : ''
+                          category.courses?.length !== 1 ? "s" : ""
                         }`}
                       </p>
                     </>

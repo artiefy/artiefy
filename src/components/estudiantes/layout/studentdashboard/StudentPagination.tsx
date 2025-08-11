@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from "react";
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { useProgress } from '@bprogress/next';
+import { useProgress } from "@bprogress/next";
 
 import {
   Pagination,
@@ -14,7 +14,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '~/components/estudiantes/ui/pagination';
+} from "~/components/estudiantes/ui/pagination";
 
 interface PaginationContainerProps {
   totalPages: number;
@@ -30,7 +30,7 @@ const StudentPagination = ({
   totalPages,
   currentPage,
   totalCourses,
-  route = '/estudiantes',
+  route = "/estudiantes",
   category,
   searchTerm,
   itemsPerPage = 9,
@@ -43,33 +43,42 @@ const StudentPagination = ({
     stop();
   }, [searchParams, stop]);
 
-  const buildUrl = useCallback((page: number): string => {
-    const params = new URLSearchParams();
+  const buildUrl = useCallback(
+    (page: number): string => {
+      const params = new URLSearchParams();
 
-    // Only add page parameter if not page 1
-    if (page !== 1) {
-      params.append('page', page.toString());
-    }
+      // Only add page parameter if not page 1
+      if (page !== 1) {
+        params.append("page", page.toString());
+      }
 
-    // Add optional parameters if present
-    if (category) params.append('category', category);
-    if (searchTerm) params.append('searchTerm', searchTerm);
+      // Add optional parameters if present
+      if (category) params.append("category", category);
+      if (searchTerm) params.append("searchTerm", searchTerm);
 
-    const queryString = params.toString();
-    return queryString ? `${route}?${queryString}` : route;
-  }, [category, route, searchTerm]);
+      const queryString = params.toString();
+      return queryString ? `${route}?${queryString}` : route;
+    },
+    [category, route, searchTerm],
+  );
 
-  const handlePageChange = useCallback((page: number) => {
-    start();
-    const newUrl = buildUrl(page);
-    router.push(newUrl, { scroll: false });
-  }, [buildUrl, router, start]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      start();
+      const newUrl = buildUrl(page);
+      router.push(newUrl, { scroll: false });
+    },
+    [buildUrl, router, start],
+  );
 
   // Calculate pagination range
-  const { startItem, endItem } = useMemo(() => ({
-    startItem: (currentPage - 1) * itemsPerPage + 1,
-    endItem: Math.min(currentPage * itemsPerPage, totalCourses),
-  }), [currentPage, itemsPerPage, totalCourses]);
+  const { startItem, endItem } = useMemo(
+    () => ({
+      startItem: (currentPage - 1) * itemsPerPage + 1,
+      endItem: Math.min(currentPage * itemsPerPage, totalCourses),
+    }),
+    [currentPage, itemsPerPage, totalCourses],
+  );
 
   if (totalPages <= 1) return null;
 
@@ -84,7 +93,7 @@ const StudentPagination = ({
             <PaginationPrevious
               onClick={() => handlePageChange(currentPage - 1)}
               className={`cursor-pointer active:scale-95 ${
-                currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                currentPage === 1 ? "pointer-events-none opacity-50" : ""
               }`}
               aria-disabled={currentPage === 1}
             />
@@ -92,12 +101,12 @@ const StudentPagination = ({
 
           {Array.from({ length: totalPages }).map((_, index) => {
             const pageNumber = index + 1;
-            const isVisible = 
+            const isVisible =
               pageNumber === 1 ||
               pageNumber === totalPages ||
               (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
 
-            const showEllipsis = 
+            const showEllipsis =
               (pageNumber === currentPage - 2 && currentPage > 3) ||
               (pageNumber === currentPage + 2 && currentPage < totalPages - 2);
 
@@ -126,7 +135,9 @@ const StudentPagination = ({
             <PaginationNext
               onClick={() => handlePageChange(currentPage + 1)}
               className={`cursor-pointer active:scale-95 ${
-                currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
+                currentPage === totalPages
+                  ? "pointer-events-none opacity-50"
+                  : ""
               }`}
               aria-disabled={currentPage === totalPages}
             />

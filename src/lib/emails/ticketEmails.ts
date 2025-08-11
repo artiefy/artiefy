@@ -1,80 +1,80 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-	service: 'Gmail',
-	auth: {
-		user: 'direcciongeneral@artiefy.com',
-		pass: process.env.PASS,
-	},
-	tls: {
-		rejectUnauthorized: false,
-	},
+  service: "Gmail",
+  auth: {
+    user: "direcciongeneral@artiefy.com",
+    pass: process.env.PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 interface EmailError {
-	code: string;
-	command: string;
-	response: string;
+  code: string;
+  command: string;
+  response: string;
 }
 
 export async function sendTicketEmail(emailData: {
-	to: string;
-	subject: string;
-	html: string;
+  to: string;
+  subject: string;
+  html: string;
 }): Promise<{ success: boolean; error?: EmailError }> {
-	try {
-		const { to, subject, html } = emailData;
-		console.log('📧 Intentando enviar email a:', to);
-		console.log('📧 Asunto:', subject);
+  try {
+    const { to, subject, html } = emailData;
+    console.log("📧 Intentando enviar email a:", to);
+    console.log("📧 Asunto:", subject);
 
-		if (!process.env.PASS) {
-			console.warn(
-				'❌ Email no enviado: Falta contraseña en variables de entorno'
-			);
-			return {
-				success: false,
-				error: { code: 'NO_PASSWORD', command: '', response: '' },
-			};
-		}
+    if (!process.env.PASS) {
+      console.warn(
+        "❌ Email no enviado: Falta contraseña en variables de entorno",
+      );
+      return {
+        success: false,
+        error: { code: "NO_PASSWORD", command: "", response: "" },
+      };
+    }
 
-		const mailOptions = {
-			from: '"Artiefy Support" <direcciongeneral@artiefy.com>',
-			to,
-			subject,
-			html,
-			replyTo: 'direcciongeneral@artiefy.com',
-		};
+    const mailOptions = {
+      from: '"Artiefy Support" <direcciongeneral@artiefy.com>',
+      to,
+      subject,
+      html,
+      replyTo: "direcciongeneral@artiefy.com",
+    };
 
-		const info = await transporter.sendMail(mailOptions);
-		console.log('✅ Email enviado exitosamente');
-		console.log('📧 ID del mensaje:', info.messageId);
-		console.log('📧 Respuesta del servidor:', info.response);
-		return { success: true };
-	} catch (error) {
-		const emailError: EmailError = {
-			code: error instanceof Error ? error.message : 'Unknown error',
-			command:
-				typeof error === 'object' && error !== null && 'command' in error
-					? String(error.command)
-					: '',
-			response:
-				typeof error === 'object' && error !== null && 'response' in error
-					? String(error.response)
-					: '',
-		};
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email enviado exitosamente");
+    console.log("📧 ID del mensaje:", info.messageId);
+    console.log("📧 Respuesta del servidor:", info.response);
+    return { success: true };
+  } catch (error) {
+    const emailError: EmailError = {
+      code: error instanceof Error ? error.message : "Unknown error",
+      command:
+        typeof error === "object" && error !== null && "command" in error
+          ? String(error.command)
+          : "",
+      response:
+        typeof error === "object" && error !== null && "response" in error
+          ? String(error.response)
+          : "",
+    };
 
-		return { success: false, error: emailError };
-	}
+    return { success: false, error: emailError };
+  }
 }
 
 export function getTicketStatusChangeEmail(
-	ticketId: number,
-	estado: string,
-	description: string,
-	commentHistory: string,
-	newComment?: string
+  ticketId: number,
+  estado: string,
+  description: string,
+  commentHistory: string,
+  newComment?: string,
 ) {
-	return `
+  return `
 		<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
 			<h2 style="color: #2563eb;">Actualización de Ticket #${ticketId}</h2>
 			
@@ -85,15 +85,15 @@ export function getTicketStatusChangeEmail(
 			</div>
 			
 			${
-				newComment
-					? `
+        newComment
+          ? `
 			<div style="margin: 20px 0;">
 				<h3 style="color: #2563eb;">Nuevo comentario:</h3>
 				<p style="background: #e0f2fe; padding: 12px; border-radius: 6px;">${newComment}</p>
 			</div>
 			`
-					: ''
-			}
+          : ""
+      }
 			
 			<div style="margin: 20px 0;">
 				<h3 style="color: #2563eb;">Historial de comentarios:</h3>
@@ -111,10 +111,10 @@ export function getTicketStatusChangeEmail(
 }
 
 export function getNewTicketAssignmentEmail(
-	ticketId: number,
-	description: string
+  ticketId: number,
+  description: string,
 ) {
-	return `
+  return `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2>Nuevo Ticket Asignado #${ticketId}</h2>
             <p>Se te ha asignado un nuevo ticket para revisión.</p>

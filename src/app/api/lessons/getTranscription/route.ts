@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { Redis } from '@upstash/redis';
-import { eq } from 'drizzle-orm';
+import { Redis } from "@upstash/redis";
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { lessons } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { lessons } from "~/server/db/schema";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -14,12 +14,12 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const lessonId = searchParams.get('lessonId');
+    const lessonId = searchParams.get("lessonId");
 
     if (!lessonId) {
       return NextResponse.json(
-        { error: 'Missing lessonId parameter' },
-        { status: 400 }
+        { error: "Missing lessonId parameter" },
+        { status: 400 },
       );
     }
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!lesson) {
-      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+      return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
     // Fetch transcription from Redis
@@ -38,17 +38,17 @@ export async function GET(request: NextRequest) {
 
     if (!transcription) {
       return NextResponse.json(
-        { error: 'Transcription not found' },
-        { status: 404 }
+        { error: "Transcription not found" },
+        { status: 404 },
       );
     }
 
     return NextResponse.json({ transcription });
   } catch (error) {
-    console.error('Error fetching transcription:', error);
+    console.error("Error fetching transcription:", error);
     return NextResponse.json(
-      { error: 'Error retrieving transcription' },
-      { status: 500 }
+      { error: "Error retrieving transcription" },
+      { status: 500 },
     );
   }
 }

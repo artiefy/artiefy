@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { FaTrophy } from 'react-icons/fa';
-import { toast } from 'sonner';
+import { FaTrophy } from "react-icons/fa";
+import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '~/components/estudiantes/ui/dialog';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { formatScore } from '~/utils/formatScore';
+} from "~/components/estudiantes/ui/dialog";
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { formatScore } from "~/utils/formatScore";
 
 interface Materia {
   id: number;
@@ -55,12 +55,12 @@ export function GradeModal({
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/grades/materias?userId=${userId}&courseId=${courseId}`
+          `/api/grades/materias?userId=${userId}&courseId=${courseId}`,
         );
         const data = (await response.json()) as ApiResponse;
 
         if (!response.ok) {
-          throw new Error(data.error ?? 'Failed to fetch grades');
+          throw new Error(data.error ?? "Failed to fetch grades");
         }
 
         if (Array.isArray(data.materias)) {
@@ -71,11 +71,11 @@ export function GradeModal({
           setCalculatedFinalGrade(Number(average.toFixed(2)));
         }
       } catch (error) {
-        console.error('Error fetching grades:', error);
+        console.error("Error fetching grades:", error);
         toast.error(
           error instanceof Error
             ? error.message
-            : 'Error al cargar las calificaciones'
+            : "Error al cargar las calificaciones",
         );
       } finally {
         setIsLoading(false);
@@ -98,7 +98,7 @@ export function GradeModal({
     materias.length > 0 &&
     Array.isArray(materias.map((materia) => materia.title))
       ? Array.from(
-          new Map(materias.map((materia) => [materia.title, materia])).values()
+          new Map(materias.map((materia) => [materia.title, materia])).values(),
         )
       : [];
 
@@ -126,7 +126,7 @@ export function GradeModal({
         ) : (
           <span
             className={`font-semibold ${
-              materia.grade >= 3 ? 'text-green-600' : 'text-red-600'
+              materia.grade >= 3 ? "text-green-600" : "text-red-600"
             }`}
           >
             {formatScore(materia.grade)}
@@ -155,8 +155,8 @@ export function GradeModal({
               <span
                 className={`text-3xl font-bold ${
                   (calculatedFinalGrade ?? 0) >= 3
-                    ? 'text-green-600'
-                    : 'text-red-600'
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {formatScore(calculatedFinalGrade ?? 0)}

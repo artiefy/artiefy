@@ -1,20 +1,20 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { Redis } from '@upstash/redis';
-import { and, eq } from 'drizzle-orm';
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { Redis } from "@upstash/redis";
+import { and, eq } from "drizzle-orm";
 
 import {
   createActivity,
   updateActivity,
-} from '~/models/educatorsModels/activitiesModels';
-import { db } from '~/server/db';
+} from "~/models/educatorsModels/activitiesModels";
+import { db } from "~/server/db";
 import {
   activities,
   lessons,
   userActivitiesProgress,
-} from '~/server/db/schema';
-import { ratelimit } from '~/server/ratelimit/ratelimit';
+} from "~/server/db/schema";
+import { ratelimit } from "~/server/ratelimit/ratelimit";
 
 function respondWithError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -25,21 +25,21 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError('No autorizado', 403);
+      return respondWithError("No autorizado", 403);
     }
 
     // Implement rate limiting
-    const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
     const { success } = await ratelimit.limit(ip);
     if (!success) {
-      return respondWithError('Demasiadas solicitudes', 429);
+      return respondWithError("Demasiadas solicitudes", 429);
     }
 
     const clerkUser = await currentUser();
     if (!clerkUser) {
       return respondWithError(
-        'No se pudo obtener información del usuario',
-        500
+        "No se pudo obtener información del usuario",
+        500,
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         : null,
     });
 
-    console.log('Datos enviados al servidor:', {
+    console.log("Datos enviados al servidor:", {
       name,
       description,
       lessonsId,
@@ -91,13 +91,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       id: newActivity.id,
-      message: 'Actividad creada exitosamente',
+      message: "Actividad creada exitosamente",
     });
   } catch (error) {
-    console.error('Error detallado:', error);
+    console.error("Error detallado:", error);
     return respondWithError(
-      `Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-      500
+      `Error al crear la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      500,
     );
   }
 }
@@ -106,13 +106,13 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get('courseId');
-    const parametroId = searchParams.get('parametroId');
+    const courseId = searchParams.get("courseId");
+    const parametroId = searchParams.get("parametroId");
 
     if (!courseId) {
       return NextResponse.json(
-        { error: 'Course ID es requerido' },
-        { status: 400 }
+        { error: "Course ID es requerido" },
+        { status: 400 },
       );
     }
 
@@ -143,10 +143,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(actividades);
   } catch (error) {
-    console.error('Error al obtener las actividades:', error);
+    console.error("Error al obtener las actividades:", error);
     return NextResponse.json(
-      { error: 'Error al obtener las actividades' },
-      { status: 500 }
+      { error: "Error al obtener las actividades" },
+      { status: 500 },
     );
   }
 }
@@ -156,7 +156,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError('No autorizado', 403);
+      return respondWithError("No autorizado", 403);
     }
 
     const body = (await request.json()) as {
@@ -180,15 +180,15 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'Actividad actualizada exitosamente',
+      message: "Actividad actualizada exitosamente",
     });
   } catch (error: unknown) {
-    console.error('Error al actualizar la actividad:', error);
+    console.error("Error al actualizar la actividad:", error);
     const errorMessage =
-      error instanceof Error ? error.message : 'Error desconocido';
+      error instanceof Error ? error.message : "Error desconocido";
     return respondWithError(
       `Error al actualizar la actividad: ${errorMessage}`,
-      500
+      500,
     );
   }
 }
@@ -197,12 +197,12 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
-        { error: 'ID no proporcionado' },
-        { status: 400 }
+        { error: "ID no proporcionado" },
+        { status: 400 },
       );
     }
 
@@ -215,8 +215,8 @@ export async function DELETE(request: NextRequest) {
 
     if (!activity) {
       return NextResponse.json(
-        { error: 'Actividad no encontrada' },
-        { status: 404 }
+        { error: "Actividad no encontrada" },
+        { status: 404 },
       );
     }
 
@@ -271,10 +271,10 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error al eliminar la actividad:', error);
+    console.error("Error al eliminar la actividad:", error);
     return NextResponse.json(
-      { error: 'Error al eliminar la actividad' },
-      { status: 500 }
+      { error: "Error al eliminar la actividad" },
+      { status: 500 },
     );
   }
 }

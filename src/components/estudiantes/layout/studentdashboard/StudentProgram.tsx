@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
-import { ArrowRightCircleIcon, StarIcon } from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon, StarIcon } from "@heroicons/react/24/solid";
 
-import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import { EnrollmentCount } from "~/components/estudiantes/layout/EnrollmentCount";
+import { Badge } from "~/components/estudiantes/ui/badge";
+import { Button } from "~/components/estudiantes/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { blurDataURL } from '~/lib/blurDataUrl';
-import { type Program } from '~/types';
+} from "~/components/estudiantes/ui/card";
+import { blurDataURL } from "~/lib/blurDataUrl";
+import { type Program } from "~/types";
 
 interface StudenProgramProps {
   program: Program;
@@ -30,9 +30,9 @@ export function StudentProgram({ program }: StudenProgramProps) {
           <div className="relative aspect-video overflow-hidden">
             <Image
               src={
-                program.coverImageKey && program.coverImageKey !== 'NULL'
+                program.coverImageKey && program.coverImageKey !== "NULL"
                   ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                  : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
               }
               alt={program.title}
               fill
@@ -65,7 +65,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
                 variant="outline"
                 className="border-primary bg-background text-xs sm:text-sm"
               >
-                {program.category?.name ?? 'Sin categoría'}
+                {program.category?.name ?? "Sin categoría"}
               </Badge>
             </div>
             <div className="flex items-center">
@@ -75,8 +75,8 @@ export function StudentProgram({ program }: StudenProgramProps) {
                     key={index}
                     className={`h-4 w-4 ${
                       index < Math.floor(program.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
+                        ? "text-yellow-400"
+                        : "text-gray-300"
                     }`}
                   />
                 ))}
@@ -85,7 +85,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
                 <StarIcon className="h-4 w-4 text-yellow-400" />
               </div>
               <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-                {program.rating?.toFixed(1) ?? '0.0'}
+                {program.rating?.toFixed(1) ?? "0.0"}
               </span>
             </div>
           </div>

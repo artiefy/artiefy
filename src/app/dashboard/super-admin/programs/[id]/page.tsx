@@ -1,16 +1,16 @@
-import ProgramDetail from './ProgramDetail'; // El componente ProgramDetail
+import ProgramDetail from "./ProgramDetail"; // El componente ProgramDetail
 
 export default async function Page({
-	params,
+  params,
 }: {
-	params: Promise<{ id: number }>;
+  params: Promise<{ id: number }>;
 }) {
-	// Esperamos a que se resuelvan los parámetros
-	const resolvedParams = await params;
+  // Esperamos a que se resuelvan los parámetros
+  const resolvedParams = await params;
 
-	return (
-		<>
-			<ProgramDetail programId={resolvedParams.id} />
-		</>
-	);
+  return (
+    <>
+      <ProgramDetail programId={resolvedParams.id} />
+    </>
+  );
 }

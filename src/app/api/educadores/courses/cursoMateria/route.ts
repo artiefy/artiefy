@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 
 import {
   deleteCourse,
@@ -13,13 +13,13 @@ import {
   getTotalStudents,
   updateCourse,
   updateMateria,
-} from '~/models/educatorsModels/courseModelsEducator';
-import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
-import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
-import { db } from '~/server/db';
-import { courseCourseTypes, courses, users } from '~/server/db/schema'; // Add users import
+} from "~/models/educatorsModels/courseModelsEducator";
+import { getSubjects } from "~/models/educatorsModels/subjectModels"; // Import the function to get subjects
+import { getModalidadById } from "~/models/super-adminModels/courseModelsSuperAdmin";
+import { db } from "~/server/db";
+import { courseCourseTypes, courses, users } from "~/server/db/schema"; // Add users import
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -27,10 +27,10 @@ const respondWithError = (message: string, status: number) =>
 // GET endpoint para obtener un curso por su ID
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const courseId = searchParams.get('courseId');
-  const userId = searchParams.get('userId');
-  const fetchSubjects = searchParams.get('fetchSubjects'); // Check if fetchSubjects is requested
-  console.log('CourseId en api route', courseId);
+  const courseId = searchParams.get("courseId");
+  const userId = searchParams.get("userId");
+  const fetchSubjects = searchParams.get("fetchSubjects"); // Check if fetchSubjects is requested
+  console.log("CourseId en api route", courseId);
 
   try {
     if (fetchSubjects) {
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       const totalDuration = await getTotalDuration(parseInt(courseId));
 
       if (!course) {
-        return respondWithError('Curso no encontrado', 404);
+        return respondWithError("Curso no encontrado", 404);
       }
       courses = {
         ...course,
@@ -60,10 +60,10 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json(courses);
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Error al obtener los datos' },
-      { status: 500 }
+      { error: "Error al obtener los datos" },
+      { status: 500 },
     );
   }
 }
@@ -72,8 +72,8 @@ export async function POST(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      console.log('Usuario no autorizado');
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      console.log("Usuario no autorizado");
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
     // Check if user exists in database
@@ -87,13 +87,13 @@ export async function POST(request: Request) {
       const clerkUser = await clerk.users.getUser(userId);
       await db.insert(users).values({
         id: userId,
-        role: 'super-admin',
-        name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
-        email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+        role: "super-admin",
+        name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim(),
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log('persona creada correctamenteeeeeee');
+      console.log("persona creada correctamenteeeeeee");
     }
 
     // Parsear los datos del cuerpo de la solicitud
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       individualPrice?: number; // ✅ se añade acá para que no rompa TS
       videoKey?: string; // ✅ igual que el frontend
     };
-    console.log('📽️ Video key recibida:', data.videoKey);
+    console.log("📽️ Video key recibida:", data.videoKey);
 
     const createdCourses = [];
     const isMultipleModalities = data.modalidadesid.length > 1;
@@ -130,9 +130,9 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error:
-              'Debe ingresar un precio válido para cursos individuales (tipo 4).',
+              "Debe ingresar un precio válido para cursos individuales (tipo 4).",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
           data.courseTypeId.map((typeId) => ({
             courseId: newCourse.id,
             courseTypeId: typeId,
-          }))
+          })),
         );
       }
 
@@ -176,9 +176,9 @@ export async function POST(request: Request) {
           return NextResponse.json(
             {
               error:
-                'Debe ingresar un precio válido para cursos individuales (tipo 4).',
+                "Debe ingresar un precio válido para cursos individuales (tipo 4).",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -199,12 +199,12 @@ export async function POST(request: Request) {
               courseid: newCourse.id,
             });
             console.log(
-              `Materia actualizada: ${subject.id} -> courseId: ${newCourse.id}`
+              `Materia actualizada: ${subject.id} -> courseId: ${newCourse.id}`,
             );
-          })
+          }),
         );
       } else {
-        console.log('No se proporcionaron materias para actualizar.');
+        console.log("No se proporcionaron materias para actualizar.");
       }
 
       createdCourses.push(newCourse);
@@ -212,12 +212,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(createdCourses, { status: 201 });
   } catch (error) {
-    console.error('Error al crear el curso:', error);
+    console.error("Error al crear el curso:", error);
     const errorMessage =
-      error instanceof Error ? error.message : 'Error desconocido';
+      error instanceof Error ? error.message : "Error desconocido";
     return NextResponse.json(
       { error: `Error al crear el curso: ${errorMessage}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -227,7 +227,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError('No autorizado', 403);
+      return respondWithError("No autorizado", 403);
     }
 
     const body = (await request.json()) as {
@@ -254,11 +254,11 @@ export async function PUT(request: NextRequest) {
 
     const course = await getCourseById(id);
     if (!course) {
-      return respondWithError('Curso no encontrado', 404);
+      return respondWithError("Curso no encontrado", 404);
     }
 
     if (course.creatorId !== userId) {
-      return respondWithError('No autorizado para actualizar este curso', 403);
+      return respondWithError("No autorizado para actualizar este curso", 403);
     }
 
     await updateCourse(id, {
@@ -277,13 +277,13 @@ export async function PUT(request: NextRequest) {
         await updateMateria(subject.id, {
           courseid: id, // ✅ Asigna el nuevo ID del curso a la materia
         });
-      })
+      }),
     );
 
-    return NextResponse.json({ message: 'Curso actualizado exitosamente' });
+    return NextResponse.json({ message: "Curso actualizado exitosamente" });
   } catch (error) {
-    console.error('Error al actualizar el curso:', error);
-    return respondWithError('Error al actualizar el curso', 500);
+    console.error("Error al actualizar el curso:", error);
+    return respondWithError("Error al actualizar el curso", 500);
   }
 }
 
@@ -291,23 +291,23 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get('courseId');
+    const courseId = searchParams.get("courseId");
 
     if (!courseId) {
       return NextResponse.json(
-        { error: 'ID no proporcionado' },
-        { status: 400 }
+        { error: "ID no proporcionado" },
+        { status: 400 },
       );
     }
 
     const parsedCourseId = parseInt(courseId);
     await deleteCourse(parsedCourseId);
-    return NextResponse.json({ message: 'Curso eliminado exitosamente' });
+    return NextResponse.json({ message: "Curso eliminado exitosamente" });
   } catch (error) {
-    console.error('Error al eliminar el curso:', error);
+    console.error("Error al eliminar el curso:", error);
     return NextResponse.json(
-      { error: 'Error al eliminar el curso' },
-      { status: 500 }
+      { error: "Error al eliminar el curso" },
+      { status: 500 },
     );
   }
 }

@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { getAllEducators } from '~/models/super-adminModels/courseModelsSuperAdmin';
-import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { getAllEducators } from "~/models/super-adminModels/courseModelsSuperAdmin";
+import { db } from "~/server/db";
+import { courses } from "~/server/db/schema";
 
 // ✅ Obtener la lista de educadores
 export async function GET() {
@@ -14,21 +14,21 @@ export async function GET() {
     // Transform the data to include only what we need
     const formattedEducators = educators.map((educator) => ({
       id: educator.id,
-      name: educator.name ?? 'Sin nombre', // Use name from users table
+      name: educator.name ?? "Sin nombre", // Use name from users table
     }));
 
     if (!formattedEducators || formattedEducators.length === 0) {
       return NextResponse.json(
-        { error: 'No hay educadores disponibles' },
-        { status: 404 }
+        { error: "No hay educadores disponibles" },
+        { status: 404 },
       );
     }
 
     return NextResponse.json(formattedEducators);
-  } catch  {
+  } catch {
     return NextResponse.json(
-      { error: 'Error al obtener educadores' },
-      { status: 500 }
+      { error: "Error al obtener educadores" },
+      { status: 500 },
     );
   }
 }
@@ -43,8 +43,8 @@ export async function PUT(req: Request) {
 
     if (!body.courseId || !body.newInstructor) {
       return NextResponse.json(
-        { error: 'Se requiere courseId y newInstructor' },
-        { status: 400 }
+        { error: "Se requiere courseId y newInstructor" },
+        { status: 400 },
       );
     }
 
@@ -60,20 +60,20 @@ export async function PUT(req: Request) {
 
     if (!result.length) {
       return NextResponse.json(
-        { error: 'No se encontró el curso' },
-        { status: 404 }
+        { error: "No se encontró el curso" },
+        { status: 404 },
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Instructor actualizado exitosamente',
+      message: "Instructor actualizado exitosamente",
       course: result[0],
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
-      { error: 'Error al actualizar el instructor' },
-      { status: 500 }
+      { error: "Error al actualizar el instructor" },
+      { status: 500 },
     );
   }
 }

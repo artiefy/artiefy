@@ -1,15 +1,15 @@
-'use server';
+"use server";
 
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { programas, users } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { programas, users } from "~/server/db/schema";
 import {
   type BaseCourse,
   type Category,
   type MateriaWithCourse,
   type Program,
-} from '~/types';
+} from "~/types";
 
 // Define types for the query result
 interface ProgramQueryResult {
@@ -118,15 +118,15 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
             // Safe access to instructor property
             if (
               materia.curso &&
-              typeof materia.curso === 'object' &&
-              'instructor' in materia.curso
+              typeof materia.curso === "object" &&
+              "instructor" in materia.curso
             ) {
               return (materia.curso as { instructor?: string }).instructor;
             }
             return undefined;
           })
-          .filter((id): id is string => !!id)
-      )
+          .filter((id): id is string => !!id),
+      ),
     );
 
     // Obtener todos los usuarios instructores necesarios
@@ -137,34 +137,34 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
         .from(users)
         .where(inArray(users.id, instructorIds)); // <-- usar inArray
       instructorsMap = Object.fromEntries(
-        instructors.map((u) => [u.id, u.name ?? 'No disponible'])
+        instructors.map((u) => [u.id, u.name ?? "No disponible"]),
       );
     }
 
     const transformedMaterias: MateriaWithCourse[] = program.materias.map(
       (materia) => {
-        let instructorId = '';
+        let instructorId = "";
         if (
           materia.curso &&
-          typeof materia.curso === 'object' &&
-          'instructor' in materia.curso
+          typeof materia.curso === "object" &&
+          "instructor" in materia.curso
         ) {
           instructorId =
-            (materia.curso as { instructor?: string }).instructor ?? '';
+            (materia.curso as { instructor?: string }).instructor ?? "";
         }
-        let instructorName = 'No disponible';
+        let instructorName = "No disponible";
         if (instructorId && instructorsMap[instructorId]) {
           instructorName = instructorsMap[instructorId];
         } else if (
           materia.curso &&
-          typeof materia.curso === 'object' &&
-          'creator' in materia.curso &&
+          typeof materia.curso === "object" &&
+          "creator" in materia.curso &&
           materia.curso.creator &&
-          'name' in materia.curso.creator
+          "name" in materia.curso.creator
         ) {
           instructorName =
             (materia.curso.creator as { name?: string }).name ??
-            'No disponible';
+            "No disponible";
         }
 
         return {
@@ -190,7 +190,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
               } as BaseCourse)
             : undefined,
         };
-      }
+      },
     );
 
     const transformedCategory: Category | undefined = program.category
@@ -209,7 +209,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
       materias: transformedMaterias,
     };
   } catch (error) {
-    console.error('Error fetching program:', error);
+    console.error("Error fetching program:", error);
     return null;
   }
 };

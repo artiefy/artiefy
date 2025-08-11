@@ -1,19 +1,19 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
 
-import { type Metadata, type ResolvingMetadata } from 'next';
-import { notFound } from 'next/navigation';
+import { type Metadata, type ResolvingMetadata } from "next";
+import { notFound } from "next/navigation";
 
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@clerk/nextjs/server";
 
-import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
-import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
+import { CourseDetailsSkeleton } from "~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton";
+import Footer from "~/components/estudiantes/layout/Footer";
+import { Header } from "~/components/estudiantes/layout/Header";
+import { getCourseById } from "~/server/actions/estudiantes/courses/getCourseById";
+import { getLessonsByCourseId } from "~/server/actions/estudiantes/lessons/getLessonsByCourseId";
 
-import CourseDetails from './CourseDetails';
+import CourseDetails from "./CourseDetails";
 
-import type { Course } from '~/types';
+import type { Course } from "~/types";
 
 interface PageParams {
   id: string;
@@ -22,7 +22,7 @@ interface PageParams {
 // Función para generar metadata dinámica
 export async function generateMetadata(
   { params }: { params: { id: string } },
-  _parent: ResolvingMetadata
+  _parent: ResolvingMetadata,
 ): Promise<Metadata> {
   try {
     // Await params to ensure it's resolved
@@ -31,8 +31,8 @@ export async function generateMetadata(
 
     if (isNaN(courseId)) {
       return {
-        title: 'Curso no encontrado',
-        description: 'ID de curso inválido',
+        title: "Curso no encontrado",
+        description: "ID de curso inválido",
       };
     }
 
@@ -41,25 +41,25 @@ export async function generateMetadata(
 
     if (!course) {
       return {
-        title: 'Curso no encontrado',
-        description: 'El curso solicitado no pudo ser encontrado.',
+        title: "Curso no encontrado",
+        description: "El curso solicitado no pudo ser encontrado.",
       };
     }
 
     // Asegurar que tengamos una URL base válida
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://artiefy.com";
     const metadataBase = new URL(baseUrl);
 
     // Fetch cover image from the API endpoint
     let coverImageUrl =
-      'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+      "https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT";
 
     try {
       const coverResponse = await fetch(
         `${baseUrl}/api/estudiantes/cursos/${courseId}/cover`,
         {
           next: { revalidate: 3600 },
-        }
+        },
       );
 
       if (coverResponse.ok) {
@@ -71,7 +71,7 @@ export async function generateMetadata(
         }
       }
     } catch (error) {
-      console.warn('Error fetching cover image from API:', error);
+      console.warn("Error fetching cover image from API:", error);
       // Fallback to direct course cover if API fails
       if (course.coverImageKey) {
         coverImageUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`;
@@ -82,40 +82,40 @@ export async function generateMetadata(
     return {
       metadataBase,
       title: `${course.title} | Artiefy`,
-      description: course.description ?? 'No hay descripción disponible.',
+      description: course.description ?? "No hay descripción disponible.",
       openGraph: {
-        type: 'website',
-        locale: 'es_ES',
+        type: "website",
+        locale: "es_ES",
         url: new URL(`/estudiantes/cursos/${courseId}`, baseUrl).toString(),
-        siteName: 'Artiefy',
+        siteName: "Artiefy",
         title: `${course.title} | Artiefy`,
-        description: course.description ?? 'No hay descripción disponible.',
+        description: course.description ?? "No hay descripción disponible.",
         images: [
           {
             url: coverImageUrl,
             width: 1200,
             height: 630,
             alt: `Portada del curso: ${course.title}`,
-            type: course.coverImageKey?.endsWith('.png')
-              ? 'image/png'
-              : 'image/jpeg',
+            type: course.coverImageKey?.endsWith(".png")
+              ? "image/png"
+              : "image/jpeg",
           },
         ],
       },
       twitter: {
-        card: 'summary_large_image',
+        card: "summary_large_image",
         title: `${course.title} | Artiefy`,
-        description: course.description ?? 'No hay descripción disponible.',
+        description: course.description ?? "No hay descripción disponible.",
         images: [coverImageUrl],
-        creator: '@artiefy',
-        site: '@artiefy',
+        creator: "@artiefy",
+        site: "@artiefy",
       },
     };
   } catch (error) {
-    console.error('Error generating metadata:', error);
+    console.error("Error generating metadata:", error);
     return {
-      title: 'Error',
-      description: 'Error al cargar el curso',
+      title: "Error",
+      description: "Error al cargar el curso",
     };
   }
 }
@@ -127,7 +127,7 @@ export default async function Page({ params }: { params: PageParams }) {
 
   return (
     <div className="pt-0">
-      {' '}
+      {" "}
       {/* Antes sin pt-0 */}
       <Header />
       <Suspense fallback={<CourseDetailsSkeleton />}>
@@ -154,7 +154,7 @@ async function CourseContent({ id }: { id: string }) {
     }
 
     // Asegura que userId es string (no null)
-    const safeUserId = userId ?? '';
+    const safeUserId = userId ?? "";
 
     // Obtener lecciones sincronizadas con progreso real del usuario
     const lessons =
@@ -191,7 +191,7 @@ async function CourseContent({ id }: { id: string }) {
       </section>
     );
   } catch (error) {
-    console.error('Error in CourseContent:', error);
+    console.error("Error in CourseContent:", error);
     throw error;
   }
 }

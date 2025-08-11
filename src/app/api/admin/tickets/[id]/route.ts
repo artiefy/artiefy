@@ -1,27 +1,27 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 
 import {
   getNewTicketAssignmentEmail,
   sendTicketEmail,
-} from '~/lib/emails/ticketEmails';
-import { db } from '~/server/db';
+} from "~/lib/emails/ticketEmails";
+import { db } from "~/server/db";
 import {
   ticketAssignees,
   ticketComments,
   tickets,
   users,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 // Tipos seguros
 interface UpdateTicketBody {
   assignedToId?: string; // (legacy: asignación única)
   assignedToIds?: string[]; // asignaciones múltiples
   newComment?: string;
 
-  estado?: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
-  tipo?: 'otro' | 'bug' | 'revision' | 'logs';
+  estado?: "abierto" | "en proceso" | "en revision" | "solucionado" | "cerrado";
+  tipo?: "otro" | "bug" | "revision" | "logs";
 
   email?: string;
   description?: string;
@@ -34,19 +34,19 @@ interface UpdateTicketBody {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata.role;
 
-    if (!userId || (role !== 'admin' && role !== 'super-admin')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId || (role !== "admin" && role !== "super-admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const ticketId = Number(params.id);
     if (isNaN(ticketId)) {
-      return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
+      return NextResponse.json({ error: "Invalid ticket ID" }, { status: 400 });
     }
 
     const body = (await request.json()) as UpdateTicketBody;
@@ -56,7 +56,7 @@ export async function PUT(
     });
 
     if (!currentTicket) {
-      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     if (body.newComment?.trim()) {
@@ -70,14 +70,14 @@ export async function PUT(
 
     if (body.assignedToIds) {
       console.log(
-        '🔁 Actualizando asignaciones múltiples:',
-        body.assignedToIds
+        "🔁 Actualizando asignaciones múltiples:",
+        body.assignedToIds,
       );
 
       await db
         .delete(ticketAssignees)
         .where(eq(ticketAssignees.ticketId, ticketId));
-      console.log('🧹 Asignaciones anteriores eliminadas');
+      console.log("🧹 Asignaciones anteriores eliminadas");
 
       if (body.assignedToIds.length > 0) {
         const newAssignments = body.assignedToIds.map((uid) => ({
@@ -86,9 +86,9 @@ export async function PUT(
         }));
 
         await Promise.all(
-          newAssignments.map((a) => db.insert(ticketAssignees).values(a))
+          newAssignments.map((a) => db.insert(ticketAssignees).values(a)),
         );
-        console.log('✅ Nuevas asignaciones insertadas');
+        console.log("✅ Nuevas asignaciones insertadas");
 
         // ✉️ Enviar correos a asignados
         for (const assignedId of body.assignedToIds) {
@@ -98,18 +98,18 @@ export async function PUT(
             });
 
             if (assignee?.email) {
-              console.log('📧 Enviando correo a:', assignee.email);
+              console.log("📧 Enviando correo a:", assignee.email);
 
               const emailResult = await sendTicketEmail({
                 to: assignee.email,
                 subject: `Nuevo Ticket Asignado #${ticketId}`,
                 html: getNewTicketAssignmentEmail(
                   ticketId,
-                  body.description ?? currentTicket.description
+                  body.description ?? currentTicket.description,
                 ),
               });
 
-              console.log('✅ Email enviado:', emailResult);
+              console.log("✅ Email enviado:", emailResult);
             } else {
               console.log(`⚠️ Usuario ${assignedId} no tiene correo`);
             }
@@ -126,9 +126,9 @@ export async function PUT(
           createdAt: new Date(),
         });
 
-        console.log('📝 Comentario automático agregado');
+        console.log("📝 Comentario automático agregado");
       } else {
-        console.log('ℹ️ No hay asignaciones nuevas para agregar');
+        console.log("ℹ️ No hay asignaciones nuevas para agregar");
       }
     }
 
@@ -157,29 +157,29 @@ export async function PUT(
 
     return NextResponse.json({ ...updatedTicket[0], comments });
   } catch (error) {
-    console.error('❌ Error updating ticket:', error);
+    console.error("❌ Error updating ticket:", error);
     return NextResponse.json(
-      { error: 'Error updating ticket' },
-      { status: 500 }
+      { error: "Error updating ticket" },
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata.role;
 
-    if (!userId || (role !== 'admin' && role !== 'super-admin')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId || (role !== "admin" && role !== "super-admin")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const ticketId = Number(params.id);
     if (isNaN(ticketId)) {
-      return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
+      return NextResponse.json({ error: "Invalid ticket ID" }, { status: 400 });
     }
 
     // ❗ Primero elimina los comentarios del ticket
@@ -194,15 +194,15 @@ export async function DELETE(
       .returning();
 
     if (!deletedTicket.length) {
-      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     return NextResponse.json(deletedTicket[0]);
   } catch (error) {
-    console.error('❌ Error deleting ticket:', error);
+    console.error("❌ Error deleting ticket:", error);
     return NextResponse.json(
-      { error: 'Error deleting ticket' },
-      { status: 500 }
+      { error: "Error deleting ticket" },
+      { status: 500 },
     );
   }
 }

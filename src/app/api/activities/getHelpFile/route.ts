@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { Redis } from '@upstash/redis';
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -10,11 +10,11 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get('activityId');
+    const activityId = searchParams.get("activityId");
     if (!activityId) {
       return NextResponse.json(
-        { error: 'Missing activityId' },
-        { status: 400 }
+        { error: "Missing activityId" },
+        { status: 400 },
       );
     }
     const key = `activity:${activityId}:questionsFilesSubida`;
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data ?? []);
   } catch (_error) {
     return NextResponse.json(
-      { error: 'Error fetching help file' },
-      { status: 500 }
+      { error: "Error fetching help file" },
+      { status: 500 },
     );
   }
 }

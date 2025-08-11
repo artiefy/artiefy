@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { clerkClient } from "@clerk/nextjs/server"; // Clerk Client
+import { and, desc, eq, sql } from "drizzle-orm";
 
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import {
   categories,
   courses,
@@ -14,17 +14,17 @@ import {
   programas,
   userCustomFields,
   users,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
-import type { BaseCourse, Program } from '~/types';
+import type { BaseCourse, Program } from "~/types";
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
   return `${year}-${day}-${month} ${hours}:${minutes}:${seconds}`;
 }
 export interface Materia {
@@ -40,7 +40,7 @@ export interface Materia {
 export interface MassiveUserUpdateInput {
   userIds: string[];
   subscriptionEndDate?: string | null;
-  planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
+  planType?: "none" | "Pro" | "Premium" | "Enterprise";
   status?: string;
   permissions?: string[];
   programId?: number;
@@ -48,11 +48,11 @@ export interface MassiveUserUpdateInput {
   customFields?: Record<string, string>;
 }
 
-type UserRole = 'admin' | 'educador' | 'super-admin' | 'estudiante';
+type UserRole = "admin" | "educador" | "super-admin" | "estudiante";
 
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
-  console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
+  console.log("DEBUG: Ejecutando getAdminUsers con query ->", query);
   const client = await clerkClient();
   const usersResponse = await client.users.getUserList({ limit: 100 });
   const users = usersResponse.data;
@@ -60,11 +60,11 @@ export async function getAdminUsers(query: string | undefined) {
   const filteredUsers = query
     ? users.filter(
         (user) =>
-          (user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-          (user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+          (user.firstName ?? "").toLowerCase().includes(query.toLowerCase()) ||
+          (user.lastName ?? "").toLowerCase().includes(query.toLowerCase()) ||
           user.emailAddresses.some((email) =>
-            email.emailAddress.toLowerCase().includes(query.toLowerCase())
-          )
+            email.emailAddress.toLowerCase().includes(query.toLowerCase()),
+          ),
       )
     : users;
 
@@ -73,10 +73,10 @@ export async function getAdminUsers(query: string | undefined) {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.emailAddresses.find(
-      (email) => email.id === user.primaryEmailAddressId
+      (email) => email.id === user.primaryEmailAddressId,
     )?.emailAddress,
-    role: user.publicMetadata.role ?? 'estudiante',
-    status: user.publicMetadata.status ?? 'activo', // ✅ Agregar estado con valor por defecto
+    role: user.publicMetadata.role ?? "estudiante",
+    status: user.publicMetadata.status ?? "activo", // ✅ Agregar estado con valor por defecto
   }));
 
   return simplifiedUsers;
@@ -101,15 +101,15 @@ export async function setRoleWrapper({
     await db
       .update(users)
       .set({
-        role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+        role: role as "estudiante" | "educador" | "admin" | "super-admin",
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
 
     console.log(`DEBUG: Rol actualizado para usuario ${id} en Clerk y BD`);
   } catch (error) {
-    console.error('Error al actualizar el rol:', error);
-    throw new Error('No se pudo actualizar el rol');
+    console.error("Error al actualizar el rol:", error);
+    throw new Error("No se pudo actualizar el rol");
   }
 }
 
@@ -125,15 +125,15 @@ export async function removeRole(id: string) {
     await db
       .update(users)
       .set({
-        role: 'estudiante' as const,
+        role: "estudiante" as const,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
 
     console.log(`DEBUG: Rol eliminado para el usuario ${id}`);
   } catch (error) {
-    console.error('Error al eliminar rol:', error);
-    throw new Error('No se pudo eliminar el rol');
+    console.error("Error al eliminar rol:", error);
+    throw new Error("No se pudo eliminar el rol");
   }
 }
 
@@ -148,23 +148,23 @@ export async function deleteUser(id: string) {
 
     console.log(`DEBUG: Usuario ${id} eliminado correctamente de Clerk y BD`);
   } catch (error) {
-    console.error('Error al eliminar usuario:', error);
-    throw new Error('No se pudo eliminar el usuario');
+    console.error("Error al eliminar usuario:", error);
+    throw new Error("No se pudo eliminar el usuario");
   }
 }
 
 export async function updateUserInfo(
   id: string,
   firstName: string,
-  lastName: string
+  lastName: string,
 ) {
   try {
     const client = await clerkClient();
     await client.users.updateUser(id, { firstName, lastName });
     console.log(`DEBUG: Usuario ${id} actualizado correctamente`);
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
-    throw new Error('No se pudo actualizar el usuario');
+    console.error("Error al actualizar usuario:", error);
+    throw new Error("No se pudo actualizar el usuario");
   }
 }
 
@@ -172,19 +172,19 @@ export async function createUser(
   firstName: string,
   lastName: string,
   email: string,
-  role: string
+  role: string,
 ) {
   try {
     // 🔹 Obtener la primera letra del primer nombre y primer apellido
     const firstInitial = firstName.charAt(0).toLowerCase();
-    const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
+    const lastInitial = lastName?.split(" ")[0]?.charAt(0).toLowerCase() || "x"; // 'x' si no hay apellido
 
     // 🔹 Generar la contraseña base (iniciales del nombre y apellido)
     let generatedPassword = `${firstInitial}${lastInitial}`;
 
     // 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
     if (generatedPassword.length < 8) {
-      generatedPassword += '12345678'.slice(0, 8 - generatedPassword.length);
+      generatedPassword += "12345678".slice(0, 8 - generatedPassword.length);
     }
 
     // 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
@@ -192,8 +192,8 @@ export async function createUser(
     generatedPassword += randomDigits;
 
     // 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
-    let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
-    if (username.length < 4) username += 'user';
+    let username = `${firstName}${lastName?.split(" ")[0] || ""}`.toLowerCase();
+    if (username.length < 4) username += "user";
     username = username.slice(0, 64);
 
     const client = await clerkClient();
@@ -207,16 +207,16 @@ export async function createUser(
     });
 
     console.log(
-      `DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`
+      `DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`,
     );
     return { user: newUser, generatedPassword };
   } catch (error: unknown) {
     console.error(
-      'DEBUG: Error al crear usuario en Clerk:',
-      JSON.stringify(error, null, 2)
+      "DEBUG: Error al crear usuario en Clerk:",
+      JSON.stringify(error, null, 2),
     );
     throw new Error(
-      (error as { message: string }).message || 'No se pudo crear el usuario'
+      (error as { message: string }).message || "No se pudo crear el usuario",
     );
   }
 }
@@ -239,17 +239,17 @@ export async function updateUserStatus(id: string, status: string) {
       .where(eq(users.id, id));
 
     console.log(
-      `DEBUG: Estado del usuario ${id} actualizado a ${status} en Clerk y BD`
+      `DEBUG: Estado del usuario ${id} actualizado a ${status} en Clerk y BD`,
     );
   } catch (error) {
-    console.error('Error al actualizar el estado del usuario:', error);
-    throw new Error('No se pudo actualizar el estado del usuario');
+    console.error("Error al actualizar el estado del usuario:", error);
+    throw new Error("No se pudo actualizar el estado del usuario");
   }
 }
 
 export async function updateMultipleUserStatus(
   userIds: string[],
-  status: string
+  status: string,
 ) {
   try {
     const client = await clerkClient();
@@ -272,11 +272,11 @@ export async function updateMultipleUserStatus(
     }
 
     console.log(
-      `DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status} en Clerk y BD`
+      `DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status} en Clerk y BD`,
     );
   } catch (error) {
-    console.error('Error al actualizar múltiples usuarios:', error);
-    throw new Error('No se pudieron actualizar los usuarios');
+    console.error("Error al actualizar múltiples usuarios:", error);
+    throw new Error("No se pudieron actualizar los usuarios");
   }
 }
 
@@ -301,7 +301,7 @@ export async function getCourses() {
   try {
     return await db.select().from(courses).orderBy(desc(courses.createdAt));
   } catch (error) {
-    console.error('❌ Error al obtener cursos:', error);
+    console.error("❌ Error al obtener cursos:", error);
     return [];
   }
 }
@@ -310,8 +310,8 @@ export async function deleteCourse(courseId: number) {
   try {
     return await db.delete(courses).where(eq(courses.id, courseId)).returning();
   } catch (error) {
-    console.error('❌ Error al eliminar curso:', error);
-    throw new Error('No se pudo eliminar el curso');
+    console.error("❌ Error al eliminar curso:", error);
+    throw new Error("No se pudo eliminar el curso");
   }
 }
 
@@ -320,7 +320,7 @@ export async function getModalidades() {
     const data = await db.select().from(modalidades);
     return data || []; // ✅ Devuelve un array vacío si `data` es `undefined`
   } catch (error) {
-    console.error('❌ Error al obtener modalidades:', error);
+    console.error("❌ Error al obtener modalidades:", error);
     return [];
   }
 }
@@ -336,7 +336,7 @@ export async function createCourse(courseData: CourseData) {
         instructor: courseData.instructor,
         modalidadesid: courseData.modalidadesid,
         nivelid: courseData.nivelid,
-        creatorId: courseData.creatorId || 'defaultCreatorId',
+        creatorId: courseData.creatorId || "defaultCreatorId",
         createdAt: new Date(courseData.createdAt),
         updatedAt: courseData.updatedAt
           ? new Date(courseData.updatedAt)
@@ -346,8 +346,8 @@ export async function createCourse(courseData: CourseData) {
       })
       .returning();
   } catch (error) {
-    console.error('❌ Error al crear curso:', error);
-    throw new Error('No se pudo crear el curso');
+    console.error("❌ Error al crear curso:", error);
+    throw new Error("No se pudo crear el curso");
   }
 }
 
@@ -361,7 +361,7 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
         ? new Date(courseData.updatedAt)
         : new Date(),
       courseTypeId:
-        typeof courseData.courseTypeId === 'number'
+        typeof courseData.courseTypeId === "number"
           ? courseData.courseTypeId
           : undefined, // Si no es número, no lo envíes
     };
@@ -372,8 +372,8 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
       .where(eq(courses.id, courseId))
       .returning();
   } catch (error) {
-    console.error('❌ Error al actualizar curso:', error);
-    throw new Error('No se pudo actualizar el curso');
+    console.error("❌ Error al actualizar curso:", error);
+    throw new Error("No se pudo actualizar el curso");
   }
 }
 
@@ -382,7 +382,7 @@ export async function getCategories() {
   try {
     return (await db.select().from(categories)) || [];
   } catch (error) {
-    console.error('❌ Error al obtener categorías:', error);
+    console.error("❌ Error al obtener categorías:", error);
     return [];
   }
 }
@@ -392,7 +392,7 @@ export async function getNivel() {
   try {
     return (await db.select().from(nivel)) || [];
   } catch (error) {
-    console.error('❌ Error al obtener niveles:', error);
+    console.error("❌ Error al obtener niveles:", error);
     return [];
   }
 }
@@ -420,19 +420,19 @@ export async function updateUserInClerk({
       firstName,
       lastName,
       publicMetadata: {
-        role: role || 'estudiante', // Valor por defecto si no existe
-        status: status || 'activo',
+        role: role || "estudiante", // Valor por defecto si no existe
+        status: status || "activo",
         permissions: Array.isArray(permissions) ? permissions : [], // Validar array
       },
     });
 
     console.log(
       `✅ Usuario ${userId} actualizado correctamente en Clerk.`,
-      updatedUser
+      updatedUser,
     );
     return true;
   } catch (error) {
-    console.error('❌ Error al actualizar usuario en Clerk:', error);
+    console.error("❌ Error al actualizar usuario en Clerk:", error);
     return false;
   }
 }
@@ -469,7 +469,7 @@ export const getProgramById = async (id: string) => {
   });
 
   if (!program) {
-    throw new Error('Program not found');
+    throw new Error("Program not found");
   }
 
   // Obtener la cantidad de inscripciones
@@ -483,7 +483,7 @@ export const getProgramById = async (id: string) => {
   const transformedMaterias: Materia[] = program.materias.map((materia) => ({
     id: materia.id,
     title: materia.title,
-    description: materia.description ?? '',
+    description: materia.description ?? "",
     programaId: materia.programaId ?? 0,
     courseId: materia.curso?.id ?? 0,
     courseid: materia.curso?.id ?? 0,
@@ -516,12 +516,12 @@ export const getProgramById = async (id: string) => {
 
 // Crear un nuevo programa
 export async function createProgram(
-  programData: Partial<ProgramData>
+  programData: Partial<ProgramData>,
 ): Promise<ProgramData> {
   const result = await db
     .insert(programas)
     .values({
-      title: programData.title ?? '',
+      title: programData.title ?? "",
       categoryid: programData.categoryid!,
       creatorId: programData.creatorId!,
       description: programData.description ?? null,
@@ -553,7 +553,7 @@ export async function createProgram(
 // Actualizar un programa
 export async function updateProgram(
   programId: number,
-  programData: Partial<ProgramData>
+  programData: Partial<ProgramData>,
 ): Promise<ProgramData> {
   const result = await db
     .update(programas)
@@ -619,10 +619,10 @@ function formatDateForClerk(date?: string | null): string | null {
   const now = new Date();
   baseDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
 
-  return baseDate.toISOString().slice(0, 19).replace('T', ' ');
+  return baseDate.toISOString().slice(0, 19).replace("T", " ");
 }
 export async function updateFullUser(
-  input: FullUserUpdateInput
+  input: FullUserUpdateInput,
 ): Promise<boolean> {
   const {
     userId,
@@ -652,34 +652,34 @@ export async function updateFullUser(
   } catch (err: unknown) {
     const error = err as { errors?: { code?: string }[]; status?: number };
 
-    if (error.errors?.[0]?.code === 'not_found' || error.status === 404) {
+    if (error.errors?.[0]?.code === "not_found" || error.status === 404) {
       userExistsInClerk = false;
     } else {
-      console.error('❌ Error obteniendo usuario de Clerk:', err);
+      console.error("❌ Error obteniendo usuario de Clerk:", err);
       return false;
     }
   }
 
   const hasSubscriptionDate = !!subscriptionEndDate;
   let normalizedStatus =
-    status?.toLowerCase() === 'activo'
-      ? 'active'
-      : (status?.toLowerCase() ?? 'active');
+    status?.toLowerCase() === "activo"
+      ? "active"
+      : (status?.toLowerCase() ?? "active");
 
-  if (hasSubscriptionDate && normalizedStatus === 'inactive') {
-    normalizedStatus = 'active';
+  if (hasSubscriptionDate && normalizedStatus === "inactive") {
+    normalizedStatus = "active";
   }
 
   const formattedEndDate = formatDateForClerk(subscriptionEndDate);
 
   const newMetadata = {
     ...existingMetadata,
-    role: (role || 'estudiante') as
-      | 'admin'
-      | 'educador'
-      | 'super-admin'
-      | 'estudiante',
-    planType: planType ?? 'none',
+    role: (role || "estudiante") as
+      | "admin"
+      | "educador"
+      | "super-admin"
+      | "estudiante",
+    planType: planType ?? "none",
     subscriptionStatus: normalizedStatus,
     subscriptionEndDate: formattedEndDate,
     permissions: Array.isArray(permissions) ? permissions : [],
@@ -700,10 +700,10 @@ export async function updateFullUser(
         name: `${firstName} ${lastName}`,
         role: role as UserRole,
         subscriptionStatus: status,
-        planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(
-          planType ?? ''
+        planType: ["none", "Pro", "Premium", "Enterprise"].includes(
+          planType ?? "",
         )
-          ? (planType as 'none' | 'Pro' | 'Premium' | 'Enterprise')
+          ? (planType as "none" | "Pro" | "Premium" | "Enterprise")
           : null,
         phone: phone ?? null,
         address: address ?? null,
@@ -736,8 +736,8 @@ export async function updateFullUser(
             .where(
               and(
                 eq(userCustomFields.userId, userId),
-                eq(userCustomFields.fieldKey, key)
-              )
+                eq(userCustomFields.fieldKey, key),
+              ),
             );
         } else {
           await db.insert(userCustomFields).values({
@@ -749,12 +749,12 @@ export async function updateFullUser(
       }
     }
     console.log(
-      `usuario en programa: userId=${userId}, programaId=${input.programId}`
+      `usuario en programa: userId=${userId}, programaId=${input.programId}`,
     );
 
     if (input.programId != null) {
       console.log(
-        `📝 Matriculando usuario en programa: userId=${userId}, programaId=${input.programId}`
+        `📝 Matriculando usuario en programa: userId=${userId}, programaId=${input.programId}`,
       );
       await db.insert(enrollmentPrograms).values({
         userId,
@@ -767,7 +767,7 @@ export async function updateFullUser(
     // 2) Matricular en curso
     if (input.courseId != null) {
       console.log(
-        `📝 Matriculando usuario en curso: userId=${userId}, courseId=${input.courseId}`
+        `📝 Matriculando usuario en curso: userId=${userId}, courseId=${input.courseId}`,
       );
       // Evitar duplicados
       const exists = await db
@@ -776,8 +776,8 @@ export async function updateFullUser(
         .where(
           and(
             eq(enrollments.userId, userId),
-            eq(enrollments.courseId, input.courseId)
-          )
+            eq(enrollments.courseId, input.courseId),
+          ),
         )
         .limit(1);
 
@@ -794,8 +794,8 @@ export async function updateFullUser(
       await db
         .update(users)
         .set({
-          planType: 'Premium',
-          subscriptionStatus: 'active',
+          planType: "Premium",
+          subscriptionStatus: "active",
           // Si `subscriptionEndDate` viene como string, pásalo a Date:
           subscriptionEndDate: subscriptionEndDate
             ? new Date(subscriptionEndDate)
@@ -811,8 +811,8 @@ export async function updateFullUser(
         : null;
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: {
-          planType: 'Premium',
-          subscriptionStatus: 'active',
+          planType: "Premium",
+          subscriptionStatus: "active",
           subscriptionEndDate: formattedEndDateStr,
         },
       });
@@ -820,13 +820,13 @@ export async function updateFullUser(
 
     return true;
   } catch (error) {
-    console.error('❌ Error actualizando datos en BD:', error);
+    console.error("❌ Error actualizando datos en BD:", error);
     return false;
   }
 }
 
 export async function updateMultipleUsers(
-  input: MassiveUserUpdateInput
+  input: MassiveUserUpdateInput,
 ): Promise<{ success: string[]; failed: string[] }> {
   const success: string[] = [];
   const failed: string[] = [];
@@ -844,17 +844,17 @@ export async function updateMultipleUsers(
 
     const result = await updateFullUser({
       userId,
-      firstName: user.name?.split(' ')[0] ?? 'Usuario',
-      lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
-      role: user.role ?? 'estudiante',
-      status: input.status ?? user.subscriptionStatus ?? 'active',
+      firstName: user.name?.split(" ")[0] ?? "Usuario",
+      lastName: user.name?.split(" ").slice(1).join(" ") ?? "Desconocido",
+      role: user.role ?? "estudiante",
+      status: input.status ?? user.subscriptionStatus ?? "active",
       permissions: input.permissions ?? [],
       phone: user.phone ?? null,
       address: user.address ?? null,
       city: user.city ?? null,
       country: user.country ?? null,
       birthDate: user.birthDate ?? null,
-      planType: input.planType ?? user.planType ?? 'none',
+      planType: input.planType ?? user.planType ?? "none",
       purchaseDate: user.purchaseDate?.toISOString() ?? null,
       subscriptionEndDate:
         input.subscriptionEndDate ??

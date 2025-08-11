@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import Player from 'next-video/player';
+import Player from "next-video/player";
 
-import '~/styles/videoloading.css';
+import "~/styles/videoloading.css";
 
 interface VideoPlayerProps {
   videoKey: string;
@@ -16,8 +16,8 @@ interface VideoPlayerProps {
 
 // Lista de videos que deben usar el reproductor nativo
 const FORCE_NATIVE_PLAYER_VIDEOS = [
-  'richard-1-1744669875805-fa3b69ce-7ac6-40be-b3e1-f843f27451f0.mp4',
-  'gesti-n-de-recursos-humanos-y-financieros-1744843970531-d6439703-8170-464f-8604-35883bf45b62.mp4',
+  "richard-1-1744669875805-fa3b69ce-7ac6-40be-b3e1-f843f27451f0.mp4",
+  "gesti-n-de-recursos-humanos-y-financieros-1744843970531-d6439703-8170-464f-8604-35883bf45b62.mp4",
 ];
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -28,26 +28,26 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   isLocked = false,
   onTimeUpdate, // Nuevo prop
 }) => {
-  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [useNativePlayer, setUseNativePlayer] = useState(false);
   const [playerError, setPlayerError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!videoKey || videoKey === 'null' || isLocked) {
+    if (!videoKey || videoKey === "null" || isLocked) {
       setIsLoading(false);
       return;
     }
 
     // Forzar reproductor nativo solo si el videoKey termina exactamente con alguno de la lista
     const shouldUseNative = FORCE_NATIVE_PLAYER_VIDEOS.some((v) =>
-      videoKey.endsWith(v)
+      videoKey.endsWith(v),
     );
     setUseNativePlayer(shouldUseNative);
     setPlayerError(
       shouldUseNative
-        ? 'Usando reproductor nativo para mejor compatibilidad'
-        : null
+        ? "Usando reproductor nativo para mejor compatibilidad"
+        : null,
     );
 
     setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
@@ -56,10 +56,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const handlePlayerError = (error?: unknown) => {
     console.warn(
-      'Next-video player failed, falling back to native player:',
-      error
+      "Next-video player failed, falling back to native player:",
+      error,
     );
-    setPlayerError('Error loading video player');
+    setPlayerError("Error loading video player");
     setUseNativePlayer(true);
   };
 
@@ -70,16 +70,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
-        {!videoKey || videoKey === 'null' || videoKey === 'none' || isLocked ? (
+        {!videoKey || videoKey === "null" || videoKey === "none" || isLocked ? (
           <>
             <h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
               Video de la Clase
             </h2>
             <p className="text-5xl font-extrabold">
               <span className="bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
-                {videoKey === 'none'
-                  ? 'Esta clase no tiene video disponible'
-                  : 'Disponible muy pronto'}
+                {videoKey === "none"
+                  ? "Esta clase no tiene video disponible"
+                  : "Disponible muy pronto"}
               </span>
             </p>
             <div className="mt-4 flex items-center space-x-2">
@@ -122,7 +122,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             const video = e.currentTarget;
             if (video && !isVideoCompleted) {
               const progress = Math.round(
-                (video.currentTime / video.duration) * 100
+                (video.currentTime / video.duration) * 100,
               );
               onProgressUpdate(progress);
             }
@@ -132,16 +132,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             }
           }}
           style={{
-            '--media-primary-color': '#ffff',
-            '--media-secondary-color': '#2ecc71',
-            '--media-accent-color': '#ffff',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            maxHeight: '100vh',
-            position: 'absolute',
-            top: '0',
-            left: '0',
+            "--media-primary-color": "#ffff",
+            "--media-secondary-color": "#2ecc71",
+            "--media-accent-color": "#ffff",
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            maxHeight: "100vh",
+            position: "absolute",
+            top: "0",
+            left: "0",
           }}
         />
       )}
@@ -156,13 +156,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onError={(_e) => {
             // El evento onError de <video> no expone detalles del error en todos los navegadores.
             // Solo loguea un mensaje genérico.
-            console.error('Native player error: Video failed to load or play');
+            console.error("Native player error: Video failed to load or play");
           }}
           onTimeUpdate={(e) => {
             const video = e.currentTarget;
             if (video && !isVideoCompleted) {
               const progress = Math.round(
-                (video.currentTime / video.duration) * 100
+                (video.currentTime / video.duration) * 100,
               );
               onProgressUpdate(progress);
             }

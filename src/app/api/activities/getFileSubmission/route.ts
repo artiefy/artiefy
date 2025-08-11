@@ -1,12 +1,12 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from "next/server";
 
-import { Redis } from '@upstash/redis';
-import { and, eq } from 'drizzle-orm';
+import { Redis } from "@upstash/redis";
+import { and, eq } from "drizzle-orm";
 
 // Importa la acción para crear notificaciones
-import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
-import { db } from '~/server/db';
-import { activities, userActivitiesProgress } from '~/server/db/schema';
+import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
+import { db } from "~/server/db";
+import { activities, userActivitiesProgress } from "~/server/db/schema";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -16,13 +16,13 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get('activityId');
-    const userId = searchParams.get('userId');
+    const activityId = searchParams.get("activityId");
+    const userId = searchParams.get("userId");
 
     if (!activityId || !userId) {
       return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
+        { error: "Missing required parameters" },
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const progress = await db.query.userActivitiesProgress.findFirst({
       where: and(
         eq(userActivitiesProgress.userId, userId),
-        eq(userActivitiesProgress.activityId, parseInt(activityId))
+        eq(userActivitiesProgress.activityId, parseInt(activityId)),
       ),
     });
 
@@ -50,19 +50,19 @@ export async function GET(request: NextRequest) {
     // --- Notificación si grade pasa de 0 a >0 y status es reviewed ---
     if (
       submission &&
-      typeof submission === 'object' &&
-      'grade' in submission &&
-      typeof submission.grade === 'number' &&
-      'status' in submission &&
-      submission.status === 'reviewed'
+      typeof submission === "object" &&
+      "grade" in submission &&
+      typeof submission.grade === "number" &&
+      "status" in submission &&
+      submission.status === "reviewed"
     ) {
       const lastGrade = progress?.finalGrade ?? 0;
       // Solo crear notificación si antes era 0 y ahora >0
       if (submission.grade > 0 && lastGrade === 0) {
         await createNotification({
           userId,
-          type: 'ACTIVITY_COMPLETED',
-          title: '¡Tu documento ha sido calificado!',
+          type: "ACTIVITY_COMPLETED",
+          title: "¡Tu documento ha sido calificado!",
           message: `El educador ha calificado tu documento en la clase. Revisa tu calificación.`,
           metadata: {
             activityId: parseInt(activityId),
@@ -83,10 +83,10 @@ export async function GET(request: NextRequest) {
         : null,
     });
   } catch (error) {
-    console.error('Error getting submission:', error);
+    console.error("Error getting submission:", error);
     return NextResponse.json(
-      { error: 'Error retrieving submission' },
-      { status: 500 }
+      { error: "Error retrieving submission" },
+      { status: 500 },
     );
   }
 }

@@ -36,7 +36,7 @@ export interface BaseCourse {
 }
 
 // Add this type
-export type SubscriptionLevel = 'none' | 'pro' | 'premium';
+export type SubscriptionLevel = "none" | "pro" | "premium";
 
 // Add this interface for course-course type relationship
 export interface CourseCourseType {
@@ -240,7 +240,7 @@ export interface Activity {
 export interface Question {
   id: string;
   text: string;
-  type: 'VOF' | 'OM' | 'COMPLETAR' | 'FILE_UPLOAD';
+  type: "VOF" | "OM" | "COMPLETAR" | "FILE_UPLOAD";
   correctOptionId?: string;
   options?: Option[];
   correctAnswer?: string;
@@ -447,18 +447,18 @@ export interface EnrollmentResponse {
 }
 
 export type NotificationType =
-  | 'PROGRAM_ENROLLMENT'
-  | 'COURSE_ENROLLMENT'
-  | 'LESSON_UNLOCKED'
-  | 'COURSE_COMPLETED'
-  | 'PLAN_PURCHASED'
-  | 'TICKET_CREATED'
-  | 'TICKET_UPDATED'
-  | 'TICKET_ASSIGNED'
-  | 'NEW_COURSE_ADDED'
-  | 'ACTIVITY_COMPLETED'
-  | 'COURSE_UNENROLLMENT'
-  | 'CERTIFICATE_CREATED';
+  | "PROGRAM_ENROLLMENT"
+  | "COURSE_ENROLLMENT"
+  | "LESSON_UNLOCKED"
+  | "COURSE_COMPLETED"
+  | "PLAN_PURCHASED"
+  | "TICKET_CREATED"
+  | "TICKET_UPDATED"
+  | "TICKET_ASSIGNED"
+  | "NEW_COURSE_ADDED"
+  | "ACTIVITY_COMPLETED"
+  | "COURSE_UNENROLLMENT"
+  | "CERTIFICATE_CREATED";
 
 export interface NotificationMetadata {
   programId?: number;

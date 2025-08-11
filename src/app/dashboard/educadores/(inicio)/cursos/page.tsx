@@ -1,19 +1,19 @@
-'use client';
-import { useCallback, useEffect, useState } from 'react';
+"use client";
+import { useCallback, useEffect, useState } from "react";
 
-import { useUser } from '@clerk/nextjs';
-import { toast } from 'sonner';
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
-import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
-import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
-import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
+import CourseListTeacher from "~/components/educators/layout/CourseListTeacher";
+import { SkeletonCard } from "~/components/educators/layout/SkeletonCard";
+import ModalFormCourse from "~/components/educators/modals/ModalFormCourse";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from '~/components/super-admin/ui/breadcrumb';
+} from "~/components/super-admin/ui/breadcrumb";
 
 // Define el modelo de datos del curso
 export interface CourseModel {
@@ -71,31 +71,31 @@ export default function Page() {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `/api/educadores/courses/coursesByEducator?userId=${encodeURIComponent(user.id)}&fullName=${encodeURIComponent(user.fullName ?? '')}`
+        `/api/educadores/courses/coursesByEducator?userId=${encodeURIComponent(user.id)}&fullName=${encodeURIComponent(user.fullName ?? "")}`,
       );
       if (response.ok) {
         const data = (await response.json()) as CourseModel[];
         setCourses(
           data.map((course) => ({
             ...course,
-            nivelid: course.nivelid ?? '', // Map it properly
+            nivelid: course.nivelid ?? "", // Map it properly
             categoryid: course.categoryid, // Map categoryid properly
             modalidadesid: course.modalidadesid, // Map modalidadesid properly
-          })) as CourseModel[]
+          })) as CourseModel[],
         );
       } else {
         const errorData = (await response.json()) as { error?: string };
         const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar los cursos: ${errorMessage}`);
-        toast.error('Error', {
+        toast.error("Error", {
           description: `No se pudieron cargar los cursos: ${errorMessage}`,
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Error desconocido';
+        error instanceof Error ? error.message : "Error desconocido";
       setError(`Error al cargar los cursos: ${errorMessage}`);
-      toast.error('Error', {
+      toast.error("Error", {
         description: `No se pudieron cargar los cursos: ${errorMessage}`,
       });
     } finally {
@@ -107,7 +107,7 @@ export default function Page() {
   const fetchSubjects = useCallback(async () => {
     try {
       const response = await fetch(
-        '/api/educadores/courses?fetchSubjects=true'
+        "/api/educadores/courses?fetchSubjects=true",
       );
       if (response.ok) {
         const data = (await response.json()) as {
@@ -115,20 +115,20 @@ export default function Page() {
           title: string;
           description: string;
         }[];
-        console.log('Fetched subjects:', data); // Add console log to debug
+        console.log("Fetched subjects:", data); // Add console log to debug
         setSubjects(data.map((subject) => ({ id: subject.id })));
         // Map subjects to strings
       } else {
         const errorData = (await response.json()) as { error?: string };
         const errorMessage = errorData.error ?? response.statusText;
-        toast.error('Error', {
+        toast.error("Error", {
           description: `No se pudieron cargar las materias: ${errorMessage}`,
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Error desconocido';
-      toast.error('Error', {
+        error instanceof Error ? error.message : "Error desconocido";
+      toast.error("Error", {
         description: `No se pudieron cargar las materias: ${errorMessage}`,
       });
     }
@@ -138,10 +138,10 @@ export default function Page() {
   useEffect(() => {
     if (user) {
       fetchCourses().catch((error) =>
-        console.error('Error fetching courses:', error)
+        console.error("Error fetching courses:", error),
       );
       fetchSubjects().catch((error) =>
-        console.error('Error fetching subjects:', error)
+        console.error("Error fetching subjects:", error),
       );
     }
   }, [user, fetchCourses, fetchSubjects]);
@@ -158,14 +158,14 @@ export default function Page() {
     rating: number, // Añadir esta línea
     addParametros: boolean, // Cambiar options por addParametros
     coverImageKey: string,
-    fileName: string // Nuevo parámetro
+    fileName: string, // Nuevo parámetro
   ) => {
     if (!user) return;
 
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametrosList.length === 0) {
-      toast.error('Error', {
-        description: 'Debe agregar al menos un parámetro de evaluación',
+      toast.error("Error", {
+        description: "Debe agregar al menos un parámetro de evaluación",
       });
       return;
     }
@@ -173,9 +173,9 @@ export default function Page() {
     try {
       setUploading(true);
       if (file) {
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -185,7 +185,7 @@ export default function Page() {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `Error: al iniciar la carga: ${uploadResponse.statusText}`
+            `Error: al iniciar la carga: ${uploadResponse.statusText}`,
           );
         }
 
@@ -202,26 +202,26 @@ export default function Page() {
 
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) => {
-          if (typeof value === 'string') {
+          if (typeof value === "string") {
             formData.append(key, value);
           }
         });
-        formData.append('file', file);
+        formData.append("file", file);
 
         await fetch(url, {
-          method: 'POST',
+          method: "POST",
           body: formData,
         });
       }
       setUploading(false);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+      const errorMessage = e instanceof Error ? e.message : "Unknown error";
       throw new Error(`Error to upload the file type ${errorMessage}`);
     }
 
-    const response = await fetch('/api/educadores/courses', {
-      method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/educadores/courses", {
+      method: "POST", // Asegúrate de usar 'POST' cuando no estás editando
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: editingCourse?.id,
         title,
@@ -243,20 +243,20 @@ export default function Page() {
     if (response.ok) {
       const responseData = (await response.json()) as { id: number };
 
-      toast.success(editingCourse ? 'Curso actualizado' : 'Curso creado', {
+      toast.success(editingCourse ? "Curso actualizado" : "Curso creado", {
         description: editingCourse
-          ? 'El curso se actualizó con éxito'
-          : 'El curso se creó con éxito',
+          ? "El curso se actualizó con éxito"
+          : "El curso se creó con éxito",
       });
 
       // Guardar parámetros en la base de datos si addParametros es true
       if (addParametros) {
         for (const parametro of parametrosList) {
           try {
-            const response = await fetch('/api/educadores/parametros', {
-              method: 'POST',
+            const response = await fetch("/api/educadores/parametros", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 name: parametro.name,
@@ -267,15 +267,15 @@ export default function Page() {
             });
 
             if (response.ok) {
-              toast.success('Parámetro creado exitosamente', {
-                description: 'El parámetro se ha creado exitosamente',
+              toast.success("Parámetro creado exitosamente", {
+                description: "El parámetro se ha creado exitosamente",
               });
             } else {
               const errorData = (await response.json()) as { error: string };
               throw new Error(errorData.error);
             }
           } catch (error) {
-            toast.error('Error al crear el parámetro', {
+            toast.error("Error al crear el parámetro", {
               description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
             });
           }
@@ -283,15 +283,15 @@ export default function Page() {
       }
 
       fetchCourses().catch((error) =>
-        console.error('Error fetching courses:', error)
+        console.error("Error fetching courses:", error),
       );
       setEditingCourse(null);
       setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
-      toast.error('Error', {
+      toast.error("Error", {
         description:
-          errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+          errorData.error ?? "Ocurrió un error al procesar la solicitud",
       });
     }
   };
@@ -319,21 +319,21 @@ export default function Page() {
   // Manejo de la categoría del curso en el modal si no es null
   const setCategoryid = (categoryid: number) => {
     setEditingCourse((prev) =>
-      prev ? { ...prev, categoryid: String(categoryid) } : prev
+      prev ? { ...prev, categoryid: String(categoryid) } : prev,
     );
   };
 
   // Manejo de la modalidad del curso en el modal si no es null
   const setModalidadesid = (modalidadesid: number) => {
     setEditingCourse((prev) =>
-      prev ? { ...prev, modalidadesid: String(modalidadesid) } : prev
+      prev ? { ...prev, modalidadesid: String(modalidadesid) } : prev,
     );
   };
 
   // Manejo de la nivel del curso en el modal si no es null
   const setNivelid = (nivelid: number) => {
     setEditingCourse((prev) =>
-      prev ? { ...prev, nivelid: String(nivelid) } : prev
+      prev ? { ...prev, nivelid: String(nivelid) } : prev,
     );
   };
 
@@ -428,9 +428,9 @@ export default function Page() {
               onSubmitAction={handleCreateOrEditCourse}
               uploading={uploading}
               editingCourseId={editingCourse ? editingCourse.id : null}
-              title={editingCourse?.title ?? ''}
+              title={editingCourse?.title ?? ""}
               setTitle={setTitle}
-              description={editingCourse?.description ?? ''}
+              description={editingCourse?.description ?? ""}
               setDescription={setDescription}
               categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
               setCategoryid={setCategoryid}
@@ -438,7 +438,7 @@ export default function Page() {
               setModalidadesid={setModalidadesid}
               nivelid={Number(editingCourse?.nivelid) || 0}
               setNivelid={setNivelid}
-              coverImageKey={editingCourse?.coverImageKey ?? ''}
+              coverImageKey={editingCourse?.coverImageKey ?? ""}
               setCoverImageKey={setCoverImageKey}
               parametros={parametrosList.map((parametro, index) => ({
                 ...parametro,
@@ -460,10 +460,10 @@ export default function Page() {
               setIndividualPrice={setIndividualPrice}
               isActive={isActive}
               setIsActive={setIsActive}
-              instructor={editingCourse?.instructor ?? ''}
+              instructor={editingCourse?.instructor ?? ""}
               setInstructor={(instructor: string) =>
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, instructor } : prev
+                  prev ? { ...prev, instructor } : prev,
                 )
               }
               educators={[]}

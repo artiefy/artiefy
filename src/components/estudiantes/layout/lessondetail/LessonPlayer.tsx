@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Lock } from 'lucide-react';
+import { Lock } from "lucide-react";
 
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
-import { type LessonWithProgress } from '~/types';
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { Progress } from "~/components/estudiantes/ui/progress";
+import { type LessonWithProgress } from "~/types";
 
-import VideoPlayer from './LessonVideo';
+import VideoPlayer from "./LessonVideo";
 
 interface LessonPlayerProps {
   lesson: LessonWithProgress;
@@ -44,11 +44,11 @@ const LessonPlayer = ({
     (currentTime: number) => {
       if (!transcription || transcription.length === 0) return;
       const idx = transcription.findIndex(
-        (item) => currentTime >= item.start && currentTime < item.end
+        (item) => currentTime >= item.start && currentTime < item.end,
       );
       setCurrentTranscriptionIndex(idx);
     },
-    [transcription]
+    [transcription],
   );
 
   // Efecto para centrar el párrafo actual en el contenedor
@@ -60,7 +60,7 @@ const LessonPlayer = ({
     ) {
       const container = transcriptionContainerRef.current;
       const activeElem = container.querySelector(
-        `[data-transcription-idx="${currentTranscriptionIndex}"]`
+        `[data-transcription-idx="${currentTranscriptionIndex}"]`,
       );
       if (activeElem) {
         const containerHeight = container.offsetHeight;
@@ -70,7 +70,7 @@ const LessonPlayer = ({
           (activeElem as HTMLElement).offsetHeight / 2;
         container.scrollTo({
           top: elemTop - containerHeight / 2,
-          behavior: 'smooth',
+          behavior: "smooth",
         });
       }
     }
@@ -134,49 +134,49 @@ const LessonPlayer = ({
                 onClick={() => setShowTranscription((v) => !v)}
               >
                 {showTranscription
-                  ? 'Ocultar transcripción'
-                  : 'Ver transcripción'}
+                  ? "Ocultar transcripción"
+                  : "Ver transcripción"}
               </button>
               {showTranscription && (
                 <div
                   className="relative transition-all duration-300"
                   style={{
-                    maxHeight: '16rem',
-                    minHeight: '10.2rem',
-                    height: 'auto',
-                    overflow: isTranscriptionScrollable ? 'auto' : 'hidden',
-                    border: '1px solid #e0e7ff',
-                    borderRadius: '0.5rem',
-                    background: '#f8fafc',
-                    position: 'relative',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
+                    maxHeight: "16rem",
+                    minHeight: "10.2rem",
+                    height: "auto",
+                    overflow: isTranscriptionScrollable ? "auto" : "hidden",
+                    border: "1px solid #e0e7ff",
+                    borderRadius: "0.5rem",
+                    background: "#f8fafc",
+                    position: "relative",
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
                     margin: 0,
                   }}
                   ref={transcriptionContainerRef}
                 >
                   <h2
                     className="text-lg font-semibold text-indigo-700"
-                    style={{ marginBottom: '0.1rem', marginTop: 0 }}
+                    style={{ marginBottom: "0.1rem", marginTop: 0 }}
                   >
                     Transcripción
                   </h2>
                   <div
                     className="relative w-full"
                     style={{
-                      minHeight: '7.8rem',
-                      maxHeight: '14rem',
-                      overflow: isTranscriptionScrollable ? 'auto' : 'hidden',
-                      position: 'relative',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
+                      minHeight: "7.8rem",
+                      maxHeight: "14rem",
+                      overflow: isTranscriptionScrollable ? "auto" : "hidden",
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "flex-start",
+                      alignItems: "center",
                       margin: 0,
-                      height: '10rem',
+                      height: "10rem",
                     }}
                   >
                     {isTranscriptionScrollable ? (
@@ -188,27 +188,27 @@ const LessonPlayer = ({
                             data-transcription-idx={idx}
                             className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
                               idx === currentTranscriptionIndex
-                                ? 'font-bold text-indigo-900'
-                                : 'text-indigo-700'
+                                ? "font-bold text-indigo-900"
+                                : "text-indigo-700"
                             }`}
                             style={{
                               background:
                                 idx === currentTranscriptionIndex
-                                  ? '#a5b4fc'
-                                  : '#eef2ff',
+                                  ? "#a5b4fc"
+                                  : "#eef2ff",
                               opacity:
                                 idx === currentTranscriptionIndex ? 1 : 0.7,
-                              textAlign: 'center',
-                              margin: '0.1rem 0',
+                              textAlign: "center",
+                              margin: "0.1rem 0",
                               borderRadius:
                                 idx === currentTranscriptionIndex
-                                  ? '0.5rem'
-                                  : '',
-                              minHeight: '2.6rem',
-                              maxHeight: '3.4rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                                  ? "0.5rem"
+                                  : "",
+                              minHeight: "2.6rem",
+                              maxHeight: "3.4rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                               zIndex: idx === currentTranscriptionIndex ? 3 : 1,
                             }}
                           >
@@ -224,13 +224,13 @@ const LessonPlayer = ({
                       // Modo automático: efecto centrado
                       <div
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           top: `calc(50% - 1.4rem)`,
                           left: 0,
-                          width: '100%',
-                          transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
+                          width: "100%",
+                          transition: "transform 0.4s cubic-bezier(.4,2,.3,1)",
                           transform: `translateY(-${currentTranscriptionIndex * 2.8}rem)`,
-                          willChange: 'transform',
+                          willChange: "transform",
                         }}
                       >
                         {transcription.map((item, idx) => (
@@ -239,27 +239,27 @@ const LessonPlayer = ({
                             data-transcription-idx={idx}
                             className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
                               idx === currentTranscriptionIndex
-                                ? 'font-bold text-indigo-900'
-                                : 'text-indigo-700'
+                                ? "font-bold text-indigo-900"
+                                : "text-indigo-700"
                             }`}
                             style={{
                               background:
                                 idx === currentTranscriptionIndex
-                                  ? '#a5b4fc'
-                                  : '#eef2ff',
+                                  ? "#a5b4fc"
+                                  : "#eef2ff",
                               opacity:
                                 idx === currentTranscriptionIndex ? 1 : 0.7,
-                              textAlign: 'center',
-                              margin: '0.1rem 0',
+                              textAlign: "center",
+                              margin: "0.1rem 0",
                               borderRadius:
                                 idx === currentTranscriptionIndex
-                                  ? '0.5rem'
-                                  : '',
-                              minHeight: '2.6rem',
-                              maxHeight: '3.4rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                                  ? "0.5rem"
+                                  : "",
+                              minHeight: "2.6rem",
+                              maxHeight: "3.4rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                               zIndex: idx === currentTranscriptionIndex ? 3 : 1,
                             }}
                           >

@@ -1,20 +1,20 @@
-import { clerkClient } from '@clerk/nextjs/server';
-import { isBefore } from 'date-fns';
-import { formatInTimeZone, toDate } from 'date-fns-tz';
-import { eq } from 'drizzle-orm';
+import { clerkClient } from "@clerk/nextjs/server";
+import { isBefore } from "date-fns";
+import { formatInTimeZone, toDate } from "date-fns-tz";
+import { eq } from "drizzle-orm";
 
-import { sendSubscriptionEmail } from '~/server/actions/estudiantes/email/sendSubscriptionEmail';
-import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
+import { sendSubscriptionEmail } from "~/server/actions/estudiantes/email/sendSubscriptionEmail";
+import { db } from "~/server/db";
+import { users } from "~/server/db/schema";
 
-const TIMEZONE = 'America/Bogota';
+const TIMEZONE = "America/Bogota";
 
 // Añade el campo lastSubscriptionEmailSentAt al tipo de usuario localmente
 interface UserWithSubscription {
   address: string | null;
   id: string;
   name: string | null;
-  role: 'estudiante' | 'educador' | 'admin' | 'super-admin';
+  role: "estudiante" | "educador" | "admin" | "super-admin";
   email: string;
   createdAt: Date;
   updatedAt: Date;
@@ -34,15 +34,15 @@ export async function checkAndUpdateSubscriptions() {
     // Get all active users
     // Forzar el tipado correcto para los usuarios
     const activeUsers = (await db.query.users.findMany({
-      where: eq(users.subscriptionStatus, 'active'),
+      where: eq(users.subscriptionStatus, "active"),
     })) as UserWithSubscription[];
 
-    console.log('🔍 Checking subscriptions:', {
+    console.log("🔍 Checking subscriptions:", {
       totalActiveUsers: activeUsers.length,
       currentTime: formatInTimeZone(
         nowBogota,
         TIMEZONE,
-        'yyyy-MM-dd HH:mm:ss zzz'
+        "yyyy-MM-dd HH:mm:ss zzz",
       ),
     });
 
@@ -53,14 +53,14 @@ export async function checkAndUpdateSubscriptions() {
       if (!user.subscriptionEndDate) continue;
 
       let endDate: Date;
-      if (typeof user.subscriptionEndDate === 'string') {
+      if (typeof user.subscriptionEndDate === "string") {
         // Solo soporta yyyy-MM-dd o yyyy-MM-dd HH:mm:ss
         const matchDash =
           /^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/.exec(
-            user.subscriptionEndDate
+            user.subscriptionEndDate,
           );
         if (matchDash) {
-          const [, year, month, day, hour = '0', min = '0', sec = '0'] =
+          const [, year, month, day, hour = "0", min = "0", sec = "0"] =
             matchDash;
           endDate = new Date(
             Number(year),
@@ -68,11 +68,11 @@ export async function checkAndUpdateSubscriptions() {
             Number(day),
             Number(hour),
             Number(min),
-            Number(sec)
+            Number(sec),
           );
         } else {
           // fallback: fecha inválida
-          endDate = new Date('2100-01-01');
+          endDate = new Date("2100-01-01");
         }
       } else {
         endDate = toDate(user.subscriptionEndDate, { timeZone: TIMEZONE });
@@ -84,7 +84,7 @@ export async function checkAndUpdateSubscriptions() {
       // Calcular días restantes
       const msPerDay = 1000 * 60 * 60 * 24;
       const daysLeft = Math.ceil(
-        (endDate.getTime() - nowBogota.getTime()) / msPerDay
+        (endDate.getTime() - nowBogota.getTime()) / msPerDay,
       );
 
       // Solo enviar si faltan 7, 3, 1 o 0 días
@@ -95,7 +95,7 @@ export async function checkAndUpdateSubscriptions() {
       let lastSent: Date | null = null;
       if (user.lastSubscriptionEmailSentAt) {
         lastSent =
-          typeof user.lastSubscriptionEmailSentAt === 'string'
+          typeof user.lastSubscriptionEmailSentAt === "string"
             ? new Date(user.lastSubscriptionEmailSentAt)
             : user.lastSubscriptionEmailSentAt;
       }
@@ -107,26 +107,26 @@ export async function checkAndUpdateSubscriptions() {
 
       if (shouldNotify && !alreadySentToday) {
         // Determinar texto para timeLeft
-        let timeLeftText = '';
-        if (daysLeft === 0) timeLeftText = 'hoy';
-        else if (daysLeft === 1) timeLeftText = '1 día';
+        let timeLeftText = "";
+        if (daysLeft === 0) timeLeftText = "hoy";
+        else if (daysLeft === 1) timeLeftText = "1 día";
         else timeLeftText = `${daysLeft} días`;
 
         try {
           await sendSubscriptionEmail({
             to: user.email,
-            userName: user.name ?? '',
-            expirationDate: formatInTimeZone(endDate, TIMEZONE, 'yyyy-MM-dd'),
+            userName: user.name ?? "",
+            expirationDate: formatInTimeZone(endDate, TIMEZONE, "yyyy-MM-dd"),
             timeLeft: timeLeftText,
           });
 
           console.log(
-            `📧 Notificación de suscripción enviada a ${user.email} (faltan ${timeLeftText})`
+            `📧 Notificación de suscripción enviada a ${user.email} (faltan ${timeLeftText})`,
           );
         } catch (error) {
           console.error(
-            '❌ Error enviando notificación de suscripción:',
-            error
+            "❌ Error enviando notificación de suscripción:",
+            error,
           );
         }
       }
@@ -141,7 +141,7 @@ export async function checkAndUpdateSubscriptions() {
           await db
             .update(users)
             .set({
-              subscriptionStatus: 'inactive',
+              subscriptionStatus: "inactive",
               updatedAt: nowUTC,
             })
             .where(eq(users.id, user.id));
@@ -155,23 +155,23 @@ export async function checkAndUpdateSubscriptions() {
           if (clerkUser?.data?.[0]) {
             await clerk.users.updateUser(clerkUser.data[0].id, {
               publicMetadata: {
-                subscriptionStatus: 'inactive',
+                subscriptionStatus: "inactive",
                 planType: user.planType,
                 subscriptionEndDate: user.subscriptionEndDate, // Mantener formato original
               },
             });
 
-            console.log('✅ Updated:', {
+            console.log("✅ Updated:", {
               user: user.email,
-              status: 'inactive',
+              status: "inactive",
               planType: user.planType,
-              metadata: 'Clerk metadata updated',
+              metadata: "Clerk metadata updated",
               updatedAt: nowUTC.toISOString(),
               subscriptionEndDate: user.subscriptionEndDate,
             });
           }
         } catch (error) {
-          console.error('❌ Update failed for user:', user.email, error);
+          console.error("❌ Update failed for user:", user.email, error);
         }
       } else {
         stillActiveCount++;
@@ -185,11 +185,11 @@ export async function checkAndUpdateSubscriptions() {
       timestamp: formatInTimeZone(
         nowBogota,
         TIMEZONE,
-        'yyyy-MM-dd HH:mm:ss zzz'
+        "yyyy-MM-dd HH:mm:ss zzz",
       ),
     };
   } catch (error) {
-    console.error('❌ Error in checkAndUpdateSubscriptions:', error);
+    console.error("❌ Error in checkAndUpdateSubscriptions:", error);
     throw error;
   }
 }

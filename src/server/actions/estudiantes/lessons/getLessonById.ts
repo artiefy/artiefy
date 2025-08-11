@@ -1,21 +1,21 @@
-'use server';
+"use server";
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import {
   courseCourseTypes,
   enrollments,
   lessons,
   userActivitiesProgress,
   userLessonsProgress,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
-import type { Activity, Course, Lesson } from '~/types';
+import type { Activity, Course, Lesson } from "~/types";
 
 export async function getLessonById(
   lessonId: number,
-  userId: string
+  userId: string,
 ): Promise<Lesson | null> {
   try {
     const lesson = await db.query.lessons.findFirst({
@@ -64,7 +64,7 @@ export async function getLessonById(
       isLocked:
         lessonsProgress.find((p) => p.lessonId === l.id)?.isLocked ?? true,
       isNew: lessonsProgress.find((p) => p.lessonId === l.id)?.isNew ?? true,
-      resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
+      resourceNames: l.resourceNames ? l.resourceNames.split(",") : [],
     }));
 
     // Transform raw course data to match Course interface
@@ -77,7 +77,7 @@ export async function getLessonById(
       isActive: lesson.course.isActive ?? false,
       requiresProgram: false,
       isFree: courseTypeRelations.some(
-        (ct) => ct.courseType?.requiredSubscriptionLevel === 'none'
+        (ct) => ct.courseType?.requiredSubscriptionLevel === "none",
       ),
       courseType:
         lesson.course.courseType !== null
@@ -95,7 +95,7 @@ export async function getLessonById(
     const lessonProgress = await db.query.userLessonsProgress.findFirst({
       where: and(
         eq(userLessonsProgress.userId, userId),
-        eq(userLessonsProgress.lessonId, lessonId)
+        eq(userLessonsProgress.lessonId, lessonId),
       ),
     });
 
@@ -112,13 +112,13 @@ export async function getLessonById(
       isCompleted: lessonProgress?.isCompleted ?? false,
       isNew: lessonProgress?.isNew ?? true,
       resourceNames: lesson.resourceNames
-        ? lesson.resourceNames.split(',').filter(Boolean)
+        ? lesson.resourceNames.split(",").filter(Boolean)
         : [],
-      resourceKey: lesson.resourceKey || '',
+      resourceKey: lesson.resourceKey || "",
       activities:
         (lesson.activities as Activity[] | undefined)?.map((activity) => {
           const activityProgress = userActivitiesProgressData.find(
-            (progress) => progress.activityId === activity.id
+            (progress) => progress.activityId === activity.id,
           );
           return {
             ...activity,
@@ -131,7 +131,7 @@ export async function getLessonById(
 
     return transformedLesson;
   } catch (error) {
-    console.error('Error al obtener la lección por ID:', error);
-    throw new Error('Error al obtener la lección por ID');
+    console.error("Error al obtener la lección por ID:", error);
+    throw new Error("Error al obtener la lección por ID");
   }
 }

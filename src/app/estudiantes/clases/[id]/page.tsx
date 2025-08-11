@@ -1,24 +1,24 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
 
-import { notFound } from 'next/navigation';
+import { notFound } from "next/navigation";
 
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@clerk/nextjs/server";
 
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
-import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
-import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
-import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
-import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
-import { sortLessons } from '~/utils/lessonSorting';
+import Footer from "~/components/estudiantes/layout/Footer";
+import { Header } from "~/components/estudiantes/layout/Header";
+import { LessonSkeleton } from "~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton";
+import { getActivityContent } from "~/server/actions/estudiantes/activities/getActivityContent";
+import { getCourseById } from "~/server/actions/estudiantes/courses/getCourseById";
+import { getLessonById } from "~/server/actions/estudiantes/lessons/getLessonById";
+import { getLessonsByCourseId } from "~/server/actions/estudiantes/lessons/getLessonsByCourseId";
+import { getUserLessonsProgress } from "~/server/actions/estudiantes/progress/getUserLessonsProgress";
+import { sortLessons } from "~/utils/lessonSorting";
 
-import LessonDetails from './LessonDetails';
+import LessonDetails from "./LessonDetails";
 
-import type { LessonWithProgress } from '~/types';
+import type { LessonWithProgress } from "~/types";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
@@ -63,14 +63,14 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 
     const lessonData = await getLessonById(lessonId, userId);
     if (!lessonData) {
-      console.log('Lección no encontrada');
+      console.log("Lección no encontrada");
       return notFound();
     }
 
     // Get course first to check if it's free
     const course = await getCourseById(lessonData.courseId, userId);
     if (!course) {
-      console.log('Curso no encontrado');
+      console.log("Curso no encontrado");
       return notFound();
     }
 
@@ -86,7 +86,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     // Mapear progreso real a cada lección
     const lessonsWithProgress = (lessons ?? []).map((lessonItem) => {
       const lessonProgress = lessonsProgress.find(
-        (progress) => progress.lessonId === lessonItem.id
+        (progress) => progress.lessonId === lessonItem.id,
       );
 
       return {
@@ -142,8 +142,8 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     );
   } catch (error: unknown) {
     console.error(
-      'Error al obtener los datos de la lección:',
-      error instanceof Error ? error.message : String(error)
+      "Error al obtener los datos de la lección:",
+      error instanceof Error ? error.message : String(error),
     );
     return notFound();
   }

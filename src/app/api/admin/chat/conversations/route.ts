@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db';
-import { conversations, users } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { conversations, users } from "~/server/db/schema";
 
 export async function GET() {
   try {
@@ -18,11 +18,11 @@ export async function GET() {
       })
       .from(conversations)
       .leftJoin(users, eq(conversations.senderId, users.id))
-      .where(eq(conversations.status, 'activo'));
+      .where(eq(conversations.status, "activo"));
 
     return NextResponse.json({ conversations: activeConversations });
   } catch (error) {
-    console.error('Error fetching conversations:', error);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    console.error("Error fetching conversations:", error);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

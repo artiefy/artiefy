@@ -1,42 +1,42 @@
-'use client';
+"use client";
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from "react";
 
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
-import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
-import { Dialog, DialogPanel } from '@headlessui/react';
-import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
+import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/nextjs";
+import { Dialog, DialogPanel } from "@headlessui/react";
+import { XMarkIcon as XMarkIconSolid } from "@heroicons/react/24/solid";
 
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Button } from "~/components/estudiantes/ui/button";
+import { Icons } from "~/components/estudiantes/ui/icons";
 
-import { UserButtonWrapper } from '../auth/UserButtonWrapper';
+import { UserButtonWrapper } from "../auth/UserButtonWrapper";
 
-import { NotificationHeader } from './NotificationHeader';
+import { NotificationHeader } from "./NotificationHeader";
 
-import '~/styles/barsicon.css';
-import '~/styles/searchBar.css';
-import '~/styles/headerSearchBar.css';
-import '~/styles/headerMenu.css';
+import "~/styles/barsicon.css";
+import "~/styles/searchBar.css";
+import "~/styles/headerSearchBar.css";
+import "~/styles/headerMenu.css";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const navItems = [
-    { href: '/', label: 'Inicio' },
-    { href: '/estudiantes', label: 'Cursos' },
-    { href: '/proyectos', label: 'Proyectos' },
-    { href: '/comunidad', label: 'Espacios' },
-    { href: '/planes', label: 'Planes' },
+    { href: "/", label: "Inicio" },
+    { href: "/estudiantes", label: "Cursos" },
+    { href: "/proyectos", label: "Proyectos" },
+    { href: "/comunidad", label: "Espacios" },
+    { href: "/planes", label: "Planes" },
   ];
 
   const toggleDropdown = () => {
@@ -48,20 +48,20 @@ export function Header() {
       setIsScrolled(window.scrollY > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.header-menu')) {
+      if (!target.closest(".header-menu")) {
         setIsDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -82,13 +82,13 @@ export function Header() {
     setSearchInProgress(true);
 
     // Emit global search event
-    const searchEvent = new CustomEvent('artiefy-search', {
+    const searchEvent = new CustomEvent("artiefy-search", {
       detail: { query: searchQuery.trim() },
     });
     window.dispatchEvent(searchEvent);
 
     // Clear the search input
-    setSearchQuery('');
+    setSearchQuery("");
     setSearchInProgress(false);
   };
 
@@ -114,8 +114,8 @@ export function Header() {
                 <Button
                   className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
                   style={{
-                    transition: '0.5s',
-                    width: '180px',
+                    transition: "0.5s",
+                    width: "180px",
                   }}
                   onClick={handleSignInClick}
                 >
@@ -123,7 +123,7 @@ export function Header() {
                     {isLoading ? (
                       <Icons.spinner className="size-6" />
                     ) : (
-                      'Iniciar Sesión'
+                      "Iniciar Sesión"
                     )}
                   </span>
                 </Button>
@@ -158,8 +158,8 @@ export function Header() {
     <header
       className={`sticky top-0 z-10 w-full transition-all duration-300 ${
         isScrolled
-          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
-          : 'md:py-3'
+          ? "bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm"
+          : "md:py-3"
       } div-header-nav`}
     >
       <div className="container mx-auto max-w-7xl px-4">
@@ -243,13 +243,13 @@ export function Header() {
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
-                      className={`menu-arrow ${isDropdownOpen ? 'rotate' : ''}`}
+                      className={`menu-arrow ${isDropdownOpen ? "rotate" : ""}`}
                     >
                       <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
                     </svg>
                   </button>
                   <div
-                    className={`menu-options ${isDropdownOpen ? 'show' : ''}`}
+                    className={`menu-options ${isDropdownOpen ? "show" : ""}`}
                   >
                     {navItems.map((item) => (
                       <Link

@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import Image from 'next/image';
+import Image from "next/image";
 
-import { useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
-import { FaCalendar, FaCheck, FaTrophy, FaUserGraduate } from 'react-icons/fa';
-import { toast } from 'sonner';
-import useSWR from 'swr';
+import { useUser } from "@clerk/nextjs";
+import { StarIcon } from "@heroicons/react/24/solid";
+import { FaCalendar, FaCheck, FaTrophy, FaUserGraduate } from "react-icons/fa";
+import { toast } from "sonner";
+import useSWR from "swr";
 
-import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import { EnrollmentCount } from "~/components/estudiantes/layout/EnrollmentCount";
+import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
+import { Badge } from "~/components/estudiantes/ui/badge";
+import { Button } from "~/components/estudiantes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { blurDataURL } from '~/lib/blurDataUrl';
-import { formatDate, type GradesApiResponse } from '~/lib/utils2';
+} from "~/components/estudiantes/ui/card";
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { blurDataURL } from "~/lib/blurDataUrl";
+import { formatDate, type GradesApiResponse } from "~/lib/utils2";
 
-import { ProgramContent } from './ProgramContent';
-import { ProgramGradesModal } from './ProgramGradesModal';
+import { ProgramContent } from "./ProgramContent";
+import { ProgramGradesModal } from "./ProgramGradesModal";
 
-import type { Program } from '~/types';
+import type { Program } from "~/types";
 
 interface ProgramHeaderProps {
   program: Program;
@@ -79,25 +79,25 @@ export function ProgramHeader({
       : null,
     async (url: string): Promise<GradesApiResponse> => {
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Error fetching grades');
+      if (!res.ok) throw new Error("Error fetching grades");
       const data = (await res.json()) as GradesApiResponse;
       return data;
     },
     {
       refreshInterval: 5000, // Poll every 5 seconds
       revalidateOnFocus: true,
-    }
+    },
   );
 
   // Agrupa por curso y toma solo una nota final por curso (la primera materia encontrada)
   const allCourses =
-    program.materias?.map((m) => m.curso?.title ?? 'Curso sin nombre') ?? [];
+    program.materias?.map((m) => m.curso?.title ?? "Curso sin nombre") ?? [];
   const uniqueCourses = Array.from(new Set(allCourses));
 
   const coursesGrades: CourseGrade[] = uniqueCourses.map((courseTitle) => {
     // Busca la primera materia de ese curso en gradesData
     const materiaDelCurso = gradesData?.materias?.find(
-      (m) => m.courseTitle === courseTitle
+      (m) => m.courseTitle === courseTitle,
     );
     // Toma la nota final de esa materia (todas tienen la misma)
     const finalGrade = materiaDelCurso ? Number(materiaDelCurso.grade) : 0;
@@ -114,7 +114,7 @@ export function ProgramHeader({
           (
             coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
             coursesGrades.length
-          ).toFixed(2)
+          ).toFixed(2),
         )
       : 0;
 
@@ -130,7 +130,7 @@ export function ProgramHeader({
   }, [gradesData, gradesError]);
 
   // Verificar plan Premium y fecha de vencimiento
-  const isPremium = user?.publicMetadata?.planType === 'Premium';
+  const isPremium = user?.publicMetadata?.planType === "Premium";
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
     | string
     | null;
@@ -140,12 +140,12 @@ export function ProgramHeader({
   const canEnroll = isSubscriptionActive && isSubscriptionValid;
 
   const getCategoryName = (program: Program) => {
-    return program.category?.name ?? 'Sin categoría';
+    return program.category?.name ?? "Sin categoría";
   };
 
   const handleSignInRedirect = async () => {
-    toast.error('Inicio de sesión requerido', {
-      description: 'Debes iniciar sesión para inscribirte en este programa',
+    toast.error("Inicio de sesión requerido", {
+      description: "Debes iniciar sesión para inscribirte en este programa",
       duration: 3000,
     });
 
@@ -158,7 +158,7 @@ export function ProgramHeader({
 
   const handleEnrollClick = async () => {
     if (!canEnroll) {
-      window.open('/planes', '_blank', 'noopener,noreferrer');
+      window.open("/planes", "_blank", "noopener,noreferrer");
       return;
     }
     await onEnrollAction();
@@ -215,7 +215,7 @@ export function ProgramHeader({
             {isUnenrolling ? (
               <Icons.spinner className="size-9 text-white" />
             ) : (
-              'Cancelar Suscripción'
+              "Cancelar Suscripción"
             )}
           </Button>
         </div>
@@ -235,7 +235,7 @@ export function ProgramHeader({
                 <>
                   <Icons.spinner
                     className="text-white"
-                    style={{ width: '20px', height: '20px' }}
+                    style={{ width: "20px", height: "20px" }}
                   />
                   <span>Cargando...</span>
                 </>
@@ -243,7 +243,7 @@ export function ProgramHeader({
                 <>
                   <Icons.spinner
                     className="text-white"
-                    style={{ width: '25px', height: '25px' }}
+                    style={{ width: "25px", height: "25px" }}
                   />
                   <span>Inscribiendo...</span>
                 </>
@@ -251,8 +251,8 @@ export function ProgramHeader({
                 <>
                   <span>
                     {!canEnroll
-                      ? 'Obtener Plan Premium'
-                      : 'Inscribirse al Programa'}
+                      ? "Obtener Plan Premium"
+                      : "Inscribirse al Programa"}
                   </span>
                   <svg
                     className="size-6"
@@ -297,7 +297,7 @@ export function ProgramHeader({
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
-      {' '}
+      {" "}
       {/* Cambiado a fondo oscuro */}
       <CardHeader className="px-0">
         <AspectRatio ratio={16 / 6}>
@@ -305,7 +305,7 @@ export function ProgramHeader({
             src={
               program.coverImageKey
                 ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-                : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
             }
             alt={program.title}
             fill
@@ -335,18 +335,18 @@ export function ProgramHeader({
               </Badge>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-white" />{' '}
+                  <FaCalendar className="mr-2 text-white" />{" "}
                   {/* icono blanco */}
                   <span className="text-xs text-white sm:text-sm">
-                    Creado: {formatDate(program.createdAt?.toString() ?? '')}
+                    Creado: {formatDate(program.createdAt?.toString() ?? "")}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-white" />{' '}
+                  <FaCalendar className="mr-2 text-white" />{" "}
                   {/* icono blanco */}
                   <span className="text-xs text-white sm:text-sm">
-                    Actualizado:{' '}
-                    {formatDate(program.updatedAt?.toString() ?? '')}
+                    Actualizado:{" "}
+                    {formatDate(program.updatedAt?.toString() ?? "")}
                   </span>
                 </div>
               </div>
@@ -363,13 +363,13 @@ export function ProgramHeader({
                   key={index}
                   className={`h-4 w-4 sm:h-5 sm:w-5 ${
                     index < Math.floor(program.rating ?? 0)
-                      ? 'text-yellow-400'
-                      : 'text-gray-300'
+                      ? "text-yellow-400"
+                      : "text-gray-300"
                   }`}
                 />
               ))}
               <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-                {program.rating?.toFixed(1) ?? '0.0'}
+                {program.rating?.toFixed(1) ?? "0.0"}
               </span>
             </div>
           </div>
@@ -380,7 +380,7 @@ export function ProgramHeader({
           <div className="prose max-w-none">
             <p className="text-sm leading-relaxed text-white sm:text-base">
               {/* Cambiado a blanco */}
-              {program.description ?? 'No hay descripción disponible.'}
+              {program.description ?? "No hay descripción disponible."}
             </p>
           </div>
           <Button
@@ -389,8 +389,8 @@ export function ProgramHeader({
             className="h-9 w-full shrink-0 bg-blue-500 px-4 font-semibold text-white hover:bg-blue-600 sm:w-auto"
             aria-label={
               !isEnrolled
-                ? 'Debes inscribirte al programa'
-                : 'Ver tus calificaciones'
+                ? "Debes inscribirte al programa"
+                : "Ver tus calificaciones"
             }
           >
             <FaTrophy className="mr-2 h-4 w-4" />

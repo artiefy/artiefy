@@ -1,38 +1,38 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import Image from 'next/image';
+import Image from "next/image";
 
-import { useRouter } from '@bprogress/next/app';
-import { useAuth } from '@clerk/nextjs';
+import { useRouter } from "@bprogress/next/app";
+import { useAuth } from "@clerk/nextjs";
 import {
   ArrowRightCircleIcon,
   CheckCircleIcon,
   StarIcon,
-} from '@heroicons/react/24/solid';
-import { FaCheck, FaCrown } from 'react-icons/fa';
-import { MdOutlineLockClock } from 'react-icons/md';
-import { toast } from 'sonner';
+} from "@heroicons/react/24/solid";
+import { FaCheck, FaCrown } from "react-icons/fa";
+import { MdOutlineLockClock } from "react-icons/md";
+import { toast } from "sonner";
 
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from '~/components/estudiantes/ui/alert';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+} from "~/components/estudiantes/ui/alert";
+import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
+import { Badge } from "~/components/estudiantes/ui/badge";
+import { Button } from "~/components/estudiantes/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+} from "~/components/estudiantes/ui/card";
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { isUserEnrolled } from "~/server/actions/estudiantes/courses/enrollInCourse";
 
-import type { Course, MateriaWithCourse, Program } from '~/types';
+import type { Course, MateriaWithCourse, Program } from "~/types";
 
 interface ProgramContentProps {
   program: Program;
@@ -74,7 +74,7 @@ export function ProgramContent({
     const safeMateriasWithCursos =
       program.materias?.filter(
         (materia): materia is MateriaWithCourse & { curso: Course } =>
-          materia.curso !== undefined && 'id' in materia.curso
+          materia.curso !== undefined && "id" in materia.curso,
       ) ?? [];
 
     const uniqueCourses = safeMateriasWithCursos.reduce(
@@ -84,18 +84,18 @@ export function ProgramContent({
         }
         return acc;
       },
-      [] as (MateriaWithCourse & { curso: Course })[]
+      [] as (MateriaWithCourse & { curso: Course })[],
     );
 
     return uniqueCourses.map((materia) => materia.curso);
   }, [program.materias]);
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -106,7 +106,7 @@ export function ProgramContent({
 
       try {
         const checksNeeded = courses.filter(
-          (course) => enrollmentCache[course.id] === undefined
+          (course) => enrollmentCache[course.id] === undefined,
         );
 
         if (checksNeeded.length === 0) return;
@@ -119,7 +119,7 @@ export function ProgramContent({
             } catch {
               return [course.id, false] as [number, boolean];
             }
-          })
+          }),
         );
 
         if (isSubscribed) {
@@ -128,7 +128,7 @@ export function ProgramContent({
           setCourseEnrollments((prev) => ({ ...prev, ...newEnrollments }));
         }
       } catch (error) {
-        console.error('Error checking enrollments:', error);
+        console.error("Error checking enrollments:", error);
       }
     }, 500); // Debounce time
 
@@ -160,20 +160,20 @@ export function ProgramContent({
           scroll: true,
         });
       } catch (error) {
-        console.error('Navigation error:', error);
-        toast.error('Error al navegar al curso');
+        console.error("Navigation error:", error);
+        toast.error("Error al navegar al curso");
       } finally {
         setTimeout(() => {
           setIsNavigating(false);
         }, 1000);
       }
     },
-    [isSignedIn, isEnrolled, router, isNavigating]
+    [isSignedIn, isEnrolled, router, isNavigating],
   );
 
   return (
     <div className="relative rounded-lg border bg-background p-6 shadow-lg">
-      {' '}
+      {" "}
       {/* Fondo azul oscuro */}
       {isEnrolled && !isSubscriptionActive && (
         <Alert
@@ -193,7 +193,7 @@ export function ProgramContent({
                   Premium.
                 </p>
                 <Button
-                  onClick={() => router.push('/planes')}
+                  onClick={() => router.push("/planes")}
                   className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
                 >
                   <FaCrown className="mr-2" />
@@ -227,8 +227,8 @@ export function ProgramContent({
       <div
         className={
           !isSubscriptionActive && isEnrolled
-            ? 'pointer-events-none opacity-50 blur-[1px] filter'
-            : ''
+            ? "pointer-events-none opacity-50 blur-[1px] filter"
+            : ""
         }
       >
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -237,7 +237,7 @@ export function ProgramContent({
               {/* Gradiente azul y sombra en hover, igual a StudentProgram */}
               <div className="animate-gradient absolute -inset-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
               <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white shadow-lg transition-transform duration-300 ease-in-out group-hover:scale-[1.03]">
-                {' '}
+                {" "}
                 {/* Fondo azul oscuro y sombra */}
                 {/* Añadir Badge "Muy pronto" para cursos desactivados */}
                 {!course.isActive && (
@@ -252,9 +252,9 @@ export function ProgramContent({
                         src={
                           course.coverImageKey
                             ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                            : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                            : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
                         }
-                        alt={course.title || 'Imagen del curso'}
+                        alt={course.title || "Imagen del curso"}
                         className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -293,9 +293,9 @@ export function ProgramContent({
                   </p>
                   <div className="flex w-full justify-between">
                     <p className="text-sm font-bold text-gray-300 italic">
-                      Educador:{' '}
+                      Educador:{" "}
                       <span className="font-bold italic">
-                        {course.instructorName ?? 'No tiene'}
+                        {course.instructorName ?? "No tiene"}
                       </span>
                     </p>
                     <div className="flex items-center">
@@ -336,12 +336,12 @@ export function ProgramContent({
                         }
                         className={`w-full ${
                           !course.isActive || !isSignedIn || !isEnrolled
-                            ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
-                            : ''
+                            ? "cursor-not-allowed bg-gray-600 hover:bg-gray-600"
+                            : ""
                         } group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
                           !course.isActive || !isSignedIn || !isEnrolled
-                            ? 'pointer-events-none bg-gray-600 !font-extrabold !text-[#fff] !opacity-100' // Fuerza blanco puro y sin opacidad
-                            : 'bg-background text-primary active:scale-95'
+                            ? "pointer-events-none bg-gray-600 !font-extrabold !text-[#fff] !opacity-100" // Fuerza blanco puro y sin opacidad
+                            : "bg-background text-primary active:scale-95"
                         }`}
                       >
                         <span className="font-bold">
@@ -351,13 +351,13 @@ export function ProgramContent({
                               Muy pronto
                             </span>
                           ) : !isSignedIn ? (
-                            'Iniciar Sesión'
+                            "Iniciar Sesión"
                           ) : !isEnrolled ? (
-                            'Requiere Inscripción'
+                            "Requiere Inscripción"
                           ) : courseEnrollments[course.id] ? (
-                            'Continuar Curso'
+                            "Continuar Curso"
                           ) : (
-                            'Ver Curso'
+                            "Ver Curso"
                           )}
                         </span>
                         {course.isActive && isEnrolled && (

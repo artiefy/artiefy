@@ -5,9 +5,9 @@ import {
   StyleSheet,
   Text,
   View,
-} from '@react-pdf/renderer';
+} from "@react-pdf/renderer";
 
-import type { Course } from '~/types';
+import type { Course } from "~/types";
 
 interface CertificationStudentPDFProps {
   userName: string;
@@ -18,41 +18,41 @@ interface CertificationStudentPDFProps {
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 0,
-    flexDirection: 'column',
-    width: '100%',
-    height: '100%',
+    flexDirection: "column",
+    width: "100%",
+    height: "100%",
   },
   border: {
-    border: '8px solid #fbbf24',
+    border: "8px solid #fbbf24",
     borderRadius: 16,
     margin: 0,
     padding: 32,
-    width: '100%',
-    height: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
+    width: "100%",
+    height: "100%",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-start",
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 0,
-    width: '100%',
-    justifyContent: 'flex-start',
+    width: "100%",
+    justifyContent: "flex-start",
     gap: 16,
-    position: 'relative',
+    position: "relative",
     minHeight: 50, // asegura espacio para el logo
   },
   logo: {
     width: 100,
     height: 50,
-    objectFit: 'contain',
+    objectFit: "contain",
     marginBottom: 0,
     marginRight: 0,
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: 0,
   },
@@ -62,85 +62,85 @@ const styles = StyleSheet.create({
   },
   headerTextCentered: {
     fontSize: 14,
-    color: '#444',
-    textAlign: 'center',
+    color: "#444",
+    textAlign: "center",
     flex: 1,
     marginLeft: 0,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#d97706',
+    fontWeight: "bold",
+    color: "#d97706",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: "#888",
     marginBottom: 16,
   },
   name: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginVertical: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   course: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginVertical: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   description: {
     fontSize: 14,
-    color: '#444',
+    color: "#444",
     marginVertical: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   grid: {
-    display: 'flex',
-    flexDirection: 'row',
+    display: "flex",
+    flexDirection: "row",
     marginTop: 40,
-    width: '100%',
+    width: "100%",
     gap: 24,
   },
   gridCol: {
     flex: 1,
-    textAlign: 'center',
-    justifyContent: 'flex-start',
+    textAlign: "center",
+    justifyContent: "flex-start",
   },
   signatureImg: {
     width: 120,
     height: 40,
-    margin: '0 auto 8px auto',
+    margin: "0 auto 8px auto",
   },
   signatureName: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginBottom: 0,
     marginTop: 0,
   },
   signatureRole: {
     fontSize: 10,
-    color: '#666',
+    color: "#666",
     marginBottom: 0,
     marginTop: 0,
   },
   details: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
-    color: '#222',
+    color: "#222",
     marginBottom: 8,
     marginTop: 0,
   },
   verify: {
     fontSize: 10,
-    color: '#2563eb',
+    color: "#2563eb",
     marginTop: 8,
-    textAlign: 'center',
-    wordBreak: 'break-all',
+    textAlign: "center",
+    wordBreak: "break-all",
   },
 });
 
@@ -169,7 +169,7 @@ export function CertificationStudentPDF({
               ha participado y completado exitosamente el curso
             </Text>
             <Text style={styles.course}>
-              {course?.title || 'Curso no encontrado'}
+              {course?.title || "Curso no encontrado"}
             </Text>
             <Text style={styles.description}>
               desarrollando habilidades y conocimientos en el área, demostrando
@@ -197,7 +197,7 @@ export function CertificationStudentPDF({
                 </Text>
                 <Text style={styles.details}>Finalizado el {date}</Text>
                 <Text style={styles.details}>
-                  CC. {course.id.toString().padStart(6, '0')}
+                  CC. {course.id.toString().padStart(6, "0")}
                 </Text>
                 <Text style={styles.verify}>
                   Verificado en: {certificateUrl}

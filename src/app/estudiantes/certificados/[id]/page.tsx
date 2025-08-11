@@ -1,17 +1,17 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
 
-import { notFound, redirect } from 'next/navigation';
+import { notFound, redirect } from "next/navigation";
 
-import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { auth } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm";
 
-import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
-import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
-import { db } from '~/server/db';
-import { certificates } from '~/server/db/schema';
+import { CertificationStudent } from "~/components/estudiantes/layout/certification/CertificationStudent";
+import Footer from "~/components/estudiantes/layout/Footer";
+import { Header } from "~/components/estudiantes/layout/Header";
+import { getCourseById } from "~/server/actions/estudiantes/courses/getCourseById";
+import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
+import { db } from "~/server/db";
+import { certificates } from "~/server/db/schema";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -24,11 +24,11 @@ export default async function CertificatePage({ params }: PageProps) {
   ]);
 
   if (!resolvedParams?.id) {
-    redirect('/estudiantes/cursos');
+    redirect("/estudiantes/cursos");
   }
 
   if (!userId) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
   const courseId = Number(resolvedParams.id);
@@ -37,7 +37,7 @@ export default async function CertificatePage({ params }: PageProps) {
   let certificate = await db.query.certificates.findFirst({
     where: and(
       eq(certificates.userId, userId),
-      eq(certificates.courseId, courseId)
+      eq(certificates.courseId, courseId),
     ),
   });
 
@@ -55,7 +55,7 @@ export default async function CertificatePage({ params }: PageProps) {
     }
     // Verificar progreso y nota final
     const allLessonsCompleted = course.lessons?.every(
-      (l) => l.porcentajecompletado === 100
+      (l) => l.porcentajecompletado === 100,
     );
     // Obtener nota final promedio de las materias
     const materiasGrades = await db.query.materiaGrades.findMany({
@@ -74,7 +74,7 @@ export default async function CertificatePage({ params }: PageProps) {
       const userData = await db.query.users.findFirst({
         where: (u) => eq(u.id, userId),
       });
-      const studentName = userData?.name ?? '';
+      const studentName = userData?.name ?? "";
 
       // Crear certificado
       const newCert = await db
@@ -93,8 +93,8 @@ export default async function CertificatePage({ params }: PageProps) {
       // Notificar al estudiante sobre el nuevo certificado
       await createNotification({
         userId,
-        type: 'CERTIFICATE_CREATED',
-        title: '¡Nuevo certificado disponible!',
+        type: "CERTIFICATE_CREATED",
+        title: "¡Nuevo certificado disponible!",
         message: `Has obtenido el certificado del curso: ${course.title}`,
         metadata: {
           courseId,
@@ -105,8 +105,8 @@ export default async function CertificatePage({ params }: PageProps) {
       // Notificar al estudiante que completó el curso
       await createNotification({
         userId,
-        type: 'COURSE_COMPLETED',
-        title: '¡Curso completado!',
+        type: "COURSE_COMPLETED",
+        title: "¡Curso completado!",
         message: `Has completado el curso "${course.title}" con nota final ${finalGrade.toFixed(2)}`,
         metadata: {
           courseId,

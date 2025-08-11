@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
-import { useUser } from '@clerk/nextjs';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { useUser } from "@clerk/nextjs";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 
-import { formatDate } from '~/lib/utils2';
+import { formatDate } from "~/lib/utils2";
 
-import { CertificationStudentPDF } from './CertificationStudentPDF';
+import { CertificationStudentPDF } from "./CertificationStudentPDF";
 
-import type { Course } from '~/types';
+import type { Course } from "~/types";
 
-import '~/styles/confetti.css';
+import "~/styles/confetti.css";
 
 interface StudentCertificationProps {
   course: Course;
@@ -33,14 +33,14 @@ export function CertificationStudent({
 
   // Get current URL for certificate verification
   const certificateUrl =
-    typeof window !== 'undefined' ? window.location.href : '';
+    typeof window !== "undefined" ? window.location.href : "";
 
   // Usa el nombre original si está disponible, si no, usa el del usuario logueado
   const displayName =
     studentName ??
     (user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`
-      : (user.firstName ?? user.lastName ?? user.username ?? ''));
+      : (user.firstName ?? user.lastName ?? user.username ?? ""));
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -156,7 +156,7 @@ export function CertificationStudent({
                     ha participado y completado exitosamente el curso
                   </p>
                   <p className="text-background text-3xl font-bold">
-                    {course?.title || 'Curso no encontrado'}
+                    {course?.title || "Curso no encontrado"}
                   </p>
                   <p className="mt-4 text-lg text-gray-600">
                     desarrollando habilidades y conocimientos en el área,
@@ -199,7 +199,7 @@ export function CertificationStudent({
                       Finalizado el {formatDate(today)}
                     </p>
                     <p className="text-sm text-gray-600">
-                      CC. {course.id.toString().padStart(6, '0')}
+                      CC. {course.id.toString().padStart(6, "0")}
                     </p>
                     <div className="mt-4 pt-2">
                       <p className="text-sm text-gray-600">Verificado en:</p>
@@ -270,10 +270,10 @@ export function CertificationStudent({
                 certificateUrl={certificateUrl}
               />
             }
-            fileName={`certificado-${course?.title || 'curso'}.pdf`}
+            fileName={`certificado-${course?.title || "curso"}.pdf`}
             className="bg-primary text-background hover:bg-primary/90 rounded px-4 py-2 font-semibold"
           >
-            {({ loading }) => (loading ? 'Generando PDF...' : 'Descargar PDF')}
+            {({ loading }) => (loading ? "Generando PDF..." : "Descargar PDF")}
           </PDFDownloadLink>
         </div>
       </div>

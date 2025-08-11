@@ -1,23 +1,23 @@
-'use server';
+"use server";
 
-import { currentUser } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm'; // Quitar inArray
+import { currentUser } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm"; // Quitar inArray
 
-import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
-import { db } from '~/server/db';
+import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
+import { db } from "~/server/db";
 import {
   courses,
   enrollments,
   lessons,
   userLessonsProgress,
   users,
-} from '~/server/db/schema';
-import { sortLessons } from '~/utils/lessonSorting';
+} from "~/server/db/schema";
+import { sortLessons } from "~/utils/lessonSorting";
 
-import type { EnrollmentResponse } from '~/types';
+import type { EnrollmentResponse } from "~/types";
 
 export async function enrollInCourse(
-  courseId: number
+  courseId: number,
 ): Promise<EnrollmentResponse> {
   let course = null;
 
@@ -27,7 +27,7 @@ export async function enrollInCourse(
     if (!user?.id) {
       return {
         success: false,
-        message: 'Usuario no autenticado',
+        message: "Usuario no autenticado",
       };
     }
 
@@ -42,12 +42,13 @@ export async function enrollInCourse(
     });
 
     if (!course) {
-      return { success: false, message: 'Curso no encontrado' };
+      return { success: false, message: "Curso no encontrado" };
     }
 
     // Determine subscription status based on course type
-    const subscriptionLevel = course.courseType?.requiredSubscriptionLevel ?? 'none';
-    const shouldBeActive = subscriptionLevel !== 'none';
+    const subscriptionLevel =
+      course.courseType?.requiredSubscriptionLevel ?? "none";
+    const shouldBeActive = subscriptionLevel !== "none";
 
     // Check if user exists
     let dbUser = await db.query.users.findFirst({
@@ -56,13 +57,13 @@ export async function enrollInCourse(
 
     if (!dbUser) {
       const primaryEmail = user.emailAddresses.find(
-        (email) => email.id === user.primaryEmailAddressId
+        (email) => email.id === user.primaryEmailAddressId,
       );
 
       if (!primaryEmail?.emailAddress) {
         return {
           success: false,
-          message: 'No se pudo obtener el email del usuario',
+          message: "No se pudo obtener el email del usuario",
         };
       }
 
@@ -72,10 +73,10 @@ export async function enrollInCourse(
           name:
             user.firstName && user.lastName
               ? `${user.firstName} ${user.lastName}`
-              : (user.firstName ?? 'Usuario'),
+              : (user.firstName ?? "Usuario"),
           email: primaryEmail.emailAddress,
-          role: 'estudiante',
-          subscriptionStatus: shouldBeActive ? 'active' : 'inactive', // Set based on course type
+          role: "estudiante",
+          subscriptionStatus: shouldBeActive ? "active" : "inactive", // Set based on course type
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -86,13 +87,13 @@ export async function enrollInCourse(
         });
 
         if (!dbUser) {
-          throw new Error('Error al crear el usuario en la base de datos');
+          throw new Error("Error al crear el usuario en la base de datos");
         }
       } catch (error) {
-        console.error('Error creating user:', error);
+        console.error("Error creating user:", error);
         return {
           success: false,
-          message: 'Error al crear el usuario en la base de datos',
+          message: "Error al crear el usuario en la base de datos",
         };
       }
     }
@@ -101,14 +102,14 @@ export async function enrollInCourse(
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
         eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
+        eq(enrollments.courseId, courseId),
       ),
     });
 
     if (existingEnrollment) {
       return {
         success: false,
-        message: 'Ya estás inscrito en este curso',
+        message: "Ya estás inscrito en este curso",
       };
     }
 
@@ -116,11 +117,11 @@ export async function enrollInCourse(
     const userPlanType = user.publicMetadata?.planType as string;
     const courseRequiredLevel = course.courseType?.requiredSubscriptionLevel;
 
-    if (courseRequiredLevel === 'premium' && userPlanType === 'Pro') {
+    if (courseRequiredLevel === "premium" && userPlanType === "Pro") {
       return {
         success: false,
         message:
-          'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+          "Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.",
         requiresSubscription: true,
       };
     }
@@ -131,13 +132,13 @@ export async function enrollInCourse(
       | null;
 
     const isSubscriptionValid =
-      subscriptionStatus === 'active' &&
+      subscriptionStatus === "active" &&
       (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
-    if (courseRequiredLevel !== 'none' && !isSubscriptionValid) {
+    if (courseRequiredLevel !== "none" && !isSubscriptionValid) {
       return {
         success: false,
-        message: 'Se requiere una suscripción activa',
+        message: "Se requiere una suscripción activa",
         requiresSubscription: true,
       };
     }
@@ -154,13 +155,13 @@ export async function enrollInCourse(
     try {
       await createNotification({
         userId,
-        type: 'COURSE_ENROLLMENT',
-        title: '¡Inscripción exitosa!',
+        type: "COURSE_ENROLLMENT",
+        title: "¡Inscripción exitosa!",
         message: `Te has inscrito al curso ${course.title}`,
         metadata: { courseId },
       });
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error("Error creating notification:", error);
       // Continue execution even if notification fails
     }
 
@@ -194,48 +195,45 @@ export async function enrollInCourse(
     // Inserta solo las nuevas lecciones de una vez
     await Promise.all(
       progressValues.map((values) =>
-        db
-          .insert(userLessonsProgress)
-          .values(values)
-          .onConflictDoNothing()
-      )
+        db.insert(userLessonsProgress).values(values).onConflictDoNothing(),
+      ),
     );
 
     return {
       success: true,
-      message: 'Inscripción exitosa',
+      message: "Inscripción exitosa",
     };
   } catch (error) {
     console.error(
-      'Error en enrollInCourse:',
-      error instanceof Error ? error.message : 'Unknown error'
+      "Error en enrollInCourse:",
+      error instanceof Error ? error.message : "Unknown error",
     );
     return {
       success: false,
       message:
         error instanceof Error
           ? error.message
-          : 'Error desconocido al inscribirse',
+          : "Error desconocido al inscribirse",
       requiresSubscription:
-        course?.courseType?.requiredSubscriptionLevel !== 'none',
+        course?.courseType?.requiredSubscriptionLevel !== "none",
     };
   }
 }
 
 export async function isUserEnrolled(
   courseId: number,
-  userId: string
+  userId: string,
 ): Promise<boolean> {
   try {
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
         eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
+        eq(enrollments.courseId, courseId),
       ),
     });
     return !!existingEnrollment;
   } catch (error) {
-    console.error('Error checking enrollment:', error);
-    throw new Error('Failed to check enrollment status');
+    console.error("Error checking enrollment:", error);
+    throw new Error("Failed to check enrollment status");
   }
 }

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-import Link from 'next/link';
+import Link from "next/link";
 
 import {
   FaCheckCircle,
@@ -9,24 +9,24 @@ import {
   FaChevronRight,
   FaChevronUp,
   FaLock,
-} from 'react-icons/fa';
-import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
-import { TbClockFilled, TbReportAnalytics } from 'react-icons/tb';
-import { toast } from 'sonner';
-import useSWR from 'swr';
+} from "react-icons/fa";
+import { MdKeyboardDoubleArrowDown } from "react-icons/md";
+import { TbClockFilled, TbReportAnalytics } from "react-icons/tb";
+import { toast } from "sonner";
+import useSWR from "swr";
 
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
-import { useMediaQuery } from '~/utils/useMediaQuery';
+import { Icons } from "~/components/estudiantes/ui/icons";
+import { completeActivity } from "~/server/actions/estudiantes/progress/completeActivity";
+import { useMediaQuery } from "~/utils/useMediaQuery";
 
-import { LessonActivityModal } from './LessonActivityModal';
-import { GradeHistory } from './LessonGradeHistory';
-import { LessonGrades } from './LessonGrades';
-import LessonResource from './LessonResource';
+import { LessonActivityModal } from "./LessonActivityModal";
+import { GradeHistory } from "./LessonGradeHistory";
+import { LessonGrades } from "./LessonGrades";
+import LessonResource from "./LessonResource";
 
-import type { Activity, SavedAnswer } from '~/types';
+import type { Activity, SavedAnswer } from "~/types";
 
-import '~/styles/arrowclass.css';
+import "~/styles/arrowclass.css";
 
 interface LessonActivitiesProps {
   activities: Activity[];
@@ -82,39 +82,39 @@ interface GradeSummaryResponse {
 }
 
 const isValidGradeSummaryResponse = (
-  data: unknown
+  data: unknown,
 ): data is GradeSummaryResponse => {
-  if (!data || typeof data !== 'object') return false;
+  if (!data || typeof data !== "object") return false;
 
   const response = data as Partial<GradeSummaryResponse>;
 
   return (
-    typeof response.finalGrade === 'number' &&
+    typeof response.finalGrade === "number" &&
     Array.isArray(response.parameters) &&
     response.parameters.every(
       (param) =>
-        typeof param.name === 'string' &&
-        typeof param.grade === 'number' &&
-        typeof param.weight === 'number' &&
+        typeof param.name === "string" &&
+        typeof param.grade === "number" &&
+        typeof param.weight === "number" &&
         Array.isArray(param.activities) &&
         param.activities.every(
           (act) =>
-            typeof act.id === 'number' &&
-            typeof act.name === 'string' &&
-            typeof act.grade === 'number'
-        )
+            typeof act.id === "number" &&
+            typeof act.name === "string" &&
+            typeof act.grade === "number",
+        ),
     )
   );
 };
 
 const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
   const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to fetch grades');
+  if (!response.ok) throw new Error("Failed to fetch grades");
 
   const rawData: unknown = await response.json();
 
   if (!isValidGradeSummaryResponse(rawData)) {
-    throw new Error('Invalid grade summary response format');
+    throw new Error("Invalid grade summary response format");
   }
 
   return rawData;
@@ -134,7 +134,7 @@ interface ActivityState {
 
 // Add helper function to extract and sort lesson numbers
 const extractLessonNumber = (title: string): number => {
-  if (title.toLowerCase().includes('bienvenida')) return -1;
+  if (title.toLowerCase().includes("bienvenida")) return -1;
   const match = /\d+/.exec(title);
   return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
 };
@@ -159,19 +159,19 @@ const LessonActivities = ({
   >({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
-    null
+    null,
   );
   const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(true);
   const [isGradesLoading, setIsGradesLoading] = useState(true);
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
-    null
+    null,
   );
   // Add underscore prefix to mark as intentionally unused local state
   const [_isActivityCompleted, setIsActivityCompleted] = useState(
-    propIsActivityCompleted
+    propIsActivityCompleted,
   );
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [showAll, setShowAll] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -217,7 +217,7 @@ const LessonActivities = ({
     {
       refreshInterval: 5000,
       revalidateOnFocus: false,
-    }
+    },
   );
 
   useEffect(() => {
@@ -232,16 +232,16 @@ const LessonActivities = ({
   }, [grades]);
 
   const isActivityAnswersResponse = (
-    data: unknown
+    data: unknown,
   ): data is ActivityAnswersResponse => {
-    if (!data || typeof data !== 'object') return false;
+    if (!data || typeof data !== "object") return false;
 
     const response = data as Partial<ActivityAnswersResponse>;
     return (
-      typeof response.score === 'number' &&
-      typeof response.answers === 'object' &&
+      typeof response.score === "number" &&
+      typeof response.answers === "object" &&
       response.answers !== null &&
-      typeof response.isAlreadyCompleted === 'boolean'
+      typeof response.isAlreadyCompleted === "boolean"
     );
   };
 
@@ -258,7 +258,7 @@ const LessonActivities = ({
           .slice(0, 3)
           .map(async (activity) => {
             const response = await fetch(
-              `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+              `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`,
             );
 
             if (!response.ok) {
@@ -298,7 +298,7 @@ const LessonActivities = ({
           ...newActivitiesState,
         }));
       } catch (error) {
-        console.error('Error checking activities status:', error);
+        console.error("Error checking activities status:", error);
       } finally {
         setIsButtonLoading(false);
       }
@@ -315,7 +315,7 @@ const LessonActivities = ({
       }));
 
       const response = await fetch(
-        `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+        `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`,
       );
 
       if (response.ok) {
@@ -338,8 +338,8 @@ const LessonActivities = ({
       setSelectedActivity(activity);
       openModal();
     } catch (e) {
-      console.error('Error fetching results:', e);
-      toast.error('Error al cargar los resultados');
+      console.error("Error fetching results:", e);
+      toast.error("Error al cargar los resultados");
     }
   };
 
@@ -387,7 +387,7 @@ const LessonActivities = ({
 
     // Keep the fetch call to update current activity's results
     void fetch(
-      `/api/activities/getAnswers?activityId=${currentActivity.id}&userId=${userId}`
+      `/api/activities/getAnswers?activityId=${currentActivity.id}&userId=${userId}`,
     )
       .then(async (response) => {
         if (response.ok) {
@@ -409,7 +409,7 @@ const LessonActivities = ({
         }
       })
       .catch((error) => {
-        console.error('Error updating activity status:', error);
+        console.error("Error updating activity status:", error);
       });
 
     setSelectedActivity(null);
@@ -420,22 +420,22 @@ const LessonActivities = ({
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+    const hasNoVideo = currentLesson?.coverVideoKey === "none";
 
     if (isButtonLoading) {
-      return 'bg-gray-300 text-gray-300 border-none';
+      return "bg-gray-300 text-gray-300 border-none";
     }
 
     if (activityState?.isCompleted) {
-      return 'bg-green-500 text-black hover:bg-green-700 active:scale-95';
+      return "bg-green-500 text-black hover:bg-green-700 active:scale-95";
     }
 
     // Enable button styling for no video or completed video
     if (hasNoVideo || isVideoCompleted) {
-      return 'font-semibold text-black relative z-10';
+      return "font-semibold text-black relative z-10";
     }
 
-    return 'bg-gray-400 text-background';
+    return "bg-gray-400 text-background";
   };
 
   const getButtonLabel = (activity: Activity) => {
@@ -457,7 +457,7 @@ const LessonActivities = ({
             <Icons.spinner className="mr-2 h-4 w-4" />
           )}
           <span className="font-semibold">
-            {activity.typeid === 1 ? 'Ver Documento' : 'Ver Resultados'}
+            {activity.typeid === 1 ? "Ver Documento" : "Ver Resultados"}
           </span>
           <FaCheckCircle className="ml-2 inline text-white" />
         </>
@@ -478,7 +478,7 @@ const LessonActivities = ({
     if (isButtonLoading) {
       return {
         icon: <TbClockFilled className="text-gray-400" />,
-        bgColor: 'bg-gray-200',
+        bgColor: "bg-gray-200",
         isActive: false,
       };
     }
@@ -486,7 +486,7 @@ const LessonActivities = ({
     if (activityState?.isCompleted) {
       return {
         icon: <FaCheckCircle className="text-green-500" />,
-        bgColor: 'bg-green-100',
+        bgColor: "bg-green-100",
         isActive: true,
       };
     }
@@ -497,11 +497,11 @@ const LessonActivities = ({
     if (
       !isVideoCompleted &&
       currentLesson &&
-      currentLesson.coverVideoKey !== 'none'
+      currentLesson.coverVideoKey !== "none"
     ) {
       return {
         icon: <FaLock className="text-gray-400" />,
-        bgColor: 'bg-gray-200',
+        bgColor: "bg-gray-200",
         isActive: false,
       };
     }
@@ -510,7 +510,7 @@ const LessonActivities = ({
     if (index === 0) {
       return {
         icon: <TbClockFilled className="text-blue-500" />,
-        bgColor: 'bg-blue-100',
+        bgColor: "bg-blue-100",
         isActive: true,
       };
     }
@@ -526,7 +526,7 @@ const LessonActivities = ({
       ) : (
         <FaLock className="text-gray-400" />
       ),
-      bgColor: isPreviousCompleted ? 'bg-blue-100' : 'bg-gray-200',
+      bgColor: isPreviousCompleted ? "bg-blue-100" : "bg-gray-200",
       isActive: isPreviousCompleted ?? false,
     };
   };
@@ -535,7 +535,7 @@ const LessonActivities = ({
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+    const hasNoVideo = currentLesson?.coverVideoKey === "none";
 
     if (!isVideoCompleted && !hasNoVideo) return false;
     if (activitiesState[activity.id]?.isCompleted) return false;
@@ -550,9 +550,9 @@ const LessonActivities = ({
   };
 
   const truncateDescription = (description: string | null, maxLength = 60) => {
-    if (!description) return '';
+    if (!description) return "";
     if (description.length <= maxLength) return description;
-    return description.slice(0, maxLength).trim() + '...';
+    return description.slice(0, maxLength).trim() + "...";
   };
 
   const getNextAvailableLessonId = useCallback(() => {
@@ -586,7 +586,7 @@ const LessonActivities = ({
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+    const hasNoVideo = currentLesson?.coverVideoKey === "none";
     const canAccess =
       hasNoVideo || isVideoCompleted || isFirstActivity || isPreviousCompleted;
     const isNextLessonAvailable =
@@ -597,10 +597,10 @@ const LessonActivities = ({
         <div
           className={`mb-4 rounded-lg border p-4 ${
             isButtonLoading
-              ? 'bg-white' // Tarjeta blanca durante carga
+              ? "bg-white" // Tarjeta blanca durante carga
               : status.isActive
-                ? 'bg-white'
-                : 'bg-gray-100 opacity-60'
+                ? "bg-white"
+                : "bg-gray-100 opacity-60"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -649,7 +649,7 @@ const LessonActivities = ({
                   isButtonLoading ||
                   !canAccess)
               }
-              className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+              className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? "cursor-not-allowed bg-gray-200" : ""} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
             >
               {/* Animated gradient background */}
               {(hasNoVideo || isVideoCompleted) &&
@@ -732,39 +732,39 @@ const LessonActivities = ({
       const allActivitiesCompleted = activities.every(
         (activity) =>
           activitiesState[activity.id]?.isCompleted ||
-          activity.id === activities[0].id
+          activity.id === activities[0].id,
       );
 
       if (allActivitiesCompleted) {
         // Actualizar el progreso de la lección a 100% en el backend
         // Esto automáticamente desbloqueará la siguiente lección si corresponde
         const lessonProgressResponse = await fetch(
-          '/api/lessons/update-progress',
+          "/api/lessons/update-progress",
           {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               lessonId,
               progress: 100,
               allActivitiesCompleted: true,
             }),
-          }
+          },
         );
 
         if (lessonProgressResponse.ok) {
           toast.success(
-            '¡Todas las actividades completadas! Clase finalizada.'
+            "¡Todas las actividades completadas! Clase finalizada.",
           );
         }
       } else {
-        toast.success('¡Actividad completada!');
+        toast.success("¡Actividad completada!");
       }
 
       // Call the parent component's handler to update the parent state
       await onActivityCompleted();
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al completar la actividad');
+      console.error("Error:", error);
+      toast.error("Error al completar la actividad");
     }
   };
 
@@ -772,19 +772,19 @@ const LessonActivities = ({
     <div
       className={
         inMainContent
-          ? 'w-full bg-transparent p-0'
+          ? "w-full bg-transparent p-0"
           : isMobile
-            ? 'm-0 w-full rounded-none bg-transparent p-0'
-            : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4'
+            ? "m-0 w-full rounded-none bg-transparent p-0"
+            : "max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4"
       }
       style={
         isMobile || inMainContent
           ? {
-              maxHeight: 'none',
-              overflow: 'visible',
-              boxShadow: 'none',
+              maxHeight: "none",
+              overflow: "visible",
+              boxShadow: "none",
               borderRadius: 0,
-              background: 'transparent',
+              background: "transparent",
             }
           : undefined
       }
@@ -792,10 +792,10 @@ const LessonActivities = ({
       <div className="flex items-center justify-between">
         <h2
           className={`text-primary mb-4 font-bold ${
-            isMobile || inMainContent ? 'px-2 text-lg' : 'text-xl md:text-2xl'
+            isMobile || inMainContent ? "px-2 text-lg" : "text-xl md:text-2xl"
           }`}
         >
-          {inMainContent ? 'Contenido de la Clase' : 'Actividades'}
+          {inMainContent ? "Contenido de la Clase" : "Actividades"}
         </h2>
         {/* Botón de retraer/expandir solo en móvil */}
         {isMobile && !inMainContent && (
@@ -803,7 +803,7 @@ const LessonActivities = ({
             className="-mt-5 mr-2 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
             onClick={() => setCollapsed((prev) => !prev)}
             aria-label={
-              collapsed ? 'Expandir actividades' : 'Ocultar actividades'
+              collapsed ? "Expandir actividades" : "Ocultar actividades"
             }
           >
             {collapsed ? (
@@ -832,7 +832,7 @@ const LessonActivities = ({
             onClick={() => setShowAll((prev) => !prev)}
             aria-expanded={showAll}
             aria-label={
-              showAll ? 'Mostrar menos actividades' : 'Mostrar más actividades'
+              showAll ? "Mostrar menos actividades" : "Mostrar más actividades"
             }
           >
             {showAll ? (
@@ -850,9 +850,9 @@ const LessonActivities = ({
       {/* Activities section */}
       {!collapsed ? (
         activities.length > 0 ? (
-          <div className={`space-y-4 ${isMobile ? 'space-y-2' : ''}`}>
+          <div className={`space-y-4 ${isMobile ? "space-y-2" : ""}`}>
             {(showAll ? activities : activities.slice(0, 3)).map(
-              (activity, index) => renderActivityCard(activity, index)
+              (activity, index) => renderActivityCard(activity, index),
             )}
           </div>
         ) : // Solo mostrar el mensaje de "Actividad disponible" y flecha si NO es móvil y NO está en el contenido principal
@@ -868,7 +868,7 @@ const LessonActivities = ({
                 viewBox="0 0 24 24"
                 fill="none"
                 className="text-blue-500"
-                style={{ transform: 'rotate(-90deg)' }}
+                style={{ transform: "rotate(-90deg)" }}
               >
                 <path
                   d="M12 19V5M12 19L5 12M12 19L19 12"
@@ -894,12 +894,12 @@ const LessonActivities = ({
       {/* Grades section */}
       <div
         className={`${
-          isMobile ? (collapsed ? 'mt-1 mb-2' : 'mt-4 mb-2') : 'mt-4'
+          isMobile ? (collapsed ? "mt-1 mb-2" : "mt-4 mb-2") : "mt-4"
         }`}
       >
         <h2
           className={`text-primary mb-4 font-bold ${
-            isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'
+            isMobile ? "px-2 text-lg" : "text-xl md:text-2xl"
           }`}
         >
           Calificaciones

@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
-import { db } from '~/server/db';
-import { classMeetings } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { classMeetings } from "~/server/db/schema";
 
 // 🚨 CONFIGURA TU BUCKET
 
@@ -19,7 +19,7 @@ interface ClassMeeting {
 }
 
 const s3 = new S3Client({
-  region: 'us-east-2',
+  region: "us-east-2",
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
@@ -33,18 +33,18 @@ async function getGraphToken() {
   void tenant;
 
   const params = new URLSearchParams();
-  params.append('grant_type', 'client_credentials');
-  params.append('client_id', clientId);
-  params.append('client_secret', clientSecret);
-  params.append('scope', 'https://graph.microsoft.com/.default');
+  params.append("grant_type", "client_credentials");
+  params.append("client_id", clientId);
+  params.append("client_secret", clientSecret);
+  params.append("scope", "https://graph.microsoft.com/.default");
 
   const res = await fetch(
-    'https://login.microsoftonline.com/060f4acf-9732-441b-80f7-425de7381dd1/oauth2/v2.0/token',
+    "https://login.microsoftonline.com/060f4acf-9732-441b-80f7-425de7381dd1/oauth2/v2.0/token",
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params.toString(),
-    }
+    },
   );
   interface TokenResponse {
     access_token: string;
@@ -57,8 +57,8 @@ async function getGraphToken() {
 
 function decodeMeetingId(encodedId: string): string {
   try {
-    const buffer = Buffer.from(encodedId, 'base64');
-    const decoded = buffer.toString('utf8');
+    const buffer = Buffer.from(encodedId, "base64");
+    const decoded = buffer.toString("utf8");
     const match = /19:meeting_[^@]+@thread\.v2/.exec(decoded);
     return match?.[0] ?? encodedId;
   } catch {
@@ -68,10 +68,10 @@ function decodeMeetingId(encodedId: string): string {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get('userId');
+  const userId = searchParams.get("userId");
 
   if (!userId) {
-    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+    return NextResponse.json({ error: "Falta userId" }, { status: 400 });
   }
 
   const token = await getGraphToken();
@@ -129,10 +129,10 @@ export async function GET(req: Request) {
     const nodeBuffer = Buffer.from(buffer); // 👈 transforma ArrayBuffer a Buffer
 
     const uploadCommand = new PutObjectCommand({
-      Bucket: 'artiefy-upload',
+      Bucket: "artiefy-upload",
       Key: `video_clase/${videoKey}`,
       Body: nodeBuffer, // ✅ ya es válido para AWS SDK
-      ContentType: 'video/mp4',
+      ContentType: "video/mp4",
     });
 
     await s3.send(uploadCommand);

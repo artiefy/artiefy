@@ -1,21 +1,21 @@
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath } from "next/cache";
 
-import { currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { currentUser } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 
-import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
-import { db } from '~/server/db';
-import { lessons, userLessonsProgress } from '~/server/db/schema';
-import { sortLessons } from '~/utils/lessonSorting';
+import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
+import { db } from "~/server/db";
+import { lessons, userLessonsProgress } from "~/server/db/schema";
+import { sortLessons } from "~/utils/lessonSorting";
 
 export async function unlockNextLesson(
-  currentLessonId: number
+  currentLessonId: number,
 ): Promise<{ success: boolean; nextLessonId?: number }> {
   try {
     const user = await currentUser();
-    if (!user?.id) throw new Error('Usuario no autenticado');
+    if (!user?.id) throw new Error("Usuario no autenticado");
 
     // Get current lesson and its activity status
     const currentLesson = await db.query.lessons.findFirst({
@@ -39,7 +39,7 @@ export async function unlockNextLesson(
 
     // Buscar el índice de la lección actual
     const currentIndex = sortedLessons.findIndex(
-      (l) => l.id === currentLessonId
+      (l) => l.id === currentLessonId,
     );
     // La siguiente lección en orden
     const nextLesson =
@@ -73,8 +73,8 @@ export async function unlockNextLesson(
     // Add notification for unlocked lesson
     await createNotification({
       userId: user.id,
-      type: 'LESSON_UNLOCKED',
-      title: '¡Nueva clase desbloqueada!',
+      type: "LESSON_UNLOCKED",
+      title: "¡Nueva clase desbloqueada!",
       message: `Se ha desbloqueado la clase: ${nextLesson.title}`,
       metadata: {
         lessonId: nextLesson.id,
@@ -82,14 +82,14 @@ export async function unlockNextLesson(
       },
     });
 
-    revalidatePath('/estudiantes/clases/[id]', 'page');
+    revalidatePath("/estudiantes/clases/[id]", "page");
 
     return {
       success: true,
       nextLessonId: nextLesson.id,
     };
   } catch (error) {
-    console.error('Error unlocking next lesson:', error);
+    console.error("Error unlocking next lesson:", error);
     return { success: false };
   }
 }

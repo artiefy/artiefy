@@ -1,13 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
-import { db } from '~/server/db/index';
+import { db } from "~/server/db/index";
 import {
   activities,
   courses,
   lessons,
   typeActi,
   userActivitiesProgress,
-} from '~/server/db/schema';
+} from "~/server/db/schema";
 
 // Interfaces
 export interface Activity {
@@ -83,14 +83,14 @@ export async function createActivity(params: CreateActivityParams) {
       .returning();
 
     if (!newActivity[0]) {
-      throw new Error('No se pudo crear la actividad');
+      throw new Error("No se pudo crear la actividad");
     }
 
     return newActivity[0];
   } catch (error) {
-    console.error('Error detallado:', error);
+    console.error("Error detallado:", error);
     throw new Error(
-      `Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      `Error al crear la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
     );
   }
 }
@@ -138,14 +138,14 @@ export const getActivityById = async (activityId: number) => {
     return activity;
   } catch (error) {
     throw new Error(
-      `Error al obtener la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      `Error al obtener la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
     );
   }
 };
 
 // Obtener todas las actividades de una lección
 export const getActivitiesByLessonId = async (
-  lessonId: number
+  lessonId: number,
 ): Promise<ActivityDetails[]> => {
   try {
     const actividades = await db
@@ -184,16 +184,16 @@ export const getActivitiesByLessonId = async (
       description: actividad.description,
       type: {
         id: actividad.type?.id ?? 0,
-        name: actividad.type?.name ?? '',
-        description: actividad.type?.description ?? '',
+        name: actividad.type?.name ?? "",
+        description: actividad.type?.description ?? "",
       },
       revisada: actividad.revisada ?? false,
       pesoNota: actividad.porcentaje ?? 0, // Added pesoNota
       parametroId: actividad.parametroId ?? 0,
       lessonsId: {
         id: actividad.lesson.id ?? 0,
-        title: actividad.lesson.title ?? '',
-        coverImageKey: actividad.lesson.coverImageKey ?? '',
+        title: actividad.lesson.title ?? "",
+        coverImageKey: actividad.lesson.coverImageKey ?? "",
         courseId: {
           id: actividad.lesson.courseId,
           title: actividad.lesson.courseTitle,
@@ -204,7 +204,7 @@ export const getActivitiesByLessonId = async (
       fechaMaximaEntrega: actividad.fechaMaximaEntrega ?? null,
     }));
   } catch (error) {
-    console.error('Error fetching activities by lesson ID:', error);
+    console.error("Error fetching activities by lesson ID:", error);
     throw error;
   }
 };
@@ -212,10 +212,10 @@ export const getActivitiesByLessonId = async (
 // Actualizar una actividad
 export const updateActivity = async (
   activityId: number,
-  { name, description, typeid }: Partial<Omit<Activity, 'id' | 'lessonsId'>>
+  { name, description, typeid }: Partial<Omit<Activity, "id" | "lessonsId">>,
 ): Promise<void> => {
   try {
-    const updateData: Partial<Omit<Activity, 'id' | 'lessonsId'>> = {};
+    const updateData: Partial<Omit<Activity, "id" | "lessonsId">> = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (typeid !== undefined) updateData.typeid = typeid;
@@ -226,7 +226,7 @@ export const updateActivity = async (
       .where(eq(activities.id, activityId));
   } catch (error) {
     throw new Error(
-      `Error al actualizar la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      `Error al actualizar la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
     );
   }
 };
@@ -243,7 +243,7 @@ export const deleteActivity = async (activityId: number): Promise<void> => {
     await db.delete(activities).where(eq(activities.id, activityId));
   } catch (error) {
     throw new Error(
-      `Error al eliminar la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      `Error al eliminar la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
     );
   }
 };
@@ -256,7 +256,7 @@ export const deleteActivitiesByLessonId = async (lessonId: number) => {
 
 // Modificar la función getTotalPorcentajeByParametro para incluir más detalles
 export async function getTotalPorcentajeByParametro(
-  parametroId: number
+  parametroId: number,
 ): Promise<{
   total: number;
   actividades: { id: number; name: string; porcentaje: number }[];
@@ -273,7 +273,7 @@ export async function getTotalPorcentajeByParametro(
 
     const total = actividades.reduce(
       (sum, act) => sum + (act.porcentaje ?? 0),
-      0
+      0,
     );
 
     return {
@@ -284,7 +284,7 @@ export async function getTotalPorcentajeByParametro(
       })),
     };
   } catch (error) {
-    console.error('Error al obtener el total de porcentajes:', error);
-    throw new Error('Error al calcular el total de porcentajes');
+    console.error("Error al obtener el total de porcentajes:", error);
+    throw new Error("Error al calcular el total de porcentajes");
   }
 }

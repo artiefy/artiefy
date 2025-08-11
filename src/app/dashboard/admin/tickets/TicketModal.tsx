@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import Image from 'next/image';
+import Image from "next/image";
 
-import { useUser } from '@clerk/nextjs';
-import { Loader2 } from 'lucide-react';
-import Select from 'react-select';
+import { useUser } from "@clerk/nextjs";
+import { Loader2 } from "lucide-react";
+import Select from "react-select";
 
-import { Modal } from '~/components/shared/Modal';
+import { Modal } from "~/components/shared/Modal";
 
 export interface Ticket {
   id: string;
@@ -63,8 +63,8 @@ interface TicketModalProps {
   onSubmitAction: (data: TicketFormData) => void;
   ticket?: Ticket | null;
   onUploadFileAction: (
-    field: 'coverImageKey' | 'videoKey' | 'documentKey',
-    file: File
+    field: "coverImageKey" | "videoKey" | "documentKey",
+    file: File,
   ) => Promise<string | null>;
 }
 
@@ -72,7 +72,7 @@ interface UploadResponse {
   url: string;
   fields: Record<string, string>;
   key: string;
-  uploadType: 'simple' | 'put';
+  uploadType: "simple" | "put";
 }
 
 export default function TicketModal({
@@ -87,17 +87,17 @@ export default function TicketModal({
   const initialFormState = useMemo<TicketFormData>(
     () => ({
       assignedToIds: [],
-      email: '',
-      description: '',
-      comments: '',
-      estado: 'abierto',
-      tipo: 'otro',
-      coverImageKey: '',
-      videoKey: '',
-      documentKey: '',
-      newComment: '',
+      email: "",
+      description: "",
+      comments: "",
+      estado: "abierto",
+      tipo: "otro",
+      coverImageKey: "",
+      videoKey: "",
+      documentKey: "",
+      newComment: "",
     }),
-    []
+    [],
   );
 
   const [formData, setFormData] = useState<TicketFormData>(initialFormState);
@@ -111,12 +111,12 @@ export default function TicketModal({
     const fetchAdmins = async () => {
       try {
         setIsLoadingAdmins(true);
-        const response = await fetch('/api/admin/users/admins');
-        if (!response.ok) throw new Error('Failed to fetch admins');
+        const response = await fetch("/api/admin/users/admins");
+        if (!response.ok) throw new Error("Failed to fetch admins");
         const data = (await response.json()) as AdminUser[];
         setAdmins(data);
       } catch (error) {
-        console.error('Error loading admins:', error);
+        console.error("Error loading admins:", error);
       } finally {
         setIsLoadingAdmins(false);
       }
@@ -127,19 +127,19 @@ export default function TicketModal({
 
   useEffect(() => {
     if (ticket) {
-      console.log('👤 Ticket recibido:', ticket);
+      console.log("👤 Ticket recibido:", ticket);
 
       setFormData({
         assignedToIds: ticket.assignedToIds ?? [],
-        email: ticket.email ?? '',
-        description: ticket.description ?? '',
-        comments: ticket.comments ?? '',
-        estado: ticket.estado ?? 'abierto',
-        tipo: ticket.tipo ?? 'otro',
-        coverImageKey: ticket.coverImageKey ?? '',
-        videoKey: ticket.videoKey ?? '',
-        documentKey: ticket.documentKey ?? '',
-        newComment: '',
+        email: ticket.email ?? "",
+        description: ticket.description ?? "",
+        comments: ticket.comments ?? "",
+        estado: ticket.estado ?? "abierto",
+        tipo: ticket.tipo ?? "otro",
+        coverImageKey: ticket.coverImageKey ?? "",
+        videoKey: ticket.videoKey ?? "",
+        documentKey: ticket.documentKey ?? "",
+        newComment: "",
       });
     } else {
       setFormData(initialFormState);
@@ -166,13 +166,13 @@ export default function TicketModal({
         setIsLoadingComments(true);
         try {
           const response = await fetch(
-            `/api/admin/tickets/${ticket.id}/comments`
+            `/api/admin/tickets/${ticket.id}/comments`,
           );
-          if (!response.ok) throw new Error('Failed to fetch comments');
+          if (!response.ok) throw new Error("Failed to fetch comments");
           const data = (await response.json()) as Comment[];
           setComments(data);
         } catch (error) {
-          console.error('Error fetching comments:', error);
+          console.error("Error fetching comments:", error);
         } finally {
           setIsLoadingComments(false);
         }
@@ -194,7 +194,7 @@ export default function TicketModal({
       documentKey: formData.documentKey ?? undefined,
       coverImageKey: formData.coverImageKey ?? undefined,
     };
-    console.log('📤 Enviando desde el modal:', submitData);
+    console.log("📤 Enviando desde el modal:", submitData);
 
     if (!submitData.assignedToIds || submitData.assignedToIds.length === 0) {
       delete submitData.assignedToIds;
@@ -207,35 +207,35 @@ export default function TicketModal({
   };
 
   const handleFileUpload =
-    (keyField: 'coverImageKey' | 'videoKey' | 'documentKey') =>
+    (keyField: "coverImageKey" | "videoKey" | "documentKey") =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
+        const res = await fetch("/api/upload", {
+          method: "POST",
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
             fileName: file.name,
           }),
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         });
         const uploadData = (await res.json()) as UploadResponse;
         const { url, fields, key, uploadType } = uploadData;
 
-        if (uploadType === 'simple') {
+        if (uploadType === "simple") {
           const formDataUpload = new FormData();
           Object.entries(fields).forEach(([k, v]) =>
-            formDataUpload.append(k, v)
+            formDataUpload.append(k, v),
           );
-          formDataUpload.append('file', file);
-          await fetch(url, { method: 'POST', body: formDataUpload });
+          formDataUpload.append("file", file);
+          await fetch(url, { method: "POST", body: formDataUpload });
         } else {
           await fetch(url, {
-            method: 'PUT',
-            headers: { 'Content-Type': file.type },
+            method: "PUT",
+            headers: { "Content-Type": file.type },
             body: file,
           });
         }
@@ -245,7 +245,7 @@ export default function TicketModal({
           [keyField]: key,
         }));
       } catch (error) {
-        console.error('Error al subir archivo:', error);
+        console.error("Error al subir archivo:", error);
       }
     };
   void handleFileUpload;
@@ -258,7 +258,7 @@ export default function TicketModal({
       onClose={onCloseAction}
       title={
         <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-          {ticket ? 'Editar Ticket' : 'Crear Nuevo Ticket'}
+          {ticket ? "Editar Ticket" : "Crear Nuevo Ticket"}
         </span>
       }
     >
@@ -268,7 +268,7 @@ export default function TicketModal({
           {ticket?.creatorName && (
             <div className="rounded-lg border border-gray-700/50 bg-gray-800/30 p-4">
               <p className="text-sm text-gray-400">
-                Creado por:{' '}
+                Creado por:{" "}
                 <span className="font-medium text-white">
                   {ticket.creatorName}
                 </span>
@@ -311,46 +311,46 @@ export default function TicketModal({
                   styles={{
                     control: (base) => ({
                       ...base,
-                      backgroundColor: '#01142B', // -background
-                      borderColor: '#00BDD8', // -secondary
-                      color: '#3AF4EF', // -primary
+                      backgroundColor: "#01142B", // -background
+                      borderColor: "#00BDD8", // -secondary
+                      color: "#3AF4EF", // -primary
                     }),
                     menu: (base) => ({
                       ...base,
-                      backgroundColor: '#01142B', // -background
-                      color: '#3AF4EF', // -primary
+                      backgroundColor: "#01142B", // -background
+                      color: "#3AF4EF", // -primary
                     }),
                     option: (base, state) => ({
                       ...base,
-                      backgroundColor: state.isFocused ? '#00A5C0' : '#01142B', // hover : normal
-                      color: '#3AF4EF',
-                      cursor: 'pointer',
+                      backgroundColor: state.isFocused ? "#00A5C0" : "#01142B", // hover : normal
+                      color: "#3AF4EF",
+                      cursor: "pointer",
                     }),
                     multiValue: (base) => ({
                       ...base,
-                      backgroundColor: '#00BDD8',
+                      backgroundColor: "#00BDD8",
                     }),
                     multiValueLabel: (base) => ({
                       ...base,
-                      color: '#01142B', // fondo claro, texto oscuro
+                      color: "#01142B", // fondo claro, texto oscuro
                       fontWeight: 600,
                     }),
                     multiValueRemove: (base) => ({
                       ...base,
-                      color: '#01142B',
-                      ':hover': {
-                        backgroundColor: '#3AF4EF',
-                        color: '#01142B',
+                      color: "#01142B",
+                      ":hover": {
+                        backgroundColor: "#3AF4EF",
+                        color: "#01142B",
                       },
                     }),
                     placeholder: (base) => ({
                       ...base,
-                      color: '#3AF4EF',
+                      color: "#3AF4EF",
                       opacity: 0.6,
                     }),
                     singleValue: (base) => ({
                       ...base,
-                      color: '#3AF4EF',
+                      color: "#3AF4EF",
                     }),
                   }}
                 />
@@ -461,9 +461,9 @@ export default function TicketModal({
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    console.log('📁 Subiendo archivo:', file.name);
-                    const key = await onUploadFileAction('coverImageKey', file);
-                    console.log('✅ Key recibido del upload:', key);
+                    console.log("📁 Subiendo archivo:", file.name);
+                    const key = await onUploadFileAction("coverImageKey", file);
+                    console.log("✅ Key recibido del upload:", key);
                     if (key) {
                       setFormData((prev) => ({ ...prev, coverImageKey: key }));
                     }
@@ -495,9 +495,9 @@ export default function TicketModal({
                     const file = e.target.files?.[0];
                     if (!file) return;
 
-                    console.log('📁 Subiendo archivo:', file.name);
-                    const key = await onUploadFileAction('videoKey', file);
-                    console.log('✅ Key recibido del upload:', key);
+                    console.log("📁 Subiendo archivo:", file.name);
+                    const key = await onUploadFileAction("videoKey", file);
+                    console.log("✅ Key recibido del upload:", key);
 
                     if (key) {
                       setFormData((prev) => ({
@@ -532,7 +532,7 @@ export default function TicketModal({
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const key = await onUploadFileAction('documentKey', file);
+                    const key = await onUploadFileAction("documentKey", file);
                     if (key) {
                       setFormData((prev) => ({ ...prev, documentKey: key }));
                     }
@@ -590,7 +590,7 @@ export default function TicketModal({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium text-blue-400">
-                            {comment.user?.name || 'Usuario'}
+                            {comment.user?.name || "Usuario"}
                           </span>
                           <span className="text-xs text-gray-500">
                             {new Date(comment.createdAt).toLocaleString()}
@@ -631,9 +631,9 @@ export default function TicketModal({
                   <span>Procesando...</span>
                 </div>
               ) : ticket ? (
-                'Actualizar Ticket'
+                "Actualizar Ticket"
               ) : (
-                'Crear Ticket'
+                "Crear Ticket"
               )}
             </button>
           </div>

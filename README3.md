@@ -1,4 +1,3 @@
-
 # Documentación de la API
 
 Esta API permite a los usuarios:

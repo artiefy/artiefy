@@ -1,12 +1,12 @@
 // src/app/api/users/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
-import nodemailer from 'nodemailer';
+import { eq } from "drizzle-orm";
+import nodemailer from "nodemailer";
 
-import { db } from '~/server/db';
-import { userCredentials,users } from '~/server/db/schema';
+import { db } from "~/server/db";
+import { userCredentials, users } from "~/server/db/schema";
 import {
   createUser,
   deleteUser,
@@ -16,13 +16,13 @@ import {
   updateMultipleUserStatus,
   updateUserInfo,
   updateUserStatus,
-} from '~/server/queries/queries';
+} from "~/server/queries/queries";
 
 // 📌 Configuración de Nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: 'direcciongeneral@artiefy.com',
+    user: "direcciongeneral@artiefy.com",
     pass: process.env.PASS, // ⚠️ Usa variables de entorno en producción
   },
 });
@@ -31,22 +31,22 @@ const transporter = nodemailer.createTransport({
 async function sendWelcomeEmail(
   to: string,
   username: string,
-  password: string
+  password: string,
 ) {
   try {
     // Escapar caracteres especiales para HTML
     const safePassword = password
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    console.log('[sendWelcomeEmail] Contraseña original:', password);
-    console.log('[sendWelcomeEmail] Contraseña escapada:', safePassword);
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    console.log("[sendWelcomeEmail] Contraseña original:", password);
+    console.log("[sendWelcomeEmail] Contraseña escapada:", safePassword);
 
     const mailOptions = {
       from: `"Artiefy" <${process.env.EMAIL_USER}>`,
       to,
-      subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
-      replyTo: 'direcciongeneral@artiefy.com',
+      subject: "🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso",
+      replyTo: "direcciongeneral@artiefy.com",
       html: `
         <h2>¡Bienvenido a Artiefy, ${username}!</h2>
         <p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
@@ -77,17 +77,17 @@ async function sendWelcomeEmail(
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ Correo de bienvenida enviado a ${to}: ${info.messageId}`);
-    return { success: true, message: 'Correo enviado correctamente' };
+    return { success: true, message: "Correo enviado correctamente" };
   } catch (error) {
     console.error(`❌ Error al enviar correo de bienvenida a ${to}:`, error);
-    return { success: false, message: 'Error al enviar el correo' };
+    return { success: false, message: "Error al enviar el correo" };
   }
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('search') ?? '';
+    const query = searchParams.get("search") ?? "";
     const users = await getAdminUsers(query);
 
     // 🔹 Recuperar el tiempo desde localStorage en el servidor no es posible directamente.
@@ -102,12 +102,12 @@ export async function GET(request: Request) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: "Unknown error" }, { status: 500 });
   }
 }
 
 // Add this type near the top of the file
-type AllowedRole = 'estudiante' | 'educador' | 'admin' | 'super-admin';
+type AllowedRole = "estudiante" | "educador" | "admin" | "super-admin";
 
 export async function POST(request: Request) {
   try {
@@ -119,51 +119,51 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as RequestBody;
-    console.log('🔍 [POST /api/users] Body recibido:', JSON.stringify(body));
+    console.log("🔍 [POST /api/users] Body recibido:", JSON.stringify(body));
 
     const { firstName, lastName, email, role } = body;
 
     // Validar que el rol sea uno de los permitidos
     const allowedRoles: AllowedRole[] = [
-      'estudiante',
-      'educador',
-      'admin',
-      'super-admin',
+      "estudiante",
+      "educador",
+      "admin",
+      "super-admin",
     ];
     if (!allowedRoles.includes(role)) {
       return NextResponse.json(
         {
           error:
-            'Rol no válido. Debe ser: estudiante, educador, admin o super-admin',
+            "Rol no válido. Debe ser: estudiante, educador, admin o super-admin",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // 2. Crear usuario en Clerk
-    console.log('🔍 [POST /api/users] Llamando a createUser...');
+    console.log("🔍 [POST /api/users] Llamando a createUser...");
 
     const result = await createUser(firstName, lastName, email, role);
     if (!result) {
       return NextResponse.json(
-        { error: 'Failed to create user' },
-        { status: 400 }
+        { error: "Failed to create user" },
+        { status: 400 },
       );
     }
     const { user, generatedPassword } = result;
 
     // 3. Guardar usuario en la base de datos con Drizzle
-    console.log('🔍 [POST /api/users] Insertando usuario en BD:', user.id);
+    console.log("🔍 [POST /api/users] Insertando usuario en BD:", user.id);
 
     await db
       .insert(users)
       .values({
         id: user.id,
-        role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+        role: role as "estudiante" | "educador" | "admin" | "super-admin",
         name: `${firstName} ${lastName}`,
         email:
           user.emailAddresses.find(
-            (addr) => addr.id === user.primaryEmailAddressId
+            (addr) => addr.id === user.primaryEmailAddressId,
           )?.emailAddress ?? email,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         },
       });
 
-    console.log('✅ Usuario guardado en la BD correctamente');
+    console.log("✅ Usuario guardado en la BD correctamente");
     // 🔹 Enviar correo con credenciales
 
     // 4. Preparar usuario seguro para la respuesta
@@ -185,11 +185,11 @@ export async function POST(request: Request) {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
-      username: user.username ?? 'usuario',
+      username: user.username ?? "usuario",
       email: user.emailAddresses.find(
-        (addr) => addr.id === user.primaryEmailAddressId
+        (addr) => addr.id === user.primaryEmailAddressId,
       )?.emailAddress,
-      role: user.publicMetadata?.role ?? 'estudiante',
+      role: user.publicMetadata?.role ?? "estudiante",
     };
 
     // Guardar credenciales
@@ -227,10 +227,10 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.error('Error al registrar usuario:', error);
+      console.error("Error al registrar usuario:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
+    return NextResponse.json({ error: "Unknown error" }, { status: 400 });
   }
 }
 
@@ -238,11 +238,11 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('id');
+    const userId = searchParams.get("id");
     if (!userId) {
       return NextResponse.json(
-        { error: 'Falta el parámetro id' },
-        { status: 400 }
+        { error: "Falta el parámetro id" },
+        { status: 400 },
       );
     }
     await deleteUser(userId);
@@ -251,7 +251,7 @@ export async function DELETE(request: Request) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
+    return NextResponse.json({ error: "Unknown error" }, { status: 400 });
   }
 }
 
@@ -270,22 +270,22 @@ export async function PATCH(request: Request) {
     const body: RequestBody = (await request.json()) as RequestBody;
     const { action, id, role, firstName, lastName, userIds, status } = body;
 
-    if (action === 'setRole') {
+    if (action === "setRole") {
       if (!role) {
         return NextResponse.json(
-          { error: 'Role is required' },
-          { status: 400 }
+          { error: "Role is required" },
+          { status: 400 },
         );
       }
       await setRoleWrapper({ id, role });
       return NextResponse.json({ success: true });
     }
-    if (action === 'removeRole') {
+    if (action === "removeRole") {
       const { userIds } = body;
       if (!userIds || !Array.isArray(userIds)) {
         return NextResponse.json(
-          { error: 'Faltan userIds o no es un array' },
-          { status: 400 }
+          { error: "Faltan userIds o no es un array" },
+          { status: 400 },
         );
       }
 
@@ -296,54 +296,54 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    if (action === 'updateUserInfo') {
+    if (action === "updateUserInfo") {
       if (firstName && lastName) {
         await updateUserInfo(id, firstName, lastName);
         return NextResponse.json({ success: true });
       } else {
         return NextResponse.json(
-          { error: 'First name and last name are required' },
-          { status: 400 }
+          { error: "First name and last name are required" },
+          { status: 400 },
         );
       }
     }
 
-    if (action === 'updateStatus') {
-      if (typeof status === 'string') {
+    if (action === "updateStatus") {
+      if (typeof status === "string") {
         await updateUserStatus(id, status);
         return NextResponse.json({ success: true });
       } else {
         return NextResponse.json(
-          { error: 'Status is required and must be a string' },
-          { status: 400 }
+          { error: "Status is required and must be a string" },
+          { status: 400 },
         );
       }
     }
 
-    if (action === 'updateMultipleStatus') {
+    if (action === "updateMultipleStatus") {
       if (userIds) {
-        if (typeof status === 'string') {
+        if (typeof status === "string") {
           await updateMultipleUserStatus(userIds, status);
         } else {
           return NextResponse.json(
-            { error: 'Status is required and must be a string' },
-            { status: 400 }
+            { error: "Status is required and must be a string" },
+            { status: 400 },
           );
         }
       } else {
         return NextResponse.json(
-          { error: 'userIds is required' },
-          { status: 400 }
+          { error: "userIds is required" },
+          { status: 400 },
         );
       }
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
+    return NextResponse.json({ error: "Acción desconocida" }, { status: 400 });
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
+    return NextResponse.json({ error: "Unknown error" }, { status: 400 });
   }
 }

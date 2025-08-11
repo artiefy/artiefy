@@ -1,255 +1,255 @@
 .loading-loader {
-	--hue: 210;
-	--size: 35px;
-	--border: 5px;
-	--speed: 1s;
-	--blur: var(--border);
+  --hue: 210;
+  --size: 35px;
+  --border: 5px;
+  --speed: 1s;
+  --blur: var(--border);
 }
 
 .loading-loader {
-	width: var(--border);
-	aspect-ratio: 1;
-	background: white;
-	border-radius: 50%;
-	position: absolute;
-	--y: calc((var(--size) * -0.5) + (var(--border) * 0.5));
-	transform: rotate(0deg) translateY(var(--y));
-	animation: loading-spin var(--speed) infinite linear;
-	display: none;
+  width: var(--border);
+  aspect-ratio: 1;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  --y: calc((var(--size) * -0.5) + (var(--border) * 0.5));
+  transform: rotate(0deg) translateY(var(--y));
+  animation: loading-spin var(--speed) infinite linear;
+  display: none;
 }
 
 .loading-loader::before {
-	content: '';
-	position: absolute;
-	inset: calc(var(--border) * -0.5);
-	border-radius: 50%;
-	background: white;
-	filter: blur(var(--blur));
-	z-index: -1;
+  content: "";
+  position: absolute;
+  inset: calc(var(--border) * -0.5);
+  border-radius: 50%;
+  background: white;
+  filter: blur(var(--blur));
+  z-index: -1;
 }
 
 .loading-loader::after {
-	content: '';
-	width: var(--size);
-	aspect-ratio: 1;
-	position: absolute;
-	top: 0%;
-	left: 50%;
-	translate: -50% 0;
-	background: conic-gradient(
-		white,
-		hsl(var(--hue), 100%, 70%),
-		hsl(var(--hue), 100%, 10%),
-		transparent 65%
-	);
-	border-radius: 50%;
-	mask: radial-gradient(
-		transparent calc(((var(--size) * 0.5) - var(--border)) - 1px),
-		white calc((var(--size) * 0.5) - var(--border))
-	);
+  content: "";
+  width: var(--size);
+  aspect-ratio: 1;
+  position: absolute;
+  top: 0%;
+  left: 50%;
+  translate: -50% 0;
+  background: conic-gradient(
+    white,
+    hsl(var(--hue), 100%, 70%),
+    hsl(var(--hue), 100%, 10%),
+    transparent 65%
+  );
+  border-radius: 50%;
+  mask: radial-gradient(
+    transparent calc(((var(--size) * 0.5) - var(--border)) - 1px),
+    white calc((var(--size) * 0.5) - var(--border))
+  );
 }
 
 @keyframes loading-spin {
-	to {
-		transform: rotate(-360deg) translateY(var(--y));
-	}
+  to {
+    transform: rotate(-360deg) translateY(var(--y));
+  }
 }
 
 .loading-container {
-	position: relative;
-	width: 20px;
-	height: 20px;
-	display: flex;
-	align-items: center;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .loading-card-info {
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	margin-bottom: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .loading-fullscreen-background {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100dvw;
-	height: 100dvh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background:
-		radial-gradient(100% 100% at 85% 0%, #3af4ef66 0%, transparent 70%),
-		radial-gradient(100% 100% at 15% 100%, #00bdd866 0%, transparent 70%),
-		radial-gradient(100% 100% at 0% 100%, #2ecc71 0%, transparent 70%), #01142b;
-	background-blend-mode: screen, screen, normal;
-	overflow: hidden;
-	z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100dvw;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(100% 100% at 85% 0%, #3af4ef66 0%, transparent 70%),
+    radial-gradient(100% 100% at 15% 100%, #00bdd866 0%, transparent 70%),
+    radial-gradient(100% 100% at 0% 100%, #2ecc71 0%, transparent 70%), #01142b;
+  background-blend-mode: screen, screen, normal;
+  overflow: hidden;
+  z-index: 9999;
 }
 
 .loading-card {
-	width: 100%;
-	height: auto;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-	overflow: hidden;
-	transition: all 1s ease;
-	padding: 2rem;
-	z-index: 10000;
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 1s ease;
+  padding: 2rem;
+  z-index: 10000;
 }
 
 .loading-card-info span {
-	font-size: 2.2rem;
-	color: #3af4ef;
-	font-weight: 900;
-	text-transform: uppercase;
-	margin-left: 10px;
+  font-size: 2.2rem;
+  color: #3af4ef;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-left: 10px;
 }
 
 .loading-animate-pulse {
-	font-weight: bold;
-	color: #3af4ef;
-	text-shadow: 0 0 10px rgba(58, 244, 239, 0.5);
+  font-weight: bold;
+  color: #3af4ef;
+  text-shadow: 0 0 10px rgba(58, 244, 239, 0.5);
 }
 
 .loading-wrapper {
-	margin-top: 2rem;
-	width: 200px;
-	height: 50px;
-	text-align: center;
-	position: relative;
-	z-index: 1;
+  margin-top: 2rem;
+  width: 200px;
+  height: 50px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .loading-title {
-	color: #3af4ef;
-	font-weight: 900;
-	text-transform: uppercase;
-	text-shadow: 0 0 15px rgba(58, 244, 239, 0.6);
-	text-align: center;
-	letter-spacing: 1px;
-	font-size: clamp(2rem, 5vw, 3rem);
-	position: relative;
+  color: #3af4ef;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(58, 244, 239, 0.6);
+  text-align: center;
+  letter-spacing: 1px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  position: relative;
 }
 
 .loading-circle {
-	width: 20px;
-	height: 20px;
-	position: absolute;
-	border-radius: 50%;
-	background-color: #fff;
-	left: 15%;
-	transform-origin: 50%;
-	animation: loading-circle7124 0.5s alternate infinite ease;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  border-radius: 50%;
+  background-color: #fff;
+  left: 15%;
+  transform-origin: 50%;
+  animation: loading-circle7124 0.5s alternate infinite ease;
 }
 
 @keyframes loading-circle7124 {
-	0% {
-		top: 60px;
-		height: 5px;
-		border-radius: 50px 50px 25px 25px;
-		transform: scaleX(1.7);
-	}
+  0% {
+    top: 60px;
+    height: 5px;
+    border-radius: 50px 50px 25px 25px;
+    transform: scaleX(1.7);
+  }
 
-	40% {
-		height: 20px;
-		border-radius: 50%;
-		transform: scaleX(1);
-	}
+  40% {
+    height: 20px;
+    border-radius: 50%;
+    transform: scaleX(1);
+  }
 
-	100% {
-		top: 0%;
-	}
+  100% {
+    top: 0%;
+  }
 }
 
 .loading-circle:nth-child(2) {
-	left: 45%;
-	animation-delay: 0.2s;
+  left: 45%;
+  animation-delay: 0.2s;
 }
 
 .loading-circle:nth-child(3) {
-	left: auto;
-	right: 15%;
-	animation-delay: 0.3s;
+  left: auto;
+  right: 15%;
+  animation-delay: 0.3s;
 }
 
 .loading-shadow {
-	width: 20px;
-	height: 4px;
-	border-radius: 50%;
-	background-color: rgba(0, 0, 0, 0.9);
-	position: absolute;
-	top: 62px;
-	transform-origin: 50%;
-	z-index: -1;
-	left: 15%;
-	filter: blur(1px);
-	animation: loading-shadow046 0.5s alternate infinite ease;
+  width: 20px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.9);
+  position: absolute;
+  top: 62px;
+  transform-origin: 50%;
+  z-index: -1;
+  left: 15%;
+  filter: blur(1px);
+  animation: loading-shadow046 0.5s alternate infinite ease;
 }
 
 @keyframes loading-shadow046 {
-	0% {
-		transform: scaleX(1.5);
-	}
+  0% {
+    transform: scaleX(1.5);
+  }
 
-	40% {
-		transform: scaleX(1);
-		opacity: 0.7;
-	}
+  40% {
+    transform: scaleX(1);
+    opacity: 0.7;
+  }
 
-	100% {
-		transform: scaleX(0.2);
-		opacity: 0.4;
-	}
+  100% {
+    transform: scaleX(0.2);
+    opacity: 0.4;
+  }
 }
 
 .loading-shadow:nth-child(4) {
-	left: 45%;
-	animation-delay: 0.2s;
+  left: 45%;
+  animation-delay: 0.2s;
 }
 
 .loading-shadow:nth-child(5) {
-	left: auto;
-	right: 15%;
-	animation-delay: 0.3s;
+  left: auto;
+  right: 15%;
+  animation-delay: 0.3s;
 }
 
 @media (max-width: 640px) {
-	.loading-card {
-		padding: 2rem 1rem;
-		gap: 1rem;
-	}
+  .loading-card {
+    padding: 2rem 1rem;
+    gap: 1rem;
+  }
 
-	.loading-card-info {
-		margin-top: 1rem;
-	}
+  .loading-card-info {
+    margin-top: 1rem;
+  }
 
-	.loading-card {
-		padding: 1rem;
-		max-width: 90%;
-	}
+  .loading-card {
+    padding: 1rem;
+    max-width: 90%;
+  }
 
-	.loading-logo {
-		width: 120px;
-		height: 120px;
-	}
+  .loading-logo {
+    width: 120px;
+    height: 120px;
+  }
 
-	.loading-title {
-		margin-bottom: 2rem;
-	}
+  .loading-title {
+    margin-bottom: 2rem;
+  }
 
-	.loading-wrapper {
-		width: 150px;
-		margin-top: 1rem;
-	}
+  .loading-wrapper {
+    width: 150px;
+    margin-top: 1rem;
+  }
 
-	.loading-title {
-		font-size: 2.5rem;
-		margin-bottom: 2rem;
-		letter-spacing: 2px;
-	}
+  .loading-title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    letter-spacing: 2px;
+  }
 }

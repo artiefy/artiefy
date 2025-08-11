@@ -1,43 +1,42 @@
- 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { eq } from 'drizzle-orm';
-import nodemailer from 'nodemailer';
-import * as XLSX from 'xlsx';
+import { eq } from "drizzle-orm";
+import nodemailer from "nodemailer";
+import * as XLSX from "xlsx";
 
-import { db } from '~/server/db';
-import { userCredentials,users } from '~/server/db/schema';
-import { createUser } from '~/server/queries/queries';
+import { db } from "~/server/db";
+import { userCredentials, users } from "~/server/db/schema";
+import { createUser } from "~/server/queries/queries";
 
 interface UserInput {
-	firstName: string;
-	lastName: string;
-	email: string;
-	role?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role?: string;
 }
 
 // Configuración de Nodemailer usando variables de entorno
 const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: 'direcciongeneral@artiefy.com',
-		pass: process.env.PASS,
-	},
+  service: "gmail",
+  auth: {
+    user: "direcciongeneral@artiefy.com",
+    pass: process.env.PASS,
+  },
 });
 
 // Función para enviar correo de bienvenida
 async function sendWelcomeEmail(
-	to: string,
-	username: string,
-	password: string
+  to: string,
+  username: string,
+  password: string,
 ) {
-	try {
-		const mailOptions = {
-			from: '"Artiefy" <direcciongeneral@artiefy.com>',
-			to,
-			subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
-			replyTo: 'direcciongeneral@artiefy.com',
-			html: `
+  try {
+    const mailOptions = {
+      from: '"Artiefy" <direcciongeneral@artiefy.com>',
+      to,
+      subject: "🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso",
+      replyTo: "direcciongeneral@artiefy.com",
+      html: `
 				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
 				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
 				<ul>
@@ -50,214 +49,214 @@ async function sendWelcomeEmail(
 				<hr>
 				<p>Equipo de Artiefy 🎨</p>
 			`,
-		};
+    };
 
-		const info = await transporter.sendMail(mailOptions);
-		console.log(`✅ Correo de bienvenida enviado a ${to}: ${info.messageId}`);
-		return true;
-	} catch (error) {
-		console.error(`❌ Error al enviar correo de bienvenida a ${to}:`, error);
-		return false;
-	}
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Correo de bienvenida enviado a ${to}: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error al enviar correo de bienvenida a ${to}:`, error);
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
-	try {
-		const formData = await request.formData();
-		const file = formData.get('file');
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-		if (!file || !(file instanceof Blob)) {
-			return NextResponse.json(
-				{ error: 'No se proporcionó un archivo válido' },
-				{ status: 400 }
-			);
-		}
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json(
+        { error: "No se proporcionó un archivo válido" },
+        { status: 400 },
+      );
+    }
 
-		const data = await file.arrayBuffer();
-		const workbook = XLSX.read(data, { type: 'array' });
-		const sheetName = workbook.SheetNames[0];
-		const sheet = workbook.Sheets[sheetName];
-		const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
 
-		const successfulUsers = [];
-		const emailErrors = [];
-		console.log(`Processing ${usersData.length} users...`);
+    const successfulUsers = [];
+    const emailErrors = [];
+    console.log(`Processing ${usersData.length} users...`);
 
-		for (const userData of usersData) {
-			try {
-				console.log(`Creating user: ${userData.email}`);
-				const result = await createUser(
-					userData.firstName.trim(),
-					userData.lastName.trim(),
-					userData.email.trim(),
-					userData.role ?? 'estudiante'
-				);
+    for (const userData of usersData) {
+      try {
+        console.log(`Creating user: ${userData.email}`);
+        const result = await createUser(
+          userData.firstName.trim(),
+          userData.lastName.trim(),
+          userData.email.trim(),
+          userData.role ?? "estudiante",
+        );
 
-				if (!result?.user) {
-					console.log(
-						`User ${userData.email} already exists, skipping creation`
-					);
-					continue;
-				}
+        if (!result?.user) {
+          console.log(
+            `User ${userData.email} already exists, skipping creation`,
+          );
+          continue;
+        }
 
-				const { user: createdUser, generatedPassword } = result;
+        const { user: createdUser, generatedPassword } = result;
 
-				// Always send welcome email, regardless of user creation status
-				let emailSent = false;
-				for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
-					emailSent = await sendWelcomeEmail(
-						userData.email.trim(),
-						`${userData.firstName} ${userData.lastName}`.trim(),
-						generatedPassword
-					);
-					if (!emailSent) {
-						console.log(
-							`Retry ${attempts + 1} sending email to ${userData.email}`
-						);
-						await new Promise((r) => setTimeout(r, 1000));
-					}
-				}
+        // Always send welcome email, regardless of user creation status
+        let emailSent = false;
+        for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+          emailSent = await sendWelcomeEmail(
+            userData.email.trim(),
+            `${userData.firstName} ${userData.lastName}`.trim(),
+            generatedPassword,
+          );
+          if (!emailSent) {
+            console.log(
+              `Retry ${attempts + 1} sending email to ${userData.email}`,
+            );
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+        }
 
-				if (!emailSent) {
-					emailErrors.push(userData.email);
-				}
+        if (!emailSent) {
+          emailErrors.push(userData.email);
+        }
 
-				// Add user to database, update if exists
-				try {
-					await db
-						.insert(users)
-						.values({
-							id: createdUser.id,
-							name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
-							email: userData.email.trim(),
-							role: (userData.role ?? 'estudiante') as
-								| 'estudiante'
-								| 'educador'
-								| 'admin'
-								| 'super-admin',
-							createdAt: new Date(),
-							updatedAt: new Date(),
-						})
-						.onConflictDoUpdate({
-							target: [users.email, users.role],
-							set: {
-								id: createdUser.id,
-								name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
-								updatedAt: new Date(),
-							},
-						});
+        // Add user to database, update if exists
+        try {
+          await db
+            .insert(users)
+            .values({
+              id: createdUser.id,
+              name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+              email: userData.email.trim(),
+              role: (userData.role ?? "estudiante") as
+                | "estudiante"
+                | "educador"
+                | "admin"
+                | "super-admin",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [users.email, users.role],
+              set: {
+                id: createdUser.id,
+                name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+                updatedAt: new Date(),
+              },
+            });
 
-					// Update or insert credentials
-					try {
-						const existingCredentials = await db
-							.select()
-							.from(userCredentials)
-							.where(eq(userCredentials.userId, createdUser.id))
-							.limit(1);
+          // Update or insert credentials
+          try {
+            const existingCredentials = await db
+              .select()
+              .from(userCredentials)
+              .where(eq(userCredentials.userId, createdUser.id))
+              .limit(1);
 
-						if (existingCredentials.length > 0) {
-							// Update existing credentials
-							await db
-								.update(userCredentials)
-								.set({
-									password: generatedPassword,
-									clerkUserId: createdUser.id,
-									email: userData.email.trim(),
-								})
-								.where(eq(userCredentials.userId, createdUser.id));
-						} else {
-							// Insert new credentials
-							await db.insert(userCredentials).values({
-								userId: createdUser.id,
-								password: generatedPassword,
-								clerkUserId: createdUser.id,
-								email: userData.email.trim(),
-							});
-						}
+            if (existingCredentials.length > 0) {
+              // Update existing credentials
+              await db
+                .update(userCredentials)
+                .set({
+                  password: generatedPassword,
+                  clerkUserId: createdUser.id,
+                  email: userData.email.trim(),
+                })
+                .where(eq(userCredentials.userId, createdUser.id));
+            } else {
+              // Insert new credentials
+              await db.insert(userCredentials).values({
+                userId: createdUser.id,
+                password: generatedPassword,
+                clerkUserId: createdUser.id,
+                email: userData.email.trim(),
+              });
+            }
 
-						successfulUsers.push({
-							id: createdUser.id,
-							firstName: userData.firstName,
-							lastName: userData.lastName,
-							email: userData.email,
-							role: userData.role ?? 'estudiante',
-							status: 'activo',
-							isNew: true,
-						});
+            successfulUsers.push({
+              id: createdUser.id,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              email: userData.email,
+              role: userData.role ?? "estudiante",
+              status: "activo",
+              isNew: true,
+            });
 
-						console.log(`✅ User ${userData.email} created successfully`);
-					} catch (error) {
-						console.log(
-							`❌ Error updating or inserting user ${userData.email}:`,
-							error
-						);
-						continue;
-					}
-				} catch (error) {
-					console.log(`❌ Error creating user ${userData.email}:`, error);
-					continue;
-				}
-			} catch (error) {
-				console.log(`❌ Error creating user ${userData.email}:`, error);
-				continue;
-			}
-		}
+            console.log(`✅ User ${userData.email} created successfully`);
+          } catch (error) {
+            console.log(
+              `❌ Error updating or inserting user ${userData.email}:`,
+              error,
+            );
+            continue;
+          }
+        } catch (error) {
+          console.log(`❌ Error creating user ${userData.email}:`, error);
+          continue;
+        }
+      } catch (error) {
+        console.log(`❌ Error creating user ${userData.email}:`, error);
+        continue;
+      }
+    }
 
-		return NextResponse.json({
-			message: 'Proceso completado',
-			users: successfulUsers,
-			emailErrors,
-			summary: {
-				total: usersData.length,
-				created: successfulUsers.length,
-				failed: usersData.length - successfulUsers.length,
-				emailErrors: emailErrors.length,
-			},
-		});
-	} catch (error) {
-		console.error('Error al procesar el archivo:', error);
-		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : 'Error desconocido' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json({
+      message: "Proceso completado",
+      users: successfulUsers,
+      emailErrors,
+      summary: {
+        total: usersData.length,
+        created: successfulUsers.length,
+        failed: usersData.length - successfulUsers.length,
+        emailErrors: emailErrors.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error al procesar el archivo:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Error desconocido" },
+      { status: 500 },
+    );
+  }
 }
 
 export function GET() {
-	try {
-		// Datos de ejemplo que representarán el formato de la plantilla
-		const templateData = [
-			{
-				firstName: 'John',
-				lastName: 'Doe',
-				email: 'johndoe@example.com',
-				role: 'estudiante', // Puedes omitir o personalizar según el formato requerido
-			},
-		];
+  try {
+    // Datos de ejemplo que representarán el formato de la plantilla
+    const templateData = [
+      {
+        firstName: "John",
+        lastName: "Doe",
+        email: "johndoe@example.com",
+        role: "estudiante", // Puedes omitir o personalizar según el formato requerido
+      },
+    ];
 
-		// Crear el archivo Excel
-		const ws = XLSX.utils.json_to_sheet(templateData);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    // Crear el archivo Excel
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
 
-		const excelBuffer = XLSX.write(wb, {
-			bookType: 'xlsx',
-			type: 'array',
-		}) as ArrayBuffer;
+    const excelBuffer = XLSX.write(wb, {
+      bookType: "xlsx",
+      type: "array",
+    }) as ArrayBuffer;
 
-		// Retornamos el archivo Excel como respuesta
-		return new NextResponse(excelBuffer, {
-			headers: {
-				'Content-Type':
-					'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-				'Content-Disposition': 'attachment; filename=plantilla_usuarios.xlsx',
-			},
-		});
-	} catch (error) {
-		console.error('Error al generar la plantilla Excel:', error);
-		return NextResponse.json(
-			{ error: 'Error al generar la plantilla Excel' },
-			{ status: 500 }
-		);
-	}
+    // Retornamos el archivo Excel como respuesta
+    return new NextResponse(excelBuffer, {
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": "attachment; filename=plantilla_usuarios.xlsx",
+      },
+    });
+  } catch (error) {
+    console.error("Error al generar la plantilla Excel:", error);
+    return NextResponse.json(
+      { error: "Error al generar la plantilla Excel" },
+      { status: 500 },
+    );
+  }
 }
