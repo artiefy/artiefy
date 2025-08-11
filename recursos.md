@@ -217,6 +217,7 @@ git config user.email "artiefy4@gmail.com"
 ## Precommit config
 
 - pip install pre-commit
+- pre-commit install
 - pre-commit --version
 - pre-commit autoupdate
 - pre-commit run --all-files

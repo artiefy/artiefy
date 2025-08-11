@@ -27,4 +27,4 @@ repos:
         entry: npx tsc --noEmit
         language: system
         files: \.(ts|tsx)$
-        exclude: src/components/**/*.tsx
+        exclude: \.tsx$
