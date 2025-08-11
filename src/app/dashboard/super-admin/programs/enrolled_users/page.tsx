@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { saveAs } from "file-saver";
-import { Loader2, Mail, UserPlus, X } from "lucide-react";
-import * as XLSX from "xlsx";
-import { z } from "zod";
+import { saveAs } from 'file-saver';
+import { Loader2, Mail, UserPlus, X } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { z } from 'zod';
 
-import { InfoDialog } from "~/app/dashboard/super-admin/components/InfoDialog";
+import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
 
 const studentSchema = z.object({
   id: z.string(),
@@ -105,7 +105,7 @@ interface User {
   subscriptionEndDate?: string | null;
 }
 
-type ColumnType = "text" | "date" | "select";
+type ColumnType = 'text' | 'date' | 'select';
 
 interface Column {
   id: string;
@@ -116,76 +116,76 @@ interface Column {
 }
 
 const allColumns: Column[] = [
-  { id: "name", label: "Nombre", defaultVisible: true, type: "text" },
-  { id: "email", label: "Correo", defaultVisible: true, type: "text" },
-  { id: "phone", label: "Teléfono", defaultVisible: false, type: "text" },
-  { id: "address", label: "Dirección", defaultVisible: false, type: "text" },
-  { id: "country", label: "País", defaultVisible: false, type: "text" },
-  { id: "city", label: "Ciudad", defaultVisible: false, type: "text" },
+  { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
+  { id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
+  { id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
+  { id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
+  { id: 'country', label: 'País', defaultVisible: false, type: 'text' },
+  { id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
   {
-    id: "birthDate",
-    label: "Fecha de nacimiento",
+    id: 'birthDate',
+    label: 'Fecha de nacimiento',
     defaultVisible: false,
-    type: "date",
+    type: 'date',
   },
   {
-    id: "subscriptionStatus",
-    label: "Estado",
+    id: 'subscriptionStatus',
+    label: 'Estado',
     defaultVisible: true,
-    type: "select",
-    options: ["active", "inactive"],
+    type: 'select',
+    options: ['active', 'inactive'],
   },
   {
-    id: "purchaseDate",
-    label: "Fecha de compra",
+    id: 'purchaseDate',
+    label: 'Fecha de compra',
     defaultVisible: true,
-    type: "date",
+    type: 'date',
   },
   {
-    id: "subscriptionEndDate",
-    label: "Fin Suscripción",
+    id: 'subscriptionEndDate',
+    label: 'Fin Suscripción',
     defaultVisible: true,
-    type: "date",
+    type: 'date',
   },
   {
-    id: "programTitle",
-    label: "Programa",
+    id: 'programTitle',
+    label: 'Programa',
     defaultVisible: true,
-    type: "select", // sin options aquí
+    type: 'select', // sin options aquí
   },
   {
-    id: "courseTitle",
-    label: "Último curso",
+    id: 'courseTitle',
+    label: 'Último curso',
     defaultVisible: true,
-    type: "select",
+    type: 'select',
   },
   {
-    id: "nivelNombre",
-    label: "Nivel de educación",
+    id: 'nivelNombre',
+    label: 'Nivel de educación',
     defaultVisible: false,
-    type: "text",
+    type: 'text',
   },
   {
-    id: "role",
-    label: "Rol",
+    id: 'role',
+    label: 'Rol',
     defaultVisible: false,
-    type: "select", // ✅ CAMBIA a 'select'
-    options: ["estudiante", "educador", "admin", "super-admin"], // ✅ AÑADE opciones
+    type: 'select', // ✅ CAMBIA a 'select'
+    options: ['estudiante', 'educador', 'admin', 'super-admin'], // ✅ AÑADE opciones
   },
   {
-    id: "planType",
-    label: "Plan",
+    id: 'planType',
+    label: 'Plan',
     defaultVisible: false,
-    type: "select", // ✅ CAMBIA a 'select'
-    options: ["none", "Pro", "Premium", "Enterprise"], // ✅ AÑADE opciones
+    type: 'select', // ✅ CAMBIA a 'select'
+    options: ['none', 'Pro', 'Premium', 'Enterprise'], // ✅ AÑADE opciones
   },
 ];
 
 // Helper function for safe string conversion
 function safeToString(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean")
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean')
     return value.toString();
   return JSON.stringify(value);
 }
@@ -198,40 +198,40 @@ export default function EnrolledUsersPage() {
   const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [codigoPais, setCodigoPais] = useState("+57");
+  const [codigoPais, setCodigoPais] = useState('+57');
   const [manualPhones, setManualPhones] = useState<string[]>([]);
   const [manualEmails, setManualEmails] = useState<string[]>([]);
-  const [newManualPhone, setNewManualPhone] = useState("");
-  const [newManualEmail, setNewManualEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [newManualPhone, setNewManualPhone] = useState('');
+  const [newManualEmail, setNewManualEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
   void setCodigoPais;
 
   const [filters, setFilters] = useState({
-    name: "",
-    email: "",
-    subscriptionStatus: "",
-    purchaseDateFrom: "",
-    purchaseDateTo: "",
+    name: '',
+    email: '',
+    subscriptionStatus: '',
+    purchaseDateFrom: '',
+    purchaseDateTo: '',
   });
 
   const [limit] = useState(10);
   const [filteredCourseResults, setFilteredCourseResults] = useState<Course[]>(
-    [],
+    []
   );
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    allColumns.filter((c) => c.defaultVisible).map((c) => c.id),
+    allColumns.filter((c) => c.defaultVisible).map((c) => c.id)
   );
   const [users, setUsers] = useState<User[]>([]);
 
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
-    {},
+    {}
   );
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState('');
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
   const [userPrograms, setUserPrograms] = useState<
     { id: string; title: string }[]
@@ -248,44 +248,44 @@ export default function EnrolledUsersPage() {
   const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newUser, setNewUser] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "estudiante",
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'estudiante',
   });
   const [notification, setNotification] = useState<{
     message: string;
-    type: "success" | "error";
+    type: 'success' | 'error';
   } | null>(null);
-  const showNotification = (message: string, type: "success" | "error") => {
+  const showNotification = (message: string, type: 'success' | 'error') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
   void notification;
   const [creatingUser, setCreatingUser] = useState(false);
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
-  const [infoDialogTitle, setInfoDialogTitle] = useState("");
-  const [infoDialogMessage, setInfoDialogMessage] = useState("");
+  const [infoDialogTitle, setInfoDialogTitle] = useState('');
+  const [infoDialogMessage, setInfoDialogMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
   const [massiveEditFields, setMassiveEditFields] = useState<
     Record<string, string>
   >({});
   const [selectedMassiveFields, setSelectedMassiveFields] = useState<string[]>(
-    [],
+    []
   );
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
-      `/api/super-admin/enroll_user_program/coursesUser?userId=${userId}`,
+      `/api/super-admin/enroll_user_program/coursesUser?userId=${userId}`
     );
-    if (!res.ok) throw new Error("Error cargando cursos");
+    if (!res.ok) throw new Error('Error cargando cursos');
     const data = (await res.json()) as {
       courses: { id: string; title: string }[];
     };
     // des-duplicar
     const unique = Array.from(
-      new Map(data.courses.map((c) => [c.id, c])).values(),
+      new Map(data.courses.map((c) => [c.id, c])).values()
     );
     setUserCourses(unique);
   }
@@ -300,8 +300,8 @@ export default function EnrolledUsersPage() {
         setShowColumnSelector(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
 
   useEffect(() => {
@@ -309,13 +309,13 @@ export default function EnrolledUsersPage() {
     const loadPrograms = async () => {
       try {
         const res = await fetch(
-          "/api/super-admin/enroll_user_program/programsFilter",
+          '/api/super-admin/enroll_user_program/programsFilter'
         );
         if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
         const json = (await res.json()) as ProgramsResponse;
         setPrograms(json.programs);
       } catch (err) {
-        console.error("No se pudieron cargar los programas:", err);
+        console.error('No se pudieron cargar los programas:', err);
       }
     };
 
@@ -325,10 +325,10 @@ export default function EnrolledUsersPage() {
 
   const columnsWithOptions = useMemo<Column[]>(() => {
     return allColumns.map((col) => {
-      if (col.id === "programTitle") {
+      if (col.id === 'programTitle') {
         return { ...col, options: programs.map((p) => p.title) };
       }
-      if (col.id === "courseTitle") {
+      if (col.id === 'courseTitle') {
         return { ...col, options: availableCourses.map((c) => c.title) };
       }
       return col;
@@ -336,7 +336,7 @@ export default function EnrolledUsersPage() {
   }, [programs, availableCourses]);
 
   const sendEmail = async () => {
-    console.log("📩 Enviando correo...");
+    console.log('📩 Enviando correo...');
     if (
       !subject ||
       !message ||
@@ -355,10 +355,10 @@ export default function EnrolledUsersPage() {
         !sendWhatsapp)
     ) {
       setNotification({
-        message: "Todos los campos son obligatorios",
-        type: "error",
+        message: 'Todos los campos son obligatorios',
+        type: 'error',
       });
-      console.error("❌ Error: Faltan datos obligatorios");
+      console.error('❌ Error: Faltan datos obligatorios');
       return;
     }
 
@@ -370,7 +370,7 @@ export default function EnrolledUsersPage() {
           .filter((s) => selectedStudents.includes(s.id))
           .map((s) => s.email),
         ...manualEmails,
-      ]),
+      ])
     );
 
     const whatsappNumbers = sendWhatsapp
@@ -380,71 +380,71 @@ export default function EnrolledUsersPage() {
               .filter((s) => selectedStudents.includes(s.id) && s.phone)
               .map((s) => `${codigoPais}${s.phone}`),
             ...manualPhones.map((p) => `${codigoPais}${p}`),
-          ]),
+          ])
         )
       : [];
 
     try {
       const formData = new FormData();
-      formData.append("subject", subject);
-      formData.append("message", message);
-      emails.forEach((email) => formData.append("emails[]", email));
-      attachments.forEach((file) => formData.append("attachments", file));
+      formData.append('subject', subject);
+      formData.append('message', message);
+      emails.forEach((email) => formData.append('emails[]', email));
+      attachments.forEach((file) => formData.append('attachments', file));
 
-      const response = await fetch("/api/super-admin/emails", {
-        method: "POST",
+      const response = await fetch('/api/super-admin/emails', {
+        method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Error al enviar el correo");
+      if (!response.ok) throw new Error('Error al enviar el correo');
 
       // Enviar whatsapp
       if (sendWhatsapp) {
         for (const number of whatsappNumbers) {
-          console.log("📲 Enviando WhatsApp a:", number);
+          console.log('📲 Enviando WhatsApp a:', number);
 
-          await fetch("/api/super-admin/whatsapp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          await fetch('/api/super-admin/whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: number,
-              message: `${subject}\n\n${message.replace(/<[^>]+>/g, "")}`,
+              message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
             }),
           });
         }
       }
 
-      console.log("✅ Mensajes enviados con éxito");
+      console.log('✅ Mensajes enviados con éxito');
       setNotification({
-        message: "Correo y/o WhatsApp enviados correctamente",
-        type: "success",
+        message: 'Correo y/o WhatsApp enviados correctamente',
+        type: 'success',
       });
 
-      setSubject("");
-      setMessage("");
+      setSubject('');
+      setMessage('');
       setAttachments([]);
       setManualPhones([]);
       setManualEmails([]);
       setShowPhoneModal(false);
     } catch (err) {
-      console.error("❌ Error al enviar:", err);
-      setNotification({ message: "Error al enviar", type: "error" });
+      console.error('❌ Error al enviar:', err);
+      setNotification({ message: 'Error al enviar', type: 'error' });
     } finally {
       setLoadingEmail(false);
     }
   };
 
   const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
   void successMessage;
-  const [searchFieldTerm, setSearchFieldTerm] = useState("");
+  const [searchFieldTerm, setSearchFieldTerm] = useState('');
   const filteredColumns = totalColumns.filter((col) =>
-    col.label.toLowerCase().includes(searchFieldTerm.toLowerCase()),
+    col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
   );
 
   // Save visible columns to localStorage
   useEffect(() => {
-    localStorage.setItem("visibleColumns", JSON.stringify(visibleColumns));
+    localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
 
   useEffect(() => {
@@ -453,24 +453,24 @@ export default function EnrolledUsersPage() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch("/api/super-admin/enroll_user_program");
+      const res = await fetch('/api/super-admin/enroll_user_program');
       const json: unknown = await res.json();
       const data = apiResponseSchema.parse(json);
 
       const enrolledMap = new Map(
-        data.enrolledUsers.map((u) => [u.id, u.programTitle]),
+        data.enrolledUsers.map((u) => [u.id, u.programTitle])
       );
 
       const studentsFilteredByRole = data.students
-        .filter((s) => s.role === "estudiante")
+        .filter((s) => s.role === 'estudiante')
         .map((s) => ({
           ...s,
-          programTitle: enrolledMap.get(s.id) ?? "No inscrito",
-          nivelNombre: s.nivelNombre ?? "No definido",
+          programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
+          nivelNombre: s.nivelNombre ?? 'No definido',
           planType: s.planType ?? undefined,
           customFields: s.customFields
             ? Object.fromEntries(
-                Object.entries(s.customFields).map(([k, v]) => [k, String(v)]),
+                Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
               )
             : undefined,
         }));
@@ -483,7 +483,7 @@ export default function EnrolledUsersPage() {
       studentsFilteredByRole.forEach((student) => {
         if (student.customFields) {
           Object.keys(student.customFields).forEach((key) =>
-            allCustomKeys.add(key),
+            allCustomKeys.add(key)
           );
         }
       });
@@ -493,20 +493,20 @@ export default function EnrolledUsersPage() {
         id: `customFields.${key}`,
         label: key,
         defaultVisible: true,
-        type: "text" as ColumnType,
+        type: 'text' as ColumnType,
       }));
 
       // Agregamos al state las columnas dinámicas
       setDynamicColumns(dynamicCustomColumns);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error('Error fetching data:', err);
     }
   };
   async function fetchUserPrograms(userId: string) {
     const res = await fetch(
-      `/api/super-admin/enroll_user_program/programsUser?userId=${userId}`,
+      `/api/super-admin/enroll_user_program/programsUser?userId=${userId}`
     );
-    if (!res.ok) throw new Error("Error cargando programas");
+    if (!res.ok) throw new Error('Error cargando programas');
     // aquí ya no hay `any`
     const data = (await res.json()) as UserProgramsResponse;
     setUserPrograms(data.programs);
@@ -518,15 +518,15 @@ export default function EnrolledUsersPage() {
       !newUser.lastName.trim() ||
       !newUser.email.trim()
     ) {
-      showNotification("Todos los campos son obligatorios.", "error");
+      showNotification('Todos los campos son obligatorios.', 'error');
       return;
     }
 
     try {
       setCreatingUser(true);
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName: newUser.firstName,
           lastName: newUser.lastName,
@@ -536,28 +536,28 @@ export default function EnrolledUsersPage() {
       });
 
       if (!res.ok) {
-        throw new Error("No se pudo crear el usuario");
+        throw new Error('No se pudo crear el usuario');
       }
 
       const rawData: unknown = await res.json();
       if (
-        typeof rawData !== "object" ||
+        typeof rawData !== 'object' ||
         rawData === null ||
-        !("user" in rawData) ||
-        !("generatedPassword" in rawData)
+        !('user' in rawData) ||
+        !('generatedPassword' in rawData)
       ) {
-        throw new Error("Respuesta de la API en formato incorrecto");
+        throw new Error('Respuesta de la API en formato incorrecto');
       }
 
       const { user: safeUser, generatedPassword } =
         rawData as CreateUserResponse;
       if (
         !safeUser ||
-        typeof safeUser !== "object" ||
-        !("id" in safeUser) ||
-        !("username" in safeUser)
+        typeof safeUser !== 'object' ||
+        !('id' in safeUser) ||
+        !('username' in safeUser)
       ) {
-        throw new Error("Usuario inválido en la respuesta de la API");
+        throw new Error('Usuario inválido en la respuesta de la API');
       }
 
       const username = safeUser.username;
@@ -568,15 +568,15 @@ export default function EnrolledUsersPage() {
           lastName: newUser.lastName,
           email: newUser.email,
           role: newUser.role,
-          status: "activo",
+          status: 'activo',
           isNew: true, // 🔹 Marcar como usuario nuevo
         },
         ...users,
       ]);
 
-      setInfoDialogTitle("Usuario Creado");
+      setInfoDialogTitle('Usuario Creado');
       setInfoDialogMessage(
-        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`,
+        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
 
@@ -584,13 +584,13 @@ export default function EnrolledUsersPage() {
       setShowCreateForm(false);
 
       setNewUser({
-        firstName: "",
-        lastName: "",
-        email: "",
-        role: "estudiante",
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: 'estudiante',
       });
     } catch {
-      showNotification("Error al crear el usuario.", "error");
+      showNotification('Error al crear el usuario.', 'error');
     } finally {
       setCreatingUser(false);
     }
@@ -598,11 +598,11 @@ export default function EnrolledUsersPage() {
 
   const downloadSelectedAsExcel = () => {
     const selectedData = students.filter((s) =>
-      selectedStudents.includes(s.id),
+      selectedStudents.includes(s.id)
     );
 
     if (selectedData.length === 0) {
-      alert("No hay estudiantes seleccionados.");
+      alert('No hay estudiantes seleccionados.');
       return;
     }
 
@@ -619,16 +619,16 @@ export default function EnrolledUsersPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Estudiantes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Estudiantes');
 
     const excelBuffer = XLSX.write(workbook, {
-      type: "array",
-      bookType: "xlsx",
+      type: 'array',
+      bookType: 'xlsx',
     }) as ArrayBuffer;
 
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 
-    saveAs(blob, "estudiantes_seleccionados.xlsx");
+    saveAs(blob, 'estudiantes_seleccionados.xlsx');
   };
 
   const getFilteredSortedStudents = () => {
@@ -638,7 +638,7 @@ export default function EnrolledUsersPage() {
         .filter((student) =>
           selectedProgram
             ? student.programTitles?.includes(selectedProgram)
-            : true,
+            : true
         )
 
         // Filtros por columnas dinámicas (incluye customFields)
@@ -646,61 +646,61 @@ export default function EnrolledUsersPage() {
           Object.entries(columnFilters).every(([key, value]) => {
             if (!value) return true;
 
-            const studentValue = key.startsWith("customFields.")
-              ? student.customFields?.[key.split(".")[1]]
+            const studentValue = key.startsWith('customFields.')
+              ? student.customFields?.[key.split('.')[1]]
               : student[key as keyof Student];
 
             if (!studentValue) return false;
 
-            if (key === "subscriptionEndDate") {
+            if (key === 'subscriptionEndDate') {
               const dateStr = safeToString(studentValue);
-              return new Date(dateStr).toISOString().split("T")[0] === value;
+              return new Date(dateStr).toISOString().split('T')[0] === value;
             }
 
             const safeStudentValue = safeToString(studentValue);
             return safeStudentValue.toLowerCase().includes(value.toLowerCase());
-          }),
+          })
         )
 
         // Filtros generales (nombre, email, estado, fechas)
         .filter((s) =>
           filters.name
             ? s.name.toLowerCase().includes(filters.name.toLowerCase())
-            : true,
+            : true
         )
         .filter((s) =>
           filters.email
             ? s.email.toLowerCase().includes(filters.email.toLowerCase())
-            : true,
+            : true
         )
         .filter((s) =>
           filters.subscriptionStatus
             ? s.subscriptionStatus === filters.subscriptionStatus
-            : true,
+            : true
         )
         .filter((s) =>
           filters.purchaseDateFrom
-            ? (s.purchaseDate ? s.purchaseDate.split("T")[0] : "") >=
+            ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
               filters.purchaseDateFrom
-            : true,
+            : true
         )
         .filter((s) =>
           filters.purchaseDateTo
-            ? (s.purchaseDate ? s.purchaseDate.split("T")[0] : "") <=
+            ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
               filters.purchaseDateTo
-            : true,
+            : true
         )
 
         // Ordenar activos primero
         .sort((a, b) => {
           if (
-            a.subscriptionStatus === "active" &&
-            b.subscriptionStatus !== "active"
+            a.subscriptionStatus === 'active' &&
+            b.subscriptionStatus !== 'active'
           )
             return -1;
           if (
-            a.subscriptionStatus !== "active" &&
-            b.subscriptionStatus === "active"
+            a.subscriptionStatus !== 'active' &&
+            b.subscriptionStatus === 'active'
           )
             return 1;
           return 0;
@@ -732,38 +732,38 @@ export default function EnrolledUsersPage() {
   };
 
   function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
-    const [fieldKey, setFieldKey] = useState("");
-    const [fieldValue, setFieldValue] = useState("");
+    const [fieldKey, setFieldKey] = useState('');
+    const [fieldValue, setFieldValue] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
       setLoading(true);
       try {
         const res = await fetch(
-          "/api/super-admin/enroll_user_program/newTable",
+          '/api/super-admin/enroll_user_program/newTable',
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: selectedUserId,
               fieldKey,
               fieldValue,
             }),
-          },
+          }
         );
 
         if (res.ok) {
-          alert("Campo personalizado agregado");
-          setFieldKey("");
-          setFieldValue("");
+          alert('Campo personalizado agregado');
+          setFieldKey('');
+          setFieldValue('');
         } else {
           const json: unknown = await res.json();
           const errorData = errorResponseSchema.parse(json);
-          alert("Error: " + errorData.error);
+          alert('Error: ' + errorData.error);
         }
       } catch (err) {
         console.error(err);
-        alert("Error inesperado");
+        alert('Error inesperado');
       } finally {
         setLoading(false);
       }
@@ -790,7 +790,7 @@ export default function EnrolledUsersPage() {
           onClick={handleSubmit}
           className="w-full rounded bg-blue-600 px-4 py-2 font-semibold transition hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
         >
-          {loading ? "Guardando..." : "Agregar"}
+          {loading ? 'Guardando...' : 'Agregar'}
         </button>
       </div>
     );
@@ -798,9 +798,9 @@ export default function EnrolledUsersPage() {
 
   const handleEnroll = async () => {
     try {
-      const response = await fetch("/api/super-admin/enroll_user_program", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/super-admin/enroll_user_program', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userIds: selectedStudents,
           courseIds: selectedCourses,
@@ -810,7 +810,7 @@ export default function EnrolledUsersPage() {
       const json: unknown = await response.json();
 
       if (response.ok) {
-        alert("Estudiantes matriculados exitosamente");
+        alert('Estudiantes matriculados exitosamente');
         setSelectedStudents([]);
         setSelectedCourses([]);
         setShowModal(false);
@@ -819,23 +819,23 @@ export default function EnrolledUsersPage() {
         alert(`Error: ${errorData.error}`);
       }
     } catch (err) {
-      console.error("Error al matricular:", err);
-      alert("Error inesperado al matricular estudiantes");
+      console.error('Error al matricular:', err);
+      alert('Error inesperado al matricular estudiantes');
     }
   };
 
   const updateStudentField = async (
     userId: string,
     field: string,
-    value: string,
+    value: string
   ) => {
     const student = students.find((s) => s.id === userId);
     if (!student) return;
 
     const updatedStudent = { ...student };
 
-    if (field.startsWith("customFields.")) {
-      const key = field.split(".")[1];
+    if (field.startsWith('customFields.')) {
+      const key = field.split('.')[1];
       updatedStudent.customFields = {
         ...updatedStudent.customFields,
         [key]: value,
@@ -846,14 +846,14 @@ export default function EnrolledUsersPage() {
       }
     }
 
-    const [firstName, ...lastNameParts] = updatedStudent.name.split(" ");
-    const lastName = lastNameParts.join(" ");
+    const [firstName, ...lastNameParts] = updatedStudent.name.split(' ');
+    const lastName = lastNameParts.join(' ');
 
     const payload: Record<string, unknown> = {
       userId: updatedStudent.id,
-      firstName: firstName || "",
+      firstName: firstName || '',
       lastName,
-      role: updatedStudent.role ?? "estudiante",
+      role: updatedStudent.role ?? 'estudiante',
       status: updatedStudent.subscriptionStatus,
       permissions: [],
       phone: updatedStudent.phone,
@@ -866,25 +866,25 @@ export default function EnrolledUsersPage() {
       subscriptionEndDate: updatedStudent.subscriptionEndDate
         ? new Date(updatedStudent.subscriptionEndDate)
             .toISOString()
-            .split("T")[0]
+            .split('T')[0]
         : null,
       customFields: updatedStudent.customFields ?? {},
     };
 
-    if (field === "programTitle") {
+    if (field === 'programTitle') {
       const prog = programs.find((p) => p.title === value);
       if (prog) payload.programId = Number(prog.id);
     }
 
     // 5. Si cambió de curso, añadimos courseId
-    if (field === "courseTitle") {
+    if (field === 'courseTitle') {
       const curso = availableCourses.find((c) => c.title === value);
       if (curso) payload.courseId = Number(curso.id);
     }
 
-    const res = await fetch("/api/super-admin/udateUser/updateUserDinamic", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/super-admin/udateUser/updateUserDinamic', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -896,10 +896,10 @@ export default function EnrolledUsersPage() {
       }
     } else {
       setStudents((prev) =>
-        prev.map((s) => (s.id === userId ? updatedStudent : s)),
+        prev.map((s) => (s.id === userId ? updatedStudent : s))
       );
       setSuccessMessage(`✅ Campo "${field}" guardado correctamente`);
-      setTimeout(() => setSuccessMessage(""), 3000);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -915,14 +915,14 @@ export default function EnrolledUsersPage() {
     for (const [field, value] of Object.entries(fields)) {
       if (!value) continue;
 
-      if (field === "programTitle") {
+      if (field === 'programTitle') {
         const prog = programs.find((p) => p.title === value);
         if (prog) {
           payload.fields.programId = Number(prog.id);
         } else {
           payload.fields[field] = value;
         }
-      } else if (field === "courseTitle") {
+      } else if (field === 'courseTitle') {
         const curso = availableCourses.find((c) => c.title === value);
         if (curso) {
           payload.fields.courseId = Number(curso.id);
@@ -935,9 +935,9 @@ export default function EnrolledUsersPage() {
     }
 
     try {
-      const res = await fetch("/api/super-admin/udateUser/updateMassive", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/super-admin/udateUser/updateMassive', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -949,13 +949,13 @@ export default function EnrolledUsersPage() {
         await fetchData();
         setShowMassiveEditModal(false);
         setSuccessMessage(
-          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`,
+          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
         );
-        setTimeout(() => setSuccessMessage(""), 3000);
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {
-      console.error("❌ Error inesperado:", err);
-      alert("❌ Error inesperado al actualizar masivamente");
+      console.error('❌ Error inesperado:', err);
+      alert('❌ Error inesperado al actualizar masivamente');
     }
   };
 
@@ -971,8 +971,8 @@ export default function EnrolledUsersPage() {
         setShowColumnSelector(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
 
   return (
@@ -1039,7 +1039,7 @@ export default function EnrolledUsersPage() {
                           setVisibleColumns((prev) =>
                             prev.includes(col.id)
                               ? prev.filter((id) => id !== col.id)
-                              : [...prev, col.id],
+                              : [...prev, col.id]
                           )
                         }
                         className="h-4 w-4 rounded border-gray-400 bg-gray-700"
@@ -1105,7 +1105,7 @@ export default function EnrolledUsersPage() {
           >
             <option value="">Todos los programas</option>
             {Array.from(
-              new Set(students.flatMap((s) => s.programTitles ?? [])),
+              new Set(students.flatMap((s) => s.programTitles ?? []))
             ).map((title) => (
               <option key={title} value={title}>
                 {title}
@@ -1132,7 +1132,7 @@ export default function EnrolledUsersPage() {
                       checked={
                         displayedStudents.length > 0 &&
                         displayedStudents.every((s) =>
-                          selectedStudents.includes(s.id),
+                          selectedStudents.includes(s.id)
                         )
                       }
                       onChange={(e) =>
@@ -1142,12 +1142,12 @@ export default function EnrolledUsersPage() {
                                 new Set([
                                   ...selectedStudents,
                                   ...displayedStudents.map((s) => s.id),
-                                ]),
+                                ])
                               )
                             : selectedStudents.filter(
                                 (id) =>
-                                  !displayedStudents.some((s) => s.id === id),
-                              ),
+                                  !displayedStudents.some((s) => s.id === id)
+                              )
                         )
                       }
                       className="rounded border-white/20"
@@ -1162,9 +1162,9 @@ export default function EnrolledUsersPage() {
                       >
                         <div className="space-y-1">
                           <div className="truncate">{col.label}</div>
-                          {col.type === "select" ? (
+                          {col.type === 'select' ? (
                             <select
-                              value={columnFilters[col.id] || ""}
+                              value={columnFilters[col.id] || ''}
                               onChange={(e) =>
                                 setColumnFilters((prev) => ({
                                   ...prev,
@@ -1183,7 +1183,7 @@ export default function EnrolledUsersPage() {
                           ) : (
                             <input
                               type={col.type}
-                              value={columnFilters[col.id] || ""}
+                              value={columnFilters[col.id] || ''}
                               onChange={(e) =>
                                 setColumnFilters((prev) => ({
                                   ...prev,
@@ -1211,7 +1211,7 @@ export default function EnrolledUsersPage() {
                           setSelectedStudents((prev) =>
                             prev.includes(student.id)
                               ? prev.filter((id) => id !== student.id)
-                              : [...prev, student.id],
+                              : [...prev, student.id]
                           )
                         }
                         className="rounded border-white/20"
@@ -1221,21 +1221,21 @@ export default function EnrolledUsersPage() {
                     {totalColumns
                       .filter((col) => visibleColumns.includes(col.id))
                       .map((col) => {
-                        let raw = "";
-                        if (col.id.startsWith("customFields.")) {
-                          const key = col.id.split(".")[1];
-                          raw = student.customFields?.[key] ?? "";
+                        let raw = '';
+                        if (col.id.startsWith('customFields.')) {
+                          const key = col.id.split('.')[1];
+                          raw = student.customFields?.[key] ?? '';
                         } else {
                           raw = safeToString(
-                            student[col.id as keyof Student] ?? "",
+                            student[col.id as keyof Student] ?? ''
                           );
                         }
-                        if (col.type === "date" && raw) {
+                        if (col.type === 'date' && raw) {
                           const d = new Date(raw);
                           if (!isNaN(d.getTime()))
-                            raw = d.toISOString().split("T")[0];
+                            raw = d.toISOString().split('T')[0];
                         }
-                        if (col.id === "programTitle") {
+                        if (col.id === 'programTitle') {
                           return (
                             <td
                               key={col.id}
@@ -1247,7 +1247,7 @@ export default function EnrolledUsersPage() {
                                   updateStudentField(
                                     student.id,
                                     col.id,
-                                    e.target.value,
+                                    e.target.value
                                   )
                                 }
                                 className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
@@ -1273,7 +1273,7 @@ export default function EnrolledUsersPage() {
                         }
 
                         // 2) columna Último curso
-                        if (col.id === "courseTitle") {
+                        if (col.id === 'courseTitle') {
                           return (
                             <td
                               key={col.id}
@@ -1285,7 +1285,7 @@ export default function EnrolledUsersPage() {
                                   updateStudentField(
                                     student.id,
                                     col.id,
-                                    e.target.value,
+                                    e.target.value
                                   )
                                 }
                                 className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
@@ -1316,14 +1316,14 @@ export default function EnrolledUsersPage() {
                             key={col.id}
                             className="px-4 py-2 align-top break-words whitespace-normal"
                           >
-                            {col.type === "select" && col.options ? (
+                            {col.type === 'select' && col.options ? (
                               <select
                                 defaultValue={raw}
                                 onBlur={(e) =>
                                   updateStudentField(
                                     student.id,
                                     col.id,
-                                    e.target.value,
+                                    e.target.value
                                   )
                                 }
                                 className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
@@ -1334,7 +1334,7 @@ export default function EnrolledUsersPage() {
                                   </option>
                                 ))}
                               </select>
-                            ) : col.type === "date" ? (
+                            ) : col.type === 'date' ? (
                               <input
                                 type="date"
                                 defaultValue={raw}
@@ -1342,7 +1342,7 @@ export default function EnrolledUsersPage() {
                                   updateStudentField(
                                     student.id,
                                     col.id,
-                                    e.target.value,
+                                    e.target.value
                                   )
                                 }
                                 className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
@@ -1355,7 +1355,7 @@ export default function EnrolledUsersPage() {
                                   updateStudentField(
                                     student.id,
                                     col.id,
-                                    e.target.value,
+                                    e.target.value
                                   )
                                 }
                                 className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
@@ -1466,7 +1466,7 @@ export default function EnrolledUsersPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="w-full max-w-xs rounded-lg bg-white p-6 dark:bg-gray-800">
               <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Programas de {currentUser?.name ?? "Usuario"}
+                Programas de {currentUser?.name ?? 'Usuario'}
               </h3>
               <ul className="mb-4 max-h-64 space-y-2 overflow-y-auto">
                 {userPrograms.length === 0 ? (
@@ -1495,7 +1495,7 @@ export default function EnrolledUsersPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="w-full max-w-xs rounded-lg bg-white p-6 dark:bg-gray-800">
               <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Cursos de {currentUser?.name ?? "Usuario"}
+                Cursos de {currentUser?.name ?? 'Usuario'}
               </h3>
               <ul className="mb-4 max-h-64 space-y-2 overflow-y-auto">
                 {userCourses.length === 0 ? (
@@ -1540,12 +1540,12 @@ export default function EnrolledUsersPage() {
                   value={newUser.firstName}
                   onChange={(e) => {
                     // Eliminar espacios y tomar solo la primera palabra
-                    const singleName = e.target.value.trim().split(" ")[0];
+                    const singleName = e.target.value.trim().split(' ')[0];
                     setNewUser({ ...newUser, firstName: singleName });
                   }}
                   onKeyDown={(e) => {
                     // Prevenir el espacio
-                    if (e.key === " ") {
+                    if (e.key === ' ') {
                       e.preventDefault();
                     }
                   }}
@@ -1592,7 +1592,7 @@ export default function EnrolledUsersPage() {
                 {creatingUser ? (
                   <Loader2 className="size-5" />
                 ) : (
-                  "Crear Usuario"
+                  'Crear Usuario'
                 )}
               </button>
             </div>
@@ -1629,7 +1629,7 @@ export default function EnrolledUsersPage() {
                           ...manualPhones,
                           newManualPhone.trim(),
                         ]);
-                        setNewManualPhone("");
+                        setNewManualPhone('');
                       }
                     }}
                     className="mt-2 w-full rounded bg-green-600 px-3 py-1"
@@ -1652,7 +1652,7 @@ export default function EnrolledUsersPage() {
                           ...manualEmails,
                           newManualEmail.trim(),
                         ]);
-                        setNewManualEmail("");
+                        setNewManualEmail('');
                       }
                     }}
                     className="mt-2 w-full rounded bg-blue-600 px-3 py-1"
@@ -1679,7 +1679,7 @@ export default function EnrolledUsersPage() {
                     <button
                       onClick={() =>
                         setManualPhones((prev) =>
-                          prev.filter((p) => p !== phone),
+                          prev.filter((p) => p !== phone)
                         )
                       }
                       className="ml-2"
@@ -1690,7 +1690,7 @@ export default function EnrolledUsersPage() {
                 ))}
                 {manualPhones.length +
                   students.filter(
-                    (s) => selectedStudents.includes(s.id) && s.phone,
+                    (s) => selectedStudents.includes(s.id) && s.phone
                   ).length ===
                   0 && <div className="text-gray-400">Sin teléfonos</div>}
               </div>
@@ -1712,7 +1712,7 @@ export default function EnrolledUsersPage() {
                     <button
                       onClick={() =>
                         setManualEmails((prev) =>
-                          prev.filter((e) => e !== email),
+                          prev.filter((e) => e !== email)
                         )
                       }
                       className="ml-2"
@@ -1773,7 +1773,7 @@ export default function EnrolledUsersPage() {
                   className="rounded bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
                   disabled={loadingEmail}
                 >
-                  {loadingEmail ? "Enviando..." : "Enviar"}
+                  {loadingEmail ? 'Enviando...' : 'Enviar'}
                 </button>
               </div>
             </div>
@@ -1825,7 +1825,7 @@ export default function EnrolledUsersPage() {
                     {filteredColumns.length > 0 ? (
                       filteredColumns.map((col) => {
                         const isSelected = selectedMassiveFields.includes(
-                          col.id,
+                          col.id
                         );
                         return (
                           <div
@@ -1834,13 +1834,13 @@ export default function EnrolledUsersPage() {
                               setSelectedMassiveFields((prev) =>
                                 isSelected
                                   ? prev.filter((id) => id !== col.id)
-                                  : [...prev, col.id],
+                                  : [...prev, col.id]
                               )
                             }
                             className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
                               isSelected
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-300 hover:bg-gray-600"
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-300 hover:bg-gray-600'
                             }`}
                           >
                             {col.label}
@@ -1871,7 +1871,7 @@ export default function EnrolledUsersPage() {
                         {col.label}
                       </label>
 
-                      {field === "programTitle" ? (
+                      {field === 'programTitle' ? (
                         <select
                           className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                           onChange={(e) =>
@@ -1888,7 +1888,7 @@ export default function EnrolledUsersPage() {
                             </option>
                           ))}
                         </select>
-                      ) : field === "courseTitle" ? (
+                      ) : field === 'courseTitle' ? (
                         <select
                           className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                           onChange={(e) =>
@@ -1905,7 +1905,7 @@ export default function EnrolledUsersPage() {
                             </option>
                           ))}
                         </select>
-                      ) : col.type === "select" && col.options ? (
+                      ) : col.type === 'select' && col.options ? (
                         <select
                           className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                           onChange={(e) =>
@@ -1922,7 +1922,7 @@ export default function EnrolledUsersPage() {
                             </option>
                           ))}
                         </select>
-                      ) : col.type === "date" ? (
+                      ) : col.type === 'date' ? (
                         <input
                           type="date"
                           className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
@@ -1964,13 +1964,13 @@ export default function EnrolledUsersPage() {
                       .then(() => {
                         setShowMassiveEditModal(false);
                         setSuccessMessage(
-                          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`,
+                          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
                         );
-                        setTimeout(() => setSuccessMessage(""), 3000);
+                        setTimeout(() => setSuccessMessage(''), 3000);
                       })
                       .catch((err) => {
-                        console.error("❌ Error masivo:", err);
-                        alert("❌ Ocurrió un error al actualizar masivamente");
+                        console.error('❌ Error masivo:', err);
+                        alert('❌ Ocurrió un error al actualizar masivamente');
                       });
                   }}
                   className="bg-primary hover:bg-primary-700 focus:ring-primary-400 w-full rounded px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
@@ -1987,7 +1987,7 @@ export default function EnrolledUsersPage() {
             <div className="animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800 p-6 shadow-xl transition-transform duration-300">
               <h3 className="mb-4 text-center text-xl font-bold text-white">
                 Matricular {selectedStudents.length} estudiante
-                {selectedStudents.length !== 1 && "s"}
+                {selectedStudents.length !== 1 && 's'}
               </h3>
 
               {/* Lista de estudiantes seleccionados */}
@@ -2021,7 +2021,7 @@ export default function EnrolledUsersPage() {
                   onChange={(e) => {
                     const term = e.target.value.toLowerCase();
                     const filtered = availableCourses.filter((c) =>
-                      c.title.toLowerCase().includes(term),
+                      c.title.toLowerCase().includes(term)
                     );
                     setFilteredCourseResults(filtered);
                   }}
@@ -2040,10 +2040,10 @@ export default function EnrolledUsersPage() {
                           setSelectedCourses((prev) =>
                             isSelected
                               ? prev.filter((id) => id !== c.id)
-                              : [...prev, c.id],
+                              : [...prev, c.id]
                           )
                         }
-                        className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 transition ${isSelected ? "bg-blue-600 text-white" : "text-gray-200 hover:bg-gray-600"}`}
+                        className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 transition ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
                       >
                         <span>{c.title}</span>
                         {isSelected && <span className="ml-2">✅</span>}

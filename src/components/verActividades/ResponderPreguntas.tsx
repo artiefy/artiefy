@@ -1,10 +1,10 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { Completado } from "~/types/typesActi";
+import type { Completado } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
@@ -35,10 +35,10 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/educadores/question/completar2?activityId=${activityId}`,
+          `/api/educadores/question/completar2?activityId=${activityId}`
         );
         if (!response.ok) {
-          throw new Error("Error al obtener las preguntas");
+          throw new Error('Error al obtener las preguntas');
         }
         const data = (await response.json()) as {
           success: boolean;
@@ -48,7 +48,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
           setQuestions(data.questionsACompletar2);
         }
       } catch (error) {
-        console.error("Error al cargar las preguntas:", error);
+        console.error('Error al cargar las preguntas:', error);
       } finally {
         setLoading(false);
       }
@@ -61,7 +61,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
     const currentQuestion = questions.find((q) => q.id === questionId);
 
     if (!currentQuestion?.correctAnswer) {
-      console.error("No hay respuesta correcta definida");
+      console.error('No hay respuesta correcta definida');
       return;
     }
 
@@ -70,7 +70,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
         ...prev,
         [questionId]: {
           isCorrect: false,
-          message: "Por favor, ingrese una respuesta",
+          message: 'Por favor, ingrese una respuesta',
           attempted: false,
         },
       }));
@@ -81,11 +81,11 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
     const normalizedUserAnswer = userAnswer
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, " ");
+      .replace(/\s+/g, ' ');
     const normalizedCorrectAnswer = currentQuestion.correctAnswer
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, " ");
+      .replace(/\s+/g, ' ');
 
     // Comparación exacta
     const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
@@ -97,7 +97,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
       [questionId]: {
         isCorrect,
         message: isCorrect
-          ? "¡Correcto! 🎉"
+          ? '¡Correcto! 🎉'
           : `Incorrecto. La respuesta correcta es: "${currentQuestion.correctAnswer}" ❌`,
         attempted: true,
       },
@@ -120,7 +120,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
                 className="w-2/4 rounded-lg border border-slate-200 p-4 shadow-lg outline-none"
                 name="answer"
                 placeholder="Ingrese aqui el complemento"
-                value={answers[question.id.toString()] || ""}
+                value={answers[question.id.toString()] || ''}
                 onChange={(e) =>
                   setAnswers((prev) => ({
                     ...prev,
@@ -131,7 +131,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
               />
               {feedback[question.id.toString()] && (
                 <p
-                  className={`mt-2 ${feedback[question.id.toString()].isCorrect ? "text-green-600" : "text-red-600"}`}
+                  className={`mt-2 ${feedback[question.id.toString()].isCorrect ? 'text-green-600' : 'text-red-600'}`}
                 >
                   {feedback[question.id.toString()].message}
                 </p>
@@ -145,7 +145,7 @@ const ResponderPreguntas: React.FC<QuestionListProps> = ({
                 onClick={() =>
                   handleSubmit(
                     question.id.toString(),
-                    answers[question.id.toString()],
+                    answers[question.id.toString()]
                   )
                 }
                 disabled={feedback[question.id.toString()]?.attempted}

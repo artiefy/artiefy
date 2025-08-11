@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
-import { inArray } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { ticketComments, tickets } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { ticketComments, tickets } from '~/server/db/schema';
 
 // Define el tipo esperado para el body
 interface BulkDeleteRequestBody {
@@ -16,8 +16,8 @@ export async function DELETE(req: Request) {
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata.role;
 
-    if (!userId || (role !== "admin" && role !== "super-admin")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = (await req.json()) as BulkDeleteRequestBody;
@@ -26,13 +26,13 @@ export async function DELETE(req: Request) {
       ? body.ids.map((id) => Number(id)).filter((n): n is number => !isNaN(n))
       : [];
 
-    console.log("📥 IDs recibidos para eliminar:", body.ids);
-    console.log("🔢 IDs convertidos a number:", ids);
+    console.log('📥 IDs recibidos para eliminar:', body.ids);
+    console.log('🔢 IDs convertidos a number:', ids);
 
     if (ids.length === 0) {
       return NextResponse.json(
-        { error: "No valid IDs provided" },
-        { status: 400 },
+        { error: 'No valid IDs provided' },
+        { status: 400 }
       );
     }
 
@@ -44,14 +44,14 @@ export async function DELETE(req: Request) {
     // Eliminar tickets
     await db.delete(tickets).where(inArray(tickets.id, ids));
 
-    console.log("✅ Tickets y comentarios eliminados correctamente.");
+    console.log('✅ Tickets y comentarios eliminados correctamente.');
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error deleting multiple tickets:", error);
+    console.error('❌ Error deleting multiple tickets:', error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
+      { error: 'Internal Server Error' },
+      { status: 500 }
     );
   }
 }

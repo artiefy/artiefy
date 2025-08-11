@@ -1,16 +1,16 @@
-import * as dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import * as dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 
 // Load environment variables from .env file
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST ?? "",
-  port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+  host: process.env.SMTP_HOST ?? '',
+  port: parseInt(process.env.SMTP_PORT ?? '587', 10),
   secure: false,
   auth: {
-    user: process.env.SMTP_USER ?? "",
-    pass: process.env.SMTP_PASS ?? "",
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
   },
 });
 
@@ -28,8 +28,8 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
       subject,
       html,
     });
-    console.log("Message sent: %s", info.messageId);
+    console.log('Message sent: %s', info.messageId);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error sending email:', error);
   }
 }

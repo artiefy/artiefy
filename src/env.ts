@@ -1,5 +1,5 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { createEnv } from '@t3-oss/env-nextjs';
+import { z } from 'zod';
 
 export const env = createEnv({
   server: {
@@ -33,8 +33,8 @@ export const env = createEnv({
     PASS: z.string().min(1),
 
     NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+      .enum(['development', 'test', 'production'])
+      .default('development'),
     CRON_SECRET: z.string().min(1),
     SKIP_ENV_VALIDATION: z.boolean().default(false),
   },
@@ -91,7 +91,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
-    SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === "true" || false,
+    SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,

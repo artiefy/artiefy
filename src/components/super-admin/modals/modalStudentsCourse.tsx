@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { X } from "lucide-react";
+import { X } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -32,14 +32,14 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
       setError(null);
       try {
         const response = await fetch(
-          `/api/super-admin/students?courseId=${courseId}`,
+          `/api/super-admin/students?courseId=${courseId}`
         );
-        if (!response.ok) throw new Error("Error al obtener estudiantes");
+        if (!response.ok) throw new Error('Error al obtener estudiantes');
 
         const data = (await response.json()) as { students: Student[] };
         setStudents(data.students || []);
       } catch {
-        setError("No se pudieron cargar los estudiantes.");
+        setError('No se pudieron cargar los estudiantes.');
       } finally {
         setLoading(false);
       }
@@ -51,10 +51,10 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md p-4">
-      <div className="relative w-full max-w-lg rounded-lg bg-white shadow-lg p-6">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4 backdrop-blur-md">
+      <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         {/* 🔹 Modal Header */}
-        <div className="flex justify-between items-center border-b pb-2">
+        <div className="flex items-center justify-between border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">
             Estudiantes inscritos
           </h2>
@@ -65,24 +65,24 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
 
         {/* 🔄 Cargando datos */}
         {loading && (
-          <p className="text-gray-500 text-center mt-4">
+          <p className="mt-4 text-center text-gray-500">
             Cargando estudiantes...
           </p>
         )}
-        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
 
         {/* 📌 Lista de estudiantes */}
         {!loading && !error && (
           <ul className="mt-4 space-y-3">
             {students.length === 0 ? (
-              <p className="text-gray-500 text-center">
+              <p className="text-center text-gray-500">
                 No hay estudiantes inscritos en este curso.
               </p>
             ) : (
               students.map((student) => (
                 <li
                   key={student.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
@@ -90,9 +90,9 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
                     </p>
                     <p className="text-xs text-gray-500">{student.email}</p>
                   </div>
-                  <div className="w-36 bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div className="h-4 w-36 overflow-hidden rounded-full bg-gray-200">
                     <div
-                      className="h-full bg-blue-500 text-xs text-white text-center"
+                      className="h-full bg-blue-500 text-center text-xs text-white"
                       style={{ width: `${student.progress}%` }}
                     >
                       {student.progress}%
@@ -108,7 +108,7 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
         <div className="mt-4 flex justify-end">
           <button
             onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+            className="rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
           >
             Cerrar
           </button>

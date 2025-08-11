@@ -1,14 +1,14 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
-import { Input } from "~/components/educators/ui/input";
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
+import { Input } from '~/components/educators/ui/input';
 
-import type { QuestionFilesSubida } from "~/types/typesActi";
+import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
@@ -24,30 +24,30 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
   const { user } = useUser();
   const userName = user?.fullName;
 
-  console.log("userName", userName);
+  console.log('userName', userName);
   useEffect(() => {
     const fetchQuestions = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/educadores/question/archivos?activityId=${activityId}`,
+          `/api/educadores/question/archivos?activityId=${activityId}`
         );
         if (!response.ok) {
-          throw new Error("Error al obtener las preguntas");
+          throw new Error('Error al obtener las preguntas');
         }
         const data = (await response.json()) as {
           success: boolean;
           questionsFilesSubida: QuestionFilesSubida[];
         };
-        console.log("API response:", data); // Verificar la respuesta de la API
+        console.log('API response:', data); // Verificar la respuesta de la API
         if (data) {
           setQuestions(data.questionsFilesSubida);
         } else {
-          console.error("Formato de datos incorrecto:", data);
+          console.error('Formato de datos incorrecto:', data);
         }
         setLoading(false);
       } catch (error) {
-        console.error("Error al cargar las preguntas:", error);
+        console.error('Error al cargar las preguntas:', error);
       }
     };
 
@@ -59,9 +59,9 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
       // Validar tamaño del archivo (150MB = 150 * 1024 * 1024 bytes)
       const maxSize = 150 * 1024 * 1024;
       if (file.size > maxSize) {
-        toast("Error", {
+        toast('Error', {
           description:
-            "El archivo es demasiado grande. El tamaño máximo permitido es 150MB.",
+            'El archivo es demasiado grande. El tamaño máximo permitido es 150MB.',
         });
         return;
       }
@@ -76,44 +76,44 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
   const handleSubmit = async (questionId: string) => {
     const file = selectedFiles[questionId];
     if (!file) {
-      alert("Por favor selecciona un archivo");
+      alert('Por favor selecciona un archivo');
       return;
     }
 
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("activityId", activityId.toString());
-      formData.append("questionId", questionId.toString());
-      formData.append("userId", user?.id ?? "");
-      formData.append("userName", userName ?? "");
+      formData.append('file', file);
+      formData.append('activityId', activityId.toString());
+      formData.append('questionId', questionId.toString());
+      formData.append('userId', user?.id ?? '');
+      formData.append('userName', userName ?? '');
 
       for (const [key, value] of formData.entries()) {
         console.log(`${key}: ${value instanceof File ? value.name : value}`);
       }
 
-      console.log("formData", formData);
+      console.log('formData', formData);
 
-      const response = await fetch("/api/estudiantes/subir-archivo", {
-        method: "POST",
+      const response = await fetch('/api/estudiantes/subir-archivo', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Error al subir el archivo");
+        throw new Error('Error al subir el archivo');
       }
 
-      toast("Archivo subido", {
-        description: "El archivo se subió correctamente",
+      toast('Archivo subido', {
+        description: 'El archivo se subió correctamente',
       });
       setSelectedFiles((prev) => ({
         ...prev,
         [questionId]: null,
       }));
     } catch (error) {
-      console.error("Error:", error);
-      toast("Error", {
+      console.error('Error:', error);
+      toast('Error', {
         description: `Error al subir el archivo: ${(error as Error).message}`,
       });
     } finally {
@@ -197,7 +197,7 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
                   onClick={() => handleSubmit(question.id)}
                   disabled={submitting || !selectedFiles[question.id]}
                 >
-                  {submitting ? "Subiendo..." : "Subir archivo"}
+                  {submitting ? 'Subiendo...' : 'Subir archivo'}
                 </Button>
               </div>
             </CardFooter>

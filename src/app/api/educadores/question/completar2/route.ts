@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
-import type { Completado2 } from "~/types/typesActi";
+import type { Completado2 } from '~/types/typesActi';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,21 +12,21 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get("activityId");
+    const activityId = searchParams.get('activityId');
     if (!activityId) {
       return NextResponse.json(
-        { success: false, message: "Se requiere activityId" },
-        { status: 400 },
+        { success: false, message: 'Se requiere activityId' },
+        { status: 400 }
       );
     }
     const key = `activity:${activityId}:questionsACompletar2`;
     const questionsACompletar2 = (await redis.get<Completado2[]>(key)) ?? [];
     return NextResponse.json({ success: true, questionsACompletar2 });
   } catch (error) {
-    console.error("Error en la API route:", error);
+    console.error('Error en la API route:', error);
     return NextResponse.json(
-      { success: false, message: "Error en el servidor" },
-      { status: 500 },
+      { success: false, message: 'Error en el servidor' },
+      { status: 500 }
     );
   }
 }
@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Se requieren activityId y questionsACompletar2",
+          message: 'Se requieren activityId y questionsACompletar2',
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const key = `activity:${activityId}:questionsACompletar2`;
@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
     await redis.set(key, updatedQuestions);
     return NextResponse.json({
       success: true,
-      message: "Pregunta guardada correctamente",
+      message: 'Pregunta guardada correctamente',
     });
   } catch (error) {
-    console.error("Error al guardar la pregunta:", error);
+    console.error('Error al guardar la pregunta:', error);
     return NextResponse.json(
-      { success: false, message: "Error al guardar la pregunta" },
-      { status: 500 },
+      { success: false, message: 'Error al guardar la pregunta' },
+      { status: 500 }
     );
   }
 }
@@ -74,27 +74,27 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Se requieren activityId y questionsACompletar2",
+          message: 'Se requieren activityId y questionsACompletar2',
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const key = `activity:${activityId}:questionsACompletar2`;
     const existingQuestions = (await redis.get<Completado2[]>(key)) ?? [];
 
     const updatedQuestions = existingQuestions.map((q) =>
-      q?.id === questionsACompletar2.id ? questionsACompletar2 : q,
+      q?.id === questionsACompletar2.id ? questionsACompletar2 : q
     );
     await redis.set(key, updatedQuestions);
     return NextResponse.json({
       success: true,
-      message: "Pregunta actualizada correctamente",
+      message: 'Pregunta actualizada correctamente',
     });
   } catch (error) {
-    console.error("Error al actualizar la pregunta:", error);
+    console.error('Error al actualizar la pregunta:', error);
     return NextResponse.json(
-      { success: false, message: "Error al actualizar la pregunta" },
-      { status: 500 },
+      { success: false, message: 'Error al actualizar la pregunta' },
+      { status: 500 }
     );
   }
 }
@@ -102,29 +102,29 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get("activityId");
-    const questionId = searchParams.get("questionId");
+    const activityId = searchParams.get('activityId');
+    const questionId = searchParams.get('questionId');
     if (!activityId || !questionId) {
       return NextResponse.json(
-        { success: false, message: "Se requieren activityId y questionId" },
-        { status: 400 },
+        { success: false, message: 'Se requieren activityId y questionId' },
+        { status: 400 }
       );
     }
     const key = `activity:${activityId}:questionsACompletar2`;
     const existingQuestions = (await redis.get<Completado2[]>(key)) ?? [];
     const updatedQuestions = existingQuestions.filter(
-      (q) => q && q.id !== questionId,
+      (q) => q && q.id !== questionId
     );
     await redis.set(key, updatedQuestions);
     return NextResponse.json({
       success: true,
-      message: "Pregunta eliminada correctamente",
+      message: 'Pregunta eliminada correctamente',
     });
   } catch (error) {
-    console.error("Error al eliminar la pregunta:", error);
+    console.error('Error al eliminar la pregunta:', error);
     return NextResponse.json(
-      { success: false, message: "Error al eliminar la pregunta" },
-      { status: 500 },
+      { success: false, message: 'Error al eliminar la pregunta' },
+      { status: 500 }
     );
   }
 }

@@ -1,14 +1,14 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
-import ViewFiles from "~/components/educators/layout/ViewFiles";
+import ViewFiles from '~/components/educators/layout/ViewFiles';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,20 +19,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
-import { Badge } from "~/components/educators/ui/badge";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/educators/ui/card";
-import { Label } from "~/components/educators/ui/label";
-import ListActividadesEducator from "~/components/super-admin/layout/ListActividades";
-import ModalFormLessons from "~/components/super-admin/modals/ModalFormLessons";
+} from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Label } from '~/components/educators/ui/label';
+import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
+import ModalFormLessons from '~/components/super-admin/modals/ModalFormLessons';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Detallado de las lecciones
 
@@ -61,13 +61,13 @@ interface Lessons {
 
 // Función para obtener el contraste del color
 const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return "black"; // Manejar el caso de color indefinido
-  hexcolor = hexcolor.replace("#", "");
+  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
@@ -79,9 +79,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   const [lessons, setLessons] = useState<Lessons | null>(null); // Estado de la lección
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>(selectedColor || "#FFFFFF"); // Estado del color
+  const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
-  const predefinedColors = ["#1f2937", "#000000", "#FFFFFF"]; // Colores predefinidos
+  const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores predefinidos
 
   // Obtener el id del curso
   const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
@@ -90,7 +90,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Obtener el color guardado en el localStorage
   useEffect(() => {
     const savedColor = localStorage.getItem(
-      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`,
+      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
     );
     if (savedColor) {
       setColor(savedColor);
@@ -102,7 +102,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     setColor(newColor);
     localStorage.setItem(
       `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`,
-      newColor,
+      newColor
     );
   };
 
@@ -114,7 +114,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/super-admin/lessons/${lessonsIdNumber}`,
+          `/api/super-admin/lessons/${lessonsIdNumber}`
         );
         if (response.ok) {
           const data = (await response.json()) as Lessons;
@@ -123,42 +123,42 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           const errorData = (await response.json()) as { error?: string };
           const errorMessage = errorData.error ?? response.statusText;
           setError(`Error al cargar la leccion: ${errorMessage}`);
-          toast.error("Error", {
+          toast.error('Error', {
             description: `No se pudo cargar la leccion: ${errorMessage}`,
           });
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar la leccion: ${errorMessage}`);
-        toast.error("Error", {
+        toast.error('Error', {
           description: `No se pudo cargar la leccion: ${errorMessage}`,
         });
       } finally {
         setLoading(false);
       }
     },
-    [user],
+    [user]
   );
 
   // Cargar las lecciones al cargar la
   useEffect(() => {
     if (!lessonId) {
-      setError("lessonId is null or invalid");
+      setError('lessonId is null or invalid');
       setLoading(false);
       return;
     }
 
-    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? "");
-    const lessonsIdNumber = parseInt(lessonsId2 ?? "");
+    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+    const lessonsIdNumber = parseInt(lessonsId2 ?? '');
     if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
-      setError("lessonId is not a valid number");
+      setError('lessonId is not a valid number');
       setLoading(false);
       return;
     }
 
     fetchLessons(lessonsIdNumber).catch((error) =>
-      console.error("Error fetching lessons:", error),
+      console.error('Error fetching lessons:', error)
     );
   }, [lessonId, fetchLessons]);
 
@@ -167,10 +167,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     try {
       // Eliminar imagen de portada
       if (lessons?.coverImageKey) {
-        const responseAwsImg = await fetch("/api/upload", {
-          method: "DELETE",
+        const responseAwsImg = await fetch('/api/upload', {
+          method: 'DELETE',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             key: lessons?.coverImageKey,
@@ -178,16 +178,16 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         });
 
         if (!responseAwsImg.ok) {
-          console.error("Error al eliminar la imagen de portada");
+          console.error('Error al eliminar la imagen de portada');
         }
       }
 
       // Eliminar video
       if (lessons?.coverVideoKey) {
-        const responseAwsVideo = await fetch("/api/upload", {
-          method: "DELETE",
+        const responseAwsVideo = await fetch('/api/upload', {
+          method: 'DELETE',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             key: lessons?.coverVideoKey,
@@ -195,26 +195,26 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         });
 
         if (!responseAwsVideo.ok) {
-          console.error("Error al eliminar el video");
+          console.error('Error al eliminar el video');
         }
       }
 
       // Eliminar archivos de recursos
       if (lessons?.resourceKey) {
         // Dividir la cadena de resourceKey en un array
-        const resourceKeys = lessons?.resourceKey.split(",");
+        const resourceKeys = lessons?.resourceKey.split(',');
 
         // Eliminar cada archivo de recurso
         const deletePromises = resourceKeys.map((key) =>
-          fetch("/api/upload", {
-            method: "DELETE",
+          fetch('/api/upload', {
+            method: 'DELETE',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               key: key.trim(), // Eliminar espacios en blanco
             }),
-          }),
+          })
         );
 
         // Esperar a que todas las eliminaciones se completen
@@ -224,7 +224,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         responses.forEach((response, index) => {
           if (!response.ok) {
             console.error(
-              `Error al eliminar el archivo ${resourceKeys[index]}`,
+              `Error al eliminar el archivo ${resourceKeys[index]}`
             );
           }
         });
@@ -232,23 +232,23 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
       // Eliminar la lección de la base de datos
       const response = await fetch(`/api/educadores/lessons?lessonId=${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error("Error al eliminar la clase");
+        throw new Error('Error al eliminar la clase');
       }
 
-      toast.success("Clase eliminada", {
+      toast.success('Clase eliminada', {
         description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
       });
 
       // Navigate back to the course details page
       router.push(`/dashboard/super-admin/cursos/${courseIdNumber}`);
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error", {
-        description: "No se pudo eliminar la clase completamente",
+      console.error('Error:', error);
+      toast.error('Error', {
+        description: 'No se pudo eliminar la clase completamente',
       });
     }
   };
@@ -257,8 +257,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   const refreshLessonData = useCallback(async () => {
     if (!lessonId) return;
 
-    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? "");
-    const lessonsIdNumber = parseInt(lessonsId2 ?? "");
+    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+    const lessonsIdNumber = parseInt(lessonsId2 ?? '');
     if (!isNaN(lessonsIdNumber) && lessonsIdNumber > 0) {
       await fetchLessons(lessonsIdNumber);
     }
@@ -288,7 +288,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             onClick={async () => {
               if (lessonId) {
                 await fetchLessons(
-                  parseInt(Array.isArray(lessonId) ? lessonId[0] : lessonId),
+                  parseInt(Array.isArray(lessonId) ? lessonId[0] : lessonId)
                 );
               }
             }}
@@ -350,7 +350,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         <div className="group relative h-auto w-full">
           <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
           <Card
-            className={`relative mt-5 border-transparent bg-black p-5 ${color === "#FFFFFF" ? "text-black" : "text-white"}`}
+            className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
             style={{
               backgroundColor: color,
               color: getContrastYIQ(color),
@@ -363,7 +363,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               {/* Add color selection buttons */}
               <div className="flex flex-col">
                 <Label
-                  className={color === "#FFFFFF" ? "text-black" : "text-white"}
+                  className={color === '#FFFFFF' ? 'text-black' : 'text-white'}
                 >
                   Seleccione el color deseado
                 </Label>
@@ -373,7 +373,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                       key={predefinedColor}
                       style={{ backgroundColor: predefinedColor }}
                       className={`size-8 border ${
-                        color === "#FFFFFF" ? "border-black" : "border-white"
+                        color === '#FFFFFF' ? 'border-black' : 'border-white'
                       }`}
                       onClick={() =>
                         handlePredefinedColorChange(predefinedColor)
@@ -415,7 +415,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   <>
                     <h4 className="hidden">No hay videos por el momento!.</h4>
                     <Image
-                      src={"/NoHayVideos.jpg"}
+                      src={'/NoHayVideos.jpg'}
                       className="mx-auto rounded-lg object-cover"
                       alt="No hay imagen o video disponible actualmente"
                       width={350}
@@ -475,7 +475,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </div>
             <div>
               <div
-                className={`pb-6 ${color === "#FFFFFF" ? "text-black" : "text-white"}`}
+                className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
               >
                 <h2 className="text-2xl font-bold">Información de la clase</h2>
                 <br />

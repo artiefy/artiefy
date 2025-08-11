@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { roleSecundarioPermisos, rolesSecundarios } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { roleSecundarioPermisos, rolesSecundarios } from '~/server/db/schema';
 
 interface UpdateRolBody {
   id: number;
@@ -16,10 +16,10 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as UpdateRolBody;
     const { id, name, permisos } = body;
 
-    if (typeof id !== "number" || !name?.trim()) {
+    if (typeof id !== 'number' || !name?.trim()) {
       return NextResponse.json(
-        { error: "Datos incompletos o inválidos" },
-        { status: 400 },
+        { error: 'Datos incompletos o inválidos' },
+        { status: 400 }
       );
     }
 
@@ -42,7 +42,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error al actualizar rol secundario:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al actualizar rol secundario:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

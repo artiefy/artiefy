@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Select from "react-select";
+import Select from 'react-select';
 
 // Interfaz para los tipos de curso
 interface CourseType {
@@ -29,10 +29,10 @@ const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
     const fetchTypes = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/typesCourse", {
-          method: "GET",
+        const response = await fetch('/api/educadores/typesCourse', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -44,14 +44,14 @@ const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
         const data = (await response.json()) as CourseType[];
         setTypes(data);
       } catch (error) {
-        console.error("Error al obtener tipos de curso:", error);
+        console.error('Error al obtener tipos de curso:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTypes().catch((error) =>
-      console.error("Error fetching course types:", error),
+      console.error('Error fetching course types:', error)
     );
   }, []);
 

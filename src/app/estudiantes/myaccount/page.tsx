@@ -1,14 +1,14 @@
-import { Suspense } from "react";
+import { Suspense } from 'react';
 
-import { RedirectToSignIn, SignedIn, SignedOut } from "@clerk/nextjs";
+import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/nextjs';
 
-import { CourseCardSkeleton } from "~/components/estudiantes/layout/CourseCardSkeleton";
-import Footer from "~/components/estudiantes/layout/Footer";
-import { Header } from "~/components/estudiantes/layout/Header";
-import MyCoursesStudent from "~/components/estudiantes/layout/MyCoursesStudent";
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSkeleton';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import MyCoursesStudent from '~/components/estudiantes/layout/MyCoursesStudent';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function MisCoursesPage() {

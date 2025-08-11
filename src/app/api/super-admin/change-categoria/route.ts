@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
-import { db } from "~/server/db";
-import { categories, courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { categories, courses } from '~/server/db/schema';
 
 const updateSchema = z.object({
   courseId: z.number(),
@@ -26,14 +26,14 @@ export async function PUT(req: Request) {
       .execute();
 
     return NextResponse.json(
-      { message: "Categoría actualizada con éxito" },
-      { status: 200 },
+      { message: 'Categoría actualizada con éxito' },
+      { status: 200 }
     );
   } catch (error) {
-    console.error("❌ Error al actualizar la categoría:", error);
+    console.error('❌ Error al actualizar la categoría:', error);
     return NextResponse.json(
-      { error: "Error al actualizar la categoría" },
-      { status: 400 },
+      { error: 'Error al actualizar la categoría' },
+      { status: 400 }
     );
   }
 }
@@ -44,10 +44,10 @@ export async function GET() {
 
     return NextResponse.json(categoriasList, { status: 200 });
   } catch (error) {
-    console.error("❌ Error al obtener categorías:", error);
+    console.error('❌ Error al obtener categorías:', error);
     return NextResponse.json(
-      { error: "Error al obtener categorías" },
-      { status: 500 },
+      { error: 'Error al obtener categorías' },
+      { status: 500 }
     );
   }
 }

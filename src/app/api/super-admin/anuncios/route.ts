@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   anuncios,
   anunciosCursos,
   anunciosProgramas,
   anunciosUsuarios,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export async function GET() {
   try {
@@ -20,10 +20,10 @@ export async function GET() {
 
     return NextResponse.json(Array.isArray(allAnuncios) ? allAnuncios : []);
   } catch (error) {
-    console.error("❌ Error al obtener los anuncios:", error);
+    console.error('❌ Error al obtener los anuncios:', error);
     return NextResponse.json(
-      { message: "Error interno del servidor" },
-      { status: 500 },
+      { message: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }
@@ -34,14 +34,14 @@ export async function POST(req: Request) {
 
     // 🔹 Validar que `body` es un objeto válido
     if (
-      typeof body !== "object" ||
+      typeof body !== 'object' ||
       body === null ||
-      !("titulo" in body) ||
-      !("descripcion" in body) ||
-      !("imagenUrl" in body) ||
-      !("tipo_destinatario" in body)
+      !('titulo' in body) ||
+      !('descripcion' in body) ||
+      !('imagenUrl' in body) ||
+      !('tipo_destinatario' in body)
     ) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     // 🔹 Convertimos `body` en un objeto tipado seguro
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       titulo: string;
       descripcion: string;
       imagenUrl: string;
-      tipo_destinatario: "todos" | "cursos" | "programas" | "custom";
+      tipo_destinatario: 'todos' | 'cursos' | 'programas' | 'custom';
       courseIds?: unknown;
       programaIds?: unknown;
       userIds?: unknown;
@@ -61,8 +61,8 @@ export async function POST(req: Request) {
     // 🔹 Validaciones de campos obligatorios
     if (!titulo.trim() || !descripcion.trim() || !imagenUrl.trim()) {
       return NextResponse.json(
-        { error: "Todos los campos son obligatorios" },
-        { status: 400 },
+        { error: 'Todos los campos son obligatorios' },
+        { status: 400 }
       );
     }
 
@@ -80,12 +80,12 @@ export async function POST(req: Request) {
     // 📌 Validar que se creó el anuncio antes de continuar
     if (!nuevoAnuncio) {
       return NextResponse.json(
-        { error: "Error al crear el anuncio" },
-        { status: 500 },
+        { error: 'Error al crear el anuncio' },
+        { status: 500 }
       );
     }
 
-    console.log("✅ Anuncio creado correctamente:", nuevoAnuncio);
+    console.log('✅ Anuncio creado correctamente:', nuevoAnuncio);
 
     // 🔹 Convertir `courseIds` a un array de números seguros
     const courseIds: number[] = Array.isArray(parsedBody.courseIds)
@@ -95,26 +95,26 @@ export async function POST(req: Request) {
       : [];
 
     console.log(
-      "📌 Cursos recibidos antes de insertar en anunciosCursos:",
-      courseIds,
+      '📌 Cursos recibidos antes de insertar en anunciosCursos:',
+      courseIds
     );
 
     // 🔹 Insertar cursos asociados al anuncio en `anunciosCursos`
-    if (tipo_destinatario === "cursos" && courseIds.length > 0) {
+    if (tipo_destinatario === 'cursos' && courseIds.length > 0) {
       try {
         await db.insert(anunciosCursos).values(
           courseIds.map((courseId) => ({
             anuncioId: nuevoAnuncio.id,
             courseId,
-          })),
+          }))
         );
-        console.log("✅ Anuncios insertados en anunciosCursos");
+        console.log('✅ Anuncios insertados en anunciosCursos');
       } catch (err) {
-        console.error("❌ Error al insertar en anunciosCursos:", err);
+        console.error('❌ Error al insertar en anunciosCursos:', err);
       }
     } else {
       console.warn(
-        "⚠️ No se insertaron anuncios en anunciosCursos (Sin cursos seleccionados o error en conversión).",
+        '⚠️ No se insertaron anuncios en anunciosCursos (Sin cursos seleccionados o error en conversión).'
       );
     }
 
@@ -125,38 +125,38 @@ export async function POST(req: Request) {
           .filter((id) => !isNaN(id))
       : [];
 
-    if (tipo_destinatario === "programas" && programaIds.length > 0) {
+    if (tipo_destinatario === 'programas' && programaIds.length > 0) {
       await db.insert(anunciosProgramas).values(
         programaIds.map((programaId) => ({
           anuncioId: nuevoAnuncio.id,
           programaId,
-        })),
+        }))
       );
     }
 
     const userIds: string[] = Array.isArray(parsedBody.userIds)
-      ? parsedBody.userIds.filter((id): id is string => typeof id === "string")
+      ? parsedBody.userIds.filter((id): id is string => typeof id === 'string')
       : [];
 
-    if (tipo_destinatario === "custom" && userIds.length > 0) {
+    if (tipo_destinatario === 'custom' && userIds.length > 0) {
       await db.insert(anunciosUsuarios).values(
         userIds.map((userId) => ({
           anuncioId: nuevoAnuncio.id,
           userId,
-        })),
+        }))
       );
     }
 
     // ✅ Responder con éxito
     return NextResponse.json(
-      { message: "Anuncio guardado correctamente", anuncio: nuevoAnuncio },
-      { status: 201 },
+      { message: 'Anuncio guardado correctamente', anuncio: nuevoAnuncio },
+      { status: 201 }
     );
   } catch (error) {
-    console.error("❌ Error al guardar el anuncio:", error);
+    console.error('❌ Error al guardar el anuncio:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

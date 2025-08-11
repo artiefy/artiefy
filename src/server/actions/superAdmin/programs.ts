@@ -1,9 +1,9 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollmentPrograms, programas } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollmentPrograms, programas } from '~/server/db/schema';
 
-import type { MateriaWithCourse, Program } from "~/types";
+import type { MateriaWithCourse, Program } from '~/types';
 
 interface CreateProgramInput {
   title: string;
@@ -40,7 +40,7 @@ export const getAllPrograms = async (): Promise<Program[]> => {
           ...program,
           totalStudents: enrollmentCount,
         };
-      }),
+      })
     );
 
     return programsWithEnrollments.map((program) => {
@@ -71,7 +71,7 @@ export const getAllPrograms = async (): Promise<Program[]> => {
       };
     });
   } catch (error) {
-    console.error("Error fetching programs:", error);
+    console.error('Error fetching programs:', error);
     return [];
   }
 };
@@ -97,7 +97,7 @@ export async function createProgram(input: CreateProgramInput) {
 
 export async function updateProgram(
   id: number,
-  input: Partial<CreateProgramInput>,
+  input: Partial<CreateProgramInput>
 ) {
   const updatedProgram = await db
     .update(programas)

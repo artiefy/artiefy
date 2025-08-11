@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { z } from "zod";
+import { z } from 'zod';
 
-import { db } from "~/server/db";
-import { userCustomFields } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userCustomFields } from '~/server/db/schema';
 
 // Validación de entrada
 const requestBodySchema = z.object({
@@ -28,8 +28,8 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Error al crear el campo personalizado" },
-      { status: 500 },
+      { error: 'Error al crear el campo personalizado' },
+      { status: 500 }
     );
   }
 }

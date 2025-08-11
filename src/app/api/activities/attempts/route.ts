@@ -1,12 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
-import { and, eq } from "drizzle-orm";
+import { Redis } from '@upstash/redis';
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { userActivitiesProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -16,13 +16,13 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get("activityId");
-    const userId = searchParams.get("userId");
+    const activityId = searchParams.get('activityId');
+    const userId = searchParams.get('userId');
 
     if (!activityId || !userId) {
       return NextResponse.json(
-        { error: "ActivityId and userId are required" },
-        { status: 400 },
+        { error: 'ActivityId and userId are required' },
+        { status: 400 }
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const progress = await db.query.userActivitiesProgress.findFirst({
       where: and(
         eq(userActivitiesProgress.userId, userId),
-        eq(userActivitiesProgress.activityId, parseInt(activityId)),
+        eq(userActivitiesProgress.activityId, parseInt(activityId))
       ),
     });
 
@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
       lastAttemptAt: progress?.lastAttemptAt ?? null,
     });
   } catch (error) {
-    console.error("Error fetching attempts:", error);
+    console.error('Error fetching attempts:', error);
     return NextResponse.json(
-      { error: "Error fetching attempts" },
-      { status: 500 },
+      { error: 'Error fetching attempts' },
+      { status: 500 }
     );
   }
 }

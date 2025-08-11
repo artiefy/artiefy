@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from 'lucide-react';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export function ConfirmDialog({
             className="flex items-center rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4" />}
-            {loading ? "Procesando..." : "Confirmar"}
+            {loading ? 'Procesando...' : 'Confirmar'}
           </button>
         </div>
       </div>

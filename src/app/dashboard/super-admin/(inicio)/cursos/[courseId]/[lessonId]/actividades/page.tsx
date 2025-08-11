@@ -1,14 +1,14 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import { useParams, useRouter, useSearchParams } from "next/navigation"; // Cambiar la importación de useRouter
+import Image from 'next/image';
+import { useParams, useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
 
-import { useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
-import SelectParametro from "~/components/educators/layout/SelectParametro";
-import TypeActDropdown from "~/components/educators/layout/TypesActDropdown";
+import SelectParametro from '~/components/educators/layout/SelectParametro';
+import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,30 +19,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
-import { Button } from "~/components/educators/ui/button";
-import { Input } from "~/components/educators/ui/input";
-import { Label } from "~/components/educators/ui/label";
-import { Progress } from "~/components/educators/ui/progress";
+} from '~/components/educators/ui/alert-dialog';
+import { Button } from '~/components/educators/ui/button';
+import { Input } from '~/components/educators/ui/input';
+import { Label } from '~/components/educators/ui/label';
+import { Progress } from '~/components/educators/ui/progress';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Crear actividad
 
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return "black"; // Manejar el caso de color indefinido
-  hexcolor = hexcolor.replace("#", "");
+  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 // Definir las interfaces de los datos
@@ -99,15 +99,15 @@ const Page: React.FC = () => {
 
   const cursoIdUrl = params?.courseId; // Obtener el ID del curso de los parámetros
   const searchParams = useSearchParams(); // Usar useSearchParams de next/navigation
-  const lessonsId = searchParams?.get("lessonId"); // Obtener el ID de la lección de los parámetros
+  const lessonsId = searchParams?.get('lessonId'); // Obtener el ID de la lección de los parámetros
   const [isUploading, setIsUploading] = useState(false); // Definir isUploading
   const [uploadProgress, setUploadProgress] = useState(0); // Definir uploadProgress
   const [course, setCourse] = useState<Course | null>(null); // Definir course
   const [formData, setFormData] = useState({
     id: 0,
-    name: "",
-    description: "",
-    type: "",
+    name: '',
+    description: '',
+    type: '',
     porcentaje: 0,
     revisada: false,
     parametro: 0,
@@ -118,7 +118,7 @@ const Page: React.FC = () => {
   const lessonIdNumber = lessonIdUrl ? parseInt(lessonIdUrl, 10) : null;
   const router = useRouter(); // Usar useRouter de next/navigation
 
-  const [color, setColor] = useState<string>("#FFFFFF"); // Definir color
+  const [color, setColor] = useState<string>('#FFFFFF'); // Definir color
   const [isActive, setIsActive] = useState(false); // Definir isActive
   const [fechaMaxima, setFechaMaxima] = useState(false); // Definir fechaMaxima
   const [showLongevidadForm, setShowLongevidadForm] = useState(false); // Definir showLongevidadForm
@@ -128,7 +128,7 @@ const Page: React.FC = () => {
   >(null);
   void parametros; // Evitar el warning de ESLint por no usar setParametros
   void cursoIdString; // Evitar el warning de ESLint por no usar cursoIdString
-  const activityId = searchParams ? searchParams.get("activityId") : null; // o params.activityId
+  const activityId = searchParams ? searchParams.get('activityId') : null; // o params.activityId
   const isEditing = activityId !== null;
 
   const [loadingActivity, setLoadingActivity] = useState(isEditing);
@@ -138,28 +138,28 @@ const Page: React.FC = () => {
     setLoadingActivity(true);
 
     console.log(
-      "▶ Iniciando carga de actividad. isEditing:",
+      '▶ Iniciando carga de actividad. isEditing:',
       isEditing,
-      "activityId:",
-      activityId,
+      'activityId:',
+      activityId
     );
 
     fetch(`/api/educadores/actividades/${activityId}`)
       .then((res): Promise<ActivityDetailsAPI> => {
         console.log(
-          `▶ Respuesta del servidor: ${res.status} ${res.statusText}`,
+          `▶ Respuesta del servidor: ${res.status} ${res.statusText}`
         );
         if (!res.ok) throw new Error(res.statusText);
         return res.json();
       })
       .then((data: ActivityDetailsAPI) => {
-        console.log("✅ Datos recibidos de la actividad:", data);
+        console.log('✅ Datos recibidos de la actividad:', data);
         // inspecciona en consola estos campos:
         console.log(
-          "   parametroId:",
+          '   parametroId:',
           data.parametroId,
-          "pesoNota:",
-          data.pesoNota,
+          'pesoNota:',
+          data.pesoNota
         );
 
         // extraemos los valores correctos
@@ -190,10 +190,10 @@ const Page: React.FC = () => {
         }
       })
       .catch((err: unknown) => {
-        console.error("❌ Error al cargar la actividad:", err);
+        console.error('❌ Error al cargar la actividad:', err);
         const message =
-          err instanceof Error ? err.message : "Error desconocido";
-        toast("Error", { description: `No se pudo cargar: ${message}` });
+          err instanceof Error ? err.message : 'Error desconocido';
+        toast('Error', { description: `No se pudo cargar: ${message}` });
       })
       .finally(() => {
         setLoadingActivity(false);
@@ -206,20 +206,20 @@ const Page: React.FC = () => {
       try {
         // Obtener parámetros
         const parametrosResponse = await fetch(
-          `/api/educadores/parametros?courseId=${courseIdNumber}`,
+          `/api/educadores/parametros?courseId=${courseIdNumber}`
         );
         if (!parametrosResponse.ok) {
-          throw new Error("Error al obtener los parámetros");
+          throw new Error('Error al obtener los parámetros');
         }
         const parametrosData =
           (await parametrosResponse.json()) as Parametros[];
 
         // Obtener actividades para verificar parámetros en uso
         const actividadesResponse = await fetch(
-          `/api/educadores/actividades?courseId=${courseIdNumber}`,
+          `/api/educadores/actividades?courseId=${courseIdNumber}`
         );
         if (!actividadesResponse.ok) {
-          throw new Error("Error al obtener las actividades");
+          throw new Error('Error al obtener las actividades');
         }
         const actividadesData = (await actividadesResponse.json()) as {
           parametroId: number;
@@ -242,11 +242,11 @@ const Page: React.FC = () => {
         setParametros(parametrosActualizados);
       } catch (error: unknown) {
         if (error instanceof Error) {
-          console.error("❌ Error al cargar los parámetros:", error);
-          toast("Error", { description: error.message });
+          console.error('❌ Error al cargar los parámetros:', error);
+          toast('Error', { description: error.message });
         } else {
-          console.error("❌ Error al cargar los parámetros (no Error):", error);
-          toast("Error", { description: "Error al cargar los parámetros" });
+          console.error('❌ Error al cargar los parámetros (no Error):', error);
+          toast('Error', { description: 'Error al cargar los parámetros' });
         }
       }
     };
@@ -274,7 +274,7 @@ const Page: React.FC = () => {
       if (courseIdNumber !== null) {
         try {
           const response = await fetch(
-            `/api/educadores/courses/${courseIdNumber}`,
+            `/api/educadores/courses/${courseIdNumber}`
           );
 
           if (response.ok) {
@@ -283,8 +283,8 @@ const Page: React.FC = () => {
           }
         } catch (error: unknown) {
           const errorMessage =
-            error instanceof Error ? error.message : "Error desconocido";
-          toast("Error", {
+            error instanceof Error ? error.message : 'Error desconocido';
+          toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
           });
         }
@@ -301,8 +301,8 @@ const Page: React.FC = () => {
         ...prevFormData,
         revisada: newIsActive,
         ...(!newIsActive && {
-          name: "",
-          description: "",
+          name: '',
+          description: '',
           porcentaje: 0,
           parametro: 0,
         }),
@@ -332,20 +332,20 @@ const Page: React.FC = () => {
   // Función para validar el porcentaje de la actividad
   const validarPorcentaje = async (
     parametroId: number,
-    nuevoPorcentaje: number,
+    nuevoPorcentaje: number
   ) => {
     try {
       const response = await fetch(
-        "/api/educadores/actividades/actividadesByLesson",
+        '/api/educadores/actividades/actividadesByLesson',
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             parametroId,
             porcentaje: nuevoPorcentaje,
             actividadId: Number(activityId), // ↪️ agrega esto
           }),
-        },
+        }
       );
 
       const data = (await response.json()) as {
@@ -355,30 +355,30 @@ const Page: React.FC = () => {
       };
 
       if (!response.ok) {
-        toast.error("Error de porcentaje", {
-          description: "Error desconocido",
+        toast.error('Error de porcentaje', {
+          description: 'Error desconocido',
         });
         return false;
       }
 
       // Mostrar información detallada
-      toast("Información del parámetro", {
+      toast('Información del parámetro', {
         description: `
 					Porcentaje total actual: ${data.totalActual}%
 					Porcentaje disponible: ${data.disponible}%
-					${data.detalles?.length ? "\nActividades asignadas:" : ""}
-					${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join("") ?? ""}
+					${data.detalles?.length ? '\nActividades asignadas:' : ''}
+					${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
 				`,
       });
 
       return nuevoPorcentaje <= data.disponible;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error("❌ Error al validar porcentaje:", error);
-        toast("Error", { description: error.message });
+        console.error('❌ Error al validar porcentaje:', error);
+        toast('Error', { description: error.message });
       } else {
-        console.error("❌ Error al validar porcentaje (no Error):", error);
-        toast("Error", { description: "Error al validar el porcentaje" });
+        console.error('❌ Error al validar porcentaje (no Error):', error);
+        toast('Error', { description: 'Error al validar el porcentaje' });
       }
       return false;
     }
@@ -404,12 +404,12 @@ const Page: React.FC = () => {
 
     // Fetch de porcentaje disponible
     const response = await fetch(
-      "/api/educadores/actividades/actividadesByLesson",
+      '/api/educadores/actividades/actividadesByLesson',
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ parametroId, porcentaje: 0 }),
-      },
+      }
     );
 
     if (!response.ok) return;
@@ -422,7 +422,7 @@ const Page: React.FC = () => {
     setPorcentajeDisponible(data.disponible);
 
     // Opcional: Toast informativo
-    toast("Porcentaje disponible", {
+    toast('Porcentaje disponible', {
       description: `Ya usado: ${data.totalActual}%, Disponible: ${data.disponible}%`,
     });
   };
@@ -433,22 +433,22 @@ const Page: React.FC = () => {
 
     // Validaciones específicas con mensajes de error
     if (!formData.name) {
-      toast("Error", {
-        description: "El nombre de la actividad es requerido",
+      toast('Error', {
+        description: 'El nombre de la actividad es requerido',
       });
       return;
     }
 
     if (!formData.description) {
-      toast("Error", {
-        description: "La descripción de la actividad es requerida",
+      toast('Error', {
+        description: 'La descripción de la actividad es requerida',
       });
       return;
     }
 
     if (!formData.type) {
-      toast("Error", {
-        description: "Debe seleccionar un tipo de actividad",
+      toast('Error', {
+        description: 'Debe seleccionar un tipo de actividad',
       });
       return;
     }
@@ -459,9 +459,9 @@ const Page: React.FC = () => {
         formData.parametro &&
         (!formData.porcentaje || formData.porcentaje <= 0)
       ) {
-        toast("Error", {
+        toast('Error', {
           description:
-            "Debe asignar un porcentaje mayor a 0 para actividades revisadas con parámetro",
+            'Debe asignar un porcentaje mayor a 0 para actividades revisadas con parámetro',
         });
         return;
       }
@@ -488,12 +488,12 @@ const Page: React.FC = () => {
     if (formData.revisada && formData.parametro) {
       const porcentajeValido = await validarPorcentaje(
         formData.parametro,
-        formData.porcentaje || 0,
+        formData.porcentaje || 0
       );
 
       if (!porcentajeValido) {
-        toast("Error", {
-          description: "El porcentaje asignado excede el disponible",
+        toast('Error', {
+          description: 'El porcentaje asignado excede el disponible',
         });
         return;
       }
@@ -507,13 +507,13 @@ const Page: React.FC = () => {
       void porcentaje;
       const endpoint = isEditing
         ? `/api/educadores/actividades/${activityId}`
-        : "/api/educadores/actividades";
+        : '/api/educadores/actividades';
 
-      const method = isEditing ? "PUT" : "POST";
+      const method = isEditing ? 'PUT' : 'POST';
 
       const actividadResponse = await fetch(endpoint, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
           description: formData.description,
@@ -532,24 +532,24 @@ const Page: React.FC = () => {
         const errorData = (await actividadResponse.json()) as {
           error?: string;
         };
-        throw new Error(errorData.error ?? "Error al crear la actividad");
+        throw new Error(errorData.error ?? 'Error al crear la actividad');
       }
 
       const actividadData = (await actividadResponse.json()) as { id: number };
       const actividadId = actividadData.id;
 
       // Mostrar mensaje de éxito
-      toast("Éxito", {
-        description: `Actividad ${isEditing ? "actualizada" : "creada"} correctamente`,
+      toast('Éxito', {
+        description: `Actividad ${isEditing ? 'actualizada' : 'creada'} correctamente`,
       });
 
       router.push(
-        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`,
+        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
       );
     } catch (err: unknown) {
-      console.error("Error detallado:", err);
-      const message = err instanceof Error ? err.message : "Error desconocido";
-      toast("Error", { description: message });
+      console.error('Error detallado:', err);
+      const message = err instanceof Error ? err.message : 'Error desconocido';
+      toast('Error', { description: message });
     } finally {
       setIsUploading(false);
     }
@@ -646,7 +646,7 @@ const Page: React.FC = () => {
                   height={70}
                 />
                 <h2 className="mt-5 flex flex-col text-start text-3xl font-semibold">
-                  {isEditing ? "Editar actividad" : "Creación de actividad"}
+                  {isEditing ? 'Editar actividad' : 'Creación de actividad'}
                   <p className="text-sm">Del curso: {course?.title}</p>
                 </h2>
               </div>
@@ -669,18 +669,18 @@ const Page: React.FC = () => {
                         />
                         <span
                           className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            isActive ? "bg-gray-300" : "bg-red-500"
+                            isActive ? 'bg-gray-300' : 'bg-red-500'
                           }`}
                         >
                           <span
                             className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              isActive ? "translate-x-8" : "translate-x-0"
+                              isActive ? 'translate-x-8' : 'translate-x-0'
                             }`}
                           />
                         </span>
                       </label>
                       <span className="mt-1 text-sm text-gray-400">
-                        {isActive ? "Si" : "No"}
+                        {isActive ? 'Si' : 'No'}
                       </span>
                     </div>
                   </div>
@@ -703,7 +703,7 @@ const Page: React.FC = () => {
                       {showLongevidadForm && (
                         <div className="my-4">
                           <SelectParametro
-                            key={`param-${activityId ?? "new"}`}
+                            key={`param-${activityId ?? 'new'}`}
                             courseId={courseIdNumber}
                             parametro={formData.parametro ?? 0}
                             onParametroChange={handleParametroChange}
@@ -713,7 +713,7 @@ const Page: React.FC = () => {
                           <Label
                             htmlFor="porcentaje"
                             className={`mb-2 ${
-                              color === "#FFFFFF" ? "text-black" : "text-white"
+                              color === '#FFFFFF' ? 'text-black' : 'text-white'
                             }`}
                           >
                             Peso actividad en el parámetro (0-100 %):
@@ -722,7 +722,7 @@ const Page: React.FC = () => {
                           <Input
                             value={formData.porcentaje}
                             className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                              color === "#FFFFFF" ? "text-black" : "text-white"
+                              color === '#FFFFFF' ? 'text-black' : 'text-white'
                             }`}
                             type="number"
                             id="percentage"
@@ -737,12 +737,12 @@ const Page: React.FC = () => {
                           {porcentajeDisponible !== null && (
                             <p
                               className={`mt-1 text-sm ${
-                                color === "#FFFFFF"
-                                  ? "text-black"
-                                  : "text-white"
+                                color === '#FFFFFF'
+                                  ? 'text-black'
+                                  : 'text-white'
                               }`}
                             >
-                              Porcentaje disponible:{" "}
+                              Porcentaje disponible:{' '}
                               <strong>{porcentajeDisponible}%</strong>
                             </p>
                           )}
@@ -770,18 +770,18 @@ const Page: React.FC = () => {
                         />
                         <span
                           className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            fechaMaxima ? "bg-gray-300" : "bg-red-500"
+                            fechaMaxima ? 'bg-gray-300' : 'bg-red-500'
                           }`}
                         >
                           <span
                             className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              fechaMaxima ? "translate-x-8" : "translate-x-0"
+                              fechaMaxima ? 'translate-x-8' : 'translate-x-0'
                             }`}
                           />
                         </span>
                       </label>
                       <span className="mt-1 text-sm text-gray-400">
-                        {fechaMaxima ? "Si" : "No"}
+                        {fechaMaxima ? 'Si' : 'No'}
                       </span>
                     </div>
                   </div>
@@ -790,7 +790,7 @@ const Page: React.FC = () => {
                     <>
                       <span
                         className={`text-xl font-medium ${
-                          color === "#FFFFFF" ? "text-black" : "text-white"
+                          color === '#FFFFFF' ? 'text-black' : 'text-white'
                         }`}
                       >
                         Fecha máxima de entrega:
@@ -802,7 +802,7 @@ const Page: React.FC = () => {
                             ? new Date(formData.fechaMaximaEntrega)
                                 .toISOString()
                                 .slice(0, 16)
-                            : ""
+                            : ''
                         }
                         className="w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none"
                         onChange={(e) =>
@@ -820,7 +820,7 @@ const Page: React.FC = () => {
               {/* ─────  TÍTULO, DESCRIPCIÓN y SELECT de tipo ───── */}
               <Label
                 className={`mt-6 mb-2 text-xl ${
-                  color === "#FFFFFF" ? "text-black" : "text-white"
+                  color === '#FFFFFF' ? 'text-black' : 'text-white'
                 }`}
               >
                 Título
@@ -832,14 +832,14 @@ const Page: React.FC = () => {
                 }
                 placeholder="Nombre de la actividad"
                 className={`border-slate-200 ${
-                  color === "#FFFFFF" ? "text-black" : "text-white"
+                  color === '#FFFFFF' ? 'text-black' : 'text-white'
                 }`}
               />
 
               <div className="my-4 flex flex-col">
                 <Label
                   className={`mb-2 text-xl ${
-                    color === "#FFFFFF" ? "text-black" : "text-white"
+                    color === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   Descripción actividad:
@@ -850,20 +850,20 @@ const Page: React.FC = () => {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                    color === "#FFFFFF" ? "text-black" : "text-white"
+                    color === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 />
               </div>
 
               <Label
                 className={`mb-2 text-xl ${
-                  color === "#FFFFFF" ? "text-black" : "text-white"
+                  color === '#FFFFFF' ? 'text-black' : 'text-white'
                 }`}
               >
                 Tipo de actividad
               </Label>
               <TypeActDropdown
-                key={`tipo-${activityId ?? "new"}`}
+                key={`tipo-${activityId ?? 'new'}`}
                 typeActi={parseInt(formData.type, 10)}
                 setTypeActividad={(t) =>
                   setFormData({ ...formData, type: t.toString() })
@@ -908,7 +908,7 @@ const Page: React.FC = () => {
                 <Input
                   type="submit"
                   className="w-1/2 cursor-pointer border-green-600 bg-green-600 text-white hover:border-green-600 hover:bg-white hover:text-green-600"
-                  value={isEditing ? "Actualizar" : "Crear"}
+                  value={isEditing ? 'Actualizar' : 'Crear'}
                 />
               </div>
             </form>

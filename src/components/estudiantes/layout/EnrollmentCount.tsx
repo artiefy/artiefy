@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { Users } from "lucide-react";
+import { Users } from 'lucide-react';
 
-import { getProgramEnrollmentCount } from "~/server/actions/estudiantes/programs/getProgramEnrollmentCount";
+import { getProgramEnrollmentCount } from '~/server/actions/estudiantes/programs/getProgramEnrollmentCount';
 
 export function EnrollmentCount({ programId }: { programId: number }) {
   const [count, setCount] = useState(0);

@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { eq, inArray } from "drizzle-orm";
-import nodemailer from "nodemailer";
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 import {
   createPostReply,
@@ -11,9 +11,9 @@ import {
   getPostRepliesByPostId,
   getPostReplyById,
   updatePostReplyById,
-} from "~/models/educatorsModels/forumAndPosts";
-import { db } from "~/server/db";
-import { enrollments, forums, users } from "~/server/db/schema";
+} from '~/models/educatorsModels/forumAndPosts';
+import { db } from '~/server/db';
+import { enrollments, forums, users } from '~/server/db/schema';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -21,18 +21,18 @@ const respondWithError = (message: string, status: number) =>
 // GET replies
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const postIds = searchParams.get("postIds");
-  if (!postIds) return respondWithError("IDs de posts no proporcionados", 400);
+  const postIds = searchParams.get('postIds');
+  if (!postIds) return respondWithError('IDs de posts no proporcionados', 400);
 
   try {
-    const idsArray = postIds.split(",").map(Number);
+    const idsArray = postIds.split(',').map(Number);
     const replies = await Promise.all(
-      idsArray.map((id) => getPostRepliesByPostId(id)),
+      idsArray.map((id) => getPostRepliesByPostId(id))
     );
     return NextResponse.json(replies.flat());
   } catch (error) {
-    console.error("Error al obtener respuestas:", error);
-    return respondWithError("Error al obtener respuestas", 500);
+    console.error('Error al obtener respuestas:', error);
+    return respondWithError('Error al obtener respuestas', 500);
   }
 }
 
@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-    if (!userId) return respondWithError("No autorizado", 403);
+    if (!userId) return respondWithError('No autorizado', 403);
 
     const clerkUser = await currentUser();
-    if (!clerkUser) return respondWithError("Usuario no encontrado", 500);
+    if (!clerkUser) return respondWithError('Usuario no encontrado', 500);
 
     const body = (await request.json()) as {
       content: string;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const { content, postId } = body;
     await createPostReply(postId, userId, content);
 
-    console.log("[FORO][REPLY] ✅ Respuesta creada:", {
+    console.log('[FORO][REPLY] ✅ Respuesta creada:', {
       postId,
       userId,
       content,
@@ -62,9 +62,9 @@ export async function POST(request: NextRequest) {
 
     try {
       const post = await getPostById(postId);
-      if (!post || typeof post.forumId !== "number") {
-        console.error("[FORO][REPLY] ❌ Post inválido o sin forumId:", post);
-        return respondWithError("Post o forumId no válido", 400);
+      if (!post || typeof post.forumId !== 'number') {
+        console.error('[FORO][REPLY] ❌ Post inválido o sin forumId:', post);
+        return respondWithError('Post o forumId no válido', 400);
       }
 
       const foroId = post.forumId; // 👈 este es el nombre correcto según el objeto que recibiste
@@ -83,12 +83,12 @@ export async function POST(request: NextRequest) {
 
       const foro = foroResult[0];
       if (!foro) {
-        console.warn("[FORO][REPLY] ⚠️ Foro no encontrado.");
+        console.warn('[FORO][REPLY] ⚠️ Foro no encontrado.');
         return NextResponse.json({
-          message: "Respuesta creada, pero foro no encontrado",
+          message: 'Respuesta creada, pero foro no encontrado',
         });
       }
-      console.log("[FORO][REPLY] 🧩 Foro obtenido:", foro);
+      console.log('[FORO][REPLY] 🧩 Foro obtenido:', foro);
 
       const enrollmentResults = await db
         .select({ userId: enrollments.userId })
@@ -103,16 +103,16 @@ export async function POST(request: NextRequest) {
         .where(inArray(users.id, enrolledUserIds))
         .execute();
 
-      const senderEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+      const senderEmail = clerkUser.emailAddresses[0]?.emailAddress ?? '';
       const senderRole = clerkUser.publicMetadata?.role;
-      console.log("[FORO][REPLY] ✍️ Quien responde:", {
+      console.log('[FORO][REPLY] ✍️ Quien responde:', {
         senderEmail,
         senderRole,
       });
 
       const recipients = new Set<string>();
 
-      if (senderRole === "educador") {
+      if (senderRole === 'educador') {
         for (const student of usersResult) {
           if (student.email && student.email !== senderEmail) {
             recipients.add(student.email);
@@ -131,20 +131,20 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log("[FORO][REPLY] 📬 Correos a notificar:", [...recipients]);
+      console.log('[FORO][REPLY] 📬 Correos a notificar:', [...recipients]);
 
       if (recipients.size > 0) {
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          service: 'gmail',
           auth: {
-            user: "direcciongeneral@artiefy.com",
+            user: 'direcciongeneral@artiefy.com',
             pass: process.env.PASS,
           },
         });
 
         await transporter.sendMail({
           from: '"Artiefy Foros" <direcciongeneral@artiefy.com>',
-          to: Array.from(recipients).join(","),
+          to: Array.from(recipients).join(','),
           subject: `💬 Nueva respuesta en el foro: ${foro.title}`,
           html: `
   <div style="font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f3f4f6; padding: 30px;">
@@ -187,20 +187,20 @@ export async function POST(request: NextRequest) {
   </div>
 `,
         });
-        console.log("[FORO][REPLY] ✅ Correos enviados exitosamente.");
+        console.log('[FORO][REPLY] ✅ Correos enviados exitosamente.');
       } else {
-        console.log("[FORO][REPLY] ⚠️ No hay destinatarios para notificar.");
+        console.log('[FORO][REPLY] ⚠️ No hay destinatarios para notificar.');
       }
     } catch (err) {
-      console.error("[FORO][REPLY] ❌ Error al enviar correo:", err);
+      console.error('[FORO][REPLY] ❌ Error al enviar correo:', err);
     }
 
-    return NextResponse.json({ message: "Respuesta creada exitosamente" });
+    return NextResponse.json({ message: 'Respuesta creada exitosamente' });
 
-    return NextResponse.json({ message: "Respuesta creada exitosamente" });
+    return NextResponse.json({ message: 'Respuesta creada exitosamente' });
   } catch (error) {
-    console.error("Error al crear respuesta:", error);
-    return respondWithError("Error al crear respuesta", 500);
+    console.error('Error al crear respuesta:', error);
+    return respondWithError('Error al crear respuesta', 500);
   }
 }
 
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
-    if (!userId) return respondWithError("No autorizado", 403);
+    if (!userId) return respondWithError('No autorizado', 403);
 
     const { id, content } = (await request.json()) as {
       id: number;
@@ -216,14 +216,14 @@ export async function PUT(request: NextRequest) {
     };
 
     const reply = await getPostReplyById(id);
-    if (!reply) return respondWithError("Respuesta no encontrada", 404);
-    if (reply.userId !== userId) return respondWithError("No autorizado", 403);
+    if (!reply) return respondWithError('Respuesta no encontrada', 404);
+    if (reply.userId !== userId) return respondWithError('No autorizado', 403);
 
     await updatePostReplyById(id, content);
-    return NextResponse.json({ message: "Respuesta actualizada" });
+    return NextResponse.json({ message: 'Respuesta actualizada' });
   } catch (error) {
-    console.error("Error actualizando respuesta:", error);
-    return respondWithError("Error actualizando respuesta", 500);
+    console.error('Error actualizando respuesta:', error);
+    return respondWithError('Error actualizando respuesta', 500);
   }
 }
 
@@ -231,20 +231,20 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { userId } = await auth();
-    if (!userId) return respondWithError("No autorizado", 403);
+    if (!userId) return respondWithError('No autorizado', 403);
 
-    const replyId = new URL(request.url).searchParams.get("replyId");
-    if (!replyId) return respondWithError("ID no proporcionado", 400);
+    const replyId = new URL(request.url).searchParams.get('replyId');
+    if (!replyId) return respondWithError('ID no proporcionado', 400);
 
     const parsedId = parseInt(replyId);
     const reply = await getPostReplyById(parsedId);
-    if (!reply) return respondWithError("Respuesta no encontrada", 404);
-    if (reply.userId !== userId) return respondWithError("No autorizado", 403);
+    if (!reply) return respondWithError('Respuesta no encontrada', 404);
+    if (reply.userId !== userId) return respondWithError('No autorizado', 403);
 
     await deletePostReplyById(parsedId);
-    return NextResponse.json({ message: "Respuesta eliminada" });
+    return NextResponse.json({ message: 'Respuesta eliminada' });
   } catch (error) {
-    console.error("Error eliminando respuesta:", error);
-    return respondWithError("Error eliminando respuesta", 500);
+    console.error('Error eliminando respuesta:', error);
+    return respondWithError('Error eliminando respuesta', 500);
   }
 }

@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getTicketsByUserId } from "~/models/educatorsModels/ticketsModels";
+import { getTicketsByUserId } from '~/models/educatorsModels/ticketsModels';
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
+    const userId = url.searchParams.get('userId');
 
     if (!userId) {
       return NextResponse.json(
-        { error: "ID de usuario inválido" },
-        { status: 400 },
+        { error: 'ID de usuario inválido' },
+        { status: 400 }
       );
     }
 
@@ -18,17 +18,17 @@ export async function GET(request: Request) {
 
     if (!tickets) {
       return NextResponse.json(
-        { error: "Tickets no encontrados para este usuario" },
-        { status: 404 },
+        { error: 'Tickets no encontrados para este usuario' },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(tickets);
   } catch (error) {
-    console.error("Error al obtener los tickets:", error);
+    console.error('Error al obtener los tickets:', error);
     return NextResponse.json(
-      { error: "Error al obtener los tickets" },
-      { status: 500 },
+      { error: 'Error al obtener los tickets' },
+      { status: 500 }
     );
   }
 }

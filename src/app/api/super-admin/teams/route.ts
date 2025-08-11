@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { db } from "~/server/db";
-import { classMeetings } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { classMeetings } from '~/server/db/schema';
 
 interface TokenResponse {
   access_token: string;
@@ -15,46 +15,46 @@ async function getGraphToken() {
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET!;
   void tenant;
   const params = new URLSearchParams();
-  params.append("grant_type", "client_credentials");
-  params.append("client_id", clientId);
-  params.append("client_secret", clientSecret);
-  params.append("scope", "https://graph.microsoft.com/.default");
+  params.append('grant_type', 'client_credentials');
+  params.append('client_id', clientId);
+  params.append('client_secret', clientSecret);
+  params.append('scope', 'https://graph.microsoft.com/.default');
 
   const res = await fetch(
-    "https://login.microsoftonline.com/060f4acf-9732-441b-80f7-425de7381dd1/oauth2/v2.0/token",
+    'https://login.microsoftonline.com/060f4acf-9732-441b-80f7-425de7381dd1/oauth2/v2.0/token',
     {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
-    },
+    }
   );
 
   const data = (await res.json()) as TokenResponse;
 
   if (!res.ok) {
     throw new Error(
-      `[Token] Error al obtener token: ${data.error_description ?? data.error}`,
+      `[Token] Error al obtener token: ${data.error_description ?? data.error}`
     );
   }
 
-  console.log("[TOKEN OK]", data.access_token);
+  console.log('[TOKEN OK]', data.access_token);
   return data.access_token;
 }
 
 // convierte Date a string local sin "Z"
 function formatLocalDate(date: Date): string {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
   return `${y}-${m}-${d}T${h}:${min}:00`;
 }
 
 function parseLocalDateTimeToUTC(dateStr: string): Date {
-  const [datePart, timePart] = dateStr.split("T");
-  const [year, month, day] = datePart.split("-").map(Number);
-  const [hour, minute] = timePart.split(":").map(Number);
+  const [datePart, timePart] = dateStr.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
 
   const local = new Date(year, month - 1, day, hour, minute);
 
@@ -82,13 +82,13 @@ export async function POST(req: Request) {
       console.log(`\n[Clase ${i + 1}] Generando fechas...`);
 
       // Parseamos manualmente
-      const [datePart, timePart] = startDateTime.split("T");
-      const [year, month, day] = datePart.split("-").map(Number);
-      const [hour, minute] = timePart.split(":").map(Number);
+      const [datePart, timePart] = startDateTime.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
 
       const startForDb = new Date(year, month - 1, day + i * 7, hour, minute);
       const endForDb = new Date(
-        startForDb.getTime() + durationMinutes * 60 * 1000,
+        startForDb.getTime() + durationMinutes * 60 * 1000
       );
 
       const startForApi = formatLocalDate(startForDb);
@@ -97,38 +97,38 @@ export async function POST(req: Request) {
       console.log(
         `[Clase ${i + 1}] → Local para API (Teams):`,
         startForApi,
-        "→",
-        endForApi,
+        '→',
+        endForApi
       );
       console.log(
         `[Clase ${i + 1}] → Fecha en objeto Date (para BD):`,
         startForDb,
-        "→",
-        endForDb,
+        '→',
+        endForDb
       );
 
       const res = await fetch(
-        "https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/events",
+        'https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/events',
         {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             subject: `${title} (Clase ${i + 1})`,
             start: {
               dateTime: startForApi,
-              timeZone: "America/Bogota",
+              timeZone: 'America/Bogota',
             },
             end: {
               dateTime: endForApi,
-              timeZone: "America/Bogota",
+              timeZone: 'America/Bogota',
             },
             isOnlineMeeting: true,
-            onlineMeetingProvider: "teamsForBusiness",
+            onlineMeetingProvider: 'teamsForBusiness',
           }),
-        },
+        }
       );
 
       const text = await res.text();
@@ -153,7 +153,7 @@ export async function POST(req: Request) {
       }
 
       if (!res.ok) {
-        console.error("[Graph Error]", {
+        console.error('[Graph Error]', {
           status: res.status,
           url: res.url,
           response: data,
@@ -161,14 +161,14 @@ export async function POST(req: Request) {
 
         throw new Error(
           `[Teams] Error creando evento. Status ${res.status}: ${
-            typeof data === "object"
+            typeof data === 'object'
               ? (data.error?.message ?? JSON.stringify(data))
               : data
-          }`,
+          }`
         );
       }
 
-      if (typeof data === "string") {
+      if (typeof data === 'string') {
         throw new Error(`[Teams] Respuesta inesperada: ${data}`);
       }
 
@@ -187,29 +187,29 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log("\n[BD] Insertando reuniones en la base de datos...");
+    console.log('\n[BD] Insertando reuniones en la base de datos...');
     await db.insert(classMeetings).values(
       meetings.map((m, i) => ({
         courseId: Number(courseId),
         title: m.subject,
         startDateTime: parseLocalDateTimeToUTC(
-          formatLocalDate(m.startDateTime),
+          formatLocalDate(m.startDateTime)
         ),
         endDateTime: parseLocalDateTimeToUTC(formatLocalDate(m.endDateTime)),
         joinUrl: m.joinUrl,
         weekNumber: i + 1,
-        meetingId: m.meetingId ?? "", // O un valor string por defecto
-      })),
+        meetingId: m.meetingId ?? '', // O un valor string por defecto
+      }))
     );
 
-    console.log("[BD] ✅ Reuniones insertadas:", meetings.length);
+    console.log('[BD] ✅ Reuniones insertadas:', meetings.length);
 
     return NextResponse.json({ meetings });
   } catch (error: unknown) {
     const err = error as { message?: string };
     return NextResponse.json(
-      { error: err.message ?? "Error interno" },
-      { status: 500 },
+      { error: err.message ?? 'Error interno' },
+      { status: 500 }
     );
   }
 }

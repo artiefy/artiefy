@@ -1,14 +1,14 @@
-"use client";
+'use client';
 import {
   type Dispatch,
   type SetStateAction,
   useCallback,
   useEffect,
-} from "react";
+} from 'react';
 
-import { FaCheckCircle, FaClock, FaLock } from "react-icons/fa";
-import { toast } from "sonner";
-import useSWR from "swr";
+import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
+import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import {
   Select,
@@ -16,9 +16,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/estudiantes/ui/select";
-import { type LessonWithProgress } from "~/types";
-import { extractNumbersFromTitle, sortLessons } from "~/utils/lessonSorting";
+} from '~/components/estudiantes/ui/select';
+import { type LessonWithProgress } from '~/types';
+import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
   lessonsState: LessonWithProgress[];
@@ -61,13 +61,13 @@ const LessonCards = ({
       : null,
     async (url) => {
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Error al obtener lecciones");
+      if (!res.ok) throw new Error('Error al obtener lecciones');
       return (await res.json()) as LessonWithProgress[];
     },
     {
       refreshInterval: 3000, // refresca cada 3 segundos
       revalidateOnFocus: true,
-    },
+    }
   );
 
   // Actualiza el estado local cuando SWR obtiene nuevas lecciones
@@ -82,10 +82,10 @@ const LessonCards = ({
       if (selectedLessonId && progress === 100) {
         try {
           const response = await fetch(
-            `/api/lessons/${lessonId}/next-lesson-status`,
+            `/api/lessons/${lessonId}/next-lesson-status`
           );
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error('Network response was not ok');
           }
           const data = (await response.json()) as NextLessonStatus;
 
@@ -94,16 +94,16 @@ const LessonCards = ({
               prev.map((lesson) =>
                 lesson.id === data.lessonId
                   ? { ...lesson, isLocked: false, isNew: true }
-                  : lesson,
-              ),
+                  : lesson
+              )
             );
           }
         } catch (error) {
-          console.error("Error checking lesson status:", error);
+          console.error('Error checking lesson status:', error);
         }
       }
     },
-    [selectedLessonId, progress, setLessonsState],
+    [selectedLessonId, progress, setLessonsState]
   );
 
   // Pre-sort lessons once
@@ -113,8 +113,8 @@ const LessonCards = ({
     if (selectedLessonId && progress >= 1) {
       setLessonsState((prev) =>
         prev.map((lesson) =>
-          lesson.id === selectedLessonId ? { ...lesson, isNew: false } : lesson,
-        ),
+          lesson.id === selectedLessonId ? { ...lesson, isNew: false } : lesson
+        )
       );
     }
   }, [selectedLessonId, progress, setLessonsState]);
@@ -124,7 +124,7 @@ const LessonCards = ({
       if (!selectedLessonId) return;
 
       const currentLesson = sortedLessons.find(
-        (l) => l.id === selectedLessonId,
+        (l) => l.id === selectedLessonId
       );
 
       if (!currentLesson || currentLesson.porcentajecompletado < 100) return;
@@ -160,9 +160,9 @@ const LessonCards = ({
 
       if (shouldUnlock) {
         try {
-          const response = await fetch("/api/lessons/unlock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          const response = await fetch('/api/lessons/unlock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               lessonId: nextLesson.id,
               currentLessonId: selectedLessonId,
@@ -173,7 +173,7 @@ const LessonCards = ({
             }),
           });
 
-          if (!response.ok) throw new Error("Failed to unlock lesson");
+          if (!response.ok) throw new Error('Failed to unlock lesson');
 
           const result = (await response.json()) as UnlockResponse;
           if (result.success) {
@@ -181,13 +181,13 @@ const LessonCards = ({
               prev.map((lesson) =>
                 nextLesson && lesson.id === nextLesson.id
                   ? { ...lesson, isLocked: false, isNew: true }
-                  : lesson,
-              ),
+                  : lesson
+              )
             );
 
             // Solo mostrar el toast una vez después de actualizar el estado
-            toast.success("¡Nueva clase desbloqueada!", {
-              id: "lesson-unlocked", // Identificador único para evitar duplicados
+            toast.success('¡Nueva clase desbloqueada!', {
+              id: 'lesson-unlocked', // Identificador único para evitar duplicados
               duration: 3000,
             });
 
@@ -195,8 +195,8 @@ const LessonCards = ({
             await checkLessonStatus(selectedLessonId);
           }
         } catch (error) {
-          console.error("Error unlocking next lesson:", error);
-          toast.error("Error al desbloquear la siguiente clase");
+          console.error('Error unlocking next lesson:', error);
+          toast.error('Error al desbloquear la siguiente clase');
         }
       }
     };
@@ -215,7 +215,7 @@ const LessonCards = ({
       return {
         icon: <FaLock className="text-gray-400" />,
         isAccessible: false,
-        className: "cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm",
+        className: 'cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm',
       };
     }
 
@@ -225,7 +225,7 @@ const LessonCards = ({
         icon: <FaCheckCircle className="text-green-500" />,
         isAccessible: true,
         className:
-          "cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-colors duration-200 active:scale-[0.98] active:transition-transform",
+          'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-colors duration-200 active:scale-[0.98] active:transition-transform',
       };
     }
 
@@ -234,7 +234,7 @@ const LessonCards = ({
       icon: <FaClock className="text-gray-400" />,
       isAccessible: true,
       className:
-        "cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] active:transition-transform",
+        'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] active:transition-transform',
     };
   };
 
@@ -244,14 +244,14 @@ const LessonCards = ({
     if (!lessonItem.isLocked) {
       onLessonClick(lessonItem.id);
     } else {
-      toast.error("Clase Bloqueada", {
-        description: "Completa la actividad anterior y desbloquea esta clase.",
+      toast.error('Clase Bloqueada', {
+        description: 'Completa la actividad anterior y desbloquea esta clase.',
       });
     }
   };
 
   const truncateDescription = (description: string | null, maxLength = 50) => {
-    if (!description) return "";
+    if (!description) return '';
     if (description.length <= maxLength) return description;
     return description.slice(0, maxLength).trim();
   };
@@ -308,17 +308,17 @@ const LessonCards = ({
         key={lessonItem.id}
         onClick={() => handleClick(lessonItem)}
         className={`relative rounded-lg p-4 transition-all duration-200 ease-in-out ${
-          isNavigating ? "cursor-not-allowed opacity-50" : ""
+          isNavigating ? 'cursor-not-allowed opacity-50' : ''
         } ${status.className} ${
           isCurrentLesson
-            ? "z-20 border-l-8 border-blue-500 bg-blue-50/95 shadow-md"
-            : ""
+            ? 'z-20 border-l-8 border-blue-500 bg-blue-50/95 shadow-md'
+            : ''
         }`}
       >
         <div className="mb-2 flex items-center justify-between">
           <h3
             className={`max-w-[calc(100%-4rem)] truncate font-semibold ${
-              status.isAccessible ? "text-gray-900" : "text-gray-500"
+              status.isAccessible ? 'text-gray-900' : 'text-gray-500'
             }`}
             title={lessonItem.title}
           >

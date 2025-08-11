@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import { useParams } from "next/navigation";
+import Image from 'next/image';
+import { useParams } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs"; // 🔥 Agrega esta línea al inicio del archivo
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio del archivo
+import { toast } from 'sonner';
 
-import ModalFormCourse from "~/components/educators/modals/program/ModalFormCourse"; // Import ModalFormCourse
+import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,25 +18,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/educators/ui/alert-dialog";
-import { Badge } from "~/components/estudiantes/ui/badge";
-import { Button } from "~/components/estudiantes/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/estudiantes/ui/card";
-import { Label } from "~/components/estudiantes/ui/label";
-import ProgramCoursesList from "~/components/super-admin/layout/programdetail/ProgramCoursesList";
-import ModalFormProgram from "~/components/super-admin/modals/ModalFormProgram";
+} from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
+import { Label } from '~/components/estudiantes/ui/label';
+import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
+import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 import {
   type CourseData as BaseCourseData,
   getCategoryNameById,
   getInstructorNameById,
-} from "~/server/queries/queries";
+} from '~/server/queries/queries';
 
 interface CourseData extends BaseCourseData {
   programId?: number; // Add programId as an optional property
@@ -91,13 +91,13 @@ export interface Parametros {
 
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
-  if (hexcolor === "#FFFFFF") return "black"; // Manejar el caso del color blanco
-  hexcolor = hexcolor.replace("#", "");
+  if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 const ProgramDetail: React.FC<ProgramDetailProps> = () => {
@@ -106,8 +106,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const [program, setProgram] = useState<Program | null>(null); // Nuevo estado para el programa
   const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
   const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
-  const [selectedColor, setSelectedColor] = useState<string>("#FFFFFF"); // Color predeterminado blanco
-  const predefinedColors = ["#000000", "#FFFFFF", "#1f2937"]; // Colores específicosconst { user } = useUser(); // 🔥 Agrega esta línea en el componente
+  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
+  const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicosconst { user } = useUser(); // 🔥 Agrega esta línea en el componente
   const { user } = useUser(); // 🔥 Agrega esta línea en el componente
   const [uploading, setUploading] = useState(false); // Nuevo estado para la carga
   const [isActive, setIsActive] = useState(true);
@@ -129,7 +129,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const programIdString = Array.isArray(programIdUrl)
     ? programIdUrl[0]
     : programIdUrl; // Obtener el id del programa como string
-  const programIdString2 = programIdString ?? ""; // Verificar si el id del programa es nulo
+  const programIdString2 = programIdString ?? ''; // Verificar si el id del programa es nulo
   const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
   const [selectedCourseType, setSelectedCourseType] = useState<number[]>([]);
@@ -137,9 +137,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   void setEditingCourse;
   void uploading;
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
-    [],
+    []
   );
-  const [instructor, setInstructor] = useState("");
+  const [instructor, setInstructor] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
@@ -149,7 +149,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   useEffect(() => {
     const loadEducators = async () => {
       try {
-        const response = await fetch("/api/super-admin/changeEducators");
+        const response = await fetch('/api/super-admin/changeEducators');
         if (response.ok) {
           const data = (await response.json()) as {
             id: string;
@@ -158,7 +158,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           setEducators(data);
         }
       } catch (error) {
-        console.error("Error al cargar educadores:", error);
+        console.error('Error al cargar educadores:', error);
       }
     };
     void loadEducators();
@@ -166,14 +166,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
   const [newCourse, setNewCourse] = useState<CourseData>({
     id: 0,
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     categoryid: 0,
     modalidadesid: 0,
     nivelid: 0,
-    instructor: "",
-    coverImageKey: "",
-    creatorId: "",
+    instructor: '',
+    coverImageKey: '',
+    creatorId: '',
     rating: 0,
     createdAt: new Date().toISOString(),
   });
@@ -182,17 +182,17 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     if (programIdNumber !== null) {
       try {
         const response = await fetch(
-          `/api/super-admin/programs/${programIdNumber}`,
+          `/api/super-admin/programs/${programIdNumber}`
         );
         if (!response.ok) {
-          throw new Error("Error fetching program");
+          throw new Error('Error fetching program');
         }
         const data = (await response.json()) as Program;
         const coursesResponse = await fetch(
-          `/api/super-admin/programs/${programIdNumber}/courses`,
+          `/api/super-admin/programs/${programIdNumber}/courses`
         );
         if (!coursesResponse.ok) {
-          throw new Error("Error fetching courses");
+          throw new Error('Error fetching courses');
         }
         const coursesData = (await coursesResponse.json()) as CourseData[];
 
@@ -211,22 +211,22 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                 instructorName: instructorName,
               };
             } catch (error) {
-              console.error("Error fetching names:", error);
+              console.error('Error fetching names:', error);
               return {
                 ...course,
-                categoryName: "Unknown Category",
-                instructorName: "Unknown Instructor",
+                categoryName: 'Unknown Category',
+                instructorName: 'Unknown Instructor',
               };
             }
-          }),
+          })
         );
 
         setCourses(coursesWithNames);
         setProgram(data);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching program:", error);
-        setError("Error fetching program");
+        console.error('Error fetching program:', error);
+        setError('Error fetching program');
         setLoading(false);
       }
     }
@@ -235,7 +235,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   // Obtener el programa y los parámetros al cargar la página
   useEffect(() => {
     fetchProgram().catch((error) =>
-      console.error("Error fetching program:", error),
+      console.error('Error fetching program:', error)
     );
   }, [fetchProgram]);
 
@@ -281,16 +281,16 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const handleCreateCourse = () => {
     setNewCourse({
       id: 0,
-      title: "",
-      description: "",
+      title: '',
+      description: '',
       categoryid: 0,
       modalidadesid: 0,
       nivelid: 0,
-      instructor: "",
+      instructor: '',
       programId: programIdNumber, // programId is now part of CourseData
-      creatorId: "",
+      creatorId: '',
       rating: 0,
-      coverImageKey: "", // Add the missing coverImageKey property
+      coverImageKey: '', // Add the missing coverImageKey property
       createdAt: new Date().toISOString(),
     });
 
@@ -302,14 +302,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     setIsCourseModalOpen(false);
     setNewCourse({
       id: 0,
-      title: "",
-      description: "",
+      title: '',
+      description: '',
       categoryid: 0,
       modalidadesid: 0,
       nivelid: 0,
-      instructor: "",
-      coverImageKey: "",
-      creatorId: "",
+      instructor: '',
+      coverImageKey: '',
+      creatorId: '',
       rating: 0,
       createdAt: new Date().toISOString(), // Add createdAt property
     });
@@ -331,7 +331,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     programId: number,
     isActive: boolean,
     courseTypeId: number[],
-    individualPrice: number | null,
+    individualPrice: number | null
   ) => {
     if (!user) return;
 
@@ -339,12 +339,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       setUploading(true);
       void id;
 
-      let videoKey = "";
+      let videoKey = '';
 
       if (file) {
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -354,7 +354,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `Error al iniciar la carga: ${uploadResponse.statusText}`,
+            `Error al iniciar la carga: ${uploadResponse.statusText}`
           );
         }
 
@@ -369,15 +369,15 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         Object.entries(uploadData.fields).forEach(([key, value]) => {
           formData.append(key, value);
         });
-        formData.append("file", file);
+        formData.append('file', file);
 
         const uploadResult = await fetch(uploadData.url, {
-          method: "POST",
+          method: 'POST',
           body: formData,
         });
 
         if (!uploadResult.ok) {
-          throw new Error("Error al subir el archivo");
+          throw new Error('Error al subir el archivo');
         }
 
         videoKey = uploadData.key;
@@ -389,9 +389,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         }
       }
 
-      const response = await fetch("/api/educadores/courses/cursoMateria", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/educadores/courses/cursoMateria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           description,
@@ -414,7 +414,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
       if (response.ok) {
         const responseData = (await response.json()) as { id: number }[];
-        console.log("📌 Respuesta de la API al crear curso:", responseData);
+        console.log('📌 Respuesta de la API al crear curso:', responseData);
 
         responseData.forEach(async (data) => {
           console.log(`Curso creado con ID: ${data.id}`);
@@ -423,17 +423,17 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
             for (const parametro of editParametros) {
               try {
                 const paramResponse = await fetch(
-                  "/api/educadores/parametros",
+                  '/api/educadores/parametros',
                   {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       name: parametro.name,
                       description: parametro.description,
                       porcentaje: parametro.porcentaje,
                       courseId: data.id,
                     }),
-                  },
+                  }
                 );
 
                 if (!paramResponse.ok) {
@@ -443,11 +443,11 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                   throw new Error(errorData.error);
                 }
 
-                toast.success("Parámetro creado exitosamente", {
+                toast.success('Parámetro creado exitosamente', {
                   description: `El parámetro se ha creado exitosamente para el curso ID ${data.id}`,
                 });
               } catch (error) {
-                toast.error("Error al crear el parámetro", {
+                toast.error('Error al crear el parámetro', {
                   description: `Error en el curso ID ${data.id}: ${(error as Error).message}`,
                 });
               }
@@ -455,10 +455,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           }
         });
 
-        toast.success("Curso(s) creado(s) con éxito", {
+        toast.success('Curso(s) creado(s) con éxito', {
           description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData
             .map((r) => r.id)
-            .join(", ")}`,
+            .join(', ')}`,
         });
 
         await fetchProgram(); // refresca la lista de cursos
@@ -466,16 +466,16 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         setIsCourseModalOpen(false); // cierra modal
       } else {
         const errorData = (await response.json()) as { error?: string };
-        toast.error("Error", {
+        toast.error('Error', {
           description:
-            errorData.error ?? "Ocurrió un error al procesar la solicitud",
+            errorData.error ?? 'Ocurrió un error al procesar la solicitud',
         });
       }
     } catch (error) {
-      console.error("Error during course creation:", error);
-      toast.error("Error", {
+      console.error('Error during course creation:', error);
+      toast.error('Error', {
         description: `Error al crear curso: ${
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error ? error.message : 'Unknown error'
         }`,
       });
     } finally {
@@ -487,10 +487,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     if (!program) return;
 
     try {
-      const response = await fetch("/api/super-admin/programs/deleteProgram", {
-        method: "DELETE",
+      const response = await fetch('/api/super-admin/programs/deleteProgram', {
+        method: 'DELETE',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           programIds: [program.id],
@@ -499,15 +499,15 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
       if (!response.ok) {
         const error = (await response.json()) as { message?: string };
-        throw new Error(error.message ?? "Error al eliminar el programa");
+        throw new Error(error.message ?? 'Error al eliminar el programa');
       }
 
-      toast.success("Programa eliminado exitosamente");
+      toast.success('Programa eliminado exitosamente');
       // Redirect to programs list
-      window.location.href = "/dashboard/super-admin/programs";
+      window.location.href = '/dashboard/super-admin/programs';
     } catch (error) {
-      toast.error("Error al eliminar el programa");
-      console.error("Error:", error);
+      toast.error('Error al eliminar el programa');
+      console.error('Error:', error);
     }
   };
 
@@ -521,12 +521,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     rating: number,
     coverImageKey: string,
     _fileName: string, // Add underscore
-    subjectIds: number[],
+    subjectIds: number[]
   ) => {
     try {
       const response = await fetch(`/api/super-admin/programs/${_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           description,
@@ -538,14 +538,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el programa");
+        throw new Error('Error al actualizar el programa');
       }
 
-      toast.success("Programa actualizado exitosamente");
+      toast.success('Programa actualizado exitosamente');
       setIsEditModalOpen(false);
       void fetchProgram(); // Use void operator
     } catch (error) {
-      toast.error("Error al actualizar el programa");
+      toast.error('Error al actualizar el programa');
       console.error(error);
     }
   };
@@ -597,7 +597,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
             <div className="flex flex-col">
               <Label
                 className={
-                  selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                 }
               >
                 Seleccione el color deseado
@@ -608,9 +608,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                     key={color}
                     style={{ backgroundColor: color }}
                     className={`size-8 border ${
-                      selectedColor === "#FFFFFF"
-                        ? "border-black"
-                        : "border-white"
+                      selectedColor === '#FFFFFF'
+                        ? 'border-black'
+                        : 'border-white'
                     }`}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
@@ -658,7 +658,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Programa:
@@ -670,7 +670,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Categoría:
@@ -687,14 +687,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
               <div className="space-y-2">
                 <h2
                   className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   Descripción:
                 </h2>
                 <p
                   className={`text-justify text-sm sm:text-base ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   {program.description}
@@ -716,7 +716,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         title={newCourse.title}
         parametros={editParametros}
         setTitle={(title) => setNewCourse((prev) => ({ ...prev, title }))}
-        description={newCourse.description ?? ""}
+        description={newCourse.description ?? ''}
         setDescription={(desc) =>
           setNewCourse((prev) => ({ ...prev, description: desc }))
         }
@@ -732,7 +732,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         }
         modalidadesid={[Number(newCourse.modalidadesid)]}
         nivelid={Number(newCourse.nivelid) || 0}
-        coverImageKey={newCourse.coverImageKey ?? ""}
+        coverImageKey={newCourse.coverImageKey ?? ''}
         setCoverImageKey={(cover) =>
           setNewCourse((prev) => ({ ...prev, coverImageKey: cover }))
         }
@@ -789,19 +789,19 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           description={editingProgram.description}
           setDescription={(desc) =>
             setEditingProgram((prev) =>
-              prev ? { ...prev, description: desc } : null,
+              prev ? { ...prev, description: desc } : null
             )
           }
           categoryid={Number(editingProgram.categoryid)}
           setCategoryid={(catId) =>
             setEditingProgram((prev) =>
-              prev ? { ...prev, categoryid: String(catId) } : null,
+              prev ? { ...prev, categoryid: String(catId) } : null
             )
           }
           coverImageKey={editingProgram.coverImageKey}
           setCoverImageKey={(cover) =>
             setEditingProgram((prev) =>
-              prev ? { ...prev, coverImageKey: cover } : null,
+              prev ? { ...prev, coverImageKey: cover } : null
             )
           }
           rating={editingProgram.rating}

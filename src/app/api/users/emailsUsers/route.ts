@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
-import nodemailer from "nodemailer";
+import { clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
-import { db } from "~/server/db";
-import { userCredentials } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userCredentials } from '~/server/db/schema';
 
 // Interfaces and types
 interface MailOptions {
@@ -17,16 +17,16 @@ interface MailOptions {
 
 interface Result {
   userId: string;
-  status: "success" | "error";
+  status: 'success' | 'error';
   message: string;
   email?: string;
 }
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
-    user: "direcciongeneral@artiefy.com",
+    user: 'direcciongeneral@artiefy.com',
     pass: process.env.PASS,
   },
 });
@@ -34,8 +34,8 @@ const transporter = nodemailer.createTransport({
 // Function to generate a random password
 function generateRandomPassword(length = 12): string {
   const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-  let password = "";
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let password = '';
   for (let i = 0; i < length; i++) {
     password += charset.charAt(Math.floor(Math.random() * charset.length));
   }
@@ -56,29 +56,29 @@ export async function POST(request: Request) {
         if (!clerkUser) {
           results.push({
             userId,
-            status: "error",
-            message: "Usuario no encontrado",
+            status: 'error',
+            message: 'Usuario no encontrado',
           });
           continue;
         }
 
         const email =
           clerkUser.emailAddresses.find(
-            (addr) => addr.id === clerkUser.primaryEmailAddressId,
-          )?.emailAddress ?? "";
+            (addr) => addr.id === clerkUser.primaryEmailAddressId
+          )?.emailAddress ?? '';
 
         if (!email) {
           results.push({
             userId,
-            status: "error",
-            message: "Email no encontrado",
+            status: 'error',
+            message: 'Email no encontrado',
           });
           continue;
         }
 
         const username =
           clerkUser.username ??
-          `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim();
+          `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
 
         let password: string;
 
@@ -103,8 +103,8 @@ export async function POST(request: Request) {
             console.error(`Error creando credenciales para ${userId}:`, error);
             results.push({
               userId,
-              status: "error",
-              message: "Error al crear credenciales",
+              status: 'error',
+              message: 'Error al crear credenciales',
             });
             continue;
           }
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
         const mailOptions: MailOptions = {
           from: '"Artiefy" <direcciongeneral@artiefy.com>',
           to: email,
-          subject: "🎨 Credenciales de Acceso - Artiefy",
+          subject: '🎨 Credenciales de Acceso - Artiefy',
           html: `
             <h2>¡Hola ${username}!</h2>
             <p>Aquí están tus credenciales de acceso para Artiefy:</p>
@@ -135,26 +135,26 @@ export async function POST(request: Request) {
 
         results.push({
           userId,
-          status: "success",
+          status: 'success',
           email,
-          message: "Credenciales enviadas correctamente",
+          message: 'Credenciales enviadas correctamente',
         });
       } catch (error) {
         console.error(`Error procesando usuario ${userId}:`, error);
         results.push({
           userId,
-          status: "error",
-          message: error instanceof Error ? error.message : "Error desconocido",
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Error desconocido',
         });
       }
     }
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Error en la ruta emailsUsers:", error);
+    console.error('Error en la ruta emailsUsers:', error);
     return NextResponse.json(
-      { error: "Error al enviar los correos" },
-      { status: 500 },
+      { error: 'Error al enviar los correos' },
+      { status: 500 }
     );
   }
 }

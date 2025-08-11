@@ -1,6 +1,6 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
+import { db } from '~/server/db/index';
 import {
   activities,
   categories,
@@ -9,7 +9,7 @@ import {
   modalidades,
   userLessonsProgress,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export interface Lesson {
   id: number;
@@ -56,19 +56,19 @@ export async function createLesson({
   try {
     const newLesson = await db.insert(lessons).values({
       title,
-      description: description ?? "",
+      description: description ?? '',
       duration,
-      coverImageKey: coverImageKey ?? "",
-      coverVideoKey: coverVideoKey ?? "",
+      coverImageKey: coverImageKey ?? '',
+      coverVideoKey: coverVideoKey ?? '',
       courseId,
-      resourceKey: resourceKey ?? "",
-      resourceNames: resourceNames ?? "",
+      resourceKey: resourceKey ?? '',
+      resourceNames: resourceNames ?? '',
     });
 
-    console.log("Lección creada:", newLesson);
+    console.log('Lección creada:', newLesson);
     return newLesson;
   } catch (error) {
-    console.error("Error al crear la lección:", error);
+    console.error('Error al crear la lección:', error);
     throw error;
   }
 }
@@ -134,11 +134,11 @@ export async function getLessonsByCourseId(courseId: number) {
       }) => ({
         id: Lesson.lessonId,
         title: Lesson.lessonTitle,
-        coverImageKey: Lesson.coverImageKey ?? "",
-        coverVideoKey: Lesson.coverVideoKey ?? "",
-        resourceKey: Lesson.resourceKey ?? "",
-        resourceNames: Lesson.resourceNames ?? "",
-        description: Lesson.lessonDescription ?? "",
+        coverImageKey: Lesson.coverImageKey ?? '',
+        coverVideoKey: Lesson.coverVideoKey ?? '',
+        resourceKey: Lesson.resourceKey ?? '',
+        resourceNames: Lesson.resourceNames ?? '',
+        description: Lesson.lessonDescription ?? '',
         createdAt: Lesson.createAt,
         updatedAt: Lesson.updateAt,
         duration: Lesson.lessonDuration,
@@ -152,12 +152,12 @@ export async function getLessonsByCourseId(courseId: number) {
           modalidad: Lesson.courseModalidad,
           nivel: Lesson.courseNivel,
         },
-      }),
+      })
     );
 
     return lessonsWithCourse;
   } catch (error) {
-    console.error("Error al obtener las lecciones por courseId", error);
+    console.error('Error al obtener las lecciones por courseId', error);
     throw error;
   }
 }
@@ -165,7 +165,7 @@ export async function getLessonsByCourseId(courseId: number) {
 // Obtener el progreso de un usuario en una lección
 export const getUserProgressByLessonId = async (
   lessonId: number,
-  userId: string,
+  userId: string
 ) => {
   const progress = await db
     .select({
@@ -175,8 +175,8 @@ export const getUserProgressByLessonId = async (
     .where(
       and(
         eq(userLessonsProgress.lessonId, lessonId),
-        eq(userLessonsProgress.userId, userId),
-      ),
+        eq(userLessonsProgress.userId, userId)
+      )
     )
     .then((rows) => rows[0]?.progress);
 
@@ -185,7 +185,7 @@ export const getUserProgressByLessonId = async (
 
 // Obtener una lección por ID
 export const getLessonById = async (
-  lessonId: number,
+  lessonId: number
 ): Promise<Lesson | null> => {
   const lessonData = await db
     .select({
@@ -235,18 +235,18 @@ interface UpdateLessonData {
 // Actualizar una lección
 export const updateLesson = async (
   lessonId: number,
-  data: UpdateLessonData,
+  data: UpdateLessonData
 ) => {
   const updateData: UpdateLessonData = {};
 
   if (data.title) updateData.title = data.title;
   if (data.description) updateData.description = data.description;
-  if (typeof data.duration === "number") updateData.duration = data.duration;
+  if (typeof data.duration === 'number') updateData.duration = data.duration;
   if (data.coverImageKey) updateData.coverImageKey = data.coverImageKey;
   if (data.coverVideoKey) updateData.coverVideoKey = data.coverVideoKey;
   if (data.resourceKey) updateData.resourceKey = data.resourceKey;
   if (data.resourceNames) updateData.resourceNames = data.resourceNames;
-  if (typeof data.courseId === "number") updateData.courseId = data.courseId;
+  if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
 
   return await db
     .update(lessons)
@@ -285,8 +285,8 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
         db
           .select({ id: lessons.id })
           .from(lessons)
-          .where(eq(lessons.courseId, courseId)),
-      ),
+          .where(eq(lessons.courseId, courseId))
+      )
     );
   // Elimina todas las lecciones asociadas a un curso por su ID
   await db.delete(lessons).where(eq(lessons.courseId, courseId));

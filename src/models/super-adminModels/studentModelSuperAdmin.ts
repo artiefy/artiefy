@@ -1,7 +1,7 @@
-import { count } from "drizzle-orm";
+import { count } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
-import { enrollments } from "~/server/db/schema";
+import { db } from '~/server/db/index';
+import { enrollments } from '~/server/db/schema';
 
 // ✅ Obtener el número total de estudiantes inscritos en TODOS los cursos
 export const getTotalStudents = async (): Promise<number> => {
@@ -12,7 +12,7 @@ export const getTotalStudents = async (): Promise<number> => {
 
     return result[0]?.totalStudents ?? 0;
   } catch (error) {
-    console.error("Error al obtener el total de estudiantes:", error);
+    console.error('Error al obtener el total de estudiantes:', error);
     return 0; // 🔥 Retornar 0 en caso de error
   }
 };

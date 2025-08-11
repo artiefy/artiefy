@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -10,22 +10,22 @@ const redis = new Redis({
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const activityId = formData.get("activityId") as string;
-    const questionId = formData.get("questionId") as string;
-    const userId = formData.get("userId") as string;
-    const userName = formData.get("userName") as string;
+    const file = formData.get('file') as File;
+    const activityId = formData.get('activityId') as string;
+    const questionId = formData.get('questionId') as string;
+    const userId = formData.get('userId') as string;
+    const userName = formData.get('userName') as string;
 
     if (!file) {
       return NextResponse.json(
-        { error: "No se proporcionó ningún archivo" },
-        { status: 400 },
+        { error: 'No se proporcionó ningún archivo' },
+        { status: 400 }
       );
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const fileContent = buffer.toString("base64");
+    const fileContent = buffer.toString('base64');
 
     const key = `activity:${activityId}:${questionId}:${userId}:${Date.now()}`;
     await redis.hset(key, {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       submittedAt: new Date().toISOString(),
       userId,
       userName,
-      status: "pendiente",
+      status: 'pendiente',
     });
 
     // Agregar la clave al índice de la actividad
@@ -43,10 +43,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error al subir el archivo:", error);
+    console.error('Error al subir el archivo:', error);
     return NextResponse.json(
-      { error: "Error al subir el archivo" },
-      { status: 500 },
+      { error: 'Error al subir el archivo' },
+      { status: 500 }
     );
   }
 }

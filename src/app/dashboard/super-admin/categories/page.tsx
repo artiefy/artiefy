@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   ChevronLeft,
@@ -10,7 +10,7 @@ import {
   Plus,
   Trash2,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface Category {
   id: number;
@@ -23,8 +23,8 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<
     { id: number; name: string; description: string; is_featured: boolean }[]
   >([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [is_featured, setIsFeatured] = useState(false);
   const [editingCategory, setEditingCategory] = useState<{
     id: number;
@@ -46,8 +46,8 @@ export default function CategoriesPage() {
   const itemsPerPage = 10;
 
   // Add new state for view toggle
-  const [activeView, setActiveView] = useState<"featured" | "other">(
-    "featured",
+  const [activeView, setActiveView] = useState<'featured' | 'other'>(
+    'featured'
   );
 
   useEffect(() => {
@@ -60,12 +60,12 @@ export default function CategoriesPage() {
   async function fetchCategories() {
     try {
       setLoading(true);
-      const res = await fetch("/api/super-admin/categories");
-      if (!res.ok) throw new Error("Error al cargar categorías");
+      const res = await fetch('/api/super-admin/categories');
+      if (!res.ok) throw new Error('Error al cargar categorías');
       const data = (await res.json()) as Category[];
       setCategories(data);
     } catch {
-      setError("Error al obtener categorías.");
+      setError('Error al obtener categorías.');
     } finally {
       setLoading(false);
     }
@@ -73,27 +73,27 @@ export default function CategoriesPage() {
 
   async function handleCreate() {
     try {
-      await fetch("/api/super-admin/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description, is_featured }),
       });
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       setIsFeatured(false);
       await fetchCategories();
       setShowCreateForm(false);
     } catch {
-      setError("Error al guardar categoría.");
+      setError('Error al guardar categoría.');
     }
   }
 
   async function handleEdit() {
     if (!editingCategory) return;
     try {
-      await fetch("/api/super-admin/categories", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingCategory.id,
           name,
@@ -102,40 +102,40 @@ export default function CategoriesPage() {
         }),
       });
       setEditingCategory(null);
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       setIsFeatured(false);
       await fetchCategories();
       setShowEditForm(false);
     } catch {
-      setError("Error al actualizar categoría.");
+      setError('Error al actualizar categoría.');
     }
   }
 
   async function handleDelete(id: number) {
     try {
-      await fetch("/api/super-admin/categories", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
       await fetchCategories();
       setShowConfirmDelete(null);
     } catch {
-      setError("Error al eliminar categoría.");
+      setError('Error al eliminar categoría.');
     }
   }
 
   // 🔹 Lógica de paginación
   const currentCategories =
-    activeView === "featured"
+    activeView === 'featured'
       ? categories.filter((cat) => cat.is_featured)
       : categories.filter((cat) => !cat.is_featured);
 
   const totalPages = Math.ceil(currentCategories.length / itemsPerPage);
   const paginatedCategories = currentCategories.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // Reset page when switching views
@@ -151,8 +151,8 @@ export default function CategoriesPage() {
           <button
             onClick={() => {
               setShowCreateForm(true);
-              setName("");
-              setDescription("");
+              setName('');
+              setDescription('');
               setIsFeatured(false);
             }}
             className="hover:bg-opacity-90 flex items-center rounded-md bg-[#01142B] px-4 py-2 font-semibold text-white shadow-md"
@@ -164,21 +164,21 @@ export default function CategoriesPage() {
         {/* Add view toggle buttons */}
         <div className="mt-6 flex space-x-4">
           <button
-            onClick={() => setActiveView("featured")}
+            onClick={() => setActiveView('featured')}
             className={`rounded-md px-4 py-2 font-semibold ${
-              activeView === "featured"
-                ? "bg-[#3AF4EF] text-[#01142B]"
-                : "bg-gray-700 text-white"
+              activeView === 'featured'
+                ? 'bg-[#3AF4EF] text-[#01142B]'
+                : 'bg-gray-700 text-white'
             }`}
           >
             Categorías Destacadas
           </button>
           <button
-            onClick={() => setActiveView("other")}
+            onClick={() => setActiveView('other')}
             className={`rounded-md px-4 py-2 font-semibold ${
-              activeView === "other"
-                ? "bg-[#3AF4EF] text-[#01142B]"
-                : "bg-gray-700 text-white"
+              activeView === 'other'
+                ? 'bg-[#3AF4EF] text-[#01142B]'
+                : 'bg-gray-700 text-white'
             }`}
           >
             Otras Categorías
@@ -227,7 +227,7 @@ export default function CategoriesPage() {
           <ErrorMessage message={error} />
         ) : (
           <>
-            {activeView === "featured" ? (
+            {activeView === 'featured' ? (
               <div className="mt-6">
                 <TableComponent
                   data={paginatedCategories}

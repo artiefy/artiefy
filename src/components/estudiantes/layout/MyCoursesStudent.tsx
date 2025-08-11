@@ -1,21 +1,21 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { BookOpenIcon, StarIcon } from "@heroicons/react/24/outline";
-import { ArrowRightCircleIcon } from "@heroicons/react/24/solid";
+import { currentUser } from '@clerk/nextjs/server';
+import { BookOpenIcon, StarIcon } from '@heroicons/react/24/outline';
+import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
-import { Badge } from "~/components/estudiantes/ui/badge";
-import { getEnrolledCourses } from "~/server/actions/estudiantes/courses/getEnrolledCourses";
-import { getEnrolledPrograms } from "~/server/actions/estudiantes/programs/getEnrolledPrograms";
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
+import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
 
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { Progress } from "../ui/progress";
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Progress } from '../ui/progress';
 
 const getImageUrl = (coverImageKey: string | null): string => {
-  if (!coverImageKey || coverImageKey === "NULL") {
-    return "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT";
+  if (!coverImageKey || coverImageKey === 'NULL') {
+    return 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
   }
   return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd();
 };
@@ -48,7 +48,7 @@ export default async function MyCoursesStudent() {
   const user = await currentUser();
 
   if (!user) {
-    throw new Error("Usuario no autenticado");
+    throw new Error('Usuario no autenticado');
   }
 
   const courses = await getEnrolledCourses();
@@ -71,7 +71,7 @@ export default async function MyCoursesStudent() {
           <div className="relative h-16 w-16 overflow-hidden rounded-full">
             <Image
               src={user.imageUrl}
-              alt={user.firstName ?? "Profile"}
+              alt={user.firstName ?? 'Profile'}
               fill
               sizes="(max-width: 768px) 10vw, (max-width: 1200px) 5vw, 4vw"
               priority
@@ -127,13 +127,13 @@ export default async function MyCoursesStudent() {
                                 key={index}
                                 className={`h-4 w-4 ${
                                   index < Math.floor(program.rating ?? 0)
-                                    ? "text-yellow-400"
-                                    : "text-gray-300"
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-300'
                                 }`}
                               />
                             ))}
                             <span className="ml-2 text-sm font-semibold text-yellow-400">
-                              {program.rating?.toFixed(1) ?? "0.0"}
+                              {program.rating?.toFixed(1) ?? '0.0'}
                             </span>
                           </div>
                         </div>
@@ -208,13 +208,13 @@ export default async function MyCoursesStudent() {
                               key={index}
                               className={`h-4 w-4 ${
                                 index < Math.floor(course.rating ?? 0)
-                                  ? "text-yellow-400"
-                                  : "text-gray-300"
+                                  ? 'text-yellow-400'
+                                  : 'text-gray-300'
                               }`}
                             />
                           ))}
                           <span className="ml-2 text-sm font-semibold text-yellow-400">
-                            {course.rating?.toFixed(1) ?? "0.0"}
+                            {course.rating?.toFixed(1) ?? '0.0'}
                           </span>
                         </div>
                       </div>
@@ -253,13 +253,13 @@ export default async function MyCoursesStudent() {
                                   key={index}
                                   className={`h-4 w-4 ${
                                     index < Math.floor(course.rating ?? 0)
-                                      ? "text-yellow-400"
-                                      : "text-gray-300"
+                                      ? 'text-yellow-400'
+                                      : 'text-gray-300'
                                   }`}
                                 />
                               ))}
                               <span className="ml-2 text-sm font-semibold text-yellow-400">
-                                {course.rating?.toFixed(1) ?? "0.0"}
+                                {course.rating?.toFixed(1) ?? '0.0'}
                               </span>
                             </div>
                           </div>
@@ -378,13 +378,13 @@ export default async function MyCoursesStudent() {
                               key={index}
                               className={`h-4 w-4 ${
                                 index < Math.floor(course.rating ?? 0)
-                                  ? "text-yellow-400"
-                                  : "text-gray-300"
+                                  ? 'text-yellow-400'
+                                  : 'text-gray-300'
                               }`}
                             />
                           ))}
                           <span className="ml-2 text-sm font-semibold text-yellow-400">
-                            {course.rating?.toFixed(1) ?? "0.0"}
+                            {course.rating?.toFixed(1) ?? '0.0'}
                           </span>
                         </div>
                       </div>

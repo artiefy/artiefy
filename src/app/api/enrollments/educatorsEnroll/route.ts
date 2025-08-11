@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server';
+import { and, eq, inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   enrollments,
   lessons,
   userLessonsProgress,
   users,
-} from "~/server/db/schema";
-import { sortLessons } from "~/utils/lessonSorting";
+} from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 interface EnrollmentRequestBody {
   courseId: string | number;
@@ -20,11 +20,11 @@ interface EnrollmentRequestBody {
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
@@ -34,16 +34,16 @@ export async function POST(req: Request) {
     const { courseId, userIds, planType } = body;
 
     if (
-      (typeof courseId !== "string" && typeof courseId !== "number") ||
+      (typeof courseId !== 'string' && typeof courseId !== 'number') ||
       !Array.isArray(userIds) ||
-      userIds.some((id) => typeof id !== "string")
+      userIds.some((id) => typeof id !== 'string')
     ) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const parsedCourseId = Number(courseId);
     if (isNaN(parsedCourseId)) {
-      return NextResponse.json({ error: "courseId inválido" }, { status: 400 });
+      return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
     }
 
     if (
@@ -52,16 +52,16 @@ export async function POST(req: Request) {
       !Array.isArray(userIds) ||
       userIds.length === 0
     ) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
-    const validPlans = ["Pro", "Premium", "Enterprise"] as const;
+    const validPlans = ['Pro', 'Premium', 'Enterprise'] as const;
     type ValidPlan = (typeof validPlans)[number];
-    type PlanType = ValidPlan | "none";
+    type PlanType = ValidPlan | 'none';
 
     const normalizedPlan: PlanType = validPlans.includes(planType as ValidPlan)
       ? (planType as ValidPlan)
-      : "none";
+      : 'none';
 
     const subscriptionEndDate = new Date();
     subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
           .update(users)
           .set({
             planType: normalizedPlan,
-            subscriptionStatus: "active",
+            subscriptionStatus: 'active',
             subscriptionEndDate,
           })
           .where(eq(users.id, userId))
@@ -83,12 +83,12 @@ export async function POST(req: Request) {
           clerk.users.updateUserMetadata(userId, {
             publicMetadata: {
               planType: normalizedPlan,
-              subscriptionStatus: "active",
+              subscriptionStatus: 'active',
               subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
             },
-          }),
+          })
         );
-      }),
+      })
     );
 
     const existingEnrollments = await db
@@ -97,8 +97,8 @@ export async function POST(req: Request) {
       .where(
         and(
           eq(enrollments.courseId, parsedCourseId),
-          inArray(enrollments.userId, userIds),
-        ),
+          inArray(enrollments.userId, userIds)
+        )
       )
       .execute();
 
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
           courseId: parsedCourseId,
           enrolledAt: new Date(),
           completed: false,
-        })),
+        }))
       );
 
       // Insertar progreso de lecciones si aplica
@@ -127,21 +127,21 @@ export async function POST(req: Request) {
             eq(userLessonsProgress.userId, userId),
             inArray(
               userLessonsProgress.lessonId,
-              sortedLessons.map((l) => l.id),
-            ),
+              sortedLessons.map((l) => l.id)
+            )
           ),
         });
 
         const existingProgressSet = new Set(
-          existingProgress.map((p) => p.lessonId),
+          existingProgress.map((p) => p.lessonId)
         );
 
         for (const [index, lesson] of sortedLessons.entries()) {
           if (!existingProgressSet.has(lesson.id)) {
             const isFirstOrWelcome =
               index === 0 ||
-              lesson.title.toLowerCase().includes("bienvenida") ||
-              lesson.title.toLowerCase().includes("clase 1");
+              lesson.title.toLowerCase().includes('bienvenida') ||
+              lesson.title.toLowerCase().includes('clase 1');
 
             await db.insert(userLessonsProgress).values({
               userId,
@@ -159,10 +159,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Matrícula completada",
+      message: 'Matrícula completada',
     });
   } catch (error) {
-    console.error("Error en matrícula:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error en matrícula:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

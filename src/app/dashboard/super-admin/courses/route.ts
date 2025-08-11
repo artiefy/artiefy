@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
+import { auth } from '@clerk/nextjs/server';
 
 import {
   createCourse,
@@ -10,10 +10,10 @@ import {
   getCoursesByUserId,
   getModalidadById,
   updateCourse,
-} from "~/models/super-adminModels/courseModelsSuperAdmin";
+} from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 // Adjust the import path as necessary
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -21,7 +21,7 @@ const respondWithError = (message: string, status: number) =>
 // GET endpoint para obtener cursos
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
+  const userId = searchParams.get('userId');
 
   try {
     let courses;
@@ -32,10 +32,10 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: "Error al obtener los cursos" },
-      { status: 500 },
+      { error: 'Error al obtener los cursos' },
+      { status: 500 }
     );
   }
 }
@@ -57,15 +57,15 @@ export async function POST(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      console.log("Usuario no autorizado");
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      console.log('Usuario no autorizado');
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Parsear los datos del cuerpo de la solicitud
     const data = (await request.json()) as CourseData & {
       modalidadesid: number[];
     };
-    console.log("Datos recibidos:", data);
+    console.log('Datos recibidos:', data);
 
     // Validar los datos recibidos
     if (
@@ -74,8 +74,8 @@ export async function POST(request: Request) {
       !data.modalidadesid ||
       data.modalidadesid.length === 0
     ) {
-      console.log("Datos inválidos:", data);
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      console.log('Datos inválidos:', data);
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const createdCourses = [];
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       const modalidad = await getModalidadById(modalidadId);
       console.log(
         `Modalidad obtenida para modalidadId ${modalidadId}:`,
-        modalidad,
+        modalidad
       );
 
       // Concatenar el nombre de la modalidad al título
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
         ? `${data.title} - ${modalidad.name}`
         : data.title;
       console.log(
-        `Título modificado para modalidadId ${modalidadId}: ${newTitle}`,
+        `Título modificado para modalidadId ${modalidadId}: ${newTitle}`
       );
 
       // Crear el curso con el título modificado
@@ -111,15 +111,15 @@ export async function POST(request: Request) {
       createdCourses.push(newCourse);
     }
 
-    console.log("Cursos creados:", createdCourses);
+    console.log('Cursos creados:', createdCourses);
 
     // Devolver todos los cursos creados
     return NextResponse.json(createdCourses, { status: 201 });
   } catch (error) {
-    console.error("Error al crear el curso:", error);
+    console.error('Error al crear el curso:', error);
     return NextResponse.json(
-      { error: "Error al crear el curso" },
-      { status: 500 },
+      { error: 'Error al crear el curso' },
+      { status: 500 }
     );
   }
 }
@@ -129,7 +129,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     const body = (await request.json()) as {
@@ -155,11 +155,11 @@ export async function PUT(request: NextRequest) {
 
     const course = await getCourseById(id);
     if (!course) {
-      return respondWithError("Curso no encontrado", 404);
+      return respondWithError('Curso no encontrado', 404);
     }
 
     if (course.creatorId !== userId) {
-      return respondWithError("No autorizado para actualizar este curso", 403);
+      return respondWithError('No autorizado para actualizar este curso', 403);
     }
 
     await updateCourse(id, {
@@ -172,10 +172,10 @@ export async function PUT(request: NextRequest) {
       nivelid,
     });
 
-    return NextResponse.json({ message: "Curso actualizado exitosamente" });
+    return NextResponse.json({ message: 'Curso actualizado exitosamente' });
   } catch (error) {
-    console.error("Error al actualizar el curso:", error);
-    return respondWithError("Error al actualizar el curso", 500);
+    console.error('Error al actualizar el curso:', error);
+    return respondWithError('Error al actualizar el curso', 500);
   }
 }
 
@@ -183,23 +183,23 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get("courseId");
+    const courseId = searchParams.get('courseId');
 
     if (!courseId) {
       return NextResponse.json(
-        { error: "ID no proporcionado" },
-        { status: 400 },
+        { error: 'ID no proporcionado' },
+        { status: 400 }
       );
     }
 
     const parsedCourseId = parseInt(courseId);
     await deleteCourse(parsedCourseId);
-    return NextResponse.json({ message: "Curso eliminado exitosamente" });
+    return NextResponse.json({ message: 'Curso eliminado exitosamente' });
   } catch (error) {
-    console.error("Error al eliminar el curso:", error);
+    console.error('Error al eliminar el curso:', error);
     return NextResponse.json(
-      { error: "Error al eliminar el curso" },
-      { status: 500 },
+      { error: 'Error al eliminar el curso' },
+      { status: 500 }
     );
   }
 }

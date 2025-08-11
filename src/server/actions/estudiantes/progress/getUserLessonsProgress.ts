@@ -1,18 +1,18 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   userActivitiesProgress,
   userLessonsProgress,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
-import type { UserActivitiesProgress, UserLessonsProgress } from "~/types";
+import type { UserActivitiesProgress, UserLessonsProgress } from '~/types';
 
 // Obtener el progreso de las lecciones del usuario
 const getUserLessonsProgress = async (
-  userId: string,
+  userId: string
 ): Promise<{
   lessonsProgress: UserLessonsProgress[];
   activitiesProgress: UserActivitiesProgress[];
@@ -41,10 +41,10 @@ const getUserLessonsProgress = async (
       activitiesProgress,
     };
   } catch (error) {
-    console.error("Error fetching user lessons progress:", error);
+    console.error('Error fetching user lessons progress:', error);
     throw new Error(
-      "Failed to fetch user lessons progress: " +
-        (error instanceof Error ? error.message : String(error)),
+      'Failed to fetch user lessons progress: ' +
+        (error instanceof Error ? error.message : String(error))
     );
   }
 };

@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { z } from "zod";
+import { z } from 'zod';
 
 import {
   getActivityById,
   updateActivity,
-} from "~/models/educatorsModels/activitiesModels";
+} from '~/models/educatorsModels/activitiesModels';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params; // ✅ esto es clave
@@ -17,40 +17,40 @@ export async function GET(
 
     if (isNaN(actividadId)) {
       return NextResponse.json(
-        { error: "ID de la actividad inválido" },
-        { status: 400 },
+        { error: 'ID de la actividad inválido' },
+        { status: 400 }
       );
     }
 
     const actividad = await getActivityById(actividadId);
     if (!actividad) {
       return NextResponse.json(
-        { error: "Actividad no encontrada" },
-        { status: 404 },
+        { error: 'Actividad no encontrada' },
+        { status: 404 }
       );
     }
 
-    console.log("✅ Actividad obtenida:", actividad);
+    console.log('✅ Actividad obtenida:', actividad);
     return NextResponse.json(actividad);
   } catch (error) {
-    console.error("❌ Error al obtener la actividad:", error);
+    console.error('❌ Error al obtener la actividad:', error);
     return NextResponse.json(
-      { error: "Error al obtener la actividad" },
-      { status: 500 },
+      { error: 'Error al obtener la actividad' },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json(
-        { error: "ID de la actividad inválido" },
-        { status: 400 },
+        { error: 'ID de la actividad inválido' },
+        { status: 400 }
       );
     }
 
@@ -64,8 +64,8 @@ export async function PUT(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Datos de entrada no válidos" },
-        { status: 400 },
+        { error: 'Datos de entrada no válidos' },
+        { status: 400 }
       );
     }
 
@@ -76,13 +76,13 @@ export async function PUT(
     }: { name?: string; description?: string; typeid?: number } = parsed.data;
 
     if (
-      (name && typeof name !== "string") ||
-      (description && typeof description !== "string") ||
-      (typeid && typeof typeid !== "number")
+      (name && typeof name !== 'string') ||
+      (description && typeof description !== 'string') ||
+      (typeid && typeof typeid !== 'number')
     ) {
       return NextResponse.json(
-        { error: "Datos de entrada no válidos" },
-        { status: 400 },
+        { error: 'Datos de entrada no válidos' },
+        { status: 400 }
       );
     }
 
@@ -93,19 +93,19 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      message: "Actividad actualizada correctamente",
+      message: 'Actividad actualizada correctamente',
       id,
     });
   } catch (error) {
-    console.error("❌ Error en PUT /api/educadores/actividades/[id]:", error);
+    console.error('❌ Error en PUT /api/educadores/actividades/[id]:', error);
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Error desconocido al actualizar la actividad",
+            : 'Error desconocido al actualizar la actividad',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

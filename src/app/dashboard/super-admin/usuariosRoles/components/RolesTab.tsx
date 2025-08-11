@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
 interface Permiso {
   id: number;
@@ -33,7 +33,7 @@ export default function RolesTab() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<RolSecundario | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
+    name: '',
     permisos: [] as number[],
   });
 
@@ -41,8 +41,8 @@ export default function RolesTab() {
     const fetchData = async () => {
       try {
         const [rolesRes, permisosRes] = await Promise.all([
-          fetch("/api/super-admin/roles-secundarios/list"),
-          fetch("/api/super-admin/permisos/list"),
+          fetch('/api/super-admin/roles-secundarios/list'),
+          fetch('/api/super-admin/permisos/list'),
         ]);
 
         if (!rolesRes.ok || !permisosRes.ok) throw new Error();
@@ -54,11 +54,11 @@ export default function RolesTab() {
           rolesData.map((r) => ({
             ...r,
             permisos: Array.isArray(r.permisos) ? r.permisos : [],
-          })),
+          }))
         );
         setPermisos(permisosData);
       } catch {
-        toast.error("Error al cargar roles o permisos");
+        toast.error('Error al cargar roles o permisos');
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export default function RolesTab() {
 
   const openCreateModal = () => {
     setEditingRole(null);
-    setFormData({ name: "", permisos: [] });
+    setFormData({ name: '', permisos: [] });
     setIsModalOpen(true);
   };
 
@@ -90,16 +90,16 @@ export default function RolesTab() {
 
   const handleSave = async () => {
     const endpoint = editingRole
-      ? "/api/super-admin/roles-secundarios/update"
-      : "/api/super-admin/roles-secundarios/create";
+      ? '/api/super-admin/roles-secundarios/update'
+      : '/api/super-admin/roles-secundarios/create';
 
-    const method = editingRole ? "PUT" : "POST";
+    const method = editingRole ? 'PUT' : 'POST';
     const body = editingRole ? { id: editingRole.id, ...formData } : formData;
 
     try {
       const res = await fetch(endpoint, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
@@ -107,7 +107,7 @@ export default function RolesTab() {
 
       if (editingRole) {
         const refreshed = await fetch(
-          "/api/super-admin/roles-secundarios/list",
+          '/api/super-admin/roles-secundarios/list'
         );
         if (refreshed.ok) {
           const refreshedData =
@@ -116,37 +116,37 @@ export default function RolesTab() {
             refreshedData.map((r) => ({
               ...r,
               permisos: Array.isArray(r.permisos) ? r.permisos : [],
-            })),
+            }))
           );
         }
-        toast.success("Rol actualizado");
+        toast.success('Rol actualizado');
       } else {
         setRoles((prev) => [...prev, saved]);
-        toast.success("Rol creado");
+        toast.success('Rol creado');
       }
       setIsModalOpen(false);
     } catch {
-      toast.error("Error al guardar rol");
+      toast.error('Error al guardar rol');
     }
   };
 
   const handleDelete = async (id: number) => {
     const confirm = window.confirm(
-      "¿Estás seguro de que quieres eliminar este rol?",
+      '¿Estás seguro de que quieres eliminar este rol?'
     );
     if (!confirm) return;
 
     try {
-      const res = await fetch("/api/super-admin/roles-secundarios/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/super-admin/roles-secundarios/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error();
       setRoles((prev) => prev.filter((r) => r.id !== id));
-      toast.success("Rol eliminado");
+      toast.success('Rol eliminado');
     } catch {
-      toast.error("Error al eliminar rol");
+      toast.error('Error al eliminar rol');
     }
   };
 
@@ -185,7 +185,7 @@ export default function RolesTab() {
                     {permisos
                       .filter((p) => role.permisos.includes(p.id))
                       .map((p) => p.name)
-                      .join(", ") || "—"}
+                      .join(', ') || '—'}
                   </td>
                   <td className="flex flex-col gap-2 px-4 py-2 sm:flex-row">
                     <button
@@ -214,7 +214,7 @@ export default function RolesTab() {
           <div className="w-full max-w-lg rounded-lg bg-gray-900 p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between border-b border-gray-700 pb-2">
               <h2 className="text-lg font-semibold">
-                {editingRole ? "Editar Rol" : "Crear Nuevo Rol"}
+                {editingRole ? 'Editar Rol' : 'Crear Nuevo Rol'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -257,7 +257,7 @@ export default function RolesTab() {
                   onClick={handleSave}
                   className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
                 >
-                  {editingRole ? "Actualizar Rol" : "Crear Rol"}
+                  {editingRole ? 'Actualizar Rol' : 'Crear Rol'}
                 </button>
               </div>
             </div>

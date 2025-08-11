@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 interface ModalErrorProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ export const ModalError: React.FC<ModalErrorProps> = ({
   isOpen,
   closeAction,
   onCloseAction,
-  message = "Ha ocurrido un error inesperado.",
+  message = 'Ha ocurrido un error inesperado.',
 }) => {
   if (!isOpen) return null;
 

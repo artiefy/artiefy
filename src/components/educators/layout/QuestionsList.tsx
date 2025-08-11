@@ -1,24 +1,24 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import { Edit, Trash } from "lucide-react";
-import { toast } from "sonner";
+import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 
-import QuestionForm from "~/components/educators/layout/QuestionsForms";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import QuestionForm from '~/components/educators/layout/QuestionsForms';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { Question } from "~/types/typesActi";
+import type { Question } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
-  onEdit?: (question: Question & { tipo: "OM" }) => void;
+  onEdit?: (question: Question & { tipo: 'OM' }) => void;
 }
 
 const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
   const [questions, setQuestions] = useState<Question[]>([]); // Estado para las preguntas
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(
-    undefined,
+    undefined
   ); // Estado para la edición de preguntas
   const [loading, setLoading] = useState(true); // Estado para el estado de carga
 
@@ -27,7 +27,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/educadores/question/opcionMulti?activityId=${activityId}`,
+        `/api/educadores/question/opcionMulti?activityId=${activityId}`
       );
       const data = (await response.json()) as {
         success: boolean;
@@ -37,15 +37,15 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
       if (data.success) {
         const filteredQuestions =
           data.questionsOM?.filter(
-            (q) => q?.text && q?.options && Array.isArray(q.options),
+            (q) => q?.text && q?.options && Array.isArray(q.options)
           ) ?? [];
 
         setQuestions(filteredQuestions);
       }
     } catch (error) {
-      console.error("Error al cargar las preguntas:", error);
-      toast("Error", {
-        description: "Error al cargar las preguntas",
+      console.error('Error al cargar las preguntas:', error);
+      toast('Error', {
+        description: 'Error al cargar las preguntas',
       });
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
 
   const handleEdit = (question: Question) => {
     if (onEdit) {
-      onEdit({ ...question, tipo: "OM" });
+      onEdit({ ...question, tipo: 'OM' });
     } else {
       setEditingQuestion(question);
     }
@@ -71,20 +71,20 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
       const response = await fetch(
         `/api/educadores/question/opcionMulti?activityId=${activityId}&questionId=${questionId}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
       if (response.ok) {
         // Actualizar el estado local en lugar de hacer fetch
         setQuestions(questions.filter((q) => q.id !== questionId));
-        toast("Pregunta eliminada", {
-          description: "La pregunta se eliminó correctamente",
+        toast('Pregunta eliminada', {
+          description: 'La pregunta se eliminó correctamente',
         });
       }
     } catch (error) {
-      console.error("Error al eliminar la pregunta:", error);
-      toast("Error", {
-        description: "Error al eliminar la pregunta",
+      console.error('Error al eliminar la pregunta:', error);
+      toast('Error', {
+        description: 'Error al eliminar la pregunta',
       });
     }
   };
@@ -132,13 +132,13 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
                   <li
                     key={option.id}
                     className={
-                      option.id === question.correctOptionId ? "font-bold" : ""
+                      option.id === question.correctOptionId ? 'font-bold' : ''
                     }
                   >
-                    {option.text}{" "}
+                    {option.text}{' '}
                     {option.id === question.correctOptionId
-                      ? "(Respuesta correcta)"
-                      : ""}
+                      ? '(Respuesta correcta)'
+                      : ''}
                   </li>
                 ))}
               </ul>

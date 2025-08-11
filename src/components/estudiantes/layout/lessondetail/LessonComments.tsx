@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from '@clerk/nextjs';
 import {
   HandThumbUpIcon,
   PencilIcon,
   StarIcon,
   TrashIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid";
+} from '@heroicons/react/24/solid';
 
-import { Button } from "~/components/estudiantes/ui/button";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { Textarea } from "~/components/estudiantes/ui/textarea";
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { Textarea } from '~/components/estudiantes/ui/textarea';
 import {
   addClassComment,
   deleteClassComment,
   editClassComment,
   getCommentsByLessonId,
   likeClassComment,
-} from "~/server/actions/estudiantes/comment/classCommentActions";
+} from '~/server/actions/estudiantes/comment/classCommentActions';
 
 interface ClassCommentProps {
   lessonId: number;
@@ -38,9 +38,9 @@ interface ClassComment {
 }
 
 const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [comments, setComments] = useState<ClassComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,14 +54,14 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
     const fetchComments = async () => {
       try {
         const response = await getCommentsByLessonId(lessonId);
-        if (response && "comments" in response) {
+        if (response && 'comments' in response) {
           setComments(response.comments || []);
         } else {
-          console.error("Invalid response format:", response);
+          console.error('Invalid response format:', response);
           setComments([]);
         }
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        console.error('Error fetching comments:', error);
         setComments([]);
       } finally {
         setLoading(false);
@@ -83,14 +83,14 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
       }
       setMessage(response.message);
       if (response.success) {
-        setContent("");
+        setContent('');
         setRating(0);
         setEditMode(null);
         const updatedComments = await getCommentsByLessonId(lessonId);
         setComments(updatedComments.comments);
       }
     } catch (error) {
-      console.error("Error adding/editing comment:", error);
+      console.error('Error adding/editing comment:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -103,11 +103,11 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
       setMessage(response.message);
       if (response.success) {
         setComments((prevComments) =>
-          prevComments.filter((comment) => comment.id !== commentId),
+          prevComments.filter((comment) => comment.id !== commentId)
         );
       }
     } catch (error) {
-      console.error("Error deleting comment:", error);
+      console.error('Error deleting comment:', error);
     } finally {
       setDeletingComment(null);
     }
@@ -123,7 +123,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
         setComments(updatedComments.comments);
       }
     } catch (error) {
-      console.error("Error liking comment:", error);
+      console.error('Error liking comment:', error);
     } finally {
       setLikingComment(null);
     }
@@ -135,13 +135,13 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
     setEditMode(comment.id);
 
     if (textareaRef.current) {
-      textareaRef.current.scrollIntoView({ behavior: "smooth" });
+      textareaRef.current.scrollIntoView({ behavior: 'smooth' });
       textareaRef.current.focus();
     }
   };
 
   const handleCancelEdit = () => {
-    setContent("");
+    setContent('');
     setRating(0);
     setEditMode(null);
   };
@@ -162,22 +162,22 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            onFocus={(e) => (e.target.placeholder = "")}
-            onBlur={(e) => (e.target.placeholder = "Escribe tu comentario")}
+            onFocus={(e) => (e.target.placeholder = '')}
+            onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
             required
             placeholder="Escribe tu comentario"
             disabled={!isSignedIn}
             className={`text-primary focus:ring-primary mt-1 block w-full rounded-md border shadow-xs placeholder:text-gray-400 sm:text-sm ${
               !isSignedIn
-                ? "border-gray-300"
-                : "focus:border-secondary focus:border-2"
+                ? 'border-gray-300'
+                : 'focus:border-secondary focus:border-2'
             }`}
             style={{
-              height: "100px",
-              padding: "10px",
-              caretColor: "var(--color-primary)",
-              textAlign: "left",
-              verticalAlign: "middle",
+              height: '100px',
+              padding: '10px',
+              caretColor: 'var(--color-primary)',
+              textAlign: 'left',
+              verticalAlign: 'middle',
             }}
           />
         </div>
@@ -192,7 +192,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
             {[1, 2, 3, 4, 5].map((star) => (
               <StarIcon
                 key={star}
-                className={`size-6 cursor-pointer ${star <= rating ? "text-yellow-400" : "text-gray-300"}`}
+                className={`size-6 cursor-pointer ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
                 onClick={() => setRating(star)}
               />
             ))}
@@ -202,19 +202,19 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
           <Button
             type="submit"
             className="bg-secondary focus:ring-secondary inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-hidden active:scale-95"
-            style={{ width: "100px", height: "38px" }}
+            style={{ width: '100px', height: '38px' }}
           >
             {isSubmitting ? (
               <div className="flex items-center">
                 <Icons.spinner
                   className="text-white"
-                  style={{ width: "20px", height: "20px" }}
+                  style={{ width: '20px', height: '20px' }}
                 />
               </div>
             ) : editMode ? (
-              "Editar"
+              'Editar'
             ) : (
-              "Enviar"
+              'Enviar'
             )}
           </Button>
           {editMode && (
@@ -237,7 +237,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
               <div className="text-primary flex items-center gap-2">
                 <Icons.spinner
                   className="inline-block"
-                  style={{ width: "20px", height: "20px" }}
+                  style={{ width: '20px', height: '20px' }}
                 />
                 <span className="text-base text-gray-500">
                   Cargando Comentarios...
@@ -255,7 +255,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <StarIcon
                         key={star}
-                        className={`size-5 ${star <= comment.rating ? "text-yellow-400" : "text-gray-300"}`}
+                        className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
                       />
                     ))}
                     <span className="ml-2 text-sm text-gray-600">
@@ -265,7 +265,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
                   <div className="flex items-center space-x-2">
                     <div className="flex flex-col items-center">
                       <span
-                        className={`-mt-6 text-sm ${comment.likes > 0 ? "text-primary" : "text-gray-400"}`}
+                        className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
                       >
                         {comment.likes.toString()}
                       </span>
@@ -276,11 +276,11 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
                         {likingComment === comment.id ? (
                           <Icons.spinner
                             className="text-blue-600"
-                            style={{ width: "20px", height: "20px" }}
+                            style={{ width: '20px', height: '20px' }}
                           />
                         ) : (
                           <HandThumbUpIcon
-                            className={`-mb-2 size-5 cursor-pointer ${comment.userLiked ? "text-blue-600" : "text-gray-400"} hover:text-blue-600`}
+                            className={`-mb-2 size-5 cursor-pointer ${comment.userLiked ? 'text-blue-600' : 'text-gray-400'} hover:text-blue-600`}
                           />
                         )}
                       </button>
@@ -293,14 +293,14 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
                         <button
                           onClick={() => handleDelete(comment.id)}
                           className={
-                            deletingComment === comment.id ? "text-red-500" : ""
+                            deletingComment === comment.id ? 'text-red-500' : ''
                           }
                           disabled={deletingComment === comment.id}
                         >
                           {deletingComment === comment.id ? (
                             <Icons.spinner
                               className="text-red-500"
-                              style={{ width: "20px", height: "20px" }}
+                              style={{ width: '20px', height: '20px' }}
                             />
                           ) : (
                             <TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />

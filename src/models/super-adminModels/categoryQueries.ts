@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { categories } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { categories } from '~/server/db/schema';
 
 // Obtener todas las categorías
 export async function getCategories() {
@@ -17,7 +17,7 @@ export async function createCategory(name: string, description: string) {
 export async function updateCategory(
   id: number,
   name: string,
-  description: string,
+  description: string
 ) {
   return await db
     .update(categories)

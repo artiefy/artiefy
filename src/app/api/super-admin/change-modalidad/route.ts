@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
-import { db } from "~/server/db";
-import { courses, modalidades } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses, modalidades } from '~/server/db/schema';
 
 const updateSchema = z.object({
   courseId: z.number(),
@@ -28,14 +28,14 @@ export async function PUT(req: Request) {
       .execute();
 
     return NextResponse.json(
-      { message: "Modalidad actualizada con éxito" },
-      { status: 200 },
+      { message: 'Modalidad actualizada con éxito' },
+      { status: 200 }
     );
   } catch (error) {
-    console.error("❌ Error al actualizar la modalidad:", error);
+    console.error('❌ Error al actualizar la modalidad:', error);
     return NextResponse.json(
-      { error: "Error al actualizar la modalidad" },
-      { status: 400 },
+      { error: 'Error al actualizar la modalidad' },
+      { status: 400 }
     );
   }
 }
@@ -46,10 +46,10 @@ export async function GET() {
 
     return NextResponse.json(modalidadesList, { status: 200 });
   } catch (error) {
-    console.error("❌ Error al obtener modalidades:", error);
+    console.error('❌ Error al obtener modalidades:', error);
     return NextResponse.json(
-      { error: "Error al obtener modalidades" },
-      { status: 500 },
+      { error: 'Error al obtener modalidades' },
+      { status: 500 }
     );
   }
 }

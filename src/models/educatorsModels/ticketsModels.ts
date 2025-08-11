@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
-import { tickets } from "~/server/db/schema";
+import { db } from '~/server/db/index';
+import { tickets } from '~/server/db/schema';
 
 export interface Ticket {
   id: number;
@@ -34,14 +34,14 @@ export async function createTicket({
       description,
       comments, // <-- también faltaba comments
       coverImageKey: coverImageKey || null,
-      estado: "abierto",
+      estado: 'abierto',
       email,
       creatorId: userId, // <-- corregido aquí
-      tipo: "otro", // <-- falta en tu insert porque "tipo" es obligatorio en la tabla
-      title: "Ticket de soporte", // <-- título por defecto
+      tipo: 'otro', // <-- falta en tu insert porque "tipo" es obligatorio en la tabla
+      title: 'Ticket de soporte', // <-- título por defecto
     });
   } catch (error) {
-    console.error("Error al crear el ticket:", error);
+    console.error('Error al crear el ticket:', error);
   }
 }
 
@@ -60,7 +60,7 @@ export function getTickets() {
       updatedAt: tickets.updatedAt,
     });
   } catch (error) {
-    console.error("Error al obtener los tickets:", error);
+    console.error('Error al obtener los tickets:', error);
   }
 }
 
@@ -82,7 +82,7 @@ export function getTicketsByUserId(userId: string) {
       .from(tickets)
       .where(eq(tickets.creatorId, userId));
   } catch (error) {
-    console.error("Error al obtener los tickets:", error);
+    console.error('Error al obtener los tickets:', error);
   }
 }
 
@@ -91,10 +91,10 @@ export async function updateTicketState(ticketId: number) {
   try {
     return db
       .update(tickets)
-      .set({ estado: "solucionado" })
+      .set({ estado: 'solucionado' })
       .where(eq(tickets.id, ticketId));
   } catch (error) {
-    console.error("Error al actualizar el estado del ticket:", error);
+    console.error('Error al actualizar el estado del ticket:', error);
   }
 }
 
@@ -103,6 +103,6 @@ export async function deleteTicket(ticketId: number) {
   try {
     return db.delete(tickets).where(eq(tickets.id, ticketId));
   } catch (error) {
-    console.error("Error al eliminar el ticket:", error);
+    console.error('Error al eliminar el ticket:', error);
   }
 }

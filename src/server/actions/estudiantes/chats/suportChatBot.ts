@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { eq, or } from "drizzle-orm";
+import { eq, or } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { ticketComments, tickets } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { ticketComments, tickets } from '~/server/db/schema';
 
 export async function getTicketByUser(userId: string): Promise<{
   ticket: typeof tickets.$inferSelect | undefined;
@@ -62,11 +62,11 @@ export async function getOrCreateSuportChat({
     .insert(tickets)
     .values({
       creatorId: creatorId,
-      description: description ?? "",
-      estado: "abierto",
-      tipo: "bug",
-      email: email ?? "",
-      title: "Ticket de soporte",
+      description: description ?? '',
+      estado: 'abierto',
+      tipo: 'bug',
+      email: email ?? '',
+      title: 'Ticket de soporte',
     })
     .returning();
 
@@ -78,12 +78,12 @@ export async function getOrCreateSuportChat({
 
 export async function getTicketWithMessages(
   ticket_id: number,
-  user_id?: string,
+  user_id?: string
 ): Promise<{
   ticket: typeof tickets.$inferSelect | undefined;
   messages: (typeof ticketComments.$inferSelect)[];
 }> {
-  console.log("Fetching ticket with ID:", ticket_id);
+  console.log('Fetching ticket with ID:', ticket_id);
 
   let ticket: typeof tickets.$inferSelect | undefined = undefined;
   let msgs: (typeof ticketComments.$inferSelect)[] = [];
@@ -108,7 +108,7 @@ export async function getTicketWithMessages(
       .then((rows) => rows[0]);
 
     if (ticket) {
-      console.log("Ticket found:", ticket);
+      console.log('Ticket found:', ticket);
       msgs = await db
         .select()
         .from(ticketComments)
@@ -125,17 +125,17 @@ export async function getTicketWithMessages(
 export async function SaveTicketMessage(
   userId: string,
   content: string,
-  sender: string,
+  sender: string
 ) {
   const ticket = await getOrCreateSuportChat({
     creatorId: userId,
-    email: "", // Puedes pasar el email si lo tienes
-    description: "",
+    email: '', // Puedes pasar el email si lo tienes
+    description: '',
   });
 
   if (ticket.id === undefined) {
     throw new Error(
-      "No se pudo obtener el ID del ticket para guardar el comentario.",
+      'No se pudo obtener el ID del ticket para guardar el comentario.'
     );
   }
   await db.insert(ticketComments).values({

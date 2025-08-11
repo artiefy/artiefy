@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getAllCourses } from "~/models/super-adminModels/courseModelsSuperAdmin";
-import { getTotalStudents } from "~/models/super-adminModels/studentModelSuperAdmin";
+import { getAllCourses } from '~/models/super-adminModels/courseModelsSuperAdmin';
+import { getTotalStudents } from '~/models/super-adminModels/studentModelSuperAdmin';
 
 export async function GET() {
   try {
@@ -15,8 +15,8 @@ export async function GET() {
     return NextResponse.json({ totalCourses, totalStudents });
   } catch {
     return NextResponse.json(
-      { error: "Error al obtener totales" },
-      { status: 500 },
+      { error: 'Error al obtener totales' },
+      { status: 500 }
     );
   }
 }

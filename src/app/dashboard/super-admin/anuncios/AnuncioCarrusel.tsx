@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import AnuncioPopup from "~/app/dashboard/super-admin/anuncios/AnuncioPopup";
+import AnuncioPopup from '~/app/dashboard/super-admin/anuncios/AnuncioPopup';
 
 interface Anuncio {
   titulo: string;

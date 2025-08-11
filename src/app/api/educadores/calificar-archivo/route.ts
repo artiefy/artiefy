@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
-import { and, eq } from "drizzle-orm";
+import { Redis } from '@upstash/redis';
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { userActivitiesProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -26,14 +26,14 @@ export async function POST(request: Request) {
     const { activityId, questionId, userId, grade, submissionKey, comment } =
       payload;
 
-    console.log("📨 Payload recibido:", payload);
-    console.log("🔎 Detalle:");
-    console.log(" - activityId:", activityId, typeof activityId);
-    console.log(" - questionId:", questionId, typeof questionId);
-    console.log(" - userId:", userId, typeof userId);
-    console.log(" - grade:", grade, typeof grade);
-    console.log(" - submissionKey:", submissionKey, typeof submissionKey);
-    console.log(" - comment:", comment, typeof comment);
+    console.log('📨 Payload recibido:', payload);
+    console.log('🔎 Detalle:');
+    console.log(' - activityId:', activityId, typeof activityId);
+    console.log(' - questionId:', questionId, typeof questionId);
+    console.log(' - userId:', userId, typeof userId);
+    console.log(' - grade:', grade, typeof grade);
+    console.log(' - submissionKey:', submissionKey, typeof submissionKey);
+    console.log(' - comment:', comment, typeof comment);
 
     // Validaciones básicas
     if (
@@ -43,37 +43,37 @@ export async function POST(request: Request) {
       grade === undefined ||
       !submissionKey?.trim()
     ) {
-      console.error("❌ Faltan datos requeridos");
+      console.error('❌ Faltan datos requeridos');
       return NextResponse.json(
-        { error: "Faltan datos requeridos" },
-        { status: 400 },
+        { error: 'Faltan datos requeridos' },
+        { status: 400 }
       );
     }
 
     const cleanedKey = submissionKey.trim();
-    console.log("🔑 Clave usada para Redis:", cleanedKey);
+    console.log('🔑 Clave usada para Redis:', cleanedKey);
 
     // Traer de Redis
     const raw = await redis.get(cleanedKey);
-    console.log("📦 Datos actuales desde Redis (raw):", raw);
+    console.log('📦 Datos actuales desde Redis (raw):', raw);
 
-    if (!raw || typeof raw !== "object") {
-      console.error("❌ No se encontraron datos en Redis para esa clave");
+    if (!raw || typeof raw !== 'object') {
+      console.error('❌ No se encontraron datos en Redis para esa clave');
       return NextResponse.json(
-        { error: "No se encontraron datos para la respuesta" },
-        { status: 404 },
+        { error: 'No se encontraron datos para la respuesta' },
+        { status: 404 }
       );
     }
 
     // Modificar y guardar en Redis
     const parsed = { ...raw } as Record<string, unknown>;
     parsed.grade = grade;
-    parsed.status = "reviewed";
+    parsed.status = 'reviewed';
     parsed.lastUpdated = new Date().toISOString();
-    parsed.comment = comment ?? "";
+    parsed.comment = comment ?? '';
 
     await redis.set(cleanedKey, parsed);
-    console.log("✅ Redis actualizado con:", parsed);
+    console.log('✅ Redis actualizado con:', parsed);
 
     // Buscar progreso actual en DB antes de actualizar
     const existingProgress = await db
@@ -82,11 +82,11 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(userActivitiesProgress.userId, userId),
-          eq(userActivitiesProgress.activityId, Number(activityId)),
-        ),
+          eq(userActivitiesProgress.activityId, Number(activityId))
+        )
       );
 
-    console.log("🔍 Resultado antes del update en DB:", existingProgress);
+    console.log('🔍 Resultado antes del update en DB:', existingProgress);
 
     // Hacer el update
     const resultUpdate = await db
@@ -99,12 +99,12 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(userActivitiesProgress.userId, userId),
-          eq(userActivitiesProgress.activityId, Number(activityId)),
-        ),
+          eq(userActivitiesProgress.activityId, Number(activityId))
+        )
       )
       .execute();
 
-    console.log("✅ Resultado del update:", resultUpdate);
+    console.log('✅ Resultado del update:', resultUpdate);
 
     return NextResponse.json({
       success: true,
@@ -117,13 +117,13 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("💥 Error al calificar:", error);
+    console.error('💥 Error al calificar:', error);
     return NextResponse.json(
       {
-        error: "Error al calificar la respuesta",
-        details: error instanceof Error ? error.message : "Error desconocido",
+        error: 'Error al calificar la respuesta',
+        details: error instanceof Error ? error.message : 'Error desconocido',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

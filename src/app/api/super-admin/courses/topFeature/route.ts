@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
 export async function GET() {
   try {
@@ -18,10 +18,10 @@ export async function GET() {
 
     return NextResponse.json({ courses: result });
   } catch (error) {
-    console.error("Error en GET /topFeature:", error);
+    console.error('Error en GET /topFeature:', error);
     return NextResponse.json(
-      { error: "Error al obtener los cursos" },
-      { status: 500 },
+      { error: 'Error al obtener los cursos' },
+      { status: 500 }
     );
   }
 }
@@ -32,13 +32,13 @@ export async function POST(req: Request) {
       id,
       field,
       value,
-    }: { id: number; field: "is_top" | "is_featured"; value: boolean } =
+    }: { id: number; field: 'is_top' | 'is_featured'; value: boolean } =
       await req.json();
 
-    if (!id || (field !== "is_top" && field !== "is_featured")) {
+    if (!id || (field !== 'is_top' && field !== 'is_featured')) {
       return NextResponse.json(
-        { error: "Parámetros inválidos" },
-        { status: 400 },
+        { error: 'Parámetros inválidos' },
+        { status: 400 }
       );
     }
 
@@ -49,10 +49,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error en POST /topFeature:", error);
+    console.error('❌ Error en POST /topFeature:', error);
     return NextResponse.json(
-      { error: "Error al actualizar el curso" },
-      { status: 500 },
+      { error: 'Error al actualizar el curso' },
+      { status: 500 }
     );
   }
 }

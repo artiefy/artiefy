@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface ThemeContextType {
   theme: string;
@@ -11,9 +11,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
-  storageKey = "edudash-theme",
-  attribute = "class", // Agrega esta línea para definir la propiedad attribute
+  defaultTheme = 'light',
+  storageKey = 'edudash-theme',
+  attribute = 'class', // Agrega esta línea para definir la propiedad attribute
 }: {
   children: React.ReactNode;
   defaultTheme?: string;
@@ -23,7 +23,7 @@ export function ThemeProvider({
   disableTransitionOnChange?: boolean; // Agrega esta línea para definir la propiedad disableTransitionOnChange
 }) {
   const [theme, setTheme] = useState<string>(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       return localStorage.getItem(storageKey) ?? defaultTheme;
     }
     return defaultTheme;
@@ -44,7 +44,7 @@ export function ThemeProvider({
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 }

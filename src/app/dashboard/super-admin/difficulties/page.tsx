@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   ChevronLeft,
@@ -10,7 +10,7 @@ import {
   Plus,
   Trash2,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface Nivel {
   id: number;
@@ -20,8 +20,8 @@ interface Nivel {
 
 export default function NivelesPage() {
   const [nivel, setNivel] = useState<Nivel[]>([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [editingNivel, setEditingNivel] = useState<Nivel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +42,12 @@ export default function NivelesPage() {
   async function fetchNivel() {
     try {
       setLoading(true);
-      const res = await fetch("/api/super-admin/niveles");
-      if (!res.ok) throw new Error("Error al cargar niveles");
+      const res = await fetch('/api/super-admin/niveles');
+      if (!res.ok) throw new Error('Error al cargar niveles');
       const data = (await res.json()) as Nivel[];
       setNivel(data);
     } catch {
-      setError("Error al obtener niveles.");
+      setError('Error al obtener niveles.');
     } finally {
       setLoading(false);
     }
@@ -55,56 +55,56 @@ export default function NivelesPage() {
 
   async function handleCreate() {
     try {
-      await fetch("/api/super-admin/niveles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/niveles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description }),
       });
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       void fetchNivel();
       setShowCreateForm(false);
     } catch {
-      setError("Error al guardar nivel.");
+      setError('Error al guardar nivel.');
     }
   }
 
   async function handleEdit() {
     if (!editingNivel) return;
     try {
-      await fetch("/api/super-admin/niveles", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/niveles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editingNivel.id, name, description }),
       });
       setEditingNivel(null);
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       void fetchNivel();
       setShowEditForm(false);
     } catch {
-      setError("Error al actualizar nivel.");
+      setError('Error al actualizar nivel.');
     }
   }
 
   async function handleDelete(id: number) {
     try {
-      await fetch("/api/super-admin/niveles", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/niveles', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
       void fetchNivel();
       setShowConfirmDelete(null);
     } catch {
-      setError("Error al eliminar nivel.");
+      setError('Error al eliminar nivel.');
     }
   }
 
   const totalPages = Math.ceil(nivel.length / itemsPerPage);
   const paginatedNiveles = nivel.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -115,8 +115,8 @@ export default function NivelesPage() {
           <button
             onClick={() => {
               setShowCreateForm(true);
-              setName("");
-              setDescription("");
+              setName('');
+              setDescription('');
             }}
             className="bg-background flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md hover:bg-[#00A5C0]"
           >

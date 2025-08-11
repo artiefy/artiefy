@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { FaTrophy } from "react-icons/fa";
+import { FaTrophy } from 'react-icons/fa';
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "~/components/estudiantes/ui/dialog";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { formatScore } from "~/utils/formatScore";
+} from '~/components/estudiantes/ui/dialog';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { formatScore } from '~/utils/formatScore';
 
 interface CourseGrade {
   courseTitle: string;
@@ -55,7 +55,7 @@ export function ProgramGradesModal({
             ) : (
               <span
                 className={`text-3xl font-bold ${
-                  finalGrade >= 3 ? "text-green-600" : "text-red-600"
+                  finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
                 }`}
               >
                 {formatScore(finalGrade)}
@@ -89,8 +89,8 @@ export function ProgramGradesModal({
                       <span
                         className={`font-semibold ${
                           course.finalGrade >= 3
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? 'text-green-600'
+                            : 'text-red-600'
                         }`}
                       >
                         {formatScore(course.finalGrade)}

@@ -13,7 +13,7 @@
 
 .arrow-button:before,
 .arrow-button:after {
-  content: "";
+  content: '';
   position: absolute;
   border-radius: 50%;
   inset: 7px;

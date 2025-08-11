@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -7,7 +7,7 @@ import {
   useEffect,
   useRef,
   useState,
-} from "react";
+} from 'react';
 
 const ExtrasContext = createContext({
   showExtras: false,
@@ -36,7 +36,7 @@ export function ExtrasProvider({ children }: { children: ReactNode }) {
         // Solo oculta si sigue visible (previene cortes si show() se llama varias veces)
         setShowExtras((prev) => (prev ? false : prev));
       },
-      VISIBLE_TIME + ANIMATION_DURATION + SAFETY_MARGIN,
+      VISIBLE_TIME + ANIMATION_DURATION + SAFETY_MARGIN
     );
   };
 

@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
-import { and, eq } from "drizzle-orm";
+import { Redis } from '@upstash/redis';
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { activities, userActivitiesProgress } from "~/server/db/schema";
-import { formatScoreNumber } from "~/utils/formatScore";
+import { db } from '~/server/db';
+import { activities, userActivitiesProgress } from '~/server/db/schema';
+import { formatScoreNumber } from '~/utils/formatScore';
 
-import type { ActivityResults, SavedAnswer } from "~/types";
+import type { ActivityResults, SavedAnswer } from '~/types';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 interface SaveAnswersRequest {
   activityId: number;
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const currentProgress = await db.query.userActivitiesProgress.findFirst({
       where: and(
         eq(userActivitiesProgress.userId, userId),
-        eq(userActivitiesProgress.activityId, activityId),
+        eq(userActivitiesProgress.activityId, activityId)
       ),
     });
 
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           canClose: true,
-          message: "Has alcanzado el límite de intentos",
+          message: 'Has alcanzado el límite de intentos',
           attemptsExhausted: true,
           finalGrade: currentProgress?.finalGrade ?? 0,
         },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
 
     if (!dbActivity) {
       return NextResponse.json(
-        { error: "Activity not found" },
-        { status: 404 },
+        { error: 'Activity not found' },
+        { status: 404 }
       );
     }
 
@@ -130,8 +130,8 @@ export async function POST(request: NextRequest) {
         success: true,
         canClose: true,
         message: passed
-          ? "Actividad completada correctamente"
-          : "Actividad guardada",
+          ? 'Actividad completada correctamente'
+          : 'Actividad guardada',
         score: weightedScore,
         attemptCount: newAttemptCount,
       });
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       success: passed,
       canClose: passed || newAttemptCount >= 3,
       message: passed
-        ? "Actividad completada correctamente"
+        ? 'Actividad completada correctamente'
         : `Intento ${newAttemptCount}/3 completado`,
       score: weightedScore,
       attemptsRemaining: Math.max(0, 3 - newAttemptCount),
@@ -168,12 +168,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error(
-      "Error saving answers:",
-      error instanceof Error ? error.message : "Unknown error",
+      'Error saving answers:',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     return NextResponse.json(
-      { success: false, error: "Error al guardar las respuestas" },
-      { status: 500 },
+      { success: false, error: 'Error al guardar las respuestas' },
+      { status: 500 }
     );
   }
 }

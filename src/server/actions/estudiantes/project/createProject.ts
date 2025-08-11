@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { db } from "~/server/db";
-import { projects } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { projects } from '~/server/db/schema';
 
 // Crear un proyecto
 export async function createProject(
@@ -12,14 +12,14 @@ export async function createProject(
     courseId: number;
     categoryId: number;
     content: string;
-  },
+  }
 ): Promise<void> {
   await db.insert(projects).values({
     name: projectData.name,
     description: projectData.description,
     coverImageKey: null,
     coverVideoKey: null,
-    type_project: "default",
+    type_project: 'default',
     userId: userId,
     categoryid: projectData.categoryId,
   });

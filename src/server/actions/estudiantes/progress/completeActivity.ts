@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { Redis } from "@upstash/redis";
-import { eq, sql } from "drizzle-orm";
+import { currentUser } from '@clerk/nextjs/server';
+import { Redis } from '@upstash/redis';
+import { eq, sql } from 'drizzle-orm';
 
-import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
-import { db } from "~/server/db";
-import { userActivitiesProgress } from "~/server/db/schema";
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
-import type { ActivityResults } from "~/types";
+import type { ActivityResults } from '~/types';
 
 // Update DbQueryResult interface to extend Record<string, unknown>
 interface DbQueryResult extends Record<string, unknown> {
@@ -28,7 +28,7 @@ export const completeActivity = async (activityId: number, userId: string) => {
     // Verificar usuario autenticado
     const user = await currentUser();
     if (!user) {
-      throw new Error("Usuario no autenticado");
+      throw new Error('Usuario no autenticado');
     }
 
     // 1. Obtener actividad y sus detalles
@@ -45,7 +45,7 @@ export const completeActivity = async (activityId: number, userId: string) => {
     });
 
     if (!activity) {
-      throw new Error("Actividad no encontrada");
+      throw new Error('Actividad no encontrada');
     }
 
     // 2. Obtener resultados de Redis
@@ -60,10 +60,10 @@ export const completeActivity = async (activityId: number, userId: string) => {
       });
 
       if (existingProgress?.isCompleted) {
-        return { success: true, message: "Actividad ya completada" };
+        return { success: true, message: 'Actividad ya completada' };
       }
 
-      throw new Error("No se encontraron resultados de la actividad");
+      throw new Error('No se encontraron resultados de la actividad');
     }
 
     // 3. Actualizar progreso de actividad
@@ -136,9 +136,9 @@ export const completeActivity = async (activityId: number, userId: string) => {
 			`);
 
       const currentFinalGrade = Number(
-        gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade,
+        gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade
       );
-      console.log("Course final grade:", currentFinalGrade);
+      console.log('Course final grade:', currentFinalGrade);
 
       // Update materia grades with course final grade
       if (activity.lesson?.course?.id) {
@@ -157,8 +157,8 @@ export const completeActivity = async (activityId: number, userId: string) => {
       // Create notification with properly formatted grade
       await createNotification({
         userId,
-        type: "ACTIVITY_COMPLETED",
-        title: "¡Actividad completada!",
+        type: 'ACTIVITY_COMPLETED',
+        title: '¡Actividad completada!',
         message: `Has completado la actividad con una calificación de ${currentFinalGrade.toFixed(1)}%`,
         metadata: {
           lessonId: activity.lessonsId,
@@ -171,8 +171,8 @@ export const completeActivity = async (activityId: number, userId: string) => {
       const finalGrade = Number(rawData.finalGrade);
       await createNotification({
         userId,
-        type: "ACTIVITY_COMPLETED",
-        title: "¡Actividad completada!",
+        type: 'ACTIVITY_COMPLETED',
+        title: '¡Actividad completada!',
         message: `Has completado la actividad con una calificación de ${finalGrade.toFixed(1)}%`,
         metadata: {
           lessonId: activity.lessonsId,
@@ -182,15 +182,15 @@ export const completeActivity = async (activityId: number, userId: string) => {
       });
     }
 
-    return { success: true, message: "Actividad completada exitosamente" };
+    return { success: true, message: 'Actividad completada exitosamente' };
   } catch (error) {
-    console.error("Error completing activity:", error);
+    console.error('Error completing activity:', error);
     return {
       success: false,
       message:
         error instanceof Error
           ? error.message
-          : "Error al completar la actividad",
+          : 'Error al completar la actividad',
     };
   }
 };

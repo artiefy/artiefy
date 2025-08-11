@@ -1,22 +1,22 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
-import { PiCertificate } from "react-icons/pi";
+import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+import { PiCertificate } from 'react-icons/pi';
 
-import Footer from "~/components/estudiantes/layout/Footer";
-import { Header } from "~/components/estudiantes/layout/Header";
-import { Button } from "~/components/estudiantes/ui/button";
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "~/components/estudiantes/ui/card";
-import { db } from "~/server/db";
+} from '~/components/estudiantes/ui/card';
+import { db } from '~/server/db';
 
-import "~/styles/certificadobutton.css"; // Importa el nuevo CSS
+import '~/styles/certificadobutton.css'; // Importa el nuevo CSS
 
 export default async function CertificatesListPage() {
   // Obtener usuario actual
@@ -24,7 +24,7 @@ export default async function CertificatesListPage() {
 
   // Redirigir si no hay usuario logueado
   if (!userId) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   // Obtener todos los certificados del usuario
@@ -74,7 +74,7 @@ export default async function CertificatesListPage() {
                   <div className="flex items-center gap-2">
                     <PiCertificate className="h-5 w-5 text-white" />
                     <CardTitle className="line-clamp-2">
-                      {certificate.course?.title || "Curso"}
+                      {certificate.course?.title || 'Curso'}
                     </CardTitle>
                   </div>
                 </CardHeader>

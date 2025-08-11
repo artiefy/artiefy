@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { toast, ToastContainer } from "react-toastify";
-import { z } from "zod";
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
+import { z } from 'zod';
 
-import ChatList from "~/app/dashboard/admin/chat/ChatList";
+import ChatList from '~/app/dashboard/admin/chat/ChatList';
 
-import TicketModal from "./TicketModal";
+import TicketModal from './TicketModal';
 
-import "react-toastify/dist/ReactToastify.css";
+import 'react-toastify/dist/ReactToastify.css';
 
 // Schema definitions
 const uploadSchema = z.object({
   url: z.string().url(),
   fields: z.record(z.string(), z.string()),
   key: z.string(),
-  uploadType: z.union([z.literal("simple"), z.literal("put")]),
+  uploadType: z.union([z.literal('simple'), z.literal('put')]),
 });
 
 const rawTicketSchema = z.array(
@@ -34,7 +34,7 @@ const rawTicketSchema = z.array(
         id: z.string(), // ✅ necesario para <Select />
         name: z.string(),
         email: z.string(),
-      }),
+      })
     ),
     assigned_to_id: z.string().optional(),
     creator_name: z.string().optional(),
@@ -46,7 +46,7 @@ const rawTicketSchema = z.array(
     cover_image_key: z.union([z.string(), z.null()]).optional(),
     video_key: z.union([z.string(), z.null()]).optional(),
     document_key: z.union([z.string(), z.null()]).optional(),
-  }),
+  })
 );
 
 // Types
@@ -98,10 +98,10 @@ export default function TicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<
-    "created" | "assigned" | "logs" | "chats"
-  >("created");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+    'created' | 'assigned' | 'logs' | 'chats'
+  >('created');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [unreadConversationIds] = useState<string[]>([]);
   const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
   const [selectedChat, setSelectedChat] = useState<{
@@ -110,11 +110,11 @@ export default function TicketsPage() {
     receiverId: string;
   } | null>(null);
   void selectedChat?.id;
-  const [filterId, setFilterId] = useState("");
-  const [filterEmail, setFilterEmail] = useState("");
-  const [filterAssignedTo, setFilterAssignedTo] = useState("");
-  const [filterStartDate, setFilterStartDate] = useState<string>("");
-  const [filterEndDate, setFilterEndDate] = useState<string>("");
+  const [filterId, setFilterId] = useState('');
+  const [filterEmail, setFilterEmail] = useState('');
+  const [filterAssignedTo, setFilterAssignedTo] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState<string>('');
+  const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [sortByIdAsc, setSortByIdAsc] = useState(false); // false = mayor a menor
@@ -125,14 +125,14 @@ export default function TicketsPage() {
         try {
           setIsLoadingComments(true);
           const response = await fetch(
-            `/api/admin/tickets/${viewTicket.id}/comments`,
+            `/api/admin/tickets/${viewTicket.id}/comments`
           );
           if (!response.ok)
-            throw new Error("No se pudo obtener los comentarios");
+            throw new Error('No se pudo obtener los comentarios');
           const data = (await response.json()) as Comment[];
           setComments(data);
         } catch (error) {
-          console.error("Error cargando comentarios:", error);
+          console.error('Error cargando comentarios:', error);
         } finally {
           setIsLoadingComments(false);
         }
@@ -143,9 +143,9 @@ export default function TicketsPage() {
   }, [viewTicket?.id]);
 
   useEffect(() => {
-    fetch("/api/socketio", {
-      method: "POST",
-    }).catch((err) => console.warn("Socket init error:", err));
+    fetch('/api/socketio', {
+      method: 'POST',
+    }).catch((err) => console.warn('Socket init error:', err));
   }, []);
 
   function formatElapsedTime(ms: number): string {
@@ -155,7 +155,7 @@ export default function TicketsPage() {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    let result = "";
+    let result = '';
     if (days > 0) result += `${days}d `;
     if (hours > 0 || days > 0) result += `${hours}h `;
     if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m `;
@@ -183,23 +183,23 @@ export default function TicketsPage() {
           ticket.assigned_users?.map(({ name, email }) => ({ name, email })) ??
           [],
         assignedToIds: ticket.assigned_users?.map((u) => u.id) ?? [],
-        assignedToId: ticket.assigned_to_id ?? "",
-        creatorName: ticket.creator_name ?? "",
-        creatorEmail: ticket.creator_email ?? "",
-        comments: ticket.comments ?? "",
+        assignedToId: ticket.assigned_to_id ?? '',
+        creatorName: ticket.creator_name ?? '',
+        creatorEmail: ticket.creator_email ?? '',
+        comments: ticket.comments ?? '',
         createdAt: new Date(ticket.created_at),
         updatedAt: new Date(ticket.updated_at),
         timeElapsedMs: ticket.time_elapsed_ms,
-        coverImageKey: ticket.cover_image_key ?? "",
-        videoKey: ticket.video_key ?? "",
-        documentKey: ticket.document_key ?? "",
+        coverImageKey: ticket.cover_image_key ?? '',
+        videoKey: ticket.video_key ?? '',
+        documentKey: ticket.document_key ?? '',
       }));
 
       setTickets(mapped);
     } catch (error) {
       console.error(
-        "Error fetching tickets:",
-        error instanceof Error ? error.message : error,
+        'Error fetching tickets:',
+        error instanceof Error ? error.message : error
       );
     } finally {
       setLoading(false);
@@ -209,8 +209,8 @@ export default function TicketsPage() {
   useEffect(() => {
     void fetchTickets();
   }, [fetchTickets]);
-  console.log("✅ Tickets antes del filtro:", tickets);
-  console.log("🔎 Estado de filtros:", {
+  console.log('✅ Tickets antes del filtro:', tickets);
+  console.log('🔎 Estado de filtros:', {
     filterType,
     filterStatus,
     filterId,
@@ -221,40 +221,40 @@ export default function TicketsPage() {
   });
 
   const filteredTickets = tickets.filter((ticket) => {
-    const createdDateOnly = ticket.createdAt.toISOString().split("T")[0];
+    const createdDateOnly = ticket.createdAt.toISOString().split('T')[0];
 
     return (
-      (filterType === "all" || ticket.tipo === filterType) &&
-      (filterStatus === "all" || ticket.estado === filterStatus) &&
+      (filterType === 'all' || ticket.tipo === filterType) &&
+      (filterStatus === 'all' || ticket.estado === filterStatus) &&
       String(ticket.id).toLowerCase().includes(filterId.toLowerCase()) &&
-      (filterEmail === "" || ticket.email === filterEmail) &&
-      (filterAssignedTo === "" ||
+      (filterEmail === '' || ticket.email === filterEmail) &&
+      (filterAssignedTo === '' ||
         ticket.assignedUsers?.some((user) => user.name === filterAssignedTo)) &&
-      (filterStartDate === "" || createdDateOnly >= filterStartDate) &&
-      (filterEndDate === "" || createdDateOnly <= filterEndDate)
+      (filterStartDate === '' || createdDateOnly >= filterStartDate) &&
+      (filterEndDate === '' || createdDateOnly <= filterEndDate)
     );
   });
 
   const uniqueUsers = Array.from(new Set(tickets.map((t) => t.email))).filter(
-    Boolean,
+    Boolean
   );
 
   const uniqueAssignedTo = Array.from(
     new Set(
       tickets
         .flatMap((t) => t.assignedUsers?.map((u) => u.name) ?? [])
-        .filter(Boolean),
-    ),
+        .filter(Boolean)
+    )
   );
 
   const handleCreate = async (data: TicketFormData): Promise<void> => {
     try {
-      console.log("🧾 Enviando ticket:", data);
+      console.log('🧾 Enviando ticket:', data);
 
       // 1. Enviar el ticket base
-      const res = await fetch("/api/admin/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       const created = (await res.json()) as { id: string };
@@ -262,30 +262,30 @@ export default function TicketsPage() {
       // 2. Si el video ya fue subido y hay un key, hacer PUT al endpoint
       if (data.videoKey) {
         const payload = JSON.stringify({ videoKey: data.videoKey });
-        const blob = new Blob([payload], { type: "application/json" });
+        const blob = new Blob([payload], { type: 'application/json' });
         const sent = navigator.sendBeacon(
           `/api/tickets/${(created as { id: string }).id}/video`,
-          blob,
+          blob
         );
 
         if (!sent) {
           await fetch(`/api/tickets/${(created as { id: string }).id}/video`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: payload,
           });
         }
       }
 
-      toast.success("✅ Ticket creado exitosamente");
+      toast.success('✅ Ticket creado exitosamente');
 
       void fetchTickets();
     } catch (error) {
-      toast.error("❌ Error al crear el ticket");
+      toast.error('❌ Error al crear el ticket');
 
       console.error(
-        "Error creating ticket:",
-        error instanceof Error ? error.message : error,
+        'Error creating ticket:',
+        error instanceof Error ? error.message : error
       );
     }
   };
@@ -294,7 +294,7 @@ export default function TicketsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const sortedTickets = [...filteredTickets].sort((a, b) =>
-    sortByIdAsc ? Number(a.id) - Number(b.id) : Number(b.id) - Number(a.id),
+    sortByIdAsc ? Number(a.id) - Number(b.id) : Number(b.id) - Number(a.id)
   );
 
   const paginatedTickets = (() => {
@@ -307,37 +307,37 @@ export default function TicketsPage() {
   const handleUpdate = async (data: TicketFormData): Promise<void> => {
     try {
       if (!selectedTicket) return;
-      console.log("🧾 Enviando ticket:", data);
+      console.log('🧾 Enviando ticket:', data);
 
       await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      toast.success("✅ Ticket creado exitosamente");
+      toast.success('✅ Ticket creado exitosamente');
 
       void fetchTickets();
     } catch (error) {
-      toast.error("❌ Error al crear el ticket");
+      toast.error('❌ Error al crear el ticket');
 
       console.error(
-        "Error updating ticket:",
-        error instanceof Error ? error.message : error,
+        'Error updating ticket:',
+        error instanceof Error ? error.message : error
       );
     }
   };
 
   const handleFileUpload = async (
-    field: "videoKey" | "documentKey" | "coverImageKey",
+    field: 'videoKey' | 'documentKey' | 'coverImageKey',
     file: File,
-    ticketId?: number,
+    ticketId?: number
   ): Promise<string | null> => {
-    console.log("📤 Upload start:", file.name, "field:", field);
+    console.log('📤 Upload start:', file.name, 'field:', field);
 
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type,
@@ -347,69 +347,69 @@ export default function TicketsPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("❌ Upload failed with status", res.status, errorText);
+        console.error('❌ Upload failed with status', res.status, errorText);
         return null;
       }
 
       const json: unknown = await res.json();
       const { url, fields, key, uploadType } = uploadSchema.parse(json);
 
-      if (uploadType === "simple") {
+      if (uploadType === 'simple') {
         const formDataUpload = new FormData();
         Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v));
-        formDataUpload.append("file", file);
-        await fetch(url, { method: "POST", body: formDataUpload });
+        formDataUpload.append('file', file);
+        await fetch(url, { method: 'POST', body: formDataUpload });
       } else {
         await fetch(url, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
           body: file,
         });
       }
 
       // ✅ Enviar videoKey al backend en segundo plano (si aplica)
-      if (field === "videoKey" && ticketId) {
+      if (field === 'videoKey' && ticketId) {
         const payload = JSON.stringify({ videoKey: key });
-        const blob = new Blob([payload], { type: "application/json" });
+        const blob = new Blob([payload], { type: 'application/json' });
         const sent = navigator.sendBeacon(
           `/api/tickets/${ticketId}/video`,
-          blob,
+          blob
         );
 
         if (!sent) {
           await fetch(`/api/tickets/${ticketId}/video`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: payload,
           });
         }
 
-        console.log("🎥 El video se está subiendo en segundo plano.");
-        toast.info("🎥 El video se está subiendo en segundo plano.");
+        console.log('🎥 El video se está subiendo en segundo plano.');
+        toast.info('🎥 El video se está subiendo en segundo plano.');
       }
 
       return key;
     } catch (err) {
-      console.error("❌ Error subiendo archivo:", err);
+      console.error('❌ Error subiendo archivo:', err);
       return null;
     }
   };
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const toggleSelectId = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este ticket?")) return;
+    if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) return;
     try {
-      await fetch(`/api/admin/tickets/${id}`, { method: "DELETE" });
+      await fetch(`/api/admin/tickets/${id}`, { method: 'DELETE' });
       void fetchTickets();
     } catch (error) {
       console.error(
-        "Error deleting ticket:",
-        error instanceof Error ? error.message : error,
+        'Error deleting ticket:',
+        error instanceof Error ? error.message : error
       );
     }
   };
@@ -425,7 +425,7 @@ export default function TicketsPage() {
   };
 
   const handleSelectChat = (chatId: string, receiverId: string): void => {
-    setSelectedChat({ id: chatId, receiverId, userName: "Usuario" });
+    setSelectedChat({ id: chatId, receiverId, userName: 'Usuario' });
   };
 
   return (
@@ -445,41 +445,41 @@ export default function TicketsPage() {
         <div className="mt-6 border-b border-gray-700">
           <div className="flex space-x-8">
             <button
-              onClick={() => setActiveTab("created")}
+              onClick={() => setActiveTab('created')}
               className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === "created"
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300"
+                activeTab === 'created'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
               }`}
             >
               Tickets Creados
             </button>
             <button
-              onClick={() => setActiveTab("assigned")}
+              onClick={() => setActiveTab('assigned')}
               className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === "assigned"
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300"
+                activeTab === 'assigned'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
               }`}
             >
               Tickets Asignados
             </button>
             <button
-              onClick={() => setActiveTab("logs")}
+              onClick={() => setActiveTab('logs')}
               className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === "logs"
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300"
+                activeTab === 'logs'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
               }`}
             >
               Logs
             </button>
             <button
-              onClick={() => setActiveTab("chats")}
+              onClick={() => setActiveTab('chats')}
               className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === "chats"
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300"
+                activeTab === 'chats'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
               }`}
             >
               Chats
@@ -507,37 +507,37 @@ export default function TicketsPage() {
               onClick={async () => {
                 if (
                   !confirm(
-                    `¿Seguro que deseas eliminar ${selectedIds.length} ticket(s)?`,
+                    `¿Seguro que deseas eliminar ${selectedIds.length} ticket(s)?`
                   )
                 )
                   return;
                 try {
                   console.log(
-                    "🧾 Enviando al backend para bulkDelete:",
-                    selectedIds,
+                    '🧾 Enviando al backend para bulkDelete:',
+                    selectedIds
                   );
 
-                  await fetch("/api/admin/tickets/bulkDelete", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
+                  await fetch('/api/admin/tickets/bulkDelete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       ids: selectedIds.map((id) => Number(id)), // 👈 convierte a número aquí
                     }),
                   });
 
                   setSelectedIds([]);
-                  toast.success("✅ Tickets eliminados");
+                  toast.success('✅ Tickets eliminados');
                   void fetchTickets();
                 } catch (err) {
                   console.error(err);
-                  toast.error("❌ Error al eliminar tickets");
+                  toast.error('❌ Error al eliminar tickets');
                 }
               }}
               disabled={selectedIds.length === 0}
               className={`rounded-md border px-4 py-2 text-sm transition ${
                 selectedIds.length === 0
-                  ? "cursor-not-allowed bg-gray-700 text-gray-400"
-                  : "bg-red-600 text-white hover:bg-red-700"
+                  ? 'cursor-not-allowed bg-gray-700 text-gray-400'
+                  : 'bg-red-600 text-white hover:bg-red-700'
               }`}
             >
               Eliminar Seleccionados
@@ -581,7 +581,7 @@ export default function TicketsPage() {
         </div>
 
         {/* Tickets table */}
-        {activeTab === "chats" ? (
+        {activeTab === 'chats' ? (
           <div className="mt-6">
             <ChatList
               onSelectChat={(id, receiverId) =>
@@ -598,7 +598,7 @@ export default function TicketsPage() {
                   {/* Filtros */}
                   <tr className="border-b border-gray-700 bg-gray-900 text-xs text-white sm:text-sm">
                     <th>
-                      {" "}
+                      {' '}
                       <div className="mt-1 flex items-center gap-2 text-sm text-white">
                         <span>Mostrar:</span>
                         <select
@@ -615,7 +615,7 @@ export default function TicketsPage() {
                           <option value={100}>100</option>
                           <option value={-1}>Todos</option>
                         </select>
-                      </div>{" "}
+                      </div>{' '}
                     </th>
                     <th className="px-4 py-2">
                       <input
@@ -693,7 +693,7 @@ export default function TicketsPage() {
                       className="cursor-pointer px-4 py-2 text-left"
                       onClick={() => setSortByIdAsc((prev) => !prev)}
                     >
-                      ID {sortByIdAsc ? "↑" : "↓"}
+                      ID {sortByIdAsc ? '↑' : '↓'}
                     </th>
 
                     <th className="px-4 py-2 text-left">Email</th>
@@ -742,13 +742,13 @@ export default function TicketsPage() {
                         <td className="px-4 py-4">
                           <span
                             className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                              ticket.tipo === "bug"
-                                ? "bg-red-500/10 text-red-500"
-                                : ticket.tipo === "revision"
-                                  ? "bg-yellow-500/10 text-yellow-500"
-                                  : ticket.tipo === "logs"
-                                    ? "bg-purple-500/10 text-purple-500"
-                                    : "bg-gray-500/10 text-gray-500"
+                              ticket.tipo === 'bug'
+                                ? 'bg-red-500/10 text-red-500'
+                                : ticket.tipo === 'revision'
+                                  ? 'bg-yellow-500/10 text-yellow-500'
+                                  : ticket.tipo === 'logs'
+                                    ? 'bg-purple-500/10 text-purple-500'
+                                    : 'bg-gray-500/10 text-gray-500'
                             }`}
                           >
                             {ticket.tipo}
@@ -757,15 +757,15 @@ export default function TicketsPage() {
                         <td className="px-4 py-4">
                           <span
                             className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                              ticket.estado === "abierto"
-                                ? "bg-green-500/10 text-green-500"
-                                : ticket.estado === "en proceso"
-                                  ? "bg-blue-500/10 text-blue-500"
-                                  : ticket.estado === "en revision"
-                                    ? "bg-yellow-500/10 text-yellow-500"
-                                    : ticket.estado === "solucionado"
-                                      ? "bg-purple-500/10 text-purple-500"
-                                      : "bg-gray-500/10 text-gray-500"
+                              ticket.estado === 'abierto'
+                                ? 'bg-green-500/10 text-green-500'
+                                : ticket.estado === 'en proceso'
+                                  ? 'bg-blue-500/10 text-blue-500'
+                                  : ticket.estado === 'en revision'
+                                    ? 'bg-yellow-500/10 text-yellow-500'
+                                    : ticket.estado === 'solucionado'
+                                      ? 'bg-purple-500/10 text-purple-500'
+                                      : 'bg-gray-500/10 text-gray-500'
                             }`}
                           >
                             {ticket.estado}
@@ -774,8 +774,8 @@ export default function TicketsPage() {
                         <td className="px-4 py-4">
                           {ticket.assignedUsers &&
                           ticket.assignedUsers.length > 0
-                            ? ticket.assignedUsers.map((u) => u.name).join(", ")
-                            : "Sin asignar"}
+                            ? ticket.assignedUsers.map((u) => u.name).join(', ')
+                            : 'Sin asignar'}
                         </td>
 
                         <td className="px-4 py-4">
@@ -831,7 +831,7 @@ export default function TicketsPage() {
                   </button>
 
                   <span className="px-2">
-                    Página {currentPage} de{" "}
+                    Página {currentPage} de{' '}
                     {Math.ceil(filteredTickets.length / itemsPerPage)}
                   </span>
 
@@ -840,7 +840,7 @@ export default function TicketsPage() {
                       setCurrentPage((prev) =>
                         prev < Math.ceil(filteredTickets.length / itemsPerPage)
                           ? prev + 1
-                          : prev,
+                          : prev
                       )
                     }
                     disabled={
@@ -896,13 +896,13 @@ export default function TicketsPage() {
                     </h3>
                     <span
                       className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.tipo === "bug"
-                          ? "bg-red-500/10 text-red-400"
-                          : viewTicket.tipo === "revision"
-                            ? "bg-yellow-500/10 text-yellow-400"
-                            : viewTicket.tipo === "logs"
-                              ? "bg-purple-500/10 text-purple-400"
-                              : "bg-gray-500/10 text-gray-400"
+                        viewTicket.tipo === 'bug'
+                          ? 'bg-red-500/10 text-red-400'
+                          : viewTicket.tipo === 'revision'
+                            ? 'bg-yellow-500/10 text-yellow-400'
+                            : viewTicket.tipo === 'logs'
+                              ? 'bg-purple-500/10 text-purple-400'
+                              : 'bg-gray-500/10 text-gray-400'
                       }`}
                     >
                       {viewTicket.tipo}
@@ -917,15 +917,15 @@ export default function TicketsPage() {
                     </h3>
                     <span
                       className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.estado === "abierto"
-                          ? "bg-green-500/10 text-green-400"
-                          : viewTicket.estado === "en proceso"
-                            ? "bg-blue-500/10 text-blue-400"
-                            : viewTicket.estado === "en revision"
-                              ? "bg-yellow-500/10 text-yellow-400"
-                              : viewTicket.estado === "solucionado"
-                                ? "bg-purple-500/10 text-purple-400"
-                                : "bg-gray-500/10 text-gray-400"
+                        viewTicket.estado === 'abierto'
+                          ? 'bg-green-500/10 text-green-400'
+                          : viewTicket.estado === 'en proceso'
+                            ? 'bg-blue-500/10 text-blue-400'
+                            : viewTicket.estado === 'en revision'
+                              ? 'bg-yellow-500/10 text-yellow-400'
+                              : viewTicket.estado === 'solucionado'
+                                ? 'bg-purple-500/10 text-purple-400'
+                                : 'bg-gray-500/10 text-gray-400'
                       }`}
                     >
                       {viewTicket.estado}
@@ -939,8 +939,8 @@ export default function TicketsPage() {
                     <p className="text-lg text-white">
                       {viewTicket.assignedUsers &&
                       viewTicket.assignedUsers.length > 0
-                        ? viewTicket.assignedUsers.map((u) => u.name).join(", ")
-                        : "Sin asignar"}
+                        ? viewTicket.assignedUsers.map((u) => u.name).join(', ')
+                        : 'Sin asignar'}
                     </p>
                   </div>
 
@@ -949,7 +949,7 @@ export default function TicketsPage() {
                       Comentario Principal
                     </h3>
                     <p className="text-lg whitespace-pre-wrap text-white">
-                      {viewTicket.comments ?? "—"}
+                      {viewTicket.comments ?? '—'}
                     </p>
                   </div>
                 </div>
@@ -1037,7 +1037,7 @@ export default function TicketsPage() {
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <span className="font-medium text-blue-400">
-                                {comment.user?.name || "Usuario"}
+                                {comment.user?.name || 'Usuario'}
                               </span>
                               <span className="text-sm text-gray-500">
                                 {new Date(comment.createdAt).toLocaleString()}
@@ -1062,7 +1062,7 @@ export default function TicketsPage() {
         )}
 
         <TicketModal
-          key={selectedTicket ? selectedTicket.id : "new"}
+          key={selectedTicket ? selectedTicket.id : 'new'}
           isOpen={isModalOpen}
           onCloseAction={handleCloseModal}
           onSubmitAction={selectedTicket ? handleUpdate : handleCreate}

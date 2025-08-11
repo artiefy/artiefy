@@ -20,7 +20,7 @@
 }
 
 .artiefy-static-checkmark:after {
-  content: "";
+  content: '';
   position: absolute;
   left: 50%;
   top: 45%;
@@ -78,7 +78,7 @@
 }
 
 .artiefy-checkbox-mark:after {
-  content: "";
+  content: '';
   position: absolute;
   opacity: 0;
   transition: all 0.2s;

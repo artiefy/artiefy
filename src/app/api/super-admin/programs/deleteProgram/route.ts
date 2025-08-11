@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { inArray } from "drizzle-orm";
+import { inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollmentPrograms, materias, programas } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollmentPrograms, materias, programas } from '~/server/db/schema';
 
 export async function DELETE(request: Request) {
   try {
@@ -11,8 +11,8 @@ export async function DELETE(request: Request) {
 
     if (!programIds || !Array.isArray(programIds)) {
       return NextResponse.json(
-        { error: "Se requiere un array de IDs de programas" },
-        { status: 400 },
+        { error: 'Se requiere un array de IDs de programas' },
+        { status: 400 }
       );
     }
 
@@ -33,12 +33,12 @@ export async function DELETE(request: Request) {
     // 3. Finally delete the programs
     await db.delete(programas).where(inArray(programas.id, programIds));
 
-    return NextResponse.json({ message: "Programas eliminados exitosamente" });
+    return NextResponse.json({ message: 'Programas eliminados exitosamente' });
   } catch (error) {
-    console.error("Error al eliminar programas:", error);
+    console.error('Error al eliminar programas:', error);
     return NextResponse.json(
-      { error: "Error al eliminar los programas" },
-      { status: 500 },
+      { error: 'Error al eliminar los programas' },
+      { status: 500 }
     );
   }
 }

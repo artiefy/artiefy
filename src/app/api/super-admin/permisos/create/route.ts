@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { db } from "~/server/db";
-import { permisos } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { permisos } from '~/server/db/schema';
 
 const ACCIONES = [
-  "create",
-  "read",
-  "update",
-  "delete",
-  "approve",
-  "assign",
-  "publish",
+  'create',
+  'read',
+  'update',
+  'delete',
+  'approve',
+  'assign',
+  'publish',
 ] as const;
 
 type Accion = (typeof ACCIONES)[number];
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const { name, description } = body;
 
     if (!name.trim() || !body.servicio || !body.accion) {
-      return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
+      return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 });
     }
 
     if (
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       !body.servicio.trim() ||
       !ACCIONES.includes(body.accion)
     ) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const created = await db
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(permisoCreado);
   } catch (error) {
-    console.error("Error al crear permiso:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al crear permiso:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

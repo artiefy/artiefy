@@ -1,10 +1,10 @@
-import { defineConfig } from "drizzle-kit";
+import { defineConfig } from 'drizzle-kit';
 
-import { env } from "~/env";
+import { env } from '~/env';
 
 export default defineConfig({
-  schema: "./src/server/db/schema.ts",
-  dialect: "postgresql",
+  schema: './src/server/db/schema.ts',
+  dialect: 'postgresql',
   dbCredentials: {
     url: env.POSTGRES_URL,
     ssl: true,
@@ -13,9 +13,9 @@ export default defineConfig({
   strict: true,
   entities: {
     roles: {
-      provider: "neon",
+      provider: 'neon',
     },
   },
-  schemaFilter: "public",
-  extensionsFilters: ["postgis"],
+  schemaFilter: 'public',
+  extensionsFilters: ['postgis'],
 });

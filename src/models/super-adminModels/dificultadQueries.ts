@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { nivel } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { nivel } from '~/server/db/schema';
 
 // Obtener todas las
 export async function getNivel() {
@@ -17,7 +17,7 @@ export async function createNivel(name: string, description: string) {
 export async function updateNivel(
   id: number,
   name: string,
-  description: string,
+  description: string
 ) {
   return await db
     .update(nivel)

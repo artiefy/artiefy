@@ -1,5 +1,5 @@
-import { db } from "~/server/db/index";
-import { materias } from "~/server/db/schema";
+import { db } from '~/server/db/index';
+import { materias } from '~/server/db/schema';
 
 export async function getSubjects() {
   try {
@@ -10,10 +10,10 @@ export async function getSubjects() {
         description: materias.description,
       })
       .from(materias);
-    console.log("Subjects from DB:", subjects); // Add console log to debug
+    console.log('Subjects from DB:', subjects); // Add console log to debug
     return subjects;
   } catch (error) {
-    console.error("Error fetching subjects:", error);
-    throw new Error("Error fetching subjects");
+    console.error('Error fetching subjects:', error);
+    throw new Error('Error fetching subjects');
   }
 }

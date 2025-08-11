@@ -1,4 +1,4 @@
-import CourseDetail from "./CourseDetail"; // El componente CourseDetail
+import CourseDetail from './CourseDetail'; // El componente CourseDetail
 
 export default async function Page({
   params,

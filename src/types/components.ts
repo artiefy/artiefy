@@ -1,4 +1,4 @@
-import type { Course } from "./index";
+import type { Course } from './index';
 
 export interface CourseHeaderProps {
   course: Course;

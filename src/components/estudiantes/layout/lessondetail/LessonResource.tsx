@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { BsFiletypeXls } from "react-icons/bs";
+import { BsFiletypeXls } from 'react-icons/bs';
 import {
   FaFilePdf,
   FaFilePowerpoint,
   FaFileWord,
   FaLink,
   FaRegFileImage,
-} from "react-icons/fa";
+} from 'react-icons/fa';
 
-import { Icons } from "~/components/estudiantes/ui/icons";
+import { Icons } from '~/components/estudiantes/ui/icons';
 
 interface FileInfo {
   key: string;
@@ -33,7 +33,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
     const fetchFiles = async () => {
       try {
         const response = await fetch(
-          `/api/estudiantes/getFiles?lessonId=${lessonId}`,
+          `/api/estudiantes/getFiles?lessonId=${lessonId}`
         );
 
         if (response.ok) {
@@ -43,7 +43,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
           setFiles([]);
         }
       } catch (error) {
-        console.error("Error fetching files:", error);
+        console.error('Error fetching files:', error);
         setFiles([]);
       } finally {
         setLoading(false);
@@ -54,23 +54,23 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
   }, [lessonId]);
 
   const getIcon = (fileName: string) => {
-    const extension = fileName.split(".").pop()?.toLowerCase();
+    const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
-      case "pdf":
+      case 'pdf':
         return <FaFilePdf className="text-red-500" />;
-      case "pptx":
-      case "ppt":
+      case 'pptx':
+      case 'ppt':
         return <FaFilePowerpoint className="text-orange-500" />;
-      case "doc":
-      case "docx":
+      case 'doc':
+      case 'docx':
         return <FaFileWord className="text-blue-500" />;
-      case "xlsx":
-      case "xls":
+      case 'xlsx':
+      case 'xls':
         return <BsFiletypeXls className="text-green-600" />;
-      case "png":
-      case "jpg":
-      case "jpeg":
-      case "gif":
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
         return <FaRegFileImage className="text-purple-500" />;
       default:
         return <FaLink className="text-blue-500" />;

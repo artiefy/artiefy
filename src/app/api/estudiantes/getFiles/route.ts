@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { eq } from "drizzle-orm";
+import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { lessons } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
 
 const s3Client = new S3Client({
   credentials: {
@@ -16,10 +16,10 @@ const s3Client = new S3Client({
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const lessonId = searchParams.get("lessonId");
+  const lessonId = searchParams.get('lessonId');
 
   if (!lessonId || isNaN(Number(lessonId))) {
-    return NextResponse.json({ message: "Invalid lessonId" }, { status: 400 });
+    return NextResponse.json({ message: 'Invalid lessonId' }, { status: 400 });
   }
 
   try {
@@ -35,8 +35,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ files: [] });
     }
 
-    const resourceKeys = lesson.resourceKey.split(",").filter(Boolean);
-    const resourceNames = lesson.resourceNames.split(",").filter(Boolean);
+    const resourceKeys = lesson.resourceKey.split(',').filter(Boolean);
+    const resourceNames = lesson.resourceNames.split(',').filter(Boolean);
 
     const filesInfo = await Promise.all(
       resourceKeys.map(async (key, index) => {
@@ -55,15 +55,15 @@ export async function GET(req: Request) {
           console.error(`Error checking file ${key}:`, err);
           return null;
         }
-      }),
+      })
     );
 
     const validFiles = filesInfo.filter(
-      (file): file is NonNullable<typeof file> => file !== null,
+      (file): file is NonNullable<typeof file> => file !== null
     );
     return NextResponse.json(validFiles);
   } catch (error) {
-    console.error("Error fetching files:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+    console.error('Error fetching files:', error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
 }

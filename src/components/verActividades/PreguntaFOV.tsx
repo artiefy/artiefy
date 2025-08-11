@@ -1,10 +1,10 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { VerdaderoOFlaso } from "~/types/typesActi";
+import type { VerdaderoOFlaso } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
@@ -35,9 +35,9 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`,
+          `/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`
         );
-        console.log("API response:", response); // Add logging
+        console.log('API response:', response); // Add logging
         if (!response.ok) {
           throw new Error(`Error fetching questions: ${response.statusText}`);
         }
@@ -45,7 +45,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
           success: boolean;
           questionsVOF?: VerdaderoOFlaso[];
         };
-        console.log("API data:", data); // Add logging
+        console.log('API data:', data); // Add logging
         if (data.success && data.questionsVOF) {
           // Asegurarse de que los objetos dentro del arreglo options se están deserializando correctamente
           const deserializedQuestions = data.questionsVOF.map((question) => ({
@@ -56,13 +56,13 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
                 }))
               : [],
           }));
-          console.log("Fetched questions:", deserializedQuestions); // Add logging
+          console.log('Fetched questions:', deserializedQuestions); // Add logging
           setQuestionsVOF(deserializedQuestions);
         } else {
-          console.error("Error fetching questions: No questions found");
+          console.error('Error fetching questions: No questions found');
         }
       } catch (error) {
-        console.error("Error al cargar las preguntas:", error);
+        console.error('Error al cargar las preguntas:', error);
       } finally {
         setLoading(false);
       }
@@ -86,7 +86,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
         ...prev,
         [questionId]: {
           isCorrect: false,
-          message: "Por favor, seleccione una opción",
+          message: 'Por favor, seleccione una opción',
           attempted: false,
         },
       }));
@@ -101,10 +101,10 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
       [questionId]: {
         isCorrect,
         message: isCorrect
-          ? "¡Correcto! 🎉"
+          ? '¡Correcto! 🎉'
           : `Incorrecto. La respuesta correcta es: "${
               currentQuestion?.options.find(
-                (opt) => opt.id === currentQuestion.correctOptionId,
+                (opt) => opt.id === currentQuestion.correctOptionId
               )?.text
             }" ❌`,
         attempted: true,
@@ -129,7 +129,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
               <ul className="space-y-1">
                 {question.options?.map((option) => (
                   <li key={option.id}>
-                    <label className={"text-black"}>
+                    <label className={'text-black'}>
                       <input
                         type="radio"
                         name={`question-${question.id}`}
@@ -150,8 +150,8 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
                 <p
                   className={`mt-2 ${
                     feedback[question.id].isCorrect
-                      ? "text-green-600"
-                      : "text-red-600"
+                      ? 'text-green-600'
+                      : 'text-red-600'
                   }`}
                 >
                   {feedback[question.id].message}
@@ -164,7 +164,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
                 variant="secondary"
                 className="absolute right-10 bottom-6"
                 onClick={() =>
-                  handleSubmit(question.id, selectedOptions[question.id] ?? "")
+                  handleSubmit(question.id, selectedOptions[question.id] ?? '')
                 }
                 disabled={feedback[question.id]?.attempted}
               >

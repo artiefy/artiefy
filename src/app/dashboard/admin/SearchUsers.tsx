@@ -1,7 +1,7 @@
 //src\app\dashboard\admin\SearchUsers.tsx
-"use client";
+'use client';
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from 'next/navigation';
 
 export const SearchUsers = () => {
   const router = useRouter();
@@ -14,7 +14,7 @@ export const SearchUsers = () => {
           e.preventDefault();
           const form = e.currentTarget;
           const formData = new FormData(form);
-          const queryTerm = formData.get("search") as string;
+          const queryTerm = formData.get('search') as string;
           router.push(`${pathname}?search=${queryTerm}`);
         }}
       >

@@ -1,11 +1,11 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
 import {
   AlertDialog,
@@ -17,15 +17,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
-import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
+} from '~/components/educators/ui/alert-dialog';
+import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "~/components/educators/ui/card";
-import { Button } from "~/components/estudiantes/ui/button";
+} from '~/components/educators/ui/card';
+import { Button } from '~/components/estudiantes/ui/button';
 
 interface ForumsModels {
   id: number;
@@ -60,11 +60,11 @@ export const Zone = () => {
       if (!user) return;
       try {
         const res = await fetch(`/api/forums?userId=${user.id}`);
-        if (!res.ok) throw new Error("Error al obtener los foros");
+        if (!res.ok) throw new Error('Error al obtener los foros');
         const data = (await res.json()) as ForumsModels[];
         setForums(data);
       } catch (err) {
-        setError("No se pudieron cargar los foros");
+        setError('No se pudieron cargar los foros');
         console.error(err);
       } finally {
         setLoading(false);
@@ -76,12 +76,12 @@ export const Zone = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/forums?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/forums?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-      toast.success("Foro eliminado correctamente");
+      toast.success('Foro eliminado correctamente');
       window.location.reload();
     } catch {
-      toast.error("No se pudo eliminar el foro");
+      toast.error('No se pudo eliminar el foro');
     }
   };
 
@@ -110,7 +110,7 @@ export const Zone = () => {
                     src={
                       forum.course.coverImageKey
                         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.course.coverImageKey}`
-                        : "/login-fondo.webp"
+                        : '/login-fondo.webp'
                     }
                     alt={forum.title}
                     className="object-cover transition-transform duration-300 hover:scale-105"
@@ -136,9 +136,9 @@ export const Zone = () => {
                   <p className="text-primary text-xs">Instructor:</p>
                   <p
                     className="truncate font-medium sm:whitespace-normal"
-                    title={forum.instructor?.name ?? "Sin nombre"}
+                    title={forum.instructor?.name ?? 'Sin nombre'}
                   >
-                    {forum.instructor?.name ?? "Sin nombre"}
+                    {forum.instructor?.name ?? 'Sin nombre'}
                   </p>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export const Zone = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esto eliminará el foro <strong>{forum.title}</strong>{" "}
+                          Esto eliminará el foro <strong>{forum.title}</strong>{' '}
                           y todo su contenido asociado.
                         </AlertDialogDescription>
                       </AlertDialogHeader>

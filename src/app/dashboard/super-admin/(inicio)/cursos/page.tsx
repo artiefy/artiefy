@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { FiPlus } from "react-icons/fi";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { FiPlus } from 'react-icons/fi';
+import { toast } from 'sonner';
 
-import { SkeletonCard } from "~/components/super-admin/layout/SkeletonCard";
-import ModalFormCourse from "~/components/super-admin/modals/ModalFormCourse";
+import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
+import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   type CourseData,
   getCourses,
   updateCourse,
-} from "~/server/queries/queries";
+} from '~/server/queries/queries';
 
-import CourseListAdmin from "./../../components/CourseListAdmin";
+import CourseListAdmin from './../../components/CourseListAdmin';
 
 type ExtendedCourseData = CourseData & {
   individualPrice?: number;
@@ -56,23 +56,23 @@ export default function Page() {
   const { user } = useUser();
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [editingCourse, setEditingCourse] = useState<ExtendedCourseData | null>(
-    null,
+    null
   );
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [totalCourses, setTotalCourses] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [subjects, setSubjects] = useState<{ id: number }[]>([]);
   const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-    [],
+    []
   );
   const [parametrosList, setParametrosList] = useState<
     { id: number; name: string; description: string; porcentaje: number }[]
   >([]);
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
-    [],
+    []
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [showProgramCourses, setShowProgramCourses] = useState(false);
@@ -106,33 +106,33 @@ export default function Page() {
           allData.data.map((course) => ({
             ...course,
             coverVideoCourseKey: course.coverVideoCourseKey ?? null,
-          })),
+          }))
         );
         setIsLoadingMore(false);
 
         // Get other data in parallel
         const [totalsResponse, categoriesResponse] = await Promise.all([
-          fetch("/api/super-admin/courses/totals"),
-          fetch("/api/super-admin/categories"),
+          fetch('/api/super-admin/courses/totals'),
+          fetch('/api/super-admin/categories'),
         ]);
 
-        if (!totalsResponse.ok) throw new Error("Error obteniendo totales");
+        if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
         const { totalStudents } = (await totalsResponse.json()) as {
           totalStudents: number;
         };
         setTotalStudents(totalStudents);
 
         if (!categoriesResponse.ok)
-          throw new Error("Error obteniendo categorías");
+          throw new Error('Error obteniendo categorías');
         const categoriesData = (await categoriesResponse.json()) as {
           id: number;
           name: string;
         }[];
         setCategories(categoriesData);
       } catch (error) {
-        console.error("❌ Error cargando datos:", error);
-        toast.error("Error al cargar los datos", {
-          description: "Intenta nuevamente.",
+        console.error('❌ Error cargando datos:', error);
+        toast.error('Error al cargar los datos', {
+          description: 'Intenta nuevamente.',
         });
       }
     }
@@ -142,7 +142,7 @@ export default function Page() {
   useEffect(() => {
     const loadEducators = async () => {
       try {
-        const response = await fetch("/api/super-admin/changeEducators");
+        const response = await fetch('/api/super-admin/changeEducators');
         if (response.ok) {
           const data = (await response.json()) as {
             id: string;
@@ -151,7 +151,7 @@ export default function Page() {
           setEducators(data);
         }
       } catch (error) {
-        console.error("Error al cargar educadores:", error);
+        console.error('Error al cargar educadores:', error);
       }
     };
     void loadEducators();
@@ -161,15 +161,15 @@ export default function Page() {
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (categoryFilter ? course.categoryid === Number(categoryFilter) : true),
+      (categoryFilter ? course.categoryid === Number(categoryFilter) : true)
   );
 
   // Modify the filtering logic for program/independent courses
   const programCourses = filteredCourses.filter(
-    (course) => course.programas && course.programas.length > 0,
+    (course) => course.programas && course.programas.length > 0
   );
   const nonProgramCourses = filteredCourses.filter(
-    (course) => !course.programas || course.programas.length === 0,
+    (course) => !course.programas || course.programas.length === 0
   );
 
   // Get current courses based on pagination and filter
@@ -178,11 +178,11 @@ export default function Page() {
     : nonProgramCourses;
 
   // Add console logs for debugging
-  console.log("Filtered courses:", {
+  console.log('Filtered courses:', {
     total: filteredCourses.length,
     program: programCourses.length,
     independent: nonProgramCourses.length,
-    showing: showProgramCourses ? "program" : "independent",
+    showing: showProgramCourses ? 'program' : 'independent',
     current: currentCourses.length,
   });
 
@@ -191,7 +191,7 @@ export default function Page() {
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
   const displayedCourses = currentCourses.slice(
     indexOfFirstCourse,
-    indexOfLastCourse,
+    indexOfLastCourse
   );
 
   const handleNextPage = () => {
@@ -225,12 +225,12 @@ export default function Page() {
       name: string;
       description: string;
       porcentaje: number;
-    }[], // ← 👈 nuevo
+    }[] // ← 👈 nuevo
   ) => {
-    console.log("🧪 Enviando datos a updateCourse:", {
+    console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
       title,
-      description: description ?? "",
+      description: description ?? '',
       coverImageKey,
       coverVideoCourseKey,
       categoryid: Number(categoryid),
@@ -242,7 +242,7 @@ export default function Page() {
       courseTypeId.includes(4) &&
       (!individualPrice || individualPrice <= 0)
     ) {
-      toast.error("El precio individual es obligatorio y debe ser mayor a 0.");
+      toast.error('El precio individual es obligatorio y debe ser mayor a 0.');
       return;
     }
 
@@ -251,8 +251,8 @@ export default function Page() {
     void parametros;
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametrosList.length === 0) {
-      toast.error("Error", {
-        description: "Debe agregar al menos un parámetro de evaluación",
+      toast.error('Error', {
+        description: 'Debe agregar al menos un parámetro de evaluación',
       });
       return;
     }
@@ -263,14 +263,14 @@ export default function Page() {
 
       setUploading(false);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : "Unknown error";
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
       throw new Error(`Error to upload the file type ${errorMessage}`);
     }
 
-    console.log("🧪 Enviando datos a updateCourse:", {
+    console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
       title,
-      description: description ?? "",
+      description: description ?? '',
       coverImageKey,
       coverVideoCourseKey,
       categoryid: Number(categoryid),
@@ -285,15 +285,15 @@ export default function Page() {
 
       // Get instructor name from educators array based on selected instructor ID
       const selectedEducator = educators.find(
-        (edu) => edu.id === editingCourse?.instructor,
+        (edu) => edu.id === editingCourse?.instructor
       );
-      const instructorName = selectedEducator?.name ?? "";
+      const instructorName = selectedEducator?.name ?? '';
 
       if (Number(id)) {
         response = await updateCourse(Number(id), {
           title,
-          description: description ?? "",
-          coverImageKey: coverImageKey ?? "",
+          description: description ?? '',
+          coverImageKey: coverImageKey ?? '',
           coverVideoCourseKey,
           categoryid: Number(categoryid),
           modalidadesid: Number(modalidadesid),
@@ -304,22 +304,22 @@ export default function Page() {
 
         responseData = { id: Number(id) };
       } else {
-        console.log("🧪 Enviando datos a sin id:", {
+        console.log('🧪 Enviando datos a sin id:', {
           id: Number(id),
           title,
-          description: description ?? "",
-          coverImageKey: coverImageKey ?? "",
-          coverVideoCourseKey: coverVideoCourseKey ?? "",
+          description: description ?? '',
+          coverImageKey: coverImageKey ?? '',
+          coverVideoCourseKey: coverVideoCourseKey ?? '',
           categoryid: Number(categoryid),
           modalidadesid: Number(modalidadesid),
           nivelid: Number(nivelid),
           rating,
           instructor: instructorName,
         });
-        const instructorId = selectedEducator?.id ?? "";
-        response = await fetch("/api/educadores/courses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const instructorId = selectedEducator?.id ?? '';
+        response = await fetch('/api/educadores/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title,
             description,
@@ -346,25 +346,25 @@ export default function Page() {
           const json: CreateCourseResponse = await response.json();
           const courseId = json?.id ?? json?.course?.id;
 
-          if (!courseId || typeof courseId !== "number") {
-            throw new Error("El backend no devolvió un ID válido del curso");
+          if (!courseId || typeof courseId !== 'number') {
+            throw new Error('El backend no devolvió un ID válido del curso');
           }
 
           responseData = { id: courseId };
 
-          console.log("✅ Curso creado correctamente con ID:", responseData.id);
+          console.log('✅ Curso creado correctamente con ID:', responseData.id);
         } else {
           const errorJson = await response.json().catch(() => ({}));
-          console.error("❌ Error creando curso:", errorJson);
-          throw new Error("No se pudo crear el curso");
+          console.error('❌ Error creando curso:', errorJson);
+          throw new Error('No se pudo crear el curso');
         }
       }
 
       if (response instanceof Response && response.ok && responseData) {
-        toast.success(id ? "Curso actualizado" : "Curso creado", {
+        toast.success(id ? 'Curso actualizado' : 'Curso creado', {
           description: id
-            ? "El curso se actualizó con éxito"
-            : "El curso se creó con éxito",
+            ? 'El curso se actualizó con éxito'
+            : 'El curso se creó con éxito',
         });
 
         // ✅ Guardar parámetros si `addParametros` es `true`
@@ -372,28 +372,28 @@ export default function Page() {
           for (const parametro of parametrosList) {
             try {
               console.log(
-                "🧪 Enviando parámetro con courseId:",
+                '🧪 Enviando parámetro con courseId:',
                 responseData.id,
-                parametro,
+                parametro
               );
 
               const parametroResponse = await fetch(
-                "/api/educadores/parametros",
+                '/api/educadores/parametros',
                 {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     name: parametro.name,
                     description: parametro.description,
                     porcentaje: parametro.porcentaje,
                     courseId: responseData.id, // ✅ Asegura que `courseId` es válido
                   }),
-                },
+                }
               );
 
               if (parametroResponse.ok) {
-                toast.success("Parámetro creado exitosamente", {
-                  description: "El parámetro se ha creado exitosamente",
+                toast.success('Parámetro creado exitosamente', {
+                  description: 'El parámetro se ha creado exitosamente',
                 });
               } else {
                 const errorData = (await parametroResponse.json()) as {
@@ -402,17 +402,17 @@ export default function Page() {
                 throw new Error(errorData.error);
               }
             } catch (error) {
-              toast.error("Error al crear el parámetro", {
+              toast.error('Error al crear el parámetro', {
                 description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
               });
             }
           }
         }
       } else {
-        throw new Error("No se pudo completar la operación");
+        throw new Error('No se pudo completar la operación');
       }
     } catch (error) {
-      toast.error("Error al procesar el curso", {
+      toast.error('Error al procesar el curso', {
         description: `Ocurrió un error: ${(error as Error).message}`,
       });
     }
@@ -424,7 +424,7 @@ export default function Page() {
       coursesData.map((course) => ({
         ...course,
         isActive: course.isActive ?? undefined, // Ensure isActive is boolean or undefined
-      })),
+      }))
     );
   };
 
@@ -432,14 +432,14 @@ export default function Page() {
   const handleCreateCourse = () => {
     setEditingCourse({
       id: 0,
-      title: "",
-      description: "",
+      title: '',
+      description: '',
       categoryid: 0,
       modalidadesid: 0,
-      createdAt: "",
-      instructor: "",
-      coverImageKey: "",
-      creatorId: "",
+      createdAt: '',
+      instructor: '',
+      coverImageKey: '',
+      creatorId: '',
       nivelid: 0,
       rating: 0,
       individualPrice: undefined, // <-- en vez de null
@@ -570,8 +570,8 @@ export default function Page() {
           }}
           className={`rounded-md px-4 py-2 ${
             !showProgramCourses
-              ? "bg-primary text-white"
-              : "bg-gray-800 text-gray-300"
+              ? 'bg-primary text-white'
+              : 'bg-gray-800 text-gray-300'
           }`}
         >
           Cursos Independientes
@@ -583,8 +583,8 @@ export default function Page() {
           }}
           className={`rounded-md px-4 py-2 ${
             showProgramCourses
-              ? "bg-primary text-background"
-              : "bg-gray-800 text-gray-300"
+              ? 'bg-primary text-background'
+              : 'bg-gray-800 text-gray-300'
           }`}
         >
           Cursos en Programas
@@ -622,7 +622,7 @@ export default function Page() {
         </button>
         <span className="flex items-center text-white">
           Página {currentPage} de {totalPages}
-          {isLoadingMore && " (Cargando...)"}
+          {isLoadingMore && ' (Cargando...)'}
         </span>
         <button
           onClick={handleNextPage}
@@ -639,14 +639,14 @@ export default function Page() {
           isOpen={isModalOpen}
           onCloseAction={handleCloseModal}
           onSubmitAction={(...args) => {
-            console.log("🔥 Modal llamó onSubmitAction", args);
+            console.log('🔥 Modal llamó onSubmitAction', args);
             return handleCreateOrUpdateCourse(...args);
           }}
           uploading={uploading}
           editingCourseId={editingCourse?.id ?? null}
-          title={editingCourse?.title ?? ""}
+          title={editingCourse?.title ?? ''}
           setTitle={setTitle}
-          description={editingCourse?.description ?? ""}
+          description={editingCourse?.description ?? ''}
           setDescription={setDescription}
           categoryid={editingCourse?.categoryid ?? 0}
           setCategoryid={(categoryid: number) =>
@@ -655,17 +655,17 @@ export default function Page() {
           modalidadesid={editingCourse?.modalidadesid ?? 0}
           setModalidadesid={(modalidadesid: number) =>
             setEditingCourse((prev) =>
-              prev ? { ...prev, modalidadesid } : null,
+              prev ? { ...prev, modalidadesid } : null
             )
           }
           nivelid={editingCourse?.nivelid ?? 0}
           setNivelid={(nivelid: number) =>
             setEditingCourse((prev) => (prev ? { ...prev, nivelid } : null))
           }
-          coverImageKey={editingCourse?.coverImageKey ?? ""}
+          coverImageKey={editingCourse?.coverImageKey ?? ''}
           setCoverImageKey={(coverImageKey: string) =>
             setEditingCourse((prev) =>
-              prev ? { ...prev, coverImageKey } : null,
+              prev ? { ...prev, coverImageKey } : null
             )
           }
           rating={editingCourse?.rating ?? 0}
@@ -683,7 +683,7 @@ export default function Page() {
           setIsActive={(newActive: boolean) => {
             if (editingCourse) {
               setEditingCourse((prev) =>
-                prev ? { ...prev, isActive: newActive } : null,
+                prev ? { ...prev, isActive: newActive } : null
               );
             } else {
               setIsActive(newActive);
@@ -697,13 +697,13 @@ export default function Page() {
           setIndividualPrice={(price: number | null) => {
             if (editingCourse) {
               setEditingCourse((prev) =>
-                prev ? { ...prev, individualPrice: price ?? undefined } : null,
+                prev ? { ...prev, individualPrice: price ?? undefined } : null
               );
             } else {
               setIndividualPrice(price);
             }
           }}
-          instructor={editingCourse?.instructor ?? ""}
+          instructor={editingCourse?.instructor ?? ''}
           setInstructor={(instructor: string) =>
             setEditingCourse((prev) => (prev ? { ...prev, instructor } : null))
           }
@@ -713,7 +713,7 @@ export default function Page() {
           coverVideoCourseKey={editingCourse?.coverVideoCourseKey ?? null}
           setCoverVideoCourseKey={(val) => {
             setEditingCourse((prev) =>
-              prev ? { ...prev, coverVideoCourseKey: val } : null,
+              prev ? { ...prev, coverVideoCourseKey: val } : null
             );
           }}
         />

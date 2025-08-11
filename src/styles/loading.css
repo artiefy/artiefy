@@ -19,7 +19,7 @@
 }
 
 .loading-loader::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: calc(var(--border) * -0.5);
   border-radius: 50%;
@@ -29,7 +29,7 @@
 }
 
 .loading-loader::after {
-  content: "";
+  content: '';
   width: var(--size);
   aspect-ratio: 1;
   position: absolute;

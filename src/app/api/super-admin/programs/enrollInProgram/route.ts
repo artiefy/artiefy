@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server';
+import { and, eq, inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollmentPrograms, programas, users } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollmentPrograms, programas, users } from '~/server/db/schema';
 
 const BATCH_SIZE = 100;
 
@@ -13,14 +13,14 @@ export async function GET() {
     const allPrograms = await db.select().from(programas).execute();
     // Use a Set to filter out duplicate titles more efficiently
     const uniquePrograms = Array.from(
-      new Map(allPrograms.map((program) => [program.title, program])).values(),
+      new Map(allPrograms.map((program) => [program.title, program])).values()
     );
     return NextResponse.json(uniquePrograms);
   } catch (error) {
-    console.error("Error al obtener programas:", error);
+    console.error('Error al obtener programas:', error);
     return NextResponse.json(
-      { error: "Error al obtener programas" },
-      { status: 500 },
+      { error: 'Error al obtener programas' },
+      { status: 500 }
     );
   }
 }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       programId: string;
       userIds: string[];
-      planType: "Pro" | "Premium" | "Enterprise";
+      planType: 'Pro' | 'Premium' | 'Enterprise';
     };
 
     const { programId, userIds, planType } = body;
@@ -38,13 +38,13 @@ export async function POST(request: Request) {
 
     if (isNaN(parsedProgramId)) {
       return NextResponse.json(
-        { error: "programId inválido" },
-        { status: 400 },
+        { error: 'programId inválido' },
+        { status: 400 }
       );
     }
 
     if (!Array.isArray(userIds) || userIds.some((id) => !id.trim())) {
-      return NextResponse.json({ error: "userIds inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'userIds inválidos' }, { status: 400 });
     }
 
     const existingUsers = await db
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
 
     if (filteredUserIds.length === 0) {
       return NextResponse.json(
-        { error: "Ninguno de los usuarios existe." },
-        { status: 400 },
+        { error: 'Ninguno de los usuarios existe.' },
+        { status: 400 }
       );
     }
 
@@ -69,8 +69,8 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(enrollmentPrograms.programaId, parsedProgramId),
-          inArray(enrollmentPrograms.userId, filteredUserIds),
-        ),
+          inArray(enrollmentPrograms.userId, filteredUserIds)
+        )
       )
       .execute();
 
@@ -83,13 +83,13 @@ export async function POST(request: Request) {
 
       // Format date for Clerk
       const formattedDate =
-        oneMonthFromNow.toISOString().slice(0, 10) + " 23:59:59";
+        oneMonthFromNow.toISOString().slice(0, 10) + ' 23:59:59';
 
       // Update DB users
       await db
         .update(users)
         .set({
-          subscriptionStatus: "active",
+          subscriptionStatus: 'active',
           planType: planType,
           subscriptionEndDate: oneMonthFromNow,
         })
@@ -100,12 +100,12 @@ export async function POST(request: Request) {
           const client = await clerkClient();
           await client.users.updateUser(userId, {
             publicMetadata: {
-              subscriptionStatus: "active",
+              subscriptionStatus: 'active',
               subscriptionEndDate: formattedDate,
               planType: planType,
             },
           });
-        }),
+        })
       );
 
       for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
             programaId: parsedProgramId,
             enrolledAt: new Date(),
             completed: false,
-          })),
+          }))
         );
       }
     }
@@ -129,10 +129,10 @@ export async function POST(request: Request) {
       message,
     });
   } catch (error) {
-    console.error("Error al asignar estudiantes a programa:", error);
+    console.error('Error al asignar estudiantes a programa:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error desconocido" },
-      { status: 500 },
+      { error: error instanceof Error ? error.message : 'Error desconocido' },
+      { status: 500 }
     );
   }
 }

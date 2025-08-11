@@ -1,10 +1,10 @@
-"use server";
+'use server';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollmentPrograms } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollmentPrograms } from '~/server/db/schema';
 
 interface Program {
   id: number;
@@ -20,7 +20,7 @@ export async function getEnrolledPrograms(): Promise<Program[]> {
   const user = await currentUser();
 
   if (!user?.id) {
-    throw new Error("Usuario no autenticado");
+    throw new Error('Usuario no autenticado');
   }
 
   const enrollments = await db.query.enrollmentPrograms.findMany({

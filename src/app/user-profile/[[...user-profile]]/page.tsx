@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { UserProfile } from "@clerk/nextjs";
+import { UserProfile } from '@clerk/nextjs';
 
 const DotIcon = () => {
   return (

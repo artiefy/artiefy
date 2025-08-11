@@ -1,5 +1,5 @@
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export function CourseDetailsSkeleton() {
   return (
@@ -26,16 +26,16 @@ export function CourseDetailsSkeleton() {
                 {/* Instructor and Stats Row */}
                 <div className="flex justify-between">
                   <div className="space-y-2">
-                    <Skeleton className="h-6 w-48 bg-gray-300" />{" "}
+                    <Skeleton className="h-6 w-48 bg-gray-300" />{' '}
                     {/* Instructor Name */}
-                    <Skeleton className="h-4 w-24 bg-gray-300" />{" "}
+                    <Skeleton className="h-4 w-24 bg-gray-300" />{' '}
                     {/* "Educador" text */}
                   </div>
                   <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
-                      <Skeleton className="h-5 w-5 bg-gray-300" />{" "}
+                      <Skeleton className="h-5 w-5 bg-gray-300" />{' '}
                       {/* Student Icon */}
-                      <Skeleton className="h-4 w-24 bg-gray-300" />{" "}
+                      <Skeleton className="h-4 w-24 bg-gray-300" />{' '}
                       {/* Student Count */}
                     </div>
                     <div className="flex space-x-1">
@@ -45,7 +45,7 @@ export function CourseDetailsSkeleton() {
                           className="h-5 w-5 bg-gray-300"
                         /> /* Rating Stars */
                       ))}
-                      <Skeleton className="ml-2 h-4 w-10 bg-gray-300" />{" "}
+                      <Skeleton className="ml-2 h-4 w-10 bg-gray-300" />{' '}
                       {/* Rating Number */}
                     </div>
                   </div>
@@ -54,14 +54,14 @@ export function CourseDetailsSkeleton() {
                 {/* Course Metadata Row */}
                 <div className="flex items-center justify-between">
                   <div className="flex space-x-4">
-                    <Skeleton className="h-8 w-24 bg-gray-300" />{" "}
+                    <Skeleton className="h-8 w-24 bg-gray-300" />{' '}
                     {/* Category Badge */}
-                    <Skeleton className="h-8 w-32 bg-gray-300" />{" "}
+                    <Skeleton className="h-8 w-32 bg-gray-300" />{' '}
                     {/* Creation Date */}
-                    <Skeleton className="h-8 w-32 bg-gray-300" />{" "}
+                    <Skeleton className="h-8 w-32 bg-gray-300" />{' '}
                     {/* Last Update */}
                   </div>
-                  <Skeleton className="h-8 w-24 bg-gray-300" />{" "}
+                  <Skeleton className="h-8 w-24 bg-gray-300" />{' '}
                   {/* Modalidad Badge */}
                 </div>
 
@@ -74,7 +74,7 @@ export function CourseDetailsSkeleton() {
 
                 {/* Course Content Section */}
                 <div className="rounded-lg border p-6">
-                  <Skeleton className="mb-4 h-6 w-48 bg-gray-300" />{" "}
+                  <Skeleton className="mb-4 h-6 w-48 bg-gray-300" />{' '}
                   {/* "Contenido del curso" */}
                   <div className="space-y-4">
                     {/* 4 Lecciones de ejemplo */}
@@ -82,12 +82,12 @@ export function CourseDetailsSkeleton() {
                       <div key={i} className="rounded-lg border bg-gray-50 p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <Skeleton className="h-5 w-5 bg-gray-300" />{" "}
+                            <Skeleton className="h-5 w-5 bg-gray-300" />{' '}
                             {/* Lesson Icon */}
-                            <Skeleton className="h-5 w-64 bg-gray-300" />{" "}
+                            <Skeleton className="h-5 w-64 bg-gray-300" />{' '}
                             {/* Lesson Title */}
                           </div>
-                          <Skeleton className="h-5 w-20 bg-gray-300" />{" "}
+                          <Skeleton className="h-5 w-20 bg-gray-300" />{' '}
                           {/* Duration */}
                         </div>
                       </div>
@@ -104,7 +104,7 @@ export function CourseDetailsSkeleton() {
 
             {/* Comments Section */}
             <div className="mt-8 mb-12 space-y-4">
-              <Skeleton className="h-8 w-48 bg-gray-300" />{" "}
+              <Skeleton className="h-8 w-48 bg-gray-300" />{' '}
               {/* "Comentarios" Title */}
               <div className="space-y-6">
                 {/* 4 Comment Skeletons */}
@@ -118,19 +118,19 @@ export function CourseDetailsSkeleton() {
                             className="h-4 w-4 bg-gray-300"
                           /> /* Rating Stars */
                         ))}
-                        <Skeleton className="ml-2 h-4 w-32 bg-gray-300" />{" "}
+                        <Skeleton className="ml-2 h-4 w-32 bg-gray-300" />{' '}
                         {/* Date */}
                       </div>
                       <div className="flex space-x-2">
-                        <Skeleton className="h-6 w-6 bg-gray-300" />{" "}
+                        <Skeleton className="h-6 w-6 bg-gray-300" />{' '}
                         {/* Like Icon */}
-                        <Skeleton className="h-6 w-6 bg-gray-300" />{" "}
+                        <Skeleton className="h-6 w-6 bg-gray-300" />{' '}
                         {/* Action Icons */}
                       </div>
                     </div>
-                    <Skeleton className="mb-2 h-4 w-full bg-gray-300" />{" "}
+                    <Skeleton className="mb-2 h-4 w-full bg-gray-300" />{' '}
                     {/* Comment Content */}
-                    <Skeleton className="h-4 w-32 bg-gray-300" />{" "}
+                    <Skeleton className="h-4 w-32 bg-gray-300" />{' '}
                     {/* Username */}
                   </div>
                 ))}

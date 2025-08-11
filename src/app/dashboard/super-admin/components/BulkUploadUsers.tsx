@@ -1,7 +1,7 @@
-"use client";
-import React, { useState } from "react";
+'use client';
+import React, { useState } from 'react';
 
-import { FiDownload, FiUpload, FiX } from "react-icons/fi";
+import { FiDownload, FiUpload, FiX } from 'react-icons/fi';
 
 interface User {
   id: string;
@@ -29,33 +29,33 @@ const BulkUploadUsers = ({
     setFile(selectedFile);
   };
 
-  const showNotification = (message: string, type: "success" | "error") => {
+  const showNotification = (message: string, type: 'success' | 'error') => {
     // Implement your notification logic here
     alert(`${type.toUpperCase()}: ${message}`);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      showNotification("Por favor selecciona un archivo primero.", "error");
+      showNotification('Por favor selecciona un archivo primero.', 'error');
       return;
     }
     setUploading(true); // ✅ Indicar que la carga ha comenzado
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
 
     try {
-      const res = await fetch("/api/usersMasive", {
-        method: "POST",
+      const res = await fetch('/api/usersMasive', {
+        method: 'POST',
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Error al subir los usuarios");
+      if (!res.ok) throw new Error('Error al subir los usuarios');
 
       // 📌 Asegurar que la respuesta es JSON
-      const contentType = res.headers.get("content-type");
-      if (!contentType?.includes("application/json")) {
-        throw new Error("Respuesta inesperada del servidor, no es JSON.");
+      const contentType = res.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error('Respuesta inesperada del servidor, no es JSON.');
       }
 
       // ✅ Recibir JSON con usuarios creados
@@ -70,8 +70,8 @@ const BulkUploadUsers = ({
       setModalIsOpen(false);
     } catch (error) {
       showNotification(
-        error instanceof Error ? error.message : "Error desconocido",
-        "error",
+        error instanceof Error ? error.message : 'Error desconocido',
+        'error'
       );
     } finally {
       setUploading(false);
@@ -81,22 +81,22 @@ const BulkUploadUsers = ({
   // Descargar plantilla de usuarios
   const handleDownloadTemplate = async () => {
     try {
-      const res = await fetch("/api/usersMasive/", {
-        method: "GET",
+      const res = await fetch('/api/usersMasive/', {
+        method: 'GET',
       });
 
       if (!res.ok) {
-        throw new Error("Error al descargar la plantilla");
+        throw new Error('Error al descargar la plantilla');
       }
 
       const data = await res.blob();
       const url = window.URL.createObjectURL(data);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = "plantilla_usuarios.xlsx";
+      link.download = 'plantilla_usuarios.xlsx';
       link.click();
     } catch {
-      alert("Error al descargar la plantilla");
+      alert('Error al descargar la plantilla');
     }
   };
 
@@ -139,7 +139,7 @@ const BulkUploadUsers = ({
                 className="mb-4 w-full rounded-md bg-[#00BDD8] px-6 py-2 text-[#01142B] transition hover:scale-105 hover:bg-[#00A5C0]"
                 disabled={uploading}
               >
-                {uploading ? "Subiendo..." : "Subir Archivo"}
+                {uploading ? 'Subiendo...' : 'Subir Archivo'}
               </button>
 
               {/* Botón para descargar plantilla */}

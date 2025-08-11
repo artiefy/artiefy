@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -10,11 +10,11 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get("activityId");
+    const activityId = searchParams.get('activityId');
     if (!activityId) {
       return NextResponse.json(
-        { success: false, message: "Se requiere activityId" },
-        { status: 400 },
+        { success: false, message: 'Se requiere activityId' },
+        { status: 400 }
       );
     }
 
@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, answers });
   } catch (error) {
-    console.error("Error fetching student answers:", error);
+    console.error('Error fetching student answers:', error);
     return NextResponse.json(
-      { success: false, message: "Error en el servidor" },
-      { status: 500 },
+      { success: false, message: 'Error en el servidor' },
+      { status: 500 }
     );
   }
 }

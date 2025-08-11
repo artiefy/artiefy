@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from '@clerk/nextjs';
 import {
   HandThumbUpIcon,
   PencilIcon,
   StarIcon,
   TrashIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid";
+} from '@heroicons/react/24/solid';
 
-import { Button } from "~/components/estudiantes/ui/button";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { Textarea } from "~/components/estudiantes/ui/textarea";
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { Textarea } from '~/components/estudiantes/ui/textarea';
 import {
   addComment,
   deleteComment,
   editComment,
   getCommentsByCourseId,
   likeComment,
-} from "~/server/actions/estudiantes/comment/courseCommentActions";
-import { isUserEnrolled } from "~/server/actions/estudiantes/courses/enrollInCourse";
+} from '~/server/actions/estudiantes/comment/courseCommentActions';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 interface CommentProps {
   courseId: number;
@@ -45,9 +45,9 @@ export default function CourseComments({
   isEnrolled,
   onEnrollmentChange,
 }: CommentProps) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
@@ -64,7 +64,7 @@ export default function CourseComments({
         const response = await getCommentsByCourseId(courseId);
         setComments(response.comments as Comment[]);
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        console.error('Error fetching comments:', error);
       } finally {
         setLoading(false);
       }
@@ -84,7 +84,7 @@ export default function CourseComments({
         setLocalIsEnrolled(enrolled);
         onEnrollmentChange?.(enrolled);
       } catch (error) {
-        console.error("Error checking enrollment:", error);
+        console.error('Error checking enrollment:', error);
       }
     }
   }, [courseId, userId, onEnrollmentChange]);
@@ -132,14 +132,14 @@ export default function CourseComments({
       }
       setMessage(response.message);
       if (response.success) {
-        setContent("");
+        setContent('');
         setRating(0);
         setEditMode(null); // Reset edit mode
         const updatedComments = await getCommentsByCourseId(courseId);
         setComments(updatedComments.comments as Comment[]);
       }
     } catch (error) {
-      console.error("Error adding/editing comment:", error);
+      console.error('Error adding/editing comment:', error);
     } finally {
       setIsSubmitting(false); // Ocultar el spinner
     }
@@ -152,11 +152,11 @@ export default function CourseComments({
       setMessage(response.message);
       if (response.success) {
         setComments((prevComments) =>
-          prevComments.filter((comment) => comment.id !== commentId),
+          prevComments.filter((comment) => comment.id !== commentId)
         );
       }
     } catch (error) {
-      console.error("Error deleting comment:", error);
+      console.error('Error deleting comment:', error);
     } finally {
       setDeletingComment(null); // Desmarcar el comentario como en proceso de eliminación
     }
@@ -172,7 +172,7 @@ export default function CourseComments({
         setComments(updatedComments.comments as Comment[]);
       }
     } catch (error) {
-      console.error("Error liking comment:", error);
+      console.error('Error liking comment:', error);
     } finally {
       setLikingComment(null); // Desmarcar el comentario como en proceso de "me gusta"
     }
@@ -185,13 +185,13 @@ export default function CourseComments({
 
     // Scroll to the textarea
     if (textareaRef.current) {
-      textareaRef.current.scrollIntoView({ behavior: "smooth" });
+      textareaRef.current.scrollIntoView({ behavior: 'smooth' });
       textareaRef.current.focus();
     }
   };
 
   const handleCancelEdit = () => {
-    setContent("");
+    setContent('');
     setRating(0); // Resetear el rating al cancelar la edición
     setEditMode(null);
   };
@@ -201,11 +201,11 @@ export default function CourseComments({
     const date = new Date(dateString);
     // Usar opciones fijas para evitar diferencias de localización
     const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     };
-    return date.toLocaleDateString("es-ES", options);
+    return date.toLocaleDateString('es-ES', options);
   };
 
   // Remove the skeleton loader section and modify the return statement
@@ -219,8 +219,8 @@ export default function CourseComments({
         <div
           className={
             !isSignedIn || !localIsEnrolled
-              ? "pointer-events-none opacity-50"
-              : ""
+              ? 'pointer-events-none opacity-50'
+              : ''
           }
         >
           <div>
@@ -238,18 +238,18 @@ export default function CourseComments({
                 setContent(e.target.value)
               }
               onFocus={(e: React.FocusEvent<HTMLTextAreaElement>) =>
-                (e.target.placeholder = "")
+                (e.target.placeholder = '')
               }
               onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) =>
-                (e.target.placeholder = "Escribe tu comentario")
+                (e.target.placeholder = 'Escribe tu comentario')
               }
               required
               placeholder="Escribe tu comentario"
               className="text-primary hover:border-secondary focus:border-secondary mt-1 block w-full border-[1px] transition-colors duration-200 focus:border-[2px]"
               style={{
-                height: "100px",
-                padding: "10px",
-                caretColor: "var(--color-primary)",
+                height: '100px',
+                padding: '10px',
+                caretColor: 'var(--color-primary)',
               }}
             />
           </div>
@@ -264,7 +264,7 @@ export default function CourseComments({
               {[1, 2, 3, 4, 5].map((star) => (
                 <StarIcon
                   key={star}
-                  className={`size-6 cursor-pointer ${star <= rating ? "text-yellow-400" : "text-gray-300"}`}
+                  className={`size-6 cursor-pointer ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
                   onClick={() => setRating(star)}
                 />
               ))}
@@ -274,19 +274,19 @@ export default function CourseComments({
             <Button
               type="submit"
               className="bg-secondary focus:ring-secondary inline-flex items-center justify-center rounded-md border border-transparent text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-hidden active:scale-95"
-              style={{ width: "100px", height: "38px" }}
+              style={{ width: '100px', height: '38px' }}
             >
               {isSubmitting ? (
                 <div className="flex items-center">
                   <Icons.spinner
                     className="text-white"
-                    style={{ width: "20px", height: "20px" }}
+                    style={{ width: '20px', height: '20px' }}
                   />
                 </div>
               ) : editMode ? (
-                "Editar"
+                'Editar'
               ) : (
-                "Enviar"
+                'Enviar'
               )}
             </Button>
             {editMode && (
@@ -310,7 +310,7 @@ export default function CourseComments({
               <div className="text-primary flex items-center gap-2">
                 <Icons.spinner
                   className="inline-block"
-                  style={{ width: "20px", height: "20px" }}
+                  style={{ width: '20px', height: '20px' }}
                 />
                 <span className="text-base text-gray-500">
                   Cargando comentarios...
@@ -327,7 +327,7 @@ export default function CourseComments({
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon
                       key={star}
-                      className={`size-5 ${star <= comment.rating ? "text-yellow-400" : "text-gray-300"}`}
+                      className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
                     />
                   ))}
                   <span className="ml-2 text-sm text-gray-600">
@@ -337,10 +337,10 @@ export default function CourseComments({
                 <div className="flex items-center space-x-2">
                   <div className="flex flex-col items-center">
                     <span
-                      className={`-mt-6 text-sm ${comment.likes > 0 ? "text-primary" : "text-gray-400"}`}
+                      className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
                     >
                       {comment.likes.toString()}
-                    </span>{" "}
+                    </span>{' '}
                     {/* Convert likes to string */}
                     <button
                       onClick={() => handleLike(comment.id)}
@@ -349,11 +349,11 @@ export default function CourseComments({
                       {likingComment === comment.id ? (
                         <Icons.spinner
                           className="text-secondary"
-                          style={{ width: "20px", height: "20px" }}
+                          style={{ width: '20px', height: '20px' }}
                         />
                       ) : (
                         <HandThumbUpIcon
-                          className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? "text-blue-500" : "text-gray-400"} hover:text-blue-500`}
+                          className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-500`}
                         />
                       )}
                     </button>
@@ -366,14 +366,14 @@ export default function CourseComments({
                       <button
                         onClick={() => handleDelete(comment.id)}
                         className={
-                          deletingComment === comment.id ? "text-red-500" : ""
+                          deletingComment === comment.id ? 'text-red-500' : ''
                         }
                         disabled={deletingComment === comment.id}
                       >
                         {deletingComment === comment.id ? (
                           <Icons.spinner
                             className="text-red-500"
-                            style={{ width: "20px", height: "20px" }}
+                            style={{ width: '20px', height: '20px' }}
                           />
                         ) : (
                           <TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />
@@ -386,7 +386,7 @@ export default function CourseComments({
               <p className="text-primary">{comment.content}</p>
               <p className="text-sm text-gray-500">
                 Por: {comment.userName}
-              </p>{" "}
+              </p>{' '}
               {/* Mostrar el nombre del usuario */}
             </li>
           ))}

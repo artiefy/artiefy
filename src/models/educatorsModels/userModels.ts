@@ -1,7 +1,7 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, or } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses, users } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses, users } from '~/server/db/schema';
 
 export interface User {
   id: string;
@@ -47,21 +47,21 @@ export async function getAllUsers(): Promise<User[]> {
 // Crear un nuevo usuario
 export async function createUser(
   id: string,
-  role: "estudiante" | "educador" | "admin" | "super-admin",
+  role: 'estudiante' | 'educador' | 'admin' | 'super-admin',
   name: string,
-  email: string,
+  email: string
 ): Promise<boolean> {
   // Verificar si el usuario ya existe por id o combinación email+rol
   const existingUser = await db
     .select()
     .from(users)
     .where(
-      or(eq(users.id, id), and(eq(users.email, email), eq(users.role, role))),
+      or(eq(users.id, id), and(eq(users.email, email), eq(users.role, role)))
     )
     .limit(1);
 
   if (existingUser.length > 0) {
-    console.log("🔍 Usuario ya existe en DB:", existingUser[0]);
+    console.log('🔍 Usuario ya existe en DB:', existingUser[0]);
     return false;
   }
 
@@ -72,10 +72,10 @@ export async function createUser(
       name,
       email,
     });
-    console.log("✅ Usuario insertado correctamente:", { id, email, role });
+    console.log('✅ Usuario insertado correctamente:', { id, email, role });
     return true;
   } catch (error) {
-    console.error("❌ Error al insertar usuario:", error);
+    console.error('❌ Error al insertar usuario:', error);
     throw error;
   }
 }

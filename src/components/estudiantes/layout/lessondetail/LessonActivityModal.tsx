@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
   ChevronRightIcon,
@@ -12,36 +12,36 @@ import {
   StarIcon as StarSolidIcon,
   XCircleIcon,
   XMarkIcon, // <-- asegúrate de importar esto
-} from "@heroicons/react/24/solid";
-import { Unlock } from "lucide-react";
-import { BiSolidReport } from "react-icons/bi";
-import { BsFiletypeXls } from "react-icons/bs";
+} from '@heroicons/react/24/solid';
+import { Unlock } from 'lucide-react';
+import { BiSolidReport } from 'react-icons/bi';
+import { BsFiletypeXls } from 'react-icons/bs';
 import {
   FaFilePdf,
   FaFilePowerpoint,
   FaFileWord,
   FaLink,
   FaTrophy,
-} from "react-icons/fa";
-import { FaRegFileImage } from "react-icons/fa6";
-import { toast } from "sonner";
+} from 'react-icons/fa';
+import { FaRegFileImage } from 'react-icons/fa6';
+import { toast } from 'sonner';
 
-import { Button } from "~/components/estudiantes/ui/button";
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "~/components/estudiantes/ui/dialog";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { unlockNextLesson } from "~/server/actions/estudiantes/lessons/unlockNextLesson";
-import { type Activity, type Question, type SavedAnswer } from "~/types";
-import { formatScoreNumber } from "~/utils/formatScore";
-import { useMediaQuery } from "~/utils/useMediaQuery"; // <-- crea este hook util
+} from '~/components/estudiantes/ui/dialog';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
+import { type Activity, type Question, type SavedAnswer } from '~/types';
+import { formatScoreNumber } from '~/utils/formatScore';
+import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
 
-import { FileUploadForm } from "./FileUploadForm";
+import { FileUploadForm } from './FileUploadForm';
 
-import "~/styles/arrowactivity.css";
+import '~/styles/arrowactivity.css';
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -82,10 +82,10 @@ interface StoredFileInfo {
   fileName: string;
   fileUrl: string;
   uploadDate: string;
-  status: "pending" | "reviewed";
+  status: 'pending' | 'reviewed';
   grade?: number;
   feedback?: string;
-  submissionType: "file" | "url";
+  submissionType: 'file' | 'url';
   url?: string;
   comment?: string; // <-- Añade esta línea para soportar el comentario del educador
 }
@@ -99,7 +99,7 @@ interface PresignedResponse {
 
 interface DocumentUploadResponse {
   success: boolean;
-  status: "pending" | "reviewed";
+  status: 'pending' | 'reviewed';
   fileUrl: string;
   documentKey: string;
 }
@@ -109,7 +109,7 @@ interface FilePreview {
   type: string;
   size: string;
   progress: number;
-  status: "uploading" | "complete" | "error";
+  status: 'uploading' | 'complete' | 'error';
 }
 
 // Add this interface near the other interfaces at the top of the file
@@ -128,9 +128,9 @@ interface FileSubmissionResponse {
 
 // Add formatFileSize as a standalone utility function
 const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
+  const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
@@ -139,21 +139,21 @@ const getFileIcon = (fileType: string) => {
   const type = fileType.toLowerCase();
 
   switch (type) {
-    case "pdf":
+    case 'pdf':
       return <FaFilePdf className="h-6 w-6 text-red-500" />;
-    case "doc":
-    case "docx":
+    case 'doc':
+    case 'docx':
       return <FaFileWord className="h-6 w-6 text-blue-500" />;
-    case "ppt":
-    case "pptx":
+    case 'ppt':
+    case 'pptx':
       return <FaFilePowerpoint className="h-6 w-6 text-orange-500" />;
-    case "xls":
-    case "xlsx":
+    case 'xls':
+    case 'xlsx':
       return <BsFiletypeXls className="h-6 w-6 text-green-600" />;
-    case "png":
-    case "jpg":
-    case "jpeg":
-    case "gif":
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
       return <FaRegFileImage className="h-6 w-6 text-purple-500" />; // Using updated icon
     default:
       return <FaLink className="h-6 w-6 text-blue-500" />;
@@ -161,11 +161,11 @@ const getFileIcon = (fileType: string) => {
 };
 
 // Add a description ID constant
-const MODAL_DESCRIPTION_ID = "activity-modal-description";
+const MODAL_DESCRIPTION_ID = 'activity-modal-description';
 
 // Add interfaces for submission tabs
 interface SubmissionTab {
-  id: "local" | "drive";
+  id: 'local' | 'drive';
   label: string;
   icon: React.JSX.Element;
 }
@@ -173,13 +173,13 @@ interface SubmissionTab {
 // Update submissionTabs constant
 const submissionTabs: SubmissionTab[] = [
   {
-    id: "local",
-    label: "Archivo Local",
+    id: 'local',
+    label: 'Archivo Local',
     icon: <Icons.arrowUpTray className="h-4 w-4" />,
   },
   {
-    id: "drive", // Keep the id the same for compatibility
-    label: "Archivo URL",
+    id: 'drive', // Keep the id the same for compatibility
+    label: 'Archivo URL',
     icon: <FaLink className="h-4 w-4" />, // Changed from FaGoogleDrive to FaLink
   },
 ];
@@ -219,7 +219,7 @@ export function LessonActivityModal({
 }: ActivityModalProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
-    {},
+    {}
   );
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,8 +239,8 @@ export function LessonActivityModal({
   const [isLoadingDocument, setIsLoadingDocument] = useState(false);
   // Add new state to track if a document was just uploaded
   const [isNewUpload, setIsNewUpload] = useState(false);
-  const [activeTab, setActiveTab] = useState<"local" | "drive">("local");
-  const [driveUrl, setDriveUrl] = useState("");
+  const [activeTab, setActiveTab] = useState<'local' | 'drive'>('local');
+  const [driveUrl, setDriveUrl] = useState('');
   const [isUrlValid, setIsUrlValid] = useState(false);
   // Add new state for URL uploading
   const [isUploadingUrl, setIsUploadingUrl] = useState(false);
@@ -248,7 +248,7 @@ export function LessonActivityModal({
   const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo | null>(null);
   const [isLoadingHelpFile, setIsLoadingHelpFile] = useState(false);
 
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (activity?.content?.questions) {
@@ -268,7 +268,7 @@ export function LessonActivityModal({
   useEffect(() => {
     const checkAttempts = async () => {
       const response = await fetch(
-        `/api/activities/attempts?activityId=${activity.id}&userId=${userId}`,
+        `/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
       );
       const data = (await response.json()) as AttemptsResponse;
 
@@ -344,7 +344,7 @@ export function LessonActivityModal({
         try {
           setIsLoadingDocument(true);
           const response = await fetch(
-            `/api/activities/getFileSubmission?activityId=${activity.id}&userId=${userId}`,
+            `/api/activities/getFileSubmission?activityId=${activity.id}&userId=${userId}`
           );
 
           if (response.ok) {
@@ -360,8 +360,8 @@ export function LessonActivityModal({
             }
           }
         } catch (error) {
-          console.error("Error loading document info:", error);
-          toast.error("Error al cargar la información del documento");
+          console.error('Error loading document info:', error);
+          toast.error('Error al cargar la información del documento');
         } finally {
           setIsLoadingDocument(false);
         }
@@ -378,7 +378,7 @@ export function LessonActivityModal({
         setIsLoadingHelpFile(true);
         try {
           const res = await fetch(
-            `/api/activities/getHelpFile?activityId=${activity.id}`,
+            `/api/activities/getHelpFile?activityId=${activity.id}`
           );
           if (res.ok) {
             // Tipar la respuesta correctamente
@@ -386,10 +386,10 @@ export function LessonActivityModal({
             if (
               Array.isArray(data) &&
               data.length > 0 &&
-              typeof data[0] === "object" &&
+              typeof data[0] === 'object' &&
               data[0] !== null &&
-              "id" in data[0] &&
-              "archivoKey" in data[0]
+              'id' in data[0] &&
+              'archivoKey' in data[0]
             ) {
               const { id, archivoKey } = data[0] as {
                 id: string;
@@ -427,10 +427,10 @@ export function LessonActivityModal({
     if (!question) return false;
 
     switch (question.type) {
-      case "VOF":
-      case "OM":
+      case 'VOF':
+      case 'OM':
         return answer === question.correctOptionId;
-      case "COMPLETAR":
+      case 'COMPLETAR':
         return (
           answer.toLowerCase().trim() ===
           question.correctAnswer?.toLowerCase().trim()
@@ -472,7 +472,7 @@ export function LessonActivityModal({
         Object.keys(userAnswers).length === (questions?.length ?? 0);
 
       if (!allQuestionsAnswered) {
-        toast.error("Debes responder todas las preguntas");
+        toast.error('Debes responder todas las preguntas');
         return;
       }
 
@@ -483,14 +483,14 @@ export function LessonActivityModal({
           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           (activity.revisada && attemptsLeft === 0) ||
           (!activity.revisada && score < 3) || // Allow closing for non-revisada even if failed
-          (isLastActivity && isLastLesson),
+          (isLastActivity && isLastLesson)
       );
 
       const hasPassingScore = score >= 3;
 
-      await fetch("/api/activities/saveAnswers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/activities/saveAnswers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: activity.id,
           userId,
@@ -502,20 +502,20 @@ export function LessonActivityModal({
       });
 
       if (!hasPassingScore) {
-        toast.error("Debes obtener al menos 3 puntos para aprobar");
+        toast.error('Debes obtener al menos 3 puntos para aprobar');
       }
 
       // Check attempts for revisada activities
       if (activity.revisada) {
         try {
           const attemptsResponse = await fetch(
-            `/api/activities/attempts?activityId=${activity.id}&userId=${userId}`,
+            `/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
           );
           const attemptsData =
             (await attemptsResponse.json()) as AttemptsResponse;
           setAttemptsLeft(3 - (attemptsData.attempts ?? 0));
         } catch (attemptError) {
-          console.error("Error checking attempts:", attemptError);
+          console.error('Error checking attempts:', attemptError);
         }
       }
 
@@ -524,9 +524,9 @@ export function LessonActivityModal({
 
       if (isLastActivity) {
         // Update grades in database
-        const response = await fetch("/api/grades/updateGrades", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/grades/updateGrades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             courseId,
             userId,
@@ -537,13 +537,13 @@ export function LessonActivityModal({
 
         if (response.ok) {
           toast.success(
-            "¡Curso completado! Puedes ver tus calificaciones en el panel de notas.",
+            '¡Curso completado! Puedes ver tus calificaciones en el panel de notas.'
           );
         }
       }
     } catch (error) {
-      console.error("Error saving answers:", error);
-      toast.error("Error al guardar las respuestas");
+      console.error('Error saving answers:', error);
+      toast.error('Error al guardar las respuestas');
     } finally {
       setIsSavingResults(false);
       setIsResultsLoaded(true);
@@ -575,15 +575,15 @@ export function LessonActivityModal({
 
       if (result?.success && result.nextLessonId) {
         onLessonUnlockedAction(result.nextLessonId);
-        toast.success("¡Siguiente clase desbloqueada!");
+        toast.success('¡Siguiente clase desbloqueada!');
         onCloseAction();
       } else {
         // Just close if it's the last lesson
         onCloseAction();
       }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al completar la actividad");
+      console.error('Error:', error);
+      toast.error('Error al completar la actividad');
     } finally {
       setIsUnlocking(false);
     }
@@ -593,18 +593,18 @@ export function LessonActivityModal({
     let displayAnswer = userAnswer.answer;
 
     switch (question.type) {
-      case "VOF": {
-        displayAnswer = userAnswer.answer === "true" ? "Verdadero" : "Falso";
+      case 'VOF': {
+        displayAnswer = userAnswer.answer === 'true' ? 'Verdadero' : 'Falso';
         break;
       }
-      case "OM": {
+      case 'OM': {
         const selectedOption = question.options?.find(
-          (opt) => opt.id === userAnswer.answer,
+          (opt) => opt.id === userAnswer.answer
         );
         displayAnswer = selectedOption?.text ?? userAnswer.answer;
         break;
       }
-      case "COMPLETAR": {
+      case 'COMPLETAR': {
         displayAnswer = userAnswer.answer;
         break;
       }
@@ -613,23 +613,23 @@ export function LessonActivityModal({
   };
 
   const getDisplayCorrectAnswer = (question: Question): string => {
-    let correctAnswer = "";
+    let correctAnswer = '';
 
     switch (question.type) {
-      case "VOF": {
+      case 'VOF': {
         correctAnswer =
-          question.correctOptionId === "true" ? "Verdadero" : "Falso";
+          question.correctOptionId === 'true' ? 'Verdadero' : 'Falso';
         break;
       }
-      case "OM": {
+      case 'OM': {
         const correctOption = question.options?.find(
-          (opt) => opt.id === question.correctOptionId,
+          (opt) => opt.id === question.correctOptionId
         );
-        correctAnswer = correctOption?.text ?? question.correctOptionId ?? "";
+        correctAnswer = correctOption?.text ?? question.correctOptionId ?? '';
         break;
       }
-      case "COMPLETAR": {
-        correctAnswer = question.correctAnswer ?? "";
+      case 'COMPLETAR': {
+        correctAnswer = question.correctAnswer ?? '';
         break;
       }
     }
@@ -640,14 +640,14 @@ export function LessonActivityModal({
     if (!currentQuestion) return null;
 
     // Add handler for file upload type
-    if (currentQuestion.type === "FILE_UPLOAD") {
+    if (currentQuestion.type === 'FILE_UPLOAD') {
       return (
         <FileUploadForm
           question={currentQuestion}
           activityId={activity.id}
           userId={userId}
           onSubmit={() => {
-            handleAnswer("uploaded");
+            handleAnswer('uploaded');
             setShowResults(true);
           }}
         />
@@ -658,14 +658,14 @@ export function LessonActivityModal({
 
     return (
       <div className="relative">
-        {" "}
+        {' '}
         {/* Add container for positioning */}
         <div className="absolute -top-2 right-0 translate-y-[-100%] transform">
           <LightBulbIcon
             className={`h-8 w-8 transition-all duration-300 ${
               isQuestionAnswered
-                ? "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"
-                : "text-gray-300"
+                ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
+                : 'text-gray-300'
             }`}
           />
         </div>
@@ -680,10 +680,10 @@ export function LessonActivityModal({
           </h3>
 
           <div className="space-y-3">
-            {currentQuestion.type === "COMPLETAR" ? (
+            {currentQuestion.type === 'COMPLETAR' ? (
               <input
                 type="text"
-                value={userAnswers[currentQuestion.id]?.answer ?? ""} // Changed || to ??
+                value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
                 onChange={(e) => handleAnswer(e.target.value)}
                 className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
                 placeholder="Escribe tu respuesta..."
@@ -718,8 +718,8 @@ export function LessonActivityModal({
 
   // Add safety check for formatScore
   const formatScore = (score: unknown): string => {
-    if (typeof score !== "number" || isNaN(score)) {
-      return "0.0";
+    if (typeof score !== 'number' || isNaN(score)) {
+      return '0.0';
     }
     return score.toFixed(1);
   };
@@ -735,7 +735,7 @@ export function LessonActivityModal({
             <StarSolidIcon key={index} className="h-8 w-8 text-yellow-400" />
           ) : (
             <StarOutlineIcon key={index} className="h-8 w-8 text-gray-300" />
-          ),
+          )
         )}
       </div>
     );
@@ -800,11 +800,11 @@ export function LessonActivityModal({
         return (
           <div className="space-y-3">
             <p className="text-center text-sm text-gray-400">
-              Te quedan{" "}
+              Te quedan{' '}
               <span className="text-2xl font-bold text-white">
                 {attemptsLeft}
-              </span>{" "}
-              intento{attemptsLeft !== 1 ? "s" : ""}
+              </span>{' '}
+              intento{attemptsLeft !== 1 ? 's' : ''}
             </p>
             <Button
               onClick={() => {
@@ -916,11 +916,11 @@ export function LessonActivityModal({
         return (
           <>
             <p className="text-center text-sm text-gray-400">
-              Te quedan{" "}
+              Te quedan{' '}
               <span className="text-2xl font-bold text-white">
                 {attemptsLeft}
-              </span>{" "}
-              intento{attemptsLeft !== 1 ? "s" : ""}
+              </span>{' '}
+              intento{attemptsLeft !== 1 ? 's' : ''}
             </p>
             <Button
               onClick={() => {
@@ -1038,7 +1038,7 @@ export function LessonActivityModal({
 
   const renderResults = () => {
     if (!isResultsLoaded || isSavingResults) {
-      return renderLoadingState("Cargando Resultados...");
+      return renderLoadingState('Cargando Resultados...');
     }
 
     // If it's a document upload activity
@@ -1071,19 +1071,19 @@ export function LessonActivityModal({
         <div className="text-center">
           {/* Reduce space between title and stars */}
           <div className="mt-1">
-            {" "}
+            {' '}
             {/* Changed from mt-3 to mt-1 */}
             {renderStars(finalScore)}
             {/* Reduce space between stars and grade */}
             <p className="mt-2 text-lg font-medium text-gray-400">
-              {" "}
+              {' '}
               {/* Changed from mt-3 to mt-2 */}
-              Calificación:{" "}
+              Calificación:{' '}
               <span
                 className={`text-2xl font-bold ${
                   finalScore >= 3
-                    ? "animate-pulse text-green-500 shadow-lg"
-                    : "animate-pulse text-red-500 shadow-lg"
+                    ? 'animate-pulse text-green-500 shadow-lg'
+                    : 'animate-pulse text-red-500 shadow-lg'
                 }`}
               >
                 {formatScore(finalScore)}
@@ -1093,11 +1093,11 @@ export function LessonActivityModal({
 
           {/* Add margin top to questions container */}
           <div className="mt-3 mb-4">
-            {" "}
+            {' '}
             {/* Added mb-4 to add space at bottom */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="max-h-[60vh] overflow-y-auto pr-6">
-                {" "}
+                {' '}
                 {/* Added pr-6 for more spacing */}
                 <div className="divide-y divide-gray-100">
                   {questions.map((question, idx) => {
@@ -1105,7 +1105,7 @@ export function LessonActivityModal({
                     const isCorrect = userAnswer?.isCorrect;
                     const displayAnswer = userAnswer
                       ? getDisplayAnswer(userAnswer, question)
-                      : "";
+                      : '';
 
                     return (
                       <div
@@ -1132,12 +1132,12 @@ export function LessonActivityModal({
                           <div
                             className={`rounded-md p-2 ${
                               isCorrect
-                                ? "bg-green-50 text-green-800"
-                                : "bg-red-50 text-red-800"
+                                ? 'bg-green-50 text-green-800'
+                                : 'bg-red-50 text-red-800'
                             }`}
                           >
                             <p className="text-sm">
-                              <span className="font-bold">Tu respuesta:</span>{" "}
+                              <span className="font-bold">Tu respuesta:</span>{' '}
                               <span className="font-bold">{displayAnswer}</span>
                             </p>
                           </div>
@@ -1146,7 +1146,7 @@ export function LessonActivityModal({
                             <div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
                               <span className="font-bold">
                                 Respuesta correcta:
-                              </span>{" "}
+                              </span>{' '}
                               <span className="font-bold">
                                 {getDisplayCorrectAnswer(question)}
                               </span>
@@ -1169,32 +1169,32 @@ export function LessonActivityModal({
 
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
-      case "VOF":
-        return "Verdadero o Falso";
-      case "OM":
-        return "Selección Múltiple";
-      case "COMPLETAR":
-        return "Completar Texto";
-      case "FILE_UPLOAD":
-        return "Subir Archivo";
+      case 'VOF':
+        return 'Verdadero o Falso';
+      case 'OM':
+        return 'Selección Múltiple';
+      case 'COMPLETAR':
+        return 'Completar Texto';
+      case 'FILE_UPLOAD':
+        return 'Subir Archivo';
       default:
-        return "Pregunta";
+        return 'Pregunta';
     }
   };
 
   const handleFileUpload = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("El archivo no debe superar los 10MB");
+      toast.error('El archivo no debe superar los 10MB');
       return;
     }
 
     setSelectedFile(file);
     setFilePreview({
       file,
-      type: file.type.split("/")[1].toUpperCase(),
+      type: file.type.split('/')[1].toUpperCase(),
       size: formatFileSize(file.size),
       progress: 0,
-      status: "uploading",
+      status: 'uploading',
     });
     setUploadProgress(0);
     setIsUploading(false);
@@ -1204,14 +1204,14 @@ export function LessonActivityModal({
     if (!filePreview) return null;
 
     const fileExtension =
-      filePreview.file.name.split(".").pop()?.toLowerCase() ?? "";
+      filePreview.file.name.split('.').pop()?.toLowerCase() ?? '';
 
     // Add function to truncate filename
     const truncateFileName = (fileName: string, maxLength = 50) => {
       if (fileName.length <= maxLength) return fileName;
-      const extension = fileName.split(".").pop();
-      const nameWithoutExt = fileName.split(".").slice(0, -1).join(".");
-      const truncatedName = nameWithoutExt.slice(0, maxLength - 3) + "...";
+      const extension = fileName.split('.').pop();
+      const nameWithoutExt = fileName.split('.').slice(0, -1).join('.');
+      const truncatedName = nameWithoutExt.slice(0, maxLength - 3) + '...';
       return `${truncatedName}.${extension}`;
     };
 
@@ -1228,7 +1228,7 @@ export function LessonActivityModal({
                   {truncateFileName(filePreview.file.name)}
                 </p>
                 <p className="text-xs text-slate-400">
-                  {filePreview.size}{" "}
+                  {filePreview.size}{' '}
                   {/* Removed the bullet point and file type */}
                 </p>
               </div>
@@ -1291,10 +1291,10 @@ export function LessonActivityModal({
     const grade = uploadedFileInfo.grade ?? 0;
     const logoSrc =
       grade > 0
-        ? "/contract-filed-line-svgrepo-com.png"
-        : "/contract-pending-line-svgrepo-com.png";
-    const logoAlt = grade > 0 ? "Revisado" : "En revisión";
-    const logoClass = grade > 0 ? "text-green-500" : "text-yellow-500";
+        ? '/contract-filed-line-svgrepo-com.png'
+        : '/contract-pending-line-svgrepo-com.png';
+    const logoAlt = grade > 0 ? 'Revisado' : 'En revisión';
+    const logoClass = grade > 0 ? 'text-green-500' : 'text-yellow-500';
 
     return (
       <div className="mt-4">
@@ -1309,11 +1309,11 @@ export function LessonActivityModal({
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium ${
                     grade > 0
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {grade > 0 ? "Revisado" : "En Revisión"}
+                  {grade > 0 ? 'Revisado' : 'En Revisión'}
                 </span>
               </div>
               {/* Document info with consistent spacing */}
@@ -1346,7 +1346,7 @@ export function LessonActivityModal({
                     </span>
                     <span className="text-sm text-gray-400">
                       {new Date(
-                        uploadedFileInfo.uploadDate,
+                        uploadedFileInfo.uploadDate
                       ).toLocaleDateString()}
                     </span>
                   </div>
@@ -1360,10 +1360,10 @@ export function LessonActivityModal({
                   </span>
                   <span
                     className={`text-lg font-bold ${
-                      grade >= 3 ? "text-green-500" : "text-red-500"
+                      grade >= 3 ? 'text-green-500' : 'text-red-500'
                     }`}
                   >
-                    {grade ? formatScore(grade) : "0.0"}
+                    {grade ? formatScore(grade) : '0.0'}
                   </span>
                 </div>
                 {/* Renderizar el comentario si existe */}
@@ -1391,10 +1391,10 @@ export function LessonActivityModal({
     // Usa la URL pública del bucket configurada en .env
     const s3BaseUrl =
       process.env.NEXT_PUBLIC_AWS_S3_URL ??
-      "https://s3.us-east-2.amazonaws.com/artiefy-upload";
+      'https://s3.us-east-2.amazonaws.com/artiefy-upload';
     const fileUrl = `${s3BaseUrl}/${helpFileInfo.archivoKey}`;
-    const fileName = helpFileInfo.archivoKey.split("/").pop() ?? "archivo";
-    const fileExtension = fileName.split(".").pop()?.toLowerCase() ?? "";
+    const fileName = helpFileInfo.archivoKey.split('/').pop() ?? 'archivo';
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
     return (
       <div className="mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4">
         <div className="flex items-center gap-3">
@@ -1443,9 +1443,9 @@ export function LessonActivityModal({
                   <div className="mb-4 flex flex-col gap-2">
                     <Button
                       onClick={() => {
-                        if (uploadedFileInfo.status === "reviewed") {
+                        if (uploadedFileInfo.status === 'reviewed') {
                           const confirmed = window.confirm(
-                            "Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?",
+                            'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
                           );
                           if (!confirmed) return;
                         }
@@ -1454,15 +1454,15 @@ export function LessonActivityModal({
                         setFilePreview(null);
                         setUploadProgress(0);
                         setShowResults(false);
-                        setDriveUrl("");
+                        setDriveUrl('');
                         setIsUrlValid(false);
                       }}
                       className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
                     >
                       <span className="flex items-center justify-center gap-2">
-                        {activeTab === "local"
-                          ? "Subir documento nuevamente"
-                          : "Subir URL nuevamente"}
+                        {activeTab === 'local'
+                          ? 'Subir documento nuevamente'
+                          : 'Subir URL nuevamente'}
                         <svg
                           className="h-4 w-4"
                           fill="none"
@@ -1528,8 +1528,8 @@ export function LessonActivityModal({
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center space-x-2 rounded-lg px-4 py-2 transition-all ${
                         activeTab === tab.id
-                          ? "bg-cyan-500/10 text-cyan-500"
-                          : "text-gray-400 hover:bg-gray-800"
+                          ? 'bg-cyan-500/10 text-cyan-500'
+                          : 'text-gray-400 hover:bg-gray-800'
                       }`}
                     >
                       {tab.icon}
@@ -1539,20 +1539,20 @@ export function LessonActivityModal({
                 </div>
 
                 {/* Submission content based on active tab */}
-                {activeTab === "local" ? (
+                {activeTab === 'local' ? (
                   <>
                     {/* Existing local file upload UI */}
                     <div
                       className={`mt-6 ${
-                        uploadedFileInfo ? "pointer-events-none opacity-50" : ""
+                        uploadedFileInfo ? 'pointer-events-none opacity-50' : ''
                       }`}
                     >
                       <div className="group/dropzone">
                         <div
                           className={`relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors ${
                             uploadedFileInfo
-                              ? "cursor-not-allowed"
-                              : "group-hover/dropzone:border-cyan-500/50"
+                              ? 'cursor-not-allowed'
+                              : 'group-hover/dropzone:border-cyan-500/50'
                           }`}
                         >
                           <input
@@ -1570,8 +1570,8 @@ export function LessonActivityModal({
                               <svg
                                 className={`h-10 w-10 ${
                                   uploadedFileInfo
-                                    ? "text-gray-500"
-                                    : "text-cyan-500"
+                                    ? 'text-gray-500'
+                                    : 'text-cyan-500'
                                 }`}
                                 fill="none"
                                 viewBox="0 0 24 24"
@@ -1589,8 +1589,8 @@ export function LessonActivityModal({
                             <div className="space-y-2">
                               <p className="text-base font-medium text-white">
                                 {uploadedFileInfo
-                                  ? "Ya has subido un documento para esta actividad"
-                                  : "Arrastra tus archivos aquí o haz clic para buscar"}
+                                  ? 'Ya has subido un documento para esta actividad'
+                                  : 'Arrastra tus archivos aquí o haz clic para buscar'}
                               </p>
                               <p className="text-sm text-slate-400">
                                 Formatos soportados: PDF, DOC, PNG, PPT
@@ -1633,9 +1633,9 @@ export function LessonActivityModal({
                             Subiendo...
                           </>
                         ) : uploadedFileInfo ? (
-                          "Documento ya subido"
+                          'Documento ya subido'
                         ) : (
-                          "Cargar Documento"
+                          'Cargar Documento'
                         )}
                       </span>
                     </button>
@@ -1668,8 +1668,8 @@ export function LessonActivityModal({
                         disabled={!!uploadedFileInfo || isUploadingUrl}
                         className={`w-full bg-transparent text-white placeholder:text-gray-400 focus:outline-none ${
                           uploadedFileInfo || isUploadingUrl
-                            ? "cursor-not-allowed opacity-50"
-                            : ""
+                            ? 'cursor-not-allowed opacity-50'
+                            : ''
                         }`}
                       />
                     </div>
@@ -1694,7 +1694,7 @@ export function LessonActivityModal({
                               {
                                 isUploading: isUploadingUrl,
                                 setIsUploading: setIsUploadingUrl,
-                              },
+                              }
                             )
                           : undefined
                       }
@@ -1703,8 +1703,8 @@ export function LessonActivityModal({
                       }
                       className={`w-full rounded-lg px-4 py-2 transition-all ${
                         !uploadedFileInfo && isUrlValid && !isUploadingUrl
-                          ? "bg-cyan-500 text-white hover:bg-cyan-600"
-                          : "cursor-not-allowed bg-gray-700 text-gray-400"
+                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                          : 'cursor-not-allowed bg-gray-700 text-gray-400'
                       }`}
                     >
                       {isUploadingUrl ? (
@@ -1713,9 +1713,9 @@ export function LessonActivityModal({
                           <span>Guardando URL...</span>
                         </div>
                       ) : uploadedFileInfo ? (
-                        "URL ya subida"
+                        'URL ya subida'
                       ) : (
-                        "Guardar URL"
+                        'Guardar URL'
                       )}
                     </button>
                     {uploadedFileInfo && renderSubmissionStatus()}
@@ -1736,11 +1736,11 @@ export function LessonActivityModal({
         ) : (
           // Add padding-right to create space for scrollbar
           <div className="">
-            {" "}
+            {' '}
             {/* Add right padding */}
             <div className="mb-8 flex flex-col items-center justify-center text-center">
               <span className="text-primary text-2xl font-bold">
-                {getQuestionTypeLabel(currentQuestion?.type ?? "")}
+                {getQuestionTypeLabel(currentQuestion?.type ?? '')}
               </span>
               <span className="mt-2 text-sm text-gray-500">
                 {currentQuestionIndex + 1} de {questions.length}
@@ -1749,7 +1749,7 @@ export function LessonActivityModal({
             {renderQuestion()}
             {/* Navigation buttons */}
             <div className="mt-6 flex justify-between">
-              {" "}
+              {' '}
               {/* Added top margin */}
               <button
                 className="btn-arrow btn-arrow-prev"
@@ -1761,12 +1761,12 @@ export function LessonActivityModal({
               </button>
               <button
                 className={`btn-arrow ${
-                  isLastQuestion ? "btn-arrow-success" : ""
+                  isLastQuestion ? 'btn-arrow-success' : ''
                 }`}
                 disabled={!canProceedToNext}
                 onClick={isLastQuestion ? handleFinish : handleNext}
               >
-                <span>{isLastQuestion ? "Ver resultados" : "Siguiente"}</span>
+                <span>{isLastQuestion ? 'Ver resultados' : 'Siguiente'}</span>
                 <ChevronRightIcon />
               </button>
             </div>
@@ -1820,8 +1820,8 @@ export function LessonActivityModal({
       <DialogContent
         className={`[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex flex-col overflow-hidden ${
           isMobile
-            ? "w-full max-w-full rounded-none p-1"
-            : "max-h-[90vh] sm:max-w-[500px]"
+            ? 'w-full max-w-full rounded-none p-1'
+            : 'max-h-[90vh] sm:max-w-[500px]'
         }`}
         aria-describedby={MODAL_DESCRIPTION_ID}
       >
@@ -1837,18 +1837,18 @@ export function LessonActivityModal({
         <DialogHeader className="bg-background sticky top-0 z-40">
           <DialogTitle className="text-center text-3xl font-bold">
             {activity.content?.questionsFilesSubida?.[0] != null
-              ? "SUBIDA DE DOCUMENTO"
-              : "ACTIVIDAD"}
+              ? 'SUBIDA DE DOCUMENTO'
+              : 'ACTIVIDAD'}
           </DialogTitle>
           <div id={MODAL_DESCRIPTION_ID} className="sr-only">
-            {activity.description ?? "Actividad del curso"}
+            {activity.description ?? 'Actividad del curso'}
           </div>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-4">
           {isUnlocking
-            ? renderLoadingState("Desbloqueando Siguiente Clase...")
+            ? renderLoadingState('Desbloqueando Siguiente Clase...')
             : isSavingResults
-              ? renderLoadingState("Cargando Resultados...")
+              ? renderLoadingState('Cargando Resultados...')
               : renderContent()}
         </div>
       </DialogContent>
@@ -1872,7 +1872,7 @@ interface UploadParams {
 class UploadError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "UploadError";
+    this.name = 'UploadError';
   }
 }
 
@@ -1892,11 +1892,11 @@ async function handleUpload({
 
   const updateFilePreview = (
     progress: number,
-    status: FilePreview["status"] = "uploading",
+    status: FilePreview['status'] = 'uploading'
   ): void => {
     setFilePreview({
       file: selectedFile,
-      type: selectedFile.type.split("/")[1].toUpperCase(),
+      type: selectedFile.type.split('/')[1].toUpperCase(),
       size: formatFileSize(selectedFile.size),
       progress,
       status,
@@ -1909,9 +1909,9 @@ async function handleUpload({
     updateFilePreview(0);
 
     // Get presigned URL
-    const presignedResponse = await fetch("/api/activities/documentupload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const presignedResponse = await fetch('/api/activities/documentupload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         filename: selectedFile.name,
         contentType: selectedFile.type,
@@ -1921,7 +1921,7 @@ async function handleUpload({
     });
 
     if (!presignedResponse.ok) {
-      throw new UploadError("Failed to get upload URL");
+      throw new UploadError('Failed to get upload URL');
     }
 
     const presignedData = (await presignedResponse.json()) as PresignedResponse;
@@ -1934,23 +1934,23 @@ async function handleUpload({
     Object.entries(fields).forEach(([fieldKey, value]) => {
       formData.append(fieldKey, String(value));
     });
-    formData.append("file", selectedFile);
+    formData.append('file', selectedFile);
 
     const uploadResponse = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       body: formData,
     });
 
     if (!uploadResponse.ok) {
-      throw new UploadError("Upload to storage failed");
+      throw new UploadError('Upload to storage failed');
     }
 
     updateFilePreview(60);
 
     // Save in database
-    const dbResponse = await fetch("/api/activities/saveFileSubmission", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const dbResponse = await fetch('/api/activities/saveFileSubmission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         activityId: activity.id,
         userId,
@@ -1959,45 +1959,45 @@ async function handleUpload({
           fileUrl,
           documentKey: key,
           uploadDate: new Date().toISOString(),
-          status: "pending",
+          status: 'pending',
         },
       }),
     });
 
     if (!dbResponse.ok) {
-      throw new UploadError("Failed to save submission");
+      throw new UploadError('Failed to save submission');
     }
 
     const result = (await dbResponse.json()) as DocumentUploadResponse;
 
-    updateFilePreview(100, "complete");
+    updateFilePreview(100, 'complete');
     setUploadProgress(100);
     setUploadedFileInfo({
       fileName: selectedFile.name,
       fileUrl: result.fileUrl,
       uploadDate: new Date().toISOString(),
       status: result.status,
-      submissionType: "file",
+      submissionType: 'file',
     });
 
     setIsNewUpload(true); // This will now work properly
-    toast.success("Documento subido correctamente");
+    toast.success('Documento subido correctamente');
     setShowResults(true);
   } catch (error) {
     const errorMessage =
       error instanceof Error
         ? error.message
-        : "Error desconocido al subir el archivo";
+        : 'Error desconocido al subir el archivo';
     if (setFilePreview) {
       setFilePreview({
         file: selectedFile,
-        type: selectedFile.type.split("/")[1].toUpperCase(),
+        type: selectedFile.type.split('/')[1].toUpperCase(),
         size: formatFileSize(selectedFile.size),
         progress: 0,
-        status: "error",
+        status: 'error',
       });
     }
-    console.error("Error de subida:", errorMessage);
+    console.error('Error de subida:', errorMessage);
     toast.error(`Error al subir el archivo: ${errorMessage}`);
   } finally {
     setIsUploading(false);
@@ -2021,7 +2021,7 @@ const handleDriveSubmit =
     setUploadedFileInfo: (info: StoredFileInfo | null) => void,
     setIsNewUpload: (value: boolean) => void,
     setShowResults: (value: boolean) => void,
-    uploadState: UrlSubmissionState,
+    uploadState: UrlSubmissionState
   ) =>
   async () => {
     const { setIsUploading } = uploadState;
@@ -2029,17 +2029,17 @@ const handleDriveSubmit =
 
     try {
       const submission = {
-        fileName: "URL Document",
+        fileName: 'URL Document',
         fileUrl: driveUrl,
         uploadDate: new Date().toISOString(),
-        status: "pending" as const,
-        submissionType: "url" as const,
+        status: 'pending' as const,
+        submissionType: 'url' as const,
         url: driveUrl,
       };
 
-      const response = await fetch("/api/activities/saveUrlSubmission", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/activities/saveUrlSubmission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: activity.id,
           userId,
@@ -2050,26 +2050,26 @@ const handleDriveSubmit =
       const apiResponse = (await response.json()) as UrlSubmissionApiResponse;
 
       if (!response.ok) {
-        throw new Error(apiResponse.error ?? "Error al guardar la URL");
+        throw new Error(apiResponse.error ?? 'Error al guardar la URL');
       }
 
       setUploadedFileInfo({
-        fileName: "URL Document",
+        fileName: 'URL Document',
         fileUrl: driveUrl,
         uploadDate: new Date().toISOString(),
-        status: "pending",
-        submissionType: "url",
+        status: 'pending',
+        submissionType: 'url',
         url: driveUrl,
         grade: 0.0,
       });
       setIsNewUpload(true);
       setShowResults(true);
-      toast.success("URL guardada correctamente");
+      toast.success('URL guardada correctamente');
     } catch (error) {
       // Proper error handling
       const errorMessage =
-        error instanceof Error ? error.message : "Error al guardar la URL";
-      console.error("Error:", errorMessage);
+        error instanceof Error ? error.message : 'Error al guardar la URL';
+      console.error('Error:', errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsUploading(false);

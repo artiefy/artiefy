@@ -1,38 +1,38 @@
-import { type Product } from "~/types/payu";
-import { type Plan, plansEmpresas, plansPersonas } from "~/types/plans";
+import { type Product } from '~/types/payu';
+import { type Plan, plansEmpresas, plansPersonas } from '~/types/plans';
 
 // 1. Primero definir las constantes
 const PLAN_IDENTIFIERS = {
-  PRO: "plan_pro_",
-  PREMIUM: "plan_premium_",
-  ENTERPRISE: "plan_enterprise_",
+  PRO: 'plan_pro_',
+  PREMIUM: 'plan_premium_',
+  ENTERPRISE: 'plan_enterprise_',
 } as const;
 
 // ✅ Función para definir el precio de cada plan
 function getPlanAmount(planName: string): string {
   switch (planName) {
-    case "Pro":
-      return "99800.00";
-    case "Premium":
-      return "149800.00";
-    case "Enterprise":
-      return "200000.00";
+    case 'Pro':
+      return '99800.00';
+    case 'Premium':
+      return '149800.00';
+    case 'Enterprise':
+      return '200000.00';
     default:
-      return "99800.00"; // Default en caso de un plan desconocido
+      return '99800.00'; // Default en caso de un plan desconocido
   }
 }
 
 // ✅ Función para crear un producto correctamente (sin referenceCode)
 export function createProduct(plan: Plan): Product {
   const identifier =
-    plan.name === "Premium"
+    plan.name === 'Premium'
       ? `${PLAN_IDENTIFIERS.PREMIUM}`
-      : plan.name === "Enterprise"
+      : plan.name === 'Enterprise'
         ? `${PLAN_IDENTIFIERS.ENTERPRISE}`
         : `${PLAN_IDENTIFIERS.PRO}`;
 
   const name = `${identifier}${plan.name}`;
-  console.log("Creating product with name:", name); // Debug log
+  console.log('Creating product with name:', name); // Debug log
 
   return {
     id: plan.id,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // Interfaz para los parámetros
 export interface Parametros {
@@ -30,12 +30,12 @@ const SelectParametro = ({
 
   // Función para obtener el contraste de un color
   const getContrastYIQ = (hexcolor: string) => {
-    hexcolor = hexcolor.replace("#", "");
+    hexcolor = hexcolor.replace('#', '');
     const r = parseInt(hexcolor.substr(0, 2), 16);
     const g = parseInt(hexcolor.substr(2, 2), 16);
     const b = parseInt(hexcolor.substr(4, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "black" : "white";
+    return yiq >= 128 ? 'black' : 'white';
   };
 
   // Fetch de los parámetros cuando el courseId cambia
@@ -46,11 +46,11 @@ const SelectParametro = ({
         const response = await fetch(
           `/api/educadores/parametros?courseId=${courseId}`,
           {
-            method: "GET",
+            method: 'GET',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
-          },
+          }
         );
 
         if (!response.ok) {
@@ -61,7 +61,7 @@ const SelectParametro = ({
         const data = (await response.json()) as Parametros[];
         setParametros(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +69,7 @@ const SelectParametro = ({
 
     // Llamada a la función para obtener los parámetros
     fetchParametros().catch((error) =>
-      console.error("Error fetching parametros:", error),
+      console.error('Error fetching parametros:', error)
     );
   }, [courseId]);
 
@@ -88,7 +88,7 @@ const SelectParametro = ({
       </label>
       {isLoading ? (
         <p
-          className={`my-3 ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
         >
           Cargando parametro...
         </p>

@@ -1,20 +1,20 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* editar curso en super admin*/
-"use client";
+'use client';
 
-import { type ChangeEvent, useEffect, useState } from "react";
+import { type ChangeEvent, useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { Plus } from "lucide-react";
-import { FiUploadCloud } from "react-icons/fi";
-import { MdClose } from "react-icons/md";
-import Select, { type MultiValue } from "react-select";
-import { toast } from "sonner";
+import { Plus } from 'lucide-react';
+import { FiUploadCloud } from 'react-icons/fi';
+import { MdClose } from 'react-icons/md';
+import Select, { type MultiValue } from 'react-select';
+import { toast } from 'sonner';
 
-import ActiveDropdown from "~/components/educators/layout/ActiveDropdown";
-import CourseTypeDropdown from "~/components/educators/layout/TypesCourseDropdown";
-import { Button } from "~/components/educators/ui/button";
+import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
+import CourseTypeDropdown from '~/components/educators/layout/TypesCourseDropdown';
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -22,9 +22,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/educators/ui/dialog";
-import { Input } from "~/components/educators/ui/input";
-import { Progress } from "~/components/educators/ui/progress";
+} from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
+import { Progress } from '~/components/educators/ui/progress';
 
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
@@ -50,7 +50,7 @@ interface CourseFormProps {
       name: string;
       description: string;
       porcentaje: number;
-    }[],
+    }[]
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -82,7 +82,7 @@ interface CourseFormProps {
       name: string;
       description: string;
       porcentaje: number;
-    }[],
+    }[]
   ) => void;
   isOpen: boolean;
   onCloseAction: () => void;
@@ -210,7 +210,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
   void isLoadingCategories;
   void isLoadingModalidades;
-  const isVideo = file instanceof File && file.type.startsWith("video/");
+  const isVideo = file instanceof File && file.type.startsWith('video/');
   const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
   void validFile;
@@ -228,7 +228,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     if (files?.[0]) {
       const selectedFile = files[0];
       setFile(selectedFile);
-      if (!selectedFile.type.startsWith("video/")) {
+      if (!selectedFile.type.startsWith('video/')) {
         setFrameImageFile(null); // Limpia el frame si es imagen
       }
 
@@ -237,7 +237,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setErrors((prev) => ({ ...prev, file: false }));
 
       // 👇 Aquí detectamos si es un video para mostrar la opción de frame
-      if (selectedFile.type.startsWith("video/")) {
+      if (selectedFile.type.startsWith('video/')) {
         setFrameImageFile(null); // reset frame image
       }
     } else {
@@ -255,8 +255,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         ...parametros,
         {
           id: 0,
-          name: "",
-          description: "",
+          name: '',
+          description: '',
           porcentaje: 0,
         },
       ]);
@@ -269,7 +269,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         const response = await fetch(
           editingCourseId
             ? `/api/super-admin/programs/materiasCourses?courseId=${editingCourseId}`
-            : "/api/super-admin/programs/materiasCourses",
+            : '/api/super-admin/programs/materiasCourses'
         );
 
         if (response.ok) {
@@ -279,10 +279,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           }[];
           setAllSubjects(subjectsData);
         } else {
-          throw new Error("Error al obtener materias");
+          throw new Error('Error al obtener materias');
         }
       } catch (error) {
-        console.error("Error al obtener materias:", error);
+        console.error('Error al obtener materias:', error);
       }
     };
 
@@ -295,10 +295,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     const fetchNiveles = async () => {
       setIsLoadingNiveles(true);
       try {
-        const response = await fetch("/api/educadores/nivel", {
-          method: "GET",
+        const response = await fetch('/api/educadores/nivel', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -310,7 +310,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         const data = (await response.json()) as Nivel[];
         setNiveles(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoadingNiveles(false);
       }
@@ -324,21 +324,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     const fetchCategories = async () => {
       setIsLoadingCategories(true);
       try {
-        const response = await fetch("/api/educadores/categories", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/educadores/categories', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
         });
 
         if (!response.ok) {
           throw new Error(
-            `Error al obtener las categorías: ${await response.text()}`,
+            `Error al obtener las categorías: ${await response.text()}`
           );
         }
 
         const data = (await response.json()) as Category[];
         setCategories(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoadingCategories(false);
       }
@@ -351,21 +351,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     const fetchModalidades = async () => {
       setIsLoadingModalidades(true);
       try {
-        const response = await fetch("/api/educadores/modalidades", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/educadores/modalidades', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
         });
 
         if (!response.ok) {
           throw new Error(
-            `Error al obtener las modalidades: ${await response.text()}`,
+            `Error al obtener las modalidades: ${await response.text()}`
           );
         }
 
         const data = (await response.json()) as Modalidad[];
         setModalidades(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoadingModalidades(false);
       }
@@ -377,8 +377,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
     index: number,
-    field: "name" | "description" | "porcentaje",
-    value: string | number,
+    field: 'name' | 'description' | 'porcentaje',
+    value: string | number
   ) => {
     const updatedParametros = [...parametros];
     updatedParametros[index] = {
@@ -389,11 +389,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Validar que la suma de los porcentajes no supere el 100%
     const sumaPorcentajes = updatedParametros.reduce(
       (acc, parametro) => acc + parametro.porcentaje,
-      0,
+      0
     );
     if (sumaPorcentajes > 100) {
-      toast("Error", {
-        description: "La suma de los porcentajes no puede superar el 100%",
+      toast('Error', {
+        description: 'La suma de los porcentajes no puede superar el 100%',
       });
       return;
     }
@@ -408,20 +408,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Si tiene ID, es un parámetro guardado → eliminarlo de la base de datos
     if (parametroAEliminar.id) {
       try {
-        const response = await fetch("/api/educadores/parametros", {
-          method: "DELETE",
+        const response = await fetch('/api/educadores/parametros', {
+          method: 'DELETE',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({ id: parametroAEliminar.id }),
         });
 
         if (!response.ok) {
-          throw new Error("Error al eliminar el parámetro de la base de datos");
+          throw new Error('Error al eliminar el parámetro de la base de datos');
         }
       } catch (error) {
-        console.error("❌ Error al eliminar parámetro:", error);
-        toast.error("Error al eliminar el parámetro");
+        console.error('❌ Error al eliminar parámetro:', error);
+        toast.error('Error al eliminar el parámetro');
         return;
       }
     }
@@ -435,8 +435,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     const controller = new AbortController();
     setUploadController(controller);
 
-    console.log("📦 Iniciando envío del formulario");
-    console.log("🎓 Instructor seleccionado:", instructor);
+    console.log('📦 Iniciando envío del formulario');
+    console.log('🎓 Instructor seleccionado:', instructor);
 
     const newErrors = {
       title: !editingCourseId && !title,
@@ -452,44 +452,44 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     if (editingCourseId) {
-      newErrors.title = modifiedFields.has("title") && !title;
-      newErrors.description = modifiedFields.has("description") && !description;
-      newErrors.nivelid = modifiedFields.has("nivelid")
+      newErrors.title = modifiedFields.has('title') && !title;
+      newErrors.description = modifiedFields.has('description') && !description;
+      newErrors.nivelid = modifiedFields.has('nivelid')
         ? !nivelid
         : !!newErrors.nivelid;
-      newErrors.file = modifiedFields.has("file") && !file;
+      newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
-        modifiedFields.has("modalidadesid") && !modalidadesid;
-      newErrors.rating = modifiedFields.has("rating") && !rating;
+        modifiedFields.has('modalidadesid') && !modalidadesid;
+      newErrors.rating = modifiedFields.has('rating') && !rating;
     }
 
     const sumaPorcentajes = parametros.reduce(
       (acc, parametro) => acc + parametro.porcentaje,
-      0,
+      0
     );
     if (addParametros && sumaPorcentajes !== 100) {
-      toast("Error", {
-        description: "La suma de los porcentajes debe ser igual a 100%",
+      toast('Error', {
+        description: 'La suma de los porcentajes debe ser igual a 100%',
       });
       return;
     }
 
     setErrors(newErrors);
     if (Object.values(newErrors).some(Boolean)) {
-      console.log("❌ Errores de validación:", newErrors);
+      console.log('❌ Errores de validación:', newErrors);
 
       const missingFields: string[] = [];
 
-      if (newErrors.title) missingFields.push("Título");
-      if (newErrors.description) missingFields.push("Descripción");
-      if (newErrors.categoryid) missingFields.push("Categoría");
-      if (newErrors.modalidadesid) missingFields.push("Modalidad");
-      if (newErrors.nivelid) missingFields.push("Nivel");
-      if (newErrors.rating) missingFields.push("Rating");
-      if (newErrors.file) missingFields.push("Archivo de portada");
+      if (newErrors.title) missingFields.push('Título');
+      if (newErrors.description) missingFields.push('Descripción');
+      if (newErrors.categoryid) missingFields.push('Categoría');
+      if (newErrors.modalidadesid) missingFields.push('Modalidad');
+      if (newErrors.nivelid) missingFields.push('Nivel');
+      if (newErrors.rating) missingFields.push('Rating');
+      if (newErrors.file) missingFields.push('Archivo de portada');
 
-      const message = `Por favor completa: ${missingFields.join(", ")}.`;
-      toast.error("Faltan campos obligatorios", { description: message });
+      const message = `Por favor completa: ${missingFields.join(', ')}.`;
+      toast.error('Faltan campos obligatorios', { description: message });
 
       return;
     }
@@ -498,14 +498,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     setIsUploading(true);
 
     let finalVideoKey: string | null = null;
-    let finalCoverImageKey = coverImageKey ?? "";
-    let finalUploadedFileName = fileName ?? "";
+    let finalCoverImageKey = coverImageKey ?? '';
+    let finalUploadedFileName = fileName ?? '';
 
     try {
       if (file) {
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -515,7 +515,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `❌ Error al subir archivo: ${uploadResponse.statusText}`,
+            `❌ Error al subir archivo: ${uploadResponse.statusText}`
           );
         }
 
@@ -525,20 +525,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         const formData = new FormData();
         if (!uploadData.fields) {
           throw new Error(
-            "La respuesta de /api/upload no contiene los fields esperados",
+            'La respuesta de /api/upload no contiene los fields esperados'
           );
         }
         Object.entries(uploadData.fields).forEach(([key, value]) => {
           formData.append(key, value as string | Blob);
         });
-        formData.append("file", file);
+        formData.append('file', file);
 
-        await fetch(uploadData.url, { method: "POST", body: formData });
+        await fetch(uploadData.url, { method: 'POST', body: formData });
 
         if (isVideo) {
           finalVideoKey = uploadData.key;
           setCoverVideoCourseKey(uploadData.key);
-          finalCoverImageKey = uploadData.coverImageKey ?? "";
+          finalCoverImageKey = uploadData.coverImageKey ?? '';
         } else {
           finalCoverImageKey = uploadData.key;
           setCoverImage(uploadData.key);
@@ -547,16 +547,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
       // Subida de frame si es video
       if (isVideo && frameImageFile && finalUploadedFileName) {
-        console.log("🎬 Video detectado, subiendo frame...");
+        console.log('🎬 Video detectado, subiendo frame...');
         const baseName = finalUploadedFileName
-          .split(".")
+          .split('.')
           .slice(0, -1)
-          .join(".");
+          .join('.');
         const frameFileName = `${baseName}.jpg`;
 
-        const frameUploadResp = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const frameUploadResp = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contentType: frameImageFile.type,
             fileSize: frameImageFile.size,
@@ -565,7 +565,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         });
 
         if (!frameUploadResp.ok) {
-          throw new Error("❌ Error al generar URL para el frame");
+          throw new Error('❌ Error al generar URL para el frame');
         }
 
         const frameUploadData =
@@ -574,34 +574,34 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         Object.entries(frameUploadData.fields).forEach(([key, value]) => {
           frameFormData.append(key, value as string | Blob);
         });
-        frameFormData.append("file", frameImageFile);
+        frameFormData.append('file', frameImageFile);
 
         await fetch(frameUploadData.url, {
-          method: "POST",
+          method: 'POST',
           body: frameFormData,
         });
 
         finalCoverImageKey = frameUploadData.key;
         console.log(
-          "🖼️ Frame subido y usado como portada:",
-          finalCoverImageKey,
+          '🖼️ Frame subido y usado como portada:',
+          finalCoverImageKey
         );
       }
 
-      console.log("🧠 Guardando en BD...");
-      console.log("   - coverImageKey:", coverImageKey);
-      console.log("   - uploadedFileName:", finalUploadedFileName);
-      console.log("   - videoKey:", finalVideoKey);
+      console.log('🧠 Guardando en BD...');
+      console.log('   - coverImageKey:', coverImageKey);
+      console.log('   - uploadedFileName:', finalUploadedFileName);
+      console.log('   - videoKey:', finalVideoKey);
       if (
         courseTypeId.includes(4) &&
         (!individualPrice || individualPrice <= 0)
       ) {
-        toast.error("Debe ingresar un precio válido para cursos individuales.");
+        toast.error('Debe ingresar un precio válido para cursos individuales.');
         return;
       }
 
       await onSubmitAction(
-        editingCourseId ? editingCourseId.toString() : "",
+        editingCourseId ? editingCourseId.toString() : '',
         title,
         description,
         file,
@@ -617,21 +617,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         subjects,
         finalVideoKey,
         individualPrice,
-        parametros, // 👈 AÑADIDO AQUÍ
+        parametros // 👈 AÑADIDO AQUÍ
       );
 
       if (controller.signal.aborted) {
-        console.log("⚠️ Subida cancelada por el usuario");
+        console.log('⚠️ Subida cancelada por el usuario');
         return;
       }
 
       setIsUploading(false);
-      console.log("✅ Curso procesado correctamente");
+      console.log('✅ Curso procesado correctamente');
     } catch (error) {
-      if ((error as Error).name === "AbortError") {
-        console.log("⚠️ Subida abortada");
+      if ((error as Error).name === 'AbortError') {
+        console.log('⚠️ Subida abortada');
       } else {
-        console.error("❌ Error en el envío:", error);
+        console.error('❌ Error en el envío:', error);
       }
       setIsUploading(false);
     }
@@ -648,29 +648,29 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Función para manejar el cambio de campo
   const handleFieldChange = (
     field: string,
-    value: string | number | File | null,
+    value: string | number | File | null
   ) => {
     setModifiedFields((prev) => new Set(prev).add(field));
     switch (field) {
-      case "title":
+      case 'title':
         setTitle(value as string);
         break;
-      case "description":
+      case 'description':
         setDescription(value as string);
         break;
-      case "categoryid":
+      case 'categoryid':
         setCategoryid(value as number);
         break;
-      case "modalidadesid":
+      case 'modalidadesid':
         setModalidadesid(value as number);
         break;
-      case "rating":
+      case 'rating':
         setRating(value as number);
         break;
-      case "nivelid":
+      case 'nivelid':
         setNivelid(value as number);
         break;
-      case "file":
+      case 'file':
         setFile(value as File);
         break;
     }
@@ -688,7 +688,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       // Actualizar el estado local cuando cambie el instructor
       const selectedEducator = educators?.find((e) => e.id === instructor);
       if (selectedEducator) {
-        setModifiedFields((prev) => new Set(prev).add("instructor"));
+        setModifiedFields((prev) => new Set(prev).add('instructor'));
       }
     }
   }, [editingCourseId, instructor, educators]);
@@ -749,7 +749,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Efecto para manejar la carga de los inputs
   useEffect(() => {
     if (editingCourseId) {
-      console.log("📝 Cargando datos del curso para editar", {
+      console.log('📝 Cargando datos del curso para editar', {
         title,
         description,
         categoryid,
@@ -795,12 +795,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Efecto para manejar la creacion o edicion del curso
   useEffect(() => {
     if (isOpen && !editingCourseId) {
-      setTitle("");
-      setDescription("");
+      setTitle('');
+      setDescription('');
       setCategoryid(0);
       setModalidadesid(0);
       setNivelid(0);
-      setCoverImage("");
+      setCoverImage('');
       setRating(NaN);
       setParametrosAction([]);
       setIndividualPrice(null);
@@ -811,7 +811,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
   useEffect(() => {
     if (isOpen && editingCourseId) {
-      console.log("🔍 Modal abierto para editar curso", {
+      console.log('🔍 Modal abierto para editar curso', {
         editingCourseId,
         title,
         description,
@@ -849,12 +849,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       <DialogContent className="max-h-[90vh] w-[95vw] max-w-4xl overflow-y-auto p-3 md:p-6">
         <DialogHeader className="mt-2 md:mt-4">
           <DialogTitle className="text-xl md:text-4xl">
-            {editingCourseId ? "Editar Curso" : "Crear Curso"}
+            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
           </DialogTitle>
           <DialogDescription className="text-sm text-white md:text-xl">
             {editingCourseId
-              ? "Edita los detalles del curso"
-              : " los detalles para crear un nuevo curso"}
+              ? 'Edita los detalles del curso'
+              : ' los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
         <div className="bg-background rounded-lg px-2 py-3 text-black shadow-md md:px-6 md:py-4">
@@ -870,8 +870,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 type="text"
                 placeholder="Título"
                 value={title}
-                onChange={(e) => handleFieldChange("title", e.target.value)}
-                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.title ? "border-red-500" : "border-primary"}`}
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.title ? 'border-red-500' : 'border-primary'}`}
               />
               {errors.title && (
                 <p className="text-xs text-red-500 md:text-sm">
@@ -890,9 +890,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 placeholder="Descripción"
                 value={description}
                 onChange={(e) =>
-                  handleFieldChange("description", e.target.value)
+                  handleFieldChange('description', e.target.value)
                 }
-                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.description ? "border-red-500" : "border-primary"}`}
+                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.description ? 'border-red-500' : 'border-primary'}`}
                 rows={4}
               />
               {errors.description && (
@@ -983,7 +983,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     <input
                       type="number"
                       placeholder="Ingrese el precio"
-                      value={individualPrice ?? ""}
+                      value={individualPrice ?? ''}
                       onChange={(e) =>
                         setIndividualPrice(Number(e.target.value))
                       }
@@ -1017,7 +1017,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 step="0.1"
                 placeholder="0-5"
                 className="border-primary mt-1 w-full rounded border p-2 text-sm text-white outline-none focus:no-underline md:text-base"
-                value={isNaN(rating) ? "" : rating}
+                value={isNaN(rating) ? '' : rating}
                 onChange={(e) => setRating(Number(e.target.value))}
               />
             </div>
@@ -1030,7 +1030,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </label>
               <select
                 id="instructor"
-                value={educators.find((e) => e.id === instructor)?.id ?? ""} // importante!
+                value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
                 onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
                 className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
               >
@@ -1050,10 +1050,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               <div
                 className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
                   isDragging
-                    ? "border-blue-500 bg-blue-50"
+                    ? 'border-blue-500 bg-blue-50'
                     : errors.file
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300 bg-gray-50"
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300 bg-gray-50'
                 }`}
               >
                 <div className="text-center text-white">
@@ -1061,13 +1061,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     <div className="relative overflow-hidden rounded-lg bg-gray-800">
                       {coverVideoCourseKey ? (
                         <video
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ""}/${coverVideoCourseKey}`}
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverVideoCourseKey}`}
                           controls
                           className="h-48 w-full object-cover"
                         />
                       ) : (
                         <Image
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ""}/${coverImage}`}
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
                           alt="current cover"
                           width={500}
                           height={200}
@@ -1088,7 +1088,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   ) : !file ? (
                     <>
                       <FiUploadCloud
-                        className={`mx-auto size-12 ${errors.file ? "text-red-500" : "text-primary"}`}
+                        className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'}`}
                       />
                       <h2 className="mt-4 text-xl font-medium">
                         Sube una imagen o video
@@ -1116,7 +1116,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     </>
                   ) : (
                     <div className="relative rounded-lg bg-gray-900 p-2">
-                      {file.type.startsWith("video/") ? (
+                      {file.type.startsWith('video/') ? (
                         <>
                           <video
                             id="video-player"
@@ -1139,35 +1139,35 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                                 type="button"
                                 onClick={() => {
                                   const video = document.getElementById(
-                                    "video-player",
+                                    'video-player'
                                   ) as HTMLVideoElement | null;
                                   if (!video) return;
                                   const canvas =
-                                    document.createElement("canvas");
+                                    document.createElement('canvas');
                                   canvas.width = video.videoWidth;
                                   canvas.height = video.videoHeight;
-                                  const ctx = canvas.getContext("2d");
+                                  const ctx = canvas.getContext('2d');
                                   if (ctx) {
                                     ctx.drawImage(
                                       video,
                                       0,
                                       0,
                                       canvas.width,
-                                      canvas.height,
+                                      canvas.height
                                     );
                                     canvas.toBlob((blob) => {
                                       if (blob) {
                                         const captured = new File(
                                           [blob],
-                                          "captura.jpg",
-                                          { type: "image/jpeg" },
+                                          'captura.jpg',
+                                          { type: 'image/jpeg' }
                                         );
                                         setFrameImageFile(captured);
                                         toast.success(
-                                          "Frame capturado correctamente",
+                                          'Frame capturado correctamente'
                                         );
                                       }
-                                    }, "image/jpeg");
+                                    }, 'image/jpeg');
                                   }
                                 }}
                                 className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
@@ -1230,7 +1230,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             <div className="mt-6 flex flex-col text-white">
               <p>
-                ¿Es calificable? {editingCourseId ? "actualizar" : "agregar"}{" "}
+                ¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
                 parametros
               </p>
               <div className="flex space-x-2">
@@ -1246,15 +1246,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     className="absolute size-0"
                   />
                   <span
-                    className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? "bg-gray-300" : "bg-red-500"}`}
+                    className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
                   >
                     <span
-                      className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${addParametros ? "translate-x-8" : "translate-x-0"}`}
+                      className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
                     />
                   </span>
                 </label>
                 <span className="mt-1 text-sm text-gray-400">
-                  {addParametros ? "Si" : "No"}
+                  {addParametros ? 'Si' : 'No'}
                 </span>
               </div>
             </div>
@@ -1268,7 +1268,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   disabled={parametros.length >= 10}
                   className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
                 >
-                  {editingCourseId ? "Editar o agregar" : "Agregar"} nuevo
+                  {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
                   parametro
                   <Plus />
                 </Button>
@@ -1292,7 +1292,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       type="text"
                       value={parametro.name}
                       onChange={(e) =>
-                        handleParametroChange(index, "name", e.target.value)
+                        handleParametroChange(index, 'name', e.target.value)
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
@@ -1304,8 +1304,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       onChange={(e) =>
                         handleParametroChange(
                           index,
-                          "description",
-                          e.target.value,
+                          'description',
+                          e.target.value
                         )
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
@@ -1319,11 +1319,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       onChange={(e) =>
                         handleParametroChange(
                           index,
-                          "porcentaje",
-                          Math.max(
-                            1,
-                            Math.min(100, parseFloat(e.target.value)),
-                          ),
+                          'porcentaje',
+                          Math.max(1, Math.min(100, parseFloat(e.target.value)))
                         )
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
@@ -1346,24 +1343,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     new Map(
                       allSubjects
                         .filter((subject) =>
-                          subjects.some((s) => s.id === subject.id),
+                          subjects.some((s) => s.id === subject.id)
                         )
-                        .map((subject) => [subject.title, subject]),
-                    ).values(),
+                        .map((subject) => [subject.title, subject])
+                    ).values()
                   ).map((subject) => ({
                     value: subject.id.toString(),
                     label: subject.title,
                   }))}
                   options={Array.from(
                     new Map(
-                      allSubjects.map((subject) => [subject.title, subject]),
-                    ).values(),
+                      allSubjects.map((subject) => [subject.title, subject])
+                    ).values()
                   ).map((subject) => ({
                     value: subject.id.toString(),
                     label: subject.title,
                   }))}
                   onChange={(
-                    newValue: MultiValue<{ value: string; label: string }>,
+                    newValue: MultiValue<{ value: string; label: string }>
                   ) => {
                     const selectedSubjects = newValue.map((option) => ({
                       id: Number(option.value),
@@ -1401,12 +1398,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             disabled={uploading}
           >
             {uploading
-              ? "Subiendo..."
+              ? 'Subiendo...'
               : editingCourseId
                 ? isEditing
-                  ? "Editando..."
-                  : "Editar"
-                : "Crear Curso"}
+                  ? 'Editando...'
+                  : 'Editar'
+                : 'Crear Curso'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { ticketComments } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { ticketComments } from '~/server/db/schema';
 
 // Tipos seguros
 interface CreateCommentBody {
@@ -16,19 +16,19 @@ interface CreateCommentBody {
 // ========================
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata.role;
 
-    if (!userId || (role !== "admin" && role !== "super-admin")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const ticketId = Number(params.id);
     if (isNaN(ticketId)) {
-      return NextResponse.json({ error: "Invalid ticket ID" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }
 
     const comments = await db.query.ticketComments.findMany({
@@ -41,10 +41,10 @@ export async function GET(
 
     return NextResponse.json(comments);
   } catch (error) {
-    console.error("❌ Error fetching comments:", error);
+    console.error('❌ Error fetching comments:', error);
     return NextResponse.json(
-      { error: "Error fetching comments" },
-      { status: 500 },
+      { error: 'Error fetching comments' },
+      { status: 500 }
     );
   }
 }
@@ -54,19 +54,19 @@ export async function GET(
 // ========================
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata.role;
 
-  if (!userId || (role !== "admin" && role !== "super-admin")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const ticketId = Number(params.id);
     if (isNaN(ticketId)) {
-      return NextResponse.json({ error: "Invalid ticket ID" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }
 
     const body = (await request.json()) as CreateCommentBody;
@@ -74,8 +74,8 @@ export async function POST(
 
     if (!content) {
       return NextResponse.json(
-        { error: "Comment content is required" },
-        { status: 400 },
+        { error: 'Comment content is required' },
+        { status: 400 }
       );
     }
 
@@ -91,10 +91,10 @@ export async function POST(
 
     return NextResponse.json(newComment[0]);
   } catch (error) {
-    console.error("❌ Error creating comment:", error);
+    console.error('❌ Error creating comment:', error);
     return NextResponse.json(
-      { error: "Error creating comment" },
-      { status: 500 },
+      { error: 'Error creating comment' },
+      { status: 500 }
     );
   }
 }

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton } from '@clerk/clerk-react';
 import {
   FiArchive,
   FiBook,
@@ -16,7 +16,7 @@ import {
   FiMenu,
   FiSettings,
   FiX,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 interface ResponsiveSidebarProps {
   children: React.ReactNode;
@@ -36,13 +36,13 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     };
 
     handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
     if (isMobile) {
-      console.log("Modo móvil activado");
+      console.log('Modo móvil activado');
     }
   }, [isMobile]);
 
@@ -50,21 +50,21 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const navItems = [
     {
       icon: <FiHome size={24} />,
-      title: "Usuarios y Roles",
-      id: "users",
-      link: "/dashboard/super-admin",
+      title: 'Usuarios y Roles',
+      id: 'users',
+      link: '/dashboard/super-admin',
     },
     {
       icon: <FiSettings size={24} />,
-      title: "Configuraciones",
-      id: "settings",
-      link: "/dashboard/super-admin/settings",
+      title: 'Configuraciones',
+      id: 'settings',
+      link: '/dashboard/super-admin/settings',
     },
     {
       icon: <FiArchive size={24} />,
-      title: "Roles",
-      id: "roles",
-      link: "/dashboard/super-admin/roles",
+      title: 'Roles',
+      id: 'roles',
+      link: '/dashboard/super-admin/roles',
     },
   ];
 
@@ -111,7 +111,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
       {/* Sidebar */}
       <aside
-        className={`bg-background fixed top-0 left-0 h-screen w-64 border-r pt-20 transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"} z-30 md:translate-x-0`}
+        className={`bg-background fixed top-0 left-0 h-screen w-64 border-r pt-20 transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} z-30 md:translate-x-0`}
       >
         <ul className="space-y-4 p-4">
           {/* Dashboard primero */}
@@ -119,9 +119,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <Link
               href="/dashboard/super-admin/admin2"
               className={`flex items-center space-x-2 rounded-lg p-2 transition-all duration-300 ${
-                pathname === "/dashboard/super-admin/admin2"
-                  ? "bg-primary text-[#01142B]"
-                  : "hover:bg-secondary text-gray-600 hover:text-white"
+                pathname === '/dashboard/super-admin/admin2'
+                  ? 'bg-primary text-[#01142B]'
+                  : 'hover:bg-secondary text-gray-600 hover:text-white'
               }`}
             >
               <FiHome size={24} />
@@ -152,7 +152,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/cursos"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/cursos" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Todos los Cursos
                   </Link>
@@ -160,7 +160,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/categories"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/categories" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Categorías
                   </Link>
@@ -168,7 +168,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/modalities"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/modalities" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Modalidades
                   </Link>
@@ -176,7 +176,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/difficulties"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/difficulties" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Niveles
                   </Link>
@@ -206,7 +206,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/programs"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/programs" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Todos los programas
                   </Link>
@@ -214,7 +214,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 <li>
                   <Link
                     href="/dashboard/super-admin/modalities"
-                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === "/dashboard/super-admin/modalities" ? "bg-primary text-[#01142B]" : ""}`}
+                    className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Materias
                   </Link>
@@ -230,7 +230,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               <li key={item.id}>
                 <Link
                   href={item.link}
-                  className={`flex items-center space-x-2 rounded-lg p-2 transition-all duration-300 ${isActive ? "bg-primary text-[#01142B]" : "hover:bg-secondary text-gray-600 hover:text-white"}`}
+                  className={`flex items-center space-x-2 rounded-lg p-2 transition-all duration-300 ${isActive ? 'bg-primary text-[#01142B]' : 'hover:bg-secondary text-gray-600 hover:text-white'}`}
                 >
                   {item.icon}
                   <span>{item.title}</span>

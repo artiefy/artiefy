@@ -1,8 +1,8 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses, materias, users } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses, materias, users } from '~/server/db/schema';
 
 export async function getCoursesByProgramId(programId: string) {
   try {
@@ -26,7 +26,7 @@ export async function getCoursesByProgramId(programId: string) {
     const coursesWithInstructors = await Promise.all(
       result.map(async (course) => {
         if (!course.instructor) {
-          return { ...course, instructorName: "Sin instructor asignado" };
+          return { ...course, instructorName: 'Sin instructor asignado' };
         }
 
         try {
@@ -46,7 +46,7 @@ export async function getCoursesByProgramId(programId: string) {
             const clerk = await clerkClient();
             const user = await clerk.users.getUser(course.instructor);
             const name =
-              `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+              `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
             return {
               ...course,
               instructorName: name || course.instructor,
@@ -61,16 +61,16 @@ export async function getCoursesByProgramId(programId: string) {
         } catch (error) {
           console.error(
             `Error fetching instructor for course ${course.id}:`,
-            error,
+            error
           );
           return { ...course, instructorName: course.instructor };
         }
-      }),
+      })
     );
 
     return coursesWithInstructors;
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error('Error fetching courses:', error);
     return [];
   }
 }

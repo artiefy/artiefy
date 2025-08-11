@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
-import { and, eq, ne as neq } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { and, eq, ne as neq } from 'drizzle-orm';
 
 import {
   createCourse,
@@ -10,15 +10,15 @@ import {
   getCourseById,
   getModalidadById,
   updateCourse,
-} from "~/models/educatorsModels/courseModelsEducator";
-import { db } from "~/server/db";
+} from '~/models/educatorsModels/courseModelsEducator';
+import { db } from '~/server/db';
 import {
   classMeetings,
   courseCourseTypes,
   courses,
   courseTypes,
   materias,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
 
@@ -46,7 +46,7 @@ interface PutRequestBody {
 }
 
 export async function getCourseByIdWithTypes(courseId: number) {
-  console.log("📘 Buscando curso con ID:", courseId);
+  console.log('📘 Buscando curso con ID:', courseId);
 
   const course = await db
     .select()
@@ -54,30 +54,30 @@ export async function getCourseByIdWithTypes(courseId: number) {
     .where(eq(courses.id, courseId))
     .then((res) => res[0]);
 
-  console.log("✅ Curso obtenido:", course);
+  console.log('✅ Curso obtenido:', course);
 
   const meetings = await db
     .select()
     .from(classMeetings)
     .where(eq(classMeetings.courseId, courseId));
 
-  console.log("📅 Reuniones encontradas:", meetings);
+  console.log('📅 Reuniones encontradas:', meetings);
 
   // 🔗 Consultar videos desde el endpoint que acabamos de crear
-  console.log("🎥 Haciendo fetch de videos...");
+  console.log('🎥 Haciendo fetch de videos...');
   const videoRes = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/super-admin/teams/video?userId=0843f2fa-3e0b-493f-8bb9-84b0aa1b2417`,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/super-admin/teams/video?userId=0843f2fa-3e0b-493f-8bb9-84b0aa1b2417`
   );
 
   const videoData = (await videoRes.json()) as VideoData;
-  console.log("📦 Datos de video recibidos:", videoData);
+  console.log('📦 Datos de video recibidos:', videoData);
 
   const videos = videoData?.videos ?? [];
-  console.log("🎬 Lista de videos extraída:", videos);
+  console.log('🎬 Lista de videos extraída:', videos);
 
   const meetingsWithVideo = meetings.map((meeting) => {
     const match = videos.find((v) =>
-      decodeURIComponent(meeting.joinUrl ?? "").includes(v.meetingId),
+      decodeURIComponent(meeting.joinUrl ?? '').includes(v.meetingId)
     );
 
     console.log(`🔍 Buscando video para reunión ${meeting.id}:`, {
@@ -100,7 +100,7 @@ export async function getCourseByIdWithTypes(courseId: number) {
     .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
     .where(eq(courseCourseTypes.courseId, courseId));
 
-  console.log("🏷️ Tipos de curso:", courseTypesList);
+  console.log('🏷️ Tipos de curso:', courseTypesList);
 
   return {
     ...course,
@@ -111,48 +111,48 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const courseId = parseInt(resolvedParams.id);
     if (isNaN(courseId)) {
       return NextResponse.json(
-        { error: "ID de curso inválido" },
-        { status: 400 },
+        { error: 'ID de curso inválido' },
+        { status: 400 }
       );
     }
 
     const course = await getCourseByIdWithTypes(courseId);
     if (!course) {
       return NextResponse.json(
-        { error: "Curso no encontrado" },
-        { status: 404 },
+        { error: 'Curso no encontrado' },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(course);
   } catch (error) {
-    console.error("Error al obtener el curso:", error);
+    console.error('Error al obtener el curso:', error);
     return NextResponse.json(
-      { error: "Error al obtener el curso" },
-      { status: 500 },
+      { error: 'Error al obtener el curso' },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Validar autenticación del usuario
     const { userId } = await auth();
     if (!userId) {
-      console.warn("⚠️ Usuario no autenticado.");
+      console.warn('⚠️ Usuario no autenticado.');
       return NextResponse.json(
-        { error: "No autorizado. Por favor, inicie sesión." },
-        { status: 403 },
+        { error: 'No autorizado. Por favor, inicie sesión.' },
+        { status: 403 }
       );
     }
 
@@ -160,10 +160,10 @@ export async function PUT(
     const courseId = parseInt(resolvedParams.id);
 
     if (isNaN(courseId)) {
-      console.warn("⚠️ ID de curso inválido.");
+      console.warn('⚠️ ID de curso inválido.');
       return NextResponse.json(
-        { error: "ID de curso inválido" },
-        { status: 400 },
+        { error: 'ID de curso inválido' },
+        { status: 400 }
       );
     }
 
@@ -184,7 +184,7 @@ export async function PUT(
       instructor: data.instructorId, // Changed to match schema's instructor field
       rating: data.rating ? Number(data.rating) : undefined,
       courseTypeId: Array.isArray(data.courseTypeId) ? data.courseTypeId : [],
-      isActive: typeof data.isActive === "boolean" ? data.isActive : undefined,
+      isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
     };
 
     // Update course
@@ -197,8 +197,8 @@ export async function PUT(
         .from(materias)
         .where(eq(materias.courseid, courseId))
         .catch((err) => {
-          console.error("❌ Error al obtener materias actuales:", err);
-          throw new Error("Error al obtener materias actuales");
+          console.error('❌ Error al obtener materias actuales:', err);
+          throw new Error('Error al obtener materias actuales');
         });
 
       // Nueva validación: Si el curso no tiene programa y la materia no tiene ni curso ni programa
@@ -213,10 +213,10 @@ export async function PUT(
             .catch((err) => {
               console.error(
                 `❌ Error al obtener la materia con ID ${subject.id}:`,
-                err,
+                err
               );
               throw new Error(
-                `Error al obtener la materia con ID ${subject.id}`,
+                `Error al obtener la materia con ID ${subject.id}`
               );
             });
 
@@ -227,36 +227,36 @@ export async function PUT(
             !materiaOriginal?.courseid
           ) {
             console.log(
-              `⚠️ Materia con ID ${subject.id} y curso ${courseId} no tienen programa ni curso asignado.`,
+              `⚠️ Materia con ID ${subject.id} y curso ${courseId} no tienen programa ni curso asignado.`
             );
 
             await db
               .insert(materias)
               .values({
-                title: materiaOriginal?.title ?? "Título predeterminado",
+                title: materiaOriginal?.title ?? 'Título predeterminado',
                 description:
-                  materiaOriginal?.description ?? "Descripción predeterminada",
+                  materiaOriginal?.description ?? 'Descripción predeterminada',
                 courseid: courseId,
               })
               .catch((err) => {
                 console.error(
                   `❌ Error al insertar la materia con ID ${subject.id}:`,
-                  err,
+                  err
                 );
                 throw new Error(
-                  `Error al insertar la materia con ID ${subject.id}`,
+                  `Error al insertar la materia con ID ${subject.id}`
                 );
               });
 
             console.log(
-              `✨ Materia con ID ${subject.id} asignada al curso ${courseId} con programaId 9999999.`,
+              `✨ Materia con ID ${subject.id} asignada al curso ${courseId} con programaId 9999999.`
             );
             continue;
           }
         } catch (err) {
           console.error(
             `❌ Error al procesar la materia con ID ${subject.id}:`,
-            err,
+            err
           );
         }
       }
@@ -265,7 +265,7 @@ export async function PUT(
       if (programId !== null && programId !== undefined) {
         for (const subject of data.subjects) {
           const existingMateria = currentMaterias.find(
-            (m) => m.id === subject.id,
+            (m) => m.id === subject.id
           );
 
           if (!existingMateria) {
@@ -278,10 +278,10 @@ export async function PUT(
               .catch((err) => {
                 console.error(
                   `❌ Error al obtener la materia con ID ${subject.id}:`,
-                  err,
+                  err
                 );
                 throw new Error(
-                  `Error al obtener la materia con ID ${subject.id}`,
+                  `Error al obtener la materia con ID ${subject.id}`
                 );
               });
 
@@ -297,23 +297,23 @@ export async function PUT(
                 .catch((err) => {
                   console.error(
                     `❌ Error al insertar la materia con ID ${subject.id}:`,
-                    err,
+                    err
                   );
                   throw new Error(
-                    `Error al insertar la materia con ID ${subject.id}`,
+                    `Error al insertar la materia con ID ${subject.id}`
                   );
                 });
 
               console.log(
                 `✨ Nueva materia creada para el curso ${courseId}:`,
-                subject.id,
+                subject.id
               );
 
               const conditions = [eq(materias.title, materiaOriginal.title)];
 
               if (materiaOriginal.programaId) {
                 conditions.push(
-                  neq(materias.programaId, materiaOriginal.programaId),
+                  neq(materias.programaId, materiaOriginal.programaId)
                 );
               }
 
@@ -331,15 +331,15 @@ export async function PUT(
                     .catch((err) => {
                       console.error(
                         `❌ Error al actualizar la materia con ID ${materia.id}:`,
-                        err,
+                        err
                       );
                       throw new Error(
-                        `Error al actualizar la materia con ID ${materia.id}`,
+                        `Error al actualizar la materia con ID ${materia.id}`
                       );
                     });
 
                   console.log(
-                    `🔄 Materia con ID ${materia.id} actualizada con curso ${courseId}`,
+                    `🔄 Materia con ID ${materia.id} actualizada con curso ${courseId}`
                   );
                 } else {
                   await db
@@ -353,15 +353,15 @@ export async function PUT(
                     .catch((err) => {
                       console.error(
                         `❌ Error al duplicar la materia con ID ${materia.id}:`,
-                        err,
+                        err
                       );
                       throw new Error(
-                        `Error al duplicar la materia con ID ${materia.id}`,
+                        `Error al duplicar la materia con ID ${materia.id}`
                       );
                     });
 
                   console.log(
-                    `📚 Materia duplicada para programa ${materia.programaId} con nuevo curso ${courseId}`,
+                    `📚 Materia duplicada para programa ${materia.programaId} con nuevo curso ${courseId}`
                   );
                 }
               }
@@ -373,17 +373,17 @@ export async function PUT(
 
     const refreshedCourse = await getCourseById(courseId);
     return NextResponse.json({
-      message: "Curso actualizado exitosamente",
+      message: 'Curso actualizado exitosamente',
       course: refreshedCourse,
     });
   } catch (error) {
-    console.error("❌ Error detallado:", error);
+    console.error('❌ Error detallado:', error);
     return NextResponse.json(
       {
-        error: "Error al actualizar el curso",
-        details: error instanceof Error ? error.message : "Error desconocido",
+        error: 'Error al actualizar el curso',
+        details: error instanceof Error ? error.message : 'Error desconocido',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -393,10 +393,10 @@ export async function GET_ALL() {
     const courses = await getAllCourses();
     return NextResponse.json(courses, { status: 200 });
   } catch (error) {
-    console.error("Error al obtener los cursos:", error);
+    console.error('Error al obtener los cursos:', error);
     return NextResponse.json(
-      { error: "Error al obtener los cursos" },
-      { status: 500 },
+      { error: 'Error al obtener los cursos' },
+      { status: 500 }
     );
   }
 }
@@ -416,15 +416,15 @@ interface CourseData {
 
 export async function POST(request: Request) {
   try {
-    console.log("Iniciando creación de curso...");
+    console.log('Iniciando creación de curso...');
 
     // Autenticación
     const { userId } = await auth();
-    console.log("Resultado auth:", { userId });
+    console.log('Resultado auth:', { userId });
 
     if (!userId) {
-      console.log("Usuario no autorizado");
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      console.log('Usuario no autorizado');
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Parsear datos del body
@@ -434,20 +434,20 @@ export async function POST(request: Request) {
       isActive?: boolean;
     };
 
-    console.log("Datos recibidos del body:", JSON.stringify(data, null, 2));
+    console.log('Datos recibidos del body:', JSON.stringify(data, null, 2));
 
     // Validación precio individual
     if (
       data.courseTypeId === 4 &&
       (data.individualPrice === null || data.individualPrice <= 0)
     ) {
-      console.log("Validación de precio individual fallida", {
+      console.log('Validación de precio individual fallida', {
         courseTypeId: data.courseTypeId,
         individualPrice: data.individualPrice,
       });
       return NextResponse.json(
-        { error: "Debe ingresar un precio válido para cursos individuales." },
-        { status: 400 },
+        { error: 'Debe ingresar un precio válido para cursos individuales.' },
+        { status: 400 }
       );
     }
 
@@ -458,12 +458,12 @@ export async function POST(request: Request) {
       !data.modalidadesid ||
       data.modalidadesid.length === 0
     ) {
-      console.log("Validación de datos fallida", {
+      console.log('Validación de datos fallida', {
         title: data.title,
         description: data.description,
         modalidadesid: data.modalidadesid,
       });
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const createdCourses = [];
@@ -491,8 +491,8 @@ export async function POST(request: Request) {
       };
 
       console.log(
-        "Payload final para crearCourse:",
-        JSON.stringify(coursePayload, null, 2),
+        'Payload final para crearCourse:',
+        JSON.stringify(coursePayload, null, 2)
       );
 
       // Crear el curso
@@ -502,17 +502,17 @@ export async function POST(request: Request) {
       createdCourses.push(newCourse);
     }
 
-    console.log("Todos los cursos creados:", createdCourses);
+    console.log('Todos los cursos creados:', createdCourses);
 
     return NextResponse.json(createdCourses, { status: 201 });
   } catch (error) {
-    console.error("Error al crear el curso:", error);
+    console.error('Error al crear el curso:', error);
     return NextResponse.json(
       {
-        error: "Error al crear el curso",
+        error: 'Error al crear el curso',
         details: error instanceof Error ? error.message : error,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -525,12 +525,12 @@ export async function DELETE(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     // Verifica si hay cuerpo en la solicitud
     if (request.body === undefined || request.body === null) {
-      return NextResponse.json({ error: "Cuerpo vacío" }, { status: 400 });
+      return NextResponse.json({ error: 'Cuerpo vacío' }, { status: 400 });
     }
 
     // Convertimos el JSON recibido al tipo correcto
@@ -538,35 +538,35 @@ export async function DELETE(request: Request) {
     try {
       data = (await request.json()) as DeleteCourseRequest;
     } catch {
-      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
     // Validamos que el ID sea un string válido
-    if (!data.id || typeof data.id !== "string") {
+    if (!data.id || typeof data.id !== 'string') {
       return NextResponse.json(
-        { error: "ID de curso inválido" },
-        { status: 400 },
+        { error: 'ID de curso inválido' },
+        { status: 400 }
       );
     }
 
     const courseId = parseInt(data.id);
     if (isNaN(courseId)) {
       return NextResponse.json(
-        { error: "ID de curso inválido" },
-        { status: 400 },
+        { error: 'ID de curso inválido' },
+        { status: 400 }
       );
     }
 
     await deleteCourse(courseId);
     return NextResponse.json(
-      { message: "Curso eliminado correctamente" },
-      { status: 200 },
+      { message: 'Curso eliminado correctamente' },
+      { status: 200 }
     );
   } catch (error) {
-    console.error("Error al eliminar el curso:", error);
+    console.error('Error al eliminar el curso:', error);
     return NextResponse.json(
-      { error: "Error al eliminar el curso" },
-      { status: 500 },
+      { error: 'Error al eliminar el curso' },
+      { status: 500 }
     );
   }
 }

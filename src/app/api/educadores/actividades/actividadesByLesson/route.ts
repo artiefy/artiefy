@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
+import { auth } from '@clerk/nextjs/server';
 
 import {
   getActivitiesByLessonId,
   getTotalPorcentajeByParametro,
-} from "~/models/educatorsModels/activitiesModels";
+} from '~/models/educatorsModels/activitiesModels';
 
 function respondWithError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -16,28 +16,28 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     const { searchParams } = new URL(request.url);
-    const lessonsId = searchParams.get("lessonId");
+    const lessonsId = searchParams.get('lessonId');
     if (!lessonsId) {
-      return respondWithError("ID de actividad no proporcionado", 400);
+      return respondWithError('ID de actividad no proporcionado', 400);
     }
 
     const activities = await getActivitiesByLessonId(parseInt(lessonsId, 10));
     if (!activities) {
-      return respondWithError("Actividad no encontrada", 404);
+      return respondWithError('Actividad no encontrada', 404);
     }
 
     return NextResponse.json(activities);
   } catch (error: unknown) {
-    console.error("Error al obtener la actividad:", error);
+    console.error('Error al obtener la actividad:', error);
     const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+      error instanceof Error ? error.message : 'Error desconocido';
     return respondWithError(
       `Error al obtener la actividad: ${errorMessage}`,
-      500,
+      500
     );
   }
 }
@@ -45,20 +45,20 @@ export async function GET(request: NextRequest) {
 // Agregar nueva ruta para validar porcentaje
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
-  if (!userId) return respondWithError("No autorizado", 403);
+  if (!userId) return respondWithError('No autorizado', 403);
 
   const data = (await request.json()) as {
     parametroId?: number;
     porcentaje?: number;
     actividadId?: number;
   };
-  console.log("🔔 validarPorcentaje POST body:", data);
+  console.log('🔔 validarPorcentaje POST body:', data);
 
   const { parametroId, porcentaje, actividadId } = data;
   if (parametroId == null || porcentaje == null) {
     return respondWithError(
-      "Datos incompletos (parametroId y porcentaje son required)",
-      400,
+      'Datos incompletos (parametroId y porcentaje son required)',
+      400
     );
   }
 
@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
       console.log(
         `↪️ Excluyendo porcentaje viejo de actividad ${actividadId}:`,
         actual.porcentaje,
-        "nuevo total:",
-        total,
+        'nuevo total:',
+        total
       );
     }
   }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   if (nuevoTotal > 100 || nuevoTotal < 0) {
     return respondWithError(
       `No se puede exceder el 100% del parámetro. Actual: ${total}%, Añadiendo: ${porcentaje}%.`,
-      400,
+      400
     );
   }
 

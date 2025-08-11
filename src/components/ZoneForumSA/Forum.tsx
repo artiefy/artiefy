@@ -1,14 +1,14 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { useUser } from "@clerk/nextjs";
-import { FaSearch } from "react-icons/fa";
-import { toast } from "sonner";
-import { z } from "zod";
+import { useUser } from '@clerk/nextjs';
+import { FaSearch } from 'react-icons/fa';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/educators/ui/dialog";
-import { Input } from "~/components/educators/ui/input";
-import { Progress } from "~/components/educators/ui/progress";
-import { Zone } from "~/components/ZoneForumSA/Zone";
+} from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
+import { Progress } from '~/components/educators/ui/progress';
+import { Zone } from '~/components/ZoneForumSA/Zone';
 
 const coursesSchema = z.array(
   z.object({
@@ -28,7 +28,7 @@ const coursesSchema = z.array(
     title: z.string(),
     description: z.string(),
     coverImageKey: z.string(),
-  }),
+  })
 );
 
 const uploadResponseSchema = z.object({
@@ -40,8 +40,8 @@ type CoursesModels = z.infer<typeof coursesSchema>[number];
 const ForumHome = () => {
   const { user } = useUser();
   const [courseId, setCourseId] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [courses, setCourses] = useState<CoursesModels[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -50,13 +50,13 @@ const ForumHome = () => {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
 
-  const uploadFileToServer = async (file: File, type: "image" | "document") => {
+  const uploadFileToServer = async (file: File, type: 'image' | 'document') => {
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("type", type);
+    formData.append('file', file);
+    formData.append('type', type);
 
-    const res = await fetch("/api/upload", {
-      method: "POST",
+    const res = await fetch('/api/upload', {
+      method: 'POST',
       body: formData,
     });
     const json = (await res.json()) as unknown;
@@ -74,41 +74,41 @@ const ForumHome = () => {
 
     try {
       if (coverImage) {
-        await uploadFileToServer(coverImage, "image");
+        await uploadFileToServer(coverImage, 'image');
       }
       if (documentFile) {
-        await uploadFileToServer(documentFile, "document");
+        await uploadFileToServer(documentFile, 'document');
       }
 
       setUploadProgress(60);
 
       const formData = new FormData();
-      formData.append("courseId", String(courseId));
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("userId", userId);
-      if (coverImage) formData.append("coverImage", coverImage);
-      if (documentFile) formData.append("documentFile", documentFile);
+      formData.append('courseId', String(courseId));
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('userId', userId);
+      if (coverImage) formData.append('coverImage', coverImage);
+      if (documentFile) formData.append('documentFile', documentFile);
 
-      const response = await fetch("/api/forums", {
-        method: "POST",
+      const response = await fetch('/api/forums', {
+        method: 'POST',
         body: formData,
       });
 
       setUploadProgress(100);
       await response.json();
 
-      toast.success("Foro creado exitosamente!");
+      toast.success('Foro creado exitosamente!');
       setIsDialogOpen(false);
       window.location.reload();
     } catch (error) {
-      console.error("Error al crear el foro:", error);
-      toast.error("Error al crear el foro");
+      console.error('Error al crear el foro:', error);
+      toast.error('Error al crear el foro');
     } finally {
       setIsUploading(false);
       setCourseId(null);
-      setTitle("");
-      setDescription("");
+      setTitle('');
+      setDescription('');
       setCoverImage(null);
       setDocumentFile(null);
     }
@@ -120,13 +120,13 @@ const ForumHome = () => {
       try {
         setLoadingCourses(true);
         const response = await fetch(
-          `/api/educadores/courses?userId=${user.id}`,
+          `/api/educadores/courses?userId=${user.id}`
         );
         const json = (await response.json()) as unknown;
         const parsed = coursesSchema.parse(json);
         setCourses(parsed);
       } catch (error) {
-        console.error("Error al obtener cursos:", error);
+        console.error('Error al obtener cursos:', error);
       } finally {
         setLoadingCourses(false);
       }
@@ -176,7 +176,7 @@ const ForumHome = () => {
                         placeholder="Selecciona o escribe un curso"
                         onChange={(e) => {
                           const selected = courses.find(
-                            (c) => c.title === e.target.value,
+                            (c) => c.title === e.target.value
                           );
                           setCourseId(selected ? selected.id : null);
                         }}
@@ -314,8 +314,8 @@ const ForumHome = () => {
                   className="w-full border border-white/20 text-white hover:bg-white/10 sm:w-auto"
                   onClick={() => {
                     setCourseId(null);
-                    setTitle("");
-                    setDescription("");
+                    setTitle('');
+                    setDescription('');
                     setIsDialogOpen(false);
                   }}
                 >

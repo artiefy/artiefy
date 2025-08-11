@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { eq, inArray } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   permisos,
   roleSecundarioPermisos,
   rolesSecundarios,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 interface AssignRoleBody {
   userId: string;
@@ -21,8 +21,8 @@ export async function PATCH(req: Request) {
     const body = (await req.json()) as AssignRoleBody;
     const { userId, roleSecundarioId } = body;
 
-    if (typeof userId !== "string" || typeof roleSecundarioId !== "number") {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    if (typeof userId !== 'string' || typeof roleSecundarioId !== 'number') {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const role = await db.query.rolesSecundarios.findFirst({
@@ -30,7 +30,7 @@ export async function PATCH(req: Request) {
     });
 
     if (!role) {
-      return NextResponse.json({ error: "Rol no encontrado" }, { status: 404 });
+      return NextResponse.json({ error: 'Rol no encontrado' }, { status: 404 });
     }
 
     const permisoIds = await db
@@ -44,8 +44,8 @@ export async function PATCH(req: Request) {
       .where(
         inArray(
           permisos.id,
-          permisoIds.map((p) => p.permisoId),
-        ),
+          permisoIds.map((p) => p.permisoId)
+        )
       );
 
     const permisoNames = permisoDetails.map((p) => p.name);
@@ -68,7 +68,7 @@ export async function PATCH(req: Request) {
       role_secundario: role.name,
     });
   } catch (error) {
-    console.error("Error al asignar rol secundario:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al asignar rol secundario:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

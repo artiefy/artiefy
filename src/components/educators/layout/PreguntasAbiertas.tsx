@@ -1,16 +1,16 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
-import { Input } from "~/components/educators/ui/input";
-import { Label } from "~/components/educators/ui/label";
-import { Progress } from "~/components/educators/ui/progress";
+import { Button } from '~/components/educators/ui/button';
+import { Input } from '~/components/educators/ui/input';
+import { Label } from '~/components/educators/ui/label';
+import { Progress } from '~/components/educators/ui/progress';
 
-import type { Completado } from "~/types/typesActi";
+import type { Completado } from '~/types/typesActi';
 
 interface PreguntasAbiertasProps {
   activityId: number;
@@ -30,10 +30,10 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
   const router = useRouter();
 
   const [formData, setFormData] = useState<Completado>({
-    id: "",
-    text: "",
-    correctAnswer: "",
-    answer: "",
+    id: '',
+    text: '',
+    correctAnswer: '',
+    answer: '',
     pesoPregunta: 0,
   });
 
@@ -45,17 +45,17 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
       setFormData(editingQuestion);
     } else {
       setFormData({
-        id: "",
-        text: "",
-        correctAnswer: "",
-        answer: "",
+        id: '',
+        text: '',
+        correctAnswer: '',
+        answer: '',
         pesoPregunta: 0,
       });
     }
   }, [editingQuestion]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -68,7 +68,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
     event.preventDefault();
     setIsVisible(false);
 
-    const method = editingQuestion ? "PUT" : "POST";
+    const method = editingQuestion ? 'PUT' : 'POST';
     const questionId = editingQuestion
       ? editingQuestion.id
       : crypto.randomUUID();
@@ -85,9 +85,9 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
     }, 300);
 
     try {
-      const response = await fetch("/api/educadores/question/completar", {
+      const response = await fetch('/api/educadores/question/completar', {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId,
           questionsACompletar: { ...formData, id: questionId },
@@ -105,14 +105,14 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
       };
 
       if (data.success) {
-        toast.success("✅ Pregunta guardada correctamente");
+        toast.success('✅ Pregunta guardada correctamente');
         onSubmit({ ...formData, id: questionId });
         router.refresh(); // 🔁 Recarga la página entera
       } else {
-        toast.error("❌ No se pudo guardar la pregunta.");
+        toast.error('❌ No se pudo guardar la pregunta.');
       }
     } catch (error) {
-      console.error("Error al guardar la pregunta:", error);
+      console.error('Error al guardar la pregunta:', error);
       toast.error(`❌ Error: ${(error as Error).message}`);
     } finally {
       clearInterval(interval);
@@ -130,7 +130,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
     <div className="container my-4 max-w-4xl rounded-lg bg-white p-6 shadow-md">
       <form onSubmit={handleSubmit} className="space-y-6">
         <h2 className="text-xl font-bold text-gray-700">
-          {editingQuestion ? "Editar Pregunta" : "Nueva Pregunta de Completado"}
+          {editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
         </h2>
 
         <div>
@@ -198,7 +198,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             type="submit"
             className="bg-green-600 text-white hover:bg-green-700"
           >
-            {editingQuestion ? "Actualizar" : "Guardar"}
+            {editingQuestion ? 'Actualizar' : 'Guardar'}
           </Button>
         </div>
       </form>

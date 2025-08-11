@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { lessons } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const courseId = searchParams.get("courseId");
+  const courseId = searchParams.get('courseId');
 
   if (!courseId) {
-    return NextResponse.json({ error: "Falta courseId" }, { status: 400 });
+    return NextResponse.json({ error: 'Falta courseId' }, { status: 400 });
   }
 
   try {
@@ -25,10 +25,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ lessons: lessonsList });
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error('❌ Error:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

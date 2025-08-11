@@ -1,7 +1,7 @@
-import { env } from "~/env";
-import { type Auth, type FormData, type Product } from "~/types/payu";
+import { env } from '~/env';
+import { type Auth, type FormData, type Product } from '~/types/payu';
 
-import { calculateSignature } from "./signature";
+import { calculateSignature } from './signature';
 
 export function createFormData(
   auth: Auth,
@@ -10,22 +10,22 @@ export function createFormData(
   buyerFullName: string,
   telephone: string,
   responseUrl: string,
-  paymentType: "course" | "plan", // Changed from boolean to union type
+  paymentType: 'course' | 'plan' // Changed from boolean to union type
 ): FormData {
   // Calcular montos con precisión
   const amount = Number(product.amount);
   const formattedAmount = amount.toFixed(2);
   const tax = Math.round(amount * 0.19).toFixed(2); // 19% IVA
   const taxReturnBase = (amount - Number(tax)).toFixed(2);
-  const currency = "COP";
+  const currency = 'COP';
 
   // Generar referenceCode único combinando ID del curso y timestamp
   const timestamp = Date.now();
-  const cleanProductName = product.name.replace(/\s*Premium\s*/g, "").trim();
+  const cleanProductName = product.name.replace(/\s*Premium\s*/g, '').trim();
   const cleanDescription =
-    paymentType === "plan" ? `Plan ${product.name}` : product.description;
+    paymentType === 'plan' ? `Plan ${product.name}` : product.description;
   const referenceCode =
-    paymentType === "course"
+    paymentType === 'course'
       ? `C${product.id}T${timestamp}` // Format: C{courseId}T{timestamp}
       : `${cleanProductName}_${timestamp}`; // Incluir el nombre del plan en la referencia
 
@@ -35,12 +35,12 @@ export function createFormData(
     auth.merchantId,
     referenceCode,
     formattedAmount,
-    currency,
+    currency
   );
 
   // Select correct confirmation URL based on payment type
   const confirmationUrl =
-    paymentType === "course"
+    paymentType === 'course'
       ? env.CONFIRMATION_URL_COURSES
       : env.CONFIRMATION_URL_PLANS;
 
@@ -54,7 +54,7 @@ export function createFormData(
     taxReturnBase,
     currency,
     signature,
-    test: "0",
+    test: '0',
     buyerEmail,
     buyerFullName,
     telephone,

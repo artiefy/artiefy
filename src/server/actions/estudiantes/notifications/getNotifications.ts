@@ -1,15 +1,15 @@
-"use server";
+'use server';
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { notifications } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { notifications } from '~/server/db/schema';
 
 import type {
   Notification,
   NotificationMetadata,
   NotificationType,
-} from "~/types";
+} from '~/types';
 
 interface DbNotification {
   id: number;
@@ -25,7 +25,7 @@ interface DbNotification {
 
 export async function getNotifications(
   userId: string,
-  options?: { limit?: number },
+  options?: { limit?: number }
 ): Promise<Notification[]> {
   try {
     const limit = options?.limit ?? 1000; // Por defecto trae 1000
@@ -47,10 +47,10 @@ export async function getNotifications(
         isMarked: result.isMarked ?? false, // <-- nuevo campo
         createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
         metadata: result.metadata as NotificationMetadata | undefined,
-      }),
+      })
     );
   } catch (error) {
-    console.error("Error fetching notifications:", error);
+    console.error('Error fetching notifications:', error);
     return [];
   }
 }
@@ -63,12 +63,12 @@ export async function getUnreadCount(userId: string): Promise<number> {
       })
       .from(notifications)
       .where(
-        and(eq(notifications.userId, userId), eq(notifications.isRead, false)),
+        and(eq(notifications.userId, userId), eq(notifications.isRead, false))
       );
 
     return result[0]?.count ?? 0;
   } catch (error) {
-    console.error("Error getting unread count:", error);
+    console.error('Error getting unread count:', error);
     return 0;
   }
 }

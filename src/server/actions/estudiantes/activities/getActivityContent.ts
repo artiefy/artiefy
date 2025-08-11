@@ -1,12 +1,12 @@
-"use server";
+'use server';
 
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
-import { getRelatedActivities } from "~/server/actions/estudiantes/activities/getRelatedActivities";
+import { getRelatedActivities } from '~/server/actions/estudiantes/activities/getRelatedActivities';
 
-import { getUserActivityProgress } from "./getUserActivityProgress";
+import { getUserActivityProgress } from './getUserActivityProgress';
 
-import type { Activity, Question } from "~/types";
+import type { Activity, Question } from '~/types';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -15,18 +15,18 @@ const redis = new Redis({
 
 const getActivityContent = async (
   lessonId: number,
-  userId: string,
+  userId: string
 ): Promise<Activity[]> => {
   try {
     console.log(`Fetching related activities for lesson ${lessonId}`);
     const relatedActivities = await getRelatedActivities(lessonId);
 
-    console.log("Related activities:", relatedActivities);
+    console.log('Related activities:', relatedActivities);
 
     // Limit to 3 activities per lesson
     if (relatedActivities.length > 3) {
       console.warn(
-        `Lesson ${lessonId} has more than 3 activities, limiting to first 3`,
+        `Lesson ${lessonId} has more than 3 activities, limiting to first 3`
       );
       relatedActivities.splice(3);
     }
@@ -34,7 +34,7 @@ const getActivityContent = async (
     // Sort activities by creation date to ensure consistent order
     relatedActivities.sort(
       (a, b) =>
-        new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime(),
+        new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime()
     );
 
     if (relatedActivities.length === 0) {
@@ -46,7 +46,7 @@ const getActivityContent = async (
 
     const activitiesWithContent = await Promise.all(
       relatedActivities.map(async (activity, index) => {
-        const questionTypes = ["VOF", "OM", "ACompletar"] as const;
+        const questionTypes = ['VOF', 'OM', 'ACompletar'] as const;
         let allQuestions: Question[] = [];
 
         for (const type of questionTypes) {
@@ -57,20 +57,20 @@ const getActivityContent = async (
             const content = await redis.get(contentKey);
             if (content) {
               const parsedQuestions = (
-                typeof content === "string" ? JSON.parse(content) : content
-              ) as Omit<Question, "type">[];
+                typeof content === 'string' ? JSON.parse(content) : content
+              ) as Omit<Question, 'type'>[];
 
               const questionsWithType = parsedQuestions.map(
                 (q) =>
                   ({
                     ...q,
                     type:
-                      type === "VOF"
-                        ? "VOF"
-                        : type === "OM"
-                          ? "OM"
-                          : "COMPLETAR",
-                  }) as Question,
+                      type === 'VOF'
+                        ? 'VOF'
+                        : type === 'OM'
+                          ? 'OM'
+                          : 'COMPLETAR',
+                  }) as Question
               );
 
               allQuestions = [...allQuestions, ...questionsWithType];
@@ -81,7 +81,7 @@ const getActivityContent = async (
         }
 
         const activityProgress = userProgress.find(
-          (progress) => progress.activityId === activity.id,
+          (progress) => progress.activityId === activity.id
         );
 
         const isLastActivityInLesson = index === relatedActivities.length - 1;
@@ -96,17 +96,17 @@ const getActivityContent = async (
           createdAt: activity.lastUpdated,
           isLastInLesson: isLastActivityInLesson, // Add this flag
         } as Activity;
-      }),
+      })
     );
 
     const validActivities = activitiesWithContent.filter(
-      (activity): activity is Activity => activity !== null,
+      (activity): activity is Activity => activity !== null
     );
 
-    console.log("Final activities with content:", validActivities);
+    console.log('Final activities with content:', validActivities);
     return validActivities;
   } catch (error) {
-    console.error("Error in getActivityContent:", error);
+    console.error('Error in getActivityContent:', error);
     throw error;
   }
 };

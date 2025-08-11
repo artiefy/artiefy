@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Nivel {
   id: number;
@@ -26,10 +26,10 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/nivel", {
-          method: "GET",
+        const response = await fetch('/api/educadores/nivel', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -41,7 +41,7 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
         const data: Nivel[] = (await response.json()) as Nivel[];
         setNiveles(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -63,13 +63,13 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={nivel || ""}
+          value={nivel || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setNivel(selectedId);
           }}
-          className={`mb-5 w-60 rounded border p-2 outline-hidden  text-[#3AF4EF] bg-background ${
-            errors.nivel ? "border-red-500" : "border-primary"
+          className={`bg-background mb-5 w-60 rounded border p-2 text-[#3AF4EF] outline-hidden ${
+            errors.nivel ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una nivel</option>

@@ -1,15 +1,15 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   categories,
   courses,
   enrollmentPrograms,
   materias,
   programas,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
-import type { Program } from "~/types";
+import type { Program } from '~/types';
 
 export const getProgramById = async (id: string): Promise<Program | null> => {
   try {
@@ -61,7 +61,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
                 : undefined,
             }
           : undefined, // Keep the structure, but allow 'undefined' if no course is associated
-      }),
+      })
     );
 
     // Build final program object
@@ -78,7 +78,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
       materias: transformedMaterias,
     };
   } catch (error) {
-    console.error("Error fetching program:", error);
+    console.error('Error fetching program:', error);
     return null;
   }
 };

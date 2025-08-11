@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   ChevronLeft,
@@ -10,14 +10,14 @@ import {
   Plus,
   Trash2,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function ModalitiesPage() {
   const [modalities, setModalities] = useState<
     { id: number; name: string; description: string }[]
   >([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [editingModality, setEditingModality] = useState<{
     id: number;
     name: string;
@@ -43,8 +43,8 @@ export default function ModalitiesPage() {
   async function fetchModalities() {
     try {
       setLoading(true);
-      const res = await fetch("/api/super-admin/modalities");
-      if (!res.ok) throw new Error("Error al cargar modalidades");
+      const res = await fetch('/api/super-admin/modalities');
+      if (!res.ok) throw new Error('Error al cargar modalidades');
       const data = (await res.json()) as {
         id: number;
         name: string;
@@ -52,7 +52,7 @@ export default function ModalitiesPage() {
       }[];
       setModalities(data);
     } catch {
-      setError("Error al obtener modalidades.");
+      setError('Error al obtener modalidades.');
     } finally {
       setLoading(false);
     }
@@ -60,49 +60,49 @@ export default function ModalitiesPage() {
 
   async function handleCreate() {
     try {
-      await fetch("/api/super-admin/modalities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/modalities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description }),
       });
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       void fetchModalities();
       setShowCreateForm(false);
     } catch {
-      setError("Error al guardar modalidad.");
+      setError('Error al guardar modalidad.');
     }
   }
 
   async function handleEdit() {
     if (!editingModality) return;
     try {
-      await fetch("/api/super-admin/modalities", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/modalities', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editingModality.id, name, description }),
       });
       setEditingModality(null);
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       void fetchModalities();
       setShowEditForm(false);
     } catch {
-      setError("Error al actualizar modalidad.");
+      setError('Error al actualizar modalidad.');
     }
   }
 
   async function handleDelete(id: number) {
     try {
-      await fetch("/api/super-admin/modalities", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/super-admin/modalities', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
       void fetchModalities();
       setShowConfirmDelete(null);
     } catch {
-      setError("Error al eliminar modalidad.");
+      setError('Error al eliminar modalidad.');
     }
   }
 
@@ -110,7 +110,7 @@ export default function ModalitiesPage() {
   const totalPages = Math.ceil(modalities.length / itemsPerPage);
   const paginatedModalities = modalities.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -121,8 +121,8 @@ export default function ModalitiesPage() {
           <button
             onClick={() => {
               setShowCreateForm(true);
-              setName("");
-              setDescription("");
+              setName('');
+              setDescription('');
             }}
             className="bg-secondary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md hover:bg-[#00A5C0]"
           >

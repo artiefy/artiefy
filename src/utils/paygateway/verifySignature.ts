@@ -1,6 +1,6 @@
-import crypto from "crypto";
+import crypto from 'crypto';
 
-import { env } from "~/env"; // Importar correctamente las variables de entorno
+import { env } from '~/env'; // Importar correctamente las variables de entorno
 
 interface PaymentData {
   merchant_id: string;
@@ -29,21 +29,21 @@ function calculateMD5ForVerification(paymentData: PaymentData): string {
     formattedValue,
     paymentData.currency,
     paymentData.state_pol,
-  ].join("~");
+  ].join('~');
 
-  console.log("🔍 Data for MD5:", rawSignature);
-  return crypto.createHash("md5").update(rawSignature).digest("hex");
+  console.log('🔍 Data for MD5:', rawSignature);
+  return crypto.createHash('md5').update(rawSignature).digest('hex');
 }
 
 // ✅ Función principal para verificar la firma
 export function verifySignature(paymentData: PaymentData): boolean {
   if (!env.API_KEY) {
-    throw new Error("❌ Error: API_KEY no está definido en el archivo .env");
+    throw new Error('❌ Error: API_KEY no está definido en el archivo .env');
   }
 
   const generatedSignature = calculateMD5ForVerification(paymentData);
-  console.log("🔍 Generated Signature:", generatedSignature);
-  console.log("🔍 Received Signature:", paymentData.sign);
+  console.log('🔍 Generated Signature:', generatedSignature);
+  console.log('🔍 Received Signature:', paymentData.sign);
 
   return generatedSignature === paymentData.sign;
 }

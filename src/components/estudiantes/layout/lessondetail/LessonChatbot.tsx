@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import { FaRobot, FaTimes } from "react-icons/fa";
+import { FaRobot, FaTimes } from 'react-icons/fa';
 
-import "~/styles/chatmodal.css"; // Import the CSS file
+import '~/styles/chatmodal.css'; // Import the CSS file
 
 const LessonChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<
     { text: string; sender: string }[]
   >([]);
-  const [messageInput, setMessageInput] = useState("");
+  const [messageInput, setMessageInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -18,7 +18,7 @@ const LessonChatBot: React.FC = () => {
   }, [chatMessages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -26,17 +26,17 @@ const LessonChatBot: React.FC = () => {
     if (messageInput.trim()) {
       setChatMessages([
         ...chatMessages,
-        { text: messageInput, sender: "user" },
+        { text: messageInput, sender: 'user' },
       ]);
-      setMessageInput("");
+      setMessageInput('');
       setIsLoading(true);
       // Simulate chatbot response
       setTimeout(() => {
         setChatMessages((prev) => [
           ...prev,
           {
-            text: "¡Gracias por tu mensaje! ¿Cómo puedo ayudarte hoy?",
-            sender: "bot",
+            text: '¡Gracias por tu mensaje! ¿Cómo puedo ayudarte hoy?',
+            sender: 'bot',
           },
         ]);
         setIsLoading(false);
@@ -49,11 +49,11 @@ const LessonChatBot: React.FC = () => {
       {/* Chat Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`button ${isOpen ? "bg-gray-200" : ""}`}
+        className={`button ${isOpen ? 'bg-gray-200' : ''}`}
       >
         <div className="button__text">
-          {Array.from("-ARTI-IA-ARTI-IA").map((char, i) => (
-            <span key={i} style={{ "--index": i } as React.CSSProperties}>
+          {Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
+            <span key={i} style={{ '--index': i } as React.CSSProperties}>
               {char}
             </span>
           ))}
@@ -81,14 +81,14 @@ const LessonChatBot: React.FC = () => {
               <div
                 key={index}
                 className={`flex ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
+                  message.sender === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${
-                    message.sender === "user"
-                      ? "bg-secondary text-white"
-                      : "bg-gray-100 text-gray-800"
+                    message.sender === 'user'
+                      ? 'bg-secondary text-white'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {message.text}
@@ -115,7 +115,7 @@ const LessonChatBot: React.FC = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 placeholder="Escribe tu mensaje..."
-                className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-hidden"
+                className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-hidden"
               />
               <button
                 type="submit"

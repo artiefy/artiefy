@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { createElement, useEffect, useState } from "react";
+import { createElement, useEffect, useState } from 'react';
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from 'next/navigation';
 
-import { useAuth } from "@clerk/nextjs";
-import { BsCheck2Circle } from "react-icons/bs";
-import { FaTimes, FaTimesCircle } from "react-icons/fa";
+import { useAuth } from '@clerk/nextjs';
+import { BsCheck2Circle } from 'react-icons/bs';
+import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 
-import Footer from "~/components/estudiantes/layout/Footer";
-import { Header } from "~/components/estudiantes/layout/Header";
-import PaymentForm from "~/components/estudiantes/layout/PaymentForm";
-import { Button } from "~/components/estudiantes/ui/button";
-import { type Plan, plansEmpresas, plansPersonas } from "~/types/plans";
-import { getProductById } from "~/utils/paygateway/products";
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
+import { Button } from '~/components/estudiantes/ui/button';
+import { type Plan, plansEmpresas, plansPersonas } from '~/types/plans';
+import { getProductById } from '~/utils/paygateway/products';
 
-import "~/styles/buttonPlanes.css";
+import '~/styles/buttonPlanes.css';
 
 const PlansPage: React.FC = () => {
   const { isSignedIn } = useAuth();
@@ -23,13 +23,13 @@ const PlansPage: React.FC = () => {
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("personas");
+  const [activeTab, setActiveTab] = useState('personas');
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
 
   // Detectar plan_id en la URL y abrir modal si corresponde (solo una vez)
   useEffect(() => {
-    const planId = searchParams?.get("plan_id");
+    const planId = searchParams?.get('plan_id');
     if (
       isSignedIn &&
       planId &&
@@ -46,12 +46,12 @@ const PlansPage: React.FC = () => {
 
         // Limpiar plan_id de la URL para evitar que el modal se vuelva a abrir en reloads
         const params = new URLSearchParams(
-          Array.from(searchParams?.entries() ?? []),
+          Array.from(searchParams?.entries() ?? [])
         );
-        params.delete("plan_id");
+        params.delete('plan_id');
         const newUrl =
-          pathname + (params.toString() ? `?${params.toString()}` : "");
-        window.history.replaceState({}, "", newUrl);
+          pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState({}, '', newUrl);
       }
     }
   }, [
@@ -99,11 +99,11 @@ const PlansPage: React.FC = () => {
           <div className="mt-8 flex justify-center space-x-4">
             <button
               className={`button-rounded ${
-                activeTab === "personas"
-                  ? "bg-primary text-white"
-                  : "text-primary bg-white"
+                activeTab === 'personas'
+                  ? 'bg-primary text-white'
+                  : 'text-primary bg-white'
               }`}
-              onClick={() => setActiveTab("personas")}
+              onClick={() => setActiveTab('personas')}
             >
               Personas
               <div className="hoverEffect">
@@ -112,11 +112,11 @@ const PlansPage: React.FC = () => {
             </button>
             <button
               className={`button-rounded ${
-                activeTab === "empresas"
-                  ? "bg-primary text-white"
-                  : "text-primary bg-white"
+                activeTab === 'empresas'
+                  ? 'bg-primary text-white'
+                  : 'text-primary bg-white'
               }`}
-              onClick={() => setActiveTab("empresas")}
+              onClick={() => setActiveTab('empresas')}
             >
               Empresas
               <div className="hoverEffect">
@@ -127,18 +127,18 @@ const PlansPage: React.FC = () => {
           <div className="mt-12 flex justify-center">
             <div
               className={`grid gap-8 ${
-                activeTab === "personas"
-                  ? "grid-cols-1 md:grid-cols-2"
-                  : "grid-cols-1 justify-items-center"
+                activeTab === 'personas'
+                  ? 'grid-cols-1 md:grid-cols-2'
+                  : 'grid-cols-1 justify-items-center'
               } w-full max-w-4xl`}
             >
-              {(activeTab === "personas" ? plansPersonas : plansEmpresas).map(
+              {(activeTab === 'personas' ? plansPersonas : plansEmpresas).map(
                 (plan) => (
                   <div
                     key={plan.id}
                     className="from-primary to-secondary relative flex w-full max-w-md flex-col items-center justify-between rounded-lg bg-linear-to-r p-2 shadow-lg transition-all duration-200"
                   >
-                    {plan.name === "Pro" && (
+                    {plan.name === 'Pro' && (
                       <div className="absolute top-6 -right-5 rotate-45 transform bg-red-500 px-5 py-1 text-xs font-bold text-white">
                         15 días gratis
                       </div>
@@ -152,28 +152,28 @@ const PlansPage: React.FC = () => {
                           plan.icon as React.ComponentType<{
                             className: string;
                           }>,
-                          { className: "size-8 text-background" },
+                          { className: 'size-8 text-background' }
                         )}
                       </div>
                       <div className="m-4 flex flex-col items-center">
                         <span className="text-background text-4xl font-extrabold">
-                          ${plan.price.toLocaleString("es-CO")}
+                          ${plan.price.toLocaleString('es-CO')}
                           <span className="text-lg font-normal">/mes</span>
                         </span>
                         <span className="w-full text-center text-2xl font-extrabold text-gray-600">
-                          ${plan.priceUsd}{" "}
+                          ${plan.priceUsd}{' '}
                           <span className="text-lg font-normal">/month</span>
                         </span>
                       </div>
                       <div className="text-background text-left">
                         <p>
-                          Cursos disponibles:{" "}
+                          Cursos disponibles:{' '}
                           <span className="text-2xl font-semibold">
                             {plan.courses}
                           </span>
                         </p>
                         <p>
-                          Proyectos disponibles:{" "}
+                          Proyectos disponibles:{' '}
                           <span className="text-2xl font-semibold">
                             {plan.projects}
                           </span>
@@ -206,7 +206,7 @@ const PlansPage: React.FC = () => {
                       </Button>
                     </div>
                   </div>
-                ),
+                )
               )}
             </div>
           </div>

@@ -15,7 +15,7 @@
   --animation-color: #1e90ff;
   --fs-size: 2em;
   letter-spacing: 3px;
-  font-family: "Courier New", Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
   font-weight: 700;
   text-decoration: none;
   font-size: var(--fs-size);

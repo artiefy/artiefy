@@ -1,4 +1,4 @@
-import { Skeleton } from "~/components/educators/ui/skeleton";
+import { Skeleton } from '~/components/educators/ui/skeleton';
 
 // Componente para mostrar un esqueleto de una tarjeta
 export function SkeletonCard() {

@@ -1,11 +1,11 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import { useParams } from "next/navigation";
+import Image from 'next/image';
+import { useParams } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { EllipsisVertical } from "lucide-react";
+import { useUser } from '@clerk/nextjs';
+import { EllipsisVertical } from 'lucide-react';
 
 import {
   Breadcrumb,
@@ -13,12 +13,12 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/educators/ui/breadcrumb";
+} from '~/components/educators/ui/breadcrumb';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "~/components/educators/ui/collapsible";
+} from '~/components/educators/ui/collapsible';
 
 // Interfaces del foro
 interface Foro {
@@ -73,8 +73,8 @@ interface PostReplay {
 const formatDate = (dateString: string | number | Date) => {
   const date = new Date(dateString);
   return isNaN(date.getTime())
-    ? "Fecha inválida"
-    : date.toISOString().split("T")[0];
+    ? 'Fecha inválida'
+    : date.toISOString().split('T')[0];
 };
 
 const ForumPage = () => {
@@ -85,14 +85,14 @@ const ForumPage = () => {
   const [loading, setLoading] = useState(true); // Estado de carga
   const [posts, setPosts] = useState<Post[]>([]); // Estado de los posts
   const [postReplays, setPostReplays] = useState<PostReplay[]>([]); // Estado de las respuestas de los posts
-  const [message, setMessage] = useState(""); // Estado del mensaje
-  const [replyMessage, setReplyMessage] = useState(""); // Estado de la respuesta
+  const [message, setMessage] = useState(''); // Estado del mensaje
+  const [replyMessage, setReplyMessage] = useState(''); // Estado de la respuesta
   const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null); // Estado de la respuesta
   const [loadingPosts, setLoadingPosts] = useState(false); // Estado de carga de los posts
   const [editingPostId, setEditingPostId] = useState<number | null>(null); // Estado de edición del post
   const [editingReplyId, setEditingReplyId] = useState<number | null>(null); // Estado de edición de la respuesta
-  const [editPostContent, setEditPostContent] = useState<string>(""); // Estado de edición del post
-  const [editReplyContent, setEditReplyContent] = useState<string>(""); // Estado de edición de la respuesta
+  const [editPostContent, setEditPostContent] = useState<string>(''); // Estado de edición del post
+  const [editReplyContent, setEditReplyContent] = useState<string>(''); // Estado de edición de la respuesta
   // const [error, setError] = useState(false);
   const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
   const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
@@ -106,10 +106,10 @@ const ForumPage = () => {
         const data = (await responseForum.json()) as Foro;
         setForumData(data);
       } else {
-        console.error("Error al traer el foro");
+        console.error('Error al traer el foro');
       }
     } catch (e) {
-      console.error("Error al obtener el foro:", e);
+      console.error('Error al obtener el foro:', e);
     } finally {
       setLoading(false);
     }
@@ -121,16 +121,16 @@ const ForumPage = () => {
     //setError(true)
     try {
       const responsePosts = await fetch(
-        `/api/forums/posts?foroId=${ForumIdNumber}`,
+        `/api/forums/posts?foroId=${ForumIdNumber}`
       );
       if (responsePosts.ok) {
         const data = (await responsePosts.json()) as Post[];
         setPosts(data);
       } else {
-        console.error("Error al traer los posts");
+        console.error('Error al traer los posts');
       }
     } catch (e) {
-      console.error("Error al obtener los posts:", e);
+      console.error('Error al obtener los posts:', e);
     } finally {
       setLoadingPosts(false);
     }
@@ -139,30 +139,30 @@ const ForumPage = () => {
   // Fetch de las respuestas (PostReplies)
   const fetchPostReplays = useCallback(async () => {
     try {
-      const postIds = posts.map((post) => post.id).join(",");
+      const postIds = posts.map((post) => post.id).join(',');
       if (postIds) {
         const responsePostReplays = await fetch(
-          `/api/forums/posts/postReplay?postIds=${postIds}`,
+          `/api/forums/posts/postReplay?postIds=${postIds}`
         );
         if (responsePostReplays.ok) {
           const data = (await responsePostReplays.json()) as PostReplay[];
           setPostReplays(data);
         } else {
-          console.error("Error al traer las respuestas");
+          console.error('Error al traer las respuestas');
         }
       }
     } catch (e) {
-      console.error("Error al obtener las respuestas:", e);
+      console.error('Error al obtener las respuestas:', e);
     }
   }, [posts]);
 
   // Fetch de los foro y las posts
   useEffect(() => {
     fetchPosts().catch((error) =>
-      console.error("Error fetching posts:", error),
+      console.error('Error fetching posts:', error)
     );
     fetchForum().catch((error) =>
-      console.error("Error fetching forum:", error),
+      console.error('Error fetching forum:', error)
     );
   }, [fetchPosts, fetchForum]);
 
@@ -170,7 +170,7 @@ const ForumPage = () => {
   useEffect(() => {
     if (posts.length > 0) {
       fetchPostReplays().catch((error) =>
-        console.error("Error fetching post replies:", error),
+        console.error('Error fetching post replies:', error)
       );
     }
   }, [fetchPostReplays, posts]);
@@ -178,9 +178,9 @@ const ForumPage = () => {
   const handlePostSubmit = async () => {
     if (!message.trim() || !user) return;
     try {
-      const response = await fetch("/api/forums/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/forums/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: message,
           foroId: ForumIdNumber,
@@ -191,14 +191,14 @@ const ForumPage = () => {
       });
 
       if (response.ok) {
-        setMessage("");
+        setMessage('');
         await fetchPosts();
 
         const role = user.publicMetadata?.role;
         const userEmail = user.emailAddresses[0]?.emailAddress;
         const uniqueEmails = new Set<string>();
 
-        if (role === "educador") {
+        if (role === 'educador') {
           // Notificar estudiantes (todos los que participaron)
           posts.forEach((post) => {
             if (post.userId.email && post.userId.email !== userEmail) {
@@ -218,7 +218,7 @@ const ForumPage = () => {
         }
       }
     } catch (error) {
-      console.error("Error al enviar el post:", error);
+      console.error('Error al enviar el post:', error);
     }
   };
 
@@ -226,9 +226,9 @@ const ForumPage = () => {
     if (!replyMessage.trim() || !user || replyingToPostId === null) return;
 
     try {
-      const response = await fetch("/api/forums/posts/postReplay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/forums/posts/postReplay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: replyMessage,
           postId: replyingToPostId,
@@ -237,7 +237,7 @@ const ForumPage = () => {
       });
 
       if (response.ok) {
-        setReplyMessage("");
+        setReplyMessage('');
         setReplyingToPostId(null);
         await fetchPostReplays();
 
@@ -247,7 +247,7 @@ const ForumPage = () => {
 
         const originalPost = posts.find((p) => p.id === replyingToPostId);
 
-        if (role === "educador") {
+        if (role === 'educador') {
           // Notificar a estudiantes que comentaron en este hilo
           if (
             originalPost?.userId.email &&
@@ -270,7 +270,7 @@ const ForumPage = () => {
         }
       }
     } catch (error) {
-      console.error("Error al enviar la respuesta:", error);
+      console.error('Error al enviar la respuesta:', error);
     }
   };
 
@@ -278,16 +278,16 @@ const ForumPage = () => {
   const handleDeletePost = async (postId: number) => {
     try {
       const response = await fetch(`/api/forums/posts?postId=${postId}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (response.ok) {
         await fetchPosts(); // Refrescar lista de posts
       } else {
-        console.error("Error al eliminar el post");
+        console.error('Error al eliminar el post');
       }
     } catch (error) {
-      console.error("Error al eliminar el post:", error);
+      console.error('Error al eliminar el post:', error);
     }
   };
 
@@ -297,17 +297,17 @@ const ForumPage = () => {
       const response = await fetch(
         `/api/forums/posts/postReplay?replyId=${replyId}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
 
       if (response.ok) {
         await fetchPostReplays(); // Refrescar respuestas
       } else {
-        console.error("Error al eliminar la respuesta");
+        console.error('Error al eliminar la respuesta');
       }
     } catch (error) {
-      console.error("Error al eliminar la respuesta:", error);
+      console.error('Error al eliminar la respuesta:', error);
     }
   };
 
@@ -316,9 +316,9 @@ const ForumPage = () => {
     if (!editPostContent.trim()) return;
     try {
       const response = await fetch(`/api/forums/posts/${postId}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           content: editPostContent,
@@ -327,13 +327,13 @@ const ForumPage = () => {
 
       if (response.ok) {
         setEditingPostId(null);
-        setEditPostContent("");
+        setEditPostContent('');
         await fetchPosts(); // Refrescar lista de posts
       } else {
-        console.error("Error al actualizar el post");
+        console.error('Error al actualizar el post');
       }
     } catch (error) {
-      console.error("Error al actualizar el post:", error);
+      console.error('Error al actualizar el post:', error);
     }
   };
 
@@ -342,9 +342,9 @@ const ForumPage = () => {
     if (!editReplyContent.trim()) return;
     try {
       const response = await fetch(`/api/forums/posts/postReplay/${replyId}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           content: editReplyContent,
@@ -353,13 +353,13 @@ const ForumPage = () => {
 
       if (response.ok) {
         setEditingReplyId(null);
-        setEditReplyContent("");
+        setEditReplyContent('');
         await fetchPostReplays(); // Refrescar respuestas
       } else {
-        console.error("Error al actualizar la respuesta");
+        console.error('Error al actualizar la respuesta');
       }
     } catch (error) {
-      console.error("Error al actualizar la respuesta:", error);
+      console.error('Error al actualizar la respuesta:', error);
     }
   };
 

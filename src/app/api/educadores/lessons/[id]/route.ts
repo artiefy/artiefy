@@ -1,54 +1,54 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getLessonById,
   updateLesson,
-} from "~/models/educatorsModels/lessonsModels";
+} from '~/models/educatorsModels/lessonsModels';
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const LessonsId = parseInt(resolvedParams.id);
     if (isNaN(LessonsId)) {
       return NextResponse.json(
-        { error: "ID de curso inválido" },
-        { status: 400 },
+        { error: 'ID de curso inválido' },
+        { status: 400 }
       );
     }
 
     const lesson = await getLessonById(LessonsId);
     if (!lesson) {
       return NextResponse.json(
-        { error: "Curso no encontrado" },
-        { status: 404 },
+        { error: 'Curso no encontrado' },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(lesson);
   } catch (error) {
-    console.error("Error al obtener el curso:", error);
+    console.error('Error al obtener el curso:', error);
     return NextResponse.json(
-      { error: "Error al obtener el curso" },
-      { status: 500 },
+      { error: 'Error al obtener el curso' },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const lessonId = parseInt(resolvedParams.id);
 
     if (isNaN(lessonId)) {
-      return new Response(JSON.stringify({ error: "ID de lección inválido" }), {
+      return new Response(JSON.stringify({ error: 'ID de lección inválido' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -76,16 +76,16 @@ export async function PUT(
 
     return new Response(JSON.stringify(updatedLesson), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Error updating lesson:", error);
+    console.error('Error updating lesson:', error);
     return new Response(
-      JSON.stringify({ error: "Error al actualizar la lección" }),
+      JSON.stringify({ error: 'Error al actualizar la lección' }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
   }
 }

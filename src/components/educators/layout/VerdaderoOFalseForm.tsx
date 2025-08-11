@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
-import { Label } from "~/components/educators/ui/label";
-import { Progress } from "~/components/educators/ui/progress";
+import { Button } from '~/components/educators/ui/button';
+import { Label } from '~/components/educators/ui/label';
+import { Progress } from '~/components/educators/ui/progress';
 
-import type { OptionVOF, VerdaderoOFlaso } from "~/types/typesActi";
+import type { OptionVOF, VerdaderoOFlaso } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada
 
@@ -28,16 +28,16 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
   onCancel,
   isUploading,
 }) => {
-  const [questionText, setQuestionText] = useState(editingQuestion?.text ?? ""); // Estado para el texto de la pregunta
+  const [questionText, setQuestionText] = useState(editingQuestion?.text ?? ''); // Estado para el texto de la pregunta
   const [options, setOptions] = useState<OptionVOF[]>([
-    { id: "true", text: "Verdadero" },
-    { id: "false", text: "Falso" },
+    { id: 'true', text: 'Verdadero' },
+    { id: 'false', text: 'Falso' },
   ]); // Estado para las opciones de la pregunta
   const [pesoPregunta, setPesoPregunta] = useState<number>(
-    editingQuestion?.pesoPregunta ?? 0,
+    editingQuestion?.pesoPregunta ?? 0
   ); // Estado para el peso de la pregunta
   const [correctOptionId, setCorrectOptionId] = useState(
-    editingQuestion?.correctOptionId ?? "",
+    editingQuestion?.correctOptionId ?? ''
   ); // Estado para la opción correcta de la pregunta
   const [isUploading2, setIsUploading] = useState(false); // Estado para el estado de carga
   const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de carga
@@ -48,17 +48,17 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
     if (editingQuestion) {
       setQuestionText(editingQuestion.text);
       setOptions([
-        { id: "true", text: "Verdadero" },
-        { id: "false", text: "Falso" },
+        { id: 'true', text: 'Verdadero' },
+        { id: 'false', text: 'Falso' },
       ]);
       setCorrectOptionId(editingQuestion.correctOptionId);
     } else {
-      setQuestionText("");
+      setQuestionText('');
       setOptions([
-        { id: "true", text: "Verdadero" },
-        { id: "false", text: "Falso" },
+        { id: 'true', text: 'Verdadero' },
+        { id: 'false', text: 'Falso' },
       ]);
-      setCorrectOptionId("");
+      setCorrectOptionId('');
     }
   }, [editingQuestion]);
 
@@ -67,7 +67,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
   // Función para validar el porcentaje total de las preguntas
   const validateTotalPercentage = async (newPesoPregunta: number) => {
     const response = await fetch(
-      `/api/educadores/question/totalPercentage?activityId=${activityId}`,
+      `/api/educadores/question/totalPercentage?activityId=${activityId}`
     );
     const data = (await response.json()) as {
       totalPercentage: number | string;
@@ -80,10 +80,10 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 
     const totalWithNew = totalActual + pesoNuevo - pesoAnterior;
 
-    console.log("Total actual:", totalActual);
-    console.log("Peso nuevo:", pesoNuevo);
-    console.log("Peso anterior (si aplica):", pesoAnterior);
-    console.log("Nuevo total proyectado:", totalWithNew);
+    console.log('Total actual:', totalActual);
+    console.log('Peso nuevo:', pesoNuevo);
+    console.log('Peso anterior (si aplica):', pesoAnterior);
+    console.log('Nuevo total proyectado:', totalWithNew);
 
     return totalWithNew > 100;
   };
@@ -92,14 +92,14 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
   const handleSubmit = async (question: VerdaderoOFlaso) => {
     const excedeLimite = await validateTotalPercentage(pesoPregunta);
     if (excedeLimite) {
-      toast("Error", {
+      toast('Error', {
         description:
-          "El porcentaje total de las preguntas no puede exceder el 100%",
+          'El porcentaje total de las preguntas no puede exceder el 100%',
       });
       return;
     }
 
-    const method = editingQuestion ? "PUT" : "POST";
+    const method = editingQuestion ? 'PUT' : 'POST';
     setIsUploading(true);
     setUploadProgress(0);
     const interval = setInterval(() => {
@@ -113,9 +113,9 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
     }, 500);
 
     try {
-      const response = await fetch("/api/educadores/question/VerdaderoOFalso", {
+      const response = await fetch('/api/educadores/question/VerdaderoOFalso', {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: String(activityId),
           questionsVOF: question,
@@ -133,19 +133,19 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
       };
 
       if (data.success) {
-        toast("Pregunta guardada", {
-          description: "La pregunta se guardó correctamente",
+        toast('Pregunta guardada', {
+          description: 'La pregunta se guardó correctamente',
         });
         onSubmit(question);
       } else if (data.success === false) {
-        toast("Error", {
-          description: "Error al guardar la pregunta",
+        toast('Error', {
+          description: 'Error al guardar la pregunta',
         });
       }
     } catch (error: unknown) {
-      console.error("Error al guardar la pregunta:", error);
-      toast("Error", {
-        description: `Error al guardar la pregunta: ${error instanceof Error ? error.message : "Unknown error"}`,
+      console.error('Error al guardar la pregunta:', error);
+      toast('Error', {
+        description: `Error al guardar la pregunta: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     } finally {
       setIsUploading(false);
@@ -192,7 +192,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
           text: questionText,
           correctOptionId,
           options,
-          correct: correctOptionId === "true",
+          correct: correctOptionId === 'true',
           pesoPregunta: pesoPregunta,
         });
       }}
@@ -274,7 +274,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
           type="submit"
           className="border-none bg-green-400 text-white hover:bg-green-500"
         >
-          {editingQuestion ? "Actualizar" : "Crear"} Pregunta
+          {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta
         </Button>
       </div>
     </form>

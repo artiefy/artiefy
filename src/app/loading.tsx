@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import "~/styles/loading.css";
+import '~/styles/loading.css';
 
 export default function Loading() {
   return (
@@ -21,8 +21,8 @@ export default function Loading() {
               priority
               sizes="200px"
               style={{
-                width: "100%",
-                height: "auto",
+                width: '100%',
+                height: 'auto',
               }}
             />
           </div>
@@ -39,7 +39,7 @@ export default function Loading() {
             <div
               className="loading-wrapper"
               aria-hidden="true"
-              style={{ transform: "translateZ(0)" }} // Force GPU acceleration
+              style={{ transform: 'translateZ(0)' }} // Force GPU acceleration
             >
               <div className="loading-circle" />
               <div className="loading-circle" />

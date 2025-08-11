@@ -1,13 +1,13 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from 'drizzle-orm';
 
-import { db } from "../../server/db/index";
+import { db } from '../../server/db/index';
 import {
   courses,
   forums,
   postReplies,
   posts,
   users,
-} from "../../server/db/schema";
+} from '../../server/db/schema';
 
 interface Post {
   id: number;
@@ -49,7 +49,7 @@ export async function createForum(
   description: string,
   userId: string,
   coverImageKey: string,
-  documentKey: string,
+  documentKey: string
 ) {
   const newForum = await db.insert(forums).values({
     courseId,
@@ -100,13 +100,13 @@ export async function getForumById(forumId: number): Promise<Foro | null> {
       },
       userId: {
         id: forum.userId,
-        name: forum.userName ?? "",
-        email: forum.userEmail ?? "",
+        name: forum.userName ?? '',
+        email: forum.userEmail ?? '',
       },
       title: forum.title,
-      description: forum.description ?? "",
-      coverImageKey: forum.coverImageKey ?? "", // <--- NUEVO
-      documentKey: forum.documentKey ?? "", // <--- NUEVO
+      description: forum.description ?? '',
+      coverImageKey: forum.coverImageKey ?? '', // <--- NUEVO
+      documentKey: forum.documentKey ?? '', // <--- NUEVO
     };
   } catch (error) {
     console.error(error);
@@ -136,16 +136,16 @@ export async function getForumByCourseId(courseId: number) {
       .where(eq(forums.courseId, courseId));
 
     if (!forum) {
-      throw new Error("Foro no encontrado");
+      throw new Error('Foro no encontrado');
     }
 
     if (forum.length === 0) {
-      throw new Error("Foro no encontrado");
+      throw new Error('Foro no encontrado');
     }
 
     const forumData = forum[0];
     if (!forumData) {
-      throw new Error("Foro no encontrado");
+      throw new Error('Foro no encontrado');
     }
 
     return {
@@ -158,10 +158,10 @@ export async function getForumByCourseId(courseId: number) {
         coverImageKey: forumData.courseCoverImageKey,
       },
       title: forumData.title,
-      description: forumData.description ?? "",
+      description: forumData.description ?? '',
       userId: {
         id: forumData.userId,
-        name: forumData.userName ?? "", // Manejar el caso en que el nombre del usuario sea nulo
+        name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
       },
     };
   } catch (error: unknown) {
@@ -202,10 +202,10 @@ export async function getForumByUserId(userId: string) {
       },
       userId: {
         id: forum.userId,
-        name: forum.userName ?? "",
+        name: forum.userName ?? '',
       },
       title: forum.title,
-      description: forum.description ?? "",
+      description: forum.description ?? '',
     }));
   } catch (error: unknown) {
     console.error(error);
@@ -240,7 +240,7 @@ export async function getAllForums() {
     return forumsRecords.map((forum) => ({
       id: forum.id,
       title: forum.title,
-      description: forum.description ?? "",
+      description: forum.description ?? '',
       course: forum.course,
       user: forum.user,
     }));
@@ -290,7 +290,7 @@ export async function deleteForumByCourseId(courseId: number) {
 export async function updateForumById(
   forumId: number,
   title: string,
-  description: string,
+  description: string
 ) {
   await db
     .update(forums)
@@ -302,7 +302,7 @@ export async function updateForumById(
 export async function createPost(
   forumId: number,
   userId: string,
-  content: string,
+  content: string
 ) {
   const nuevoPost = await db.insert(posts).values({
     forumId,
@@ -384,7 +384,7 @@ export async function getPostById(postId: number) {
 export async function createPostReply(
   postId: number,
   userId: string,
-  content: string,
+  content: string
 ) {
   const newPostReply = await db.insert(postReplies).values({
     postId,

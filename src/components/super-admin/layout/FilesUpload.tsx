@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { FilePlus2, FileVideo, Image as ImageIcon } from "lucide-react";
-import { MdClose } from "react-icons/md";
+import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
+import { MdClose } from 'react-icons/md';
 
 interface FileUploadProps {
-  type: "image" | "video" | "file";
+  type: 'image' | 'video' | 'file';
   label: string;
   accept: string;
   maxSize: number; // en MB
@@ -30,38 +30,38 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [fileSizes, setFileSizes] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [errors, setErrors] = useState("");
+  const [errors, setErrors] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
     const validFileTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     ];
 
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
-      type === "file"
+      type === 'file'
     ) {
-      setErrors("No puedes subir más de 5 archivos.");
+      setErrors('No puedes subir más de 5 archivos.');
       return;
     }
 
     const validFiles = selectedFiles.filter(
       (file) =>
         file.size / (1024 * 1024) <= maxSize &&
-        (type !== "file" || validFileTypes.includes(file.type)),
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
 
     if (validFiles.length !== selectedFiles.length) {
       setErrors(
-        "Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.",
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
       );
       return;
     }
@@ -69,7 +69,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
-    setErrors("");
+    setErrors('');
     onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
   };
 
@@ -87,33 +87,33 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(false);
     const selectedFiles = Array.from(e.dataTransfer.files ?? []);
     const validFileTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     ];
 
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
-      type === "file"
+      type === 'file'
     ) {
-      setErrors("No puedes subir más de 5 archivos.");
+      setErrors('No puedes subir más de 5 archivos.');
       return;
     }
 
     const validFiles = selectedFiles.filter(
       (file) =>
         file.size / (1024 * 1024) <= maxSize &&
-        (type !== "file" || validFileTypes.includes(file.type)),
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
 
     if (validFiles.length !== selectedFiles.length) {
       setErrors(
-        "Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.",
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
       );
       return;
     }
@@ -121,7 +121,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
-    setErrors("");
+    setErrors('');
     onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
   };
 
@@ -129,22 +129,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setFiles((prev) => prev.filter((_, i) => i !== index));
     setFileNames((prev) => prev.filter((_, i) => i !== index));
     setFileSizes((prev) => prev.filter((_, i) => i !== index));
-    setErrors("");
+    setErrors('');
     onFileChange(files.length > 1 ? files.filter((_, i) => i !== index) : null);
   };
 
   return (
     <div className="flex flex-col items-center">
-      <label className="text-center text-lg font-medium text-primary">
+      <label className="text-primary text-center text-lg font-medium">
         {label}
       </label>
       <div
         className={`mt-2 w-4/5 rounded-lg border-2 border-dashed p-8 ${
           isDragging
-            ? "border-blue-500 bg-blue-50"
+            ? 'border-blue-500 bg-blue-50'
             : errors
-              ? "border-red-500 bg-red-50"
-              : "border-gray-300 bg-gray-50"
+              ? 'border-red-500 bg-red-50'
+              : 'border-gray-300 bg-gray-50'
         } transition-all duration-300 ease-in-out`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -152,14 +152,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
       >
         {!files.length ? (
           <div className="text-center">
-            <div className="mx-auto size-16 rounded-full bg-primary pt-2">
-              {type === "image" && (
+            <div className="bg-primary mx-auto size-16 rounded-full pt-2">
+              {type === 'image' && (
                 <ImageIcon className="mx-auto size-12 text-white" />
               )}
-              {type === "video" && (
+              {type === 'video' && (
                 <FileVideo className="mx-auto size-12 text-white" />
               )}
-              {type === "file" && (
+              {type === 'file' && (
                 <FilePlus2 className="mx-auto size-12 text-white" />
               )}
             </div>
@@ -179,21 +179,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
               className="hidden"
               onChange={handleFileChange}
               id={`file-upload-${type}`}
-              multiple={type === "file"} // Permitir múltiples archivos solo si el tipo es file
+              multiple={type === 'file'} // Permitir múltiples archivos solo si el tipo es file
             />
             <label
               htmlFor={`file-upload-${type}`}
-              className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+              className="bg-primary mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
             >
               Seleccionar {tipo}
             </label>
           </div>
         ) : (
           <>
-            {type === "image" && files.length === 1 && (
+            {type === 'image' && files.length === 1 && (
               <div className="relative overflow-hidden rounded-lg bg-gray-100">
                 <Image
-                  src={files[0] ? URL.createObjectURL(files[0]) : ""}
+                  src={files[0] ? URL.createObjectURL(files[0]) : ''}
                   alt="preview"
                   width={500}
                   height={200}
@@ -210,15 +210,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     {fileNames[0]}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {fileSizes[0] ? (fileSizes[0] / 1024).toFixed(2) : ""} KB
+                    {fileSizes[0] ? (fileSizes[0] / 1024).toFixed(2) : ''} KB
                   </p>
                 </div>
               </div>
             )}
-            {type === "video" && files.length === 1 && (
+            {type === 'video' && files.length === 1 && (
               <div className="relative overflow-hidden rounded-lg bg-gray-100">
                 <video className="h-48 w-full object-cover" controls>
-                  <source src={files[0] ? URL.createObjectURL(files[0]) : ""} />
+                  <source src={files[0] ? URL.createObjectURL(files[0]) : ''} />
                 </video>
                 <button
                   onClick={() => handleRemoveFile(0)}
@@ -231,12 +231,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     {fileNames[0]}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {fileSizes[0] ? (fileSizes[0] / 1024).toFixed(2) : ""} KB
+                    {fileSizes[0] ? (fileSizes[0] / 1024).toFixed(2) : ''} KB
                   </p>
                 </div>
               </div>
             )}
-            {type === "file" && (
+            {type === 'file' && (
               <div className="space-y-2">
                 {files.map((_, index) => (
                   <div
@@ -249,7 +249,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     <p className="text-sm text-gray-500">
                       {fileSizes[index]
                         ? (fileSizes[index] / 1024).toFixed(2)
-                        : ""}{" "}
+                        : ''}{' '}
                       KB
                     </p>
                     <button
@@ -262,7 +262,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 ))}
                 {files.length < 5 && (
                   <div className="mt-4 text-center">
-                    {" "}
+                    {' '}
                     <input
                       type="file"
                       accept={accept}
@@ -270,14 +270,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       onChange={handleFileChange}
                       id={`additional-file-upload-${type}`}
                       multiple
-                    />{" "}
+                    />{' '}
                     <label
                       htmlFor={`additional-file-upload-${type}`}
-                      className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+                      className="bg-primary inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
                     >
-                      {" "}
-                      Subir más archivos{" "}
-                    </label>{" "}
+                      {' '}
+                      Subir más archivos{' '}
+                    </label>{' '}
                   </div>
                 )}
               </div>

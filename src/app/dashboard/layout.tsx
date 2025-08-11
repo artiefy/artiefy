@@ -1,4 +1,4 @@
-import ResponsiveSidebar from "~/components/eduAndAdmiMenu";
+import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 
 export default function DashboardLayout({
   children,

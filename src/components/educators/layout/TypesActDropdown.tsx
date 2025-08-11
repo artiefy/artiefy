@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // Interfaz para los tipos de actividades
 interface TypeAct {
@@ -24,12 +24,12 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 
   // Función para obtener el contraste de un color
   const getContrastYIQ = (hexcolor: string) => {
-    hexcolor = hexcolor.replace("#", "");
+    hexcolor = hexcolor.replace('#', '');
     const r = parseInt(hexcolor.substr(0, 2), 16);
     const g = parseInt(hexcolor.substr(2, 2), 16);
     const b = parseInt(hexcolor.substr(4, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "black" : "white";
+    return yiq >= 128 ? 'black' : 'white';
   };
 
   // Fetch de los tipos de actividades
@@ -37,10 +37,10 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
     const fetchTypeAct = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/typeAct", {
-          method: "GET",
+        const response = await fetch('/api/educadores/typeAct', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -52,7 +52,7 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
         const data = (await response.json()) as TypeAct[];
         setTypeAct(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -60,7 +60,7 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 
     // Llamamos a la función para obtener las categorías
     fetchTypeAct().catch((error) =>
-      console.error("Error fetching categories:", error),
+      console.error('Error fetching categories:', error)
     );
   }, []);
 
@@ -79,14 +79,14 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
       </label>
       {isLoading ? (
         <p
-          className={`my-3 ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"} `}
+          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'} `}
         >
           Cargando los tipos de actividades...
         </p>
       ) : (
         <select
           id="typesAct-select"
-          value={typeActi || ""}
+          value={typeActi || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setTypeActividad(selectedId);

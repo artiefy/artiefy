@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import PermisosTab from "./components/PermisosTab";
-import RolesTab from "./components/RolesTab";
+import PermisosTab from './components/PermisosTab';
+import RolesTab from './components/RolesTab';
 
 export default function UsuariosRolesPage() {
-  const [activeTab, setActiveTab] = useState<"permisos" | "roles">("permisos");
+  const [activeTab, setActiveTab] = useState<'permisos' | 'roles'>('permisos');
 
   return (
     <div className="px-4 py-6 sm:px-6 md:px-8 lg:px-10">
@@ -21,21 +21,21 @@ export default function UsuariosRolesPage() {
 
       <div className="mb-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
         <button
-          onClick={() => setActiveTab("permisos")}
+          onClick={() => setActiveTab('permisos')}
           className={`w-full rounded px-4 py-2 text-center sm:w-auto ${
-            activeTab === "permisos"
-              ? "bg-primary text-white"
-              : "bg-gray-700 text-gray-300"
+            activeTab === 'permisos'
+              ? 'bg-primary text-white'
+              : 'bg-gray-700 text-gray-300'
           }`}
         >
           Permisos
         </button>
         <button
-          onClick={() => setActiveTab("roles")}
+          onClick={() => setActiveTab('roles')}
           className={`w-full rounded px-4 py-2 text-center sm:w-auto ${
-            activeTab === "roles"
-              ? "bg-primary text-white"
-              : "bg-gray-700 text-gray-300"
+            activeTab === 'roles'
+              ? 'bg-primary text-white'
+              : 'bg-gray-700 text-gray-300'
           }`}
         >
           Roles Secundarios
@@ -43,7 +43,7 @@ export default function UsuariosRolesPage() {
       </div>
 
       <div className="w-full overflow-auto">
-        {activeTab === "permisos" ? <PermisosTab /> : <RolesTab />}
+        {activeTab === 'permisos' ? <PermisosTab /> : <RolesTab />}
       </div>
     </div>
   );

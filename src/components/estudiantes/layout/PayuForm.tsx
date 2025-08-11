@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { type FC } from "react";
+import { type FC } from 'react';
 
-import { type Product } from "~/types/payu";
-import { calculateSignature } from "~/utils/paygateway/signature";
+import { type Product } from '~/types/payu';
+import { calculateSignature } from '~/utils/paygateway/signature';
 
 interface PayuFormProps {
   product: Product;
@@ -17,11 +17,11 @@ export const PayuForm: FC<PayuFormProps> = ({
   buyerFullName,
 }) => {
   const signature = calculateSignature(
-    process.env.NEXT_PUBLIC_API_KEY ?? "",
-    process.env.NEXT_PUBLIC_MERCHANT_ID ?? "",
+    process.env.NEXT_PUBLIC_API_KEY ?? '',
+    process.env.NEXT_PUBLIC_MERCHANT_ID ?? '',
     product.referenceCode ?? `${product.id}_${Date.now()}`,
     product.amount,
-    "USD",
+    'USD'
   );
 
   return (
@@ -54,7 +54,7 @@ export const PayuForm: FC<PayuFormProps> = ({
       <input
         name="test"
         type="hidden"
-        value={process.env.NODE_ENV === "production" ? "0" : "1"}
+        value={process.env.NODE_ENV === 'production' ? '0' : '1'}
       />
       <input name="buyerEmail" type="hidden" value={buyerEmail} />
       <input name="buyerFullName" type="hidden" value={buyerFullName} />

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { useParams } from "next/navigation";
+import { useParams } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { useUser } from '@clerk/nextjs';
+import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import {
   Calendar,
   Clock,
@@ -13,17 +13,17 @@ import {
   Star,
   Trophy,
   Users,
-} from "lucide-react";
-import { toast } from "sonner";
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 //Dashboard especifico para los detalles de un curso
 
@@ -60,31 +60,31 @@ interface Course {
 }
 
 // Definir la funcion calculateAverageProgress "progreso en general de las clases"
-function calculateAverageProgress(lessons: Course["lessons"]) {
+function calculateAverageProgress(lessons: Course['lessons']) {
   const totalProgress = lessons.reduce(
     (acc, lesson) => acc + lesson.progress,
-    0,
+    0
   );
   return lessons.length ? totalProgress / lessons.length : 0;
 }
 
 // Definir la funcion fetchUserProgressFromAPI "obtener el progreso de los usuario desde la API"
 async function fetchUserProgressFromAPI(
-  courseId: number,
+  courseId: number
 ): Promise<Record<number, Record<string, number>>> {
   const response = await fetch(
-    `/api/educadores/progressUser?courseId=${courseId}`,
+    `/api/educadores/progressUser?courseId=${courseId}`
   );
   if (response.ok) {
-    const contentType = response.headers.get("content-type");
-    if (contentType?.includes("application/json")) {
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
       const data = (await response.json()) as Record<
         number,
         Record<string, number>
       >;
       return data;
     } else {
-      throw new Error("Respuesta no es JSON");
+      throw new Error('Respuesta no es JSON');
     }
   } else if (response.status === 204) {
     // No Content
@@ -110,7 +110,7 @@ function App() {
     setError(null);
     try {
       const response = await fetch(
-        `/api/educadores/courses?courseId=${courseIdNumber}`,
+        `/api/educadores/courses?courseId=${courseIdNumber}`
       );
       if (response.ok) {
         const data = (await response.json()) as Course;
@@ -119,15 +119,15 @@ function App() {
         const errorData = (await response.json()) as { error?: string };
         const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar los cursos: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudieron cargar los cursos: ${errorMessage}`,
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+        error instanceof Error ? error.message : 'Unknown error';
       setError(`Error al cargar los cursos: ${errorMessage}`);
-      toast("Error", {
+      toast('Error', {
         description: `No se pudieron cargar los cursos: ${errorMessage}`,
       });
     } finally {
@@ -155,12 +155,12 @@ function App() {
         };
       });
       setCourses((prevCourses) =>
-        prevCourses ? { ...prevCourses, lessons: updatedLessons } : prevCourses,
+        prevCourses ? { ...prevCourses, lessons: updatedLessons } : prevCourses
       );
     } catch (error) {
-      console.error("Error fetching user progress:", error);
-      toast("Error", {
-        description: `No se pudo obtener el progreso del usuario: ${error instanceof Error ? error.message : "Unknown error"}`,
+      console.error('Error fetching user progress:', error);
+      toast('Error', {
+        description: `No se pudo obtener el progreso del usuario: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
   }, [courses, courseIdNumber]);
@@ -169,7 +169,7 @@ function App() {
   useEffect(() => {
     if (user) {
       fetchUserProgress().catch((error) =>
-        console.error("Error fetching user progress:", error),
+        console.error('Error fetching user progress:', error)
       );
     }
   }, [user, courses, fetchUserProgress]);
@@ -179,7 +179,7 @@ function App() {
   useEffect(() => {
     if (user && courseIdNumber) {
       fetchCourses().catch((error) =>
-        console.error("Error fetching courses:", error),
+        console.error('Error fetching courses:', error)
       );
     }
   }, [user, courseIdNumber, fetchCourses]);
@@ -262,7 +262,7 @@ function App() {
                 <h1 className="ml-2 text-2xl font-bold text-white">
                   <span className="text-primary">
                     Panel de control del curso:
-                  </span>{" "}
+                  </span>{' '}
                   {courses?.title}
                 </h1>
               </div>
@@ -276,10 +276,10 @@ function App() {
             <div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
               <div>
                 <h2 className="justify-start text-2xl font-bold text-white">
-                  Curso: {courses?.title ?? "Selecciona un curso"}
+                  Curso: {courses?.title ?? 'Selecciona un curso'}
                 </h2>
                 <p className="mt-1 text-gray-500/70">
-                  Descripcion: {courses?.description ?? "Descripción del curso"}
+                  Descripcion: {courses?.description ?? 'Descripción del curso'}
                 </p>
               </div>
             </div>
@@ -291,12 +291,12 @@ function App() {
               <StatCard
                 icon={<Users className="size-6" />}
                 title="Total estudiantes registrados"
-                value={courses.totalStudents?.toString() ?? "N/A"}
+                value={courses.totalStudents?.toString() ?? 'N/A'}
               />
               <StatCard
                 icon={<Clock className="size-6" />}
                 title="Duracion del curso (minutos)"
-                value={courses.totalDuration.toString() ?? "N/A"}
+                value={courses.totalDuration.toString() ?? 'N/A'}
               />
               <StatCard
                 icon={<Trophy className="size-6" />}
@@ -342,7 +342,7 @@ function App() {
                               <p className="text-sm text-gray-400">
                                 {lesson.progress !== undefined
                                   ? `${lesson.progress.toFixed(2)}%`
-                                  : "Sin progreso"}
+                                  : 'Sin progreso'}
                               </p>
                             </div>
                           </div>
@@ -407,7 +407,7 @@ function StatCard({ icon, title, value, trend }: StatCardProps) {
       <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
         <div className="flex items-center">
           <div className="bg-primary/10 rounded-lg p-2">
-            {React.cloneElement(icon, { className: "h-6 w-6 text-primary" })}
+            {React.cloneElement(icon, { className: 'h-6 w-6 text-primary' })}
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium text-white">{title}</p>

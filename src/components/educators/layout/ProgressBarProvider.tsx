@@ -1,7 +1,7 @@
 // Create a Providers component to wrap your application with all the components requiring 'use client', such as next-nprogress-bar or your different contexts...
-"use client";
+'use client';
 
-import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
+import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 
 // Componente para envolver la aplicación con los proveedores necesarios
 const Providers = ({ children }: { children: React.ReactNode }) => {

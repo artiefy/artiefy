@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { sql } from "drizzle-orm";
+import { sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // Define strict types for query results
 interface DBRow {
@@ -43,13 +43,13 @@ interface GradeResponse {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get("courseId");
-    const userId = searchParams.get("userId");
+    const courseId = searchParams.get('courseId');
+    const userId = searchParams.get('userId');
 
     if (!courseId || !userId) {
       return NextResponse.json(
-        { error: "Missing parameters" },
-        { status: 400 },
+        { error: 'Missing parameters' },
+        { status: 400 }
       );
     }
 
@@ -108,24 +108,24 @@ export async function GET(request: NextRequest) {
     `)) as unknown as DBQueryResult;
 
     // Debug logs for grade calculation
-    console.log("Grade Calculation Debug:");
-    console.log("Raw Query Result:", queryResult);
+    console.log('Grade Calculation Debug:');
+    console.log('Raw Query Result:', queryResult);
 
     // Single declaration of rows
     const dbRows = queryResult?.rows ?? [];
     console.log(
-      "Parameter Rows:",
+      'Parameter Rows:',
       dbRows.map((row) => ({
         name: row.name,
         weight: row.weight,
         grade: row.grade,
         contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
-      })),
+      }))
     );
 
     // Transform results with proper type safety
     const parameters: GradeParameter[] = dbRows.map((row) => {
-      const activities = JSON.parse(row.activities ?? "[]") as ActivityResult[];
+      const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
 
       return {
         name: String(row.name),
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
     // Update materias grades with the correct final grade
     if (finalGrade > 0) {
-      console.log("Updating materia grades with final grade:", finalGrade);
+      console.log('Updating materia grades with final grade:', finalGrade);
 
       await db.execute(sql`
 			  WITH course_materias AS (
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
 			  JOIN materias m ON m.id = mg.materia_id
 			  WHERE m.courseid = ${courseId} AND mg.user_id = ${userId}
 			`);
-      console.log("Updated materia grades:", updatedGrades);
+      console.log('Updated materia grades:', updatedGrades);
     }
 
     const response: GradeResponse = {
@@ -184,10 +184,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Error calculating grades:", error);
+    console.error('Error calculating grades:', error);
     return NextResponse.json(
-      { error: "Failed to calculate grades" },
-      { status: 500 },
+      { error: 'Failed to calculate grades' },
+      { status: 500 }
     );
   }
 }

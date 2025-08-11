@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // Interfaz para las categorías
 interface Category {
@@ -29,10 +29,10 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/categories", {
-          method: "GET",
+        const response = await fetch('/api/educadores/categories', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -44,7 +44,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         const data = (await response.json()) as Category[];
         setCategories(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -52,7 +52,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
 
     // Llamada a la función para obtener las categorías
     fetchCategories().catch((error) =>
-      console.error("Error fetching categories:", error),
+      console.error('Error fetching categories:', error)
     );
   }, []);
 
@@ -61,7 +61,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     <div className="flex flex-col gap-2">
       <label
         htmlFor="category-select"
-        className="text-lg font-medium text-primary"
+        className="text-primary text-lg font-medium"
       >
         Selecciona una categoría:
       </label>
@@ -70,13 +70,13 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={category || ""}
+          value={category || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setCategory(selectedId);
           }}
-          className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-            errors.category ? "border-red-500" : "border-primary"
+          className={`bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden ${
+            errors.category ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una categoría</option>

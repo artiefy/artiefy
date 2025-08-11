@@ -1,25 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { auth } from "@clerk/nextjs/server";
+import { auth } from '@clerk/nextjs/server';
 
-import { updateParametro } from "~/models/educatorsModels/parametrosModels";
+import { updateParametro } from '~/models/educatorsModels/parametrosModels';
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const resolvedParams = await params; // Esperar params antes de usar sus propiedades
     const parametroId = parseInt(resolvedParams.id);
     if (isNaN(parametroId)) {
       return NextResponse.json(
-        { error: "ID de parámetro inválido" },
-        { status: 400 },
+        { error: 'ID de parámetro inválido' },
+        { status: 400 }
       );
     }
 
@@ -40,10 +40,10 @@ export async function PUT(
 
     return NextResponse.json(updatedParametro);
   } catch (error) {
-    console.error("Error al actualizar el parámetro:", error);
+    console.error('Error al actualizar el parámetro:', error);
     return NextResponse.json(
-      { error: "Error al actualizar el parámetro" },
-      { status: 500 },
+      { error: 'Error al actualizar el parámetro' },
+      { status: 500 }
     );
   }
 }

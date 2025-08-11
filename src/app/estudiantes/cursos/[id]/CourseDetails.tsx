@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from 'next/navigation';
 
-import { useAuth, useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { useAuth, useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
-import { CourseBreadcrumb } from "~/components/estudiantes/layout/coursedetail/CourseBreadcrumb";
-import CourseComments from "~/components/estudiantes/layout/coursedetail/CourseComments";
-import { CourseDetailsSkeleton } from "~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton";
-import { CourseHeader } from "~/components/estudiantes/layout/coursedetail/CourseHeader";
-import StudentChatbot from "~/components/estudiantes/layout/studentdashboard/StudentChatbot";
-import { enrollInCourse } from "~/server/actions/estudiantes/courses/enrollInCourse";
-import { getCourseById } from "~/server/actions/estudiantes/courses/getCourseById";
-import { unenrollFromCourse } from "~/server/actions/estudiantes/courses/unenrollFromCourse";
-import { getLessonsByCourseId } from "~/server/actions/estudiantes/lessons/getLessonsByCourseId";
+import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
+import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
+import { CourseHeader } from '~/components/estudiantes/layout/coursedetail/CourseHeader';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
+import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 
-import type { Course, Enrollment } from "~/types";
+import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
   course: initialCourse,
@@ -40,12 +40,12 @@ export default function CourseDetails({
 
   useEffect(() => {
     if (!initialCourse.isActive) {
-      toast.error("Curso no disponible", {
-        description: "Este curso no está disponible actualmente.",
+      toast.error('Curso no disponible', {
+        description: 'Este curso no está disponible actualmente.',
         duration: 2000,
-        id: "course-unavailable", // Previene toasts duplicados
+        id: 'course-unavailable', // Previene toasts duplicados
       });
-      router.replace("/estudiantes");
+      router.replace('/estudiantes');
     }
   }, [initialCourse.isActive, router]);
 
@@ -58,7 +58,7 @@ export default function CourseDetails({
           const isUserEnrolled =
             Array.isArray(initialCourse.enrollments) &&
             initialCourse.enrollments.some(
-              (enrollment: Enrollment) => enrollment.userId === userId,
+              (enrollment: Enrollment) => enrollment.userId === userId
             );
           setIsEnrolled(isUserEnrolled);
 
@@ -67,7 +67,7 @@ export default function CourseDetails({
           const subscriptionEndDate = user?.publicMetadata
             ?.subscriptionEndDate as string | null;
           const isSubscriptionActive =
-            subscriptionStatus === "active" &&
+            subscriptionStatus === 'active' &&
             (!subscriptionEndDate ||
               new Date(subscriptionEndDate) > new Date());
           setIsSubscriptionActive(isSubscriptionActive);
@@ -76,7 +76,7 @@ export default function CourseDetails({
           if (isUserEnrolled) {
             const lessons = await getLessonsByCourseId(
               initialCourse.id,
-              userId,
+              userId
             );
             if (lessons) {
               setCourse((prev) => ({
@@ -94,7 +94,7 @@ export default function CourseDetails({
           }
         }
       } catch (error) {
-        console.error("Error checking enrollment:", error);
+        console.error('Error checking enrollment:', error);
       } finally {
         setIsCheckingEnrollment(false);
         setIsLoading(false);
@@ -110,7 +110,7 @@ export default function CourseDetails({
 
   const handleEnroll = async () => {
     if (!isSignedIn) {
-      toast.error("Debes iniciar sesión");
+      toast.error('Debes iniciar sesión');
       void router.push(`/sign-in?redirect_url=${pathname}`);
       return;
     }
@@ -120,7 +120,7 @@ export default function CourseDetails({
     setIsEnrolling(true);
 
     try {
-      console.log("Enrolling user in course", { courseId: course.id });
+      console.log('Enrolling user in course', { courseId: course.id });
 
       // Call the server action directly
       const result = await enrollInCourse(course.id);
@@ -128,7 +128,7 @@ export default function CourseDetails({
       if (result.success) {
         setTotalStudents((prev) => prev + 1);
         setIsEnrolled(true);
-        toast.success("¡Te has inscrito exitosamente!");
+        toast.success('¡Te has inscrito exitosamente!');
 
         // Actualizar curso y progreso desde la BD
         const updatedCourse = await getCourseById(course.id, userId);
@@ -149,9 +149,9 @@ export default function CourseDetails({
         }
       } else {
         // Handle specific enrollment errors
-        if (result.message === "Ya estás inscrito en este curso") {
+        if (result.message === 'Ya estás inscrito en este curso') {
           setIsEnrolled(true);
-          toast.info("Ya estás inscrito en este curso");
+          toast.info('Ya estás inscrito en este curso');
 
           // Update course data to reflect enrollment
           const updatedCourse = await getCourseById(course.id, userId);
@@ -171,19 +171,19 @@ export default function CourseDetails({
             });
           }
         } else if (result.requiresSubscription) {
-          toast.error("Suscripción requerida", {
-            description: "Necesitas una suscripción activa para inscribirte.",
+          toast.error('Suscripción requerida', {
+            description: 'Necesitas una suscripción activa para inscribirte.',
           });
-          window.open("/planes", "_blank");
+          window.open('/planes', '_blank');
         } else {
-          toast.error("Error en la inscripción", {
+          toast.error('Error en la inscripción', {
             description: result.message,
           });
         }
       }
     } catch (error) {
-      console.error("Error en la inscripción:", error);
-      toast.error("Error al inscribirse al curso");
+      console.error('Error en la inscripción:', error);
+      toast.error('Error al inscribirse al curso');
     } finally {
       setIsEnrolling(false);
     }
@@ -191,13 +191,13 @@ export default function CourseDetails({
 
   const onEnrollAction = async () => {
     try {
-      console.log("onEnrollAction called");
+      console.log('onEnrollAction called');
       // IMPORTANT: This function is called by CourseHeader for ALL course types
       // Directly call handleEnroll to ensure the user gets enrolled
       await handleEnroll();
     } catch (error) {
-      console.error("Error en onEnrollAction:", error);
-      toast.error("Error al procesar la inscripción");
+      console.error('Error en onEnrollAction:', error);
+      toast.error('Error al procesar la inscripción');
     }
   };
 
@@ -216,7 +216,7 @@ export default function CourseDetails({
           ...prev,
           enrollments: Array.isArray(prev.enrollments)
             ? prev.enrollments.filter(
-                (enrollment: Enrollment) => enrollment.userId !== userId,
+                (enrollment: Enrollment) => enrollment.userId !== userId
               )
             : [],
           lessons:
@@ -227,10 +227,10 @@ export default function CourseDetails({
               isNew: lesson.isNew,
             })) ?? [],
         }));
-        toast.success("Has cancelado tu inscripción al curso correctamente");
+        toast.success('Has cancelado tu inscripción al curso correctamente');
       }
     } catch (error) {
-      console.error("Error al cancelar la inscripción:", error);
+      console.error('Error al cancelar la inscripción:', error);
     } finally {
       setIsUnenrolling(false);
     }

@@ -1,24 +1,24 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { GraduationCap } from "lucide-react";
+import { useUser } from '@clerk/nextjs';
+import { GraduationCap } from 'lucide-react';
 import {
   FaBook,
   FaChalkboardTeacher,
   FaClock,
   FaGraduationCap,
-} from "react-icons/fa";
-import { toast } from "sonner";
+} from 'react-icons/fa';
+import { toast } from 'sonner';
 
-import CourseListDetails from "~/components/educators/layout/CourseListDetails";
+import CourseListDetails from '~/components/educators/layout/CourseListDetails';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/educators/ui/breadcrumb";
+} from '~/components/educators/ui/breadcrumb';
 
 // Define the CourseModel interface
 export interface CourseModel {
@@ -63,7 +63,7 @@ export default function Home() {
     try {
       // Fetch the stats from the API of dashboard by user Id
       const response = await fetch(
-        `/api/educadores/dashboard?userId=${user.id}`,
+        `/api/educadores/dashboard?userId=${user.id}`
       );
       if (response.ok) {
         const data = (await response.json()) as StatsModel;
@@ -71,26 +71,26 @@ export default function Home() {
       } else {
         const errorData = (await response.json()) as { error?: string };
         const errorMessage = errorData.error ?? response.statusText;
-        toast("Error", {
+        toast('Error', {
           description: `No se pudieron cargar las estadísticas: ${errorMessage}`,
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
-      toast("Error", {
+        error instanceof Error ? error.message : 'Error desconocido';
+      toast('Error', {
         description: `No se pudieron cargar las estadísticas: ${errorMessage}`,
       });
     }
   }, [user]);
 
-  console.log("stats", stats);
+  console.log('stats', stats);
 
   // Fetch courses
   useEffect(() => {
     if (user) {
       fetchStats().catch((error) =>
-        console.error("Error fetching stats:", error),
+        console.error('Error fetching stats:', error)
       );
     }
   }, [user, fetchStats]);
@@ -102,33 +102,33 @@ export default function Home() {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `/api/educadores/courses/coursesByEducator?userId=${encodeURIComponent(user.id)}&fullName=${encodeURIComponent(user.fullName ?? "")}`,
+        `/api/educadores/courses/coursesByEducator?userId=${encodeURIComponent(user.id)}&fullName=${encodeURIComponent(user.fullName ?? '')}`
       );
-      console.log("API Response:", response);
+      console.log('API Response:', response);
       if (response.ok) {
         const data = (await response.json()) as CourseModel[];
-        console.log("Courses data:", data);
+        console.log('Courses data:', data);
         setCourses(
           data.map((course) => ({
             ...course,
-            nivelid: course.nivelid ?? "", // Map it properly
+            nivelid: course.nivelid ?? '', // Map it properly
             categoryid: course.categoryid, // Map categoryid properly
             modalidadesid: course.modalidadesid, // Map modalidadesid properly
-          })) as CourseModel[],
+          })) as CourseModel[]
         );
       } else {
         const errorData = (await response.json()) as { error?: string };
         const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar los cursos: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudieron cargar los cursos: ${errorMessage}`,
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+        error instanceof Error ? error.message : 'Error desconocido';
       setError(`Error al cargar los cursos: ${errorMessage}`);
-      toast("Error", {
+      toast('Error', {
         description: `No se pudieron cargar los cursos: ${errorMessage}`,
       });
     } finally {
@@ -140,7 +140,7 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       fetchCourses().catch((error) =>
-        console.error("Error fetching courses:", error),
+        console.error('Error fetching courses:', error)
       );
     }
   }, [user, fetchCourses]);

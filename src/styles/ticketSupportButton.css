@@ -19,7 +19,7 @@
 
 /* Update tooltip styles */
 .ticket-button::before {
-  content: "Soporte Artiefy";
+  content: 'Soporte Artiefy';
   position: absolute;
   top: 50%;
   right: calc(100% + 10px); /* Position to the left of the button */
@@ -37,7 +37,7 @@
 
 /* Update arrow position for left side */
 .ticket-button::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   right: calc(100% + 2px);

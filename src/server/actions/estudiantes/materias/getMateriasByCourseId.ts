@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { materias } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { materias } from '~/server/db/schema';
 
 export async function getMateriasByCourseId(courseId: number) {
   try {
@@ -12,7 +12,7 @@ export async function getMateriasByCourseId(courseId: number) {
 
     return result;
   } catch (error) {
-    console.error("Error fetching materias:", error);
+    console.error('Error fetching materias:', error);
     return [];
   }
 }

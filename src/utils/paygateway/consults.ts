@@ -1,7 +1,7 @@
-import axios from "axios";
+import axios from 'axios';
 
 const PAYU_API_URL =
-  "https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi";
+  'https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi';
 
 interface Auth {
   apiLogin: string;
@@ -16,12 +16,12 @@ interface PayUResponse {
 
 export async function consultOrderById(
   orderId: number,
-  auth: Auth,
+  auth: Auth
 ): Promise<PayUResponse> {
   const requestBody = {
     test: false,
-    language: "en",
-    command: "ORDER_DETAIL",
+    language: 'en',
+    command: 'ORDER_DETAIL',
     merchant: auth,
     details: {
       orderId,
@@ -30,7 +30,7 @@ export async function consultOrderById(
 
   const response = await axios.post<PayUResponse>(PAYU_API_URL, requestBody, {
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -39,12 +39,12 @@ export async function consultOrderById(
 
 export async function consultTransactionById(
   transactionId: string,
-  auth: Auth,
+  auth: Auth
 ): Promise<PayUResponse> {
   const requestBody = {
     test: false,
-    language: "en",
-    command: "TRANSACTION_RESPONSE_DETAIL",
+    language: 'en',
+    command: 'TRANSACTION_RESPONSE_DETAIL',
     merchant: auth,
     details: {
       transactionId,
@@ -53,7 +53,7 @@ export async function consultTransactionById(
 
   const response = await axios.post<PayUResponse>(PAYU_API_URL, requestBody, {
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -62,12 +62,12 @@ export async function consultTransactionById(
 
 export async function consultOrderByReferenceCode(
   referenceCode: string,
-  auth: Auth,
+  auth: Auth
 ): Promise<PayUResponse> {
   const requestBody = {
     test: false,
-    language: "en",
-    command: "ORDER_DETAIL_BY_REFERENCE_CODE",
+    language: 'en',
+    command: 'ORDER_DETAIL_BY_REFERENCE_CODE',
     merchant: auth,
     details: {
       referenceCode,
@@ -76,7 +76,7 @@ export async function consultOrderByReferenceCode(
 
   const response = await axios.post<PayUResponse>(PAYU_API_URL, requestBody, {
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 

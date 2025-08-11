@@ -1,6 +1,6 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
+import { db } from '~/server/db/index';
 import {
   categories,
   courses,
@@ -9,7 +9,7 @@ import {
   notas,
   programas,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 // Interfaz para representar un Programa
 export interface Program {
@@ -61,7 +61,7 @@ export const getProgramById = async (programaId: number) => {
     .then((rows) => rows[0]);
 
   if (!program) {
-    throw new Error("Programa no encontrado");
+    throw new Error('Programa no encontrado');
   }
 
   const subjects = await db
@@ -120,7 +120,7 @@ export const updateProgram = async (
     description: string;
     coverImageKey: string;
     rating: number;
-  },
+  }
 ) => {
   return db
     .update(programas)
@@ -142,18 +142,18 @@ export const deleteProgram = async (programaId: number): Promise<void> => {
     await db
       .delete(enrollmentPrograms)
       .where(eq(enrollmentPrograms.programaId, programaId));
-    console.log("Inscripciones eliminadas correctamente.");
+    console.log('Inscripciones eliminadas correctamente.');
 
     // 🔎 2️⃣ Verificar y eliminar materias asociadas
     await db.delete(materias).where(eq(materias.programaId, programaId));
-    console.log("Materias eliminadas correctamente.");
+    console.log('Materias eliminadas correctamente.');
 
     // 🔎 3️⃣ Eliminar el programa
     await db.delete(programas).where(eq(programas.id, programaId));
-    console.log("Programa eliminado correctamente.");
+    console.log('Programa eliminado correctamente.');
   } catch (error) {
-    console.error("ERROR al eliminar el programa:", error);
-    throw new Error("Error desconocido al eliminar el programa.");
+    console.error('ERROR al eliminar el programa:', error);
+    throw new Error('Error desconocido al eliminar el programa.');
   }
 };
 
@@ -205,7 +205,7 @@ export const getStudentGradesByProgramId = async (programaId: number) => {
 // ✅ Inscribir un usuario en un programa
 export const enrollUserInProgram = async (
   userId: string,
-  programaId: number,
+  programaId: number
 ) => {
   return db.insert(enrollmentPrograms).values({
     userId,
@@ -230,7 +230,7 @@ export const getUserPrograms = async (userId: string) => {
 
 // ✅ Obtener la cantidad de estudiantes en un programa
 export const getTotalStudentsInProgram = async (
-  programaId: number,
+  programaId: number
 ): Promise<number> => {
   const result = await db
     .select({ totalStudents: count() })

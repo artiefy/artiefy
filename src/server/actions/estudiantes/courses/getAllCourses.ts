@@ -1,8 +1,8 @@
-"use server";
+'use server';
 
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   categories,
   courseCourseTypes,
@@ -11,9 +11,9 @@ import {
   modalidades,
   nivel,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
-import type { Course, CourseType, SubscriptionLevel } from "~/types";
+import type { Course, CourseType, SubscriptionLevel } from '~/types';
 
 // Consulta base separada
 const baseCoursesQuery = {
@@ -99,12 +99,12 @@ export async function getAllCourses(): Promise<Course[]> {
     // Transform course data synchronously now that we have all needed data
     const transformedCourses: Course[] = coursesData.map((course) => ({
       id: course.id,
-      title: course.title ?? "",
-      description: course.description ?? "",
-      coverImageKey: course.coverImageKey ?? "",
+      title: course.title ?? '',
+      description: course.description ?? '',
+      coverImageKey: course.coverImageKey ?? '',
       categoryid: course.categoryid,
-      instructor: course.instructor ?? "",
-      instructorName: course.instructorName ?? "no encontrado",
+      instructor: course.instructor ?? '',
+      instructorName: course.instructorName ?? 'no encontrado',
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
       creatorId: course.creatorId,
@@ -115,22 +115,22 @@ export async function getAllCourses(): Promise<Course[]> {
       lessons: [],
       category: {
         id: course.categoryid,
-        name: course.categoryName ?? "",
-        description: course.categoryDescription ?? "",
+        name: course.categoryName ?? '',
+        description: course.categoryDescription ?? '',
         is_featured: course.isFeatured ?? false,
       },
-      modalidad: { name: course.modalidadName ?? "" },
-      nivel: { name: course.nivelName ?? "" },
+      modalidad: { name: course.modalidadName ?? '' },
+      nivel: { name: course.nivelName ?? '' },
       isFeatured: course.isFeatured ?? false,
       requerimientos: [] as string[],
       courseTypeId: course.courseTypeId ?? null,
       courseType: course.courseTypeId
         ? {
-            name: course.courseTypeName ?? "",
+            name: course.courseTypeName ?? '',
             requiredSubscriptionLevel:
-              course.requiredSubscriptionLevel! || "none",
+              course.requiredSubscriptionLevel! || 'none',
             isPurchasableIndividually: Boolean(
-              course.isPurchasableIndividually,
+              course.isPurchasableIndividually
             ),
             price: course.courseTypeId === 4 ? course.individualPrice : null,
           }
@@ -145,9 +145,9 @@ export async function getAllCourses(): Promise<Course[]> {
 
     return transformedCourses;
   } catch (err) {
-    console.error("Error al obtener todos los cursos:", err);
+    console.error('Error al obtener todos los cursos:', err);
     throw new Error(
-      `Error al obtener todos los cursos: ${err instanceof Error ? err.message : "Error desconocido"}`,
+      `Error al obtener todos los cursos: ${err instanceof Error ? err.message : 'Error desconocido'}`
     );
   }
 }

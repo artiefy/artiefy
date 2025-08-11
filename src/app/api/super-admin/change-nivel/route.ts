@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
-import { db } from "~/server/db";
-import { courses, nivel } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses, nivel } from '~/server/db/schema';
 
 // Definir esquema de validación con Zod
 const updateSchema = z.object({
@@ -29,14 +29,14 @@ export async function PUT(req: Request) {
       .execute();
 
     return NextResponse.json(
-      { message: "nivel actualizada con éxito" },
-      { status: 200 },
+      { message: 'nivel actualizada con éxito' },
+      { status: 200 }
     );
   } catch (error) {
-    console.error("❌ Error al actualizar la nivel:", error);
+    console.error('❌ Error al actualizar la nivel:', error);
     return NextResponse.json(
-      { error: "Error al actualizar la nivel" },
-      { status: 400 },
+      { error: 'Error al actualizar la nivel' },
+      { status: 400 }
     );
   }
 }
@@ -47,10 +47,10 @@ export async function GET() {
 
     return NextResponse.json(niveles, { status: 200 });
   } catch (error) {
-    console.error("❌ Error al obtener niveles:", error);
+    console.error('❌ Error al obtener niveles:', error);
     return NextResponse.json(
-      { error: "Error al obtener niveles" },
-      { status: 500 },
+      { error: 'Error al obtener niveles' },
+      { status: 500 }
     );
   }
 }

@@ -1,25 +1,25 @@
-"use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+'use client';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useProgress } from "@bprogress/next";
-import { useUser } from "@clerk/nextjs";
-import { FaCheckCircle, FaLock } from "react-icons/fa";
-import { toast } from "sonner";
+import { useProgress } from '@bprogress/next';
+import { useUser } from '@clerk/nextjs';
+import { FaCheckCircle, FaLock } from 'react-icons/fa';
+import { toast } from 'sonner';
 
-import LessonActivities from "~/components/estudiantes/layout/lessondetail/LessonActivities";
-import LessonBreadcrumbs from "~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs";
-import LessonCards from "~/components/estudiantes/layout/lessondetail/LessonCards";
-import LessonComments from "~/components/estudiantes/layout/lessondetail/LessonComments";
-import LessonNavigation from "~/components/estudiantes/layout/lessondetail/LessonNavigation";
-import LessonPlayer from "~/components/estudiantes/layout/lessondetail/LessonPlayer";
-import StudentChatbot from "~/components/estudiantes/layout/studentdashboard/StudentChatbot";
-import { Button } from "~/components/estudiantes/ui/button";
-import { Progress } from "~/components/estudiantes/ui/progress";
-import { isUserEnrolled } from "~/server/actions/estudiantes/courses/enrollInCourse";
-import { completeActivity } from "~/server/actions/estudiantes/progress/completeActivity";
-import { updateLessonProgress } from "~/server/actions/estudiantes/progress/updateLessonProgress";
+import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
+import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
+import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
+import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Progress } from '~/components/estudiantes/ui/progress';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
+import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
 import {
   type Activity,
   type Course,
@@ -27,13 +27,13 @@ import {
   type LessonWithProgress,
   type UserActivitiesProgress,
   type UserLessonsProgress,
-} from "~/types";
-import { sortLessons } from "~/utils/lessonSorting";
+} from '~/types';
+import { sortLessons } from '~/utils/lessonSorting';
 import {
   restoreScrollPosition,
   saveScrollPosition,
-} from "~/utils/scrollPosition";
-import { useMediaQuery } from "~/utils/useMediaQuery";
+} from '~/utils/scrollPosition';
+import { useMediaQuery } from '~/utils/useMediaQuery';
 
 interface LessonDetailsProps {
   lesson: LessonWithProgress;
@@ -55,7 +55,7 @@ const isLastLesson = (lessons: LessonWithProgress[], currentId: number) => {
 const isLastActivity = (
   lessons: LessonWithProgress[],
   activities: Activity[],
-  currentLesson: LessonWithProgress,
+  currentLesson: LessonWithProgress
 ) => {
   if (!lessons.length || !activities.length) return false;
   const sortedLessons = sortLessons(lessons);
@@ -82,11 +82,11 @@ export default function LessonDetails({
   const [selectedLessonId, setSelectedLessonId] = useState<number>(lesson?.id);
   const [progress, setProgress] = useState(lesson?.porcentajecompletado ?? 0);
   const [isVideoCompleted, setIsVideoCompleted] = useState(
-    lesson?.porcentajecompletado === 100,
+    lesson?.porcentajecompletado === 100
   );
   // Update to use first activity's completion status
   const [isActivityCompleted, setIsActivityCompleted] = useState(
-    activities[0]?.isCompleted ?? false,
+    activities[0]?.isCompleted ?? false
   );
   // Inicializar lessonsState con un valor predeterminado
   const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>(() =>
@@ -97,7 +97,7 @@ export default function LessonDetails({
       isCompleted: false,
       isNew: true,
       courseTitle: lesson.courseTitle,
-    })),
+    }))
   );
 
   // Mover la inicialización de estados al useEffect con una bandera
@@ -113,10 +113,10 @@ export default function LessonDetails({
   // Move course active check to the top
   useEffect(() => {
     if (!course.isActive) {
-      toast.error("Curso no disponible", {
-        description: "Este curso no está disponible actualmente.",
+      toast.error('Curso no disponible', {
+        description: 'Este curso no está disponible actualmente.',
       });
-      router.push("/estudiantes");
+      router.push('/estudiantes');
     }
   }, [course.isActive, router]);
 
@@ -143,12 +143,12 @@ export default function LessonDetails({
 
         const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
           const progress = userLessonsProgress.find(
-            (p) => p.lessonId === lessonItem.id,
+            (p) => p.lessonId === lessonItem.id
           );
 
           const isFirst =
             index === 0 ||
-            lessonItem.title.toLowerCase().includes("bienvenida");
+            lessonItem.title.toLowerCase().includes('bienvenida');
 
           return {
             ...lessonItem,
@@ -202,10 +202,10 @@ export default function LessonDetails({
 
     if (lesson?.isLocked) {
       // Mostrar un único toast
-      toast.error("Lección bloqueada", {
+      toast.error('Lección bloqueada', {
         description:
-          "Completa las lecciones anteriores para desbloquear esta clase.",
-        id: "lesson-locked",
+          'Completa las lecciones anteriores para desbloquear esta clase.',
+        id: 'lesson-locked',
       });
 
       // Configurar la redirección con un nuevo timeout
@@ -225,7 +225,7 @@ export default function LessonDetails({
     const checkEnrollment = async () => {
       const isEnrolled = await isUserEnrolled(lesson.courseId, userId);
       if (!isEnrolled) {
-        toast.error("Debes estar inscrito en el curso para ver esta lección.");
+        toast.error('Debes estar inscrito en el curso para ver esta lección.');
         void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
       }
     };
@@ -254,8 +254,8 @@ export default function LessonDetails({
                     isCompleted: roundedProgress === 100,
                     isNew: roundedProgress > 1 ? false : l.isNew,
                   }
-                : l,
-            ),
+                : l
+            )
           );
 
           // Use Promise.resolve for state updates
@@ -264,12 +264,12 @@ export default function LessonDetails({
           // Update database
           return updateLessonProgress(lesson.id, roundedProgress);
         } catch (error) {
-          console.error("Error al actualizar el progreso:", error);
-          toast.error("Error al sincronizar el progreso");
+          console.error('Error al actualizar el progreso:', error);
+          toast.error('Error al sincronizar el progreso');
         }
       }
     },
-    [progress, lesson.id, setLessonsState],
+    [progress, lesson.id, setLessonsState]
   );
 
   // Update video end handler
@@ -280,10 +280,10 @@ export default function LessonDetails({
 
       // Mensaje diferente según si tiene actividades o no
       const hasActivities = activities.length > 0;
-      toast.success("Clase completada", {
+      toast.success('Clase completada', {
         description: hasActivities
-          ? "Ahora completa la actividad para continuar"
-          : "Video completado exitosamente",
+          ? 'Ahora completa la actividad para continuar'
+          : 'Video completado exitosamente',
       });
 
       // Si no tiene actividades, actualizar el progreso localmente a 100%
@@ -297,13 +297,13 @@ export default function LessonDetails({
                   porcentajecompletado: 100,
                   isCompleted: true,
                 }
-              : l,
-          ),
+              : l
+          )
         );
       }
     } catch (error) {
-      console.error("Error al completar la lección:", error);
-      toast.error("Error al marcar la lección como completada");
+      console.error('Error al completar la lección:', error);
+      toast.error('Error al marcar la lección como completada');
     }
   };
 
@@ -316,10 +316,10 @@ export default function LessonDetails({
       setIsActivityCompleted(true);
 
       // Remove automatic unlocking - let modal handle it
-      toast.success("¡Actividad completada!");
+      toast.success('¡Actividad completada!');
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al completar la actividad");
+      console.error('Error:', error);
+      toast.error('Error al completar la actividad');
     }
   };
 
@@ -332,15 +332,15 @@ export default function LessonDetails({
   }, [lesson, isVideoCompleted]);
 
   // Update handleNavigationClick to use await y solo navegar si la clase destino está desbloqueada
-  const handleNavigationClick = async (direction: "prev" | "next") => {
+  const handleNavigationClick = async (direction: 'prev' | 'next') => {
     if (isNavigating) return;
     const sortedLessons = sortLessons(lessonsState);
     const currentIndex = sortedLessons.findIndex(
-      (l) => l.id === selectedLessonId,
+      (l) => l.id === selectedLessonId
     );
 
     let targetLesson: LessonWithProgress | undefined;
-    if (direction === "prev") {
+    if (direction === 'prev') {
       targetLesson = sortedLessons
         .slice(0, currentIndex)
         .reverse()
@@ -400,7 +400,7 @@ export default function LessonDetails({
 
   // Keep subscription check but remove the loading UI
   useEffect(() => {
-    if (!user || course.courseType?.requiredSubscriptionLevel === "none") {
+    if (!user || course.courseType?.requiredSubscriptionLevel === 'none') {
       return;
     }
 
@@ -411,18 +411,18 @@ export default function LessonDetails({
     };
 
     if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
-      toast.error("Se requiere una suscripción activa para ver las clases");
-      void router.push("/planes");
+      toast.error('Se requiere una suscripción activa para ver las clases');
+      void router.push('/planes');
       return;
     }
 
-    const isActive = metadata.subscriptionStatus === "active";
+    const isActive = metadata.subscriptionStatus === 'active';
     const endDate = new Date(metadata.subscriptionEndDate);
     const isValid = endDate > new Date();
 
     if (!isActive || !isValid) {
-      toast.error("Se requiere una suscripción activa para ver las clases");
-      void router.push("/planes");
+      toast.error('Se requiere una suscripción activa para ver las clases');
+      void router.push('/planes');
     }
   }, [user, course.courseType?.requiredSubscriptionLevel, router]);
 
@@ -462,10 +462,10 @@ export default function LessonDetails({
 
     const courseTypeName = course.courseType.name;
     const requiredLevel = course.courseType.requiredSubscriptionLevel;
-    const isIndividual = courseTypeName === "Individual";
-    const isFree = courseTypeName === "Free";
+    const isIndividual = courseTypeName === 'Individual';
+    const isFree = courseTypeName === 'Free';
     const isSubscription =
-      requiredLevel === "pro" || requiredLevel === "premium";
+      requiredLevel === 'pro' || requiredLevel === 'premium';
 
     // Si es Free, dejar pasar
     if (isFree) return;
@@ -477,10 +477,10 @@ export default function LessonDetails({
         ? (course.enrollments as { userId: string; isPermanent: boolean }[])
         : [];
       const hasIndividualEnrollment = enrollmentsArr.some(
-        (e) => e.userId === user.id && e.isPermanent,
+        (e) => e.userId === user.id && e.isPermanent
       );
       if (!hasIndividualEnrollment) {
-        toast.error("Debes comprar este curso para acceder a las clases.");
+        toast.error('Debes comprar este curso para acceder a las clases.');
         void router.push(`/estudiantes/cursos/${course.id}`);
       }
       return;
@@ -489,16 +489,16 @@ export default function LessonDetails({
     // Si es de suscripción (pro/premium), verificar suscripción activa y fecha
     if (isSubscription) {
       if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
-        toast.error("Se requiere una suscripción activa para ver las clases");
-        void router.push("/planes");
+        toast.error('Se requiere una suscripción activa para ver las clases');
+        void router.push('/planes');
         return;
       }
-      const isActive = metadata.subscriptionStatus === "active";
+      const isActive = metadata.subscriptionStatus === 'active';
       const endDate = parseSubscriptionDate(metadata.subscriptionEndDate);
       const isValid = endDate ? endDate > new Date() : false;
       if (!isActive || !isValid) {
-        toast.error("Se requiere una suscripción activa para ver las clases");
-        void router.push("/planes");
+        toast.error('Se requiere una suscripción activa para ver las clases');
+        void router.push('/planes');
       }
     }
   }, [user, course, router]);
@@ -508,10 +508,10 @@ export default function LessonDetails({
     { start: number; end: number; text: string }[]
   >([]);
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
   // Solo declara activityModalId/setActivityModalId una vez aquí
   const [activityModalId, setActivityModalId] = useState<number | undefined>(
-    undefined,
+    undefined
   );
 
   // Obtener la transcripción al montar el componente
@@ -520,7 +520,7 @@ export default function LessonDetails({
       setIsLoadingTranscription(true);
       try {
         const res = await fetch(
-          `/api/lessons/getTranscription?lessonId=${lesson.id}`,
+          `/api/lessons/getTranscription?lessonId=${lesson.id}`
         );
         if (!res.ok) {
           setTranscription([]);
@@ -535,7 +535,7 @@ export default function LessonDetails({
         }
         const data: TranscriptionResponse = await res.json();
         let parsed: { start: number; end: number; text: string }[] = [];
-        if (typeof data.transcription === "string") {
+        if (typeof data.transcription === 'string') {
           try {
             parsed = JSON.parse(data.transcription) as {
               start: number;
@@ -560,7 +560,7 @@ export default function LessonDetails({
 
   // En el efecto que lee el query param, asigna undefined si no existe
   useEffect(() => {
-    const activityIdParam = searchParams.get("activityId");
+    const activityIdParam = searchParams.get('activityId');
     setActivityModalId(activityIdParam ? Number(activityIdParam) : undefined);
   }, [searchParams, setActivityModalId]);
 
@@ -569,11 +569,11 @@ export default function LessonDetails({
     const handler = (event: CustomEvent<{ activityId: number }>) => {
       setActivityModalId(event.detail?.activityId ?? undefined);
     };
-    window.addEventListener("open-activity-modal", handler as EventListener);
+    window.addEventListener('open-activity-modal', handler as EventListener);
     return () => {
       window.removeEventListener(
-        "open-activity-modal",
-        handler as EventListener,
+        'open-activity-modal',
+        handler as EventListener
       );
     };
   }, [setActivityModalId]);
@@ -592,8 +592,8 @@ export default function LessonDetails({
       prevLessons.map((lesson) =>
         lesson.id === lessonId
           ? { ...lesson, isLocked: false, isNew: true }
-          : lesson,
-      ),
+          : lesson
+      )
     );
   };
 
@@ -670,7 +670,7 @@ export default function LessonDetails({
           </div>
 
           {/* ACTIVIDADES EN EL CENTRO CUANDO NO HAY VIDEO */}
-          {!isMobile && lesson.coverVideoKey === "none" ? (
+          {!isMobile && lesson.coverVideoKey === 'none' ? (
             <div className="mx-auto w-full max-w-4xl rounded-lg bg-white shadow">
               <div className="rounded-lg bg-white p-4 shadow-xs md:p-6">
                 <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
@@ -689,7 +689,7 @@ export default function LessonDetails({
                           <div
                             key={activity.id}
                             className={`rounded-lg border bg-white p-4 shadow-sm ${
-                              isLocked ? "bg-gray-100 opacity-60" : "bg-white"
+                              isLocked ? 'bg-gray-100 opacity-60' : 'bg-white'
                             }`}
                           >
                             <div className="mb-2 flex items-center justify-between">
@@ -703,7 +703,7 @@ export default function LessonDetails({
                                   <FaLock className="text-gray-400" />
                                 ) : (
                                   <div className="text-blue-500">
-                                    {index === 0 ? "Disponible" : "Pendiente"}
+                                    {index === 0 ? 'Disponible' : 'Pendiente'}
                                   </div>
                                 )}
                               </div>
@@ -723,15 +723,15 @@ export default function LessonDetails({
                                 disabled={isLocked}
                                 className={`rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 font-medium text-white hover:from-blue-600 hover:to-indigo-700 ${
                                   isLocked
-                                    ? "cursor-not-allowed opacity-60"
-                                    : ""
+                                    ? 'cursor-not-allowed opacity-60'
+                                    : ''
                                 }`}
                               >
                                 {activity.isCompleted
-                                  ? "Ver Resultados"
+                                  ? 'Ver Resultados'
                                   : isLocked
-                                    ? "Bloqueada"
-                                    : "Iniciar Actividad"}
+                                    ? 'Bloqueada'
+                                    : 'Iniciar Actividad'}
                               </Button>
                             </div>
                           </div>
@@ -759,7 +759,7 @@ export default function LessonDetails({
             </div>
           ) : (
             // Solo mostrar LessonPlayer si hay video o si NO es móvil
-            (lesson.coverVideoKey !== "none" || !isMobile) && (
+            (lesson.coverVideoKey !== 'none' || !isMobile) && (
               <LessonPlayer
                 lesson={lesson}
                 progress={progress}
@@ -777,7 +777,7 @@ export default function LessonDetails({
               <LessonActivities
                 activities={activities}
                 isVideoCompleted={
-                  lesson.coverVideoKey === "none" ? true : isVideoCompleted
+                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
                 }
                 isActivityCompleted={isActivityCompleted}
                 handleActivityCompletion={handleActivityCompletion}
@@ -789,7 +789,7 @@ export default function LessonDetails({
                 isLastActivity={isLastActivity(
                   lessonsState,
                   activities,
-                  lesson,
+                  lesson
                 )}
                 lessons={lessonsState}
                 activityModalId={activityModalId}
@@ -802,7 +802,7 @@ export default function LessonDetails({
         {/* Right Sidebar - SOLO calificaciones y recursos cuando no hay video */}
         {!isMobile && (
           <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-0 md:shadow-sm lg:w-72">
-            {lesson.coverVideoKey === "none" ? (
+            {lesson.coverVideoKey === 'none' ? (
               <>
                 <div className="mt-4">
                   <LessonActivities
@@ -818,7 +818,7 @@ export default function LessonDetails({
                     isLastActivity={isLastActivity(
                       lessonsState,
                       activities,
-                      lesson,
+                      lesson
                     )}
                     lessons={lessonsState}
                     activityModalId={activityModalId}
@@ -830,7 +830,7 @@ export default function LessonDetails({
               <LessonActivities
                 activities={activities}
                 isVideoCompleted={
-                  lesson.coverVideoKey === "none" ? true : isVideoCompleted
+                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
                 }
                 isActivityCompleted={isActivityCompleted}
                 handleActivityCompletion={handleActivityCompletion}
@@ -842,7 +842,7 @@ export default function LessonDetails({
                 isLastActivity={isLastActivity(
                   lessonsState,
                   activities,
-                  lesson,
+                  lesson
                 )}
                 lessons={lessonsState}
                 activityModalId={activityModalId}

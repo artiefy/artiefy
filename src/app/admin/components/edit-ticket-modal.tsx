@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
-import { Modal } from "~/components/shared/Modal";
+import { Modal } from '~/components/shared/Modal';
 
 interface EditTicketModalProps {
   isOpen: boolean;
@@ -19,12 +19,12 @@ interface EditTicketModalProps {
 
 const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
   const [formData, setFormData] = useState({
-    email: ticket?.email ?? "",
-    description: ticket?.description ?? "",
-    comments: ticket?.comments ?? "",
-    estado: ticket?.estado ?? "",
-    tipo: ticket?.tipo ?? "",
-    assignedToId: ticket?.assignedToId ?? "",
+    email: ticket?.email ?? '',
+    description: ticket?.description ?? '',
+    comments: ticket?.comments ?? '',
+    estado: ticket?.estado ?? '',
+    tipo: ticket?.tipo ?? '',
+    assignedToId: ticket?.assignedToId ?? '',
   });
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
@@ -55,10 +55,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/admin/tickets", {
-        method: "PUT",
+      const response = await fetch('/api/admin/tickets', {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           id: ticket?.id,
@@ -67,16 +67,16 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update ticket");
+        throw new Error('Failed to update ticket');
       }
 
       const updatedTicket: unknown = await response.json(); // Corregido para evitar `any`
-      console.log("Ticket actualizado:", updatedTicket);
+      console.log('Ticket actualizado:', updatedTicket);
 
       // You can add a success notification here
       onClose();
     } catch (error) {
-      console.error("Error updating ticket:", error);
+      console.error('Error updating ticket:', error);
       // You can add an error notification here
     }
   };
@@ -174,7 +174,7 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
               >
                 <option value={ticket?.assignedToId}>
-                  {ticket?.assignedToName ?? "Select User"}
+                  {ticket?.assignedToName ?? 'Select User'}
                 </option>
                 {/* Aquí puedes agregar más opciones dinámicamente */}
               </select>

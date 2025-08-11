@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 
 interface CourseFormProps {
   courseId?: string;
@@ -23,31 +23,31 @@ export function CourseForm({ courseId, modalidadesid }: CourseFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [courseData, setCourseData] = useState<CourseData>({
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     categoryId: 1,
     modalidadesid: modalidadesid ? parseInt(modalidadesid) : 1,
-    instructor: "",
+    instructor: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const url = courseId ? `/api/courses/${courseId}` : "/api/courses";
-      const method = courseId ? "PUT" : "POST";
+      const url = courseId ? `/api/courses/${courseId}` : '/api/courses';
+      const method = courseId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(courseData),
       });
 
-      if (!response.ok) throw new Error("Error al guardar el curso");
-      router.push("/dashboard/profesores/cursos");
+      if (!response.ok) throw new Error('Error al guardar el curso');
+      router.push('/dashboard/profesores/cursos');
       router.refresh();
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -87,12 +87,12 @@ export function CourseForm({ courseId, modalidadesid }: CourseFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push("/dashboard/profesores/cursos")}
+          onClick={() => router.push('/dashboard/profesores/cursos')}
         >
           Cancelar
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? "Guardando..." : courseId ? "Actualizar" : "Crear"}
+          {loading ? 'Guardando...' : courseId ? 'Actualizar' : 'Crear'}
         </Button>
       </div>
     </form>

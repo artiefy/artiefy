@@ -3,8 +3,8 @@ export interface StudentTicket {
   email: string;
   description: string;
   comments: string;
-  estado: "abierto" | "en proceso" | "en revision" | "solucionado" | "cerrado";
-  tipo: "otro" | "bug" | "revision" | "logs";
+  estado: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
+  tipo: 'otro' | 'bug' | 'revision' | 'logs';
   creatorId: string;
   coverImageKey?: string | null;
   videoKey?: string | null;
@@ -16,7 +16,7 @@ export interface StudentTicket {
 export interface CreateStudentTicketDTO {
   email: string;
   description: string;
-  tipo: StudentTicket["tipo"];
-  estado: StudentTicket["estado"];
+  tipo: StudentTicket['tipo'];
+  estado: StudentTicket['estado'];
   title?: string; // Optional title for the ticket
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 interface ClerkUserResponse {
   id: string;
@@ -15,7 +15,7 @@ const getClerkUser = async (userId: string) => {
     const res = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
       headers: {
         Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -27,22 +27,22 @@ const getClerkUser = async (userId: string) => {
     const userData: ClerkUserResponse = (await res.json()) as ClerkUserResponse;
 
     // Verificar el valor de created_at que llega de Clerk
-    console.log("Fecha de creación recibida:", userData.created_at);
+    console.log('Fecha de creación recibida:', userData.created_at);
 
     // Asegurarnos de que la fecha sea válida
     const createdAt = new Date(userData.created_at);
     const formattedCreatedAt =
       createdAt instanceof Date && !isNaN(createdAt.getTime())
         ? createdAt.toLocaleDateString()
-        : "Fecha no disponible";
-    console.log("Fecha formateada:", formattedCreatedAt);
+        : 'Fecha no disponible';
+    console.log('Fecha formateada:', formattedCreatedAt);
 
     // Obtener rol y estado de los metadatos
-    const role = userData.public_metadata?.role ?? "Sin rol";
-    const status = userData.public_metadata?.status ?? "Activo";
+    const role = userData.public_metadata?.role ?? 'Sin rol';
+    const status = userData.public_metadata?.status ?? 'Activo';
 
     const permissions: string[] = Array.isArray(
-      userData.public_metadata?.permissions,
+      userData.public_metadata?.permissions
     )
       ? userData.public_metadata.permissions
       : [];
@@ -50,18 +50,18 @@ const getClerkUser = async (userId: string) => {
     const user = {
       id: userData.id,
       name: `${userData.first_name} ${userData.last_name}`,
-      email: userData.email_addresses?.[0]?.email_address || "Sin correo",
+      email: userData.email_addresses?.[0]?.email_address || 'Sin correo',
       createdAt: formattedCreatedAt,
       profileImage: userData.profile_image_url || null, // Cambiado: enviar null si no hay imagen
       role,
       status,
-      password: "No disponible", // Clerk no expone la contraseña
+      password: 'No disponible', // Clerk no expone la contraseña
       permissions,
     };
 
     return user;
   } catch (error) {
-    console.error("Error al obtener usuario de Clerk:", error);
+    console.error('Error al obtener usuario de Clerk:', error);
     return null;
   }
 };
@@ -70,12 +70,12 @@ const getClerkUser = async (userId: string) => {
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const userId = url.searchParams.get("id");
+    const userId = url.searchParams.get('id');
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Falta el ID del usuario" },
-        { status: 400 },
+        { error: 'Falta el ID del usuario' },
+        { status: 400 }
       );
     }
 
@@ -83,19 +83,19 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Usuario no encontrado" },
-        { status: 404 },
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error en la API de usuario:", error);
+    console.error('Error en la API de usuario:', error);
     const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+      error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
       { error: `Error en el servidor: ${errorMessage}` },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

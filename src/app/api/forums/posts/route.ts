@@ -1,18 +1,18 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { eq, inArray } from "drizzle-orm";
-import nodemailer from "nodemailer";
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 import {
   createPost,
   deletePostById,
   getPostById,
   getPostsByForo,
-} from "~/models/educatorsModels/forumAndPosts";
-import { db } from "~/server/db";
-import { enrollments, forums, users } from "~/server/db/schema";
-import { ratelimit } from "~/server/ratelimit/ratelimit";
+} from '~/models/educatorsModels/forumAndPosts';
+import { db } from '~/server/db';
+import { enrollments, forums, users } from '~/server/db/schema';
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -20,16 +20,16 @@ const respondWithError = (message: string, status: number) =>
 // GET endpoint para obtener posts por foro
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const foroId = searchParams.get("foroId");
+  const foroId = searchParams.get('foroId');
 
   try {
     const posts = foroId ? await getPostsByForo(Number(foroId)) : [];
     return NextResponse.json(posts);
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: "Error al obtener los posts" },
-      { status: 500 },
+      { error: 'Error al obtener los posts' },
+      { status: 500 }
     );
   }
 }
@@ -39,21 +39,21 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     // Implement rate limiting
-    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
     const { success } = await ratelimit.limit(ip);
     if (!success) {
-      return respondWithError("Demasiadas solicitudes", 429);
+      return respondWithError('Demasiadas solicitudes', 429);
     }
 
     const clerkUser = await currentUser();
     if (!clerkUser) {
       return respondWithError(
-        "No se pudo obtener información del usuario",
-        500,
+        'No se pudo obtener información del usuario',
+        500
       );
     }
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { content, foroId } = body;
 
     await createPost(foroId, userId, content);
-    console.log("[FORO][POST] ✅ Post creado:", { foroId, userId, content });
+    console.log('[FORO][POST] ✅ Post creado:', { foroId, userId, content });
 
     try {
       // 1. Obtener el foro para acceder al courseId y userId del instructor
@@ -83,12 +83,12 @@ export async function POST(request: NextRequest) {
 
       const foro = foroResult[0];
       if (!foro) {
-        console.warn("[FORO][POST] ⚠️ Foro no encontrado.");
+        console.warn('[FORO][POST] ⚠️ Foro no encontrado.');
         return NextResponse.json({
-          message: "Post creado, pero foro no encontrado",
+          message: 'Post creado, pero foro no encontrado',
         });
       }
-      console.log("[FORO][POST] 🧩 Foro obtenido:", foro);
+      console.log('[FORO][POST] 🧩 Foro obtenido:', foro);
 
       // 2. Obtener userIds de estudiantes inscritos en ese curso
       const enrollmentResults = await db
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         .execute();
 
       const enrolledUserIds = enrollmentResults.map((e) => e.userId);
-      console.log("[FORO][POST] 🧑‍🎓 Estudiantes inscritos:", enrolledUserIds);
+      console.log('[FORO][POST] 🧑‍🎓 Estudiantes inscritos:', enrolledUserIds);
 
       // 3. Obtener correos de esos userIds
       const usersResult = await db
@@ -110,23 +110,23 @@ export async function POST(request: NextRequest) {
         .where(inArray(users.id, enrolledUserIds))
         .execute();
       console.log(
-        "[FORO][POST] 🧾 Correos recuperados de usuarios:",
-        usersResult,
+        '[FORO][POST] 🧾 Correos recuperados de usuarios:',
+        usersResult
       );
 
-      const senderEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+      const senderEmail = clerkUser.emailAddresses[0]?.emailAddress ?? '';
       const senderRole = clerkUser.publicMetadata?.role;
-      console.log("[FORO][POST] ✍️ Usuario que crea el post:", {
+      console.log('[FORO][POST] ✍️ Usuario que crea el post:', {
         email: senderEmail,
         role: senderRole,
       });
 
       const recipients = new Set<string>();
 
-      if (senderRole === "admin" || senderRole === "educador") {
+      if (senderRole === 'admin' || senderRole === 'educador') {
         // 4A. Si es educador, notificar a estudiantes inscritos
         for (const student of usersResult) {
-          console.log("[FORO][POST] Verificando correo:", {
+          console.log('[FORO][POST] Verificando correo:', {
             studentEmail: student.email,
             senderEmail,
             match: student.email !== senderEmail,
@@ -152,21 +152,21 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log("[FORO][POST] 📬 Correos a notificar:", [...recipients]);
+      console.log('[FORO][POST] 📬 Correos a notificar:', [...recipients]);
 
       // 5. Enviar correos si hay destinatarios
       if (recipients.size > 0) {
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          service: 'gmail',
           auth: {
-            user: "direcciongeneral@artiefy.com",
+            user: 'direcciongeneral@artiefy.com',
             pass: process.env.PASS,
           },
         });
 
         await transporter.sendMail({
           from: '"Artiefy Foros" <direcciongeneral@artiefy.com>',
-          to: Array.from(recipients).join(","),
+          to: Array.from(recipients).join(','),
           subject: `📝 Nuevo post en el foro: ${foro.title}`,
           html: `
   <div style="font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; padding: 20px;">
@@ -195,28 +195,28 @@ export async function POST(request: NextRequest) {
   </div>
 `,
         });
-        console.log("[FORO][POST] ✅ Correos enviados exitosamente.");
+        console.log('[FORO][POST] ✅ Correos enviados exitosamente.');
       } else {
-        console.log("[FORO][POST] ⚠️ No hay destinatarios para el correo.");
+        console.log('[FORO][POST] ⚠️ No hay destinatarios para el correo.');
       }
     } catch (err) {
       console.error(
-        "[FORO][POST] ❌ Error en lógica de envío de correos:",
-        err,
+        '[FORO][POST] ❌ Error en lógica de envío de correos:',
+        err
       );
     }
 
-    console.log("Datos enviados al servidor:", {
+    console.log('Datos enviados al servidor:', {
       content,
       userId,
       foroId,
     });
 
-    return NextResponse.json({ message: "Post creado exitosamente" });
+    return NextResponse.json({ message: 'Post creado exitosamente' });
   } catch (error: unknown) {
-    console.error("Error al crear el post:", error);
+    console.error('Error al crear el post:', error);
     const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+      error instanceof Error ? error.message : 'Error desconocido';
     return respondWithError(`Error al crear el post: ${errorMessage}`, 500);
   }
 }
@@ -226,30 +226,30 @@ export async function DELETE(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     const { searchParams } = new URL(request.url);
-    const postId = searchParams.get("postId");
+    const postId = searchParams.get('postId');
 
     if (!postId) {
-      return respondWithError("ID no proporcionado", 400);
+      return respondWithError('ID no proporcionado', 400);
     }
 
     const parsedPostId = parseInt(postId);
     const post = await getPostById(parsedPostId);
     if (!post) {
-      return respondWithError("Post no encontrado", 404);
+      return respondWithError('Post no encontrado', 404);
     }
 
     if (post.userId !== userId) {
-      return respondWithError("No autorizado para eliminar este post", 403);
+      return respondWithError('No autorizado para eliminar este post', 403);
     }
 
     await deletePostById(parsedPostId);
-    return NextResponse.json({ message: "Post eliminado exitosamente" });
+    return NextResponse.json({ message: 'Post eliminado exitosamente' });
   } catch (error) {
-    console.error("Error al eliminar el post:", error);
-    return respondWithError("Error al eliminar el post", 500);
+    console.error('Error al eliminar el post:', error);
+    return respondWithError('Error al eliminar el post', 500);
   }
 }

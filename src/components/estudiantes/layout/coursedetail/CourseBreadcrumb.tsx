@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { FaHome, FaUserGraduate } from "react-icons/fa";
-import { HiAcademicCap } from "react-icons/hi";
+import { FaHome, FaUserGraduate } from 'react-icons/fa';
+import { HiAcademicCap } from 'react-icons/hi';
 
 import {
   Breadcrumb,
@@ -10,7 +10,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "~/components/estudiantes/ui/breadcrumb";
+} from '~/components/estudiantes/ui/breadcrumb';
 
 interface CourseBreadcrumbProps {
   title: string;

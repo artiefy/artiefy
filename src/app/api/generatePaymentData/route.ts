@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { env } from "~/env";
-import { type FormData } from "~/types/payu";
-import { getAuthConfig } from "~/utils/paygateway/auth";
-import { createFormData } from "~/utils/paygateway/form";
-import { getProductById } from "~/utils/paygateway/products";
+import { env } from '~/env';
+import { type FormData } from '~/types/payu';
+import { getAuthConfig } from '~/utils/paygateway/auth';
+import { createFormData } from '~/utils/paygateway/form';
+import { getProductById } from '~/utils/paygateway/products';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,14 +22,14 @@ export async function POST(req: NextRequest) {
       !body.telephone
     ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: 'Missing required fields' },
+        { status: 400 }
       );
     }
 
     const product = getProductById(body.productId);
     if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
     const auth = getAuthConfig();
@@ -40,15 +40,15 @@ export async function POST(req: NextRequest) {
       body.buyerFullName,
       body.telephone,
       `${env.NEXT_PUBLIC_BASE_URL}/gracias?type=plan&from=payu`, // Añade from=payu
-      "plan", // Specify payment type as plan
+      'plan' // Specify payment type as plan
     );
 
     return NextResponse.json(formData);
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
+      { error: 'Internal Server Error' },
+      { status: 500 }
     );
   }
 }

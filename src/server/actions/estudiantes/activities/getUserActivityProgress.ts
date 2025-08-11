@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { userActivitiesProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
-import type { UserActivitiesProgress } from "~/types";
+import type { UserActivitiesProgress } from '~/types';
 
 export async function getUserActivityProgress(
-  userId: string,
+  userId: string
 ): Promise<UserActivitiesProgress[]> {
   try {
     const activitiesProgress = await db.query.userActivitiesProgress.findMany({
@@ -22,9 +22,9 @@ export async function getUserActivityProgress(
     })) as UserActivitiesProgress[];
   } catch (error) {
     console.error(
-      "Error al obtener el progreso de las actividades del usuario:",
-      error,
+      'Error al obtener el progreso de las actividades del usuario:',
+      error
     );
-    throw new Error("Failed to fetch user activity progress");
+    throw new Error('Failed to fetch user activity progress');
   }
 }

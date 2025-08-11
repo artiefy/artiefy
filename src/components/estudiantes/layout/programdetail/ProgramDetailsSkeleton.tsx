@@ -1,14 +1,14 @@
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import {
   Card,
   CardContent,
   CardHeader,
-} from "~/components/estudiantes/ui/card";
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+} from '~/components/estudiantes/ui/card';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export function ProgramDetailsSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
         <Card className="overflow-hidden p-0">
           <CardHeader className="px-0">

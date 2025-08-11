@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { db } from "~/server/db";
-import { roleSecundarioPermisos, rolesSecundarios } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { roleSecundarioPermisos, rolesSecundarios } from '~/server/db/schema';
 
 interface CreateRoleBody {
   name: string;
@@ -11,12 +11,12 @@ interface CreateRoleBody {
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as CreateRoleBody;
-    console.log("Body recibido:", body);
+    console.log('Body recibido:', body);
 
     const { name, permisos } = body;
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
+      return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 });
     }
 
     const inserted = await db
@@ -24,10 +24,10 @@ export async function POST(req: Request) {
       .values({ name })
       .returning();
 
-    console.log("Insert result:", inserted);
+    console.log('Insert result:', inserted);
 
     const newRole = inserted[0];
-    if (!newRole) throw new Error("No se insertó el rol");
+    if (!newRole) throw new Error('No se insertó el rol');
 
     if (Array.isArray(permisos) && permisos.length > 0) {
       const relations = permisos.map((permisoId) => ({
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       permisos: permisos ?? [],
     });
   } catch (error) {
-    console.error("Error al crear rol secundario:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al crear rol secundario:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

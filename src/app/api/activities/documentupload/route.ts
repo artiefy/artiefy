@@ -1,7 +1,7 @@
-import { S3Client } from "@aws-sdk/client-s3";
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import { Redis } from "@upstash/redis";
-import { v4 as uuidv4 } from "uuid";
+import { S3Client } from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { Redis } from '@upstash/redis';
+import { v4 as uuidv4 } from 'uuid';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -19,7 +19,7 @@ interface DocumentMetadata {
   key: string;
   fileUrl: string;
   fileName: string;
-  status: "pending" | "reviewed";
+  status: 'pending' | 'reviewed';
   grade?: number;
   feedback?: string;
 }
@@ -32,8 +32,8 @@ export async function POST(request: Request) {
 
     if (!filename || !contentType || !activityId || !userId) {
       return Response.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: 'Missing required fields' },
+        { status: 400 }
       );
     }
 
@@ -54,12 +54,12 @@ export async function POST(request: Request) {
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: key,
       Conditions: [
-        ["content-length-range", 0, 10485760], // 10 MB limit
-        ["starts-with", "$Content-Type", contentType],
+        ['content-length-range', 0, 10485760], // 10 MB limit
+        ['starts-with', '$Content-Type', contentType],
       ],
       Fields: {
-        acl: "public-read",
-        "Content-Type": contentType,
+        acl: 'public-read',
+        'Content-Type': contentType,
       },
       Expires: 600, // 10 minutes
     });
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       key,
       fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
       fileName: filename,
-      status: "pending", // Reset status to pending for resubmissions
+      status: 'pending', // Reset status to pending for resubmissions
     };
 
     // Always update the metadata for the document, allowing resubmissions
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
     });
   } catch (error) {
-    console.error("Document upload error:", error);
+    console.error('Document upload error:', error);
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { and, eq } from "drizzle-orm";
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   activities,
   courses,
@@ -15,19 +15,19 @@ import {
   userLessonsProgress,
   users,
   userTimeTracking,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export async function GET(
   _req: Request,
-  context: { params: { courseId?: string; userId?: string } },
+  context: { params: { courseId?: string; userId?: string } }
 ) {
   const courseId = context?.params?.courseId;
   const userId = context?.params?.userId;
 
   if (!courseId || !userId) {
     return NextResponse.json(
-      { error: "Faltan parámetros requeridos" },
-      { status: 400 },
+      { error: 'Faltan parámetros requeridos' },
+      { status: 400 }
     );
   }
 
@@ -39,15 +39,15 @@ export async function GET(
       .where(
         and(
           eq(enrollments.courseId, Number(courseId)),
-          eq(enrollments.userId, userId),
-        ),
+          eq(enrollments.userId, userId)
+        )
       )
       .limit(1);
 
     if (existingEnrollment.length === 0) {
       return NextResponse.json(
-        { error: "El usuario no está inscrito en este curso" },
-        { status: 404 },
+        { error: 'El usuario no está inscrito en este curso' },
+        { status: 404 }
       );
     }
 
@@ -80,8 +80,8 @@ export async function GET(
       : [];
 
     console.log(
-      "📊 Parámetros de Evaluación obtenidos:",
-      formattedEvaluationParameters,
+      '📊 Parámetros de Evaluación obtenidos:',
+      formattedEvaluationParameters
     );
 
     const courseInfo = await db
@@ -103,7 +103,7 @@ export async function GET(
       .where(eq(userLessonsProgress.userId, userId));
 
     const completedLessons = totalLessons.filter(
-      (lesson) => lesson.isCompleted,
+      (lesson) => lesson.isCompleted
     );
 
     // 🔹 Calcular porcentaje de progreso
@@ -124,20 +124,20 @@ export async function GET(
       .from(userActivitiesProgress)
       .leftJoin(
         activities,
-        eq(userActivitiesProgress.activityId, activities.id),
+        eq(userActivitiesProgress.activityId, activities.id)
       )
       .leftJoin(
         scores,
         and(
           eq(scores.userId, userId),
-          eq(userActivitiesProgress.activityId, activities.id),
-        ),
+          eq(userActivitiesProgress.activityId, activities.id)
+        )
       )
       .where(eq(userActivitiesProgress.userId, userId));
 
     const totalActivities = activityDetails.length;
     const completedActivities = activityDetails.filter(
-      (a) => a.isCompleted,
+      (a) => a.isCompleted
     ).length;
 
     // 🔹 Contar mensajes en foros
@@ -163,21 +163,21 @@ export async function GET(
 
     const totalTime = totalTimeSpent.reduce(
       (acc, time) => acc + (time.timeSpent || 0),
-      0,
+      0
     );
 
     // 🔹 Calcular nota global del curso basada en actividades
     const totalActivityScore = activityDetails.reduce(
       (sum, activity) => sum + (activity.score ?? 0),
-      0,
+      0
     );
     const globalCourseScore =
       totalActivities > 0
         ? (totalActivityScore / totalActivities).toFixed(2)
-        : "0.00";
+        : '0.00';
 
     // 🔹 Enviar la respuesta final con los parámetros corregidos
-    console.log("📊 Enviando respuesta final:", {
+    console.log('📊 Enviando respuesta final:', {
       success: true,
       enrolled: true,
       user: userInfo[0] || {},
@@ -219,10 +219,10 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("❌ Error obteniendo datos del curso:", error);
+    console.error('❌ Error obteniendo datos del curso:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

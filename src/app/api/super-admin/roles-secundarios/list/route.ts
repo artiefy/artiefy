@@ -1,11 +1,11 @@
 // /api/super-admin/roles-secundarios/list/route.ts
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { roleSecundarioPermisos, rolesSecundarios } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { roleSecundarioPermisos, rolesSecundarios } from '~/server/db/schema';
 
 export async function GET() {
   try {
@@ -24,12 +24,12 @@ export async function GET() {
           ...rol,
           permisos: permisosIds, // ✅ Solo los IDs
         };
-      }),
+      })
     );
 
     return NextResponse.json(rolesWithPermisos);
   } catch (error) {
-    console.error("Error al listar roles secundarios:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al listar roles secundarios:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

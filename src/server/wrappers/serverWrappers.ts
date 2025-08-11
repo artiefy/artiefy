@@ -1,7 +1,7 @@
 // serverWrappers.ts
-"use server";
+'use server';
 
-import { removeRole, setRole } from "~/server/actions/admin/user/_actions";
+import { removeRole, setRole } from '~/server/actions/admin/user/_actions';
 
 // Wrapper para setRole
 export async function setRoleWrapper(formData: FormData) {

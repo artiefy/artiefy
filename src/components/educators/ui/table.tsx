@@ -1,8 +1,8 @@
-import React from "react";
+import React from 'react';
 
 export function Table({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="w-full overflow-x-auto">
       <table className="min-w-full bg-white">{children}</table>
     </div>
   );
@@ -14,7 +14,7 @@ export function TableHead({ children }: { children: React.ReactNode }) {
 
 export function TableHeader({ children }: { children: React.ReactNode }) {
   return (
-    <tr className="text-xs text-gray-500 uppercase tracking-wider">
+    <tr className="text-xs tracking-wider text-gray-500 uppercase">
       {children}
     </tr>
   );
@@ -25,12 +25,12 @@ export function TableBody({ children }: { children: React.ReactNode }) {
 }
 
 export function TableRow({ children }: { children: React.ReactNode }) {
-  return <tr className="hover:bg-gray-50 transition">{children}</tr>;
+  return <tr className="transition hover:bg-gray-50">{children}</tr>;
 }
 
 export function TableCell({
   children,
-  className = "",
+  className = '',
 }: {
   children: React.ReactNode;
   className?: string;

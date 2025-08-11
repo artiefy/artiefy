@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 
-import { Modal } from "~/components/shared/Modal";
+import { Modal } from '~/components/shared/Modal';
 
 interface FormData {
   email: string;
@@ -26,14 +26,14 @@ const TicketModal = ({
 }: TicketModalProps) => {
   const initialFormState = useMemo<FormData>(
     () => ({
-      email: "",
-      tipo: "",
-      estado: "",
-      assignedToId: "",
-      description: "",
-      comments: "",
+      email: '',
+      tipo: '',
+      estado: '',
+      assignedToId: '',
+      description: '',
+      comments: '',
     }),
-    [],
+    []
   );
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
@@ -41,12 +41,12 @@ const TicketModal = ({
   useEffect(() => {
     if (ticket) {
       setFormData({
-        email: ticket.email ?? "",
-        tipo: ticket.tipo ?? "",
-        estado: ticket.estado ?? "",
-        assignedToId: ticket.assignedToId ?? "",
-        description: ticket.description ?? "",
-        comments: ticket.comments ?? "",
+        email: ticket.email ?? '',
+        tipo: ticket.tipo ?? '',
+        estado: ticket.estado ?? '',
+        assignedToId: ticket.assignedToId ?? '',
+        description: ticket.description ?? '',
+        comments: ticket.comments ?? '',
       });
     } else {
       setFormData(initialFormState);
@@ -58,11 +58,11 @@ const TicketModal = ({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/users");
+        const response = await fetch('/api/users');
         const data = (await response.json()) as { id: string; name: string }[];
         setUsers(data);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error('Error fetching users:', error);
       }
     };
 
@@ -72,7 +72,7 @@ const TicketModal = ({
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -90,7 +90,7 @@ const TicketModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={ticket ? "Editar Ticket" : "Crear Ticket"}
+      title={ticket ? 'Editar Ticket' : 'Crear Ticket'}
     >
       <form
         onSubmit={handleSubmit}
@@ -109,7 +109,7 @@ const TicketModal = ({
                   className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white shadow-sm"
                 >
                   <option value="">
-                    {ticket?.assignedToName ?? "Seleccionar usuario"}
+                    {ticket?.assignedToName ?? 'Seleccionar usuario'}
                   </option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -214,7 +214,7 @@ const TicketModal = ({
             type="submit"
             className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            {ticket ? "Guardar Cambios" : "Crear Ticket"}
+            {ticket ? 'Guardar Cambios' : 'Crear Ticket'}
           </button>
         </div>
       </form>

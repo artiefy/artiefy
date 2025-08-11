@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useProgress } from "@bprogress/next";
+import { useProgress } from '@bprogress/next';
 
 import {
   Pagination,
@@ -14,7 +14,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "~/components/estudiantes/ui/pagination";
+} from '~/components/estudiantes/ui/pagination';
 
 interface PaginationContainerProps {
   totalPages: number;
@@ -30,7 +30,7 @@ const StudentPagination = ({
   totalPages,
   currentPage,
   totalCourses,
-  route = "/estudiantes",
+  route = '/estudiantes',
   category,
   searchTerm,
   itemsPerPage = 9,
@@ -49,17 +49,17 @@ const StudentPagination = ({
 
       // Only add page parameter if not page 1
       if (page !== 1) {
-        params.append("page", page.toString());
+        params.append('page', page.toString());
       }
 
       // Add optional parameters if present
-      if (category) params.append("category", category);
-      if (searchTerm) params.append("searchTerm", searchTerm);
+      if (category) params.append('category', category);
+      if (searchTerm) params.append('searchTerm', searchTerm);
 
       const queryString = params.toString();
       return queryString ? `${route}?${queryString}` : route;
     },
-    [category, route, searchTerm],
+    [category, route, searchTerm]
   );
 
   const handlePageChange = useCallback(
@@ -68,7 +68,7 @@ const StudentPagination = ({
       const newUrl = buildUrl(page);
       router.push(newUrl, { scroll: false });
     },
-    [buildUrl, router, start],
+    [buildUrl, router, start]
   );
 
   // Calculate pagination range
@@ -77,13 +77,13 @@ const StudentPagination = ({
       startItem: (currentPage - 1) * itemsPerPage + 1,
       endItem: Math.min(currentPage * itemsPerPage, totalCourses),
     }),
-    [currentPage, itemsPerPage, totalCourses],
+    [currentPage, itemsPerPage, totalCourses]
   );
 
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-col items-center justify-between space-y-4 py-8 div-pagination">
+    <div className="div-pagination flex flex-col items-center justify-between space-y-4 py-8">
       <p className="text-sm text-gray-600">
         Mostrando {startItem}-{endItem} de {totalCourses} cursos
       </p>
@@ -93,7 +93,7 @@ const StudentPagination = ({
             <PaginationPrevious
               onClick={() => handlePageChange(currentPage - 1)}
               className={`cursor-pointer active:scale-95 ${
-                currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                currentPage === 1 ? 'pointer-events-none opacity-50' : ''
               }`}
               aria-disabled={currentPage === 1}
             />
@@ -136,8 +136,8 @@ const StudentPagination = ({
               onClick={() => handlePageChange(currentPage + 1)}
               className={`cursor-pointer active:scale-95 ${
                 currentPage === totalPages
-                  ? "pointer-events-none opacity-50"
-                  : ""
+                  ? 'pointer-events-none opacity-50'
+                  : ''
               }`}
               aria-disabled={currentPage === totalPages}
             />

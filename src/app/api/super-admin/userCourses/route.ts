@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getCoursesByUserIdSimplified } from "~/models/super-adminModels/courseModelsSuperAdmin";
+import { getCoursesByUserIdSimplified } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
+    const userId = url.searchParams.get('userId');
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Falta el ID del usuario" },
-        { status: 400 },
+        { error: 'Falta el ID del usuario' },
+        { status: 400 }
       );
     }
 
@@ -30,14 +30,14 @@ export async function GET(request: Request) {
       coverImageKey: course.coverImageKey ?? null, // ✅ Mantiene `coverImageKey` sin modificar
       coverImage: course.coverImageKey
         ? `/path/to/images/${course.coverImageKey}`
-        : "/default-course-image.png",
+        : '/default-course-image.png',
     }));
 
     // Log para ver los cursos filtrados antes de devolverlos
 
     return NextResponse.json({ courses: filteredCourses }, { status: 200 });
   } catch (error) {
-    console.error("Error al obtener los cursos del usuario:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al obtener los cursos del usuario:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

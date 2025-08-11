@@ -15,20 +15,20 @@ export async function getGraphToken() {
   const res = await fetch(
     `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
     {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        grant_type: "client_credentials",
+        grant_type: 'client_credentials',
         client_id: clientId,
         client_secret: clientSecret,
-        scope: "https://graph.microsoft.com/.default",
+        scope: 'https://graph.microsoft.com/.default',
       }),
-    },
+    }
   );
 
   const data = (await res.json()) as GraphTokenResponse;
 
   if (!res.ok)
-    throw new Error(data.error_description ?? "Error obteniendo token");
+    throw new Error(data.error_description ?? 'Error obteniendo token');
   return data.access_token;
 }

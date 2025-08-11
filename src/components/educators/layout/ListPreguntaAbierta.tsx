@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import { Edit, Trash } from "lucide-react";
-import { toast } from "sonner";
+import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 
-import PreguntasAbiertas from "~/components/educators/layout/PreguntasAbiertas";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { Completado } from "~/types/typesActi";
+import type { Completado } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
-  onEdit?: (question: Completado & { tipo: "COMPLETADO" }) => void;
+  onEdit?: (question: Completado & { tipo: 'COMPLETADO' }) => void;
   shouldRefresh?: boolean; // ✅ NUEVA PROP
 }
 
@@ -33,10 +33,10 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/educadores/question/completar?activityId=${activityId}`,
+        `/api/educadores/question/completar?activityId=${activityId}`
       );
       if (!response.ok) {
-        throw new Error("Error al obtener las preguntas");
+        throw new Error('Error al obtener las preguntas');
       }
       const data = (await response.json()) as {
         success: boolean;
@@ -46,15 +46,15 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
       if (data.success) {
         const filteredQuestions =
           data.questionsACompletar?.filter(
-            (q) => q?.text && q?.correctAnswer,
+            (q) => q?.text && q?.correctAnswer
           ) ?? [];
 
         setQuestions(filteredQuestions);
       }
     } catch (error) {
-      console.error("Error al cargar las preguntas:", error);
-      toast("Error", {
-        description: "Error al cargar las preguntas",
+      console.error('Error al cargar las preguntas:', error);
+      toast('Error', {
+        description: 'Error al cargar las preguntas',
       });
     } finally {
       setLoading(false);
@@ -68,7 +68,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
 
   const handleEdit = (question: Completado) => {
     if (onEdit) {
-      onEdit({ ...question, tipo: "COMPLETADO" }); // pasa al padre con tipo
+      onEdit({ ...question, tipo: 'COMPLETADO' }); // pasa al padre con tipo
     } else {
       setEditingQuestion(question); // local
     }
@@ -86,22 +86,22 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
       const response = await fetch(
         `/api/educadores/question/completar?activityId=${activityId}&questionId=${questionId}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
       if (response.ok) {
         // Actualizar el estado local en lugar de hacer fetch
         setQuestions((prevQuestions) =>
-          prevQuestions.filter((q) => q.id !== questionId),
+          prevQuestions.filter((q) => q.id !== questionId)
         );
-        toast("Pregunta eliminada", {
-          description: "La pregunta se eliminó correctamente",
+        toast('Pregunta eliminada', {
+          description: 'La pregunta se eliminó correctamente',
         });
       }
     } catch (error) {
-      console.error("Error al eliminar la pregunta:", error);
-      toast("Error", {
-        description: "Error al eliminar la pregunta",
+      console.error('Error al eliminar la pregunta:', error);
+      toast('Error', {
+        description: 'Error al eliminar la pregunta',
       });
     }
   };

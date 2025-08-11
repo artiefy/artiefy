@@ -33,7 +33,7 @@ export interface BaseCourse {
 }
 
 // Add this type
-export type SubscriptionLevel = "none" | "pro" | "premium";
+export type SubscriptionLevel = 'none' | 'pro' | 'premium';
 
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
@@ -211,7 +211,7 @@ export interface Activity {
 export interface Question {
   id: string;
   text: string;
-  type: "VOF" | "OM" | "COMPLETAR";
+  type: 'VOF' | 'OM' | 'COMPLETAR';
   correctOptionId?: string;
   options?: Option[];
   correctAnswer?: string;

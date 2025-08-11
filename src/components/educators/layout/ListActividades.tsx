@@ -1,20 +1,20 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
-import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
-import { Badge } from "~/components/educators/ui/badge";
+import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
+} from '~/components/educators/ui/card';
 
 // Interfaz para las actividades
 interface ActividadModels {
@@ -49,16 +49,16 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
   const [loading, setLoading] = useState(true); // Estado para el estado de carga
   const [error, setError] = useState<string | null>(null); // Estado para el error
 
-  const lessonIdString = lessonId ? lessonId.toString() : ""; // Convertimos el lessonId a string
+  const lessonIdString = lessonId ? lessonId.toString() : ''; // Convertimos el lessonId a string
 
   // Función para obtener el contraste de un color
   const getContrastYIQ = (hexcolor: string) => {
-    hexcolor = hexcolor.replace("#", "");
+    hexcolor = hexcolor.replace('#', '');
     const r = parseInt(hexcolor.substr(0, 2), 16);
     const g = parseInt(hexcolor.substr(2, 2), 16);
     const b = parseInt(hexcolor.substr(4, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "black" : "white";
+    return yiq >= 128 ? 'black' : 'white';
   };
 
   // Fetch de las lecciones cuando el courseId cambia
@@ -69,21 +69,21 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
         setError(null);
         try {
           const response = await fetch(
-            `/api/educadores/actividades/actividadesByLesson?lessonId=${lessonIdString}`,
+            `/api/educadores/actividades/actividadesByLesson?lessonId=${lessonIdString}`
           );
 
           if (!response.ok) {
             const errorData = (await response.json()) as { error?: string };
             throw new Error(
-              errorData.error ?? "Error al obtener las lecciones",
+              errorData.error ?? 'Error al obtener las lecciones'
             );
           }
 
           const data = (await response.json()) as ActividadModels[];
           setActividades(data); // Setea las lecciones obtenidas
         } catch (error) {
-          setError("Error al obtener las lecciones"); // Error general
-          console.error("Error al obtener las lecciones:", error);
+          setError('Error al obtener las lecciones'); // Error general
+          console.error('Error al obtener las lecciones:', error);
         } finally {
           setLoading(false);
         }
@@ -136,7 +136,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
                         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
                         : `/favicon.ico`
                     }
-                    alt={actividad.name || "Imagen del curso"}
+                    alt={actividad.name || 'Imagen del curso'}
                     className={`relative mx-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
                     height={150}
                     width={150}
@@ -145,7 +145,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
                 </CardHeader>
                 <CardContent
                   className={`${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   <CardTitle className="text-lg">
@@ -158,7 +158,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
                       Clase:
                       <Badge
                         variant="outline"
-                        className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+                        className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                       >
                         {actividad.lessonsId.title}
                       </Badge>

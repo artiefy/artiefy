@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   courses,
   enrollmentPrograms,
@@ -12,24 +12,24 @@ import {
   userCustomFields,
   userLessonsProgress,
   users,
-} from "~/server/db/schema";
-import { sortLessons } from "~/utils/lessonSorting";
+} from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const programId = url.searchParams.get("programId");
+  const programId = url.searchParams.get('programId');
 
   try {
     const latestDates = db
       .select({
         userId: enrollmentPrograms.userId,
         latestEnrolledAt: sql`MAX(${enrollmentPrograms.enrolledAt})`.as(
-          "latestEnrolledAt",
+          'latestEnrolledAt'
         ),
       })
       .from(enrollmentPrograms)
       .groupBy(enrollmentPrograms.userId)
-      .as("latest_dates");
+      .as('latest_dates');
 
     const latestEnrollments = db
       .select({
@@ -42,10 +42,10 @@ export async function GET(req: Request) {
         latestDates,
         and(
           eq(enrollmentPrograms.userId, latestDates.userId),
-          eq(enrollmentPrograms.enrolledAt, latestDates.latestEnrolledAt),
-        ),
+          eq(enrollmentPrograms.enrolledAt, latestDates.latestEnrolledAt)
+        )
       )
-      .as("latest_enrollments");
+      .as('latest_enrollments');
 
     const allEnrollments = await db
       .select({
@@ -68,12 +68,12 @@ export async function GET(req: Request) {
       .select({
         userId: enrollments.userId,
         latestEnrolledAt: sql`MAX(${enrollments.enrolledAt})`.as(
-          "latestEnrolledAt",
+          'latestEnrolledAt'
         ),
       })
       .from(enrollments)
       .groupBy(enrollments.userId)
-      .as("latest_course_dates");
+      .as('latest_course_dates');
 
     // 2) Únete a esa subconsulta para quedarte sólo con la fila más reciente
     const latestCourseEnrollments = db
@@ -87,10 +87,10 @@ export async function GET(req: Request) {
         latestCourseDates,
         and(
           eq(enrollments.userId, latestCourseDates.userId),
-          eq(enrollments.enrolledAt, latestCourseDates.latestEnrolledAt),
-        ),
+          eq(enrollments.enrolledAt, latestCourseDates.latestEnrolledAt)
+        )
       )
-      .as("latest_course_enrollments");
+      .as('latest_course_enrollments');
 
     // Traer los campos dinámicos
     const customFields = await db
@@ -131,23 +131,23 @@ export async function GET(req: Request) {
 			JOIN courses c ON c.nivelid = n.id
 			JOIN enrollments e ON e.course_id = c.id
 			WHERE e.user_id = ${users.id}
-			LIMIT 1)`.as("nivelNombre"),
+			LIMIT 1)`.as('nivelNombre'),
       })
       .from(users)
       .innerJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
       .innerJoin(programas, eq(latestEnrollments.programaId, programas.id))
       .innerJoin(
         latestCourseEnrollments,
-        eq(users.id, latestCourseEnrollments.userId),
+        eq(users.id, latestCourseEnrollments.userId)
       )
       .innerJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
       .where(
         programId
           ? and(
-              eq(users.role, "estudiante"),
-              eq(programas.id, Number(programId)),
+              eq(users.role, 'estudiante'),
+              eq(programas.id, Number(programId))
             )
-          : eq(users.role, "estudiante"),
+          : eq(users.role, 'estudiante')
       );
 
     // Agregar los campos dinámicos a cada estudiante
@@ -159,7 +159,7 @@ export async function GET(req: Request) {
 
     const coursesList = await db
       .select({
-        id: sql<string>`CAST(${courses.id} AS TEXT)`.as("id"),
+        id: sql<string>`CAST(${courses.id} AS TEXT)`.as('id'),
         title: courses.title,
       })
       .from(courses);
@@ -175,10 +175,10 @@ export async function GET(req: Request) {
       courses: coursesList,
     });
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error('❌ Error:', error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 },
+      { error: 'Internal Server Error' },
+      { status: 500 }
     );
   }
 }
@@ -194,15 +194,15 @@ export async function POST(req: Request) {
 
     if (
       !rawBody ||
-      typeof rawBody !== "object" ||
-      !("userIds" in rawBody) ||
-      !("courseIds" in rawBody) ||
+      typeof rawBody !== 'object' ||
+      !('userIds' in rawBody) ||
+      !('courseIds' in rawBody) ||
       !Array.isArray((rawBody as EnrollmentRequestBody).userIds) ||
       !Array.isArray((rawBody as EnrollmentRequestBody).courseIds)
     ) {
       return NextResponse.json(
-        { error: "Parámetros inválidos" },
-        { status: 400 },
+        { error: 'Parámetros inválidos' },
+        { status: 400 }
       );
     }
 
@@ -210,7 +210,7 @@ export async function POST(req: Request) {
     const { userIds, courseIds } = body;
 
     if (!userIds || !courseIds) {
-      return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
     }
 
     const insertData: { userId: string; courseId: number }[] = [];
@@ -223,8 +223,8 @@ export async function POST(req: Request) {
           .where(
             and(
               eq(enrollments.userId, userId),
-              eq(enrollments.courseId, parseInt(courseId, 10)),
-            ),
+              eq(enrollments.courseId, parseInt(courseId, 10))
+            )
           )
           .limit(1);
 
@@ -246,7 +246,7 @@ export async function POST(req: Request) {
         const sortedLessons = sortLessons(courseLessons);
 
         const lessonIds: number[] = sortedLessons.map((lesson) =>
-          Number(lesson.id),
+          Number(lesson.id)
         );
 
         // Verificación defensiva
@@ -257,20 +257,20 @@ export async function POST(req: Request) {
         const existingProgress = await db.query.userLessonsProgress.findMany({
           where: and(
             eq(userLessonsProgress.userId, userId),
-            inArray(userLessonsProgress.lessonId, lessonIds),
+            inArray(userLessonsProgress.lessonId, lessonIds)
           ),
         });
 
         const existingProgressSet = new Set(
-          existingProgress.map((progress) => progress.lessonId),
+          existingProgress.map((progress) => progress.lessonId)
         );
 
         for (const [index, lesson] of sortedLessons.entries()) {
           if (!existingProgressSet.has(lesson.id)) {
             const isFirstOrWelcome =
               index === 0 ||
-              lesson.title.toLowerCase().includes("bienvenida") ||
-              lesson.title.toLowerCase().includes("clase 1");
+              lesson.title.toLowerCase().includes('bienvenida') ||
+              lesson.title.toLowerCase().includes('clase 1');
 
             await db.insert(userLessonsProgress).values({
               userId,
@@ -288,10 +288,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error al matricular estudiantes:", error);
+    console.error('Error al matricular estudiantes:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

@@ -1,25 +1,25 @@
 // pages/viewFiles.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Link from "next/link";
+import Link from 'next/link';
 
-import { Icons } from "~/components/educators/ui/icons";
+import { Icons } from '~/components/educators/ui/icons';
 
 const getIconForFileType = (fileName: string) => {
-  if (fileName === null || fileName === "") return <Icons.txt />;
-  const ext = fileName.split(".").pop()?.toLowerCase();
+  if (fileName === null || fileName === '') return <Icons.txt />;
+  const ext = fileName.split('.').pop()?.toLowerCase();
 
   switch (ext) {
-    case "pdf":
+    case 'pdf':
       return <Icons.pdf className="size-16" />;
-    case "docx":
-    case "doc":
+    case 'docx':
+    case 'doc':
       return <Icons.word className="size-16" />;
-    case "xlsx":
-    case "xls":
+    case 'xlsx':
+    case 'xls':
       return <Icons.excel className="size-16" />;
-    case "pptx":
-    case "ppt":
+    case 'pptx':
+    case 'ppt':
       return <Icons.powerPoint className="size-16" />;
     default:
       return <Icons.txt className="size-16" />;
@@ -43,7 +43,7 @@ interface ViewFilesProps {
 const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
   const [files, setFiles] = useState<FilesModels[]>([]);
   const [lessonFileName, setLessonFileName] = useState<LessonsModels | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,10 +59,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
     const fetchFiles = async () => {
       try {
         const res = await fetch(
-          `/api/educadores/getFiles?lessonId=${lessonIdNumber}`,
+          `/api/educadores/getFiles?lessonId=${lessonIdNumber}`
         );
         if (!res.ok) {
-          throw new Error("Error al obtener los archivos");
+          throw new Error('Error al obtener los archivos');
         }
 
         const data = (await res.json()) as FilesModels[];
@@ -70,18 +70,18 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
           const files = data.filter((file: { key: string }) => file.key); // Filtrar claves vacías y nombres vacíos
           setFiles(files); // Extraer claves y nombres de los archivos
         } else {
-          setError("Datos incorrectos recibidos de la API");
+          setError('Datos incorrectos recibidos de la API');
         }
       } catch (err: unknown) {
-        console.error("Error en la solicitud de archivos:", err);
-        setError("Hubo un problema al cargar los archivos");
+        console.error('Error en la solicitud de archivos:', err);
+        setError('Hubo un problema al cargar los archivos');
       } finally {
         setLoading(false);
       }
     };
 
     fetchFiles().catch((err: unknown) =>
-      console.error("Error fetching files:", err),
+      console.error('Error fetching files:', err)
     );
   }, [lessonId, lessonIdNumber]);
 
@@ -89,10 +89,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
     const fetchFilesName = async () => {
       try {
         const respuestaName = await fetch(
-          `/api/educadores/lessons/${lessonIdNumber}`,
+          `/api/educadores/lessons/${lessonIdNumber}`
         );
         if (!respuestaName.ok) {
-          throw new Error("Error al obtener los nombres de los archivos");
+          throw new Error('Error al obtener los nombres de los archivos');
         }
 
         const dataName: LessonsModels =
@@ -101,30 +101,30 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
           setLessonFileName(dataName); // Extraer claves y nombres de los archivos
         } else {
           setErrorNames(
-            "Datos incorrectos recibidos de la API name Files sources",
+            'Datos incorrectos recibidos de la API name Files sources'
           );
         }
       } catch (err: unknown) {
-        console.error("Error en la solicitud del nombre de los archivos:", err);
-        setErrorNames("Hubo un problema al cargar el nombre de los archivos");
+        console.error('Error en la solicitud del nombre de los archivos:', err);
+        setErrorNames('Hubo un problema al cargar el nombre de los archivos');
       } finally {
         setLoadingNames(false);
       }
     };
 
     fetchFilesName().catch((err: unknown) =>
-      console.error("Error fetching files:", err),
+      console.error('Error fetching files:', err)
     );
   }, [lessonId, lessonIdNumber]);
 
   if (loading) {
     return (
-      <div className="font-semibold text-primary">Cargando archivos...</div>
+      <div className="text-primary font-semibold">Cargando archivos...</div>
     );
   }
   if (loadingNames) {
     return (
-      <div className="font-semibold text-primary">
+      <div className="text-primary font-semibold">
         Cargando nombre de archivos...
       </div>
     );
@@ -132,7 +132,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 
   if (files.length === 0) {
     return (
-      <div className="font-semibold text-primary">
+      <div className="text-primary font-semibold">
         No hay archivos subidos actualmente!.
       </div>
     );
@@ -148,7 +148,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
   return (
     <div className="mt-6">
       <h1
-        className={`mb-4 text-2xl font-bold ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+        className={`mb-4 text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
       >
         Archivos de la clase
       </h1>
@@ -160,7 +160,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
           if (lessonFileName === null) {
             return null; // Manejar caso de nombre de archivo vacío
           }
-          const resourceNames = lessonFileName.resourceNames.split(","); // Separar resourceNames por comas
+          const resourceNames = lessonFileName.resourceNames.split(','); // Separar resourceNames por comas
 
           return (
             <Link
@@ -173,7 +173,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
               {icon}
 
               <p
-                className={`no-underline hover:underline ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+                className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
               >
                 {resourceNames[index] ?? file.fileName}
               </p>

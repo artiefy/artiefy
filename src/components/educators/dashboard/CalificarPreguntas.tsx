@@ -1,17 +1,17 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
-import { Input } from "~/components/educators/ui/input";
-import { Label } from "~/components/educators/ui/label";
+import { Button } from '~/components/educators/ui/button';
+import { Input } from '~/components/educators/ui/input';
+import { Label } from '~/components/educators/ui/label';
 import {
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
-} from "~/components/educators/ui/modal";
+} from '~/components/educators/ui/modal';
 
 // OJO: ESTA INTERFAZ NO ESTA TERMINADA POR TEMAS DE TIEMPO
 
@@ -31,10 +31,10 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 }) => {
   const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]); // Estado para las respuestas de los estudiantes
   const [selectedAnswer, setSelectedAnswer] = useState<StudentAnswer | null>(
-    null,
+    null
   ); // Estado para la respuesta seleccionada
   const [grade, setGrade] = useState<number | undefined>(undefined); // Estado para la calificación
-  const [comment, setComment] = useState<string>(""); // Estado para el comentario
+  const [comment, setComment] = useState<string>(''); // Estado para el comentario
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // Estado para el modal
 
   // Efecto para obtener las respuestas de los estudiantes
@@ -42,14 +42,14 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
     const fetchStudentAnswers = async () => {
       try {
         const response = await fetch(
-          `/api/educadores/answers?activityId=${activityId}`,
+          `/api/educadores/answers?activityId=${activityId}`
         );
         const data = (await response.json()) as { answers: StudentAnswer[] };
         setStudentAnswers(data.answers);
       } catch (error) {
-        console.error("Error fetching student answers:", error);
-        toast("Error", {
-          description: "Error al cargar las respuestas de los estudiantes",
+        console.error('Error fetching student answers:', error);
+        toast('Error', {
+          description: 'Error al cargar las respuestas de los estudiantes',
         });
       }
     };
@@ -61,7 +61,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
   const handleOpenModal = (answer: StudentAnswer) => {
     setSelectedAnswer(answer);
     setGrade(answer.grade);
-    setComment(answer.comment ?? "");
+    setComment(answer.comment ?? '');
     setIsModalOpen(true);
   };
 
@@ -69,7 +69,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
   const handleCloseModal = () => {
     setSelectedAnswer(null);
     setGrade(undefined);
-    setComment("");
+    setComment('');
     setIsModalOpen(false);
   };
 
@@ -81,31 +81,31 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
       const response = await fetch(
         `/api/educadores/answers/${selectedAnswer.id}`,
         {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ grade, comment }),
-        },
+        }
       );
 
       if (!response.ok) {
-        throw new Error("Error al guardar la calificación");
+        throw new Error('Error al guardar la calificación');
       }
 
       const updatedAnswer = { ...selectedAnswer, grade, comment };
       setStudentAnswers((prevAnswers) =>
         prevAnswers.map((answer) =>
-          answer.id === updatedAnswer.id ? updatedAnswer : answer,
-        ),
+          answer.id === updatedAnswer.id ? updatedAnswer : answer
+        )
       );
 
-      toast("Calificación guardada", {
-        description: "La calificación se guardó correctamente",
+      toast('Calificación guardada', {
+        description: 'La calificación se guardó correctamente',
       });
       handleCloseModal();
     } catch (error) {
-      console.error("Error saving grade:", error);
-      toast("Error", {
-        description: "Error al guardar la calificación",
+      console.error('Error saving grade:', error);
+      toast('Error', {
+        description: 'Error al guardar la calificación',
       });
     }
   };
@@ -161,7 +161,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
               <Input
                 id="grade"
                 type="number"
-                value={grade ?? ""}
+                value={grade ?? ''}
                 onChange={(e) => setGrade(Number(e.target.value))}
                 min={0}
                 max={100}

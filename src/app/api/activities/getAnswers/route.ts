@@ -1,13 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
-import { and, eq } from "drizzle-orm";
+import { Redis } from '@upstash/redis';
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 
-import type { ActivityResults } from "~/types";
+import type { ActivityResults } from '~/types';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -17,13 +17,13 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const activityId = searchParams.get("activityId");
-    const userId = searchParams.get("userId");
+    const activityId = searchParams.get('activityId');
+    const userId = searchParams.get('userId');
 
     if (!activityId || !userId) {
       return NextResponse.json(
-        { error: "ActivityId and userId are required" },
-        { status: 400 },
+        { error: 'ActivityId and userId are required' },
+        { status: 400 }
       );
     }
 
@@ -55,14 +55,14 @@ export async function GET(request: NextRequest) {
 
     // If no record found at all
     return NextResponse.json(
-      { error: "No activity progress found" },
-      { status: 404 },
+      { error: 'No activity progress found' },
+      { status: 404 }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: "Error fetching answers" },
-      { status: 500 },
+      { error: 'Error fetching answers' },
+      { status: 500 }
     );
   }
 }

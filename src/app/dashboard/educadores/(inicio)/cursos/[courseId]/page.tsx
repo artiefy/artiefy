@@ -1,4 +1,4 @@
-import CourseDetail from "./CourseDetail";
+import CourseDetail from './CourseDetail';
 
 export default function CourseDetailPage({
   params,

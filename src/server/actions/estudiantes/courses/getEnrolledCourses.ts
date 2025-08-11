@@ -1,15 +1,15 @@
-"use server";
+'use server';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   enrollments,
   lessons,
   userLessonsProgress,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export interface EnrolledCourse {
   id: number;
@@ -26,7 +26,7 @@ export interface EnrolledCourse {
 export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
   try {
     const user = await currentUser();
-    if (!user?.id) throw new Error("Usuario no autenticado");
+    if (!user?.id) throw new Error('Usuario no autenticado');
 
     // Get enrolled courses with category relation
     const enrolledCourses = await db.query.enrollments.findMany({
@@ -58,7 +58,7 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
         const completedLessons = lessonsProgress.filter(
           (progress) =>
             progress.isCompleted &&
-            courseLessons.some((lesson) => lesson.id === progress.lessonId),
+            courseLessons.some((lesson) => lesson.id === progress.lessonId)
         ).length;
 
         const progress =
@@ -73,7 +73,7 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
 
         const instructorName = instructor
           ? `${instructor.name}`
-          : "Unknown Instructor";
+          : 'Unknown Instructor';
 
         return {
           id: enrollment.courseId,
@@ -88,12 +88,12 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
               }
             : null,
         };
-      }),
+      })
     );
 
     return coursesWithProgress;
   } catch (error) {
-    console.error("Error fetching enrolled courses:", error);
-    throw new Error("Error al obtener los cursos inscritos");
+    console.error('Error fetching enrolled courses:', error);
+    throw new Error('Error al obtener los cursos inscritos');
   }
 }

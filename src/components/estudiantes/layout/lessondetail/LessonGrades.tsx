@@ -1,12 +1,12 @@
-"use client";
-import React from "react";
+'use client';
+import React from 'react';
 
-import { StarIcon } from "@heroicons/react/24/solid";
-import { FaTrophy } from "react-icons/fa";
+import { StarIcon } from '@heroicons/react/24/solid';
+import { FaTrophy } from 'react-icons/fa';
 
-import { Button } from "~/components/estudiantes/ui/button";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { formatScore } from "~/utils/formatScore";
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { formatScore } from '~/utils/formatScore';
 
 interface LessonGradesProps {
   finalGrade: number | null;
@@ -21,7 +21,7 @@ export function LessonGrades({
 }: LessonGradesProps) {
   // Add useMemo to prevent unnecessary re-renders
   const displayGrade = React.useMemo(() => {
-    return finalGrade !== null ? formatScore(finalGrade) : "0.0";
+    return finalGrade !== null ? formatScore(finalGrade) : '0.0';
   }, [finalGrade]);
 
   return (
@@ -39,7 +39,7 @@ export function LessonGrades({
             <StarIcon className="size-8 text-yellow-500" />
             <span
               className={`ml-2 text-3xl font-bold ${
-                Number(displayGrade) < 3 ? "text-red-600" : "text-green-600"
+                Number(displayGrade) < 3 ? 'text-red-600' : 'text-green-600'
               }`}
             >
               {displayGrade}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Category {
   id: number;
@@ -26,10 +26,10 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/categories", {
-          method: "GET",
+        const response = await fetch('/api/educadores/categories', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -41,14 +41,14 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         const data = (await response.json()) as Category[];
         setCategories(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchCategories().catch((error) =>
-      console.error("Error fetching categories:", error),
+      console.error('Error fetching categories:', error)
     );
   }, []);
 
@@ -65,13 +65,13 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={category || ""}
+          value={category || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setCategory(selectedId);
           }}
-          className={`mb-5 w-60 rounded border p-2 outline-hidden text-[#3AF4EF] bg-background ${
-            errors.category ? "border-red-500" : "border-primary"
+          className={`bg-background mb-5 w-60 rounded border p-2 text-[#3AF4EF] outline-hidden ${
+            errors.category ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una categoría</option>

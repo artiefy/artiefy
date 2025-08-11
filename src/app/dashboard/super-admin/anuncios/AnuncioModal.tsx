@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { X } from "lucide-react";
+import { X } from 'lucide-react';
 
-import AnuncioPreview from "./AnuncioPreview";
+import AnuncioPreview from './AnuncioPreview';
 
 interface AnuncioModalProps {
   onClose: () => void;
@@ -26,10 +26,10 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
   // 🔹 Estado para checkboxes y cursos seleccionados
   const [opcionesSeleccionadas, setOpcionesSeleccionadas] = useState<string[]>(
-    [],
+    []
   );
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
-    null,
+    null
   );
   const [cursosDisponibles, setCursosDisponibles] = useState<
     { id: number; title: string }[]
@@ -39,12 +39,12 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
   useEffect(() => {
     const fetchCursos = async () => {
       try {
-        const response = await fetch("/api/cursos"); // Ajusta la ruta según tu API
-        if (!response.ok) throw new Error("Error al obtener los cursos");
+        const response = await fetch('/api/cursos'); // Ajusta la ruta según tu API
+        if (!response.ok) throw new Error('Error al obtener los cursos');
         const data = (await response.json()) as { id: number; title: string }[];
         setCursosDisponibles(data);
       } catch (error) {
-        console.error("❌ Error al cargar cursos:", error);
+        console.error('❌ Error al cargar cursos:', error);
       }
     };
     void fetchCursos();
@@ -54,7 +54,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
     setOpcionesSeleccionadas((prev) =>
       prev.includes(opcion)
         ? prev.filter((item) => item !== opcion)
-        : [...prev, opcion],
+        : [...prev, opcion]
     );
   };
 
@@ -70,53 +70,53 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
   // 🔹 Guardar anuncio (simulación)
   const handleSave = async () => {
     if (!tituloState.trim() || !descripcionState.trim() || !imagen) {
-      alert("Todos los campos son obligatorios");
+      alert('Todos los campos son obligatorios');
       return;
     }
 
     try {
-      console.log("📤 Obteniendo URL firmada de S3...");
+      console.log('📤 Obteniendo URL firmada de S3...');
 
       // 🔹 Obtener la URL firmada para subir la imagen a S3
-      const uploadRequest = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const uploadRequest = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contentType: imagen.type,
           fileSize: imagen.size,
         }),
       });
 
-      if (!uploadRequest.ok) throw new Error("Error al obtener la URL firmada");
+      if (!uploadRequest.ok) throw new Error('Error al obtener la URL firmada');
 
       const { url, fields, key } = (await uploadRequest.json()) as {
         url: string;
         fields: Record<string, string>;
         key: string;
       };
-      console.log("✅ URL firmada recibida:", { url, fields, key });
+      console.log('✅ URL firmada recibida:', { url, fields, key });
 
       // 🔹 Subir la imagen directamente a S3
       const formData = new FormData();
       Object.entries(fields).forEach(([key, value]) => {
         formData.append(key, value);
       });
-      formData.append("file", imagen);
+      formData.append('file', imagen);
 
       const s3UploadResponse = await fetch(url, {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
       if (!s3UploadResponse.ok)
-        throw new Error("Error al subir la imagen a S3");
+        throw new Error('Error al subir la imagen a S3');
 
       const imageUrl = `/${key}`;
 
       // 🔹 Guardar el anuncio en la base de datos
-      const response = await fetch("/api/super-admin/anuncios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/super-admin/anuncios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           titulo: tituloState,
           descripcion: descripcionState,
@@ -125,22 +125,22 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
       });
 
       const responseData = (await response.json()) as { message?: string };
-      console.log("📌 Respuesta del servidor:", responseData);
+      console.log('📌 Respuesta del servidor:', responseData);
 
       if (!response.ok)
-        throw new Error(responseData.message ?? "Error al guardar el anuncio");
+        throw new Error(responseData.message ?? 'Error al guardar el anuncio');
 
-      alert("Anuncio guardado correctamente.");
+      alert('Anuncio guardado correctamente.');
 
       // 🔹 Resetear formulario
-      setTituloState("");
-      setDescripcionState("");
+      setTituloState('');
+      setDescripcionState('');
       setImagen(null);
       setPreviewImagen(null);
       onClose();
     } catch (error) {
-      console.error("❌ Error al guardar anuncio:", error);
-      alert("Error al guardar el anuncio.");
+      console.error('❌ Error al guardar anuncio:', error);
+      alert('Error al guardar el anuncio.');
     }
   };
 
@@ -177,8 +177,8 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
           <label className="flex items-center space-x-2 text-white">
             <input
               type="checkbox"
-              checked={opcionesSeleccionadas.includes("curso")}
-              onChange={() => handleCheckboxChange("curso")}
+              checked={opcionesSeleccionadas.includes('curso')}
+              onChange={() => handleCheckboxChange('curso')}
               className="form-checkbox h-5 w-5 text-blue-500"
             />
             <span>Asignar a un Curso</span>
@@ -186,10 +186,10 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
         </div>
 
         {/* 🔹 Mostrar select de cursos si se activa el checkbox */}
-        {opcionesSeleccionadas.includes("curso") && (
+        {opcionesSeleccionadas.includes('curso') && (
           <select
             className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
-            value={cursoSeleccionado ?? ""}
+            value={cursoSeleccionado ?? ''}
             onChange={(e) => setCursoSeleccionado(Number(e.target.value))}
           >
             <option value="">Selecciona un curso</option>
@@ -213,7 +213,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
         <AnuncioPreview
           titulo={tituloState}
           descripcion={descripcionState}
-          imagenUrl={previewImagen ?? ""}
+          imagenUrl={previewImagen ?? ''}
         />
 
         {/* Botón de Guardar */}

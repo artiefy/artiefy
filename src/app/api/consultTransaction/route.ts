@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError } from 'axios';
 
 // Constants
 const PAYU_API_URL =
-  "https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi";
+  'https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi';
 
 // Types
 interface RequestBody {
@@ -33,7 +33,7 @@ interface PayURequestBody {
 // Validation function
 const validateRequest = (body: RequestBody): string | null => {
   if (!body.orderId && !body.transactionId && !body.referenceCode) {
-    return "At least one identifier (orderId, transactionId, or referenceCode) is required";
+    return 'At least one identifier (orderId, transactionId, or referenceCode) is required';
   }
   return null;
 };
@@ -43,8 +43,8 @@ const getRequestBody = (body: RequestBody, auth: PayUAuth): PayURequestBody => {
   if (body.orderId) {
     return {
       test: false,
-      language: "en",
-      command: "ORDER_DETAIL",
+      language: 'en',
+      command: 'ORDER_DETAIL',
       merchant: auth,
       details: { orderId: body.orderId },
     };
@@ -53,8 +53,8 @@ const getRequestBody = (body: RequestBody, auth: PayUAuth): PayURequestBody => {
   if (body.transactionId) {
     return {
       test: false,
-      language: "en",
-      command: "TRANSACTION_RESPONSE_DETAIL",
+      language: 'en',
+      command: 'TRANSACTION_RESPONSE_DETAIL',
       merchant: auth,
       details: { transactionId: body.transactionId },
     };
@@ -62,8 +62,8 @@ const getRequestBody = (body: RequestBody, auth: PayUAuth): PayURequestBody => {
 
   return {
     test: false,
-    language: "en",
-    command: "ORDER_DETAIL_BY_REFERENCE_CODE",
+    language: 'en',
+    command: 'ORDER_DETAIL_BY_REFERENCE_CODE',
     merchant: auth,
     details: { referenceCode: body.referenceCode },
   };
@@ -76,10 +76,10 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.API_KEY;
 
     if (!apiLogin || !apiKey) {
-      console.error("❌ Missing PayU API credentials");
+      console.error('❌ Missing PayU API credentials');
       return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 },
+        { error: 'Server configuration error' },
+        { status: 500 }
       );
     }
 
@@ -98,9 +98,9 @@ export async function POST(req: NextRequest) {
     const requestBody = getRequestBody(body, auth);
 
     // Make request to PayU
-    console.log("📤 Sending request to PayU:", {
+    console.log('📤 Sending request to PayU:', {
       ...requestBody,
-      merchant: { ...requestBody.merchant, apiKey: "***" },
+      merchant: { ...requestBody.merchant, apiKey: '***' },
     });
 
     const response = await axios.post<{ data: Record<string, unknown> }>(
@@ -108,26 +108,26 @@ export async function POST(req: NextRequest) {
       requestBody,
       {
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         timeout: 10000, // 10 second timeout
-      },
+      }
     );
 
-    console.log("✅ PayU response received");
+    console.log('✅ PayU response received');
 
     return NextResponse.json({
       success: true,
       data: response.data,
     });
   } catch (error) {
-    console.error("❌ Error in transaction consultation:", error);
+    console.error('❌ Error in transaction consultation:', error);
 
     if (error instanceof AxiosError) {
       return NextResponse.json(
         {
-          error: "PayU API error",
+          error: 'PayU API error',
           message:
             (error.response?.data as { message?: string })?.message ??
             error.message,
@@ -135,16 +135,16 @@ export async function POST(req: NextRequest) {
         },
         {
           status: error.response?.status ?? 500,
-        },
+        }
       );
     }
 
     return NextResponse.json(
       {
-        error: "Internal server error",
-        message: error instanceof Error ? error.message : "Unknown error",
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

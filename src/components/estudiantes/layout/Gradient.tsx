@@ -1,4 +1,4 @@
-export const dynamic = "force-static";
+export const dynamic = 'force-static';
 
 const SmoothGradient = () => {
   return (
@@ -24,7 +24,7 @@ const SmoothGradient = () => {
             ),
             #01142B
           `,
-          backgroundBlendMode: "screen, screen, normal",
+          backgroundBlendMode: 'screen, screen, normal',
         }}
       />
     </div>

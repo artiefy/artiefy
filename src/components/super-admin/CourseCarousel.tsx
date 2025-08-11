@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import useEmblaCarousel from "embla-carousel-react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from 'embla-carousel-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -24,13 +24,13 @@ interface Props {
 export default function CourseCarousel({ courses, userId }: Props) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
-    align: "start",
-    containScroll: "trimSnaps",
+    align: 'start',
+    containScroll: 'trimSnaps',
   });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const router = useRouter();
-  if (typeof router === "string" && router) {
+  if (typeof router === 'string' && router) {
     // Variable utilizada para evitar warnings, no afecta la lógica
   }
 
@@ -42,20 +42,20 @@ export default function CourseCarousel({ courses, userId }: Props) {
 
   useEffect(() => {
     if (!emblaApi) return;
-    emblaApi.on("select", onSelect);
+    emblaApi.on('select', onSelect);
     onSelect();
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="relative z-0 w-full px-6 py-4 overflow-hidden">
-      {" "}
+    <div className="relative z-0 w-full overflow-hidden px-6 py-4">
+      {' '}
       {/* 🔥 Margen extra para que no se corte */}
-      <div className="overflow-hidden  px-6 py-8 " ref={emblaRef}>
+      <div className="overflow-hidden px-6 py-8" ref={emblaRef}>
         <div className="flex space-x-4">
           {courses.map((course) => (
             <div
               key={course.id}
-              className="relative isolate z-10 w-48 mx-2 flex-shrink-0 overflow-visible rounded-lg bg-gray-800 px-4 py-4 shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]"
+              className="relative isolate z-10 mx-2 w-48 flex-shrink-0 overflow-visible rounded-lg bg-gray-800 px-4 py-4 shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]"
             >
               {/* Imagen */}
               {course.coverImageKey ? (
@@ -75,7 +75,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
               {/* Información */}
               <div className="p-2 text-white">
                 <p className="text-primary text-xs font-semibold">Nombre:</p>
-                <h2 className="text-sm truncate font-bold text-white">
+                <h2 className="truncate text-sm font-bold text-white">
                   {course.title}
                 </h2>
               </div>

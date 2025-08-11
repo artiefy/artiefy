@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { and, eq } from "drizzle-orm";
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { chat_messages, conversations } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { chat_messages, conversations } from '~/server/db/schema';
 
 export async function getOrCreateConversation({
   senderId,
@@ -39,7 +39,7 @@ export async function getOrCreateConversation({
     .values({
       senderId,
       curso_id: cursoId,
-      title: title ?? "",
+      title: title ?? '',
     })
     .returning();
 
@@ -53,8 +53,8 @@ export async function findConversationById(courseId: number, userId: string) {
     .where(
       and(
         eq(conversations.curso_id, courseId),
-        eq(conversations.senderId, userId),
-      ),
+        eq(conversations.senderId, userId)
+      )
     )
     .limit(1)
     .then((rows) => rows[0]);

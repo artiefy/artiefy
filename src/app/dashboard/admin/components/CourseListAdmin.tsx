@@ -1,19 +1,19 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { ArrowRightIcon, StarIcon } from "@heroicons/react/24/solid";
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 
-import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
-import { Badge } from "~/components/educators/ui/badge";
+import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
+import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
-import { Button } from "~/components/estudiantes/ui/button";
-import { type CourseData } from "~/server/queries/queries";
+} from '~/components/educators/ui/card';
+import { Button } from '~/components/estudiantes/ui/button';
+import { type CourseData } from '~/server/queries/queries';
 
 interface Course {
   id?: number;
@@ -41,12 +41,12 @@ interface CourseListAdminProps {
 }
 
 export default function CourseListAdmin({ courses }: CourseListAdminProps) {
-  console.log("Courses received in CourseListAdmin:", courses);
+  console.log('Courses received in CourseListAdmin:', courses);
 
   return (
     <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
       {courses.map((course) => {
-        console.log("Rendering course:", course);
+        console.log('Rendering course:', course);
         return (
           <div key={course.id} className="group relative">
             <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
@@ -58,9 +58,9 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
                       src={
                         course.coverImageKey
                           ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                          : "/placeholder.svg"
+                          : '/placeholder.svg'
                       }
-                      alt={course.title || "Imagen del curso"}
+                      alt={course.title || 'Imagen del curso'}
                       className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -79,7 +79,7 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
                     variant="outline"
                     className="border-primary bg-background text-primary hover:bg-black/70"
                   >
-                    {course.categoryName ?? "Unknown Category"}
+                    {course.categoryName ?? 'Unknown Category'}
                   </Badge>
                   {course.programas?.map((programa) => (
                     <Badge
@@ -99,9 +99,9 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
               <CardFooter className="flex flex-col items-start justify-between space-y-2 px-2">
                 <div className="flex w-full justify-between">
                   <p className="text-sm font-bold text-gray-300 italic">
-                    Educador:{" "}
+                    Educador:{' '}
                     <span className="font-bold italic">
-                      {course.instructorName ?? "Sin instructor asignado"}
+                      {course.instructorName ?? 'Sin instructor asignado'}
                     </span>
                   </p>
                   <p className="text-sm font-bold text-red-500">

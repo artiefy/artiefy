@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-import { Loader2, X } from "lucide-react";
+import { Loader2, X } from 'lucide-react';
 
 interface AnuncioPopupProps {
   onClose: () => void;
@@ -73,10 +73,10 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
 
         {/* 📝 Contenido del anuncio */}
         <h3 className="text-2xl font-bold text-[#3AF4EF]">
-          {titulo || "Título del Anuncio"}
+          {titulo || 'Título del Anuncio'}
         </h3>
         <p className="mt-2 text-gray-300">
-          {descripcion || "Descripción del anuncio..."}
+          {descripcion || 'Descripción del anuncio...'}
         </p>
         {tipo_destinatario && (
           <p className="mt-2 text-sm text-gray-400">
@@ -88,11 +88,11 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
         <div className="mt-4 flex justify-center gap-4">
           {/* Botón de Ver Planes */}
           <button
-            onClick={() => handleNavigation("/planes", "planes")}
+            onClick={() => handleNavigation('/planes', 'planes')}
             className="relative flex items-center justify-center gap-2 rounded-md bg-blue-500 px-6 py-2 text-white transition-all hover:scale-105 hover:bg-blue-600 disabled:opacity-70"
             disabled={loadingButton !== null}
           >
-            {loadingButton === "planes" ? (
+            {loadingButton === 'planes' ? (
               <Loader2 className="size-5" />
             ) : (
               <>Ver Planes</>

@@ -1,17 +1,17 @@
-import { Suspense } from "react";
+import { Suspense } from 'react';
 
-import StudentDetails from "~/app/estudiantes/StudentDetails";
-import Footer from "~/components/estudiantes/layout/Footer";
-import { Header } from "~/components/estudiantes/layout/Header";
-import StudentCategories from "~/components/estudiantes/layout/studentdashboard/StudentCategories";
-import StudentListCourses from "~/components/estudiantes/layout/studentdashboard/StudentListCourses";
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
-import { getAllCategories } from "~/server/actions/estudiantes/categories/getAllCategories";
-import { getFeaturedCategories } from "~/server/actions/estudiantes/categories/getFeaturedCategories";
-import { getAllCourses } from "~/server/actions/estudiantes/courses/getAllCourses";
-import { getAllPrograms } from "~/server/actions/estudiantes/programs/getAllPrograms";
+import StudentDetails from '~/app/estudiantes/StudentDetails';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
+import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
+import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
+import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
-import type { Category, Course, Program } from "~/types";
+import type { Category, Course, Program } from '~/types';
 
 interface SearchParams {
   category?: string;
@@ -36,11 +36,11 @@ const ITEMS_PER_PAGE = 9;
 
 // Add this helper function before the fetchData function
 function removeAccents(str: string): string {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 async function fetchData(
-  params: SearchParams | undefined,
+  params: SearchParams | undefined
 ): Promise<APIResponse> {
   const [allCourses, allCategories, featuredCategories, allPrograms] =
     await Promise.all([
@@ -55,7 +55,7 @@ async function fetchData(
   if (params?.category) {
     const categoryId = Number(params.category);
     filteredCourses = filteredCourses.filter(
-      (course) => course.categoryid === categoryId,
+      (course) => course.categoryid === categoryId
     );
   }
 
@@ -65,10 +65,10 @@ async function fetchData(
       const normalizedTitle = removeAccents(course.title.toLowerCase());
       const normalizedCategory = course.category?.name
         ? removeAccents(course.category.name.toLowerCase())
-        : "";
+        : '';
       const normalizedModalidad = course.modalidad?.name
         ? removeAccents(course.modalidad.name.toLowerCase())
-        : "";
+        : '';
 
       // Solo buscar en título, categoría y modalidad
       return (
@@ -81,10 +81,10 @@ async function fetchData(
 
   const totalFilteredCourses = filteredCourses.length;
   const totalPages = Math.ceil(totalFilteredCourses / ITEMS_PER_PAGE);
-  const page = Number(params?.page ?? "1");
+  const page = Number(params?.page ?? '1');
   const paginatedCourses = filteredCourses.slice(
     (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
   );
 
   return {
@@ -106,8 +106,8 @@ async function fetchAllCourses(): Promise<Course[]> {
 }
 
 // Agregar estas configuraciones al inicio del archivo, después de los imports
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 interface PageProps {
   searchParams: Promise<{
@@ -134,7 +134,7 @@ export default async function Page({ searchParams }: PageProps) {
       <>
         <div
           className="flex min-h-screen flex-col"
-          style={{ isolation: "isolate", zIndex: 1 }}
+          style={{ isolation: 'isolate', zIndex: 1 }}
         >
           <Header />
           <StudentDetails
@@ -177,7 +177,7 @@ export default async function Page({ searchParams }: PageProps) {
       </>
     );
   } catch (error) {
-    console.error("Error al cargar los cursos:", error);
+    console.error('Error al cargar los cursos:', error);
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">

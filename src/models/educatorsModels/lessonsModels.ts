@@ -1,7 +1,7 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { and, desc, eq, inArray, lt } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
+import { db } from '~/server/db/index';
 import {
   activities,
   categories,
@@ -11,7 +11,7 @@ import {
   userActivitiesProgress,
   userLessonsProgress,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export interface Lesson {
   id: number;
@@ -62,11 +62,11 @@ export async function createLesson({
         title,
         description,
         duration,
-        coverImageKey: coverImageKey ?? "",
-        coverVideoKey: coverVideoKey ?? "",
+        coverImageKey: coverImageKey ?? '',
+        coverVideoKey: coverVideoKey ?? '',
         courseId,
-        resourceKey: resourceKey ?? "",
-        resourceNames: resourceNames ?? "",
+        resourceKey: resourceKey ?? '',
+        resourceNames: resourceNames ?? '',
       })
       .returning({ id: lessons.id });
 
@@ -109,8 +109,8 @@ export async function createLesson({
             .where(
               and(
                 inArray(userActivitiesProgress.activityId, activityIds),
-                eq(userActivitiesProgress.userId, progress.userId),
-              ),
+                eq(userActivitiesProgress.userId, progress.userId)
+              )
             );
 
           unlockNextLesson =
@@ -128,31 +128,31 @@ export async function createLesson({
       }
     }
 
-    console.log("✅ Lección creada:", newLesson);
-    if (coverVideoKey && coverVideoKey !== "none") {
+    console.log('✅ Lección creada:', newLesson);
+    if (coverVideoKey && coverVideoKey !== 'none') {
       try {
         await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/video/register`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             key: coverVideoKey,
             lessonId: newLesson.id,
           }),
         });
-        console.log("🎬 Video registrado para transcripción");
+        console.log('🎬 Video registrado para transcripción');
       } catch (error) {
         console.error(
-          "❌ Error al registrar el video para transcripción:",
-          error,
+          '❌ Error al registrar el video para transcripción:',
+          error
         );
       }
     }
     return newLesson;
     // Registrar el video para transcripción si tiene coverVideoKey válido
   } catch (_error) {
-    console.error("❌ Error al crear la lección:", _error);
+    console.error('❌ Error al crear la lección:', _error);
     throw _error;
   }
 }
@@ -199,19 +199,19 @@ export async function getLessonsByCourseId(courseId: number) {
     }
 
     const clerk = await clerkClient();
-    let fullname = "";
+    let fullname = '';
     const instructorId = lessonsData[0].courseInstructor;
 
-    console.log("Intentando obtener instructor:", instructorId);
+    console.log('Intentando obtener instructor:', instructorId);
 
     try {
       try {
         const clerkUser = await clerk.users.getUser(instructorId);
         fullname =
-          `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim();
+          `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
       } catch (_error) {
         console.log(
-          "Instructor no encontrado en Clerk, buscando en base de datos...",
+          'Instructor no encontrado en Clerk, buscando en base de datos...'
         );
         // Buscar en la base de datos
         const dbUser = await db
@@ -225,13 +225,13 @@ export async function getLessonsByCourseId(courseId: number) {
         if (dbUser?.name) {
           fullname = dbUser.name;
         } else {
-          console.error("Instructor no encontrado en la base de datos");
-          fullname = "Instructor no encontrado";
+          console.error('Instructor no encontrado en la base de datos');
+          fullname = 'Instructor no encontrado';
         }
       }
     } catch (_error) {
-      console.error("Error al obtener datos del instructor:", _error);
-      fullname = "Instructor no encontrado";
+      console.error('Error al obtener datos del instructor:', _error);
+      fullname = 'Instructor no encontrado';
     }
 
     const lessonsWithCourse = lessonsData.map(
@@ -256,11 +256,11 @@ export async function getLessonsByCourseId(courseId: number) {
       }) => ({
         id: Lesson.lessonId,
         title: Lesson.lessonTitle,
-        coverImageKey: Lesson.coverImageKey ?? "",
-        coverVideoKey: Lesson.coverVideoKey ?? "",
-        resourceKey: Lesson.resourceKey ?? "",
-        resourceNames: Lesson.resourceNames ?? "",
-        description: Lesson.lessonDescription ?? "",
+        coverImageKey: Lesson.coverImageKey ?? '',
+        coverVideoKey: Lesson.coverVideoKey ?? '',
+        resourceKey: Lesson.resourceKey ?? '',
+        resourceNames: Lesson.resourceNames ?? '',
+        description: Lesson.lessonDescription ?? '',
         createdAt: Lesson.createAt,
         updatedAt: Lesson.updateAt,
         duration: Lesson.lessonDuration,
@@ -268,26 +268,26 @@ export async function getLessonsByCourseId(courseId: number) {
           id: Lesson.courseId,
           title: Lesson.courseTitle,
           description: Lesson.courseDescription,
-          instructor: fullname || "Instructor no disponible",
+          instructor: fullname || 'Instructor no disponible',
           courseCategories: Lesson.courseCategories,
           categories: Lesson.courseCategories,
           modalidad: Lesson.courseModalidad,
           nivel: Lesson.courseNivel,
         },
-      }),
+      })
     );
 
     return lessonsWithCourse;
   } catch (_error) {
-    console.error("Error al obtener las lecciones:", _error);
-    throw new Error("No se pudieron cargar las lecciones del curso");
+    console.error('Error al obtener las lecciones:', _error);
+    throw new Error('No se pudieron cargar las lecciones del curso');
   }
 }
 
 // Obtener el progreso de un usuario en una lección
 export const getUserProgressByLessonId = async (
   lessonId: number,
-  userId: string,
+  userId: string
 ) => {
   const progress = await db
     .select({
@@ -297,8 +297,8 @@ export const getUserProgressByLessonId = async (
     .where(
       and(
         eq(userLessonsProgress.lessonId, lessonId),
-        eq(userLessonsProgress.userId, userId),
-      ),
+        eq(userLessonsProgress.userId, userId)
+      )
     )
     .then((rows) => rows[0]?.progress);
 
@@ -307,7 +307,7 @@ export const getUserProgressByLessonId = async (
 
 // Obtener una lección por ID
 export const getLessonById = async (
-  lessonId: number,
+  lessonId: number
 ): Promise<Lesson | null> => {
   try {
     const lessonData = await db
@@ -345,10 +345,10 @@ export const getLessonById = async (
     }
 
     const clerk = await clerkClient();
-    let instructorName = "";
+    let instructorName = '';
     const instructorId = lessonData.course.instructor;
 
-    console.log("Datos del instructor en getLessonById:", {
+    console.log('Datos del instructor en getLessonById:', {
       lessonId,
       instructorId,
       courseTitle: lessonData.course.title,
@@ -356,16 +356,16 @@ export const getLessonById = async (
 
     try {
       if (!instructorId) {
-        console.log("ID del instructor no encontrado en la base de datos");
-        instructorName = "Instructor no asignado";
+        console.log('ID del instructor no encontrado en la base de datos');
+        instructorName = 'Instructor no asignado';
       } else {
         try {
           const clerkUser = await clerk.users.getUser(instructorId);
           instructorName =
-            `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim();
+            `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
         } catch (_error) {
           console.log(
-            "Instructor no encontrado en Clerk, buscando en base de datos...",
+            'Instructor no encontrado en Clerk, buscando en base de datos...'
           );
           // Buscar en la base de datos
           const dbUser = await db
@@ -379,14 +379,14 @@ export const getLessonById = async (
           if (dbUser?.name) {
             instructorName = dbUser.name;
           } else {
-            console.error("Instructor no encontrado en la base de datos");
-            instructorName = "Instructor no encontrado";
+            console.error('Instructor no encontrado en la base de datos');
+            instructorName = 'Instructor no encontrado';
           }
         }
       }
     } catch (_error) {
-      console.error("Error al obtener datos del instructor:", _error);
-      instructorName = "Instructor no encontrado";
+      console.error('Error al obtener datos del instructor:', _error);
+      instructorName = 'Instructor no encontrado';
     }
 
     return {
@@ -397,8 +397,8 @@ export const getLessonById = async (
       },
     } as unknown as Lesson;
   } catch (_error) {
-    console.error("Error al obtener la lección por ID:", _error);
-    throw new Error("No se pudo cargar la lección");
+    console.error('Error al obtener la lección por ID:', _error);
+    throw new Error('No se pudo cargar la lección');
   }
 };
 
@@ -417,18 +417,18 @@ interface UpdateLessonData {
 // Actualizar una lección
 export const updateLesson = async (
   lessonId: number,
-  data: UpdateLessonData,
+  data: UpdateLessonData
 ) => {
   const updateData: UpdateLessonData = {};
 
   if (data.title) updateData.title = data.title;
   if (data.description) updateData.description = data.description;
-  if (typeof data.duration === "number") updateData.duration = data.duration;
+  if (typeof data.duration === 'number') updateData.duration = data.duration;
   if (data.coverImageKey) updateData.coverImageKey = data.coverImageKey;
   if (data.coverVideoKey) updateData.coverVideoKey = data.coverVideoKey;
   if (data.resourceKey) updateData.resourceKey = data.resourceKey;
   if (data.resourceNames) updateData.resourceNames = data.resourceNames;
-  if (typeof data.courseId === "number") updateData.courseId = data.courseId;
+  if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
 
   return await db
     .update(lessons)
@@ -470,7 +470,7 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
   } catch (_error) {
     // Log the error with more context
     console.error(`Error al eliminar la lección con ID: ${lessonId}`, _error);
-    throw new Error("No se pudo eliminar la lección correctamente.");
+    throw new Error('No se pudo eliminar la lección correctamente.');
   }
 };
 
@@ -517,10 +517,10 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
   } catch (_error) {
     console.error(
       `Error al eliminar las lecciones del curso con ID: ${courseId}`,
-      _error,
+      _error
     );
     throw new Error(
-      "No se pudieron eliminar las lecciones del curso correctamente.",
+      'No se pudieron eliminar las lecciones del curso correctamente.'
     );
   }
 };

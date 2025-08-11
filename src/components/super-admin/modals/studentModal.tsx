@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/educators/ui/dialog";
+} from '~/components/educators/ui/dialog';
 
 interface Student {
   id: string;
@@ -38,7 +38,7 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
 
   useEffect(() => {
     if (Object.keys(timeTracking).length > 0) {
-      console.log("Seguimiento de tiempo:", timeTracking);
+      console.log('Seguimiento de tiempo:', timeTracking);
     }
   }, [timeTracking]); // 🔹 Usa `timeTracking` pasivamente para evitar advertencias
 
@@ -50,17 +50,17 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
       setError(null);
       try {
         const response = await fetch(
-          `/api/super-admin/students?courseId=${courseId}`,
+          `/api/super-admin/students?courseId=${courseId}`
         );
-        if (!response.ok) throw new Error("Error al obtener los estudiantes");
+        if (!response.ok) throw new Error('Error al obtener los estudiantes');
         const data = (await response.json()) as { students: Student[] };
         setStudents(data.students);
 
         // 🔹 Obtener el tiempo de conexión guardado en la BD y localStorage
         const storedTime: Record<string, Record<string, number>> = JSON.parse(
-          localStorage.getItem("time_tracking") ?? "{}",
+          localStorage.getItem('time_tracking') ?? '{}'
         ) as Record<string, Record<string, number>>;
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toISOString().split('T')[0];
 
         // 🔹 Mapear el tiempo de conexión de cada estudiante
         const updatedTimeTracking = data.students.reduce(
@@ -69,13 +69,13 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
               student.timeSpent ?? (storedTime[student.id]?.[today] || 0); // 🔥 Primero usa el de la BD, luego localStorage
             return acc;
           },
-          {},
+          {}
         );
 
         setTimeTracking(updatedTimeTracking);
       } catch (err) {
         console.error(err);
-        setError("Error al cargar los datos.");
+        setError('Error al cargar los datos.');
       } finally {
         setLoading(false);
       }
@@ -126,7 +126,7 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
                   return (
                     <tr key={student.id} className="hover:bg-gray-700">
                       <td className="border border-gray-700 px-4 py-3">
-                        {student.name || "No disponible"}
+                        {student.name || 'No disponible'}
                       </td>
                       <td className="border border-gray-700 px-4 py-3">
                         {student.email}
@@ -141,35 +141,35 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
                           // Calcular días, horas, minutos y segundos correctamente
                           const days = Math.floor(totalSeconds / 86400); // 1 día = 86400 segundos
                           const hours = Math.floor(
-                            (totalSeconds % 86400) / 3600,
+                            (totalSeconds % 86400) / 3600
                           ); // Horas restantes
                           const minutes = Math.floor(
-                            (totalSeconds % 3600) / 60,
+                            (totalSeconds % 3600) / 60
                           ); // Minutos restantes después de quitar las horas
                           const seconds = totalSeconds % 60; // Segundos restantes después de quitar los minutos
 
                           console.log(
-                            `Debug: totalSeconds=${totalSeconds}, days=${days}, hours=${hours}, minutes=${minutes}, seconds=${seconds}`,
+                            `Debug: totalSeconds=${totalSeconds}, days=${days}, hours=${hours}, minutes=${minutes}, seconds=${seconds}`
                           );
 
                           // Generar la cadena de tiempo en formato legible
                           const timeString = [
-                            days > 0 ? `${days}d` : "",
-                            hours > 0 ? `${hours}h` : "",
-                            minutes > 0 ? `${minutes}m` : "",
-                            seconds > 0 ? `${seconds}s` : "",
+                            days > 0 ? `${days}d` : '',
+                            hours > 0 ? `${hours}h` : '',
+                            minutes > 0 ? `${minutes}m` : '',
+                            seconds > 0 ? `${seconds}s` : '',
                           ]
                             .filter(Boolean) // Eliminar valores vacíos
-                            .join(" "); // Unir con espacios
+                            .join(' '); // Unir con espacios
 
-                          return timeString || "0s"; // Si no hay tiempo, mostrar "0s"
+                          return timeString || '0s'; // Si no hay tiempo, mostrar "0s"
                         })()}
                       </td>
 
                       <td className="border border-gray-700 px-4 py-3">
                         {student.completedCourses
-                          ? "✅ Completado"
-                          : "⏳ En progreso"}
+                          ? '✅ Completado'
+                          : '⏳ En progreso'}
                       </td>
                       <td className="border border-gray-700 px-4 py-3">
                         <div className="relative h-6 w-full rounded-full bg-gray-700">

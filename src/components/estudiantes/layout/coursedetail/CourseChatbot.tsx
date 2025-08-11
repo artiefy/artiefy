@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import { BsPersonCircle } from "react-icons/bs";
-import { FaRobot } from "react-icons/fa";
-import { FiSend } from "react-icons/fi";
-import { IoMdClose } from "react-icons/io";
-import { toast } from "sonner";
+import { BsPersonCircle } from 'react-icons/bs';
+import { FaRobot } from 'react-icons/fa';
+import { FiSend } from 'react-icons/fi';
+import { IoMdClose } from 'react-icons/io';
+import { toast } from 'sonner';
 
-import "~/styles/chatmodal.css";
+import '~/styles/chatmodal.css';
 
 interface CourseChatbotProps {
   isEnrolled: boolean;
@@ -17,9 +17,9 @@ interface CourseChatbotProps {
 const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, text: "¡Hola! ¿En qué puedo ayudarte hoy?", sender: "bot" },
+    { id: 1, text: '¡Hola! ¿En qué puedo ayudarte hoy?', sender: 'bot' },
   ]);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,17 +35,17 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isEnrolled) {
-      toast.error("Debes estar inscrito en el curso para usar el chat", {
-        description: "Por favor, inscríbete primero para acceder al chat.",
+      toast.error('Debes estar inscrito en el curso para usar el chat', {
+        description: 'Por favor, inscríbete primero para acceder al chat.',
         action: {
-          label: "Cerrar",
-          onClick: () => console.log("Cerrado"),
+          label: 'Cerrar',
+          onClick: () => console.log('Cerrado'),
         },
       });
       return;
@@ -55,18 +55,18 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
     const newUserMessage = {
       id: messages.length + 1,
       text: inputText,
-      sender: "user" as const,
+      sender: 'user' as const,
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
-    setInputText("");
+    setInputText('');
     setIsLoading(true);
 
     setTimeout(() => {
       const botResponse = {
         id: messages.length + 2,
-        text: "Gracias por tu mensaje. Estoy procesando tu solicitud.",
-        sender: "bot" as const,
+        text: 'Gracias por tu mensaje. Estoy procesando tu solicitud.',
+        sender: 'bot' as const,
       };
       setMessages((prev) => [...prev, botResponse]);
       setIsLoading(false);
@@ -75,12 +75,12 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
 
   const handleClick = () => {
     if (!isEnrolled) {
-      toast.error("Acceso restringido", {
+      toast.error('Acceso restringido', {
         description:
-          "Se necesita estar inscrito al curso para poder usar la IA de Artie",
+          'Se necesita estar inscrito al curso para poder usar la IA de Artie',
         action: {
-          label: "Entendido",
-          onClick: () => console.log("Closed"),
+          label: 'Entendido',
+          onClick: () => console.log('Closed'),
         },
         duration: 5000,
       });
@@ -93,17 +93,17 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
     <>
       <button
         onClick={handleClick}
-        className={`button ${!isEnrolled && "cursor-not-allowed opacity-50"}`}
-        style={{ display: isOpen ? "none" : "flex" }}
+        className={`button ${!isEnrolled && 'cursor-not-allowed opacity-50'}`}
+        style={{ display: isOpen ? 'none' : 'flex' }}
         aria-label={
           isEnrolled
-            ? "Abrir chat"
-            : "Chat disponible solo para estudiantes inscritos"
+            ? 'Abrir chat'
+            : 'Chat disponible solo para estudiantes inscritos'
         }
       >
         <div className="button__text">
-          {Array.from("-ARTI-IA-ARTI-IA").map((char, i) => (
-            <span key={i} style={{ "--index": i } as React.CSSProperties}>
+          {Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
+            <span key={i} style={{ '--index': i } as React.CSSProperties}>
               {char}
             </span>
           ))}
@@ -148,25 +148,25 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} mb-4`}
+                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
                 >
                   <div
                     className={`flex max-w-[80%] items-start space-x-2 ${
-                      message.sender === "user"
-                        ? "flex-row-reverse space-x-reverse"
-                        : "flex-row"
+                      message.sender === 'user'
+                        ? 'flex-row-reverse space-x-reverse'
+                        : 'flex-row'
                     }`}
                   >
-                    {message.sender === "bot" ? (
+                    {message.sender === 'bot' ? (
                       <FaRobot className="text-secondary mt-2 text-xl" />
                     ) : (
                       <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                     )}
                     <div
                       className={`rounded-lg p-3 ${
-                        message.sender === "user"
-                          ? "bg-secondary text-white"
-                          : "bg-gray-100 text-gray-800"
+                        message.sender === 'user'
+                          ? 'bg-secondary text-white'
+                          : 'bg-gray-100 text-gray-800'
                       }`}
                     >
                       {message.text}
@@ -197,16 +197,16 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
                     isEnrolled
-                      ? "Escribe tu mensaje..."
-                      : "Inscríbete para chatear"
+                      ? 'Escribe tu mensaje...'
+                      : 'Inscríbete para chatear'
                   }
-                  className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+                  className="text-background focus:ring-secondary flex-1 rounded-lg border border-gray-300 p-2 focus:ring-2 focus:outline-none"
                   disabled={!isEnrolled || isLoading}
                 />
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="rounded-lg bg-secondary px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+                  className="bg-secondary rounded-lg px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
                   aria-label="Enviar mensaje"
                 >
                   <FiSend className="text-xl" />

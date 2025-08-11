@@ -1,19 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
-import { modalidades } from "~/server/db/schema";
+import { db } from '~/server/db/index';
+import { modalidades } from '~/server/db/schema';
 
 export async function GET() {
   try {
     const result = await db.select().from(modalidades);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Error al obtener modalidades:", error);
+    console.error('❌ Error al obtener modalidades:', error);
     return NextResponse.json(
-      { error: "Error al obtener modalidades" },
-      { status: 500 },
+      { error: 'Error al obtener modalidades' },
+      { status: 500 }
     );
   }
 }
@@ -30,10 +30,10 @@ export async function POST(req: Request) {
       .returning();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Error al crear modalidad:", error);
+    console.error('❌ Error al crear modalidad:', error);
     return NextResponse.json(
-      { error: "Error al crear modalidad" },
-      { status: 500 },
+      { error: 'Error al crear modalidad' },
+      { status: 500 }
     );
   }
 }
@@ -54,10 +54,10 @@ export async function PUT(req: Request) {
       .returning();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Error al actualizar modalidad:", error);
+    console.error('❌ Error al actualizar modalidad:', error);
     return NextResponse.json(
-      { error: "Error al actualizar modalidad" },
-      { status: 500 },
+      { error: 'Error al actualizar modalidad' },
+      { status: 500 }
     );
   }
 }
@@ -66,12 +66,12 @@ export async function DELETE(req: Request) {
   try {
     const { id }: { id: number } = (await req.json()) as { id: number };
     await db.delete(modalidades).where(eq(modalidades.id, id));
-    return NextResponse.json({ message: "Modalidad eliminada" });
+    return NextResponse.json({ message: 'Modalidad eliminada' });
   } catch (error) {
-    console.error("❌ Error al eliminar modalidad:", error);
+    console.error('❌ Error al eliminar modalidad:', error);
     return NextResponse.json(
-      { error: "Error al eliminar modalidad" },
-      { status: 500 },
+      { error: 'Error al eliminar modalidad' },
+      { status: 500 }
     );
   }
 }

@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { permisos } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { permisos } from '~/server/db/schema';
 
 const ACCIONES = [
-  "create",
-  "read",
-  "update",
-  "delete",
-  "approve",
-  "assign",
-  "publish",
+  'create',
+  'read',
+  'update',
+  'delete',
+  'approve',
+  'assign',
+  'publish',
 ] as const;
 
 type Accion = (typeof ACCIONES)[number];
@@ -32,14 +32,14 @@ export async function PUT(req: Request) {
 
     // Validaciones de tipo
     if (
-      typeof id !== "number" ||
+      typeof id !== 'number' ||
       !name?.trim() ||
       !servicio?.trim() ||
       !ACCIONES.includes(accion)
     ) {
       return NextResponse.json(
-        { error: "Datos incompletos o inválidos" },
-        { status: 400 },
+        { error: 'Datos incompletos o inválidos' },
+        { status: 400 }
       );
     }
 
@@ -55,7 +55,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error al actualizar permiso:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error al actualizar permiso:', error);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

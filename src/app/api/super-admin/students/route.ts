@@ -1,25 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { count, eq } from "drizzle-orm";
+import { count, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
+import { db } from '~/server/db/index';
 import {
   enrollments,
   lessons,
   userLessonsProgress,
   users,
   userTimeTracking,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const courseId = searchParams.get("courseId");
+    const courseId = searchParams.get('courseId');
 
     if (!courseId) {
       return NextResponse.json(
-        { error: "Falta el parámetro courseId" },
-        { status: 400 },
+        { error: 'Falta el parámetro courseId' },
+        { status: 400 }
       );
     }
 
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       .where(eq(enrollments.courseId, parseInt(courseId, 10)))
       .execute();
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0];
 
     // 🔍 Obtener progreso de cada estudiante
     const studentProgress = await Promise.all(
@@ -55,11 +55,11 @@ export async function GET(req: Request) {
           .then((res) => res[0]?.completed || 0);
 
         const progressPercentage = Math.round(
-          (completedLessons / totalLessons) * 100,
+          (completedLessons / totalLessons) * 100
         );
 
         return { ...student, progress: progressPercentage };
-      }),
+      })
     );
 
     // Recuperar el tiempo de conexión para cada estudiante
@@ -86,10 +86,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ students: studentsWithTime });
   } catch (error) {
-    console.error("❌ Error al obtener los datos:", error);
+    console.error('❌ Error al obtener los datos:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

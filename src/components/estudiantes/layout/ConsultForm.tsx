@@ -1,14 +1,14 @@
-"use client";
-import { useState } from "react";
+'use client';
+import { useState } from 'react';
 
-import { Button } from "~/components/estudiantes/ui/button";
+import { Button } from '~/components/estudiantes/ui/button';
 
 type Result = Record<string, string | number>;
 
 const ConsultForm: React.FC = () => {
-  const [orderId, setOrderId] = useState("");
-  const [transactionId, setTransactionId] = useState("");
-  const [referenceCode, setReferenceCode] = useState("");
+  const [orderId, setOrderId] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [referenceCode, setReferenceCode] = useState('');
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,10 +17,10 @@ const ConsultForm: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await fetch("/api/consultTransaction", {
-        method: "POST",
+      const response = await fetch('/api/consultTransaction', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           orderId: orderId ? parseInt(orderId) : undefined,
@@ -30,7 +30,7 @@ const ConsultForm: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch transaction data");
+        throw new Error('Failed to fetch transaction data');
       }
 
       const data: Result = (await response.json()) as Result;

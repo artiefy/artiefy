@@ -1,8 +1,8 @@
-"use client";
-import React, { useCallback, useEffect, useState } from "react";
+'use client';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
 import {
   Check,
@@ -14,19 +14,19 @@ import {
   UserPlus,
   X,
   XCircle,
-} from "lucide-react";
-import SunEditor from "suneditor-react";
+} from 'lucide-react';
+import SunEditor from 'suneditor-react';
 
-import AnuncioPreview from "~/app/dashboard/super-admin/anuncios/AnuncioPreview";
-import EditUserModal from "~/app/dashboard/super-admin/users/EditUserModal"; // Ajusta la ruta según la ubicación de tu componente
-import CourseCarousel from "~/components/super-admin/CourseCarousel";
-import { deleteUser, setRoleWrapper } from "~/server/queries/queries";
+import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
+import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
+import CourseCarousel from '~/components/super-admin/CourseCarousel';
+import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
-import BulkUploadUsers from "./components/BulkUploadUsers"; // Ajusta la ruta según la ubicación de tu componente
-import { ConfirmDialog } from "./components/ConfirmDialog";
-import { InfoDialog } from "./components/InfoDialog";
+import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
+import { ConfirmDialog } from './components/ConfirmDialog';
+import { InfoDialog } from './components/InfoDialog';
 
-import "suneditor/dist/css/suneditor.min.css";
+import 'suneditor/dist/css/suneditor.min.css';
 
 interface User {
   id: string;
@@ -115,24 +115,24 @@ interface EmailResponse {
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   // 🔍 Estados de búsqueda y filtros
-  const [searchQuery, setSearchQuery] = useState(""); // Búsqueda por nombre o correo
-  const [roleFilter, setRoleFilter] = useState(""); // Filtro por rol
-  const [statusFilter, setStatusFilter] = useState(""); // Filtro por estado
+  const [searchQuery, setSearchQuery] = useState(''); // Búsqueda por nombre o correo
+  const [roleFilter, setRoleFilter] = useState(''); // Filtro por rol
+  const [statusFilter, setStatusFilter] = useState(''); // Filtro por estado
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   void loading;
   void error;
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(
-    null as string | null,
+    null as string | null
   );
-  if (typeof updatingUserId === "string" && updatingUserId) {
+  if (typeof updatingUserId === 'string' && updatingUserId) {
     // Variable utilizada para evitar warnings, no afecta la lógica
   }
 
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null);
   const [notification, setNotification] = useState<{
     message: string;
-    type: "success" | "error";
+    type: 'success' | 'error';
   } | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
@@ -141,54 +141,54 @@ export default function AdminDashboard() {
     firstName: string;
     lastName: string;
   }>({
-    firstName: "",
-    lastName: "",
+    firstName: '',
+    lastName: '',
   });
   void editValues;
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
-  const [infoDialogTitle, setInfoDialogTitle] = useState("");
-  const [infoDialogMessage, setInfoDialogMessage] = useState("");
+  const [infoDialogTitle, setInfoDialogTitle] = useState('');
+  const [infoDialogMessage, setInfoDialogMessage] = useState('');
   interface Anuncio {
     id: string;
     title: string;
   }
 
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
-  if (typeof anuncios === "string" && anuncios) {
+  if (typeof anuncios === 'string' && anuncios) {
     // Variable utilizada para evitar warnings, no afecta la lógica
   }
 
   const [showAnuncioModal, setShowAnuncioModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false); // ✅ Nuevo estado para mostrar el modal de correos
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]); // ✅ Para almacenar los emails seleccionados
-  const [customEmails, setCustomEmails] = useState(""); // ✅ Para agregar emails manualmente
-  const [subject, setSubject] = useState(""); // ✅ Asunto del correo
-  const [message, setMessage] = useState(""); // ✅ Mensaje del correo
+  const [customEmails, setCustomEmails] = useState(''); // ✅ Para agregar emails manualmente
+  const [subject, setSubject] = useState(''); // ✅ Asunto del correo
+  const [message, setMessage] = useState(''); // ✅ Mensaje del correo
   const [loadingEmail, setLoadingEmail] = useState(false); // ✅ Estado de carga para el envío de correos
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
-  const [numerosLocales, setNumerosLocales] = useState("");
-  const [codigoPais, setCodigoPais] = useState("+57");
+  const [numerosLocales, setNumerosLocales] = useState('');
+  const [codigoPais, setCodigoPais] = useState('+57');
 
   const [previewAttachments, setPreviewAttachments] = useState<string[]>([]);
   const [usersPerPage, setUsersPerPage] = useState<number>(10);
 
   const [newAnuncio, setNewAnuncio] = useState({
-    titulo: "",
-    descripcion: "",
+    titulo: '',
+    descripcion: '',
     imagen: null as File | null,
     previewImagen: null as string | null,
-    tipo_destinatario: "todos" as "todos" | "cursos" | "programas" | "custom",
+    tipo_destinatario: 'todos' as 'todos' | 'cursos' | 'programas' | 'custom',
     cursoId: null as number | null,
   });
 
   const searchParams = useSearchParams();
-  const query = searchParams?.get("search") ?? "";
+  const query = searchParams?.get('search') ?? '';
   const [newUser, setNewUser] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "estudiante",
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'estudiante',
   });
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
   const [creatingUser, setCreatingUser] = useState(false);
   const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  if (typeof showPassword === "string" && showPassword) {
+  if (typeof showPassword === 'string' && showPassword) {
     // Variable utilizada para evitar warnings, no afecta la lógica
   }
 
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
     setSelectedUsers((prevSelected) =>
       prevSelected.includes(userId)
         ? prevSelected.filter((id) => id !== userId)
-        : [...prevSelected, userId],
+        : [...prevSelected, userId]
     );
 
     setSelectedEmails((prevEmails) => {
@@ -238,34 +238,34 @@ export default function AdminDashboard() {
         Array.isArray(data) &&
         data.every(
           (item) =>
-            typeof item === "object" &&
+            typeof item === 'object' &&
             item !== null &&
-            "id" in item &&
-            "title" in item &&
-            (typeof (item as { id: unknown }).id === "string" ||
-              typeof (item as { id: unknown }).id === "number") &&
-            typeof (item as { title: unknown }).title === "string",
+            'id' in item &&
+            'title' in item &&
+            (typeof (item as { id: unknown }).id === 'string' ||
+              typeof (item as { id: unknown }).id === 'number') &&
+            typeof (item as { title: unknown }).title === 'string'
         )
       );
     },
-    [],
+    []
   );
 
   const fetchAllPrograms = useCallback(async () => {
     try {
-      const res = await fetch("/api/super-admin/programs");
-      if (!res.ok) throw new Error("Error al obtener programas");
+      const res = await fetch('/api/super-admin/programs');
+      if (!res.ok) throw new Error('Error al obtener programas');
       const rawData: unknown = await res.json();
-      if (!isValidProgramArray(rawData)) throw new Error("Datos inválidos");
+      if (!isValidProgramArray(rawData)) throw new Error('Datos inválidos');
       const data = Array.from(
         new Map(
-          rawData.map((p) => [p.id, { id: String(p.id), title: p.title }]),
-        ).values(),
+          rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
+        ).values()
       );
       setPrograms(data);
       setAllPrograms(data);
     } catch (error) {
-      console.error("Error cargando programas:", error);
+      console.error('Error cargando programas:', error);
       setPrograms([]);
     }
   }, [setPrograms, setAllPrograms, isValidProgramArray]);
@@ -275,13 +275,13 @@ export default function AdminDashboard() {
       Array.isArray(data) &&
       data.every(
         (item) =>
-          typeof item === "object" &&
+          typeof item === 'object' &&
           item !== null &&
-          "id" in item &&
-          "title" in item &&
-          (typeof (item as { id: unknown }).id === "string" ||
-            typeof (item as { id: unknown }).id === "number") &&
-          typeof (item as { title: unknown }).title === "string",
+          'id' in item &&
+          'title' in item &&
+          (typeof (item as { id: unknown }).id === 'string' ||
+            typeof (item as { id: unknown }).id === 'number') &&
+          typeof (item as { title: unknown }).title === 'string'
       )
     );
   }, []);
@@ -291,25 +291,25 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchMaterias = async () => {
       try {
-        const res = await fetch("/api/super-admin/materias");
+        const res = await fetch('/api/super-admin/materias');
         const rawData: unknown = await res.json();
         if (
           !Array.isArray(rawData) ||
           !rawData.every(
             (item) =>
-              typeof item === "object" &&
+              typeof item === 'object' &&
               item !== null &&
-              "id" in item &&
-              "courseId" in item &&
-              "programaId" in item,
+              'id' in item &&
+              'courseId' in item &&
+              'programaId' in item
           )
         ) {
-          throw new Error("Invalid data format for Materias");
+          throw new Error('Invalid data format for Materias');
         }
         const data: Materia[] = rawData as Materia[];
         setMaterias(data);
       } catch (error) {
-        console.error("Error al cargar materias:", error);
+        console.error('Error al cargar materias:', error);
       }
     };
 
@@ -329,7 +329,7 @@ export default function AdminDashboard() {
     const uniqueProgramIds = [...new Set(programIds)]; // Eliminar duplicados
 
     const relatedPrograms = allPrograms.filter((p) =>
-      uniqueProgramIds.includes(p.id),
+      uniqueProgramIds.includes(p.id)
     );
 
     setPrograms(relatedPrograms);
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
     const uniqueCourseIds = [...new Set(courseIds)]; // Eliminar duplicados
 
     const relatedCourses = allCourses.filter((c) =>
-      uniqueCourseIds.includes(c.id),
+      uniqueCourseIds.includes(c.id)
     );
 
     setCourses(relatedCourses);
@@ -362,13 +362,13 @@ export default function AdminDashboard() {
 
   const fetchAllCourses = useCallback(async () => {
     try {
-      const res = await fetch("/api/super-admin/courses");
-      if (!res.ok) throw new Error("Error al obtener cursos");
+      const res = await fetch('/api/super-admin/courses');
+      if (!res.ok) throw new Error('Error al obtener cursos');
 
       const rawData: unknown = await res.json();
 
       if (!isValidCourseArray(rawData)) {
-        throw new Error("Datos inválidos para cursos");
+        throw new Error('Datos inválidos para cursos');
       }
 
       const data = rawData.map((c) => ({
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
       setCourses(data);
       setAllCourses(data);
     } catch (error) {
-      console.error("Error cargando todos los cursos:", error);
+      console.error('Error cargando todos los cursos:', error);
       setCourses([]);
     }
   }, [isValidCourseArray]);
@@ -387,56 +387,56 @@ export default function AdminDashboard() {
   // 1️⃣ Filtrar usuarios
   const filteredUsers = users.filter(
     (user) =>
-      (searchQuery === "" ||
+      (searchQuery === '' ||
         user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
       (roleFilter ? user.role === roleFilter : true) &&
-      (statusFilter ? user.status === statusFilter : true),
+      (statusFilter ? user.status === statusFilter : true)
   );
   const [sendingEmails, setSendingEmails] = useState(false);
 
   const fetchPrograms = useCallback(async () => {
     try {
       const res = await fetch(
-        "server/actions/estudiantes/programs/getAllPrograms",
+        'server/actions/estudiantes/programs/getAllPrograms'
       ); // Actualizar la ruta correcta
-      if (!res.ok) throw new Error("Error al obtener programas");
+      if (!res.ok) throw new Error('Error al obtener programas');
 
       const rawData: unknown = await res.json();
       if (
         !Array.isArray(rawData) ||
         !rawData.every(
           (item) =>
-            typeof item === "object" &&
+            typeof item === 'object' &&
             item !== null &&
-            "id" in item &&
-            "title" in item &&
-            typeof (item as { id: unknown }).id === "string" &&
-            typeof (item as { title: unknown }).title === "string",
+            'id' in item &&
+            'title' in item &&
+            typeof (item as { id: unknown }).id === 'string' &&
+            typeof (item as { title: unknown }).title === 'string'
         )
       ) {
-        throw new Error("Datos inválidos recibidos");
+        throw new Error('Datos inválidos recibidos');
       }
 
       const data = rawData as { id: string; title: string }[];
       setPrograms(data);
     } catch (error) {
-      console.error("Error fetching programs:", error);
+      console.error('Error fetching programs:', error);
       setPrograms([]); // Asegurarse de que programs siempre tenga un valor válido
     }
   }, []);
 
   const fetchProgramsForAssign = useCallback(async () => {
     try {
-      const res = await fetch("/api/super-admin/programs/enrollInProgram");
-      if (!res.ok) throw new Error("Error al obtener programas");
+      const res = await fetch('/api/super-admin/programs/enrollInProgram');
+      if (!res.ok) throw new Error('Error al obtener programas');
 
       const data = (await res.json()) as { id: string; title: string }[];
-      console.log("✅ Programas para asignación cargados:", data);
+      console.log('✅ Programas para asignación cargados:', data);
       setPrograms(data);
     } catch (error) {
-      console.error("Error al cargar programas:", error);
+      console.error('Error al cargar programas:', error);
     }
   }, []);
 
@@ -462,44 +462,44 @@ export default function AdminDashboard() {
     setSelectedStudents((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
+        : [...prev, userId]
     );
   };
 
   const fetchCourses = useCallback(async () => {
     try {
-      const res = await fetch("/api/educadores/courses");
-      if (!res.ok) throw new Error("Error al cargar cursos");
+      const res = await fetch('/api/educadores/courses');
+      if (!res.ok) throw new Error('Error al cargar cursos');
       const rawData: unknown = await res.json();
-      if (!Array.isArray(rawData)) throw new Error("Invalid data received");
+      if (!Array.isArray(rawData)) throw new Error('Invalid data received');
       const data: { id: string; title: string }[] = rawData.filter(
         (item): item is { id: string; title: string } =>
-          typeof item === "object" &&
+          typeof item === 'object' &&
           item !== null &&
-          "id" in item &&
-          "title" in item,
+          'id' in item &&
+          'title' in item
       );
       setCourses(data);
     } catch (err) {
-      console.error("Error fetching courses:", err);
+      console.error('Error fetching courses:', err);
     }
   }, []);
   const fetchAnuncios = async (userId: string) => {
     try {
-      const res = await fetch("/api/super-admin/anuncios/view-anuncio", {
-        headers: { "x-user-id": userId },
+      const res = await fetch('/api/super-admin/anuncios/view-anuncio', {
+        headers: { 'x-user-id': userId },
       });
-      if (!res.ok) throw new Error("Error al obtener anuncios");
+      if (!res.ok) throw new Error('Error al obtener anuncios');
 
       const data = (await res.json()) as { id: string; title: string }[];
       setAnuncios(data);
     } catch (error) {
-      console.error("❌ Error al obtener anuncios:", error);
+      console.error('❌ Error al obtener anuncios:', error);
     }
   };
 
   const sendEmail = async () => {
-    console.log("📩 Enviando correo...");
+    console.log('📩 Enviando correo...');
     if (
       !subject ||
       !message ||
@@ -508,10 +508,10 @@ export default function AdminDashboard() {
         (!numerosLocales.trim() || !sendWhatsapp))
     ) {
       setNotification({
-        message: "Todos los campos son obligatorios",
-        type: "error",
+        message: 'Todos los campos son obligatorios',
+        type: 'error',
       });
-      console.error("❌ Error: Faltan datos obligatorios");
+      console.error('❌ Error: Faltan datos obligatorios');
       return;
     }
 
@@ -521,17 +521,17 @@ export default function AdminDashboard() {
       new Set([
         ...selectedEmails,
         ...customEmails
-          .split(",")
+          .split(',')
           .map((e) => e.trim())
           .filter(Boolean),
-      ]),
+      ])
     );
 
     // ⚡ procesar los números para whatsapp
     let whatsappNumbers: string[] = [];
     if (sendWhatsapp && numerosLocales.trim()) {
       whatsappNumbers = numerosLocales
-        .split(",")
+        .split(',')
         .map((num) => num.trim())
         .filter(Boolean)
         .map((num) => `${codigoPais}${num}`);
@@ -539,52 +539,52 @@ export default function AdminDashboard() {
 
     try {
       const formData = new FormData();
-      formData.append("subject", subject);
-      formData.append("message", message);
-      emails.forEach((email) => formData.append("emails[]", email));
-      attachments.forEach((file) => formData.append("attachments", file));
+      formData.append('subject', subject);
+      formData.append('message', message);
+      emails.forEach((email) => formData.append('emails[]', email));
+      attachments.forEach((file) => formData.append('attachments', file));
 
-      const response = await fetch("/api/super-admin/emails", {
-        method: "POST",
+      const response = await fetch('/api/super-admin/emails', {
+        method: 'POST',
         body: formData,
       });
 
       if (sendWhatsapp) {
         for (const number of whatsappNumbers) {
-          console.log("📲 Enviando WhatsApp a:", number);
+          console.log('📲 Enviando WhatsApp a:', number);
 
-          await fetch("/api/super-admin/whatsapp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          await fetch('/api/super-admin/whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: number,
-              message: `${subject}\n\n${message.replace(/<[^>]+>/g, "")}`,
+              message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
             }),
           });
         }
       }
 
-      if (!response.ok) throw new Error("Error al enviar el correo");
+      if (!response.ok) throw new Error('Error al enviar el correo');
 
-      console.log("✅ Correo enviado con éxito");
+      console.log('✅ Correo enviado con éxito');
       setNotification({
-        message: "Correo enviado correctamente",
-        type: "success",
+        message: 'Correo enviado correctamente',
+        type: 'success',
       });
 
-      setSubject("");
-      setMessage("");
+      setSubject('');
+      setMessage('');
       setSelectedEmails([]);
-      setCustomEmails("");
+      setCustomEmails('');
       setAttachments([]);
       setPreviewAttachments([]);
-      setNumerosLocales("");
-      setCodigoPais("+57");
+      setNumerosLocales('');
+      setCodigoPais('+57');
       setSendWhatsapp(false);
       setShowEmailModal(false);
     } catch (error) {
-      console.error("❌ Error al enviar el correo:", error);
-      setNotification({ message: "Error al enviar el correo", type: "error" });
+      console.error('❌ Error al enviar el correo:', error);
+      setNotification({ message: 'Error al enviar el correo', type: 'error' });
     } finally {
       setLoadingEmail(false);
     }
@@ -609,7 +609,7 @@ export default function AdminDashboard() {
     }
   };
   const handleAttachmentChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (event.target.files?.length) {
       const files = Array.from(event.target.files);
@@ -627,19 +627,19 @@ export default function AdminDashboard() {
   };
 
   const handleManualEmailAdd = (
-    event: React.KeyboardEvent<HTMLInputElement>,
+    event: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    if (event.key === "Enter" && customEmails.trim()) {
+    if (event.key === 'Enter' && customEmails.trim()) {
       event.preventDefault(); // Evita que el `Enter` haga un submit del formulario
 
       const emails = customEmails
-        .split(",")
+        .split(',')
         .map((email) => email.trim())
-        .filter((email) => email !== "");
+        .filter((email) => email !== '');
 
       // Agregar solo correos válidos y evitar duplicados
       setSelectedEmails((prev) => [...new Set([...prev, ...emails])]);
-      setCustomEmails("");
+      setCustomEmails('');
     }
   };
 
@@ -649,22 +649,22 @@ export default function AdminDashboard() {
       !newAnuncio.descripcion.trim() ||
       !newAnuncio.imagen
     ) {
-      alert("Todos los campos son obligatorios.");
+      alert('Todos los campos son obligatorios.');
       return;
     }
 
     try {
       // 🔹 Subir la imagen primero a S3
-      const uploadRequest = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const uploadRequest = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contentType: newAnuncio.imagen.type,
           fileSize: newAnuncio.imagen.size,
         }),
       });
 
-      if (!uploadRequest.ok) throw new Error("Error al obtener la URL firmada");
+      if (!uploadRequest.ok) throw new Error('Error al obtener la URL firmada');
 
       const uploadData = (await uploadRequest.json()) as {
         url: string;
@@ -675,63 +675,63 @@ export default function AdminDashboard() {
 
       const formData = new FormData();
       Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value),
+        formData.append(key, value)
       );
-      formData.append("file", newAnuncio.imagen);
+      formData.append('file', newAnuncio.imagen);
 
       const s3UploadResponse = await fetch(url, {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
-      if (!s3UploadResponse.ok) throw new Error("Error al subir la imagen");
+      if (!s3UploadResponse.ok) throw new Error('Error al subir la imagen');
 
       const imageUrl = `${key}`;
 
       // 🔹 Guardar el anuncio con los destinatarios seleccionados
       const destinatarios: string[] =
-        newAnuncio.tipo_destinatario === "cursos"
+        newAnuncio.tipo_destinatario === 'cursos'
           ? (selectedCourses ?? [])
-          : newAnuncio.tipo_destinatario === "programas"
+          : newAnuncio.tipo_destinatario === 'programas'
             ? (selectedPrograms ?? [])
-            : newAnuncio.tipo_destinatario === "custom"
+            : newAnuncio.tipo_destinatario === 'custom'
               ? (selectedUsers ?? [])
               : [];
 
-      console.log("📌 Destinatarios enviados:", destinatarios);
+      console.log('📌 Destinatarios enviados:', destinatarios);
 
-      const response = await fetch("/api/super-admin/anuncios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/super-admin/anuncios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           titulo: newAnuncio.titulo,
           descripcion: newAnuncio.descripcion,
           imagenUrl: imageUrl,
           tipo_destinatario: newAnuncio.tipo_destinatario,
           courseIds:
-            newAnuncio.tipo_destinatario === "cursos" ? selectedCourses : [],
+            newAnuncio.tipo_destinatario === 'cursos' ? selectedCourses : [],
           programaIds:
-            newAnuncio.tipo_destinatario === "programas"
+            newAnuncio.tipo_destinatario === 'programas'
               ? selectedPrograms
               : [],
           userIds:
-            newAnuncio.tipo_destinatario === "custom" ? selectedUsers : [],
+            newAnuncio.tipo_destinatario === 'custom' ? selectedUsers : [],
         }),
       });
 
-      if (!response.ok) throw new Error("Error al guardar el anuncio");
+      if (!response.ok) throw new Error('Error al guardar el anuncio');
 
-      alert("Anuncio guardado correctamente");
+      alert('Anuncio guardado correctamente');
       setShowAnuncioModal(false);
     } catch (error) {
-      console.error("❌ Error al guardar anuncio:", error);
-      alert("Error al guardar el anuncio.");
+      console.error('❌ Error al guardar anuncio:', error);
+      alert('Error al guardar el anuncio.');
     }
   };
 
   const [selectedPlanType, setSelectedPlanType] = useState<
-    "Pro" | "Premium" | "Enterprise"
-  >("Premium");
+    'Pro' | 'Premium' | 'Enterprise'
+  >('Premium');
 
   const handleAssignStudents = async () => {
     if (selectedStudents.length === 0) return;
@@ -739,7 +739,7 @@ export default function AdminDashboard() {
     try {
       const payload: {
         userIds: string[];
-        planType: "Pro" | "Premium" | "Enterprise";
+        planType: 'Pro' | 'Premium' | 'Enterprise';
         courseId?: string;
         programId?: string;
       } = {
@@ -755,30 +755,30 @@ export default function AdminDashboard() {
         payload.programId = selectedProgram;
       }
 
-      const response = await fetch("/api/enrollments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Error during enrollment");
+      if (!response.ok) throw new Error('Error during enrollment');
 
       const rawResult: unknown = await response.json();
 
       if (
-        typeof rawResult === "object" &&
+        typeof rawResult === 'object' &&
         rawResult !== null &&
-        "success" in rawResult &&
-        typeof (rawResult as { success: unknown }).success === "boolean" &&
-        "message" in rawResult &&
-        typeof (rawResult as { message: unknown }).message === "string"
+        'success' in rawResult &&
+        typeof (rawResult as { success: unknown }).success === 'boolean' &&
+        'message' in rawResult &&
+        typeof (rawResult as { message: unknown }).message === 'string'
       ) {
         const result: { success: boolean; message: string } = rawResult as {
           success: boolean;
           message: string;
         };
 
-        console.log("Enrollment successful:", result);
+        console.log('Enrollment successful:', result);
         setShowAssignModal(false);
         setSelectedStudents([]);
         setSelectedCourse(null);
@@ -803,10 +803,10 @@ export default function AdminDashboard() {
 
         alert(successMessage);
       } else {
-        throw new Error("Invalid response format");
+        throw new Error('Invalid response format');
       }
     } catch (error) {
-      console.error("Error assigning students:", error);
+      console.error('Error assigning students:', error);
     }
   };
 
@@ -814,28 +814,28 @@ export default function AdminDashboard() {
     try {
       // Obtener información básica del usuario
       const userRes = await fetch(`/api/super-admin/infoUser?id=${user.id}`);
-      if (!userRes.ok) throw new Error("Error al obtener datos del usuario");
+      if (!userRes.ok) throw new Error('Error al obtener datos del usuario');
 
       const userData: UserData = (await userRes.json()) as UserData;
 
       // Validar que los datos sean correctos
       if (!userData?.name || !userData?.email || !userData?.id) {
-        throw new Error("Datos del usuario inválidos");
+        throw new Error('Datos del usuario inválidos');
       }
 
       // Extraer el primer y segundo nombre de `name` (en caso de que tenga más de un nombre)
-      const [firstName, lastName] = userData.name.split(" ");
+      const [firstName, lastName] = userData.name.split(' ');
 
       const validUserData: ViewUserResponse = {
         id: String(userData.id),
-        firstName: firstName || "Nombre no disponible",
-        lastName: lastName || "Apellido no disponible",
+        firstName: firstName || 'Nombre no disponible',
+        lastName: lastName || 'Apellido no disponible',
         email: String(userData.email),
-        profileImage: userData.profileImage ?? "/default-avatar.png",
-        createdAt: userData.createdAt ?? "Fecha no disponible",
-        role: userData.role ?? "Sin rol",
-        status: userData.status ?? "Activo",
-        password: userData.password ?? "No disponible",
+        profileImage: userData.profileImage ?? '/default-avatar.png',
+        createdAt: userData.createdAt ?? 'Fecha no disponible',
+        role: userData.role ?? 'Sin rol',
+        status: userData.status ?? 'Activo',
+        password: userData.password ?? 'No disponible',
         courses: [], // Esto se completará con los cursos más tarde
       };
 
@@ -844,28 +844,28 @@ export default function AdminDashboard() {
 
       // Obtener los cursos
       const coursesRes = await fetch(
-        `/api/super-admin/userCourses?userId=${user.id}`,
+        `/api/super-admin/userCourses?userId=${user.id}`
       );
-      if (!coursesRes.ok) throw new Error("Error al obtener los cursos");
+      if (!coursesRes.ok) throw new Error('Error al obtener los cursos');
 
       const coursesData = (await coursesRes.json()) as CoursesData;
 
       // Validar que los cursos sean correctos
       if (!coursesData || !Array.isArray(coursesData.courses)) {
-        throw new Error("Error en los datos de los cursos");
+        throw new Error('Error en los datos de los cursos');
       }
 
       // Mapear los cursos
       console.log(
-        "📌 Cursos obtenidos en `handleViewUser`:",
-        coursesData.courses,
+        '📌 Cursos obtenidos en `handleViewUser`:',
+        coursesData.courses
       );
       const courses = coursesData.courses.map((course) => ({
         id: course.id,
-        title: course.title || "Sin título",
+        title: course.title || 'Sin título',
         coverImageKey: course.coverImageKey ?? null,
-        coverImage: course.coverImage ?? "/default-course.jpg",
-        instructor: course.instructor || "Instructor no disponible",
+        coverImage: course.coverImage ?? '/default-course.jpg',
+        instructor: course.instructor || 'Instructor no disponible',
       }));
 
       // Actualizar el estado con los cursos
@@ -876,7 +876,7 @@ export default function AdminDashboard() {
 
       setShowPassword(false);
     } catch (error) {
-      console.error("Error al obtener usuario o cursos:", error);
+      console.error('Error al obtener usuario o cursos:', error);
     }
   };
 
@@ -887,10 +887,10 @@ export default function AdminDashboard() {
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error("Error al cargar usuarios");
+      if (!res.ok) throw new Error('Error al cargar usuarios');
 
       const rawData: unknown = await res.json();
-      if (!Array.isArray(rawData)) throw new Error("Datos inválidos recibidos");
+      if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
       const data: User[] = (rawData as User[]).map((item) => ({
         id: String(item.id),
@@ -900,16 +900,16 @@ export default function AdminDashboard() {
         role: String(item.role),
         status: String(item.status),
         permissions:
-          "permissions" in item && Array.isArray(item.permissions)
+          'permissions' in item && Array.isArray(item.permissions)
             ? item.permissions
             : [], // ✅ Asegura que `permissions` se guarden correctamente
       }));
 
       setUsers(data);
-      console.log("✅ Usuarios cargados con permisos:", data);
+      console.log('✅ Usuarios cargados con permisos:', data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-      console.error("Error fetching users:", err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -921,11 +921,11 @@ export default function AdminDashboard() {
   }, [fetchUsers]);
 
   const showNotification = useCallback(
-    (message: string, type: "success" | "error") => {
+    (message: string, type: 'success' | 'error') => {
       setNotification({ message, type });
       setTimeout(() => setNotification(null), 3000);
     },
-    [],
+    []
   );
 
   interface CreateUserResponse {
@@ -942,15 +942,15 @@ export default function AdminDashboard() {
       !newUser.lastName.trim() ||
       !newUser.email.trim()
     ) {
-      showNotification("Todos los campos son obligatorios.", "error");
+      showNotification('Todos los campos son obligatorios.', 'error');
       return;
     }
 
     try {
       setCreatingUser(true);
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName: newUser.firstName,
           lastName: newUser.lastName,
@@ -960,28 +960,28 @@ export default function AdminDashboard() {
       });
 
       if (!res.ok) {
-        throw new Error("No se pudo crear el usuario");
+        throw new Error('No se pudo crear el usuario');
       }
 
       const rawData: unknown = await res.json();
       if (
-        typeof rawData !== "object" ||
+        typeof rawData !== 'object' ||
         rawData === null ||
-        !("user" in rawData) ||
-        !("generatedPassword" in rawData)
+        !('user' in rawData) ||
+        !('generatedPassword' in rawData)
       ) {
-        throw new Error("Respuesta de la API en formato incorrecto");
+        throw new Error('Respuesta de la API en formato incorrecto');
       }
 
       const { user: safeUser, generatedPassword } =
         rawData as CreateUserResponse;
       if (
         !safeUser ||
-        typeof safeUser !== "object" ||
-        !("id" in safeUser) ||
-        !("username" in safeUser)
+        typeof safeUser !== 'object' ||
+        !('id' in safeUser) ||
+        !('username' in safeUser)
       ) {
-        throw new Error("Usuario inválido en la respuesta de la API");
+        throw new Error('Usuario inválido en la respuesta de la API');
       }
 
       const username = safeUser.username;
@@ -992,15 +992,15 @@ export default function AdminDashboard() {
           lastName: newUser.lastName,
           email: newUser.email,
           role: newUser.role,
-          status: "activo",
+          status: 'activo',
           isNew: true, // 🔹 Marcar como usuario nuevo
         },
         ...users,
       ]);
 
-      setInfoDialogTitle("Usuario Creado");
+      setInfoDialogTitle('Usuario Creado');
       setInfoDialogMessage(
-        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`,
+        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
 
@@ -1008,13 +1008,13 @@ export default function AdminDashboard() {
       setShowCreateForm(false);
 
       setNewUser({
-        firstName: "",
-        lastName: "",
-        email: "",
-        role: "estudiante",
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: 'estudiante',
       });
     } catch {
-      showNotification("Error al crear el usuario.", "error");
+      showNotification('Error al crear el usuario.', 'error');
     } finally {
       setCreatingUser(false);
     }
@@ -1022,16 +1022,16 @@ export default function AdminDashboard() {
 
   const handleMassUpdateStatus = async (newStatus: string) => {
     if (selectedUsers.length === 0) {
-      showNotification("No has seleccionado usuarios.", "error");
+      showNotification('No has seleccionado usuarios.', 'error');
       return;
     }
 
     try {
-      await fetch("/api/users", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: "updateMultipleStatus",
+          action: 'updateMultipleStatus',
           userIds: selectedUsers,
           status: newStatus,
         }),
@@ -1041,20 +1041,20 @@ export default function AdminDashboard() {
         users.map((user) =>
           selectedUsers.includes(user.id)
             ? { ...user, status: newStatus }
-            : user,
-        ),
+            : user
+        )
       );
       setSelectedUsers([]);
-      showNotification(`Usuarios actualizados a ${newStatus}.`, "success");
+      showNotification(`Usuarios actualizados a ${newStatus}.`, 'success');
     } catch {
-      showNotification("Error al actualizar usuarios.", "error");
+      showNotification('Error al actualizar usuarios.', 'error');
     }
   };
 
   const handleRoleChange = (userId: string, newRole: string) => {
     setConfirmation({
       isOpen: true,
-      title: "Actualizar Rol",
+      title: 'Actualizar Rol',
       message: `¿Estás seguro de que quieres cambiar el rol de este usuario a ${newRole}?`,
       onConfirm: () => {
         void (async () => {
@@ -1064,13 +1064,13 @@ export default function AdminDashboard() {
 
             setUsers(
               users.map((user) =>
-                user.id === userId ? { ...user, role: newRole } : user,
-              ),
+                user.id === userId ? { ...user, role: newRole } : user
+              )
             );
 
-            showNotification("Rol actualizado con éxito.", "success");
+            showNotification('Rol actualizado con éxito.', 'success');
           } catch {
-            showNotification("Error al actualizar el rol.", "error");
+            showNotification('Error al actualizar el rol.', 'error');
           } finally {
             setUpdatingUserId(null);
           }
@@ -1081,23 +1081,23 @@ export default function AdminDashboard() {
 
   const handleMassRemoveRole = () => {
     if (selectedUsers.length === 0) {
-      showNotification("No has seleccionado usuarios.", "error");
+      showNotification('No has seleccionado usuarios.', 'error');
       return;
     }
 
     setConfirmation({
       isOpen: true,
-      title: "Eliminar Roles",
+      title: 'Eliminar Roles',
       message:
-        "¿Estás seguro de que quieres eliminar el rol de los usuarios seleccionados?",
+        '¿Estás seguro de que quieres eliminar el rol de los usuarios seleccionados?',
       onConfirm: () => {
         void (async () => {
           try {
-            await fetch("/api/users", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
+            await fetch('/api/users', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                action: "removeRole",
+                action: 'removeRole',
                 userIds: selectedUsers,
               }),
             });
@@ -1106,15 +1106,15 @@ export default function AdminDashboard() {
             setUsers(
               users.map((user) =>
                 selectedUsers.includes(user.id)
-                  ? { ...user, role: "sin-role" }
-                  : user,
-              ),
+                  ? { ...user, role: 'sin-role' }
+                  : user
+              )
             );
 
             setSelectedUsers([]); // Limpiar selección
-            showNotification("Roles eliminados con éxito.", "success");
+            showNotification('Roles eliminados con éxito.', 'success');
           } catch {
-            showNotification("Error al eliminar roles.", "error");
+            showNotification('Error al eliminar roles.', 'error');
           } finally {
             setConfirmation(null);
           }
@@ -1126,9 +1126,9 @@ export default function AdminDashboard() {
   const handleDeleteUser = (userId: string) => {
     setConfirmation({
       isOpen: true,
-      title: "Eliminar Usuario",
+      title: 'Eliminar Usuario',
       message:
-        "¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.",
+        '¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.',
       onConfirm: () => {
         void (async () => {
           try {
@@ -1136,9 +1136,9 @@ export default function AdminDashboard() {
             await deleteUser(userId);
 
             setUsers(users.filter((user) => user.id !== userId));
-            showNotification("Usuario eliminado correctamente.", "success");
+            showNotification('Usuario eliminado correctamente.', 'success');
           } catch {
-            showNotification("Error al eliminar el usuario.", "error");
+            showNotification('Error al eliminar el usuario.', 'error');
           } finally {
             setUpdatingUserId(null);
             setConfirmation(null);
@@ -1151,7 +1151,7 @@ export default function AdminDashboard() {
   const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
   const [programsCollapsed, setProgramsCollapsed] = useState(true);
   const [coursesCollapsed, setCoursesCollapsed] = useState(true);
-  const [studentSearch, setStudentSearch] = useState("");
+  const [studentSearch, setStudentSearch] = useState('');
 
   const handleMassUserUpload = useCallback(
     (newUsers: User[]) => {
@@ -1166,7 +1166,7 @@ export default function AdminDashboard() {
       // ✅ Mostrar notificación de éxito
       showNotification(
         `Se crearon ${newUsers.length} nuevos usuarios`,
-        "success",
+        'success'
       );
 
       // ✅ Cerrar el modal sin recargar la página
@@ -1175,14 +1175,14 @@ export default function AdminDashboard() {
         setModalIsOpen(false);
       }
     },
-    [showNotification, modalIsOpen],
+    [showNotification, modalIsOpen]
   );
 
   const handleEditUser = async (user: User) => {
     try {
       // 🔹 Obtener los datos del usuario desde Clerk
       const res = await fetch(`/api/super-admin/infoUserUpdate?id=${user.id}`);
-      if (!res.ok) throw new Error("Error al obtener datos del usuario");
+      if (!res.ok) throw new Error('Error al obtener datos del usuario');
 
       const userData: UserData = (await res.json()) as UserData;
 
@@ -1200,7 +1200,7 @@ export default function AdminDashboard() {
           : [],
       };
 
-      console.log("📌 Usuario con permisos:", userWithPermissions);
+      console.log('📌 Usuario con permisos:', userWithPermissions);
 
       // ✅ Guardar el usuario en el estado para abrir el modal con la info actualizada
       setEditingUser({
@@ -1211,8 +1211,8 @@ export default function AdminDashboard() {
           ? userData.permissions
           : [],
         subscriptionEndDate: userData.subscriptionEndDate ?? null,
-        role: userData.role ?? "sin-role",
-        status: userData.status ?? "sin-status",
+        role: userData.role ?? 'sin-role',
+        status: userData.status ?? 'sin-status',
       });
 
       // ✅ Asegurar que los campos de edición se actualicen con `firstName` y `lastName`
@@ -1221,7 +1221,7 @@ export default function AdminDashboard() {
         lastName,
       });
     } catch (error) {
-      console.error("❌ Error al obtener usuario:", error);
+      console.error('❌ Error al obtener usuario:', error);
     }
   };
 
@@ -1234,25 +1234,25 @@ export default function AdminDashboard() {
 
       try {
         const res = await fetch(
-          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`,
+          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
         );
-        if (!res.ok) throw new Error("Error al obtener programas desde curso");
+        if (!res.ok) throw new Error('Error al obtener programas desde curso');
 
         const rawData: unknown = await res.json();
 
         if (!isValidProgramArray(rawData)) {
-          throw new Error("Datos inválidos al obtener programas desde curso");
+          throw new Error('Datos inválidos al obtener programas desde curso');
         }
 
         const data = Array.from(
           new Map(
-            rawData.map((p) => [p.id, { id: String(p.id), title: p.title }]),
-          ).values(),
+            rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
+          ).values()
         );
 
         setPrograms(data);
       } catch (error) {
-        console.error("Error cargando programas desde curso:", error);
+        console.error('Error cargando programas desde curso:', error);
         setPrograms([]);
       }
     };
@@ -1263,20 +1263,20 @@ export default function AdminDashboard() {
     const fetchCoursesFromProgram = async () => {
       try {
         const res = await fetch(
-          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`,
+          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
         );
-        if (!res.ok) throw new Error("Error al obtener cursos desde programa");
+        if (!res.ok) throw new Error('Error al obtener cursos desde programa');
 
         const rawData: unknown = await res.json();
 
         if (!isValidCourseArray(rawData)) {
-          throw new Error("Datos inválidos al obtener cursos desde programa");
+          throw new Error('Datos inválidos al obtener cursos desde programa');
         }
 
         const data: Program[] = rawData as Program[];
         setCourses(data);
       } catch (error) {
-        console.error("Error cargando cursos desde programa:", error);
+        console.error('Error cargando cursos desde programa:', error);
         setCourses([]);
       }
     };
@@ -1304,22 +1304,22 @@ export default function AdminDashboard() {
     const loadCourses = async () => {
       try {
         const res = await fetch(
-          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`,
+          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
         );
-        if (!res.ok) throw new Error("Error al obtener cursos");
+        if (!res.ok) throw new Error('Error al obtener cursos');
 
         const rawData: unknown = await res.json();
         if (
           !Array.isArray(rawData) ||
           !rawData.every(
             (item) =>
-              typeof item === "object" &&
+              typeof item === 'object' &&
               item !== null &&
-              "id" in item &&
-              "title" in item,
+              'id' in item &&
+              'title' in item
           )
         ) {
-          throw new Error("Datos inválidos recibidos");
+          throw new Error('Datos inválidos recibidos');
         }
 
         const data: { id: string; title: string }[] = rawData as {
@@ -1329,7 +1329,7 @@ export default function AdminDashboard() {
 
         setCourses([...new Set(data)]); // Eliminar duplicados en cursos
       } catch (err) {
-        console.error("Error al cargar cursos desde programa:", err);
+        console.error('Error al cargar cursos desde programa:', err);
       }
     };
 
@@ -1345,22 +1345,22 @@ export default function AdminDashboard() {
     const loadPrograms = async () => {
       try {
         const res = await fetch(
-          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`,
+          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
         );
-        if (!res.ok) throw new Error("Error al obtener programas");
+        if (!res.ok) throw new Error('Error al obtener programas');
 
         const rawData: unknown = await res.json();
         if (
           !Array.isArray(rawData) ||
           !rawData.every(
             (item) =>
-              typeof item === "object" &&
+              typeof item === 'object' &&
               item !== null &&
-              "id" in item &&
-              "title" in item,
+              'id' in item &&
+              'title' in item
           )
         ) {
-          throw new Error("Datos inválidos recibidos");
+          throw new Error('Datos inválidos recibidos');
         }
 
         const data: { id: string; title: string }[] = rawData as {
@@ -1370,7 +1370,7 @@ export default function AdminDashboard() {
 
         setPrograms([...new Set(data)]); // Eliminar duplicados en programas
       } catch (err) {
-        console.error("Error al cargar programas desde curso:", err);
+        console.error('Error al cargar programas desde curso:', err);
       }
     };
 
@@ -1378,19 +1378,19 @@ export default function AdminDashboard() {
   }, [selectedCourse, allPrograms]);
 
   // Add search filters for courses and programs
-  const [courseSearch, setCourseSearch] = useState("");
-  const [programSearch, setProgramSearch] = useState("");
+  const [courseSearch, setCourseSearch] = useState('');
+  const [programSearch, setProgramSearch] = useState('');
 
   const filteredCourses = Array.from(
-    new Map(courses.map((course) => [course.title, course])).values(),
+    new Map(courses.map((course) => [course.title, course])).values()
   ).filter((course) =>
-    course.title.toLowerCase().includes(courseSearch.toLowerCase()),
+    course.title.toLowerCase().includes(courseSearch.toLowerCase())
   );
 
   const filteredPrograms = Array.from(
-    new Map(programs.map((program) => [program.title, program])).values(),
+    new Map(programs.map((program) => [program.title, program])).values()
   ).filter((program) =>
-    program.title.toLowerCase().includes(programSearch.toLowerCase()),
+    program.title.toLowerCase().includes(programSearch.toLowerCase())
   );
 
   return (
@@ -1418,11 +1418,11 @@ export default function AdminDashboard() {
             <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
           </button>
           <button
-            onClick={() => handleMassUpdateStatus("activo")}
+            onClick={() => handleMassUpdateStatus('activo')}
             className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
               selectedUsers.length === 0
-                ? "cursor-not-allowed border border-gray-600 text-gray-500"
-                : "border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
             }`}
             disabled={selectedUsers.length === 0}
           >
@@ -1431,11 +1431,11 @@ export default function AdminDashboard() {
             <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
           </button>
           <button
-            onClick={() => handleMassUpdateStatus("inactivo")}
+            onClick={() => handleMassUpdateStatus('inactivo')}
             className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
               selectedUsers.length === 0
-                ? "cursor-not-allowed border border-gray-600 text-gray-500"
-                : "border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
             }`}
             disabled={selectedUsers.length === 0}
           >
@@ -1447,8 +1447,8 @@ export default function AdminDashboard() {
             onClick={handleMassRemoveRole}
             className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
               selectedUsers.length === 0
-                ? "cursor-not-allowed border border-gray-600 text-gray-500"
-                : "border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
             }`}
             disabled={selectedUsers.length === 0}
           >
@@ -1461,20 +1461,20 @@ export default function AdminDashboard() {
             onClick={async () => {
               try {
                 if (selectedUsers.length === 0) {
-                  showNotification("No hay usuarios seleccionados", "error");
+                  showNotification('No hay usuarios seleccionados', 'error');
                   return;
                 }
 
                 setSendingEmails(true);
                 showNotification(
                   `Enviando ${selectedUsers.length} correos...`,
-                  "success",
+                  'success'
                 );
 
-                const response = await fetch("/api/users/emailsUsers", {
-                  method: "POST",
+                const response = await fetch('/api/users/emailsUsers', {
+                  method: 'POST',
                   headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
                     userIds: selectedUsers,
@@ -1482,41 +1482,41 @@ export default function AdminDashboard() {
                 });
 
                 if (!response.ok) {
-                  throw new Error("Error al enviar las credenciales");
+                  throw new Error('Error al enviar las credenciales');
                 }
 
                 const rawResult: unknown = await response.json();
 
                 if (
                   !rawResult ||
-                  typeof rawResult !== "object" ||
-                  !("results" in rawResult) ||
+                  typeof rawResult !== 'object' ||
+                  !('results' in rawResult) ||
                   !Array.isArray((rawResult as { results: unknown }).results)
                 ) {
-                  throw new Error("Invalid email response");
+                  throw new Error('Invalid email response');
                 }
 
                 const result = rawResult as EmailResponse;
 
                 const successCount = result.results.filter(
-                  (r) => r.status === "success",
+                  (r) => r.status === 'success'
                 ).length;
 
                 showNotification(
                   `Credenciales enviadas a ${successCount} usuarios`,
-                  "success",
+                  'success'
                 );
               } catch (error) {
-                console.error("Error:", error);
-                showNotification("Error al enviar las credenciales", "error");
+                console.error('Error:', error);
+                showNotification('Error al enviar las credenciales', 'error');
               } finally {
                 setSendingEmails(false);
               }
             }}
             className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
               selectedUsers.length === 0
-                ? "cursor-not-allowed border border-gray-600 text-gray-500"
-                : "border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
             }`}
             disabled={selectedUsers.length === 0 || sendingEmails}
           >
@@ -1527,7 +1527,7 @@ export default function AdminDashboard() {
                   Enviando...
                 </div>
               ) : (
-                "Reenviar Credenciales"
+                'Reenviar Credenciales'
               )}
             </span>
             {!sendingEmails && (
@@ -1640,7 +1640,7 @@ export default function AdminDashboard() {
                           setSelectedUsers(
                             e.target.checked
                               ? filteredUsers.map((user) => user.id)
-                              : [],
+                              : []
                           )
                         }
                         className="rounded border-white/20"
@@ -1696,7 +1696,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <select
-                          value={user.role || "sin-role"}
+                          value={user.role || 'sin-role'}
                           onChange={(e) =>
                             handleRoleChange(user.id, e.target.value)
                           }
@@ -1712,31 +1712,31 @@ export default function AdminDashboard() {
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div
                           className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            user.status === "activo"
-                              ? "bg-green-500/10 text-green-500"
-                              : user.status === "inactivo"
-                                ? "bg-red-500/10 text-red-500"
-                                : "bg-yellow-500/10 text-yellow-500"
+                            user.status === 'activo'
+                              ? 'bg-green-500/10 text-green-500'
+                              : user.status === 'inactivo'
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-yellow-500/10 text-yellow-500'
                           }`}
                         >
                           <div
                             className={`mr-1 size-1.5 rounded-full sm:size-2 ${
-                              user.status === "activo"
-                                ? "bg-green-500"
-                                : user.status === "inactivo"
-                                  ? "bg-red-500"
-                                  : "bg-yellow-500"
+                              user.status === 'activo'
+                                ? 'bg-green-500'
+                                : user.status === 'inactivo'
+                                  ? 'bg-red-500'
+                                  : 'bg-yellow-500'
                             }`}
                           />
                           <span className="hidden sm:inline">
                             {user.status}
                           </span>
                           <span className="inline sm:hidden">
-                            {user.status === "activo"
-                              ? "A"
-                              : user.status === "inactivo"
-                                ? "I"
-                                : "S"}
+                            {user.status === 'activo'
+                              ? 'A'
+                              : user.status === 'inactivo'
+                                ? 'I'
+                                : 'S'}
                           </span>
                         </div>
                       </td>
@@ -1794,7 +1794,7 @@ export default function AdminDashboard() {
               >
                 {Array.from(
                   { length: Math.ceil(filteredUsers.length / usersPerPage) },
-                  (_, i) => i + 1,
+                  (_, i) => i + 1
                 ).map((page) => (
                   <option key={page} value={page}>
                     Página {page}
@@ -1807,7 +1807,7 @@ export default function AdminDashboard() {
                   setCurrentPage((prev) =>
                     prev < Math.ceil(filteredUsers.length / usersPerPage)
                       ? prev + 1
-                      : prev,
+                      : prev
                   )
                 }
                 disabled={
@@ -1844,12 +1844,12 @@ export default function AdminDashboard() {
                 value={newUser.firstName}
                 onChange={(e) => {
                   // Eliminar espacios y tomar solo la primera palabra
-                  const singleName = e.target.value.trim().split(" ")[0];
+                  const singleName = e.target.value.trim().split(' ')[0];
                   setNewUser({ ...newUser, firstName: singleName });
                 }}
                 onKeyDown={(e) => {
                   // Prevenir el espacio
-                  if (e.key === " ") {
+                  if (e.key === ' ') {
                     e.preventDefault();
                   }
                 }}
@@ -1893,7 +1893,7 @@ export default function AdminDashboard() {
               className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
               disabled={creatingUser}
             >
-              {creatingUser ? <Loader2 className="size-5" /> : "Crear Usuario"}
+              {creatingUser ? <Loader2 className="size-5" /> : 'Crear Usuario'}
             </button>
           </div>
         </div>
@@ -1965,16 +1965,16 @@ export default function AdminDashboard() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                        viewUser.status === "activo"
-                          ? "bg-green-500/10 text-green-400"
-                          : "bg-red-500/10 text-red-400"
+                        viewUser.status === 'activo'
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
                       }`}
                     >
                       <span
                         className={`size-2 rounded-full ${
-                          viewUser.status === "activo"
-                            ? "bg-green-400"
-                            : "bg-red-400"
+                          viewUser.status === 'activo'
+                            ? 'bg-green-400'
+                            : 'bg-red-400'
                         }`}
                       />
                       {viewUser.status}
@@ -2063,7 +2063,7 @@ export default function AdminDashboard() {
                     }
                     onChange={(e) =>
                       setSelectedStudents(
-                        e.target.checked ? users.map((u) => u.id) : [],
+                        e.target.checked ? users.map((u) => u.id) : []
                       )
                     }
                     className="form-checkbox h-5 w-5 text-blue-500"
@@ -2081,7 +2081,7 @@ export default function AdminDashboard() {
                           .includes(studentSearch.toLowerCase()) ||
                         user.email
                           .toLowerCase()
-                          .includes(studentSearch.toLowerCase()),
+                          .includes(studentSearch.toLowerCase())
                     )
                     .map((user) => (
                       <label
@@ -2112,7 +2112,7 @@ export default function AdminDashboard() {
                     value={selectedPlanType}
                     onChange={(e) =>
                       setSelectedPlanType(
-                        e.target.value as "Pro" | "Premium" | "Enterprise",
+                        e.target.value as 'Pro' | 'Premium' | 'Enterprise'
                       )
                     }
                     className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-white"
@@ -2128,7 +2128,7 @@ export default function AdminDashboard() {
                     onClick={() => setCoursesCollapsed(!coursesCollapsed)}
                     className="bg-secondary w-full rounded py-2 text-white"
                   >
-                    {coursesCollapsed ? "Mostrar Cursos" : "Ocultar Cursos"}
+                    {coursesCollapsed ? 'Mostrar Cursos' : 'Ocultar Cursos'}
                   </button>
                   {!coursesCollapsed && (
                     <div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
@@ -2179,8 +2179,8 @@ export default function AdminDashboard() {
                     className="bg-primary w-full rounded py-2 text-white"
                   >
                     {programsCollapsed
-                      ? "Mostrar Programas"
-                      : "Ocultar Programas"}
+                      ? 'Mostrar Programas'
+                      : 'Ocultar Programas'}
                   </button>
 
                   {!programsCollapsed && (
@@ -2249,7 +2249,7 @@ export default function AdminDashboard() {
 
       {notification && (
         <div
-          className={`fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg ${notification.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+          className={`fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}
         >
           {notification.message}
         </div>
@@ -2272,15 +2272,15 @@ export default function AdminDashboard() {
             {/* Tipo de destinatario */}
             <select
               className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
-              value={newAnuncio.tipo_destinatario || ""}
+              value={newAnuncio.tipo_destinatario || ''}
               onChange={(e) =>
                 setNewAnuncio({
                   ...newAnuncio,
                   tipo_destinatario: e.target.value as
-                    | "todos"
-                    | "cursos"
-                    | "programas"
-                    | "custom",
+                    | 'todos'
+                    | 'cursos'
+                    | 'programas'
+                    | 'custom',
                 })
               }
             >
@@ -2290,7 +2290,7 @@ export default function AdminDashboard() {
               <option value="custom">Usuarios específicos</option>
             </select>
             {/* Mostrar el select de cursos si se selecciona "cursos" */}
-            {newAnuncio.tipo_destinatario === "cursos" && (
+            {newAnuncio.tipo_destinatario === 'cursos' && (
               <select
                 className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
                 value={selectedCourses}
@@ -2306,7 +2306,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Mostrar el select de programas si se selecciona "programas" */}
-            {newAnuncio.tipo_destinatario === "programas" && (
+            {newAnuncio.tipo_destinatario === 'programas' && (
               <select
                 className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
                 value={selectedPrograms}
@@ -2323,7 +2323,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Mostrar el select de usuarios si se selecciona "custom" */}
-            {newAnuncio.tipo_destinatario === "custom" && (
+            {newAnuncio.tipo_destinatario === 'custom' && (
               <select
                 className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
                 value={selectedUsers}
@@ -2369,7 +2369,7 @@ export default function AdminDashboard() {
             <AnuncioPreview
               titulo={newAnuncio.titulo}
               descripcion={newAnuncio.descripcion}
-              imagenUrl={newAnuncio.previewImagen ?? ""}
+              imagenUrl={newAnuncio.previewImagen ?? ''}
             />
 
             <button
@@ -2389,9 +2389,9 @@ export default function AdminDashboard() {
           onClose={() => setEditingUser(null)}
           onSave={async (updatedUser, updatedPermissions) => {
             try {
-              const res = await fetch("/api/super-admin/udateUser", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+              const res = await fetch('/api/super-admin/udateUser', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   userId: updatedUser.id,
                   firstName: updatedUser.firstName,
@@ -2400,26 +2400,26 @@ export default function AdminDashboard() {
                   status: updatedUser.status,
                   permissions: updatedPermissions,
                   subscriptionEndDate: updatedUser.subscriptionEndDate ?? null,
-                  planType: updatedUser.planType ?? "none", // ✅ INCLUIDO AQUÍ
+                  planType: updatedUser.planType ?? 'none', // ✅ INCLUIDO AQUÍ
                 }),
               });
 
-              if (!res.ok) throw new Error("Error actualizando usuario");
+              if (!res.ok) throw new Error('Error actualizando usuario');
 
               // Actualizar el usuario localmente en el estado
               setUsers(
                 users.map((user) =>
                   user.id === updatedUser.id
                     ? { ...updatedUser, permissions: updatedPermissions }
-                    : user,
-                ),
+                    : user
+                )
               );
 
               setEditingUser(null);
-              showNotification("Usuario actualizado con éxito.", "success");
+              showNotification('Usuario actualizado con éxito.', 'success');
             } catch (err) {
-              console.error("❌ Error actualizando usuario:", err);
-              showNotification("Error al actualizar usuario", "error");
+              console.error('❌ Error actualizando usuario:', err);
+              showNotification('Error al actualizar usuario', 'error');
             }
           }}
         />
@@ -2427,8 +2427,8 @@ export default function AdminDashboard() {
 
       <ConfirmDialog
         isOpen={confirmation?.isOpen ?? false}
-        title={confirmation?.title ?? ""}
-        message={confirmation?.message ?? ""}
+        title={confirmation?.title ?? ''}
+        message={confirmation?.message ?? ''}
         onConfirm={
           confirmation?.onConfirm
             ? async () => {
@@ -2479,7 +2479,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={() =>
                       setSelectedEmails((prev) =>
-                        prev.filter((e) => e !== email),
+                        prev.filter((e) => e !== email)
                       )
                     }
                     className="ml-2 text-lg text-white"
@@ -2505,13 +2505,13 @@ export default function AdminDashboard() {
               setContents={message}
               onChange={(content) => setMessage(content)}
               setOptions={{
-                height: "200",
+                height: '200',
                 buttonList: [
-                  ["bold", "italic", "underline", "strike"],
-                  ["fontSize", "fontColor", "hiliteColor"],
-                  ["align", "list", "table"],
-                  ["link", "image", "video"],
-                  ["removeFormat"],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  ['fontSize', 'fontColor', 'hiliteColor'],
+                  ['align', 'list', 'table'],
+                  ['link', 'image', 'video'],
+                  ['removeFormat'],
                 ],
               }}
             />
@@ -2600,7 +2600,7 @@ export default function AdminDashboard() {
                 className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 disabled={loadingEmail}
               >
-                {loadingEmail ? <Loader2 className="text-white" /> : "Enviar"}
+                {loadingEmail ? <Loader2 className="text-white" /> : 'Enviar'}
               </button>
             </div>
           </div>

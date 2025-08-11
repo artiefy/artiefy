@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -9,7 +9,7 @@ const redis = new Redis({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params;
@@ -21,8 +21,8 @@ export async function PUT(
 
     if (!existingAnswer) {
       return NextResponse.json(
-        { success: false, message: "Respuesta no encontrada" },
-        { status: 404 },
+        { success: false, message: 'Respuesta no encontrada' },
+        { status: 404 }
       );
     }
 
@@ -31,13 +31,13 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: "Calificación actualizada correctamente",
+      message: 'Calificación actualizada correctamente',
     });
   } catch (error) {
-    console.error("Error al actualizar la calificación:", error);
+    console.error('Error al actualizar la calificación:', error);
     return NextResponse.json(
-      { success: false, message: "Error al actualizar la calificación" },
-      { status: 500 },
+      { success: false, message: 'Error al actualizar la calificación' },
+      { status: 500 }
     );
   }
 }

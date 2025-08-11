@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
+import { toast } from 'sonner';
 
-import ListActividadesLookStudent from "~/components/educators/layout/ListActividadesByStudent";
-import VerFileByStudent from "~/components/educators/layout/verFileBystudent";
-import { Button } from "~/components/educators/ui/button";
+import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
+import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
+import { Button } from '~/components/educators/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Ver clase como vista estudiantes, consideraciones: Lo mismo que en course
 
@@ -64,20 +64,20 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   const [lessons, setLessons] = useState<Lessons | null>(null); // Estado para almacenar la lección
   const [loading, setLoading] = useState(true); // Estado para almacenar el estado de carga
   const [error, setError] = useState<string | null>(null); // Estado para almacenar errores
-  const [color, setColor] = useState<string>(selectedColor || "#FFFFFF"); // Estado para almacenar el color de la lección
+  const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado para almacenar el color de la lección
   const router = useRouter(); // Obtener el router
 
   // Convertir el id del curso a número
   const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
   const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
   console.log(
-    `courseIdString: ${courseIdString}, courseIdNumber: ${courseIdNumber}`,
+    `courseIdString: ${courseIdString}, courseIdNumber: ${courseIdNumber}`
   );
 
   // Obtener el color de la lección guardado en el local storage
   useEffect(() => {
     const savedColor = localStorage.getItem(
-      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`,
+      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
     );
     if (savedColor) {
       setColor(savedColor);
@@ -88,15 +88,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Obtener la lección
   useEffect(() => {
     if (!lessonId) {
-      setError("lessonId is null or invalid");
+      setError('lessonId is null or invalid');
       setLoading(false);
       return;
     }
 
-    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? "");
-    const lessonsIdNumber = parseInt(lessonsId2 ?? "");
+    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+    const lessonsIdNumber = parseInt(lessonsId2 ?? '');
     if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
-      setError("lessonId is not a valid number");
+      setError('lessonId is not a valid number');
       setLoading(false);
       return;
     }
@@ -107,7 +107,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/educadores/lessons/${lessonsIdNumber}`,
+          `/api/educadores/lessons/${lessonsIdNumber}`
         );
         if (response.ok) {
           const data = (await response.json()) as Lessons;
@@ -116,15 +116,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           const errorData = (await response.json()) as { error?: string };
           const errorMessage = errorData.error ?? response.statusText;
           setError(`Error al cargar la leccion: ${errorMessage}`);
-          toast("Error", {
+          toast('Error', {
             description: `No se pudo cargar la leccion: ${errorMessage}`,
           });
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar la leccion: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudo cargar la leccion: ${errorMessage}`,
         });
       } finally {
@@ -133,7 +133,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     };
 
     fetchLessons().catch((error) =>
-      console.error("Error fetching lessons:", error),
+      console.error('Error fetching lessons:', error)
     );
   }, [user, lessonId]);
 
@@ -155,41 +155,41 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   if (!lessons) return <div>No se encontró la leccion.</div>;
 
   // Funcion para navegar entre las clases 'prev'' y ''next', no finalizado
-  const handleNavigation = (direction: "prev" | "next", lessons: Lessons[]) => {
+  const handleNavigation = (direction: 'prev' | 'next', lessons: Lessons[]) => {
     const sortedLessons = [...(lessons ?? [])].sort(
-      (a, b) => a.order - b.order,
+      (a, b) => a.order - b.order
     );
     const currentIndex = sortedLessons.findIndex(
-      (l) => l.id === selectedLessonId,
+      (l) => l.id === selectedLessonId
     );
 
-    if (direction === "prev") {
+    if (direction === 'prev') {
       for (let i = currentIndex - 1; i >= 0; i--) {
         const prevLesson = sortedLessons[i];
         if (prevLesson) {
           setSelectedLessonId(prevLesson.id);
           router.push(
-            `/dashboard/educadores/cursos/${courseIdNumber}/${prevLesson.id}/verClase/${prevLesson.id}`,
+            `/dashboard/educadores/cursos/${courseIdNumber}/${prevLesson.id}/verClase/${prevLesson.id}`
           );
           return;
         }
       }
-      toast("Información", {
-        description: "No hay más clases anteriores.",
+      toast('Información', {
+        description: 'No hay más clases anteriores.',
       });
-    } else if (direction === "next") {
+    } else if (direction === 'next') {
       for (let i = currentIndex + 1; i < sortedLessons.length; i++) {
         const nextLesson = sortedLessons[i];
         if (nextLesson) {
           setSelectedLessonId(nextLesson.id);
           router.push(
-            `/dashboard/educadores/cursos/${courseIdNumber}/${nextLesson.id}/verClase/${nextLesson.id}`,
+            `/dashboard/educadores/cursos/${courseIdNumber}/${nextLesson.id}/verClase/${nextLesson.id}`
           );
           return;
         }
       }
-      toast("Información", {
-        description: "No hay más clases siguientes.",
+      toast('Información', {
+        description: 'No hay más clases siguientes.',
       });
     }
   };
@@ -245,14 +245,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="mt-4 flex items-center justify-between">
-          <Button onClick={() => handleNavigation("prev", [lessons])}>
+          <Button onClick={() => handleNavigation('prev', [lessons])}>
             <ArrowLeftIcon className="animate-bounce-right size-5" />
             <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
               <div className="relative h-full w-10 bg-white/30" />
             </div>
             Clase Anterior
           </Button>
-          <Button onClick={() => handleNavigation("next", [lessons])}>
+          <Button onClick={() => handleNavigation('next', [lessons])}>
             Siguiente Clase
             <ArrowRightIcon className="animate-bounce-right size-5" />
             <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
@@ -316,7 +316,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               />
             </div>
             <Link
-              href={"#"}
+              href={'#'}
               onClick={() => window.history.back()}
               className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
             >

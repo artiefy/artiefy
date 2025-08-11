@@ -1,9 +1,9 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollmentPrograms, programas } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollmentPrograms, programas } from '~/server/db/schema';
 
-import type { Course, Materia, Program } from "~/types/super-admin";
+import type { Course, Materia, Program } from '~/types/super-admin';
 
 export interface ProgramDetails {
   id: number;
@@ -44,7 +44,7 @@ export const getProgramById = async (id: string) => {
   });
 
   if (!program) {
-    throw new Error("Program not found");
+    throw new Error('Program not found');
   }
 
   // Get enrollment count using a separate query
@@ -68,7 +68,7 @@ export const getProgramById = async (id: string) => {
       requiresSubscription: false, // Add missing required field
       isFree: true, // Add missing required field with default value
       courseType: {
-        requiredSubscriptionLevel: "none",
+        requiredSubscriptionLevel: 'none',
         isPurchasableIndividually: null,
         price: null,
       },
@@ -80,7 +80,7 @@ export const getProgramById = async (id: string) => {
     .map((materia) => ({
       id: materia.id,
       title: materia.title,
-      description: materia.description ?? "",
+      description: materia.description ?? '',
       programaId: materia.programaId ?? 0,
       courseId: materia.courseid ?? null,
       courseid: materia.courseid ?? null,
@@ -95,7 +95,7 @@ export const getProgramById = async (id: string) => {
         requiresSubscription: false,
         isFree: true,
         courseType: {
-          requiredSubscriptionLevel: "none",
+          requiredSubscriptionLevel: 'none',
           isPurchasableIndividually: null,
           price: null,
         },
@@ -124,7 +124,7 @@ export const getProgramById = async (id: string) => {
 // Actualizar un programa
 export const updateProgram = async (
   programId: number,
-  programData: Partial<Program>,
+  programData: Partial<Program>
 ): Promise<Program> => {
   try {
     const result = await db
@@ -142,7 +142,7 @@ export const updateProgram = async (
       .returning();
 
     if (!result || result.length === 0) {
-      throw new Error("No se encontró el programa para actualizar");
+      throw new Error('No se encontró el programa para actualizar');
     }
 
     return {
@@ -150,8 +150,8 @@ export const updateProgram = async (
       id: result[0].id.toString(),
     };
   } catch (error) {
-    console.error("Error al actualizar el programa:", error);
-    throw new Error("Error al actualizar el programa");
+    console.error('Error al actualizar el programa:', error);
+    throw new Error('Error al actualizar el programa');
   }
 };
 
@@ -187,8 +187,8 @@ export async function createProgram(data: CreateProgramInput) {
     return newProgram;
   } catch (error) {
     console.error(
-      "❌ Error al insertar el programa en la base de datos:",
-      error,
+      '❌ Error al insertar el programa en la base de datos:',
+      error
     );
     throw error;
   }

@@ -1,15 +1,15 @@
-"use client";
-import React, { useCallback, useEffect, useState } from "react";
+'use client';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from 'next/navigation';
 
-import { Edit, Loader2, Trash2, UserPlus, X } from "lucide-react";
+import { Edit, Loader2, Trash2, UserPlus, X } from 'lucide-react';
 
-import BulkUploadUsers from "~/app/dashboard/super-admin/components/BulkUploadUsers"; // Ajusta la ruta según la ubicación de tu componente
-import { ConfirmDialog } from "~/app/dashboard/super-admin/components/ConfirmDialog";
-import { InfoDialog } from "~/app/dashboard/super-admin/components/InfoDialog";
-import EditUserModal from "~/app/dashboard/super-admin/users/EditUserModal"; // Ajusta la ruta según la ubicación de tu componente
-import { deleteUser, setRoleWrapper } from "~/server/queries/queries";
+import BulkUploadUsers from '~/app/dashboard/super-admin/components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
+import { ConfirmDialog } from '~/app/dashboard/super-admin/components/ConfirmDialog';
+import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
+import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
+import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
 interface User {
   id: string;
@@ -46,51 +46,51 @@ interface UserData {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null);
   const [notification, setNotification] = useState<{
     message: string;
-    type: "success" | "error";
+    type: 'success' | 'error';
   } | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editValues, setEditValues] = useState<{
     firstName: string;
     lastName: string;
-  }>({ firstName: "", lastName: "" });
+  }>({ firstName: '', lastName: '' });
   void loading;
   void error;
   void updatingUserId;
   void editValues;
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
-  const [infoDialogTitle, setInfoDialogTitle] = useState("");
-  const [infoDialogMessage, setInfoDialogMessage] = useState("");
+  const [infoDialogTitle, setInfoDialogTitle] = useState('');
+  const [infoDialogMessage, setInfoDialogMessage] = useState('');
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const [newUser, setNewUser] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "estudiante",
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'estudiante',
   });
   const [creatingUser, setCreatingUser] = useState(false);
 
   const searchParams = useSearchParams();
-  const query = searchParams?.get("search") ?? "";
+  const query = searchParams?.get('search') ?? '';
 
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error("Error al cargar usuarios");
+      if (!res.ok) throw new Error('Error al cargar usuarios');
 
       const rawData: unknown = await res.json();
-      if (!Array.isArray(rawData)) throw new Error("Datos inválidos recibidos");
+      if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
       const data: User[] = (rawData as User[]).map((item) => ({
         id: String(item.id),
@@ -100,16 +100,16 @@ export default function AdminDashboard() {
         role: String(item.role),
         status: String(item.status),
         permissions:
-          "permissions" in item && Array.isArray(item.permissions)
+          'permissions' in item && Array.isArray(item.permissions)
             ? item.permissions
             : [],
       }));
 
       setUsers(data);
-      console.log("✅ Usuarios cargados con permisos:", data);
+      console.log('✅ Usuarios cargados con permisos:', data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-      console.error("Error fetching users:", err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -125,15 +125,15 @@ export default function AdminDashboard() {
       !newUser.lastName.trim() ||
       !newUser.email.trim()
     ) {
-      showNotification("Todos los campos son obligatorios.", "error");
+      showNotification('Todos los campos son obligatorios.', 'error');
       return;
     }
 
     try {
       setCreatingUser(true);
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           firstName: newUser.firstName,
           lastName: newUser.lastName,
@@ -143,17 +143,17 @@ export default function AdminDashboard() {
       });
 
       if (!res.ok) {
-        throw new Error("No se pudo crear el usuario");
+        throw new Error('No se pudo crear el usuario');
       }
 
       const rawData: unknown = await res.json();
       if (
-        typeof rawData !== "object" ||
+        typeof rawData !== 'object' ||
         rawData === null ||
-        !("user" in rawData) ||
-        !("generatedPassword" in rawData)
+        !('user' in rawData) ||
+        !('generatedPassword' in rawData)
       ) {
-        throw new Error("Respuesta de la API en formato incorrecto");
+        throw new Error('Respuesta de la API en formato incorrecto');
       }
 
       const { user: safeUser, generatedPassword } = rawData as {
@@ -162,11 +162,11 @@ export default function AdminDashboard() {
       };
       if (
         !safeUser ||
-        typeof safeUser !== "object" ||
-        !("id" in safeUser) ||
-        !("username" in safeUser)
+        typeof safeUser !== 'object' ||
+        !('id' in safeUser) ||
+        !('username' in safeUser)
       ) {
-        throw new Error("Usuario inválido en la respuesta de la API");
+        throw new Error('Usuario inválido en la respuesta de la API');
       }
 
       const username = safeUser.username;
@@ -177,28 +177,28 @@ export default function AdminDashboard() {
           lastName: newUser.lastName,
           email: newUser.email,
           role: newUser.role,
-          status: "activo",
+          status: 'activo',
           isNew: true,
         },
         ...users,
       ]);
 
-      setInfoDialogTitle("Usuario Creado");
+      setInfoDialogTitle('Usuario Creado');
       setInfoDialogMessage(
-        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`,
+        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
 
       setShowCreateForm(false);
 
       setNewUser({
-        firstName: "",
-        lastName: "",
-        email: "",
-        role: "estudiante",
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: 'estudiante',
       });
     } catch {
-      showNotification("Error al crear el usuario.", "error");
+      showNotification('Error al crear el usuario.', 'error');
     } finally {
       setCreatingUser(false);
     }
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
   const handleRoleChange = (userId: string, newRole: string) => {
     setConfirmation({
       isOpen: true,
-      title: "Actualizar Rol",
+      title: 'Actualizar Rol',
       message: `¿Estás seguro de que quieres cambiar el rol de este usuario a ${newRole}?`,
       onConfirm: () => {
         void (async () => {
@@ -217,13 +217,13 @@ export default function AdminDashboard() {
 
             setUsers(
               users.map((user) =>
-                user.id === userId ? { ...user, role: newRole } : user,
-              ),
+                user.id === userId ? { ...user, role: newRole } : user
+              )
             );
 
-            showNotification("Rol actualizado con éxito.", "success");
+            showNotification('Rol actualizado con éxito.', 'success');
           } catch {
-            showNotification("Error al actualizar el rol.", "error");
+            showNotification('Error al actualizar el rol.', 'error');
           } finally {
             setUpdatingUserId(null);
           }
@@ -235,9 +235,9 @@ export default function AdminDashboard() {
   const handleDeleteUser = (userId: string) => {
     setConfirmation({
       isOpen: true,
-      title: "Eliminar Usuario",
+      title: 'Eliminar Usuario',
       message:
-        "¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.",
+        '¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.',
       onConfirm: () => {
         void (async () => {
           try {
@@ -245,9 +245,9 @@ export default function AdminDashboard() {
             await deleteUser(userId);
 
             setUsers(users.filter((user) => user.id !== userId));
-            showNotification("Usuario eliminado correctamente.", "success");
+            showNotification('Usuario eliminado correctamente.', 'success');
           } catch {
-            showNotification("Error al eliminar el usuario.", "error");
+            showNotification('Error al eliminar el usuario.', 'error');
           } finally {
             setUpdatingUserId(null);
             setConfirmation(null);
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
   const handleEditUser = async (user: User) => {
     try {
       const res = await fetch(`/api/super-admin/infoUserUpdate?id=${user.id}`);
-      if (!res.ok) throw new Error("Error al obtener datos del usuario");
+      if (!res.ok) throw new Error('Error al obtener datos del usuario');
 
       const userData: UserData = (await res.json()) as UserData;
 
@@ -276,12 +276,12 @@ export default function AdminDashboard() {
           : [],
       };
 
-      console.log("📌 Usuario con permisos:", userWithPermissions);
+      console.log('📌 Usuario con permisos:', userWithPermissions);
 
       setEditingUser({
         ...userWithPermissions,
-        role: userWithPermissions.role ?? "sin-role",
-        status: userWithPermissions.status ?? "sin-status",
+        role: userWithPermissions.role ?? 'sin-role',
+        status: userWithPermissions.status ?? 'sin-status',
       });
 
       setEditValues({
@@ -289,16 +289,16 @@ export default function AdminDashboard() {
         lastName,
       });
     } catch (error) {
-      console.error("❌ Error al obtener usuario:", error);
+      console.error('❌ Error al obtener usuario:', error);
     }
   };
 
   const showNotification = useCallback(
-    (message: string, type: "success" | "error") => {
+    (message: string, type: 'success' | 'error') => {
       setNotification({ message, type });
       setTimeout(() => setNotification(null), 3000);
     },
-    [],
+    []
   );
 
   return (
@@ -327,7 +327,7 @@ export default function AdminDashboard() {
           <BulkUploadUsers
             onUsersUploaded={(newUsers) => {
               setUsers((prevUsers) => [...newUsers, ...prevUsers]);
-              showNotification("Usuarios cargados con éxito.", "success");
+              showNotification('Usuarios cargados con éxito.', 'success');
             }}
           />
         </div>
@@ -384,9 +384,7 @@ export default function AdminDashboard() {
                         checked={selectedUsers.length === users.length}
                         onChange={(e) =>
                           setSelectedUsers(
-                            e.target.checked
-                              ? users.map((user) => user.id)
-                              : [],
+                            e.target.checked ? users.map((user) => user.id) : []
                           )
                         }
                         className="rounded border-white/20"
@@ -420,7 +418,7 @@ export default function AdminDashboard() {
                             setSelectedUsers((prev) =>
                               prev.includes(user.id)
                                 ? prev.filter((id) => id !== user.id)
-                                : [...prev, user.id],
+                                : [...prev, user.id]
                             )
                           }
                           className="rounded border-gray-600"
@@ -446,7 +444,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <select
-                          value={user.role || "sin-role"}
+                          value={user.role || 'sin-role'}
                           onChange={(e) =>
                             handleRoleChange(user.id, e.target.value)
                           }
@@ -462,31 +460,31 @@ export default function AdminDashboard() {
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div
                           className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            user.status === "activo"
-                              ? "bg-green-500/10 text-green-500"
-                              : user.status === "inactivo"
-                                ? "bg-red-500/10 text-red-500"
-                                : "bg-yellow-500/10 text-yellow-500"
+                            user.status === 'activo'
+                              ? 'bg-green-500/10 text-green-500'
+                              : user.status === 'inactivo'
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-yellow-500/10 text-yellow-500'
                           }`}
                         >
                           <div
                             className={`mr-1 size-1.5 rounded-full sm:size-2 ${
-                              user.status === "activo"
-                                ? "bg-green-500"
-                                : user.status === "inactivo"
-                                  ? "bg-red-500"
-                                  : "bg-yellow-500"
+                              user.status === 'activo'
+                                ? 'bg-green-500'
+                                : user.status === 'inactivo'
+                                  ? 'bg-red-500'
+                                  : 'bg-yellow-500'
                             }`}
                           />
                           <span className="hidden sm:inline">
                             {user.status}
                           </span>
                           <span className="inline sm:hidden">
-                            {user.status === "activo"
-                              ? "A"
-                              : user.status === "inactivo"
-                                ? "I"
-                                : "S"}
+                            {user.status === 'activo'
+                              ? 'A'
+                              : user.status === 'inactivo'
+                                ? 'I'
+                                : 'S'}
                           </span>
                         </div>
                       </td>
@@ -536,11 +534,11 @@ export default function AdminDashboard() {
                 className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
                 value={newUser.firstName}
                 onChange={(e) => {
-                  const singleName = e.target.value.trim().split(" ")[0];
+                  const singleName = e.target.value.trim().split(' ')[0];
                   setNewUser({ ...newUser, firstName: singleName });
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === " ") {
+                  if (e.key === ' ') {
                     e.preventDefault();
                   }
                 }}
@@ -583,7 +581,7 @@ export default function AdminDashboard() {
               className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
               disabled={creatingUser}
             >
-              {creatingUser ? <Loader2 className="size-5" /> : "Crear Usuario"}
+              {creatingUser ? <Loader2 className="size-5" /> : 'Crear Usuario'}
             </button>
           </div>
         </div>
@@ -596,9 +594,9 @@ export default function AdminDashboard() {
           onClose={() => setEditingUser(null)}
           onSave={async (updatedUser, updatedPermissions) => {
             try {
-              const res = await fetch("/api/super-admin/udateUser", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+              const res = await fetch('/api/super-admin/udateUser', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   userId: updatedUser.id,
                   firstName: updatedUser.firstName,
@@ -609,22 +607,22 @@ export default function AdminDashboard() {
                 }),
               });
 
-              if (!res.ok) throw new Error("Error actualizando usuario");
+              if (!res.ok) throw new Error('Error actualizando usuario');
 
               // Actualizar el usuario localmente en el estado
               setUsers(
                 users.map((user) =>
                   user.id === updatedUser.id
                     ? { ...updatedUser, permissions: updatedPermissions }
-                    : user,
-                ),
+                    : user
+                )
               );
 
               setEditingUser(null);
-              showNotification("Usuario actualizado con éxito.", "success");
+              showNotification('Usuario actualizado con éxito.', 'success');
             } catch (err) {
-              console.error("❌ Error actualizando usuario:", err);
-              showNotification("Error al actualizar usuario", "error");
+              console.error('❌ Error actualizando usuario:', err);
+              showNotification('Error al actualizar usuario', 'error');
             }
           }}
         />
@@ -632,8 +630,8 @@ export default function AdminDashboard() {
 
       <ConfirmDialog
         isOpen={confirmation?.isOpen ?? false}
-        title={confirmation?.title ?? ""}
-        message={confirmation?.message ?? ""}
+        title={confirmation?.title ?? ''}
+        message={confirmation?.message ?? ''}
         onConfirm={
           confirmation?.onConfirm
             ? async () => {
@@ -654,7 +652,7 @@ export default function AdminDashboard() {
       {notification && (
         <div
           className={`fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg ${
-            notification.type === "success" ? "bg-green-500" : "bg-red-500"
+            notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
           }`}
         >
           {notification.message}

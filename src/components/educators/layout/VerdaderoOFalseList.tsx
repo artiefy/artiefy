@@ -1,18 +1,18 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import { Edit, Trash } from "lucide-react";
-import { toast } from "sonner";
+import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 
-import QuestionVOFForm from "~/components/educators/layout/VerdaderoOFalseForm";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { VerdaderoOFlaso } from "~/types/typesActi";
+import type { VerdaderoOFlaso } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
-  onEdit?: (question: VerdaderoOFlaso & { tipo: "FOV" }) => void;
+  onEdit?: (question: VerdaderoOFlaso & { tipo: 'FOV' }) => void;
   shouldRefresh?: boolean; // ⬅ Agregado
 }
 
@@ -32,7 +32,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`,
+        `/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`
       );
       if (!response.ok) {
         throw new Error(`Error fetching questions: ${response.statusText}`);
@@ -46,9 +46,9 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
         setQuestionsVOF(data.questionsVOF);
       }
     } catch (error) {
-      console.error("Error al cargar las preguntas:", error);
-      toast("Error", {
-        description: "Error al cargar las preguntas",
+      console.error('Error al cargar las preguntas:', error);
+      toast('Error', {
+        description: 'Error al cargar las preguntas',
       });
     } finally {
       setLoading(false);
@@ -64,7 +64,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
 
   const handleEdit = (question: VerdaderoOFlaso) => {
     if (onEdit) {
-      onEdit({ ...question, tipo: "FOV" }); // pasa al padre con tipo
+      onEdit({ ...question, tipo: 'FOV' }); // pasa al padre con tipo
     } else {
       setEditingQuestion(question); // local
     }
@@ -76,20 +76,20 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
       const response = await fetch(
         `/api/educadores/question/VerdaderoOFalso?activityId=${activityId}&questionId=${questionId}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
       if (response.ok) {
         // Actualizar el estado local en lugar de hacer fetch
         setQuestionsVOF(questions.filter((q) => q.id !== questionId));
-        toast("Pregunta eliminada", {
-          description: "La pregunta se eliminó correctamente",
+        toast('Pregunta eliminada', {
+          description: 'La pregunta se eliminó correctamente',
         });
       }
     } catch (error) {
-      console.error("Error al eliminar la pregunta:", error);
-      toast("Error", {
-        description: "Error al eliminar la pregunta",
+      console.error('Error al eliminar la pregunta:', error);
+      toast('Error', {
+        description: 'Error al eliminar la pregunta',
       });
     }
   };
@@ -97,13 +97,13 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
   // Función para manejar la submisión del formulario
   const handleFormSubmit = (question: VerdaderoOFlaso) => {
     setEditingQuestion(undefined);
-    onEdit?.({ ...question, tipo: "FOV" }); // <-- si quieres volver a subirlo al padre
+    onEdit?.({ ...question, tipo: 'FOV' }); // <-- si quieres volver a subirlo al padre
 
     // Actualizamos el estado local inmediatamente
     if (editingQuestion) {
       // Si estamos editando, reemplazamos la pregunta existente
       setQuestionsVOF((prevQuestions) =>
-        prevQuestions.map((q) => (q.id === question.id ? question : q)),
+        prevQuestions.map((q) => (q.id === question.id ? question : q))
       );
     } else {
       // Si es una nueva pregunta, la añadimos al array
@@ -151,12 +151,12 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
                   <li
                     key={option.id}
                     className={
-                      option.id === question.correctOptionId ? "font-bold" : ""
+                      option.id === question.correctOptionId ? 'font-bold' : ''
                     }
                   >
-                    {option.text}{" "}
+                    {option.text}{' '}
                     {option.id === question.correctOptionId &&
-                      "(Respuesta correcta)"}
+                      '(Respuesta correcta)'}
                   </li>
                 ))}
               </ul>

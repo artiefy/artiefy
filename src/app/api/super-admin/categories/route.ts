@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db/index";
-import { categories } from "~/server/db/schema";
+import { db } from '~/server/db/index';
+import { categories } from '~/server/db/schema';
 
 export async function GET() {
   try {
@@ -11,8 +11,8 @@ export async function GET() {
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      { error: "Error al obtener categorías" },
-      { status: 500 },
+      { error: 'Error al obtener categorías' },
+      { status: 500 }
     );
   }
 }
@@ -31,10 +31,10 @@ export async function POST(req: Request) {
       .returning();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Error al crear categoría:", error);
+    console.error('❌ Error al crear categoría:', error);
     return NextResponse.json(
-      { error: "Error al crear categoría" },
-      { status: 500 },
+      { error: 'Error al crear categoría' },
+      { status: 500 }
     );
   }
 }
@@ -55,10 +55,10 @@ export async function PUT(req: Request) {
       .returning();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("❌ Error al actualizar categoría:", error);
+    console.error('❌ Error al actualizar categoría:', error);
     return NextResponse.json(
-      { error: "Error al actualizar categoría" },
-      { status: 500 },
+      { error: 'Error al actualizar categoría' },
+      { status: 500 }
     );
   }
 }
@@ -67,12 +67,12 @@ export async function DELETE(req: Request) {
   try {
     const { id }: { id: number } = (await req.json()) as { id: number };
     await db.delete(categories).where(eq(categories.id, id));
-    return NextResponse.json({ message: "Categoría eliminada" });
+    return NextResponse.json({ message: 'Categoría eliminada' });
   } catch (error) {
-    console.error("❌ Error al eliminar categoría:", error);
+    console.error('❌ Error al eliminar categoría:', error);
     return NextResponse.json(
-      { error: "Error al eliminar categoría" },
-      { status: 500 },
+      { error: 'Error al eliminar categoría' },
+      { status: 500 }
     );
   }
 }

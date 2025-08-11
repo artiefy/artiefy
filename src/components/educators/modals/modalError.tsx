@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { IoMdClose } from "react-icons/io";
+import { useUser } from '@clerk/nextjs';
+import { IoMdClose } from 'react-icons/io';
 
 // Interfaz para los errores del formulario
 type FormErrors = Record<string, string>;
@@ -15,16 +15,16 @@ export const ModalError = ({
 }) => {
   const { user } = useUser(); // Obtiene el usuario actual
   const [formData, setFormData] = useState({
-    description: "",
-    comments: "",
-    email: "",
-    userId: user?.id ?? "",
+    description: '',
+    comments: '',
+    email: '',
+    userId: user?.id ?? '',
   }); // Estado para los datos del formulario
   const [errors, setErrors] = useState<FormErrors>({}); // Estado para los errores del formulario
 
   // Maneja el cambio en los campos del formulario
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -34,7 +34,7 @@ export const ModalError = ({
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: "",
+        [name]: '',
       }));
     }
   };
@@ -43,7 +43,7 @@ export const ModalError = ({
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      userId: user?.id ?? "",
+      userId: user?.id ?? '',
     }));
   }, [user]);
 
@@ -51,18 +51,18 @@ export const ModalError = ({
   const validateForm = () => {
     const newErrors: FormErrors = {};
     if (!formData.description.trim()) {
-      newErrors.description = "Error description is required";
+      newErrors.description = 'Error description is required';
     }
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
+      newErrors.email = 'Please enter a valid email';
     }
     if (!formData.userId.trim()) {
-      newErrors.userId = "User ID is required";
+      newErrors.userId = 'User ID is required';
     }
     if (!formData.comments.trim()) {
-      newErrors.comments = "Comments are required";
+      newErrors.comments = 'Comments are required';
     }
 
     setErrors(newErrors);
@@ -73,13 +73,13 @@ export const ModalError = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log("Form submitted:", formData);
+      console.log('Form submitted:', formData);
       try {
-        const response = await fetch("/api/tickets", {
-          method: "POST",
+        const response = await fetch('/api/tickets', {
+          method: 'POST',
           body: JSON.stringify(formData),
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
         const data: { message?: string } = (await response.json()) as {
@@ -87,19 +87,19 @@ export const ModalError = ({
         };
         console.log(`Datos enviados al servidor: ${JSON.stringify(data)}`);
         if (response.ok) {
-          alert("Ticket creado exitosamente");
+          alert('Ticket creado exitosamente');
         } else {
-          alert("Error al crear el ticket");
+          alert('Error al crear el ticket');
         }
       } catch (error) {
-        console.error("Error al crear el ticket:", error);
+        console.error('Error al crear el ticket:', error);
       }
       onClose();
       setFormData({
-        description: "",
-        comments: "",
-        email: "",
-        userId: user?.id ?? "",
+        description: '',
+        comments: '',
+        email: '',
+        userId: user?.id ?? '',
       });
     }
   };
@@ -143,7 +143,7 @@ export const ModalError = ({
                 value={formData.description}
                 onChange={handleInputChange}
                 className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
-                  errors.description ? "border-red-500" : ""
+                  errors.description ? 'border-red-500' : ''
                 }`}
               />
               {errors.description && (
@@ -184,7 +184,7 @@ export const ModalError = ({
                 value={formData.email}
                 onChange={handleInputChange}
                 className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
-                  errors.email ? "border-red-500" : ""
+                  errors.email ? 'border-red-500' : ''
                 }`}
               />
               {errors.email && (

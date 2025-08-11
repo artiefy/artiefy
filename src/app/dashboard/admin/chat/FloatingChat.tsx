@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { useAuth } from "@clerk/nextjs";
-import EmojiPicker, { Theme } from "emoji-picker-react";
-import { MessageCircle, Send, X } from "lucide-react";
+import { useAuth } from '@clerk/nextjs';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { MessageCircle, Send, X } from 'lucide-react';
 
-import socket from "~/lib/socket";
+import socket from '~/lib/socket';
 
 interface Message {
   id: number;
@@ -33,7 +33,7 @@ export default function FloatingChat({
   setUnreadConversations,
 }: FloatingChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
@@ -70,7 +70,7 @@ export default function FloatingChat({
         setUnreadConversations((prev) =>
           prev.includes(data.conversationId)
             ? prev
-            : [...prev, data.conversationId],
+            : [...prev, data.conversationId]
         );
       }
     };
@@ -86,25 +86,25 @@ export default function FloatingChat({
       }
     };
 
-    socket.on("message", handleNewMessage);
-    socket.on("notification", handleNotification);
+    socket.on('message', handleNewMessage);
+    socket.on('notification', handleNotification);
 
     return () => {
-      socket.off("message", handleNewMessage);
-      socket.off("notification", handleNotification);
+      socket.off('message', handleNewMessage);
+      socket.off('notification', handleNotification);
     };
   }, [currentConversationId, setUnreadConversations]);
 
   const fetchConversationHistory = async (conversationId: string) => {
     try {
       const response = await fetch(
-        `/api/admin/chat/messages/${conversationId}`,
+        `/api/admin/chat/messages/${conversationId}`
       );
-      if (!response.ok) throw new Error("Error fetching messages");
+      if (!response.ok) throw new Error('Error fetching messages');
       const data = (await response.json()) as { messages: Message[] };
       setMessages(data.messages ?? []);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.error('Error fetching messages:', error);
     }
   };
 
@@ -112,12 +112,12 @@ export default function FloatingChat({
     if (!newMessage.trim() || !userId) return;
 
     try {
-      const response = await fetch("/api/admin/chat/createMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/admin/chat/createMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: currentConversationId, // <--- este es clave
-          receiverId: currentConversationId ? null : (receiverId ?? "new"),
+          receiverId: currentConversationId ? null : (receiverId ?? 'new'),
           message: newMessage,
         }),
       });
@@ -141,11 +141,11 @@ export default function FloatingChat({
       };
 
       setMessages((prev) => [...prev, newMsg]);
-      setNewMessage("");
+      setNewMessage('');
 
-      console.log("📤 Emitiendo mensaje via socket:", {
+      console.log('📤 Emitiendo mensaje via socket:', {
         conversationId: data.conversationId,
-        senderName: "Tú",
+        senderName: 'Tú',
         receiverId: receiverId,
       });
 
@@ -158,25 +158,25 @@ export default function FloatingChat({
       const targetReceiverId = receiverId ?? propReceiverId;
       if (!targetReceiverId) {
         console.warn(
-          "⚠️ receiverId está vacío. No se podrá emitir correctamente.",
+          '⚠️ receiverId está vacío. No se podrá emitir correctamente.'
         );
       }
 
-      socket.emit("message", {
+      socket.emit('message', {
         ...newMsg,
         conversationId: data.conversationId,
-        senderName: "Tú",
+        senderName: 'Tú',
         receiverId: targetReceiverId,
       });
     } catch (error) {
-      console.error("❌ Error al enviar mensaje:", error);
+      console.error('❌ Error al enviar mensaje:', error);
     }
   };
 
   useEffect(() => {
     if (userId) {
-      console.log("✅ Registrando userId en socket:", userId);
-      socket.emit("user_connected", userId);
+      console.log('✅ Registrando userId en socket:', userId);
+      socket.emit('user_connected', userId);
     }
   }, [userId]);
 
@@ -218,7 +218,7 @@ export default function FloatingChat({
         <div className="fixed right-4 bottom-20 z-50 flex h-[500px] w-[350px] flex-col rounded-lg border border-gray-700 bg-gray-800 shadow-xl">
           <div className="flex items-center justify-between border-b border-gray-700 p-4">
             <h3 className="text-lg font-semibold text-white">
-              {userName ? `Chat con ${userName}` : "Nuevo Chat"}
+              {userName ? `Chat con ${userName}` : 'Nuevo Chat'}
             </h3>
             <button
               onClick={handleClose}
@@ -233,13 +233,13 @@ export default function FloatingChat({
               {messages.map((msg, idx) => (
                 <div
                   key={`${msg.id || idx}-${msg.createdAt}`}
-                  className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
+                  className={`flex ${msg.senderId === userId ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
                       msg.senderId === userId
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-700 text-gray-200"
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-700 text-gray-200'
                     }`}
                   >
                     {msg.senderName && (

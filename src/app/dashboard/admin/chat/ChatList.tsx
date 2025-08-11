@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { MessageCircle } from "lucide-react";
+import { MessageCircle } from 'lucide-react';
 
 interface ChatListProps {
   onSelectChat: (chatId: string, receiverId: string) => void;
@@ -31,24 +31,24 @@ export default function ChatList({
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    void fetch("/api/socketio");
+    void fetch('/api/socketio');
   }, []);
 
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const response = await fetch("/api/admin/chat/conversations");
-        if (!response.ok) throw new Error("Error fetching conversations");
+        const response = await fetch('/api/admin/chat/conversations');
+        if (!response.ok) throw new Error('Error fetching conversations');
 
         const data = (await response.json()) as ApiResponse;
 
         const sorted = data.conversations.sort(
-          (a, b) => Number(b.id) - Number(a.id),
+          (a, b) => Number(b.id) - Number(a.id)
         );
 
         setConversations(sorted);
       } catch (error) {
-        console.error("Error:", error);
+        console.error('Error:', error);
       }
     };
 
@@ -58,7 +58,7 @@ export default function ChatList({
   const totalPages = Math.ceil(conversations.length / ITEMS_PER_PAGE);
   const paginatedConversations = conversations.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -78,7 +78,7 @@ export default function ChatList({
             <div>
               <h3 className="font-medium">{conv.userName}</h3>
               <p className="text-sm text-gray-400">
-                {conv.status === "activo" ? "Conversación activa" : "Cerrado"}
+                {conv.status === 'activo' ? 'Conversación activa' : 'Cerrado'}
               </p>
             </div>
             <div className="relative">

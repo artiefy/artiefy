@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { notifications } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { notifications } from '~/server/db/schema';
 
 export async function markNotificationsAsRead(userId: string): Promise<void> {
   try {
@@ -12,6 +12,6 @@ export async function markNotificationsAsRead(userId: string): Promise<void> {
       .set({ isRead: true, isMarked: true }) // <-- marca ambos campos
       .where(eq(notifications.userId, userId));
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
+    console.error('Error marking notifications as read:', error);
   }
 }

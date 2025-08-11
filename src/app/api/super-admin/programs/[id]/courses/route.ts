@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getCoursesByProgramId } from "~/server/actions/superAdmin/program/getCoursesByProgramId";
+import { getCoursesByProgramId } from '~/server/actions/superAdmin/program/getCoursesByProgramId';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ) {
   try {
     const id = params.id; // Correctly accessing 'id'
@@ -15,10 +15,10 @@ export async function GET(
     }
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error('Error fetching courses:', error);
     return NextResponse.json(
-      { error: "Error fetching courses" },
-      { status: 500 },
+      { error: 'Error fetching courses' },
+      { status: 500 }
     );
   }
 }

@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses, materias } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses, materias } from '~/server/db/schema';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const programId = searchParams.get("programId");
+  const programId = searchParams.get('programId');
 
   try {
     if (programId) {
@@ -33,10 +33,10 @@ export async function GET(request: Request) {
       return NextResponse.json(allCourses);
     }
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error('Error fetching courses:', error);
     return NextResponse.json(
-      { error: "Error fetching courses" },
-      { status: 500 },
+      { error: 'Error fetching courses' },
+      { status: 500 }
     );
   }
 }

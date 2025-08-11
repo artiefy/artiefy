@@ -1,11 +1,11 @@
-"use server";
+'use server';
 
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { categories, courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { categories, courses } from '~/server/db/schema';
 
-import type { Category } from "~/types";
+import type { Category } from '~/types';
 
 // Opción 1: Sin caché
 export async function getFeaturedCategories(limit = 7): Promise<Category[]> {
@@ -29,10 +29,10 @@ export async function getFeaturedCategories(limit = 7): Promise<Category[]> {
       courses: { length: Number(category.courseCount) },
     }));
   } catch (error) {
-    console.error("Error fetching featured categories:", error);
+    console.error('Error fetching featured categories:', error);
     throw new Error(
-      "Failed to fetch featured categories: " +
-        (error instanceof Error ? error.message : String(error)),
+      'Failed to fetch featured categories: ' +
+        (error instanceof Error ? error.message : String(error))
     );
   }
 }

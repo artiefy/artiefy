@@ -1,19 +1,19 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { ArrowRightIcon, StarIcon } from "@heroicons/react/24/solid";
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 
-import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
-import { Badge } from "~/components/educators/ui/badge";
+import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
+import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
-import { Button } from "~/components/estudiantes/ui/button";
-import { Checkbox } from "~/components/estudiantes/ui/checkbox";
+} from '~/components/educators/ui/card';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Checkbox } from '~/components/estudiantes/ui/checkbox';
 
 export interface Program {
   id: number;
@@ -53,7 +53,7 @@ export default function ProgramListAdmin({
 }: ProgramListAdminProps) {
   const getCategoryName = (categoryId: number) => {
     const category = categories.find((c) => c.id === categoryId);
-    return category?.name ?? "Sin categoría";
+    return category?.name ?? 'Sin categoría';
   };
 
   const totalPages = Math.ceil(programs.length / itemsPerPage);
@@ -71,7 +71,7 @@ export default function ProgramListAdmin({
               onCheckedChange={() => onToggleSelection(program.id)}
               className="absolute top-2 right-2 z-10"
             />
-            <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
             <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
               <CardHeader>
                 <AspectRatio ratio={16 / 9}>
@@ -80,9 +80,9 @@ export default function ProgramListAdmin({
                       src={
                         program.coverImageKey
                           ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-                          : "/placeholder.svg"
+                          : '/placeholder.svg'
                       }
-                      alt={program.title || "Imagen del programa"}
+                      alt={program.title || 'Imagen del programa'}
                       className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -93,8 +93,8 @@ export default function ProgramListAdmin({
               </CardHeader>
 
               <CardContent className="flex grow flex-col items-center justify-between space-y-2 px-2 text-center">
-                <CardTitle className="w-full rounded-lg text-lg text-background">
-                  <div className="font-bold text-primary">{program.title}</div>
+                <CardTitle className="text-background w-full rounded-lg text-lg">
+                  <div className="text-primary font-bold">{program.title}</div>
                 </CardTitle>
                 <div className="flex items-center justify-center">
                   <Badge
@@ -111,7 +111,7 @@ export default function ProgramListAdmin({
               <CardFooter className="flex flex-col items-center space-y-2 px-2">
                 <div className="flex w-full justify-center gap-4">
                   <p className="text-center text-sm font-bold text-gray-300 italic">
-                    Educador:{" "}
+                    Educador:{' '}
                     <span className="font-bold italic">
                       {program.instructor}
                     </span>
@@ -131,7 +131,7 @@ export default function ProgramListAdmin({
                   <Button asChild className="h-8 w-[95px] px-0">
                     <Link
                       href={`/dashboard/super-admin/programs/${program.id}`}
-                      className="group/button inline-flex h-full w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-background px-2 text-[10px] text-primary transition-all hover:bg-primary/10"
+                      className="group/button bg-background text-primary hover:bg-primary/10 inline-flex h-full w-full items-center justify-center gap-1.5 rounded-md border border-white/20 px-2 text-[10px] transition-all"
                     >
                       <span className="relative z-10">Ver Programa</span>
                       <ArrowRightIcon className="relative z-10 size-3" />
@@ -163,7 +163,7 @@ export default function ProgramListAdmin({
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
               key={page}
-              variant={currentPage === page ? "default" : "outline"}
+              variant={currentPage === page ? 'default' : 'outline'}
               onClick={() => onPageChange(page)}
               className="px-3 py-1"
             >

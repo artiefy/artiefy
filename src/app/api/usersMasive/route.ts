@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
-import nodemailer from "nodemailer";
-import * as XLSX from "xlsx";
+import { eq } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
+import * as XLSX from 'xlsx';
 
-import { db } from "~/server/db";
-import { userCredentials, users } from "~/server/db/schema";
-import { createUser } from "~/server/queries/queries";
+import { db } from '~/server/db';
+import { userCredentials, users } from '~/server/db/schema';
+import { createUser } from '~/server/queries/queries';
 
 interface UserInput {
   firstName: string;
@@ -17,9 +17,9 @@ interface UserInput {
 
 // Configuración de Nodemailer usando variables de entorno
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
-    user: "direcciongeneral@artiefy.com",
+    user: 'direcciongeneral@artiefy.com',
     pass: process.env.PASS,
   },
 });
@@ -28,14 +28,14 @@ const transporter = nodemailer.createTransport({
 async function sendWelcomeEmail(
   to: string,
   username: string,
-  password: string,
+  password: string
 ) {
   try {
     const mailOptions = {
       from: '"Artiefy" <direcciongeneral@artiefy.com>',
       to,
-      subject: "🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso",
-      replyTo: "direcciongeneral@artiefy.com",
+      subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
+      replyTo: 'direcciongeneral@artiefy.com',
       html: `
 				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
 				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
@@ -63,17 +63,17 @@ async function sendWelcomeEmail(
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get("file");
+    const file = formData.get('file');
 
     if (!file || !(file instanceof Blob)) {
       return NextResponse.json(
-        { error: "No se proporcionó un archivo válido" },
-        { status: 400 },
+        { error: 'No se proporcionó un archivo válido' },
+        { status: 400 }
       );
     }
 
     const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: "array" });
+    const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
@@ -89,12 +89,12 @@ export async function POST(request: Request) {
           userData.firstName.trim(),
           userData.lastName.trim(),
           userData.email.trim(),
-          userData.role ?? "estudiante",
+          userData.role ?? 'estudiante'
         );
 
         if (!result?.user) {
           console.log(
-            `User ${userData.email} already exists, skipping creation`,
+            `User ${userData.email} already exists, skipping creation`
           );
           continue;
         }
@@ -107,11 +107,11 @@ export async function POST(request: Request) {
           emailSent = await sendWelcomeEmail(
             userData.email.trim(),
             `${userData.firstName} ${userData.lastName}`.trim(),
-            generatedPassword,
+            generatedPassword
           );
           if (!emailSent) {
             console.log(
-              `Retry ${attempts + 1} sending email to ${userData.email}`,
+              `Retry ${attempts + 1} sending email to ${userData.email}`
             );
             await new Promise((r) => setTimeout(r, 1000));
           }
@@ -129,11 +129,11 @@ export async function POST(request: Request) {
               id: createdUser.id,
               name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
               email: userData.email.trim(),
-              role: (userData.role ?? "estudiante") as
-                | "estudiante"
-                | "educador"
-                | "admin"
-                | "super-admin",
+              role: (userData.role ?? 'estudiante') as
+                | 'estudiante'
+                | 'educador'
+                | 'admin'
+                | 'super-admin',
               createdAt: new Date(),
               updatedAt: new Date(),
             })
@@ -179,8 +179,8 @@ export async function POST(request: Request) {
               firstName: userData.firstName,
               lastName: userData.lastName,
               email: userData.email,
-              role: userData.role ?? "estudiante",
-              status: "activo",
+              role: userData.role ?? 'estudiante',
+              status: 'activo',
               isNew: true,
             });
 
@@ -188,7 +188,7 @@ export async function POST(request: Request) {
           } catch (error) {
             console.log(
               `❌ Error updating or inserting user ${userData.email}:`,
-              error,
+              error
             );
             continue;
           }
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: "Proceso completado",
+      message: 'Proceso completado',
       users: successfulUsers,
       emailErrors,
       summary: {
@@ -214,10 +214,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error al procesar el archivo:", error);
+    console.error('Error al procesar el archivo:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error desconocido" },
-      { status: 500 },
+      { error: error instanceof Error ? error.message : 'Error desconocido' },
+      { status: 500 }
     );
   }
 }
@@ -227,36 +227,36 @@ export function GET() {
     // Datos de ejemplo que representarán el formato de la plantilla
     const templateData = [
       {
-        firstName: "John",
-        lastName: "Doe",
-        email: "johndoe@example.com",
-        role: "estudiante", // Puedes omitir o personalizar según el formato requerido
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'johndoe@example.com',
+        role: 'estudiante', // Puedes omitir o personalizar según el formato requerido
       },
     ];
 
     // Crear el archivo Excel
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
 
     const excelBuffer = XLSX.write(wb, {
-      bookType: "xlsx",
-      type: "array",
+      bookType: 'xlsx',
+      type: 'array',
     }) as ArrayBuffer;
 
     // Retornamos el archivo Excel como respuesta
     return new NextResponse(excelBuffer, {
       headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": "attachment; filename=plantilla_usuarios.xlsx",
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename=plantilla_usuarios.xlsx',
       },
     });
   } catch (error) {
-    console.error("Error al generar la plantilla Excel:", error);
+    console.error('Error al generar la plantilla Excel:', error);
     return NextResponse.json(
-      { error: "Error al generar la plantilla Excel" },
-      { status: 500 },
+      { error: 'Error al generar la plantilla Excel' },
+      { status: 500 }
     );
   }
 }

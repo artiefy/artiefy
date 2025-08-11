@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { Redis } from "@upstash/redis";
-import { sql } from "drizzle-orm";
+import { Redis } from '@upstash/redis';
+import { sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { userActivitiesProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -15,8 +15,8 @@ interface SubmissionData {
   fileName: string;
   fileUrl: string;
   uploadDate: string;
-  status: "pending" | "reviewed";
-  submissionType: "url";
+  status: 'pending' | 'reviewed';
+  submissionType: 'url';
   url: string;
 }
 
@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
 
     if (!activityId || !userId || !submissionData?.url) {
       return NextResponse.json(
-        { success: false, error: "Invalid request data" },
-        { status: 400 },
+        { success: false, error: 'Invalid request data' },
+        { status: 400 }
       );
     }
 
@@ -78,14 +78,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "URL guardada correctamente",
+      message: 'URL guardada correctamente',
       submission,
     });
   } catch (error) {
-    console.error("Error saving URL submission:", error);
+    console.error('Error saving URL submission:', error);
     return NextResponse.json(
-      { success: false, error: "Error al guardar la URL" },
-      { status: 500 },
+      { success: false, error: 'Error al guardar la URL' },
+      { status: 500 }
     );
   }
 }

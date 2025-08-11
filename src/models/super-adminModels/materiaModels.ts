@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm"; // ✅ Importar inArray
+import { eq } from 'drizzle-orm'; // ✅ Importar inArray
 
-import { db } from "~/server/db";
-import { materias } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { materias } from '~/server/db/schema';
 
 export interface Materia {
   id: number;
@@ -24,7 +24,7 @@ export const getAllMaterias = async () => {
 
   // Retorna solo los valores únicos y ordenados por título
   return Array.from(uniqueMateriasMap.values()).sort((a, b) =>
-    a.title.localeCompare(b.title),
+    a.title.localeCompare(b.title)
   );
 };
 
@@ -43,8 +43,8 @@ export const getAllMateriasFull = async () => {
 };
 
 export const getMateriaById = async (id: number) => {
-  if (typeof id !== "number") {
-    throw new Error("ID must be a number");
+  if (typeof id !== 'number') {
+    throw new Error('ID must be a number');
   }
   const result = await db
     .select()
@@ -55,7 +55,7 @@ export const getMateriaById = async (id: number) => {
 };
 
 export const updateMateria = async (id: number, materia: Partial<Materia>) => {
-  if (!id) throw new Error("ID is required for update");
+  if (!id) throw new Error('ID is required for update');
   try {
     const updateResult = await db
       .update(materias)
@@ -65,14 +65,14 @@ export const updateMateria = async (id: number, materia: Partial<Materia>) => {
 
     return updateResult;
   } catch (error) {
-    console.error("Database error:", error); // Muestra el error de la base de datos
-    throw new Error("Database operation failed");
+    console.error('Database error:', error); // Muestra el error de la base de datos
+    throw new Error('Database operation failed');
   }
 };
 
-export const createMateria = async (materia: Omit<Materia, "id">) => {
+export const createMateria = async (materia: Omit<Materia, 'id'>) => {
   if (!materia.title || !materia.description) {
-    throw new Error("Title and description are required");
+    throw new Error('Title and description are required');
   }
   const insertResult = await db
     .insert(materias)
@@ -85,8 +85,8 @@ export const createMateria = async (materia: Omit<Materia, "id">) => {
 };
 
 export const deleteMateria = async (id: number): Promise<void> => {
-  if (typeof id !== "number") {
-    throw new Error("ID must be a number for a valid deletion operation.");
+  if (typeof id !== 'number') {
+    throw new Error('ID must be a number for a valid deletion operation.');
   }
   // Utiliza `eq` para asegurar que la condición de eliminación es segura y precisa.
   await db.delete(materias).where(eq(materias.id, id)).execute();

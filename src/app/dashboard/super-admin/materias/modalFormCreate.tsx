@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/educators/ui/dialog";
-import { Input } from "~/components/educators/ui/input";
+} from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
 
-import type { Materia } from "~/models/super-adminModels/materiaModels";
+import type { Materia } from '~/models/super-adminModels/materiaModels';
 
 interface ModalFormMateriaProps {
   isOpen: boolean;
@@ -32,8 +32,8 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
   onCreate,
   onUpdate,
 }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({
     title: false,
     description: false,
@@ -56,8 +56,8 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
     setErrors(newErrors);
 
     if (Object.values(newErrors).some((error) => error)) {
-      toast.error("Error", {
-        description: "Todos los campos son obligatorios",
+      toast.error('Error', {
+        description: 'Todos los campos son obligatorios',
       });
       return;
     }
@@ -65,25 +65,25 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
     const materiaData = { title, description };
 
     try {
-      const response = await fetch("/api/super-admin/materias", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/super-admin/materias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(materiaData),
       });
 
       if (!response.ok) {
-        throw new Error("Error al guardar la materia");
+        throw new Error('Error al guardar la materia');
       }
 
       const responseData = (await response.json()) as Materia;
       onCreate(responseData);
       onClose();
-      toast.success("Materia creada exitosamente");
+      toast.success('Materia creada exitosamente');
     } catch (error) {
-      toast.error("Error", {
-        description: "Error al guardar la materia: " + (error as Error).message,
+      toast.error('Error', {
+        description: 'Error al guardar la materia: ' + (error as Error).message,
       });
-      console.error("Error:", error);
+      console.error('Error:', error);
     }
   };
 
@@ -97,8 +97,8 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
     setErrors(newErrors);
 
     if (Object.values(newErrors).some((error) => error)) {
-      toast.error("Error", {
-        description: "Todos los campos son obligatorios",
+      toast.error('Error', {
+        description: 'Todos los campos son obligatorios',
       });
       return;
     }
@@ -109,26 +109,26 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
       const response = await fetch(
         `/api/super-admin/materias?id=${editingMateria?.id}`,
         {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(materiaData),
-        },
+        }
       );
 
       if (!response.ok) {
-        throw new Error("Error al actualizar la materia");
+        throw new Error('Error al actualizar la materia');
       }
 
       const responseData = (await response.json()) as Materia;
       onUpdate(responseData);
       onClose();
-      toast.success("Materia actualizada exitosamente");
+      toast.success('Materia actualizada exitosamente');
     } catch (error) {
-      toast.error("Error", {
+      toast.error('Error', {
         description:
-          "Error al actualizar la materia: " + (error as Error).message,
+          'Error al actualizar la materia: ' + (error as Error).message,
       });
-      console.error("Error:", error);
+      console.error('Error:', error);
     }
   };
 
@@ -137,16 +137,16 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
       <DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle className="text-4xl">
-            {editingMateria ? "Editar Materia" : "Crear Materia"}
+            {editingMateria ? 'Editar Materia' : 'Crear Materia'}
           </DialogTitle>
           <DialogDescription className="text-xl text-white">
             {editingMateria
-              ? "Edita los detalles de la materia"
-              : "Llena los detalles para crear una nueva materia"}
+              ? 'Edita los detalles de la materia'
+              : 'Llena los detalles para crear una nueva materia'}
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-lg bg-background px-6 text-black shadow-md">
-          <label htmlFor="title" className="text-lg font-medium text-primary">
+        <div className="bg-background rounded-lg px-6 text-black shadow-md">
+          <label htmlFor="title" className="text-primary text-lg font-medium">
             Título
           </label>
           <Input
@@ -154,14 +154,14 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
             placeholder="Título"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.title && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
           <label
             htmlFor="description"
-            className="text-lg font-medium text-primary"
+            className="text-primary text-lg font-medium"
           >
             Descripción
           </label>
@@ -169,7 +169,7 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
             placeholder="Descripción"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
+            className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -186,7 +186,7 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
             onClick={editingMateria ? handleUpdate : handleCreate}
             className="bg-green-400 text-white hover:bg-green-400/70"
           >
-            {editingMateria ? "Actualizar" : "Crear"}
+            {editingMateria ? 'Actualizar' : 'Crear'}
           </Button>
         </DialogFooter>
       </DialogContent>

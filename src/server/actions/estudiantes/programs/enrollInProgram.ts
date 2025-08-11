@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { currentUser } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 
-import { createNotification } from "~/server/actions/estudiantes/notifications/createNotification";
-import { db } from "~/server/db";
-import { enrollmentPrograms, programas, users } from "~/server/db/schema";
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
+import { db } from '~/server/db';
+import { enrollmentPrograms, programas, users } from '~/server/db/schema';
 
 export async function enrollInProgram(
-  programId: number,
+  programId: number
 ): Promise<{ success: boolean; message: string }> {
   try {
     const user = await currentUser();
@@ -16,7 +16,7 @@ export async function enrollInProgram(
     if (!user?.id) {
       return {
         success: false,
-        message: "Usuario no autenticado",
+        message: 'Usuario no autenticado',
       };
     }
 
@@ -29,13 +29,13 @@ export async function enrollInProgram(
 
     if (!dbUser) {
       const primaryEmail = user.emailAddresses.find(
-        (email) => email.id === user.primaryEmailAddressId,
+        (email) => email.id === user.primaryEmailAddressId
       );
 
       if (!primaryEmail?.emailAddress) {
         return {
           success: false,
-          message: "No se pudo obtener el email del usuario",
+          message: 'No se pudo obtener el email del usuario',
         };
       }
 
@@ -46,10 +46,10 @@ export async function enrollInProgram(
           name:
             user.firstName && user.lastName
               ? `${user.firstName} ${user.lastName}`
-              : (user.firstName ?? "Usuario"),
+              : (user.firstName ?? 'Usuario'),
           email: primaryEmail.emailAddress,
-          role: "estudiante",
-          subscriptionStatus: "active", // Set based on Clerk metadata
+          role: 'estudiante',
+          subscriptionStatus: 'active', // Set based on Clerk metadata
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -59,13 +59,13 @@ export async function enrollInProgram(
         });
 
         if (!dbUser) {
-          throw new Error("Error al crear el usuario en la base de datos");
+          throw new Error('Error al crear el usuario en la base de datos');
         }
       } catch (error) {
-        console.error("Error creating user:", error);
+        console.error('Error creating user:', error);
         return {
           success: false,
-          message: "Error al crear el usuario en la base de datos",
+          message: 'Error al crear el usuario en la base de datos',
         };
       }
     }
@@ -78,17 +78,17 @@ export async function enrollInProgram(
       | null;
 
     const isSubscriptionValid =
-      subscriptionStatus === "active" &&
-      planType === "Premium" && // Only Premium plans can enroll in programs
+      subscriptionStatus === 'active' &&
+      planType === 'Premium' && // Only Premium plans can enroll in programs
       (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
     if (!isSubscriptionValid) {
       return {
         success: false,
         message:
-          planType === "Pro"
-            ? "Los programas requieren una suscripción Premium. Actualiza tu plan para acceder."
-            : "Se requiere una suscripción premium activa",
+          planType === 'Pro'
+            ? 'Los programas requieren una suscripción Premium. Actualiza tu plan para acceder.'
+            : 'Se requiere una suscripción premium activa',
       };
     }
 
@@ -96,14 +96,14 @@ export async function enrollInProgram(
     const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
       where: and(
         eq(enrollmentPrograms.userId, userId),
-        eq(enrollmentPrograms.programaId, programId),
+        eq(enrollmentPrograms.programaId, programId)
       ),
     });
 
     if (existingEnrollment) {
       return {
         success: false,
-        message: "Ya estás inscrito en este programa",
+        message: 'Ya estás inscrito en este programa',
       };
     }
 
@@ -128,49 +128,49 @@ export async function enrollInProgram(
       if (!program) {
         return {
           success: false,
-          message: "Programa no encontrado",
+          message: 'Programa no encontrado',
         };
       }
 
       await createNotification({
         userId,
-        type: "PROGRAM_ENROLLMENT",
-        title: "¡Inscripción exitosa!",
+        type: 'PROGRAM_ENROLLMENT',
+        title: '¡Inscripción exitosa!',
         message: `Te has inscrito al programa ${program.title}`,
         metadata: { programId },
       });
     } catch (error) {
-      console.error("Error creating notification:", error);
+      console.error('Error creating notification:', error);
       // Continue execution even if notification fails
     }
 
     return {
       success: true,
-      message: "Inscripción exitosa al programa",
+      message: 'Inscripción exitosa al programa',
     };
   } catch (error) {
-    console.error("Error en enrollInProgram:", error);
+    console.error('Error en enrollInProgram:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Error desconocido",
+      message: error instanceof Error ? error.message : 'Error desconocido',
     };
   }
 }
 
 export async function isUserEnrolledInProgram(
   programId: number,
-  userId: string,
+  userId: string
 ): Promise<boolean> {
   try {
     const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
       where: and(
         eq(enrollmentPrograms.userId, userId),
-        eq(enrollmentPrograms.programaId, programId),
+        eq(enrollmentPrograms.programaId, programId)
       ),
     });
     return !!existingEnrollment;
   } catch (error) {
-    console.error("Error checking program enrollment:", error);
-    throw new Error("Failed to check program enrollment status");
+    console.error('Error checking program enrollment:', error);
+    throw new Error('Failed to check program enrollment status');
   }
 }

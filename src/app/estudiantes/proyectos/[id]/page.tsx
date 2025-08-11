@@ -1,11 +1,11 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { useRouter } from "next/router";
+import { useRouter } from 'next/router';
 
-import { getProjectById } from "~/server/actions/estudiantes/project/getProjectById";
+import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
 
-import type { Project } from "~/types";
+import type { Project } from '~/types';
 
 const ProjectDetailPage = () => {
   const router = useRouter();

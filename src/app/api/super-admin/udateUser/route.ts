@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { updateUserInClerk } from "~/server/queries/queries";
+import { updateUserInClerk } from '~/server/queries/queries';
 
 export async function PATCH(req: Request) {
   try {
@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
       planType?: string; // ✅ Añadido aquí
     };
 
-    console.log("📦 Datos recibidos en PATCH /api/super-admin/udateUser:", {
+    console.log('📦 Datos recibidos en PATCH /api/super-admin/udateUser:', {
       userId,
       firstName,
       lastName,
@@ -37,8 +37,8 @@ export async function PATCH(req: Request) {
 
     if (!userId || !firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios: userId, firstName o lastName" },
-        { status: 400 },
+        { error: 'Faltan datos obligatorios: userId, firstName o lastName' },
+        { status: 400 }
       );
     }
 
@@ -55,14 +55,14 @@ export async function PATCH(req: Request) {
 
     if (!updateSuccess) {
       return NextResponse.json(
-        { error: "Error al actualizar usuario en Clerk" },
-        { status: 500 },
+        { error: 'Error al actualizar usuario en Clerk' },
+        { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: "Usuario actualizado correctamente en Clerk",
+      message: 'Usuario actualizado correctamente en Clerk',
       updatedUser: {
         userId,
         firstName,
@@ -76,13 +76,13 @@ export async function PATCH(req: Request) {
     });
   } catch (error: unknown) {
     const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+      error instanceof Error ? error.message : 'Error desconocido';
 
-    console.error("❌ Error en la API de actualización:", errorMessage);
+    console.error('❌ Error en la API de actualización:', errorMessage);
 
     return NextResponse.json(
       { error: `Error interno del servidor: ${errorMessage}` },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

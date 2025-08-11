@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Role {
   id: number;
@@ -30,12 +30,12 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const res = await fetch("/api/super-admin/roles-secundarios/list");
-        if (!res.ok) throw new Error("Error al cargar roles");
+        const res = await fetch('/api/super-admin/roles-secundarios/list');
+        if (!res.ok) throw new Error('Error al cargar roles');
         const data = (await res.json()) as Role[];
         setRoles(data);
       } catch (error) {
-        console.error("Error cargando roles:", error);
+        console.error('Error cargando roles:', error);
       }
     };
     void fetchRoles();
@@ -47,22 +47,22 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
 
     try {
       const res = await fetch(
-        "/api/super-admin/roles-secundarios/assign-role-secundario",
+        '/api/super-admin/roles-secundarios/assign-role-secundario',
         {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user.id,
             roleSecundarioId: selectedRoleId,
           }),
-        },
+        }
       );
 
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!res.ok) throw new Error('Error al guardar');
       const data = (await res.json()) as { role_secundario: string };
       onSave({ id: user.id, role_secundario: data.role_secundario });
     } catch (error) {
-      console.error("Error asignando rol secundario:", error);
+      console.error('Error asignando rol secundario:', error);
     } finally {
       setLoading(false);
     }
@@ -74,13 +74,13 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="w-full max-w-lg rounded-lg bg-gray-900 p-6 text-white shadow-lg">
         <h2 className="mb-4 text-xl font-semibold">
-          Asignar Rol Secundario a{" "}
+          Asignar Rol Secundario a{' '}
           <span className="text-primary">{user.name}</span>
         </h2>
 
         <select
           className="mb-4 w-full rounded-md border border-white/10 bg-gray-800 px-4 py-2"
-          value={selectedRoleId ?? ""}
+          value={selectedRoleId ?? ''}
           onChange={(e) => setSelectedRoleId(Number(e.target.value))}
         >
           <option value="" disabled>
@@ -99,7 +99,7 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
             <ul className="list-disc space-y-1 pl-5">
               {selectedRole.permisos.map((p) => (
                 <li key={p.id}>
-                  <span className="text-primary">{p.name}</span>:{" "}
+                  <span className="text-primary">{p.name}</span>:{' '}
                   {p.description}
                 </li>
               ))}
@@ -119,7 +119,7 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
             disabled={!selectedRoleId || loading}
             className="bg-primary text-background hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50"
           >
-            {loading ? "Guardando..." : "Guardar"}
+            {loading ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
       </div>

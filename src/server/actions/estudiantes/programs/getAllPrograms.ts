@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { db } from "~/server/db";
-import { type BaseCourse, type MateriaWithCourse, type Program } from "~/types";
+import { db } from '~/server/db';
+import { type BaseCourse, type MateriaWithCourse, type Program } from '~/types';
 
 export async function getAllPrograms(): Promise<Program[]> {
   try {
@@ -50,7 +50,7 @@ export async function getAllPrograms(): Promise<Program[]> {
       })) as MateriaWithCourse[],
     }));
   } catch (error) {
-    console.error("Error fetching programs:", error);
+    console.error('Error fetching programs:', error);
     return [];
   }
 }

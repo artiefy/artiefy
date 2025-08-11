@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { clerkClient } from "@clerk/nextjs/server"; // Clerk Client
-import { desc, eq, sql } from "drizzle-orm";
+import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
+import { desc, eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   categories,
   courses,
@@ -13,7 +13,7 @@ import {
   programas,
   userCredentials,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 // Add this cache object at module level
 const categoryNameCache: Record<number, string> = {};
@@ -32,7 +32,7 @@ interface GetCoursesOptions {
 
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query?: string) {
-  console.log("DEBUG: Ejecutando getAdminUsers (SIN paginar por count)");
+  console.log('DEBUG: Ejecutando getAdminUsers (SIN paginar por count)');
 
   const client = await clerkClient();
   const allUsers: {
@@ -61,7 +61,7 @@ export async function getAdminUsers(query?: string) {
         firstName: user.firstName ?? undefined,
         lastName: user.lastName ?? undefined,
         primaryEmailAddressId: user.primaryEmailAddressId ?? undefined,
-      })),
+      }))
     );
 
     offset += limit;
@@ -69,27 +69,27 @@ export async function getAdminUsers(query?: string) {
 
   const simplifiedUsers = allUsers.map((user) => ({
     id: user.id,
-    firstName: user.firstName ?? "",
-    lastName: user.lastName ?? "",
+    firstName: user.firstName ?? '',
+    lastName: user.lastName ?? '',
     email:
       user.emailAddresses.find(
-        (email) => email.id === user.primaryEmailAddressId,
-      )?.emailAddress ?? "",
+        (email) => email.id === user.primaryEmailAddressId
+      )?.emailAddress ?? '',
     role:
-      typeof user.publicMetadata?.role === "string"
+      typeof user.publicMetadata?.role === 'string'
         ? user.publicMetadata.role.trim().toLowerCase()
-        : "estudiante",
+        : 'estudiante',
     status:
-      typeof user.publicMetadata?.status === "string"
+      typeof user.publicMetadata?.status === 'string'
         ? user.publicMetadata.status
-        : "activo",
+        : 'activo',
   }));
 
   const filtered = query
     ? simplifiedUsers.filter((user) =>
         `${user.firstName} ${user.lastName} ${user.email}`
           .toLowerCase()
-          .includes(query.toLowerCase()),
+          .includes(query.toLowerCase())
       )
     : simplifiedUsers;
 
@@ -128,15 +128,15 @@ export async function setRoleWrapper({
     await db
       .update(users)
       .set({
-        role: role as "estudiante" | "educador" | "admin" | "super-admin",
+        role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
 
     console.log(`DEBUG: Rol actualizado para usuario ${id} en Clerk y BD`);
   } catch (error) {
-    console.error("Error al actualizar el rol:", error);
-    throw new Error("No se pudo actualizar el rol");
+    console.error('Error al actualizar el rol:', error);
+    throw new Error('No se pudo actualizar el rol');
   }
 }
 
@@ -149,8 +149,8 @@ export async function removeRole(id: string) {
     });
     console.log(`DEBUG: Rol eliminado para el usuario ${id}`);
   } catch (error) {
-    console.error("Error al eliminar rol:", error);
-    throw new Error("No se pudo eliminar el rol");
+    console.error('Error al eliminar rol:', error);
+    throw new Error('No se pudo eliminar el rol');
   }
 }
 
@@ -165,19 +165,19 @@ export async function deleteUser(id: string) {
       await client.users.deleteUser(id);
     } catch (clerkError: unknown) {
       if (
-        typeof clerkError === "object" &&
+        typeof clerkError === 'object' &&
         clerkError !== null &&
-        "status" in clerkError &&
-        typeof (clerkError as { status: unknown }).status === "number" &&
+        'status' in clerkError &&
+        typeof (clerkError as { status: unknown }).status === 'number' &&
         (clerkError as { status: number }).status !== 404
       ) {
         if (clerkError instanceof Error) {
           throw clerkError;
         }
-        throw new Error("Unknown Clerk error during user deletion");
+        throw new Error('Unknown Clerk error during user deletion');
       }
       console.log(
-        `Usuario ${id} no encontrado en Clerk, continuando con eliminación local`,
+        `Usuario ${id} no encontrado en Clerk, continuando con eliminación local`
       );
     }
 
@@ -186,35 +186,35 @@ export async function deleteUser(id: string) {
 
     console.log(`DEBUG: Usuario ${id} eliminado correctamente de la BD`);
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    throw new Error("No se pudo eliminar el usuario");
+    console.error('Error al eliminar usuario:', error);
+    throw new Error('No se pudo eliminar el usuario');
   }
 }
 
 export async function updateUserInfo(
   id: string,
   firstName: string,
-  lastName: string,
+  lastName: string
 ) {
   try {
     const client = await clerkClient();
     await client.users.updateUser(id, { firstName, lastName });
     console.log(`DEBUG: Usuario ${id} actualizado correctamente`);
   } catch (error) {
-    console.error("Error al actualizar usuario:", error);
-    throw new Error("No se pudo actualizar el usuario");
+    console.error('Error al actualizar usuario:', error);
+    throw new Error('No se pudo actualizar el usuario');
   }
 }
 
 function generateSecurePassword(length = 14): string {
-  const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const lowercase = "abcdefghjkmnpqrstuvwxyz";
-  const numbers = "23456789";
-  const symbols = "!@#$%^&*()_+-={}[]<>?";
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+  const numbers = '23456789';
+  const symbols = '!@#$%^&*()_+-={}[]<>?';
 
   const allChars = uppercase + lowercase + numbers + symbols;
 
-  let password = "";
+  let password = '';
   // Asegurar al menos un carácter de cada tipo
   password += uppercase[Math.floor(Math.random() * uppercase.length)];
   password += lowercase[Math.floor(Math.random() * lowercase.length)];
@@ -228,9 +228,9 @@ function generateSecurePassword(length = 14): string {
 
   // Mezclar la contraseña para evitar patrones predecibles
   return password
-    .split("")
+    .split('')
     .sort(() => 0.5 - Math.random())
-    .join("");
+    .join('');
 }
 
 async function generateUniqueUsername(baseUsername: string): Promise<string> {
@@ -260,13 +260,13 @@ export async function createUser(
   firstName: string,
   lastName: string,
   email: string,
-  role: string,
+  role: string
 ) {
   try {
     const generatedPassword = generateSecurePassword();
     let baseUsername =
-      `${firstName}${lastName?.split(" ")[0] || ""}`.toLowerCase();
-    if (baseUsername.length < 4) baseUsername += "user";
+      `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
+    if (baseUsername.length < 4) baseUsername += 'user';
     baseUsername = baseUsername.slice(0, 60); // Leave room for numbers
 
     const uniqueUsername = await generateUniqueUsername(baseUsername);
@@ -290,8 +290,8 @@ export async function createUser(
           error as { errors?: { code: string; meta?: { paramName: string } }[] }
         )?.errors?.some(
           (e) =>
-            e.code === "form_identifier_exists" &&
-            e.meta?.paramName === "email_address",
+            e.code === 'form_identifier_exists' &&
+            e.meta?.paramName === 'email_address'
         )
       ) {
         return null;
@@ -300,7 +300,7 @@ export async function createUser(
       throw error;
     }
   } catch (error) {
-    console.error("Error al crear usuario:", error);
+    console.error('Error al crear usuario:', error);
     throw error;
   }
 }
@@ -334,17 +334,17 @@ export async function updateUserStatus(id: string, status: string) {
       .where(eq(users.id, id));
 
     console.log(
-      `DEBUG: Estado del usuario ${id} actualizado a ${status} en Clerk y BD`,
+      `DEBUG: Estado del usuario ${id} actualizado a ${status} en Clerk y BD`
     );
   } catch (error) {
-    console.error("Error al actualizar el estado del usuario:", error);
-    throw new Error("No se pudo actualizar el estado del usuario");
+    console.error('Error al actualizar el estado del usuario:', error);
+    throw new Error('No se pudo actualizar el estado del usuario');
   }
 }
 
 export async function updateMultipleUserStatus(
   userIds: string[],
-  status: string,
+  status: string
 ) {
   try {
     const client = await clerkClient();
@@ -354,7 +354,7 @@ export async function updateMultipleUserStatus(
 
     // 2. Crear un mapa para acceder fácilmente a los metadatos de cada usuario.
     const metadataMap = new Map(
-      userList.data.map((user) => [user.id, user.publicMetadata]),
+      userList.data.map((user) => [user.id, user.publicMetadata])
     );
     // Update both Clerk and database for each user
     for (const id of userIds) {
@@ -382,11 +382,11 @@ export async function updateMultipleUserStatus(
     }
 
     console.log(
-      `DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status} en Clerk y BD`,
+      `DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status} en Clerk y BD`
     );
   } catch (error) {
-    console.error("Error al actualizar múltiples usuarios:", error);
-    throw new Error("No se pudieron actualizar los usuarios");
+    console.error('Error al actualizar múltiples usuarios:', error);
+    throw new Error('No se pudieron actualizar los usuarios');
   }
 }
 
@@ -422,7 +422,7 @@ export interface Materia {
 }
 
 export async function getCourses(
-  options: GetCoursesOptions = {},
+  options: GetCoursesOptions = {}
 ): Promise<PaginatedResult<CourseData>> {
   const { page = 1, limit = 10 } = options;
   const offset = (page - 1) * limit;
@@ -463,12 +463,12 @@ export async function getCourses(
 
     // Get instructors info from Clerk
     const clerk = await clerkClient();
-    console.log("Fetching instructor info for courses:", coursesData);
+    console.log('Fetching instructor info for courses:', coursesData);
 
     const instructorsInfo = await Promise.all(
       coursesData.map(async (course) => {
         if (!course.instructor) {
-          return { id: "", name: "Sin instructor asignado" };
+          return { id: '', name: 'Sin instructor asignado' };
         }
 
         try {
@@ -487,7 +487,7 @@ export async function getCourses(
           try {
             const user = await clerk.users.getUser(course.instructor);
             const name =
-              `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+              `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
             return {
               id: course.instructor,
               name: name || course.instructor, // Fallback to instructor ID if no name
@@ -502,16 +502,16 @@ export async function getCourses(
         } catch (error) {
           console.error(
             `Error fetching instructor for course ${course.id}:`,
-            error,
+            error
           );
           return { id: course.instructor, name: course.instructor };
         }
-      }),
+      })
     );
 
     // Create lookup for instructor names
     const instructorNames = Object.fromEntries(
-      instructorsInfo.map((info) => [info.id, info.name]),
+      instructorsInfo.map((info) => [info.id, info.name])
     );
 
     // Get materias and programas for each course with instructor names
@@ -539,12 +539,12 @@ export async function getCourses(
         return {
           ...course,
           categoryName:
-            categoryNameCache[course.categoryid] ?? "Unknown Category",
+            categoryNameCache[course.categoryid] ?? 'Unknown Category',
           programas: uniquePrograms,
           instructorName:
             instructorNames[course.instructor] || course.instructor,
         };
-      }),
+      })
     );
 
     return {
@@ -552,7 +552,7 @@ export async function getCourses(
       total: Number(countResult[0]?.count ?? 0),
     };
   } catch (error) {
-    console.error("❌ Error al obtener cursos:", error);
+    console.error('❌ Error al obtener cursos:', error);
     return { data: [], total: 0 };
   }
 }
@@ -561,8 +561,8 @@ export async function deleteCourse(courseId: number) {
   try {
     return await db.delete(courses).where(eq(courses.id, courseId)).returning();
   } catch (error) {
-    console.error("❌ Error al eliminar curso:", error);
-    throw new Error("No se pudo eliminar el curso");
+    console.error('❌ Error al eliminar curso:', error);
+    throw new Error('No se pudo eliminar el curso');
   }
 }
 
@@ -571,7 +571,7 @@ export async function getModalidades() {
     const data = await db.select().from(modalidades);
     return data || []; // ✅ Devuelve un array vacío si `data` es `undefined`
   } catch (error) {
-    console.error("❌ Error al obtener modalidades:", error);
+    console.error('❌ Error al obtener modalidades:', error);
     return [];
   }
 }
@@ -587,7 +587,7 @@ export async function createCourse(courseData: CourseData) {
         instructor: courseData.instructor,
         modalidadesid: courseData.modalidadesid,
         nivelid: courseData.nivelid,
-        creatorId: courseData.creatorId || "defaultCreatorId",
+        creatorId: courseData.creatorId || 'defaultCreatorId',
         createdAt: new Date(courseData.createdAt),
         updatedAt: courseData.updatedAt
           ? new Date(courseData.updatedAt)
@@ -599,20 +599,20 @@ export async function createCourse(courseData: CourseData) {
       })
       .returning();
   } catch (error) {
-    console.error("❌ Error al crear curso:", error);
-    throw new Error("No se pudo crear el curso");
+    console.error('❌ Error al crear curso:', error);
+    throw new Error('No se pudo crear el curso');
   }
 }
 
 // ✅ Función corregida con `courseId: number`
 export async function updateCourse(courseId: number, courseData: CourseData) {
   try {
-    console.log("📝 Actualizando curso:");
-    console.log("ID:", courseId);
-    console.log("coverImageKey recibido:", courseData.coverImageKey);
+    console.log('📝 Actualizando curso:');
+    console.log('ID:', courseId);
+    console.log('coverImageKey recibido:', courseData.coverImageKey);
     console.log(
-      "coverVideoCourseKey recibido:",
-      courseData.coverVideoCourseKey,
+      'coverVideoCourseKey recibido:',
+      courseData.coverVideoCourseKey
     );
 
     return await db
@@ -629,8 +629,8 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
       .where(eq(courses.id, courseId))
       .returning();
   } catch (error) {
-    console.error("❌ Error al actualizar curso:", error);
-    throw new Error("No se pudo actualizar el curso");
+    console.error('❌ Error al actualizar curso:', error);
+    throw new Error('No se pudo actualizar el curso');
   }
 }
 
@@ -639,7 +639,7 @@ export async function getCategories() {
   try {
     return (await db.select().from(categories)) || [];
   } catch (error) {
-    console.error("❌ Error al obtener categorías:", error);
+    console.error('❌ Error al obtener categorías:', error);
     return [];
   }
 }
@@ -649,7 +649,7 @@ export async function getNivel() {
   try {
     return (await db.select().from(nivel)) || [];
   } catch (error) {
-    console.error("❌ Error al obtener niveles:", error);
+    console.error('❌ Error al obtener niveles:', error);
     return [];
   }
 }
@@ -664,7 +664,7 @@ function formatDateToClerk(date?: string | null): string | null {
   const now = new Date();
   baseDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
 
-  return baseDate.toISOString().slice(0, 19).replace("T", " ");
+  return baseDate.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 export async function updateUserInClerk({
@@ -690,31 +690,31 @@ export async function updateUserInClerk({
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
-    console.log("📥 Fecha original recibida:", subscriptionEndDate);
+    console.log('📥 Fecha original recibida:', subscriptionEndDate);
     const formattedEndDate = formatDateToClerk(subscriptionEndDate);
-    console.log("📤 Fecha formateada para Clerk:", formattedEndDate);
+    console.log('📤 Fecha formateada para Clerk:', formattedEndDate);
     // Normalizar status: convertir "Activo" (u otros similares) a "active"
 
     const hasSubscriptionDate = !!subscriptionEndDate;
 
     let normalizedStatus =
-      status?.toLowerCase() === "activo"
-        ? "active"
-        : (status?.toLowerCase() ?? "active");
+      status?.toLowerCase() === 'activo'
+        ? 'active'
+        : (status?.toLowerCase() ?? 'active');
 
     // Si hay fecha de suscripción y el status es "inactive", forzamos a "active"
-    if (hasSubscriptionDate && normalizedStatus === "inactive") {
-      normalizedStatus = "active";
+    if (hasSubscriptionDate && normalizedStatus === 'inactive') {
+      normalizedStatus = 'active';
     }
 
     const newMetadata = {
       ...user.publicMetadata,
-      role: (role || "estudiante") as
-        | "admin"
-        | "educador"
-        | "super-admin"
-        | "estudiante",
-      planType: planType ?? "none",
+      role: (role || 'estudiante') as
+        | 'admin'
+        | 'educador'
+        | 'super-admin'
+        | 'estudiante',
+      planType: planType ?? 'none',
       subscriptionStatus: normalizedStatus,
       subscriptionEndDate: formattedEndDate,
       permissions: Array.isArray(permissions) ? permissions : [],
@@ -730,17 +730,17 @@ export async function updateUserInClerk({
       .update(users)
       .set({
         name: `${firstName} ${lastName}`,
-        role: (role || "estudiante") as
-          | "estudiante"
-          | "educador"
-          | "admin"
-          | "super-admin",
+        role: (role || 'estudiante') as
+          | 'estudiante'
+          | 'educador'
+          | 'admin'
+          | 'super-admin',
         subscriptionStatus: normalizedStatus,
         planType:
           planType &&
-          ["none", "Pro", "Premium", "Enterprise"].includes(planType)
-            ? (planType as "Pro" | "Premium" | "Enterprise" | "none")
-            : "none",
+          ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+            ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
+            : 'none',
         subscriptionEndDate: formattedEndDate
           ? new Date(formattedEndDate)
           : null,
@@ -751,13 +751,13 @@ export async function updateUserInClerk({
     console.log(`✅ Usuario ${userId} actualizado en Clerk y BD`);
     return true;
   } catch (error) {
-    console.error("❌ Error al actualizar usuario:", error);
+    console.error('❌ Error al actualizar usuario:', error);
     return false;
   }
 }
 
 export async function getMateriasByCourseId(
-  courseId: string,
+  courseId: string
 ): Promise<Materia[]> {
   try {
     const result = await db
@@ -766,14 +766,14 @@ export async function getMateriasByCourseId(
       .where(eq(materias.courseid, parseInt(courseId)));
     return result as Materia[];
   } catch (error) {
-    console.error("Error fetching materias:", error);
+    console.error('Error fetching materias:', error);
     return [];
   }
 }
 
 // Remove the old getCategoryNameById since we now use cache
 export async function getCategoryNameById(id: number): Promise<string> {
-  return Promise.resolve(categoryNameCache[id] ?? "Unknown Category");
+  return Promise.resolve(categoryNameCache[id] ?? 'Unknown Category');
 }
 
 // Update this function to get instructor name from users table
@@ -791,17 +791,17 @@ export async function getInstructorNameById(id: string): Promise<string> {
       const client = await clerkClient();
       const clerkUser = await client.users.getUser(id);
       return (
-        `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() ||
-        "Unknown Instructor"
+        `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+        'Unknown Instructor'
       );
     } catch (clerkError) {
       // If Clerk returns 404 or any other error, return a default value
       console.log(`Instructor ${id} not found in Clerk:`, clerkError);
-      return id || "Unknown Instructor"; // Return the ID if available, otherwise Unknown Instructor
+      return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
     }
   } catch (error) {
-    console.error("Error getting instructor name:", error);
-    return id || "Unknown Instructor"; // Return the ID if available, otherwise Unknown Instructor
+    console.error('Error getting instructor name:', error);
+    return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
   }
 }
 export {};

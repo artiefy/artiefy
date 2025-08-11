@@ -1,5 +1,5 @@
-export type TicketStatus = "Open" | "In Progress" | "Resolved";
-export type TicketPriority = "Low" | "Medium" | "High";
+export type TicketStatus = 'Open' | 'In Progress' | 'Resolved';
+export type TicketPriority = 'Low' | 'Medium' | 'High';
 
 export interface Assignee {
   id: number;
@@ -29,9 +29,9 @@ export interface TicketListProps {
   onDeleteTicket: (id: string) => void;
   // Removed duplicate TicketListProps interface
   description: string;
-  status: "abierto" | "en progreso" | "cerrado";
+  status: 'abierto' | 'en progreso' | 'cerrado';
   assignedTechnician: string | null;
-  priority: "Baja" | "Media" | "Alta" | "Crítico";
+  priority: 'Baja' | 'Media' | 'Alta' | 'Crítico';
   createdAt: string;
   updatedAt: string;
   estudiante?: string;
@@ -46,9 +46,9 @@ export interface Ticket {
   id: number;
   title: string;
   description: string;
-  status: "abierto" | "en progreso" | "cerrado";
+  status: 'abierto' | 'en progreso' | 'cerrado';
   assignedTechnician: string | null;
-  priority: "Baja" | "Media" | "Alta" | "Crítico";
+  priority: 'Baja' | 'Media' | 'Alta' | 'Crítico';
   createdAt: string;
   estudiante?: string;
   asunto?: string;
@@ -56,14 +56,14 @@ export interface Ticket {
   prioridad?: string;
   imagen?: string;
   fechaCreacion?: string | Date;
-  estado?: "Abierto" | "En Progreso" | "Resuelto";
+  estado?: 'Abierto' | 'En Progreso' | 'Resuelto';
 }
 
 export interface CreateTicketInput {
   titulo: string;
-  estado: "pendiente" | "en_proceso" | "critico" | "completado";
+  estado: 'pendiente' | 'en_proceso' | 'critico' | 'completado';
   asignadoA: string | null;
-  prioridad: "Baja" | "Media" | "Alta" | "Crítica";
+  prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
   descripcion: string;
   urlImagen?: File;
   categorias: string[];

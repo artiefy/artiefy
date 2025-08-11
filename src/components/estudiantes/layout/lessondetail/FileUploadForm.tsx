@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { FileUp, Upload } from "lucide-react";
-import { toast } from "sonner";
+import { FileUp, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Icons } from "~/components/estudiantes/ui/icons";
+import { Icons } from '~/components/estudiantes/ui/icons';
 
-import type { Question } from "~/types";
+import type { Question } from '~/types';
 
-import "~/styles/activityupload.css";
+import '~/styles/activityupload.css';
 
 interface FileUploadFormProps {
   question: Question;
@@ -34,34 +34,34 @@ export function FileUploadForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      toast.error("Por favor selecciona un archivo");
+      toast.error('Por favor selecciona un archivo');
       return;
     }
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("userId", userId);
-    formData.append("activityId", activityId.toString());
-    formData.append("questionId", question.id);
+    formData.append('file', file);
+    formData.append('userId', userId);
+    formData.append('activityId', activityId.toString());
+    formData.append('questionId', question.id);
 
     try {
-      const response = await fetch("/api/activities/uploadFile", {
-        method: "POST",
+      const response = await fetch('/api/activities/uploadFile', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Error al subir el archivo");
+        throw new Error('Error al subir el archivo');
       }
 
       // Just check if response is ok, we don't need the data
       await response.json();
-      toast.success("Archivo subido correctamente. Pendiente de revisión.");
+      toast.success('Archivo subido correctamente. Pendiente de revisión.');
       onSubmit();
     } catch (error) {
-      toast.error("Error al subir el archivo");
-      console.error("Error:", error);
+      toast.error('Error al subir el archivo');
+      console.error('Error:', error);
     } finally {
       setIsUploading(false);
     }
@@ -81,7 +81,7 @@ export function FileUploadForm({
 
           <label htmlFor="file-upload" className="upload-footer">
             <FileUp className="mr-2 h-5 w-5" />
-            <p>{file ? file.name : "Seleccionar archivo"}</p>
+            <p>{file ? file.name : 'Seleccionar archivo'}</p>
           </label>
 
           <input
@@ -103,7 +103,7 @@ export function FileUploadForm({
                 Subiendo...
               </>
             ) : (
-              "Subir Documento"
+              'Subir Documento'
             )}
           </button>
         </div>

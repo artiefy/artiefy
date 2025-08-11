@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { useUser } from "@clerk/nextjs";
-import { StarIcon } from "@heroicons/react/24/solid";
-import { FaCalendar, FaCheck, FaUserGraduate } from "react-icons/fa";
+import { useUser } from '@clerk/nextjs';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { FaCalendar, FaCheck, FaUserGraduate } from 'react-icons/fa';
 
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Badge } from "~/components/estudiantes/ui/badge";
-import { Button } from "~/components/estudiantes/ui/button";
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
-} from "~/components/estudiantes/ui/card";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import { blurDataURL } from "~/lib/blurDataUrl";
+} from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { blurDataURL } from '~/lib/blurDataUrl';
 
-import { ProgramContent } from "./ProgramContent";
+import { ProgramContent } from './ProgramContent';
 
-import type { Program } from "~/types";
+import type { Program } from '~/types';
 
 interface ProgramHeaderProps {
   program: Program;
@@ -47,17 +47,17 @@ export function ProgramHeader({
   const { user } = useUser();
 
   // Verificar plan Premium
-  const isPremium = user?.publicMetadata?.planType === "Premium";
+  const isPremium = user?.publicMetadata?.planType === 'Premium';
   const canEnroll = isSubscriptionActive && isPremium;
 
   const formatDate = (
-    dateString: string | number | Date | null | undefined,
+    dateString: string | number | Date | null | undefined
   ) => {
-    if (!dateString) return "Fecha no disponible";
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    if (!dateString) return 'Fecha no disponible';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -69,7 +69,7 @@ export function ProgramHeader({
             src={
               program.coverImageKey
                 ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-                : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
             }
             alt={program.title}
             fill
@@ -93,7 +93,7 @@ export function ProgramHeader({
               variant="outline"
               className="border-primary bg-background text-primary hover:bg-black/70"
             >
-              {program.category?.name ?? "Sin categoría"}
+              {program.category?.name ?? 'Sin categoría'}
             </Badge>
             <div className="flex items-center">
               <FaCalendar className="mr-2 text-gray-600" />
@@ -113,7 +113,7 @@ export function ProgramHeader({
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
-                  className={`h-5 w-5 ${index < Math.floor(program.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
+                  className={`h-5 w-5 ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
               <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -126,7 +126,7 @@ export function ProgramHeader({
         {/* Program description */}
         <div className="prose max-w-none">
           <p className="leading-relaxed text-gray-700">
-            {program.description ?? "No hay descripción disponible."}
+            {program.description ?? 'No hay descripción disponible.'}
           </p>
         </div>
 
@@ -151,7 +151,7 @@ export function ProgramHeader({
                   {isUnenrolling ? (
                     <Icons.spinner className="text-white" />
                   ) : (
-                    "Cancelar Suscripción"
+                    'Cancelar Suscripción'
                   )}
                 </Button>
               </div>
@@ -167,14 +167,14 @@ export function ProgramHeader({
                     {isEnrolling ? (
                       <Icons.spinner
                         className="text-white"
-                        style={{ width: "25px", height: "25px" }}
+                        style={{ width: '25px', height: '25px' }}
                       />
                     ) : (
                       <>
                         <span className="transition-all duration-500 group-hover:translate-x-1">
                           {!canEnroll
-                            ? "Requiere Plan Premium"
-                            : "Inscribirse al programa"}
+                            ? 'Requiere Plan Premium'
+                            : 'Inscribirse al programa'}
                         </span>
                         <svg
                           className="size-6 transition-transform duration-500 group-hover:translate-x-1"

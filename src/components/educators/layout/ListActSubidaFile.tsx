@@ -1,20 +1,20 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { Edit, Trash } from "lucide-react";
-import { toast } from "sonner";
+import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 
-import FormActCompletado from "~/components/educators/layout/FormActCompletado";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import FormActCompletado from '~/components/educators/layout/FormActCompletado';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { QuestionFilesSubida } from "~/types/typesActi";
+import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
-  onEdit?: (question: QuestionFilesSubida & { tipo: "ARCHIVO" }) => void;
+  onEdit?: (question: QuestionFilesSubida & { tipo: 'ARCHIVO' }) => void;
   shouldRefresh?: boolean; // ✅ agregar esta prop
 }
 
@@ -34,10 +34,10 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/educadores/question/archivos?activityId=${activityId}`,
+        `/api/educadores/question/archivos?activityId=${activityId}`
       );
       if (!response.ok) {
-        throw new Error("Error al obtener las preguntas");
+        throw new Error('Error al obtener las preguntas');
       }
       const data = (await response.json()) as {
         success: boolean;
@@ -52,9 +52,9 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
         setQuestions(data.questionsFilesSubida);
       }
     } catch (error) {
-      console.error("Error al cargar las preguntas:", error);
-      toast("Error", {
-        description: "Error al cargar las preguntas",
+      console.error('Error al cargar las preguntas:', error);
+      toast('Error', {
+        description: 'Error al cargar las preguntas',
       });
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
   // Función para editar una pregunta
   const handleEdit = (question: QuestionFilesSubida) => {
     if (onEdit) {
-      onEdit({ ...question, tipo: "ARCHIVO" }); // 👈 Pasar a padre con tipo
+      onEdit({ ...question, tipo: 'ARCHIVO' }); // 👈 Pasar a padre con tipo
     } else {
       setEditingQuestion(question);
     }
@@ -101,20 +101,20 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
       const response = await fetch(
         `/api/educadores/question/archivos?activityId=${activityId}&questionId=${questionId}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
       if (response.ok) {
         // Actualizar el estado local en lugar de hacer fetch
         setQuestions(questions.filter((q) => q.id !== questionId));
-        toast("Pregunta eliminada", {
-          description: "La pregunta se eliminó correctamente",
+        toast('Pregunta eliminada', {
+          description: 'La pregunta se eliminó correctamente',
         });
       }
     } catch (error) {
-      console.error("Error al eliminar la pregunta:", error);
-      toast("Error", {
-        description: "Error al eliminar la pregunta",
+      console.error('Error al eliminar la pregunta:', error);
+      toast('Error', {
+        description: 'Error al eliminar la pregunta',
       });
     }
   };
@@ -187,7 +187,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                         width={800} // Ajusta según tu diseño
                         height={450}
                         className="max-h-60 w-full rounded-md border object-cover shadow"
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: 'cover' }}
                       />
                     </div>
                   )}
@@ -198,7 +198,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                       <p className="mb-1 text-sm text-gray-600">
                         Archivo de ayuda:
                       </p>
-                      {question.archivoKey.endsWith(".mp4") ? (
+                      {question.archivoKey.endsWith('.mp4') ? (
                         <video
                           controls
                           className="w-full rounded-md shadow"

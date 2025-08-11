@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
-} from "@aws-sdk/client-s3";
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { v4 as uuidv4 } from "uuid";
+} from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v4 as uuidv4 } from 'uuid';
 
 const MAX_SIMPLE_UPLOAD_SIZE = 500 * 1024 * 1024; // 500 MB
 const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB
@@ -15,13 +15,13 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB
 const client = new S3Client({ region: process.env.AWS_REGION });
 
 function sanitizeFileName(fileName: string): string {
-  const ext = fileName.split(".").pop() ?? "";
+  const ext = fileName.split('.').pop() ?? '';
   const timestamp = Date.now();
   const baseName = fileName
-    .split(".")[0]
+    .split('.')[0]
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "-")
-    .replace(/-+/g, "-")
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
     .trim();
 
   return `${baseName}-${timestamp}-${uuidv4()}.${ext}`;
@@ -36,48 +36,48 @@ export async function POST(request: Request) {
     };
 
     if (!process.env.AWS_BUCKET_NAME) {
-      throw new Error("AWS_BUCKET_NAME no está definido");
+      throw new Error('AWS_BUCKET_NAME no está definido');
     }
 
-    console.log("📦 Iniciando carga...");
-    console.log("➡️ Tipo:", contentType);
-    console.log("➡️ Tamaño:", fileSize);
-    console.log("➡️ Nombre original:", fileName);
+    console.log('📦 Iniciando carga...');
+    console.log('➡️ Tipo:', contentType);
+    console.log('➡️ Tamaño:', fileSize);
+    console.log('➡️ Nombre original:', fileName);
 
-    const isVideo = contentType.startsWith("video/");
-    const isImage = contentType.startsWith("image/");
+    const isVideo = contentType.startsWith('video/');
+    const isImage = contentType.startsWith('image/');
     const isDoc =
-      contentType === "application/pdf" ||
-      contentType === "application/msword" ||
+      contentType === 'application/pdf' ||
+      contentType === 'application/msword' ||
       contentType ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       contentType ===
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
       contentType ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
     if (!isVideo && !isImage && !isDoc) {
-      throw new Error("❌ Tipo de archivo no permitido");
+      throw new Error('❌ Tipo de archivo no permitido');
     }
 
-    let finalKey = "";
-    let sanitizedBase = "";
-    const fileType: "video" | "image" = isVideo ? "video" : "image";
-    const extension = fileName.split(".").pop() ?? "bin";
+    let finalKey = '';
+    let sanitizedBase = '';
+    const fileType: 'video' | 'image' = isVideo ? 'video' : 'image';
+    const extension = fileName.split('.').pop() ?? 'bin';
 
     // Detectar si ya viene un path limpio como 'uploads/xyz.jpg'
     const isPresanitized =
-      fileName.startsWith("uploads/") && !fileName.includes(" ");
+      fileName.startsWith('uploads/') && !fileName.includes(' ');
 
     if (isPresanitized) {
       finalKey = fileName;
       sanitizedBase = fileName
-        .replace(/^uploads\//, "")
-        .replace(/\.[^.]+$/, "");
+        .replace(/^uploads\//, '')
+        .replace(/\.[^.]+$/, '');
       console.log(`📝 Usando key ya formateado: ${finalKey}`);
     } else {
       const sanitizedFullName = sanitizeFileName(fileName);
-      sanitizedBase = sanitizedFullName.split(".")[0];
+      sanitizedBase = sanitizedFullName.split('.')[0];
 
       if (isVideo) {
         finalKey = `uploads/${sanitizedBase}-video.${extension}`;
@@ -89,12 +89,12 @@ export async function POST(request: Request) {
     }
 
     if (fileSize > MAX_FILE_SIZE) {
-      throw new Error("❌ Archivo demasiado grande (> 25GB)");
+      throw new Error('❌ Archivo demasiado grande (> 25GB)');
     }
 
     // coverImageKey a guardar (si es video, se apunta al JPG asociado)
     const coverImageKey =
-      fileType === "image" ? finalKey : `uploads/${sanitizedBase}.jpg`;
+      fileType === 'image' ? finalKey : `uploads/${sanitizedBase}.jpg`;
 
     // Generar presigned POST o PUT
     if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
@@ -102,12 +102,12 @@ export async function POST(request: Request) {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: finalKey,
         Conditions: [
-          ["content-length-range", 0, MAX_SIMPLE_UPLOAD_SIZE],
-          ["starts-with", "$Content-Type", ""],
+          ['content-length-range', 0, MAX_SIMPLE_UPLOAD_SIZE],
+          ['starts-with', '$Content-Type', ''],
         ],
         Fields: {
-          "Content-Type": contentType,
-          acl: "public-read",
+          'Content-Type': contentType,
+          acl: 'public-read',
         },
         Expires: 3600,
       });
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         fields,
         key: finalKey,
         fileName: finalKey,
-        uploadType: "simple",
+        uploadType: 'simple',
         contentType,
         coverImageKey,
       });
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
         Key: finalKey,
         ContentType: contentType,
         ContentLength: fileSize,
-        ACL: "public-read",
+        ACL: 'public-read',
       });
 
       const signedUrl = await getSignedUrl(client, command, {
@@ -137,16 +137,16 @@ export async function POST(request: Request) {
         url: signedUrl,
         key: finalKey,
         fileName: finalKey,
-        uploadType: "put",
+        uploadType: 'put',
         contentType,
         coverImageKey,
       });
     }
   } catch (error) {
-    console.error("❌ Error en la carga (POST):", error);
+    console.error('❌ Error en la carga (POST):', error);
     return NextResponse.json(
-      { error: (error as Error).message || "Error desconocido" },
-      { status: 500 },
+      { error: (error as Error).message || 'Error desconocido' },
+      { status: 500 }
     );
   }
 }
@@ -158,37 +158,37 @@ export async function DELETE(request: Request) {
 
     if (!key) {
       return NextResponse.json(
-        { error: "Se requiere una key para eliminar el archivo" },
-        { status: 400 },
+        { error: 'Se requiere una key para eliminar el archivo' },
+        { status: 400 }
       );
     }
 
     if (!process.env.AWS_BUCKET_NAME) {
-      throw new Error("AWS_BUCKET_NAME no está definido");
+      throw new Error('AWS_BUCKET_NAME no está definido');
     }
 
     await client.send(
       new DeleteObjectCommand({
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: key,
-      }),
+      })
     );
 
-    console.log("🗑️ Archivo eliminado de S3:", key);
+    console.log('🗑️ Archivo eliminado de S3:', key);
 
     return NextResponse.json({
-      message: "Archivo eliminado con éxito",
+      message: 'Archivo eliminado con éxito',
     });
   } catch (error) {
-    console.error("❌ Error al eliminar el archivo:", error);
+    console.error('❌ Error al eliminar el archivo:', error);
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Error desconocido al eliminar el archivo",
+            : 'Error desconocido al eliminar el archivo',
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -1,13 +1,13 @@
-"use server";
+'use server';
 
-import { unstable_cache } from "next/cache";
+import { unstable_cache } from 'next/cache';
 
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { categories, courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { categories, courses } from '~/server/db/schema';
 
-import type { Category } from "~/types";
+import type { Category } from '~/types';
 
 // Mantener el caché para categorías ya que cambian poco
 export const getAllCategories = unstable_cache(
@@ -30,13 +30,13 @@ export const getAllCategories = unstable_cache(
         courses: { length: Number(category.courseCount) },
       }));
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error('Error fetching categories:', error);
       throw new Error(
-        "Failed to fetch categories: " +
-          (error instanceof Error ? error.message : String(error)),
+        'Failed to fetch categories: ' +
+          (error instanceof Error ? error.message : String(error))
       );
     }
   },
-  ["all-categories"],
-  { revalidate: 3600 }, // 1 hora
+  ['all-categories'],
+  { revalidate: 3600 } // 1 hora
 );

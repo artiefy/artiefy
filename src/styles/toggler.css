@@ -22,7 +22,7 @@
   display: block;
   border-radius: 100%;
   background-color: #d7062a;
-  content: "";
+  content: '';
   animation-name: toggler-size;
   animation-duration: 0.15s;
   animation-timing-function: ease-out;

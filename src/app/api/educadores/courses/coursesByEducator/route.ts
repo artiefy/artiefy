@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getAllCourses,
@@ -7,8 +7,8 @@ import {
   getLessonsByCourseId,
   getTotalDuration,
   getTotalStudents,
-} from "~/models/educatorsModels/courseModelsEducator";
-import { getSubjects } from "~/models/educatorsModels/subjectModels"; // Import the function to get subjects
+} from '~/models/educatorsModels/courseModelsEducator';
+import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -16,12 +16,12 @@ const respondWithError = (message: string, status: number) =>
 // GET endpoint para obtener un curso por su ID
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const courseId = searchParams.get("courseId");
-  const userId = searchParams.get("userId");
-  const fullName = searchParams.get("fullName");
-  const fetchSubjects = searchParams.get("fetchSubjects");
+  const courseId = searchParams.get('courseId');
+  const userId = searchParams.get('userId');
+  const fullName = searchParams.get('fullName');
+  const fetchSubjects = searchParams.get('fetchSubjects');
 
-  console.log("GET Request Parameters:", {
+  console.log('GET Request Parameters:', {
     courseId,
     userId,
     fullName,
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   try {
     if (fetchSubjects) {
       const subjects = await getSubjects();
-      console.log("Subjects:", subjects);
+      console.log('Subjects:', subjects);
       return NextResponse.json(subjects);
     }
     let courses;
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       const totalDuration = await getTotalDuration(parseInt(courseId));
 
       if (!course) {
-        return respondWithError("Curso no encontrado", 404);
+        return respondWithError('Curso no encontrado', 404);
       }
       courses = {
         ...course,
@@ -58,17 +58,17 @@ export async function GET(req: NextRequest) {
         instructor: fullName,
         userId: userId,
       }));
-      console.log("Courses for instructor ID:", userId, courses);
+      console.log('Courses for instructor ID:', userId, courses);
     } else {
       courses = await getAllCourses();
-      console.log("All courses:", courses);
+      console.log('All courses:', courses);
     }
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error in GET courses:", error);
+    console.error('Error in GET courses:', error);
     return NextResponse.json(
-      { error: "Error al obtener los datos" },
-      { status: 500 },
+      { error: 'Error al obtener los datos' },
+      { status: 500 }
     );
   }
 }

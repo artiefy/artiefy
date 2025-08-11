@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { BsPersonCircle } from "react-icons/bs";
-import { MdSupportAgent } from "react-icons/md";
+import { BsPersonCircle } from 'react-icons/bs';
+import { MdSupportAgent } from 'react-icons/md';
 
-import { getOrCreateSuportChat } from "~/server/actions/estudiantes/chats/suportChatBot";
+import { getOrCreateSuportChat } from '~/server/actions/estudiantes/chats/suportChatBot';
 
-import type { UserResource } from "@clerk/types";
+import type { UserResource } from '@clerk/types';
 
 interface SuportChatProps {
   messages: { id: number; text: string; sender: string }[];
@@ -49,33 +49,33 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       try {
         const ticket = await getOrCreateSuportChat({
           creatorId: user.id,
-          email: user.emailAddresses?.[0]?.emailAddress ?? "",
-          description: "",
+          email: user.emailAddresses?.[0]?.emailAddress ?? '',
+          description: '',
         });
 
         if (ticket) {
-          console.log("Ticket fetched:", ticket);
+          console.log('Ticket fetched:', ticket);
           const initialMessages = [
             {
               id: Date.now(), // ID único para el primer mensaje
-              text: "¡Hola! ¿En qué puedo ayudarte?",
-              sender: "support",
+              text: '¡Hola! ¿En qué puedo ayudarte?',
+              sender: 'support',
             },
             ...ticket.messages.map((msg) => ({
               id: msg.id,
               text: msg.content,
-              sender: msg.sender === "user" ? "user" : "support",
+              sender: msg.sender === 'user' ? 'user' : 'support',
             })),
           ];
 
           setMessages(initialMessages);
         } else {
           console.warn(
-            "No se pudo obtener el ticket o no hay mensajes iniciales.",
+            'No se pudo obtener el ticket o no hay mensajes iniciales.'
           );
         }
       } catch (error) {
-        console.error("Error fetching initial messages:", error);
+        console.error('Error fetching initial messages:', error);
       }
     };
 
@@ -90,22 +90,22 @@ export const SuportChat: React.FC<SuportChatProps> = ({
           <div key={message.id}>
             <div
               className={`flex ${
-                message.sender === "user" ? "justify-end" : "justify-start"
+                message.sender === 'user' ? 'justify-end' : 'justify-start'
               } mb-4`}
             >
               <div
                 className={`flex max-w-[80%] items-start space-x-2 ${
-                  message.sender === "user"
-                    ? "flex-row-reverse space-x-reverse"
-                    : "flex-row"
+                  message.sender === 'user'
+                    ? 'flex-row-reverse space-x-reverse'
+                    : 'flex-row'
                 }`}
               >
-                {message.sender === "support" ? (
+                {message.sender === 'support' ? (
                   <MdSupportAgent className="text-secondary mt-2 text-xl" />
                 ) : user?.imageUrl ? (
                   <Image
                     src={user.imageUrl}
-                    alt={user.fullName ?? "User"}
+                    alt={user.fullName ?? 'User'}
                     width={24}
                     height={24}
                     className="mt-2 rounded-full"
@@ -116,9 +116,9 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                 )}
                 <div
                   className={`rounded-lg p-3 ${
-                    message.sender === "user"
-                      ? "bg-secondary text-white"
-                      : "bg-gray-100 text-gray-800"
+                    message.sender === 'user'
+                      ? 'bg-secondary text-white'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {message.text}

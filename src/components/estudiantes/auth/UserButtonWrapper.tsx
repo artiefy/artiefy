@@ -1,5 +1,5 @@
-import { UserButton } from "@clerk/nextjs";
-import { AcademicCapIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { UserButton } from '@clerk/nextjs';
+import { AcademicCapIcon, UserCircleIcon } from '@heroicons/react/24/solid';
 
 export function UserButtonWrapper() {
   return (
@@ -7,9 +7,9 @@ export function UserButtonWrapper() {
       showName
       appearance={{
         elements: {
-          rootBox: "flex items-center justify-end",
-          userButtonTrigger: "focus:shadow-none",
-          userButtonPopoverCard: "z-[100]",
+          rootBox: 'flex items-center justify-end',
+          userButtonTrigger: 'focus:shadow-none',
+          userButtonPopoverCard: 'z-[100]',
         },
       }}
     >

@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { like, or, type SQL } from "drizzle-orm";
+import { like, or, type SQL } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
 interface RequestBody {
   prompt: string;
@@ -13,20 +13,20 @@ interface ApiResponse {
   result: { id: number; title: string }[];
 }
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
     const { prompt } = body;
 
-    console.log("🔍 Searching for:", prompt);
+    console.log('🔍 Searching for:', prompt);
 
     // 1. Obtener sugerencias de títulos de la API externa
-    const response = await fetch("http://18.117.124.192:5000/root_courses", {
-      method: "POST",
+    const response = await fetch('http://18.117.124.192:5000/root_courses', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         prompt: prompt.toLowerCase().trim(),
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     // 2. Buscar cursos en la base de datos local usando los títulos sugeridos
     const titleConditions: SQL[] = data.result.map((course) =>
-      like(courses.title, `%${course.title}%`),
+      like(courses.title, `%${course.title}%`)
     );
 
     const localCourses = await db
@@ -70,21 +70,21 @@ export async function POST(request: Request) {
     // 3. Formatear respuesta con los IDs locales
     const formattedResponse = `He encontrado estos cursos que podrían interesarte:\n\n${localCourses
       .map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
-      .join("\n\n")}`;
+      .join('\n\n')}`;
 
     return NextResponse.json({
       response: formattedResponse,
       courses: localCourses,
     });
   } catch (error) {
-    console.error("Search Error:", error);
+    console.error('Search Error:', error);
     return NextResponse.json(
       {
         response:
-          "Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.",
+          'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.',
         courses: [],
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

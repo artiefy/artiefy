@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
-import { z } from "zod";
+import { clerkClient } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   enrollmentPrograms,
   enrollments,
   userCustomFields,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
@@ -23,17 +23,17 @@ export async function PATCH(req: Request) {
     const parsed = updateSchema.safeParse(body);
 
     if (!parsed.success) {
-      console.error("❌ Error validación:", parsed.error.format());
+      console.error('❌ Error validación:', parsed.error.format());
       return NextResponse.json(
-        { error: "Parámetros inválidos" },
-        { status: 400 },
+        { error: 'Parámetros inválidos' },
+        { status: 400 }
       );
     }
 
     const { userIds, fields } = parsed.data;
-    console.log("✅ Payload recibido del FRONTEND:");
-    console.log("➡️ userIds:", userIds);
-    console.log("➡️ fields:", fields);
+    console.log('✅ Payload recibido del FRONTEND:');
+    console.log('➡️ userIds:', userIds);
+    console.log('➡️ fields:', fields);
 
     for (const userId of userIds) {
       console.log(`\n🔄 Procesando usuario: ${userId}`);
@@ -61,12 +61,12 @@ export async function PATCH(req: Request) {
       let lastName: string | undefined;
 
       // Si hay solo name, dividirlo
-      if (typeof name === "string" && name.trim() !== "") {
-        const split = name.trim().split(" ");
+      if (typeof name === 'string' && name.trim() !== '') {
+        const split = name.trim().split(' ');
         firstName = split[0];
-        lastName = split.slice(1).join(" ") || "";
+        lastName = split.slice(1).join(' ') || '';
         console.log(
-          `✂️ Dividido name -> firstName: "${firstName}", lastName: "${lastName}"`,
+          `✂️ Dividido name -> firstName: "${firstName}", lastName: "${lastName}"`
         );
       }
 
@@ -79,36 +79,36 @@ export async function PATCH(req: Request) {
         existingMetadata = clerkUser.publicMetadata ?? {};
       } catch (err) {
         const e = err as { errors?: { code: string }[]; status?: number };
-        if (e?.errors?.[0]?.code === "not_found" || e?.status === 404) {
+        if (e?.errors?.[0]?.code === 'not_found' || e?.status === 404) {
           userExistsInClerk = false;
         } else {
-          console.error("❌ Clerk err:", err);
+          console.error('❌ Clerk err:', err);
           return NextResponse.json(
-            { error: "Error con Clerk" },
-            { status: 500 },
+            { error: 'Error con Clerk' },
+            { status: 500 }
           );
         }
       }
 
       const normalizedStatus =
-        typeof status === "string" && status.toLowerCase() === "activo"
-          ? "active"
-          : typeof status === "string"
+        typeof status === 'string' && status.toLowerCase() === 'activo'
+          ? 'active'
+          : typeof status === 'string'
             ? status.toLowerCase()
-            : "active";
+            : 'active';
 
       const endDateIso = subscriptionEndDate
-        ? new Date(subscriptionEndDate as string).toISOString().split("T")[0]
+        ? new Date(subscriptionEndDate as string).toISOString().split('T')[0]
         : null;
 
       const newMetadata = {
         ...existingMetadata,
-        role: typeof role === "string" ? role : "estudiante",
-        planType: typeof planType === "string" ? planType : "none",
+        role: typeof role === 'string' ? role : 'estudiante',
+        planType: typeof planType === 'string' ? planType : 'none',
         subscriptionStatus: normalizedStatus,
         subscriptionEndDate: endDateIso,
         permissions: Array.isArray(permissions) ? permissions : [],
-        fullName: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+        fullName: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
       };
 
       if (userExistsInClerk) {
@@ -125,37 +125,37 @@ export async function PATCH(req: Request) {
       }
 
       // SET dinámico para DB
-      const validPlanTypes = ["none", "Pro", "Premium", "Enterprise"];
+      const validPlanTypes = ['none', 'Pro', 'Premium', 'Enterprise'];
       const resolvedPlanType =
-        typeof planType === "string" && validPlanTypes.includes(planType)
+        typeof planType === 'string' && validPlanTypes.includes(planType)
           ? planType
-          : "Premium";
+          : 'Premium';
 
       const userUpdateFields: Record<string, unknown> = {
         updatedAt: new Date(),
       };
 
-      if (typeof name === "string") {
+      if (typeof name === 'string') {
         userUpdateFields.name = name;
       } else if (firstName || lastName) {
-        userUpdateFields.name = `${firstName ?? ""} ${lastName ?? ""}`.trim();
+        userUpdateFields.name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
       }
 
-      if (typeof role === "string") userUpdateFields.role = role;
-      if (typeof status === "string")
+      if (typeof role === 'string') userUpdateFields.role = role;
+      if (typeof status === 'string')
         userUpdateFields.subscriptionStatus = status;
       if (planType !== undefined) userUpdateFields.planType = resolvedPlanType;
-      if (typeof phone === "string") userUpdateFields.phone = phone;
-      if (typeof address === "string") userUpdateFields.address = address;
-      if (typeof city === "string") userUpdateFields.city = city;
-      if (typeof country === "string") userUpdateFields.country = country;
+      if (typeof phone === 'string') userUpdateFields.phone = phone;
+      if (typeof address === 'string') userUpdateFields.address = address;
+      if (typeof city === 'string') userUpdateFields.city = city;
+      if (typeof country === 'string') userUpdateFields.country = country;
       if (birthDate !== undefined)
         userUpdateFields.birthDate = new Date(birthDate as string);
       if (purchaseDate !== undefined)
         userUpdateFields.purchaseDate = new Date(purchaseDate as string);
       if (subscriptionEndDate !== undefined)
         userUpdateFields.subscriptionEndDate = new Date(
-          subscriptionEndDate as string,
+          subscriptionEndDate as string
         );
 
       console.log(`🚀 Campos SET para UPDATE en DB:`, userUpdateFields);
@@ -194,8 +194,8 @@ export async function PATCH(req: Request) {
           .where(
             and(
               eq(enrollments.userId, userId),
-              eq(enrollments.courseId, courseId as number),
-            ),
+              eq(enrollments.courseId, courseId as number)
+            )
           )
           .limit(1);
 
@@ -212,8 +212,8 @@ export async function PATCH(req: Request) {
         console.log(`🔄 Actualizando Clerk metadata por inscripción en curso`);
         await client.users.updateUserMetadata(userId, {
           publicMetadata: {
-            planType: "Premium",
-            subscriptionStatus: "active",
+            planType: 'Premium',
+            subscriptionStatus: 'active',
             subscriptionEndDate: endDateIso,
           },
         });
@@ -221,8 +221,8 @@ export async function PATCH(req: Request) {
         await db
           .update(users)
           .set({
-            planType: "Premium",
-            subscriptionStatus: "active",
+            planType: 'Premium',
+            subscriptionStatus: 'active',
             subscriptionEndDate: subscriptionEndDate
               ? new Date(subscriptionEndDate as string)
               : null,
@@ -235,10 +235,10 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("❌ Error en updateMassive:", err);
+    console.error('❌ Error en updateMassive:', err);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

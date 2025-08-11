@@ -1,17 +1,17 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { Portal } from "@radix-ui/react-portal";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { Portal } from '@radix-ui/react-portal';
+import { toast } from 'sonner';
 
-import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
-import DashboardEstudiantes from "~/components/educators/layout/DashboardEstudiantes";
-import LessonsListEducator from "~/components/educators/layout/LessonsListEducator"; // Importar el componente
+import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
+import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,20 +22,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
-import { Badge } from "~/components/educators/ui/badge";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/educators/ui/card";
-import { Label } from "~/components/educators/ui/label";
-import TechLoader from "~/components/estudiantes/ui/tech-loader";
-import ModalFormCourse from "~/components/super-admin/modals/ModalFormCourse";
+} from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Label } from '~/components/educators/ui/label';
+import TechLoader from '~/components/estudiantes/ui/tech-loader';
+import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Definir la interfaz del curso
 interface Course {
@@ -86,13 +86,13 @@ interface Educator {
 
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
-  if (hexcolor === "#FFFFFF") return "black"; // Manejar el caso del color blanco
-  hexcolor = hexcolor.replace("#", "");
+  if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 // Add this CSS block at the top of the file after imports:
@@ -140,8 +140,8 @@ const styles = `
     `;
 
 // Replace the stylesheet append code
-if (typeof document !== "undefined") {
-  const styleSheet = document.createElement("style");
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
   styleSheet.textContent = styles;
   document.head.appendChild(styleSheet);
 }
@@ -164,16 +164,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [course, setCourse] = useState<Course | null>(null); // Nuevo estado para el curso
   const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
   const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
-  const [editTitle, setEditTitle] = useState(""); // Nuevo estado para el título del curso a editar
-  const [editDescription, setEditDescription] = useState(""); // Nuevo estado para la descripción del curso
+  const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
+  const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
   const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
   const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
   const [editNivel, setEditNivel] = useState(0); // Replaced  with editNivel
-  const [editCoverImageKey, setEditCoverImageKey] = useState(""); // Nuevo estado para la imagen del curso
+  const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
   const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
   const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
-  const [selectedColor, setSelectedColor] = useState<string>("#FFFFFF"); // Color predeterminado blanco
-  const predefinedColors = ["#1f2937", "#000000", "#FFFFFF"]; // Colores específicos
+  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
+  const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
@@ -182,13 +182,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
 
   const BADGE_GRADIENTS = [
-    "from-pink-500 via-red-500 to-yellow-500",
-    "from-green-300 via-blue-500 to-purple-600",
-    "from-pink-300 via-purple-300 to-indigo-400",
-    "from-yellow-400 via-pink-500 to-red-500",
-    "from-blue-400 via-indigo-500 to-purple-600",
-    "from-green-400 via-cyan-500 to-blue-500",
-    "from-orange-400 via-pink-500 to-red-500",
+    'from-pink-500 via-red-500 to-yellow-500',
+    'from-green-300 via-blue-500 to-purple-600',
+    'from-pink-300 via-purple-300 to-indigo-400',
+    'from-yellow-400 via-pink-500 to-red-500',
+    'from-blue-400 via-indigo-500 to-purple-600',
+    'from-green-400 via-cyan-500 to-blue-500',
+    'from-orange-400 via-pink-500 to-red-500',
   ];
 
   type BadgeGradientFunction = () => string;
@@ -212,14 +212,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const courseIdString = Array.isArray(courseIdUrl)
     ? courseIdUrl[0]
     : courseIdUrl; // Obtener el id del curso como string
-  const courseIdString2 = courseIdString ?? ""; // Verificar si el id del curso es nulo
+  const courseIdString2 = courseIdString ?? ''; // Verificar si el id del curso es nulo
   const courseIdNumber = parseInt(courseIdString2); // Convertir el id del curso a número
 
   // Add these new states after the existing states
   const [educators, setEducators] = useState<Educator[]>([]);
-  const [selectedInstructor, setSelectedInstructor] = useState<string>("");
+  const [selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState("");
+  const [currentInstructor, setCurrentInstructor] = useState('');
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -228,20 +228,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   const handleEnrollAndRedirect = async () => {
     if (!user?.id || !courseIdNumber) {
-      toast.error("Usuario no autenticado o curso inválido");
+      toast.error('Usuario no autenticado o curso inválido');
       return;
     }
 
     try {
-      const res = await fetch("/api/enrollments/educatorsEnroll", {
-        method: "POST",
+      const res = await fetch('/api/enrollments/educatorsEnroll', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           courseId: String(courseIdNumber),
           userIds: [user.id], // 🔁 Aquí sí tienes acceso
-          planType: "Premium",
+          planType: 'Premium',
         }),
       });
 
@@ -249,21 +249,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         const responseData: unknown = await res.json();
 
         const errorMessage =
-          typeof responseData === "object" &&
+          typeof responseData === 'object' &&
           responseData !== null &&
-          "error" in responseData &&
-          typeof (responseData as { error?: unknown }).error === "string"
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
-            : "Error al matricular";
+            : 'Error al matricular';
 
         toast.error(errorMessage);
       } else {
-        toast.success("Matriculado correctamente");
+        toast.success('Matriculado correctamente');
         router.push(`/estudiantes/cursos/${courseIdNumber}`);
       }
     } catch (error) {
-      console.error("Error al matricular:", error);
-      toast.error("Error al matricular al curso");
+      console.error('Error al matricular:', error);
+      toast.error('Error al matricular al curso');
     }
   };
 
@@ -274,20 +274,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/educadores/courses/${courseIdNumber}`,
+          `/api/educadores/courses/${courseIdNumber}`
         );
         const responseParametros = await fetch(
-          `/api/educadores/parametros?courseId=${courseIdNumber}`,
+          `/api/educadores/parametros?courseId=${courseIdNumber}`
         ); // Obtener los parámetros
         const materiasResponse = await fetch(
-          `/api/educadores/courses/${courseIdNumber}/materiasOne`,
+          `/api/educadores/courses/${courseIdNumber}/materiasOne`
         );
         if (materiasResponse.ok) {
           const materiasData = (await materiasResponse.json()) as Materia[];
           setMaterias(materiasData);
         } else {
           console.log(
-            "No se encontraron materias o no se pudo cargar la información de las materias.",
+            'No se encontraron materias o no se pudo cargar la información de las materias.'
           );
         }
 
@@ -302,7 +302,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               ? data.courseTypes.map((type) => type.id)
               : data.courseTypeId !== null && data.courseTypeId !== undefined
                 ? [data.courseTypeId]
-                : [],
+                : []
           );
           setIndividualPrice(data.individualPrice ?? null);
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
@@ -321,10 +321,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             const errorJson: unknown = await response.json();
 
             if (
-              typeof errorJson === "object" &&
+              typeof errorJson === 'object' &&
               errorJson !== null &&
-              "error" in errorJson &&
-              typeof (errorJson as { error?: string }).error === "string"
+              'error' in errorJson &&
+              typeof (errorJson as { error?: string }).error === 'string'
             ) {
               errorMessage = (errorJson as { error: string }).error;
             }
@@ -334,15 +334,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           // Guardamos el error en el estado y mostramos el toast
           setError(`Error al cargar el curso: ${errorMessage}`);
-          toast("Error", {
+          toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
           });
         }
       } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar el curso: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudo cargar el curso: ${errorMessage}`,
         });
       } finally {
@@ -354,12 +354,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Add this function after fetchCourse
   const fetchEducators = async () => {
     try {
-      const response = await fetch("/api/super-admin/changeEducators");
-      if (!response.ok) throw new Error("Failed to fetch educators");
+      const response = await fetch('/api/super-admin/changeEducators');
+      if (!response.ok) throw new Error('Failed to fetch educators');
       const data = (await response.json()) as Educator[];
       setEducators(data);
     } catch (error) {
-      console.error("Error fetching educators:", error);
+      console.error('Error fetching educators:', error);
     }
   };
   useEffect(() => {
@@ -414,7 +414,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       description: string;
       porcentaje: number;
     }[],
-    courseTypeName?: string, // Add the new argument, optional if not always present
+    courseTypeName?: string // Add the new argument, optional if not always present
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -422,15 +422,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       let finalCoverImageKey = coverImageKey;
       let finalFileName = fileName;
       if (addParametros) {
-        console.log("Se agregarán parámetros adicionales");
+        console.log('Se agregarán parámetros adicionales');
       }
 
       // Si viene un nuevo archivo, subimos el archivo
       if (file) {
-        console.log("🟡 Subiendo nuevo archivo...");
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        console.log('🟡 Subiendo nuevo archivo...');
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -440,7 +440,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         void courseTypeName; // Use void operator to explicitly ignore the promise
 
         if (!uploadResponse.ok) {
-          throw new Error("Error al generar URL de carga");
+          throw new Error('Error al generar URL de carga');
         }
 
         const uploadData = (await uploadResponse.json()) as {
@@ -452,23 +452,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const formData = new FormData();
         Object.entries(uploadData.fields).forEach(([k, v]) =>
-          formData.append(k, v),
+          formData.append(k, v)
         );
-        formData.append("file", file);
+        formData.append('file', file);
 
         const uploadResult = await fetch(uploadData.url, {
-          method: "POST",
+          method: 'POST',
           body: formData,
         });
 
         if (!uploadResult.ok) {
-          throw new Error("Error al subir archivo a S3");
+          throw new Error('Error al subir archivo a S3');
         }
 
         finalCoverImageKey = uploadData.key;
         finalFileName = uploadData.fileName;
 
-        console.log("🟢 Archivo subido correctamente:", {
+        console.log('🟢 Archivo subido correctamente:', {
           finalCoverImageKey,
           finalFileName,
         });
@@ -492,19 +492,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         parametros,
       };
 
-      console.log("🚀 Payload final de actualización:", payload);
+      console.log('🚀 Payload final de actualización:', payload);
 
       const response = await fetch(
         `/api/educadores/courses/${courseIdNumber}`,
         {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-        },
+        }
       );
 
       if (addParametros && parametros.length) {
-        console.log("📝 Se actualizarán o crearán parámetros...");
+        console.log('📝 Se actualizarán o crearán parámetros...');
 
         for (const parametro of parametros) {
           if (parametro.id && parametro.id !== 0) {
@@ -513,32 +513,32 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             const updateResponse = await fetch(
               `/api/educadores/parametros/${parametro.id}`,
               {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   name: parametro.name,
                   description: parametro.description,
                   porcentaje: parametro.porcentaje,
                   courseId: Number(courseIdString2),
                 }),
-              },
+              }
             );
 
             if (!updateResponse.ok) {
               console.error(
-                `🔴 Error al actualizar parámetro ID ${parametro.id}`,
+                `🔴 Error al actualizar parámetro ID ${parametro.id}`
               );
             } else {
               console.log(
-                `✅ Parámetro ID ${parametro.id} actualizado correctamente`,
+                `✅ Parámetro ID ${parametro.id} actualizado correctamente`
               );
             }
           } else {
             console.log(`➕ Creando nuevo parámetro`);
 
             const createResponse = await fetch(`/api/educadores/parametros`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 name: parametro.name,
                 description: parametro.description,
@@ -548,9 +548,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             });
 
             if (!createResponse.ok) {
-              console.error("🔴 Error al crear nuevo parámetro");
+              console.error('🔴 Error al crear nuevo parámetro');
             } else {
-              console.log("✅ Nuevo parámetro creado correctamente");
+              console.log('✅ Nuevo parámetro creado correctamente');
             }
           }
         }
@@ -558,23 +558,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("🔴 Error al actualizar curso:", errorText);
-        throw new Error("Error al actualizar el curso");
+        console.error('🔴 Error al actualizar curso:', errorText);
+        throw new Error('Error al actualizar el curso');
       }
 
       const updatedCourse = (await response.json()) as Course;
-      console.log("🟢 Curso actualizado correctamente:", updatedCourse);
+      console.log('🟢 Curso actualizado correctamente:', updatedCourse);
 
       setCourse(updatedCourse);
       setIsModalOpen(false);
-      toast.success("Curso actualizado correctamente");
+      toast.success('Curso actualizado correctamente');
       await fetchCourse();
     } catch (err) {
-      console.error("❌ ERROR FATAL EN handleUpdateCourse:", err);
-      toast.error("Error al actualizar curso");
+      console.error('❌ ERROR FATAL EN handleUpdateCourse:', err);
+      toast.error('Error al actualizar curso');
     } finally {
       setIsUpdating(false);
-      console.log("🟢 FIN handleUpdateCourse");
+      console.log('🟢 FIN handleUpdateCourse');
     }
   };
 
@@ -589,23 +589,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     setIndividualPrice(course.individualPrice ?? null);
 
     // 🔥 VALIDAMOS QUE coverImageKey NO SEA UN VIDEO
-    if (course.coverImageKey.endsWith(".mp4")) {
+    if (course.coverImageKey.endsWith('.mp4')) {
       console.warn(
-        "⚠ El coverImageKey tenía un video, lo limpiamos para edición.",
+        '⚠ El coverImageKey tenía un video, lo limpiamos para edición.'
       );
-      setEditCoverImageKey("");
+      setEditCoverImageKey('');
     } else {
       setEditCoverImageKey(course.coverImageKey);
     }
 
-    setEditCoverVideoCourseKey(course.coverVideoCourseKey ?? "");
+    setEditCoverVideoCourseKey(course.coverVideoCourseKey ?? '');
     setEditParametros(
       parametros.map((parametro) => ({
         id: parametro.id,
         name: parametro.name,
         description: parametro.description,
         porcentaje: parametro.porcentaje,
-      })),
+      }))
     );
     setEditRating(course.rating);
     setCourseTypeId(
@@ -613,7 +613,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         ? course.courseTypes.map((type) => type.id)
         : course.courseTypeId !== null && course.courseTypeId !== undefined
           ? [course.courseTypeId]
-          : [],
+          : []
     );
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
@@ -642,10 +642,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     try {
       // Primero intentamos eliminar la imagen de S3
       if (course.coverImageKey) {
-        const responseAws = await fetch("/api/upload", {
-          method: "DELETE",
+        const responseAws = await fetch('/api/upload', {
+          method: 'DELETE',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             key: course.coverImageKey,
@@ -653,7 +653,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         });
 
         if (!responseAws.ok) {
-          console.error("Error al eliminar la imagen de S3");
+          console.error('Error al eliminar la imagen de S3');
         }
       }
 
@@ -661,22 +661,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       const response = await fetch(
         `/api/educadores/courses?courseId=${course.id}`,
         {
-          method: "DELETE",
-        },
+          method: 'DELETE',
+        }
       );
 
       if (!response.ok) {
         throw new Error(`Error al eliminar el curso`);
       }
 
-      toast("Curso eliminado", {
-        description: "El curso se ha eliminado con éxito.",
+      toast('Curso eliminado', {
+        description: 'El curso se ha eliminado con éxito.',
       });
-      router.push("/dashboard/super-admin/cursos");
+      router.push('/dashboard/super-admin/cursos');
     } catch (error) {
-      console.error("Error:", error);
-      toast("Error", {
-        description: "No se pudo eliminar el curso completamente",
+      console.error('Error:', error);
+      toast('Error', {
+        description: 'No se pudo eliminar el curso completamente',
       });
     }
   };
@@ -709,17 +709,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Modify handleChangeInstructor to include name
   const handleChangeInstructor = async () => {
     if (!selectedInstructor || !course?.id) {
-      toast.error("Por favor seleccione un instructor");
+      toast.error('Por favor seleccione un instructor');
       return;
     }
 
     try {
       setIsUpdating(true);
 
-      const response = await fetch("/api/super-admin/changeEducators", {
-        method: "PUT",
+      const response = await fetch('/api/super-admin/changeEducators', {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           courseId: course.id,
@@ -728,12 +728,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el instructor");
+        throw new Error('Error al actualizar el instructor');
       }
 
       // Update the course state with new instructor
       const selectedEducator = educators.find(
-        (e) => e.id === selectedInstructor,
+        (e) => e.id === selectedInstructor
       );
 
       if (selectedEducator && course) {
@@ -743,13 +743,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           instructorName: selectedEducator.name,
         });
 
-        setSelectedInstructor("");
-        toast.success("Instructor actualizado exitosamente");
+        setSelectedInstructor('');
+        toast.success('Instructor actualizado exitosamente');
         await fetchCourse();
       }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al actualizar el instructor");
+      console.error('Error:', error);
+      toast.error('Error al actualizar el instructor');
     } finally {
       setIsUpdating(false);
     }
@@ -806,7 +806,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="flex flex-col">
               <Label
                 className={
-                  selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                 }
               >
                 Seleccione el color deseado
@@ -817,9 +817,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     key={color}
                     style={{ backgroundColor: color }}
                     className={`size-8 border ${
-                      selectedColor === "#FFFFFF"
-                        ? "border-black"
-                        : "border-white"
+                      selectedColor === '#FFFFFF'
+                        ? 'border-black'
+                        : 'border-white'
                     } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
@@ -832,7 +832,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="flex w-full flex-col space-y-4">
               <div className="relative aspect-video w-full">
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ""}/${course.coverImageKey}`}
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                   alt={course.title}
                   width={300}
                   height={100}
@@ -897,7 +897,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Curso:
@@ -909,7 +909,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Categoría:
@@ -925,14 +925,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="space-y-2">
                 <h2
                   className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   Descripción:
                 </h2>
                 <p
                   className={`text-justify text-sm sm:text-base ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   {course.description}
@@ -941,7 +941,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="space-y-2">
                 <h2
                   className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   Precio Individual:
@@ -952,7 +952,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 >
                   {individualPrice !== null
                     ? `$${individualPrice}`
-                    : "No asignado"}
+                    : 'No asignado'}
                 </Badge>
               </div>
 
@@ -960,7 +960,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Educador:
@@ -975,7 +975,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         {course.instructorName ??
                           educators.find((e) => e.id === course.instructor)
                             ?.name ??
-                          "Sin nombre"}
+                          'Sin nombre'}
                       </option>
                       {educators
                         .filter((ed) => ed.id !== course.instructor)
@@ -1003,7 +1003,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Nivel:
@@ -1018,7 +1018,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Modalidad:
@@ -1033,7 +1033,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Tipos de curso:
@@ -1064,7 +1064,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="space-y-2">
                   <h2
                     className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Estado:
@@ -1073,11 +1073,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     variant="outline"
                     className={`ml-1 w-fit border ${
                       course.isActive
-                        ? "border-green-500 text-green-500"
-                        : "border-red-500 text-red-500"
+                        ? 'border-green-500 text-green-500'
+                        : 'border-red-500 text-red-500'
                     } bg-background hover:bg-black/70`}
                   >
-                    {course.isActive ? "Activo" : "Inactivo"}
+                    {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </div>
                 <div className="materias-container col-span-1 sm:col-span-2">
@@ -1142,7 +1142,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           subjects,
           coverVideoCourseKey,
           individualPrice,
-          parametros,
+          parametros
         ) =>
           handleUpdateCourse(
             id,
@@ -1161,7 +1161,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             subjects,
             coverVideoCourseKey,
             individualPrice,
-            parametros,
+            parametros
           )
         }
         editingCourseId={course.id}
@@ -1177,7 +1177,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setDescription={setEditDescription}
         setModalidadesid={(value: number | number[]) =>
           setEditModalidad(
-            Array.isArray(value) ? Number(value[0]) : Number(value),
+            Array.isArray(value) ? Number(value[0]) : Number(value)
           )
         }
         setCategoryid={setEditCategory}

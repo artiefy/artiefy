@@ -1,12 +1,12 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { Button } from "~/components/educators/ui/button";
-import { Progress } from "~/components/educators/ui/progress";
+import { Button } from '~/components/educators/ui/button';
+import { Progress } from '~/components/educators/ui/progress';
 
-import type { QuestionFilesSubida } from "~/types/typesActi";
+import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface formSubida {
   activityId: number;
@@ -36,12 +36,12 @@ const FormActCompletado: React.FC<formSubida> = ({
   const [file2, setFile2] = useState<File | null>(null);
 
   const [formData, setFormData] = useState<QuestionFilesSubida>({
-    id: "",
-    text: "",
-    parametros: "",
+    id: '',
+    text: '',
+    parametros: '',
     pesoPregunta: 0,
-    archivoKey: "",
-    portadaKey: "",
+    archivoKey: '',
+    portadaKey: '',
   });
 
   useEffect(() => {
@@ -49,37 +49,37 @@ const FormActCompletado: React.FC<formSubida> = ({
       setFormData(editingQuestion);
     } else {
       setFormData({
-        id: "",
-        text: "",
-        parametros: "",
+        id: '',
+        text: '',
+        parametros: '',
         pesoPregunta: 0,
-        archivoKey: "",
-        portadaKey: "",
+        archivoKey: '',
+        portadaKey: '',
       });
     }
   }, [editingQuestion]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "pesoPregunta" ? Number(value) : value,
+      [name]: name === 'pesoPregunta' ? Number(value) : value,
     }));
   };
 
   const uploadToS3 = async (file: File): Promise<string> => {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contentType: file.type,
         fileSize: file.size,
         fileName: file.name,
       }),
     });
-    if (!res.ok) throw new Error("Error al generar la URL de subida");
+    if (!res.ok) throw new Error('Error al generar la URL de subida');
 
     const responseJson = (await res.json()) as UploadS3Response;
     const { url, fields, key } = responseJson;
@@ -87,19 +87,19 @@ const FormActCompletado: React.FC<formSubida> = ({
     Object.entries(fields).forEach(([k, v]) => {
       uploadForm.append(k, v);
     });
-    uploadForm.append("file", file);
+    uploadForm.append('file', file);
 
     const uploadRes = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       body: uploadForm,
     });
-    if (!uploadRes.ok) throw new Error("Error al subir archivo");
+    if (!uploadRes.ok) throw new Error('Error al subir archivo');
     return key;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const method = editingQuestion ? "PUT" : "POST";
+    const method = editingQuestion ? 'PUT' : 'POST';
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -119,7 +119,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 
     try {
       if (!file1 || !file2)
-        throw new Error("Debes seleccionar ambos archivos.");
+        throw new Error('Debes seleccionar ambos archivos.');
 
       const archivoKey = await uploadToS3(file1);
       const portadaKey = await uploadToS3(file2);
@@ -127,9 +127,9 @@ const FormActCompletado: React.FC<formSubida> = ({
       formData.archivoKey = archivoKey;
       formData.portadaKey = portadaKey;
 
-      const response = await fetch("/api/educadores/question/archivos", {
+      const response = await fetch('/api/educadores/question/archivos', {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ activityId, questionsFilesSubida: formData }),
       });
 
@@ -140,18 +140,18 @@ const FormActCompletado: React.FC<formSubida> = ({
 
       const data = (await response.json()) as SaveResponse;
       if (data.success) {
-        toast("Pregunta guardada", {
-          description: "La pregunta se guardó correctamente",
+        toast('Pregunta guardada', {
+          description: 'La pregunta se guardó correctamente',
         });
         window.location.reload();
       } else {
-        toast("Error", {
-          description: "Error al guardar la pregunta",
+        toast('Error', {
+          description: 'Error al guardar la pregunta',
         });
       }
     } catch (error) {
-      console.error("Error al guardar la pregunta:", error);
-      toast("Error", {
+      console.error('Error al guardar la pregunta:', error);
+      toast('Error', {
         description: `Error: ${(error as Error).message}`,
       });
     } finally {
@@ -162,7 +162,7 @@ const FormActCompletado: React.FC<formSubida> = ({
   return (
     <div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
       <h2 className="text-center text-2xl font-bold text-gray-800">
-        {editingQuestion ? "Actualizar" : "Crear"} Pregunta del tipo:
+        {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta del tipo:
         Presentación de trabajo
       </h2>
       <form onSubmit={handleSubmit}>
@@ -192,7 +192,7 @@ const FormActCompletado: React.FC<formSubida> = ({
           <div className="relative flex items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm">
             <span className="truncate text-sm text-gray-500">
               {file1?.name ??
-                "Selecciona un archivo de ayuda (PDF, Word, video...)"}
+                'Selecciona un archivo de ayuda (PDF, Word, video...)'}
             </span>
             <label className="cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600">
               Seleccionar
@@ -214,7 +214,7 @@ const FormActCompletado: React.FC<formSubida> = ({
           </label>
           <div className="relative flex items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm">
             <span className="truncate text-sm text-gray-500">
-              {file2?.name ?? "Selecciona una imagen complementaria"}
+              {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
             <label className="cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm text-white hover:bg-purple-600">
               Seleccionar
@@ -253,7 +253,7 @@ const FormActCompletado: React.FC<formSubida> = ({
             type="submit"
             className="border-none bg-green-400 text-white hover:bg-green-500"
           >
-            {editingQuestion ? "Actualizar" : "Enviar"}
+            {editingQuestion ? 'Actualizar' : 'Enviar'}
           </Button>
         </div>
       </form>

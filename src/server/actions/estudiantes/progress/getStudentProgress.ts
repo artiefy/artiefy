@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { enrollments, userLessonsProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { enrollments, userLessonsProgress } from '~/server/db/schema';
 
 // Obtener el progreso general del estudiante
 export async function getStudentProgress(userId: string): Promise<{
@@ -20,7 +20,7 @@ export async function getStudentProgress(userId: string): Promise<{
     .from(enrollments)
     .leftJoin(
       userLessonsProgress,
-      eq(enrollments.userId, userLessonsProgress.userId),
+      eq(enrollments.userId, userLessonsProgress.userId)
     )
     .where(eq(enrollments.userId, userId))
     .groupBy(enrollments.userId);

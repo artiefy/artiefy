@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { FiPlus } from "react-icons/fi";
+import { useUser } from '@clerk/nextjs';
+import { FiPlus } from 'react-icons/fi';
 import {
   PiAppWindowBold,
   PiAtomBold,
@@ -27,8 +27,8 @@ import {
   PiShieldCheckBold,
   PiSunBold,
   PiWindBold,
-} from "react-icons/pi";
-import { toast } from "sonner";
+} from 'react-icons/pi';
+import { toast } from 'sonner';
 
 import {
   AlertDialog,
@@ -39,12 +39,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/educators/ui/alert-dialog";
-import { Button } from "~/components/estudiantes/ui/button";
-import { SkeletonCard } from "~/components/super-admin/layout/SkeletonCard";
-import ModalFormProgram from "~/components/super-admin/modals/ModalFormProgram";
-import ProgramListAdmin from "~/components/super-admin/ProgramsListAdmin";
-import { getPrograms } from "~/server/queries/queriesSuperAdmin";
+} from '~/components/educators/ui/alert-dialog';
+import { Button } from '~/components/estudiantes/ui/button';
+import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
+import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
+import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
+import { getPrograms } from '~/server/queries/queriesSuperAdmin';
 
 // Define el modelo de datos del programa
 export interface ProgramModel {
@@ -84,8 +84,8 @@ export default function Page() {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [totalPrograms, setTotalPrograms] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   // Update the state definition to use the new interface
@@ -99,8 +99,8 @@ export default function Page() {
   useEffect(() => {
     setScreenWidth(window.innerWidth);
     const handleResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // ✅ Obtener programas, totales y categorías
@@ -112,24 +112,24 @@ export default function Page() {
           programsData.map(
             (program): ProgramModel => ({
               id: program.id ?? 0,
-              title: program.title ?? "",
-              description: program.description ?? "",
+              title: program.title ?? '',
+              description: program.description ?? '',
               categoryid: program.categoryid ?? 0,
               createdAt:
-                typeof program.createdAt === "string"
+                typeof program.createdAt === 'string'
                   ? program.createdAt
                   : (program.createdAt?.toISOString() ??
                     new Date().toISOString()),
-              coverImageKey: program.coverImageKey ?? "",
-              creatorId: program.creatorId ?? "",
+              coverImageKey: program.coverImageKey ?? '',
+              creatorId: program.creatorId ?? '',
               rating: program.rating ?? 0,
-            }),
-          ),
+            })
+          )
         );
 
         // Obtener métricas
-        const totalsResponse = await fetch("/api/super-admin/programs/totals");
-        if (!totalsResponse.ok) throw new Error("Error obteniendo totales");
+        const totalsResponse = await fetch('/api/super-admin/programs/totals');
+        if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
         const { totalPrograms, totalStudents } =
           (await totalsResponse.json()) as {
             totalPrograms: number;
@@ -140,16 +140,16 @@ export default function Page() {
         setTotalStudents(totalStudents);
 
         // Obtener categorías
-        const categoriesResponse = await fetch("/api/super-admin/categories");
+        const categoriesResponse = await fetch('/api/super-admin/categories');
         if (!categoriesResponse.ok)
-          throw new Error("Error obteniendo categorías");
+          throw new Error('Error obteniendo categorías');
         // Update the type assertion for categoriesData
         const categoriesData = (await categoriesResponse.json()) as Category[];
         setCategories(categoriesData);
       } catch (error) {
-        console.error("❌ Error cargando datos:", error);
-        toast.error("Error al cargar los datos", {
-          description: "Intenta nuevamente.",
+        console.error('❌ Error cargando datos:', error);
+        toast.error('Error al cargar los datos', {
+          description: 'Intenta nuevamente.',
         });
       }
     }
@@ -164,7 +164,7 @@ export default function Page() {
   const filteredPrograms = programs.filter(
     (program) =>
       program.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (categoryFilter ? program.categoryid === Number(categoryFilter) : true),
+      (categoryFilter ? program.categoryid === Number(categoryFilter) : true)
   );
 
   // ✅ Crear o actualizar programa
@@ -177,17 +177,17 @@ export default function Page() {
     rating: number,
     coverImageKey: string,
     fileName: string,
-    subjectIds: number[],
+    subjectIds: number[]
   ) => {
     if (!user) return;
-    console.log("📤 Enviando programa con subjectIds:", subjectIds);
+    console.log('📤 Enviando programa con subjectIds:', subjectIds);
 
     try {
       setUploading(true);
       if (file) {
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -197,7 +197,7 @@ export default function Page() {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `Error: al iniciar la carga: ${uploadResponse.statusText}`,
+            `Error: al iniciar la carga: ${uploadResponse.statusText}`
           );
         }
 
@@ -212,25 +212,25 @@ export default function Page() {
 
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) => {
-          if (typeof value === "string") {
+          if (typeof value === 'string') {
             formData.append(key, value);
           }
         });
-        formData.append("file", file);
+        formData.append('file', file);
 
         await fetch(url, {
-          method: "POST",
+          method: 'POST',
           body: formData,
         });
       }
       setUploading(false);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : "Unknown error";
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
       throw new Error(`Error to upload the file type ${errorMessage}`);
     }
 
     const creatorId =
-      user?.fullName ?? user?.emailAddresses[0]?.emailAddress ?? "Desconocido";
+      user?.fullName ?? user?.emailAddresses[0]?.emailAddress ?? 'Desconocido';
 
     try {
       let response;
@@ -239,12 +239,12 @@ export default function Page() {
 
       if (id) {
         response = await fetch(`/api/super-admin/programs?programId=${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title,
-            description: description ?? "",
-            coverImageKey: coverImageKey ?? "",
+            description: description ?? '',
+            coverImageKey: coverImageKey ?? '',
             categoryid: Number(categoryid),
             rating,
             creatorId,
@@ -253,14 +253,14 @@ export default function Page() {
         });
 
         if (!response.ok) {
-          throw new Error("Error al actualizar el programa");
+          throw new Error('Error al actualizar el programa');
         }
 
         responseData = (await response.json()) as { id: number };
       } else {
-        response = await fetch("/api/super-admin/programs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        response = await fetch('/api/super-admin/programs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title,
             description,
@@ -278,10 +278,10 @@ export default function Page() {
       }
 
       if (response instanceof Response && response.ok && responseData) {
-        toast.success(id ? "Programa actualizado" : "Programa creado", {
+        toast.success(id ? 'Programa actualizado' : 'Programa creado', {
           description: id
-            ? "El programa se actualizó con éxito"
-            : "El programa se creó con éxito",
+            ? 'El programa se actualizó con éxito'
+            : 'El programa se creó con éxito',
         });
 
         // Refresh the programs list
@@ -290,18 +290,18 @@ export default function Page() {
           programsData.map((program) => ({
             ...program,
             id: program.id ?? 0,
-            description: program.description ?? "",
-            coverImageKey: program.coverImageKey ?? "",
+            description: program.description ?? '',
+            coverImageKey: program.coverImageKey ?? '',
             rating: program.rating ?? 0,
             createdAt:
-              typeof program.createdAt === "string"
+              typeof program.createdAt === 'string'
                 ? program.createdAt
                 : program.createdAt.toISOString(),
-          })),
+          }))
         );
       }
     } catch (error) {
-      toast.error("Error al procesar el programa", {
+      toast.error('Error al procesar el programa', {
         description: `Ocurrió un error: ${(error as Error).message}`,
       });
     } finally {
@@ -316,12 +316,12 @@ export default function Page() {
   const handleCreateProgram = () => {
     setEditingProgram({
       id: 0,
-      title: "",
-      description: "",
+      title: '',
+      description: '',
       categoryid: 0,
-      createdAt: "",
-      coverImageKey: "",
-      creatorId: "",
+      createdAt: '',
+      coverImageKey: '',
+      creatorId: '',
       rating: 0,
     });
     setIsModalOpen(true);
@@ -329,18 +329,18 @@ export default function Page() {
 
   const handleDeleteSelected = async () => {
     try {
-      const response = await fetch("/api/super-admin/programs/deleteProgram", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/super-admin/programs/deleteProgram', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ programIds: selectedPrograms }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al eliminar los programas");
+        throw new Error('Error al eliminar los programas');
       }
 
       toast.success(
-        `${selectedPrograms.length} programa(s) eliminado(s) exitosamente`,
+        `${selectedPrograms.length} programa(s) eliminado(s) exitosamente`
       );
       setSelectedPrograms([]);
       // Refresh programs list
@@ -349,23 +349,23 @@ export default function Page() {
         programsData.map(
           (program): ProgramModel => ({
             id: program.id ?? 0,
-            title: program.title ?? "",
-            description: program.description ?? "",
+            title: program.title ?? '',
+            description: program.description ?? '',
             categoryid: program.categoryid ?? 0,
             createdAt:
-              typeof program.createdAt === "string"
+              typeof program.createdAt === 'string'
                 ? program.createdAt
                 : (program.createdAt?.toISOString() ??
                   new Date().toISOString()),
-            coverImageKey: program.coverImageKey ?? "",
-            creatorId: program.creatorId ?? "",
+            coverImageKey: program.coverImageKey ?? '',
+            creatorId: program.creatorId ?? '',
             rating: program.rating ?? 0,
-          }),
-        ),
+          })
+        )
       );
     } catch (error) {
-      toast.error("Error al eliminar los programas");
-      console.error("Error:", error);
+      toast.error('Error al eliminar los programas');
+      console.error('Error:', error);
     }
     setShowDeleteConfirm(false);
   };
@@ -374,7 +374,7 @@ export default function Page() {
     setSelectedPrograms((prev) =>
       prev.includes(programId)
         ? prev.filter((id) => id !== programId)
-        : [...prev, programId],
+        : [...prev, programId]
     );
   };
 
@@ -400,23 +400,23 @@ export default function Page() {
     const icons: Record<string, React.ReactNode> = {
       Redes: <PiCloudBold className="size-5" />,
       APIs: <PiGlobeBold className="size-5" />,
-      "Análisis de Datos": <PiChartLineUpBold className="size-5" />,
+      'Análisis de Datos': <PiChartLineUpBold className="size-5" />,
       Videojuegos: <PiGameControllerBold className="size-5" />,
       Seguridad: <PiShieldCheckBold className="size-5" />,
-      "Frameworks Web": <PiWindBold className="size-5" />,
+      'Frameworks Web': <PiWindBold className="size-5" />,
       Tecnología: <PiComputerTowerBold className="size-5" />,
       Matemáticas: <PiCalculatorBold className="size-5" />,
       Ciencias: <PiAtomBold className="size-5" />,
       Diseño: <PiPaintBrushBold className="size-5" />,
       Marketing: <PiMegaphoneBold className="size-5" />,
-      "Machine Learning": <PiBrainBold className="size-5" />,
-      "Bases de Datos": <PiDatabaseBold className="size-5" />,
-      "Desarrollo Web": <PiBrowserBold className="size-5" />,
+      'Machine Learning': <PiBrainBold className="size-5" />,
+      'Bases de Datos': <PiDatabaseBold className="size-5" />,
+      'Desarrollo Web': <PiBrowserBold className="size-5" />,
       Programación: <PiCodeBold className="size-5" />,
-      "Desarrollo Móvil": <PiDeviceMobileBold className="size-5" />,
-      "Inteligencia Artificial": <PiRobotBold className="size-5" />,
-      "Desarrollo de Software": <PiAppWindowBold className="size-5" />,
-      "Energía Solar": <PiSunBold className="size-5" />,
+      'Desarrollo Móvil': <PiDeviceMobileBold className="size-5" />,
+      'Inteligencia Artificial': <PiRobotBold className="size-5" />,
+      'Desarrollo de Software': <PiAppWindowBold className="size-5" />,
+      'Energía Solar': <PiSunBold className="size-5" />,
       Humanidades: <PiBooksBold className="size-5" />,
       Cosmetología: <PiScissorsBold className="size-5" />,
       Emprendimiento: <PiChartLineUpBold className="size-5" />,
@@ -506,11 +506,11 @@ export default function Page() {
           <div className="flex flex-wrap items-center gap-2">
             {/* All Categories Button */}
             <button
-              onClick={() => setCategoryFilter("")}
+              onClick={() => setCategoryFilter('')}
               className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-all ${
                 !categoryFilter
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <PiGraduationCapBold className="size-4" />
@@ -524,7 +524,7 @@ export default function Page() {
               .map((category) => {
                 const isSelected = categoryFilter === category.id.toString();
                 const programCount = programs.filter(
-                  (p) => p.categoryid === category.id,
+                  (p) => p.categoryid === category.id
                 ).length;
 
                 return (
@@ -533,8 +533,8 @@ export default function Page() {
                     onClick={() => setCategoryFilter(category.id.toString())}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-all ${
                       isSelected
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     {getCategoryIcon(category.name)}
@@ -544,7 +544,7 @@ export default function Page() {
                     {programCount > 0 && (
                       <span
                         className={
-                          isSelected ? "text-primary" : "text-gray-500"
+                          isSelected ? 'text-primary' : 'text-gray-500'
                         }
                       >
                         ({programCount})
@@ -631,26 +631,26 @@ export default function Page() {
             onSubmitAction={handleCreateOrUpdateProgram}
             uploading={uploading}
             editingProgramId={editingProgram?.id ?? null}
-            title={editingProgram?.title ?? ""}
+            title={editingProgram?.title ?? ''}
             setTitle={(title) =>
               setEditingProgram((prev) => (prev ? { ...prev, title } : null))
             }
-            description={editingProgram?.description ?? ""}
+            description={editingProgram?.description ?? ''}
             setDescription={(description) =>
               setEditingProgram((prev) =>
-                prev ? { ...prev, description } : null,
+                prev ? { ...prev, description } : null
               )
             }
             categoryid={editingProgram?.categoryid ?? 0}
             setCategoryid={(categoryid) =>
               setEditingProgram((prev) =>
-                prev ? { ...prev, categoryid } : null,
+                prev ? { ...prev, categoryid } : null
               )
             }
-            coverImageKey={editingProgram?.coverImageKey ?? ""}
+            coverImageKey={editingProgram?.coverImageKey ?? ''}
             setCoverImageKey={(coverImageKey) =>
               setEditingProgram((prev) =>
-                prev ? { ...prev, coverImageKey } : null,
+                prev ? { ...prev, coverImageKey } : null
               )
             }
             rating={editingProgram?.rating ?? 0}

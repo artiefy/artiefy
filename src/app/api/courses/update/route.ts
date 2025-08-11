@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { updateCourse } from "~/models/super-adminModels/courseModelsSuperAdmin";
+import { updateCourse } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export async function PUT(request: Request) {
   try {
@@ -16,12 +16,12 @@ export async function PUT(request: Request) {
     }
 
     const body: RequestBody = (await request.json()) as RequestBody;
-    console.log("🔹 Recibido en API:", body); // ✅ Verifica qué datos llegan al backend
+    console.log('🔹 Recibido en API:', body); // ✅ Verifica qué datos llegan al backend
 
     if (!body.id || !body.title || !body.description) {
       return NextResponse.json(
-        { error: "Datos incompletos para actualizar el curso" },
-        { status: 400 },
+        { error: 'Datos incompletos para actualizar el curso' },
+        { status: 400 }
       );
     }
 
@@ -29,20 +29,20 @@ export async function PUT(request: Request) {
     await updateCourse(Number(body.id), {
       title: body.title,
       description: body.description,
-      coverImageKey: body.coverImageKey ?? "",
+      coverImageKey: body.coverImageKey ?? '',
       categoryid: body.categoryid ? Number(body.categoryid) : 0,
       modalidadesid: body.modalidadesid ? Number(body.modalidadesid) : 0,
       nivelid: body.nivelid ? Number(body.nivelid) : 0,
-      instructor: body.instructor ?? "",
+      instructor: body.instructor ?? '',
     });
 
     console.log(`✅ Curso ${body.id} actualizado correctamente`);
-    return NextResponse.json({ message: "Curso actualizado correctamente" });
+    return NextResponse.json({ message: 'Curso actualizado correctamente' });
   } catch (error) {
-    console.error("❌ Error en la API de actualización:", error);
+    console.error('❌ Error en la API de actualización:', error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 },
+      { error: 'Error interno del servidor' },
+      { status: 500 }
     );
   }
 }

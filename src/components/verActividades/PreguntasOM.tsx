@@ -1,10 +1,10 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardContent, CardFooter } from "~/components/educators/ui/card";
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
-import type { Question } from "~/types/typesActi";
+import type { Question } from '~/types/typesActi';
 
 interface QuestionListProps {
   activityId: number;
@@ -40,7 +40,7 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/educadores/question/opcionMulti?activityId=${activityIdNumber}`,
+          `/api/educadores/question/opcionMulti?activityId=${activityIdNumber}`
         );
         const data = (await response.json()) as {
           success: boolean;
@@ -50,7 +50,7 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
           setQuestions(data.questionsOM);
         }
       } catch (error) {
-        console.error("Error al cargar las preguntas:", error);
+        console.error('Error al cargar las preguntas:', error);
       } finally {
         setLoading(false);
       }
@@ -76,7 +76,7 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
         ...prev,
         [questionId]: {
           isCorrect: false,
-          message: "Por favor, seleccione una opción",
+          message: 'Por favor, seleccione una opción',
           attempted: false,
         },
       }));
@@ -91,10 +91,10 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
       [questionId]: {
         isCorrect,
         message: isCorrect
-          ? "¡Correcto! 🎉"
+          ? '¡Correcto! 🎉'
           : `Incorrecto. La respuesta correcta es: "${
               currentQuestion?.options.find(
-                (opt) => opt.id === currentQuestion.correctOptionId,
+                (opt) => opt.id === currentQuestion.correctOptionId
               )?.text
             }" ❌`,
         attempted: true,
@@ -135,8 +135,8 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
               <p
                 className={`mt-2 ${
                   feedback[question.id].isCorrect
-                    ? "text-green-600"
-                    : "text-red-600"
+                    ? 'text-green-600'
+                    : 'text-red-600'
                 }`}
               >
                 {feedback[question.id].message}
@@ -149,7 +149,7 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
               variant="secondary"
               className="absolute right-10 bottom-6"
               onClick={() =>
-                handleSubmit(question.id, selectedOptions[question.id] || "")
+                handleSubmit(question.id, selectedOptions[question.id] || '')
               }
               disabled={feedback[question.id]?.attempted}
             >

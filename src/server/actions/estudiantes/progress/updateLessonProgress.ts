@@ -1,16 +1,16 @@
-"use server";
+'use server';
 
-import { currentUser } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { currentUser } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   activities,
   lessons,
   userActivitiesProgress,
   userLessonsProgress,
-} from "~/server/db/schema";
-import { sortLessons } from "~/utils/lessonSorting";
+} from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 const unlockNextLesson = async (lessonId: number, userId: string) => {
   // Obtener información de la lección actual
@@ -47,8 +47,8 @@ const unlockNextLesson = async (lessonId: number, userId: string) => {
       .where(
         and(
           eq(userLessonsProgress.userId, userId),
-          eq(userLessonsProgress.lessonId, nextLesson.id),
-        ),
+          eq(userLessonsProgress.lessonId, nextLesson.id)
+        )
       );
   }
 };
@@ -56,7 +56,7 @@ const unlockNextLesson = async (lessonId: number, userId: string) => {
 // Función auxiliar para verificar si todas las actividades de una lección están completadas
 const areAllActivitiesCompleted = async (
   lessonId: number,
-  userId: string,
+  userId: string
 ): Promise<boolean> => {
   // Obtener todas las actividades de la lección
   const lessonActivities = await db.query.activities.findMany({
@@ -73,7 +73,7 @@ const areAllActivitiesCompleted = async (
     where: and(
       eq(userActivitiesProgress.userId, userId),
       // This is the corrected line - we need to check activities that belong to the lesson
-      eq(activities.lessonsId, lessonId),
+      eq(activities.lessonsId, lessonId)
     ),
   });
 
@@ -86,11 +86,11 @@ const areAllActivitiesCompleted = async (
 
 export async function updateLessonProgress(
   lessonId: number,
-  progress: number,
+  progress: number
 ): Promise<void> {
   const user = await currentUser();
   if (!user?.id) {
-    throw new Error("Usuario no autenticado");
+    throw new Error('Usuario no autenticado');
   }
 
   const userId = user.id;
@@ -101,14 +101,14 @@ export async function updateLessonProgress(
   });
 
   if (!currentLesson) {
-    throw new Error("Lección no encontrada");
+    throw new Error('Lección no encontrada');
   }
 
   // Determinar si la lección tiene video
   const hasVideo =
-    currentLesson.coverVideoKey !== "none" &&
+    currentLesson.coverVideoKey !== 'none' &&
     currentLesson.coverVideoKey !== null &&
-    currentLesson.coverVideoKey !== "";
+    currentLesson.coverVideoKey !== '';
 
   // Obtener actividades de la lección
   const lessonActivities = await db.query.activities.findMany({
@@ -120,7 +120,7 @@ export async function updateLessonProgress(
   // Verificar si todas las actividades están completadas (si hay)
   const allActivitiesCompleted = await areAllActivitiesCompleted(
     lessonId,
-    userId,
+    userId
   );
 
   // Determinar si la lección está completada según las reglas:
@@ -172,8 +172,8 @@ export async function updateLessonProgress(
     .where(
       and(
         eq(userLessonsProgress.userId, userId),
-        eq(userLessonsProgress.lessonId, lessonId),
-      ),
+        eq(userLessonsProgress.lessonId, lessonId)
+      )
     );
 
   // Solo desbloquear la siguiente lección si esta lección está completada

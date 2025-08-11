@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // Interfaz para las modalidades
 interface Modalidad {
@@ -29,10 +29,10 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/modalidades", {
-          method: "GET",
+        const response = await fetch('/api/educadores/modalidades', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -44,7 +44,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
         const data: Modalidad[] = (await response.json()) as Modalidad[];
         setModalidades(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -59,7 +59,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     <div className="flex flex-col gap-2">
       <label
         htmlFor="category-select"
-        className="text-lg font-medium text-primary"
+        className="text-primary text-lg font-medium"
       >
         Selecciona una Modalidad:
       </label>
@@ -68,13 +68,13 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={modalidad || ""}
+          value={modalidad || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setModalidad(selectedId);
           }}
-          className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-            errors.modalidad ? "border-red-500" : "border-primary"
+          className={`bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden ${
+            errors.modalidad ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una modalidad</option>

@@ -1,5 +1,5 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
 interface ActiveDropdownProps {
   isActive: boolean | null;
@@ -17,11 +17,11 @@ const ActiveDropdown: React.FC<ActiveDropdownProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/educadores/CourseActive");
+        const response = await fetch('/api/educadores/CourseActive');
         const data = (await response.json()) as { id: boolean; name: string }[];
         setActiveOptions(data);
       } catch (error) {
-        console.error("Error al obtener estados activos:", error);
+        console.error('Error al obtener estados activos:', error);
       }
     };
     void fetchData();
@@ -29,9 +29,9 @@ const ActiveDropdown: React.FC<ActiveDropdownProps> = ({
 
   return (
     <select
-      className="mt-2 rounded border border-primary bg-background p-2 text-white outline-none"
-      value={isActive !== null ? String(isActive) : ""}
-      onChange={(e) => setIsActive(e.target.value === "true")}
+      className="border-primary bg-background mt-2 rounded border p-2 text-white outline-none"
+      value={isActive !== null ? String(isActive) : ''}
+      onChange={(e) => setIsActive(e.target.value === 'true')}
     >
       <option value="">Selecciona estado</option>
       {activeOptions.map((option) => (

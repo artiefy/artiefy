@@ -1,8 +1,8 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { Button } from "~/components/estudiantes/ui/button";
-import { setRoleWrapper } from "~/server/wrappers/serverWrappers";
+import { Button } from '~/components/estudiantes/ui/button';
+import { setRoleWrapper } from '~/server/wrappers/serverWrappers';
 
 interface User {
   id: string;
@@ -20,11 +20,11 @@ export default function RolesPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch("/api/users"); // 🔥 Conectar con API real
+        const res = await fetch('/api/users'); // 🔥 Conectar con API real
         const data: User[] = (await res.json()) as User[];
         setUsers(data);
       } catch {
-        setError("Error al cargar los usuarios");
+        setError('Error al cargar los usuarios');
       } finally {
         setLoading(false);
       }
@@ -35,17 +35,17 @@ export default function RolesPage() {
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       const formData = new FormData();
-      formData.append("id", userId);
-      formData.append("role", newRole);
+      formData.append('id', userId);
+      formData.append('role', newRole);
 
       await setRoleWrapper(formData);
       setUsers(
         users.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user,
-        ),
+          user.id === userId ? { ...user, role: newRole } : user
+        )
       );
     } catch {
-      setError("Error al actualizar el rol");
+      setError('Error al actualizar el rol');
     }
   };
 
@@ -88,7 +88,7 @@ export default function RolesPage() {
                 <td className="border p-2">
                   <Button
                     className="bg-red-600 text-white hover:bg-red-700"
-                    onClick={() => handleRoleChange(user.id, "")}
+                    onClick={() => handleRoleChange(user.id, '')}
                   >
                     Eliminar Rol
                   </Button>

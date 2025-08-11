@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Select from "react-select";
+import Select from 'react-select';
 
 // Interfaz para las modalidades
 interface Modalidad {
@@ -30,10 +30,10 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/modalidades", {
-          method: "GET",
+        const response = await fetch('/api/educadores/modalidades', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -45,7 +45,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
         const data: Modalidad[] = (await response.json()) as Modalidad[];
         setModalidades(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +61,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     <div className="flex flex-col gap-2">
       <label
         htmlFor="category-select"
-        className="text-lg font-medium text-primary"
+        className="text-primary text-lg font-medium"
       >
         Selecciona una Modalidad:
       </label>

@@ -1,11 +1,11 @@
-"use server";
+'use server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { courses } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
-import type { Course } from "~/types";
+import type { Course } from '~/types';
 
 /**
  * Get featured courses from the database
@@ -31,7 +31,7 @@ export async function getFeaturedCourses(): Promise<Course[]> {
       isActive: course.isActive ?? false, // Use nullable value or default to false
     })) as Course[];
   } catch (error) {
-    console.error("Error fetching featured courses:", error);
+    console.error('Error fetching featured courses:', error);
     return [];
   }
 }
@@ -60,7 +60,7 @@ export async function getTopCourses(): Promise<Course[]> {
       isActive: course.isActive ?? false, // Use nullable value or default to false
     })) as Course[];
   } catch (error) {
-    console.error("Error fetching top courses:", error);
+    console.error('Error fetching top courses:', error);
     return [];
   }
 }

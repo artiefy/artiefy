@@ -1,24 +1,24 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams, useSearchParams } from 'next/navigation';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import CalificarPreguntas from "~/components/educators/dashboard/CalificarPreguntas";
-import FormActCompletado from "~/components/educators/layout/FormActCompletado";
-import QuestionSubidaList from "~/components/educators/layout/ListActSubidaFile";
-import ListPreguntaAbierta from "~/components/educators/layout/ListPreguntaAbierta";
-import ListPreguntaAbierta2 from "~/components/educators/layout/ListPreguntaAbierta2";
-import PreguntasAbiertas from "~/components/educators/layout/PreguntasAbiertas";
-import PreguntasAbiertas2 from "~/components/educators/layout/PreguntasAbiertas2";
-import QuestionForm from "~/components/educators/layout/QuestionsForms";
-import QuestionList from "~/components/educators/layout/QuestionsList";
-import SeleccionActi from "~/components/educators/layout/SeleccionActi";
-import QuestionVOFForm from "~/components/educators/layout/VerdaderoOFalseForm";
-import QuestionVOFList from "~/components/educators/layout/VerdaderoOFalseList";
+import CalificarPreguntas from '~/components/educators/dashboard/CalificarPreguntas';
+import FormActCompletado from '~/components/educators/layout/FormActCompletado';
+import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
+import ListPreguntaAbierta from '~/components/educators/layout/ListPreguntaAbierta';
+import ListPreguntaAbierta2 from '~/components/educators/layout/ListPreguntaAbierta2';
+import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
+import PreguntasAbiertas2 from '~/components/educators/layout/PreguntasAbiertas2';
+import QuestionForm from '~/components/educators/layout/QuestionsForms';
+import QuestionList from '~/components/educators/layout/QuestionsList';
+import SeleccionActi from '~/components/educators/layout/SeleccionActi';
+import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
+import QuestionVOFList from '~/components/educators/layout/VerdaderoOFalseList';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,24 +29,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
-import { Badge } from "~/components/educators/ui/badge";
-import { Button } from "~/components/educators/ui/button";
-import VerRespuestasArchivos from "~/components/educators/VerRespuestasArchivos";
+} from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 import type {
   Completado,
   Question,
   QuestionFilesSubida,
   VerdaderoOFlaso,
-} from "~/types/typesActi";
+} from '~/types/typesActi';
 
 //Renderizar la creacion y configuracion de la actividad segun su id
 
@@ -89,13 +89,13 @@ interface PorcentajeResponse {
 }
 
 const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return "black"; // Manejar el caso de color indefinido
-  hexcolor = hexcolor.replace("#", "");
+  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 const Page: React.FC = () => {
@@ -108,11 +108,11 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>("#FFFFFF"); // Estado del color
-  const [selectedActivityType, setSelectedActivityType] = useState<string>(""); // Estado del tipo de actividad seleccionado
+  const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
+  const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
   const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 
-  type TipoPregunta = "OM" | "FOV" | "COMPLETADO" | "ARCHIVO";
+  type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
 
   type EditableQuestion = (
     | Question
@@ -154,7 +154,7 @@ const Page: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/educadores/actividades/${actividadIdNumber}`,
+          `/api/educadores/actividades/${actividadIdNumber}`
         );
 
         if (response.ok) {
@@ -164,15 +164,15 @@ const Page: React.FC = () => {
           const errorData = (await response.json()) as { error?: string };
           const errorMessage = errorData.error ?? response.statusText;
           setError(`Error al cargar la actividad: ${errorMessage}`);
-          toast("Error", {
+          toast('Error', {
             description: `No se pudo cargar la actividad: ${errorMessage}`,
           });
         }
       } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar la actividad: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudo cargar la actividad: ${errorMessage}`,
         });
       } finally {
@@ -184,25 +184,25 @@ const Page: React.FC = () => {
   // Cargar la actividad
   useEffect(() => {
     fetchActividad().catch((error) =>
-      console.error("Error fetching activity:", error),
+      console.error('Error fetching activity:', error)
     );
   }, [fetchActividad]);
 
   const fetchPorcentajes = useCallback(() => {
     if (actividadIdNumber !== null) {
       fetch(
-        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`,
+        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
       )
         .then((res) => res.json() as Promise<PorcentajeResponse>)
         .then((data) => {
           setPorcentajeUsado(Number(data.usado));
           setPorcentajeDisponible(Number(data.disponible));
           if (
-            typeof data.resumen === "object" &&
+            typeof data.resumen === 'object' &&
             data.resumen !== null &&
-            "opcionMultiple" in data.resumen &&
-            "verdaderoFalso" in data.resumen &&
-            "completar" in data.resumen
+            'opcionMultiple' in data.resumen &&
+            'verdaderoFalso' in data.resumen &&
+            'completar' in data.resumen
           ) {
             setResumenPorTipo({
               opcionMultiple: Number(data.resumen.opcionMultiple),
@@ -212,7 +212,7 @@ const Page: React.FC = () => {
           }
         })
         .catch((err) => {
-          console.error("Error obteniendo porcentajes por tipo:", err);
+          console.error('Error obteniendo porcentajes por tipo:', err);
         });
     }
   }, [actividadIdNumber]);
@@ -227,14 +227,14 @@ const Page: React.FC = () => {
 
   useEffect(() => {
     if (actividad?.type.id === 1) {
-      setQuestions(["ARCHIVO"]);
+      setQuestions(['ARCHIVO']);
     }
   }, [actividad]);
 
   useEffect(() => {
     if (actividadIdNumber !== null) {
       fetch(
-        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`,
+        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
       )
         .then((res) => res.json() as Promise<PorcentajeResponse>)
         .then((data) => {
@@ -247,7 +247,7 @@ const Page: React.FC = () => {
           });
         })
         .catch((err) => {
-          console.error("Error obteniendo porcentajes por tipo:", err);
+          console.error('Error obteniendo porcentajes por tipo:', err);
         });
     }
   }, [actividadIdNumber]);
@@ -263,30 +263,30 @@ const Page: React.FC = () => {
         const response = await fetch(
           `/api/educadores/actividades?id=${actividadIdNumber}`,
           {
-            method: "DELETE",
-          },
+            method: 'DELETE',
+          }
         );
 
         if (response.ok) {
-          toast("Actividad eliminada", {
+          toast('Actividad eliminada', {
             description:
-              "La actividad y todos sus archivos asociados se eliminaron con éxito.",
+              'La actividad y todos sus archivos asociados se eliminaron con éxito.',
           });
           window.history.back();
         } else {
           const errorData = (await response.json()) as { error?: string };
-          toast("Error", {
-            description: errorData.error ?? "Error al eliminar la actividad.",
+          toast('Error', {
+            description: errorData.error ?? 'Error al eliminar la actividad.',
           });
         }
       } catch (error: unknown) {
-        if ((error as Error).name === "AbortError") {
-          console.log("Delete cancelled");
+        if ((error as Error).name === 'AbortError') {
+          console.log('Delete cancelled');
           return;
         } else {
           const errorMessage =
-            error instanceof Error ? error.message : "Error desconocido";
-          toast("Error", {
+            error instanceof Error ? error.message : 'Error desconocido';
+          toast('Error', {
             description: `Error al eliminar la actividad: ${errorMessage}`,
           });
         }
@@ -298,7 +298,7 @@ const Page: React.FC = () => {
   const handleAddQuestion = () => {
     if (selectedActivityType) {
       setQuestions([selectedActivityType]); // Solo mantener el nuevo formulario
-      setSelectedActivityType("");
+      setSelectedActivityType('');
     }
   };
 
@@ -420,7 +420,7 @@ const Page: React.FC = () => {
           <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
             <div className="space-y-5 text-lg">
               <p className="font-semibold">
-                Del docente:{" "}
+                Del docente:{' '}
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
@@ -429,34 +429,34 @@ const Page: React.FC = () => {
                 </Badge>
               </p>
               <p className="font-semibold">
-                Tipo de actividad:{" "}
+                Tipo de actividad:{' '}
                 <b className="text-primary">{actividad.type?.name}</b>
               </p>
               <p className="font-semibold">
                 Permite: <b>{actividad.type?.description}</b>
               </p>
               <p className="w-11/12 font-semibold">
-                Descripción de la actividad:{" "}
+                Descripción de la actividad:{' '}
                 <b className="w-11/12">{actividad.description}.</b>
               </p>
               <p className="font-semibold">
-                ¿La actividad es calificable?:{" "}
+                ¿La actividad es calificable?:{' '}
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
                 >
-                  {actividad.revisada ? "Si" : "No"}.
+                  {actividad.revisada ? 'Si' : 'No'}.
                 </Badge>
               </p>
               <p className="font-semibold">
-                Fecha máxima de entrega:{" "}
+                Fecha máxima de entrega:{' '}
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
                 >
                   {actividad.fechaMaximaEntrega
                     ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
-                    : "No tiene fecha máxima de entrega"}
+                    : 'No tiene fecha máxima de entrega'}
                   .
                 </Badge>
               </p>
@@ -480,14 +480,14 @@ const Page: React.FC = () => {
           <div className="mx-auto flex flex-wrap justify-center gap-4 sm:justify-evenly md:gap-6">
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 transition-colors duration-200"
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
             >
               Realizar Actividad
             </Link>
 
             <Link
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 transition-colors duration-200"
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
             >
               Editar Actividad
             </Link>
@@ -505,9 +505,9 @@ const Page: React.FC = () => {
                     Esta acción no se puede deshacer. Se eliminará
                     permanentemente la actividad
                     <span className="font-bold">
-                      {" "}
+                      {' '}
                       {actividad?.name}, del tipo: {actividad?.type?.name}
-                    </span>{" "}
+                    </span>{' '}
                     y todos los datos asociados a este.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -515,7 +515,7 @@ const Page: React.FC = () => {
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAct}
-                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-transparent hover:text-red-700 hover:border-red-700"
+                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:border-red-700 hover:bg-transparent hover:text-red-700"
                   >
                     Eliminar
                   </AlertDialogAction>
@@ -546,7 +546,7 @@ const Page: React.FC = () => {
                           activityId={actividadIdNumber.toString()}
                         />
                       </div>
-                      {questions.includes("ARCHIVO") && (
+                      {questions.includes('ARCHIVO') && (
                         <FormActCompletado
                           activityId={actividadIdNumber}
                           onSubmit={handleFormSubmit}
@@ -554,8 +554,8 @@ const Page: React.FC = () => {
                         />
                       )}
 
-                      {editingQuestion?.tipo === "ARCHIVO" &&
-                        "parametros" in editingQuestion && (
+                      {editingQuestion?.tipo === 'ARCHIVO' &&
+                        'parametros' in editingQuestion && (
                           <FormActCompletado
                             activityId={actividadIdNumber}
                             editingQuestion={editingQuestion}
@@ -569,16 +569,16 @@ const Page: React.FC = () => {
                           key={`subida-${shouldRefresh}`}
                           activityId={actividadIdNumber}
                           onEdit={(q) => {
-                            if ("parametros" in q) {
+                            if ('parametros' in q) {
                               console.log(
-                                "[onEdit] Editando pregunta con parámetros:",
-                                q,
+                                '[onEdit] Editando pregunta con parámetros:',
+                                q
                               );
-                              setEditingQuestion({ ...q, tipo: "ARCHIVO" });
+                              setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
                             } else {
                               console.warn(
                                 '[onEdit] La pregunta no tiene "parametros":',
-                                q,
+                                q
                               );
                             }
                           }}
@@ -596,7 +596,7 @@ const Page: React.FC = () => {
                 onSelectChange={setSelectedActivityType}
               />
               <div
-                className={`mt-2 text-center text-sm ${color === "#FFFFFF" ? "text-black" : "text-white"}`}
+                className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
               >
                 <p>
                   <strong>Porcentaje usado por tipo de pregunta:</strong>
@@ -611,14 +611,14 @@ const Page: React.FC = () => {
                   Total usado: <strong>{porcentajeUsado}%</strong>
                 </p>
                 <p>
-                  Porcentaje disponible:{" "}
+                  Porcentaje disponible:{' '}
                   <strong>{porcentajeDisponible}%</strong>
                 </p>
               </div>
 
               {selectedActivityType && (
                 <Button
-                  className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === "#FFFFFF" ? "text-black" : "text-white"}`}
+                  className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta
@@ -627,7 +627,7 @@ const Page: React.FC = () => {
               {/* Para agregar nuevas preguntas */}
               {questions.map((questionType, index) => (
                 <div key={index}>
-                  {questionType === "OM" && actividadIdNumber !== null && (
+                  {questionType === 'OM' && actividadIdNumber !== null && (
                     <QuestionForm
                       activityId={actividadIdNumber}
                       onSubmit={handleFormSubmit}
@@ -636,7 +636,7 @@ const Page: React.FC = () => {
                       editingQuestion={undefined} // <- ✅ Tipo correcto
                     />
                   )}
-                  {questionType === "FOV" && actividadIdNumber !== null && (
+                  {questionType === 'FOV' && actividadIdNumber !== null && (
                     <QuestionVOFForm
                       activityId={actividadIdNumber}
                       onSubmit={handleFormSubmit}
@@ -645,7 +645,7 @@ const Page: React.FC = () => {
                       editingQuestion={undefined} // <- ✅ Tipo correcto
                     />
                   )}
-                  {questionType === "COMPLETADO" &&
+                  {questionType === 'COMPLETADO' &&
                     actividadIdNumber !== null && (
                       <PreguntasAbiertas
                         activityId={actividadIdNumber}
@@ -660,7 +660,7 @@ const Page: React.FC = () => {
               {/* Para editar una pregunta existente */}
               {editingQuestion && (
                 <div className="mt-4">
-                  {editingQuestion.tipo === "OM" &&
+                  {editingQuestion.tipo === 'OM' &&
                     actividadIdNumber !== null && (
                       <QuestionForm
                         activityId={actividadIdNumber}
@@ -670,7 +670,7 @@ const Page: React.FC = () => {
                         editingQuestion={editingQuestion as Question}
                       />
                     )}
-                  {editingQuestion.tipo === "FOV" &&
+                  {editingQuestion.tipo === 'FOV' &&
                     actividadIdNumber !== null && (
                       <QuestionVOFForm
                         activityId={actividadIdNumber}
@@ -688,14 +688,14 @@ const Page: React.FC = () => {
                   <QuestionVOFList
                     key={`vof-${shouldRefresh}`}
                     activityId={actividadIdNumber}
-                    onEdit={(q) => setEditingQuestion({ ...q, tipo: "FOV" })}
+                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
                     shouldRefresh={shouldRefresh}
                   />
 
                   <QuestionList
                     key={`om-${shouldRefresh}`}
                     activityId={actividadIdNumber}
-                    onEdit={(q) => setEditingQuestion({ ...q, tipo: "OM" })}
+                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
                   />
                   <ListPreguntaAbierta
                     key={`abierta-${shouldRefresh}`}

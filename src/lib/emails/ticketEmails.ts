@@ -1,9 +1,9 @@
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  service: 'Gmail',
   auth: {
-    user: "direcciongeneral@artiefy.com",
+    user: 'direcciongeneral@artiefy.com',
     pass: process.env.PASS,
   },
   tls: {
@@ -24,16 +24,16 @@ export async function sendTicketEmail(emailData: {
 }): Promise<{ success: boolean; error?: EmailError }> {
   try {
     const { to, subject, html } = emailData;
-    console.log("📧 Intentando enviar email a:", to);
-    console.log("📧 Asunto:", subject);
+    console.log('📧 Intentando enviar email a:', to);
+    console.log('📧 Asunto:', subject);
 
     if (!process.env.PASS) {
       console.warn(
-        "❌ Email no enviado: Falta contraseña en variables de entorno",
+        '❌ Email no enviado: Falta contraseña en variables de entorno'
       );
       return {
         success: false,
-        error: { code: "NO_PASSWORD", command: "", response: "" },
+        error: { code: 'NO_PASSWORD', command: '', response: '' },
       };
     }
 
@@ -42,25 +42,25 @@ export async function sendTicketEmail(emailData: {
       to,
       subject,
       html,
-      replyTo: "direcciongeneral@artiefy.com",
+      replyTo: 'direcciongeneral@artiefy.com',
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email enviado exitosamente");
-    console.log("📧 ID del mensaje:", info.messageId);
-    console.log("📧 Respuesta del servidor:", info.response);
+    console.log('✅ Email enviado exitosamente');
+    console.log('📧 ID del mensaje:', info.messageId);
+    console.log('📧 Respuesta del servidor:', info.response);
     return { success: true };
   } catch (error) {
     const emailError: EmailError = {
-      code: error instanceof Error ? error.message : "Unknown error",
+      code: error instanceof Error ? error.message : 'Unknown error',
       command:
-        typeof error === "object" && error !== null && "command" in error
+        typeof error === 'object' && error !== null && 'command' in error
           ? String(error.command)
-          : "",
+          : '',
       response:
-        typeof error === "object" && error !== null && "response" in error
+        typeof error === 'object' && error !== null && 'response' in error
           ? String(error.response)
-          : "",
+          : '',
     };
 
     return { success: false, error: emailError };
@@ -72,7 +72,7 @@ export function getTicketStatusChangeEmail(
   estado: string,
   description: string,
   commentHistory: string,
-  newComment?: string,
+  newComment?: string
 ) {
   return `
 		<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
@@ -92,7 +92,7 @@ export function getTicketStatusChangeEmail(
 				<p style="background: #e0f2fe; padding: 12px; border-radius: 6px;">${newComment}</p>
 			</div>
 			`
-          : ""
+          : ''
       }
 			
 			<div style="margin: 20px 0;">
@@ -112,7 +112,7 @@ export function getTicketStatusChangeEmail(
 
 export function getNewTicketAssignmentEmail(
   ticketId: number,
-  description: string,
+  description: string
 ) {
   return `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">

@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from 'next/server';
 
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import { db } from "~/server/db";
-import { lessons, userLessonsProgress } from "~/server/db/schema";
+import { db } from '~/server/db';
+import { lessons, userLessonsProgress } from '~/server/db/schema';
 
 interface NextLessonStatusResponse {
   lessonId: number | null;
@@ -13,7 +13,7 @@ interface NextLessonStatusResponse {
 
 export async function GET(
   _: NextRequest, // Rename 'request' to '_' to indicate it's intentionally unused
-  { params }: { params: { id: string } },
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<NextLessonStatusResponse>> {
   try {
     // Usar el patrón recomendado por Next.js para params asíncronos
@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({
         lessonId: null,
         isUnlocked: false,
-        error: "ID no proporcionado",
+        error: 'ID no proporcionado',
       });
     }
 
@@ -33,7 +33,7 @@ export async function GET(
       return NextResponse.json({
         lessonId: null,
         isUnlocked: false,
-        error: "ID inválido",
+        error: 'ID inválido',
       });
     }
 
@@ -69,11 +69,11 @@ export async function GET(
       isUnlocked: progress?.isLocked === false,
     });
   } catch (error) {
-    console.error("Error in next-lesson-status:", error);
+    console.error('Error in next-lesson-status:', error);
     return NextResponse.json({
       lessonId: null,
       isUnlocked: false,
-      error: "Error interno del servidor",
+      error: 'Error interno del servidor',
     });
   }
 }

@@ -1,4 +1,4 @@
-import ProgramDetail from "./ProgramDetail"; // El componente ProgramDetail
+import ProgramDetail from './ProgramDetail'; // El componente ProgramDetail
 
 export default async function Page({
   params,

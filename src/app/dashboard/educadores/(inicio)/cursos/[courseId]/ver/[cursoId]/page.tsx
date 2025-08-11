@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { StarIcon } from "@heroicons/react/24/solid";
-import { ArrowLeftIcon } from "lucide-react";
-import { FaCalendar, FaClock, FaUserGraduate } from "react-icons/fa";
-import { toast } from "sonner";
+import { useUser } from '@clerk/nextjs';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from 'lucide-react';
+import { FaCalendar, FaClock, FaUserGraduate } from 'react-icons/fa';
+import { toast } from 'sonner';
 
-import { Badge } from "~/components/educators/ui/badge";
-import { Card, CardHeader, CardTitle } from "~/components/educators/ui/card";
+import { Badge } from '~/components/educators/ui/badge';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,7 +21,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "~/components/super-admin/ui/breadcrumb";
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador
 
@@ -69,21 +69,21 @@ interface LessonsModels {
 
 // Función para obtener el color de contraste
 const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return "black";
-  hexcolor = hexcolor.replace("#", "");
+  if (!hexcolor) return 'black';
+  hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  return yiq >= 128 ? 'black' : 'white';
 };
 
 // Función para formatear la fecha
 const formatDate = (dateString: string | number | Date) => {
   const date = new Date(dateString);
   return isNaN(date.getTime())
-    ? "Fecha inválida"
-    : date.toISOString().split("T")[0];
+    ? 'Fecha inválida'
+    : date.toISOString().split('T')[0];
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
@@ -95,13 +95,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [error, setError] = useState<string | null>(null); // Estado de error
   const [lessons, setLessons] = useState<LessonsModels[]>([]); // Estado de las lecciones
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null); // Estado de la lección expandida
-  const [selectedColor, setSelectedColor] = useState<string>("#FFFFFF"); // Estado del color seleccionado
+  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Estado del color seleccionado
 
   // Verifica que courseId no sea un array ni undefined, y lo convierte a número
   const courseIdString = Array.isArray(courseIdUrl)
     ? courseIdUrl[0]
     : courseIdUrl;
-  const courseIdString2 = courseIdString ?? "";
+  const courseIdString2 = courseIdString ?? '';
   const courseIdNumber = parseInt(courseIdString2);
 
   // Función para obtener el curso
@@ -112,7 +112,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/educadores/courses/${courseIdNumber}`,
+          `/api/educadores/courses/${courseIdNumber}`
         );
 
         if (response.ok) {
@@ -123,15 +123,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           const errorData = (await response.json()) as { error?: string };
           const errorMessage = errorData.error ?? response.statusText;
           setError(`Error al cargar el curso: ${errorMessage}`);
-          toast("Error", {
+          toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
           });
         }
       } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar el curso: ${errorMessage}`);
-        toast("Error", {
+        toast('Error', {
           description: `No se pudo cargar el curso: ${errorMessage}`,
         });
       } finally {
@@ -143,7 +143,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Fetch del curso al cargar el componente
   useEffect(() => {
     fetchCourse().catch((error) =>
-      console.error("Error fetching course:", error),
+      console.error('Error fetching course:', error)
     );
   }, [fetchCourse]);
 
@@ -155,21 +155,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setError(null);
         try {
           const response = await fetch(
-            `/api/educadores/lessons?courseId=${course.id}`,
+            `/api/educadores/lessons?courseId=${course.id}`
           );
 
           if (!response.ok) {
             const errorData = (await response.json()) as { error?: string };
             throw new Error(
-              errorData.error ?? "Error al obtener las lecciones",
+              errorData.error ?? 'Error al obtener las lecciones'
             );
           }
 
           const data = (await response.json()) as LessonsModels[];
           setLessons(data); // Setea las lecciones obtenidas
         } catch (error) {
-          setError("Error al obtener las lecciones"); // Error general
-          console.error("Error al obtener las lecciones:", error);
+          setError('Error al obtener las lecciones'); // Error general
+          console.error('Error al obtener las lecciones:', error);
         } finally {
           setLoading(false);
         }
@@ -267,7 +267,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
             <CardTitle
               className={`text-2xl font-bold hover:underline ${
-                selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
               }`}
             >
               Curso: {course.title}
@@ -293,18 +293,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <div className="flex flex-col">
                     <h2
                       className={`font-semibold ${
-                        selectedColor === "#FFFFFF"
-                          ? "text-black"
-                          : "text-white"
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
                       }`}
                     >
                       Educador:
                     </h2>
                     <p
                       className={
-                        selectedColor === "#FFFFFF"
-                          ? "text-black"
-                          : "text-white"
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
                       }
                     >
                       {course.instructor}
@@ -313,9 +313,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <div className="flex gap-4">
                     <p
                       className={`flex ${
-                        selectedColor === "#FFFFFF"
-                          ? "text-black"
-                          : "text-white"
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
                       }`}
                     >
                       <FaUserGraduate className="mr-2 text-blue-600" />
@@ -326,7 +326,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {Array.from({ length: 5 }).map((_, index) => (
                       <StarIcon
                         key={index}
-                        className={`size-5 ${index < Math.floor(course.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
+                        className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                       />
                     ))}
                     <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -356,13 +356,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="my-4">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                   }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+                  className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                 >
                   {course.description}
                 </p>
@@ -371,14 +371,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="flex flex-col">
                   <h2
                     className={`text-lg font-semibold ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Nivel:
                   </h2>
                   <p
                     className={
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }
                   >
                     {course.nivelid}
@@ -387,14 +387,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="flex flex-col">
                   <h2
                     className={`text-lg font-semibold ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     Modalidad:
                   </h2>
                   <p
                     className={
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }
                   >
                     {course.modalidadesid}
@@ -418,10 +418,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           >
                             <div className="flex w-full items-center justify-between">
                               <div
-                                className={`flex items-center space-x-2 ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+                                className={`flex items-center space-x-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                               >
                                 <span className="font-medium">
-                                  Clase {lesson.order}: {lesson.title}{" "}
+                                  Clase {lesson.order}: {lesson.title}{' '}
                                   <span className="ml-2 text-sm">
                                     ({lesson.duration} mins)
                                   </span>
@@ -432,7 +432,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           </button>
                           {expandedLesson === lesson.id && (
                             <div
-                              className={`px-6 py-4 ${selectedColor === "#FFFFFF" ? "text-black" : "text-white"}`}
+                              className={`px-6 py-4 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                             >
                               <p className="text-sm">
                                 Del Educador: {lesson.course.instructor}
@@ -441,7 +441,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 Descripción: {lesson.description}
                               </p>
                               <p className="mb-4 text-sm">
-                                Fecha de creación:{" "}
+                                Fecha de creación:{' '}
                                 {formatDate(lesson.createdAt)}
                               </p>
                               <Link
@@ -460,7 +460,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </div>
           <Link
-            href={"#"}
+            href={'#'}
             onClick={() => window.history.back()}
             className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
           >

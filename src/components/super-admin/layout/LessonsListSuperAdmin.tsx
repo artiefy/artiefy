@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
 
-import { ArrowRightIcon } from "@heroicons/react/24/solid";
-import { ArrowUpFromLine } from "lucide-react";
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
+import { ArrowUpFromLine } from 'lucide-react';
 
-import { LoadingCourses } from "~/app/dashboard/super-admin/(inicio)/cursos/page";
-import { Badge } from "~/components/educators/ui/badge";
+import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
+import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
+} from '~/components/educators/ui/card';
 
-import ModalFormLessons from "../modals/ModalFormLessons";
-import StudentsModal from "../modals/studentModal";
-import { Button } from "../ui/button";
+import ModalFormLessons from '../modals/ModalFormLessons';
+import StudentsModal from '../modals/studentModal';
+import { Button } from '../ui/button';
 
 interface LessonsModels {
   id: number;
@@ -60,12 +60,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const courseIdString = courseId.toString();
 
   const getContrastYIQ = (hexcolor: string) => {
-    hexcolor = hexcolor.replace("#", "");
+    hexcolor = hexcolor.replace('#', '');
     const r = parseInt(hexcolor.substr(0, 2), 16);
     const g = parseInt(hexcolor.substr(2, 2), 16);
     const b = parseInt(hexcolor.substr(4, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "black" : "white";
+    return yiq >= 128 ? 'black' : 'white';
   };
 
   // Fetch de las lecciones cuando el courseId cambia
@@ -76,21 +76,21 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         setError(null);
         try {
           const response = await fetch(
-            `/api/super-admin/lessons?courseId=${courseIdString}`,
+            `/api/super-admin/lessons?courseId=${courseIdString}`
           );
 
           if (!response.ok) {
             const errorData = (await response.json()) as { error?: string };
             throw new Error(
-              errorData.error ?? "Error al obtener las lecciones",
+              errorData.error ?? 'Error al obtener las lecciones'
             );
           }
 
           const data = (await response.json()) as LessonsModels[];
           setLessons(data); // Setea las lecciones obtenidas
         } catch (error) {
-          setError("Error al obtener las lecciones"); // Error general
-          console.error("Error al obtener las lecciones:", error);
+          setError('Error al obtener las lecciones'); // Error general
+          console.error('Error al obtener las lecciones:', error);
         } finally {
           setLoading(false);
         }
@@ -120,12 +120,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           <Button
             style={{ backgroundColor: selectedColor }}
             className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
             }`}
             onClick={() => {
-              console.log("Botón Crear nueva clase clickeado");
+              console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
-              console.log("isModalOpenLessons:", isModalOpenLessons);
+              console.log('isModalOpenLessons:', isModalOpenLessons);
             }}
           >
             <ArrowUpFromLine />
@@ -177,7 +177,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                   </CardHeader>
                   <CardContent
                     className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                      selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
                     <CardTitle className="rounded-lg text-lg">
@@ -199,17 +199,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                       Descripción: {lesson.description}
                     </p>
                     <p className="text-sm font-bold italic">
-                      Educador:{" "}
+                      Educador:{' '}
                       <span className="font-bold italic">
                         {lesson.course.instructor}
                       </span>
                     </p>
                     <p className="text-sm font-bold italic">
-                      Clase #{" "}
+                      Clase #{' '}
                       <span className="font-bold italic">{lesson.order}</span>
                     </p>
                     <p className="text-sm font-bold italic">
-                      Duración:{" "}
+                      Duración:{' '}
                       <span className="font-bold italic">
                         {lesson.duration} Minutos
                       </span>
@@ -237,13 +237,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mx-auto my-4">
           <Button
             className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
-              selectedColor === "#FFFFFF" ? "text-black" : "text-white"
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
             }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
-              console.log("Botón Crear nueva clase clickeado");
+              console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
-              console.log("isModalOpenLessons:", isModalOpenLessons);
+              console.log('isModalOpenLessons:', isModalOpenLessons);
             }}
           >
             <ArrowUpFromLine />

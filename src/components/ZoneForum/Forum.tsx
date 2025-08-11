@@ -1,14 +1,14 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
+import Image from 'next/image';
 
-import { useUser } from "@clerk/nextjs";
-import { FaSearch } from "react-icons/fa";
-import { toast } from "sonner";
-import { z } from "zod";
+import { useUser } from '@clerk/nextjs';
+import { FaSearch } from 'react-icons/fa';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/educators/ui/dialog";
-import { Input } from "~/components/educators/ui/input";
-import { Progress } from "~/components/educators/ui/progress";
-import { Zone } from "~/components/ZoneForum/Zone";
+} from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
+import { Progress } from '~/components/educators/ui/progress';
+import { Zone } from '~/components/ZoneForum/Zone';
 
 interface CoursesModels {
   id: number;
@@ -36,8 +36,8 @@ const uploadResponseSchema = z.object({
 const ForumHome = () => {
   const { user } = useUser();
   const [courseId, setCourseId] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [courses, setCourses] = useState<CoursesModels[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -49,14 +49,14 @@ const ForumHome = () => {
 
   const uploadFileToServer = async (
     file: File,
-    type: "image" | "document",
+    type: 'image' | 'document'
   ): Promise<string> => {
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("type", type);
+    formData.append('file', file);
+    formData.append('type', type);
 
-    const res = await fetch("/api/upload", {
-      method: "POST",
+    const res = await fetch('/api/upload', {
+      method: 'POST',
       body: formData,
     });
     const json: unknown = await res.json();
@@ -71,29 +71,29 @@ const ForumHome = () => {
     setUploadProgress(25);
 
     const userId = user.id;
-    let coverImageKey = "";
-    let documentKey = "";
+    let coverImageKey = '';
+    let documentKey = '';
 
     try {
       if (coverImage) {
-        coverImageKey = await uploadFileToServer(coverImage, "image");
+        coverImageKey = await uploadFileToServer(coverImage, 'image');
       }
       if (documentFile) {
-        documentKey = await uploadFileToServer(documentFile, "document");
+        documentKey = await uploadFileToServer(documentFile, 'document');
       }
 
       setUploadProgress(60);
 
       const formData = new FormData();
-      formData.append("courseId", String(courseId));
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("userId", userId);
-      formData.append("coverImageKey", coverImageKey);
-      formData.append("documentKey", documentKey);
+      formData.append('courseId', String(courseId));
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('userId', userId);
+      formData.append('coverImageKey', coverImageKey);
+      formData.append('documentKey', documentKey);
 
-      const response = await fetch("/api/forums", {
-        method: "POST",
+      const response = await fetch('/api/forums', {
+        method: 'POST',
         body: formData,
       });
 
@@ -106,20 +106,20 @@ const ForumHome = () => {
       const result = responseSchema.parse(json);
 
       if (result.success) {
-        toast.success("Foro creado exitosamente!");
+        toast.success('Foro creado exitosamente!');
         setIsDialogOpen(false);
         window.location.reload();
       } else {
-        toast.error(result.message ?? "Error al crear el foro");
+        toast.error(result.message ?? 'Error al crear el foro');
       }
     } catch (error) {
-      console.error("Error al crear el foro:", error);
-      toast.error("Error al crear el foro");
+      console.error('Error al crear el foro:', error);
+      toast.error('Error al crear el foro');
     } finally {
       setIsUploading(false);
       setCourseId(null);
-      setTitle("");
-      setDescription("");
+      setTitle('');
+      setDescription('');
       setCoverImage(null);
       setDocumentFile(null);
     }
@@ -131,7 +131,7 @@ const ForumHome = () => {
       try {
         setLoadingCourses(true);
         const response = await fetch(
-          `/api/educadores/courses?userId=${user.id}`,
+          `/api/educadores/courses?userId=${user.id}`
         );
         const json: unknown = await response.json();
         const coursesSchema = z.array(
@@ -140,13 +140,13 @@ const ForumHome = () => {
             title: z.string(),
             description: z.string(),
             coverImageKey: z.string(),
-          }),
+          })
         );
         const data = coursesSchema.parse(json);
         setCourses(data);
       } catch (error) {
-        console.error("Error:", error);
-        toast.error("Error al cargar los cursos");
+        console.error('Error:', error);
+        toast.error('Error al cargar los cursos');
       } finally {
         setLoadingCourses(false);
       }
@@ -196,7 +196,7 @@ const ForumHome = () => {
                         placeholder="Selecciona o escribe un curso"
                         onChange={(e) => {
                           const selected = courses.find(
-                            (c) => c.title === e.target.value,
+                            (c) => c.title === e.target.value
                           );
                           setCourseId(selected ? selected.id : null);
                         }}
@@ -334,8 +334,8 @@ const ForumHome = () => {
                   className="w-full border border-white/20 text-white hover:bg-white/10 sm:w-auto"
                   onClick={() => {
                     setCourseId(null);
-                    setTitle("");
-                    setDescription("");
+                    setTitle('');
+                    setDescription('');
                     setIsDialogOpen(false);
                   }}
                 >

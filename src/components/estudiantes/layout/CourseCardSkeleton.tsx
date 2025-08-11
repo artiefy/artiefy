@@ -1,9 +1,9 @@
-import { Card, CardContent } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
+import { Card, CardContent } from '../ui/card';
+import { Skeleton } from '../ui/skeleton';
 
 export function CourseCardSkeleton() {
   return (
-    <Card className="overflow-hidden bg-gray-800 py-0 -pt-2 sm:pt-0 text-white">
+    <Card className="-pt-2 overflow-hidden bg-gray-800 py-0 text-white sm:pt-0">
       <div className="flex h-32">
         <div className="w-48">
           <Skeleton className="h-full w-full" />

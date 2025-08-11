@@ -1,45 +1,45 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from 'drizzle-orm';
 
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 import {
   categories,
   courses,
   enrollmentPrograms,
   materias,
   programas,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
-import type { Program } from "~/types";
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { Program } from '~/types';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
-  console.log("Request method:", req.method); // Debugging log
-  if (req.method === "GET") {
+  console.log('Request method:', req.method); // Debugging log
+  if (req.method === 'GET') {
     const { idprogram } = req.query;
     if (!idprogram) {
-      return res.status(400).json({ message: "Program ID is required" });
+      return res.status(400).json({ message: 'Program ID is required' });
     }
 
-    console.log("Fetching program by ID:", idprogram); // Debugging log
+    console.log('Fetching program by ID:', idprogram); // Debugging log
     const program = await getProgramById(idprogram as string);
     if (program) {
       res.status(200).json(program);
     } else {
-      res.status(404).json({ message: "Program not found" });
+      res.status(404).json({ message: 'Program not found' });
     }
-  } else if (req.method === "POST" && req.url?.includes("isUserEnrolled")) {
+  } else if (req.method === 'POST' && req.url?.includes('isUserEnrolled')) {
     const { programId, userId } = req.body as {
       programId: number;
       userId: string;
     };
-    console.log("Checking if user is enrolled:", { programId, userId }); // Debugging log
+    console.log('Checking if user is enrolled:', { programId, userId }); // Debugging log
     const isEnrolled = await isUserEnrolledInProgram(programId, userId);
     return res.status(200).json({ enrolled: isEnrolled });
   } else {
-    res.setHeader("Allow", ["GET", "POST"]);
+    res.setHeader('Allow', ['GET', 'POST']);
     return res
       .status(405)
       .json({ message: `Method ${req.method} not allowed` });
@@ -48,7 +48,7 @@ export default async function handler(
 
 export const getProgramById = async (id: string): Promise<Program | null> => {
   try {
-    console.log("Querying program by ID:", id);
+    console.log('Querying program by ID:', id);
     // Get program basic data
     const program = await db.query.programas.findFirst({
       where: eq(programas.id, parseInt(id, 10)),
@@ -114,26 +114,26 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
       materias: transformedMaterias,
     };
   } catch (error) {
-    console.error("Error fetching program:", error);
+    console.error('Error fetching program:', error);
     return null;
   }
 };
 
 export async function isUserEnrolledInProgram(
   programId: number,
-  userId: string,
+  userId: string
 ): Promise<boolean> {
   try {
-    console.log("Querying enrollment for user:", { programId, userId }); // Debugging log
+    console.log('Querying enrollment for user:', { programId, userId }); // Debugging log
     const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
       where: and(
         eq(enrollmentPrograms.userId, userId),
-        eq(enrollmentPrograms.programaId, programId),
+        eq(enrollmentPrograms.programaId, programId)
       ),
     });
     return !!existingEnrollment;
   } catch (error) {
-    console.error("Error checking program enrollment:", error);
-    throw new Error("Failed to check program enrollment status");
+    console.error('Error checking program enrollment:', error);
+    throw new Error('Failed to check program enrollment status');
   }
 }

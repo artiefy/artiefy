@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
 
-import { useUser } from "@clerk/nextjs";
-import { BsPersonCircle } from "react-icons/bs";
-import { HiMiniCpuChip } from "react-icons/hi2";
+import { useUser } from '@clerk/nextjs';
+import { BsPersonCircle } from 'react-icons/bs';
+import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
   getConversationWithMessages,
   getOrCreateConversation,
-} from "~/server/actions/estudiantes/chats/saveChat";
+} from '~/server/actions/estudiantes/chats/saveChat';
 
 // Props for the chat component
 interface ChatProps {
@@ -49,7 +49,7 @@ interface ChatProps {
   inputRef?: React.RefObject<HTMLInputElement>;
   renderMessage: (
     message: { id: number; text: string; sender: string },
-    idx: number,
+    idx: number
   ) => React.ReactNode;
   idea?: { selected: boolean; idea: string };
   setIdea?: React.Dispatch<
@@ -96,24 +96,24 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
   function handleBotButtonClick(action: string) {
     switch (action) {
-      case "show_toc":
-        console.log("Mostrar temario");
+      case 'show_toc':
+        console.log('Mostrar temario');
         break;
-      case "new_idea":
-        window.dispatchEvent(new CustomEvent("new-idea"));
+      case 'new_idea':
+        window.dispatchEvent(new CustomEvent('new-idea'));
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             id: Date.now(),
-            text: "¡Genial! ¿Cuál es tu idea? 📝",
-            sender: "bot",
+            text: '¡Genial! ¿Cuál es tu idea? 📝',
+            sender: 'bot',
           },
         ]);
         break;
-      case "contact_support":
-        window.dispatchEvent(new CustomEvent("support-open-chat"));
+      case 'contact_support':
+        window.dispatchEvent(new CustomEvent('support-open-chat'));
         break;
-      case "new_project":
+      case 'new_project':
         // Lógica para crear proyecto
         if (!isSignedIn) {
           // Redirigir a la página de planes
@@ -121,21 +121,21 @@ export const ChatMessages: React.FC<ChatProps> = ({
         }
         break;
       default:
-        console.log("Acción no reconocida:", action);
+        console.log('Acción no reconocida:', action);
     }
   }
 
   useEffect(() => {
-    console.log("La conversación: " + conversation.id);
+    console.log('La conversación: ' + conversation.id);
 
     if (!conversation) return;
 
     let inCourse = false;
 
-    if (pathname.includes("cursos") || pathname.includes("curso")) {
-      console.log("Ingreso al if");
+    if (pathname.includes('cursos') || pathname.includes('curso')) {
+      console.log('Ingreso al if');
       if (isEnrolled) {
-        console.log("Usuario está inscrito en el curso");
+        console.log('Usuario está inscrito en el curso');
         inCourse = true;
       }
     }
@@ -149,17 +149,17 @@ export const ChatMessages: React.FC<ChatProps> = ({
           chats = await getConversationWithMessages(conversation.id);
         }
 
-        console.log("Datos: " + conversation.id + " " + conversation.id);
-        console.log("Chats:", chats);
+        console.log('Datos: ' + conversation.id + ' ' + conversation.id);
+        console.log('Chats:', chats);
 
         if (chats && chats.messages.length > 0) {
-          console.log("Cargando mensajes de la conversación existente");
+          console.log('Cargando mensajes de la conversación existente');
           // Si ya hay mensajes, los cargamos
           if (inCourse) {
             setChatMode({
               idChat: conversation.id,
               status: true,
-              curso_title: courseTitle ?? "",
+              curso_title: courseTitle ?? '',
             });
           }
 
@@ -168,18 +168,18 @@ export const ChatMessages: React.FC<ChatProps> = ({
               id: msg.id,
               text: msg.message,
               sender: msg.sender,
-            }),
+            })
           );
 
           const botMessage = {
             id: -1,
             text:
               isEnrolled == true
-                ? "¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso " +
+                ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
                   courseTitle +
-                  " , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎"
-                : "¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎",
-            sender: "bot",
+                  ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
+                : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+            sender: 'bot',
             /* DOCUMENTADO POR SI ME PIDE VOLVERLO A PONER
                         buttons: [
                         { label: '📚 Crear Proyecto', action: 'new_project' },
@@ -191,17 +191,17 @@ export const ChatMessages: React.FC<ChatProps> = ({
           };
 
           const alreadyHasBot = loadedMessages.some(
-            (msg) => msg.sender === "bot" && msg.text === botMessage.text,
+            (msg) => msg.sender === 'bot' && msg.text === botMessage.text
           );
 
           setMessages(
-            alreadyHasBot ? loadedMessages : [botMessage, ...loadedMessages],
+            alreadyHasBot ? loadedMessages : [botMessage, ...loadedMessages]
           );
         }
         // Creamos una conversación si no existe, luego de 2 mensajes enviados por el usuario
         else {
           console.log(
-            "No hay mensajes en la conversación, creando una nueva conversación",
+            'No hay mensajes en la conversación, creando una nueva conversación'
           );
           if (chats.messages.length === 0) {
             /*
@@ -216,29 +216,29 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
             if (courseId != null) {
               void getOrCreateConversation({
-                senderId: user?.id ?? "",
+                senderId: user?.id ?? '',
                 cursoId: courseId,
                 title:
-                  "Curso - " +
+                  'Curso - ' +
                   (courseTitle
                     ? courseTitle.length > 12
-                      ? courseTitle.slice(0, 35) + "..."
+                      ? courseTitle.slice(0, 35) + '...'
                       : courseTitle
-                    : "Sin título"),
+                    : 'Sin título'),
               });
 
               setChatMode({
                 idChat: courseId,
                 status: true,
-                curso_title: "",
+                curso_title: '',
               });
             }
           } else {
-            console.log("Pero no entra para el if de crear conversación");
+            console.log('Pero no entra para el if de crear conversación');
           }
         }
       } catch (error) {
-        console.error("Error al obtener los mensajes:", error);
+        console.error('Error al obtener los mensajes:', error);
       }
     };
 
@@ -262,22 +262,22 @@ export const ChatMessages: React.FC<ChatProps> = ({
           <div
             key={message.id}
             className={`flex ${
-              message.sender === "user" ? "justify-end" : "justify-start"
+              message.sender === 'user' ? 'justify-end' : 'justify-start'
             } mb-4`}
           >
             <div
               className={`flex max-w-[80%] items-start space-x-2 ${
-                message.sender === "user"
-                  ? "flex-row-reverse space-x-reverse"
-                  : "flex-row"
+                message.sender === 'user'
+                  ? 'flex-row-reverse space-x-reverse'
+                  : 'flex-row'
               }`}
             >
-              {message.sender === "bot" ? (
+              {message.sender === 'bot' ? (
                 <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
               ) : user?.imageUrl ? (
                 <Image
-                  src={user.imageUrl ?? "/default-avatar.png"}
-                  alt={user.fullName ?? "User"}
+                  src={user.imageUrl ?? '/default-avatar.png'}
+                  alt={user.fullName ?? 'User'}
                   width={24}
                   height={24}
                   className="mt-2 rounded-full"
@@ -288,24 +288,22 @@ export const ChatMessages: React.FC<ChatProps> = ({
               )}
               <div
                 className={`rounded-lg p-3 ${
-                  message.sender === "user"
-                    ? "bg-secondary text-white"
-                    : "bg-gray-300 text-gray-800"
+                  message.sender === 'user'
+                    ? 'bg-secondary text-white'
+                    : 'bg-gray-300 text-gray-800'
                 }`}
               >
                 {renderMessage(message, idx)}
                 {/* Renderizar botones si existen */}
 
-                {message.sender === "bot" && message.buttons && (
+                {message.sender === 'bot' && message.buttons && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {message.buttons && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {message.buttons
                           .filter(
                             (btn) =>
-                              !(
-                                btn.action === "contact_support" && !isSignedIn
-                              ),
+                              !(btn.action === 'contact_support' && !isSignedIn)
                           )
                           .map((btn) => (
                             <button
@@ -357,7 +355,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={"Escribe un mensaje..."}
+              placeholder={'Escribe un mensaje...'}
               className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
               disabled={isLoading}
             />

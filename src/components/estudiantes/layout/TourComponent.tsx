@@ -1,11 +1,11 @@
-"use client";
-import React, { useEffect, useState } from "react";
+'use client';
+import React, { useEffect, useState } from 'react';
 
-import { LuInfo } from "react-icons/lu";
+import { LuInfo } from 'react-icons/lu';
 
-import { useExtras } from "~/app/estudiantes/StudentContext";
+import { useExtras } from '~/app/estudiantes/StudentContext';
 
-import "~/styles/tourButtonAnimations.css";
+import '~/styles/tourButtonAnimations.css';
 
 export const TourComponent = () => {
   const { showExtras } = useExtras();
@@ -21,8 +21,8 @@ export const TourComponent = () => {
 
     // Si quieres que se actualice al redimensionar:
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Lógica de animación/desmontaje igual que soporte
@@ -44,11 +44,11 @@ export const TourComponent = () => {
   useEffect(() => {
     const handleHideButton = () => setHideButton(true);
     const handleShowButton = () => setHideButton(false);
-    window.addEventListener("student-chat-open", handleHideButton);
-    window.addEventListener("student-chat-close", handleShowButton);
+    window.addEventListener('student-chat-open', handleHideButton);
+    window.addEventListener('student-chat-close', handleShowButton);
     return () => {
-      window.removeEventListener("student-chat-open", handleHideButton);
-      window.removeEventListener("student-chat-close", handleShowButton);
+      window.removeEventListener('student-chat-open', handleHideButton);
+      window.removeEventListener('student-chat-close', handleShowButton);
     };
   }, []);
 
@@ -74,16 +74,16 @@ export const TourComponent = () => {
         <div
           className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-40 sm:bottom-25 sm:translate-x-0"
           style={{
-            animationName: isExiting ? "fadeOutRight" : "fadeInRight",
+            animationName: isExiting ? 'fadeOutRight' : 'fadeInRight',
             animationDuration: `${ANIMATION_DURATION}ms`,
-            animationTimingFunction: "ease",
-            animationFillMode: "forwards",
+            animationTimingFunction: 'ease',
+            animationFillMode: 'forwards',
           }}
         >
           <button
             onClick={() => {
-              console.log("Botón de tour clickeado");
-              window.dispatchEvent(new Event("start-tour"));
+              console.log('Botón de tour clickeado');
+              window.dispatchEvent(new Event('start-tour'));
             }}
             className="relative flex items-center gap-2 rounded-full border border-green-400 bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-emerald-500 hover:to-green-600 hover:shadow-[0_0_20px_#00c951]"
           >

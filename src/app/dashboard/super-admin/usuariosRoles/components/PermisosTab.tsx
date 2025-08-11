@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
 interface Permiso {
   id: number;
@@ -10,13 +10,13 @@ interface Permiso {
   description: string;
   servicio: string;
   accion:
-    | "create"
-    | "read"
-    | "update"
-    | "delete"
-    | "approve"
-    | "assign"
-    | "publish";
+    | 'create'
+    | 'read'
+    | 'update'
+    | 'delete'
+    | 'approve'
+    | 'assign'
+    | 'publish';
 }
 
 export default function PermisosTab() {
@@ -24,10 +24,10 @@ export default function PermisosTab() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPermiso, setNewPermiso] = useState({
-    name: "",
-    description: "",
-    servicio: "",
-    accion: "read",
+    name: '',
+    description: '',
+    servicio: '',
+    accion: 'read',
   });
 
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -36,12 +36,12 @@ export default function PermisosTab() {
   useEffect(() => {
     const fetchPermisos = async () => {
       try {
-        const res = await fetch("/api/super-admin/permisos/list");
-        if (!res.ok) throw new Error("Error al obtener permisos");
+        const res = await fetch('/api/super-admin/permisos/list');
+        if (!res.ok) throw new Error('Error al obtener permisos');
         const data = (await res.json()) as Permiso[];
         setPermisos(data);
       } catch {
-        toast.error("No se pudieron cargar los permisos");
+        toast.error('No se pudieron cargar los permisos');
       } finally {
         setLoading(false);
       }
@@ -52,43 +52,43 @@ export default function PermisosTab() {
 
   const handleCreate = async () => {
     try {
-      const res = await fetch("/api/super-admin/permisos/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/super-admin/permisos/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPermiso),
       });
       if (!res.ok) throw new Error();
       const created = (await res.json()) as Permiso;
       setPermisos((prev) => [...prev, created]);
       setNewPermiso({
-        name: "",
-        description: "",
-        servicio: "",
-        accion: "read",
+        name: '',
+        description: '',
+        servicio: '',
+        accion: 'read',
       });
       setIsModalOpen(false);
-      toast.success("Permiso creado");
+      toast.success('Permiso creado');
     } catch {
-      toast.error("Error al crear permiso");
+      toast.error('Error al crear permiso');
     }
   };
 
   const handleUpdate = async (permiso: Permiso) => {
     setUpdatingId(permiso.id);
     try {
-      const res = await fetch("/api/super-admin/permisos/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/super-admin/permisos/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(permiso),
       });
       if (!res.ok) throw new Error();
       const updated = (await res.json()) as Permiso;
       setPermisos((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p)),
+        prev.map((p) => (p.id === updated.id ? updated : p))
       );
-      toast.success("Permiso actualizado");
+      toast.success('Permiso actualizado');
     } catch {
-      toast.error("Error al actualizar permiso");
+      toast.error('Error al actualizar permiso');
     } finally {
       setUpdatingId(null);
     }
@@ -96,22 +96,22 @@ export default function PermisosTab() {
 
   const handleDelete = async (id: number) => {
     const confirm = window.confirm(
-      "¿Estás seguro de que quieres eliminar este permiso?",
+      '¿Estás seguro de que quieres eliminar este permiso?'
     );
     if (!confirm) return;
 
     setDeletingId(id);
     try {
-      const res = await fetch("/api/super-admin/permisos/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/super-admin/permisos/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error();
       setPermisos((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Permiso eliminado");
+      toast.success('Permiso eliminado');
     } catch {
-      toast.error("Error al eliminar permiso");
+      toast.error('Error al eliminar permiso');
     } finally {
       setDeletingId(null);
     }
@@ -158,8 +158,8 @@ export default function PermisosTab() {
                           prev.map((p) =>
                             p.id === permiso.id
                               ? { ...p, name: e.target.value }
-                              : p,
-                          ),
+                              : p
+                          )
                         )
                       }
                       className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -174,8 +174,8 @@ export default function PermisosTab() {
                           prev.map((p) =>
                             p.id === permiso.id
                               ? { ...p, description: e.target.value }
-                              : p,
-                          ),
+                              : p
+                          )
                         )
                       }
                       className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -190,8 +190,8 @@ export default function PermisosTab() {
                           prev.map((p) =>
                             p.id === permiso.id
                               ? { ...p, servicio: e.target.value }
-                              : p,
-                          ),
+                              : p
+                          )
                         )
                       }
                       className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -206,10 +206,10 @@ export default function PermisosTab() {
                             p.id === permiso.id
                               ? {
                                   ...p,
-                                  accion: e.target.value as Permiso["accion"],
+                                  accion: e.target.value as Permiso['accion'],
                                 }
-                              : p,
-                          ),
+                              : p
+                          )
                         )
                       }
                       className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -230,15 +230,15 @@ export default function PermisosTab() {
                       disabled={updatingId === permiso.id}
                     >
                       {updatingId === permiso.id
-                        ? "Guardando..."
-                        : "Actualizar"}
+                        ? 'Guardando...'
+                        : 'Actualizar'}
                     </button>
                     <button
                       onClick={() => handleDelete(permiso.id)}
                       className="flex items-center justify-center rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 disabled:opacity-50"
                       disabled={deletingId === permiso.id}
                     >
-                      {deletingId === permiso.id ? "Eliminando..." : "Eliminar"}
+                      {deletingId === permiso.id ? 'Eliminando...' : 'Eliminar'}
                     </button>
                   </td>
                 </tr>
@@ -294,7 +294,7 @@ export default function PermisosTab() {
                 onChange={(e) =>
                   setNewPermiso({
                     ...newPermiso,
-                    accion: e.target.value as Permiso["accion"],
+                    accion: e.target.value as Permiso['accion'],
                   })
                 }
                 className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"

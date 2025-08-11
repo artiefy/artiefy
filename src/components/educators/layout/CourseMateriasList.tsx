@@ -1,14 +1,14 @@
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
-import { Button } from "~/components/educators/ui/button";
+import { Button } from '~/components/educators/ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
-import { type Materia } from "~/server/queries/queries";
+} from '~/components/educators/ui/card';
+import { type Materia } from '~/server/queries/queries';
 
 interface CourseMateriasListProps {
   materias: Materia[];

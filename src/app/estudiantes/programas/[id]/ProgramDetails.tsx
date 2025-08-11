@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from 'next/navigation';
 
-import { useAuth, useUser } from "@clerk/nextjs";
-import { FaCheckCircle } from "react-icons/fa";
-import { toast } from "sonner";
+import { useAuth, useUser } from '@clerk/nextjs';
+import { FaCheckCircle } from 'react-icons/fa';
+import { toast } from 'sonner';
 
-import { ProgramHeader } from "~/components/estudiantes/layout/programdetail/ProgramHeader";
-import { ProgramsBreadcrumbs } from "~/components/estudiantes/layout/programdetail/ProgramsBreadcrumbs";
+import { ProgramHeader } from '~/components/estudiantes/layout/programdetail/ProgramHeader';
+import { ProgramsBreadcrumbs } from '~/components/estudiantes/layout/programdetail/ProgramsBreadcrumbs';
 import {
   enrollInProgram,
   isUserEnrolledInProgram,
-} from "~/server/actions/estudiantes/programs/enrollInProgram";
-import { unenrollFromProgram } from "~/server/actions/estudiantes/programs/unenrollFromProgram";
+} from '~/server/actions/estudiantes/programs/enrollInProgram';
+import { unenrollFromProgram } from '~/server/actions/estudiantes/programs/unenrollFromProgram';
 
-import type { Program } from "~/types";
+import type { Program } from '~/types';
 
 interface ProgramDetailsProps {
   program: Program;
@@ -47,8 +47,8 @@ export default function ProgramDetails({
       | null;
 
     const isValid =
-      subscriptionStatus === "active" &&
-      planType === "Premium" &&
+      subscriptionStatus === 'active' &&
+      planType === 'Premium' &&
       (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
     setIsSubscriptionActive(isValid);
@@ -62,12 +62,12 @@ export default function ProgramDetails({
       try {
         const enrolled = await isUserEnrolledInProgram(
           parseInt(program.id),
-          userId,
+          userId
         );
         setIsEnrolled(enrolled);
         checkSubscriptionStatus();
       } catch (error) {
-        console.error("Error initializing program:", error);
+        console.error('Error initializing program:', error);
       } finally {
         setIsCheckingEnrollment(false);
       }
@@ -91,25 +91,25 @@ export default function ProgramDetails({
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
 
   const handleEnroll = (): Promise<void> => {
     if (!isSignedIn) {
-      toast.error("Debes iniciar sesión");
+      toast.error('Debes iniciar sesión');
       void router.push(`/sign-in?redirect_url=${pathname}`);
       return Promise.resolve();
     }
 
     if (!isSubscriptionActive) {
-      toast.error("Se requiere plan Premium activo", {
+      toast.error('Se requiere plan Premium activo', {
         description:
-          "Necesitas una suscripción Premium activa para inscribirte.",
+          'Necesitas una suscripción Premium activa para inscribirte.',
       });
-      void router.push("/planes");
+      void router.push('/planes');
       return Promise.resolve();
     }
 
@@ -126,13 +126,13 @@ export default function ProgramDetails({
       const result = await enrollInProgram(parseInt(program.id));
       if (result.success) {
         setIsEnrolled(true);
-        toast.success("¡Te has inscrito exitosamente al programa!");
+        toast.success('¡Te has inscrito exitosamente al programa!');
       } else {
         toast.error(result.message);
       }
     } catch (err) {
-      console.error("Error enrolling:", err);
-      toast.error("Error al inscribirse en el programa");
+      console.error('Error enrolling:', err);
+      toast.error('Error al inscribirse en el programa');
     } finally {
       setIsEnrolling(false);
     }
@@ -144,13 +144,13 @@ export default function ProgramDetails({
       const result = await unenrollFromProgram(parseInt(program.id));
       if (result.success) {
         setIsEnrolled(false);
-        toast.success("Has cancelado tu inscripción al programa");
+        toast.success('Has cancelado tu inscripción al programa');
       } else {
         toast.error(result.message);
       }
     } catch (err) {
-      console.error("Error unenrolling:", err);
-      toast.error("Error al cancelar la inscripción");
+      console.error('Error unenrolling:', err);
+      toast.error('Error al cancelar la inscripción');
     } finally {
       setIsUnenrolling(false);
     }
@@ -167,7 +167,7 @@ export default function ProgramDetails({
               Requisito de Inscripción
             </h2>
             <p className="text-background mb-6 text-center">
-              La inscripción a un programa requiere al menos una estancia de{" "}
+              La inscripción a un programa requiere al menos una estancia de{' '}
               <b>10 meses</b> en Artiefy.
             </p>
             <button

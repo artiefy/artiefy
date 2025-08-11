@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { useRouter } from "next/router";
+import { useRouter } from 'next/router';
 
-import { getProjectById } from "~/server/actions/estudiantes/project/getProjectById";
+import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
 
-import type { Project } from "~/types";
+import type { Project } from '~/types';
 
 const ProjectDetail = () => {
   const router = useRouter();

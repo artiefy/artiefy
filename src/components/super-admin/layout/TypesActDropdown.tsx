@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface TypeAct {
   id: number;
@@ -26,10 +26,10 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
     const fetchTypeAct = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/educadores/typeAct", {
-          method: "GET",
+        const response = await fetch('/api/educadores/typeAct', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -41,14 +41,14 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
         const data = (await response.json()) as TypeAct[];
         setTypeAct(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTypeAct().catch((error) =>
-      console.error("Error fetching categories:", error),
+      console.error('Error fetching categories:', error)
     );
   }, []);
 
@@ -65,13 +65,13 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
       ) : (
         <select
           id="typesAct-select"
-          value={typeActi || ""}
+          value={typeActi || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setTypeActividad(selectedId);
           }}
           className={`mb-5 w-80 rounded border p-2 text-black outline-hidden ${
-            errors.type ? "border-red-500" : "border-slate-200"
+            errors.type ? 'border-red-500' : 'border-slate-200'
           }`}
         >
           <option value="">Selecciona un tipo de actividad</option>

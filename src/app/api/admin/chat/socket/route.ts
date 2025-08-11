@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { Server } from "socket.io";
+import { Server } from 'socket.io';
 
-import type { NextApiResponseServerIO } from "~/types/socket";
-import type { Server as NetServer } from "http";
+import type { NextApiResponseServerIO } from '~/types/socket';
+import type { Server as NetServer } from 'http';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 let io: Server | undefined;
 
@@ -18,59 +18,59 @@ interface ChatMessagePayload {
 
 export function GET(_: Request, res: NextApiResponseServerIO) {
   if (!res.socket.server.io) {
-    console.log("🚀 Initializing Socket.IO server...");
+    console.log('🚀 Initializing Socket.IO server...');
 
     const httpServer = res.socket.server as unknown as NetServer;
     io = new Server(httpServer, {
-      path: "/api/admin/chat/socketio",
+      path: '/api/admin/chat/socketio',
       cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
+        origin: '*',
+        methods: ['GET', 'POST'],
       },
-      transports: ["polling", "websocket"],
+      transports: ['polling', 'websocket'],
     });
 
     res.socket.server.io = io;
 
     const connectedUsers = new Map<string, string>();
 
-    io.on("connection", (socket) => {
-      console.log("👤 User connected:", socket.id);
+    io.on('connection', (socket) => {
+      console.log('👤 User connected:', socket.id);
 
-      socket.on("user_connected", (userId: string) => {
+      socket.on('user_connected', (userId: string) => {
         connectedUsers.set(userId, socket.id);
       });
 
-      socket.on("message", (data: ChatMessagePayload) => {
-        console.log("📩 Message received:", data);
+      socket.on('message', (data: ChatMessagePayload) => {
+        console.log('📩 Message received:', data);
 
         // Emit to everyone except sender
-        socket.broadcast.emit("message", {
+        socket.broadcast.emit('message', {
           ...data,
           timestamp: new Date(),
         });
 
-        console.log("🎯 Looking for socket of receiverId:", data.receiverId);
+        console.log('🎯 Looking for socket of receiverId:', data.receiverId);
         const receiverSocketId = connectedUsers.get(data.receiverId);
-        console.log("🔌 Receiver socket ID:", receiverSocketId);
+        console.log('🔌 Receiver socket ID:', receiverSocketId);
 
         if (receiverSocketId) {
-          io?.to(receiverSocketId).emit("message", {
+          io?.to(receiverSocketId).emit('message', {
             ...data,
             timestamp: new Date(),
           });
 
-          io?.to(receiverSocketId).emit("notification", {
-            type: "new_message",
-            from: data.senderName ?? "Usuario",
+          io?.to(receiverSocketId).emit('notification', {
+            type: 'new_message',
+            from: data.senderName ?? 'Usuario',
             message: data.message,
             conversationId: data.conversationId,
           });
         }
       });
 
-      socket.on("disconnect", () => {
-        console.log("🔌 User disconnected:", socket.id);
+      socket.on('disconnect', () => {
+        console.log('🔌 User disconnected:', socket.id);
         for (const [userId, socketId] of connectedUsers.entries()) {
           if (socketId === socket.id) {
             connectedUsers.delete(userId);
@@ -80,7 +80,7 @@ export function GET(_: Request, res: NextApiResponseServerIO) {
       });
     });
   } else {
-    console.log("⚡ Socket.IO server already initialized");
+    console.log('⚡ Socket.IO server already initialized');
   }
 
   return NextResponse.json({ success: true });

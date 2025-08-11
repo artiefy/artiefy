@@ -1,19 +1,19 @@
-import { db } from "~/server/db";
+import { db } from '~/server/db';
 
-import type { Activity, GradeReport, ParameterGrade } from "~/types";
+import type { Activity, GradeReport, ParameterGrade } from '~/types';
 
 export function calculateWeightedGrade(
-  grades: { grade: number; weight: number }[],
+  grades: { grade: number; weight: number }[]
 ): number {
   const weightedSum = grades.reduce(
     (sum, g) => sum + (g.grade * g.weight) / 100,
-    0,
+    0
   );
   return Number(weightedSum.toFixed(1));
 }
 
 export async function calculateMateriaGrades(
-  materiaId: number,
+  materiaId: number
 ): Promise<number> {
   const activities = await fetchActivitiesForMateria(materiaId);
   const grades = activities.map((activity) => ({
@@ -26,7 +26,7 @@ export async function calculateMateriaGrades(
 
 export async function calculateParameterGrades(
   userId: string,
-  parameterId: number,
+  parameterId: number
 ): Promise<ParameterGrade> {
   const parameter = await db.query.parametros.findFirst({
     where: (parametros, { eq }) => eq(parametros.id, parameterId),
@@ -36,7 +36,7 @@ export async function calculateParameterGrades(
     id: parameterId,
     parameterId,
     userId,
-    parameterName: parameter?.name ?? "",
+    parameterName: parameter?.name ?? '',
     grade: 0,
     weight: parameter?.porcentaje ?? 0,
     updatedAt: new Date(),
@@ -44,7 +44,7 @@ export async function calculateParameterGrades(
 }
 
 export async function getStudentGradeReport(
-  userId: string,
+  userId: string
 ): Promise<GradeReport[]> {
   const materias = await db.query.materias.findMany({
     where: (materias, { eq: equals }) =>
@@ -68,14 +68,14 @@ export async function getStudentGradeReport(
         })),
         parameters: [],
       };
-    }),
+    })
   );
 
   return reports;
 }
 
 async function fetchActivitiesForMateria(
-  materiaId: number,
+  materiaId: number
 ): Promise<Activity[]> {
   const activities = await db.query.activities.findMany({
     where: (activities, { eq }) => eq(activities.lessonsId, materiaId),

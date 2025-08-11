@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Image from "next/image";
+import Image from 'next/image';
 
 interface AnuncioPreviewProps {
   titulo: string;
@@ -38,10 +38,10 @@ export default function AnuncioPreview({
 
       {/* 📝 Contenido del anuncio */}
       <h3 className="text-2xl font-bold text-[#3AF4EF]">
-        {titulo || "Título del Anuncio"}
+        {titulo || 'Título del Anuncio'}
       </h3>
       <p className="mt-2 text-gray-300">
-        {descripcion || "Descripción del anuncio..."}
+        {descripcion || 'Descripción del anuncio...'}
       </p>
 
       {/* 🔘 Botón con efecto profesional */}

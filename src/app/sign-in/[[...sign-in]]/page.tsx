@@ -1,33 +1,33 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useAuth, useSignIn } from "@clerk/nextjs";
-import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
-import { type ClerkAPIError, type OAuthStrategy } from "@clerk/types";
+import { useAuth, useSignIn } from '@clerk/nextjs';
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Icons } from "~/components/estudiantes/ui/icons";
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Icons } from '~/components/estudiantes/ui/icons';
 
-import Loading from "../../loading";
+import Loading from '../../loading';
 
 export default function SignInPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { signIn, setActive } = useSignIn();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
   const [successfulCreation, setSuccessfulCreation] = useState(false);
   const [secondFactor, setSecondFactor] = useState(false);
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
-    null,
+    null
   );
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,10 +35,10 @@ export default function SignInPage() {
   // Función para extraer redirect_url sin importar si está en query param o hash
   const getRedirectUrl = () => {
     // Primero intentamos obtenerlo de los query params normales
-    let redirectUrl = searchParams?.get("redirect_url");
+    let redirectUrl = searchParams?.get('redirect_url');
 
     // Si no encontramos en query params, buscamos en el hash
-    if (!redirectUrl && typeof window !== "undefined") {
+    if (!redirectUrl && typeof window !== 'undefined') {
       try {
         // Extraer los parámetros del hash
         const hashString = window.location.hash.substring(2); // Remover '#/'
@@ -46,41 +46,41 @@ export default function SignInPage() {
 
         // Intentar obtener redirect_url del hash
         redirectUrl =
-          hashParams.get("redirect_url") ??
-          hashParams.get("sign_in_fallback_redirect_url");
+          hashParams.get('redirect_url') ??
+          hashParams.get('sign_in_fallback_redirect_url');
       } catch (error) {
-        console.error("Error parsing hash params:", error);
+        console.error('Error parsing hash params:', error);
       }
     }
 
     // Decodificar la URL si está codificada y usar fallback si es necesario
     try {
-      return redirectUrl ? decodeURIComponent(redirectUrl) : "/";
+      return redirectUrl ? decodeURIComponent(redirectUrl) : '/';
     } catch (error) {
-      console.error("Error decoding redirect URL:", error);
-      return "/";
+      console.error('Error decoding redirect URL:', error);
+      return '/';
     }
   };
 
   // Extraer plan_id de los query params
-  const planId = searchParams?.get("plan_id");
+  const planId = searchParams?.get('plan_id');
 
   // Modificar redirectUrl para incluir plan_id si existe
   const redirectUrl = (() => {
     let url = getRedirectUrl();
-    if (planId && !url.includes("plan_id=")) {
+    if (planId && !url.includes('plan_id=')) {
       // Añadir plan_id como query param
-      const separator = url.includes("?") ? "&" : "?";
+      const separator = url.includes('?') ? '&' : '?';
       url = `${url}${separator}plan_id=${planId}`;
     }
     return url;
   })();
 
-  console.log("✅ Redirect URL detectada:", redirectUrl);
+  console.log('✅ Redirect URL detectada:', redirectUrl);
 
   useEffect(() => {
     if (isSignedIn) {
-      console.log("🔄 Usuario autenticado, redirigiendo a:", redirectUrl);
+      console.log('🔄 Usuario autenticado, redirigiendo a:', redirectUrl);
       router.replace(redirectUrl);
     }
   }, [isSignedIn, router, redirectUrl]);
@@ -94,34 +94,34 @@ export default function SignInPage() {
     if (!signIn) {
       setErrors([
         {
-          code: "sign_in_undefined",
-          message: "SignIn no está definido",
+          code: 'sign_in_undefined',
+          message: 'SignIn no está definido',
           meta: {},
         },
       ]);
       return;
     }
     console.log(
-      "🔄 Iniciando sesión con OAuth:",
+      '🔄 Iniciando sesión con OAuth:',
       strategy,
-      "➡️ Redirigiendo a:",
-      redirectUrl,
+      '➡️ Redirigiendo a:',
+      redirectUrl
     );
 
     try {
       setLoadingProvider(strategy);
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: "/sign-up/sso-callback",
+        redirectUrl: '/sign-up/sso-callback',
         redirectUrlComplete: redirectUrl, // Asegurar redirección correcta
       });
     } catch (err) {
       setLoadingProvider(null);
-      console.error("❌ Error en OAuth:", err);
+      console.error('❌ Error en OAuth:', err);
       setErrors([
         {
-          code: "oauth_error",
-          message: "Error en el inicio de sesión con OAuth",
+          code: 'oauth_error',
+          message: 'Error en el inicio de sesión con OAuth',
           meta: {},
         },
       ]);
@@ -141,22 +141,22 @@ export default function SignInPage() {
         password,
       });
 
-      if (signInAttempt.status === "complete") {
+      if (signInAttempt.status === 'complete') {
         if (setActive) {
           await setActive({ session: signInAttempt.createdSessionId });
         }
         router.replace(redirectUrl);
-      } else if (signInAttempt.status === "needs_first_factor") {
+      } else if (signInAttempt.status === 'needs_first_factor') {
         const supportedStrategies =
           signInAttempt.supportedFirstFactors?.map(
-            (factor) => factor.strategy,
+            (factor) => factor.strategy
           ) ?? [];
-        if (!supportedStrategies.includes("password")) {
+        if (!supportedStrategies.includes('password')) {
           setErrors([
             {
-              code: "invalid_strategy",
-              message: "Estrategia de verificación inválida",
-              longMessage: "Estrategia de verificación inválida",
+              code: 'invalid_strategy',
+              message: 'Estrategia de verificación inválida',
+              longMessage: 'Estrategia de verificación inválida',
               meta: {},
             },
           ]);
@@ -164,9 +164,9 @@ export default function SignInPage() {
       } else {
         setErrors([
           {
-            code: "unknown_error",
-            message: "Ocurrió un error desconocido",
-            longMessage: "Ocurrió un error desconocido",
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
             meta: {},
           },
         ]);
@@ -177,9 +177,9 @@ export default function SignInPage() {
       } else {
         setErrors([
           {
-            code: "unknown_error",
-            message: "Ocurrió un error desconocido",
-            longMessage: "Ocurrió un error desconocido",
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
             meta: {},
           },
         ]);
@@ -197,7 +197,7 @@ export default function SignInPage() {
     try {
       if (!signIn) return;
       await signIn.create({
-        strategy: "reset_password_email_code",
+        strategy: 'reset_password_email_code',
         identifier: email,
       });
       setSuccessfulCreation(true);
@@ -208,9 +208,9 @@ export default function SignInPage() {
       } else {
         setErrors([
           {
-            code: "unknown_error",
-            message: "Ocurrió un error desconocido",
-            longMessage: "Ocurrió un error desconocido",
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
             meta: {},
           },
         ]);
@@ -229,9 +229,9 @@ export default function SignInPage() {
       if (!signIn) {
         setErrors([
           {
-            code: "sign_in_undefined",
-            message: "SignIn no está definido",
-            longMessage: "SignIn no está definido",
+            code: 'sign_in_undefined',
+            message: 'SignIn no está definido',
+            longMessage: 'SignIn no está definido',
             meta: {},
           },
         ]);
@@ -239,15 +239,15 @@ export default function SignInPage() {
         return;
       }
       const result = await signIn.attemptFirstFactor({
-        strategy: "reset_password_email_code",
+        strategy: 'reset_password_email_code',
         code,
         password,
       });
 
-      if (result.status === "needs_second_factor") {
+      if (result.status === 'needs_second_factor') {
         setSecondFactor(true);
         setErrors(undefined);
-      } else if (result.status === "complete") {
+      } else if (result.status === 'complete') {
         if (setActive) {
           await setActive({ session: result.createdSessionId });
         }
@@ -255,9 +255,9 @@ export default function SignInPage() {
       } else {
         setErrors([
           {
-            code: "unknown_error",
-            message: "Ocurrió un error desconocido",
-            longMessage: "Ocurrió un error desconocido",
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
             meta: {},
           },
         ]);
@@ -268,9 +268,9 @@ export default function SignInPage() {
       } else {
         setErrors([
           {
-            code: "unknown_error",
-            message: "Ocurrió un error desconocido",
-            longMessage: "Ocurrió un error desconocido",
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
             meta: {},
           },
         ]);
@@ -281,10 +281,10 @@ export default function SignInPage() {
   };
 
   const emailError = errors?.some(
-    (error) => error.code === "form_identifier_not_found",
+    (error) => error.code === 'form_identifier_not_found'
   );
   const passwordError = errors?.some(
-    (error) => error.code === "form_password_incorrect",
+    (error) => error.code === 'form_password_incorrect'
   );
 
   return (
@@ -298,7 +298,7 @@ export default function SignInPage() {
         sizes="100vw"
         priority
         style={{
-          objectFit: "cover",
+          objectFit: 'cover',
         }}
       />
 
@@ -329,10 +329,10 @@ export default function SignInPage() {
               <ul>
                 {errors.map((el, index) => (
                   <li key={index} className="-my-4 text-sm text-rose-400">
-                    {el.code === "form_password_incorrect"
-                      ? "Contraseña incorrecta. Inténtalo de nuevo o usa otro método."
-                      : el.code === "form_identifier_not_found"
-                        ? "No se pudo encontrar tu cuenta."
+                    {el.code === 'form_password_incorrect'
+                      ? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.'
+                      : el.code === 'form_identifier_not_found'
+                        ? 'No se pudo encontrar tu cuenta.'
                         : el.longMessage}
                   </li>
                 ))}
@@ -350,7 +350,7 @@ export default function SignInPage() {
                     placeholder="Correo Electrónico"
                     required
                     className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
-                      emailError ? "ring-rose-400" : "ring-white/20"
+                      emailError ? 'ring-rose-400' : 'ring-white/20'
                     } focus:ring-primary hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
                   />
                 </div>
@@ -364,7 +364,7 @@ export default function SignInPage() {
                     placeholder="Contraseña"
                     required
                     className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
-                      passwordError ? "ring-rose-400" : "ring-white/20"
+                      passwordError ? 'ring-rose-400' : 'ring-white/20'
                     } focus:ring-primary hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
                   />
                 </div>
@@ -372,7 +372,7 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
-                    style={{ width: "150px" }}
+                    style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
@@ -417,7 +417,7 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
-                    style={{ width: "150px" }}
+                    style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
@@ -450,7 +450,7 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
-                    style={{ width: "150px" }}
+                    style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
@@ -473,30 +473,30 @@ export default function SignInPage() {
               <p>O ingresa con tu cuenta:</p>
               <div className="mt-2 flex justify-center space-x-4">
                 <div
-                  onClick={() => signInWith("oauth_google")}
+                  onClick={() => signInWith('oauth_google')}
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
-                  {loadingProvider === "oauth_google" ? (
+                  {loadingProvider === 'oauth_google' ? (
                     <Icons.spinner className="text-primary h-10 w-10" />
                   ) : (
                     <Icons.google />
                   )}
                 </div>
                 <div
-                  onClick={() => signInWith("oauth_github")}
+                  onClick={() => signInWith('oauth_github')}
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
-                  {loadingProvider === "oauth_github" ? (
+                  {loadingProvider === 'oauth_github' ? (
                     <Icons.spinner className="text-primary h-10 w-10" />
                   ) : (
                     <Icons.gitHub />
                   )}
                 </div>
                 <div
-                  onClick={() => signInWith("oauth_facebook")}
+                  onClick={() => signInWith('oauth_facebook')}
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
-                  {loadingProvider === "oauth_facebook" ? (
+                  {loadingProvider === 'oauth_facebook' ? (
                     <Icons.spinner className="text-primary h-10 w-10" />
                   ) : (
                     <Icons.facebook />
@@ -506,16 +506,16 @@ export default function SignInPage() {
               <div className="mt-6 text-sm">
                 <Link
                   href={`/sign-up${
-                    searchParams?.get("redirect_url") || planId
+                    searchParams?.get('redirect_url') || planId
                       ? `?${[
-                          searchParams?.get("redirect_url")
-                            ? `redirect_url=${encodeURIComponent(searchParams.get("redirect_url")!)}`
-                            : "",
-                          planId ? `plan_id=${planId}` : "",
+                          searchParams?.get('redirect_url')
+                            ? `redirect_url=${encodeURIComponent(searchParams.get('redirect_url')!)}`
+                            : '',
+                          planId ? `plan_id=${planId}` : '',
                         ]
                           .filter(Boolean)
-                          .join("&")}`
-                      : ""
+                          .join('&')}`
+                      : ''
                   }`}
                   className="text-primary decoration-primary hover:text-secondary font-medium underline-offset-4 outline-hidden hover:underline focus-visible:underline"
                 >

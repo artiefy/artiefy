@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import sharp from "sharp";
+import sharp from 'sharp';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const TIMEOUT = 10000; // Reducido a 10 segundos
 const MAX_RETRIES = 2;
 
 async function fetchWithTimeout(
   url: string,
-  retryCount = 0,
+  retryCount = 0
 ): Promise<Response> {
   try {
     const controller = new AbortController();
@@ -19,8 +19,8 @@ async function fetchWithTimeout(
       signal: controller.signal,
       next: { revalidate: 3600 },
       headers: {
-        Accept: "image/*",
-        "Cache-Control": "public, max-age=31536000", // 1 año
+        Accept: 'image/*',
+        'Cache-Control': 'public, max-age=31536000', // 1 año
       },
     });
 
@@ -35,7 +35,7 @@ async function fetchWithTimeout(
     if (retryCount < MAX_RETRIES) {
       // Espera exponencial entre reintentos
       await new Promise((resolve) =>
-        setTimeout(resolve, Math.pow(2, retryCount) * 1000),
+        setTimeout(resolve, Math.pow(2, retryCount) * 1000)
       );
       return fetchWithTimeout(url, retryCount + 1);
     }
@@ -54,7 +54,7 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
     return await sharpImage
       .resize(width, null, {
         withoutEnlargement: true,
-        fit: "inside",
+        fit: 'inside',
       })
       .webp({
         quality: 75, // Calidad reducida para mejor compresión
@@ -62,7 +62,7 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
       })
       .toBuffer();
   } catch (error) {
-    console.error("Error optimizing image:", error);
+    console.error('Error optimizing image:', error);
     return Buffer.from(buffer);
   }
 }
@@ -70,16 +70,16 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const imageUrl = searchParams.get("url");
+    const imageUrl = searchParams.get('url');
 
     if (!imageUrl) {
-      return NextResponse.json({ error: "Missing image URL" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing image URL' }, { status: 400 });
     }
 
-    if (!imageUrl.includes("s3.us-east-2.amazonaws.com")) {
+    if (!imageUrl.includes('s3.us-east-2.amazonaws.com')) {
       return NextResponse.json(
-        { error: "Invalid image source" },
-        { status: 403 },
+        { error: 'Invalid image source' },
+        { status: 403 }
       );
     }
 
@@ -90,12 +90,12 @@ export async function GET(request: Request) {
     const optimizedBuffer = await optimizeImageBuffer(buffer);
 
     const headers = new Headers({
-      "Content-Type": "image/webp",
-      "Cache-Control": "public, max-age=31536000, immutable",
-      "Content-Length": optimizedBuffer.length.toString(),
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET",
-      "X-Content-Type-Options": "nosniff",
+      'Content-Type': 'image/webp',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Content-Length': optimizedBuffer.length.toString(),
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'X-Content-Type-Options': 'nosniff',
     });
 
     return new NextResponse(new Uint8Array(optimizedBuffer), {
@@ -103,16 +103,16 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    console.error("Image proxy error:", error);
+    console.error('Image proxy error:', error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch image",
-        timeout: error instanceof Error && error.name === "AbortError",
+        error: error instanceof Error ? error.message : 'Failed to fetch image',
+        timeout: error instanceof Error && error.name === 'AbortError',
       },
       {
         status:
-          error instanceof Error && error.name === "AbortError" ? 504 : 500,
-      },
+          error instanceof Error && error.name === 'AbortError' ? 504 : 500,
+      }
     );
   }
 }
