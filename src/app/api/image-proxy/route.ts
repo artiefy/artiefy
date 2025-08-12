@@ -98,21 +98,21 @@ export async function GET(request: Request) {
       'X-Content-Type-Options': 'nosniff',
     });
 
-    return new NextResponse(new Uint8Array(optimizedBuffer), {
+    // ...
+    // Siempre optimizar imágenes
+
+    // Convertir Buffer de Node → Uint8Array compatible con Web API
+    const u8 = new Uint8Array(optimizedBuffer.byteLength);
+    u8.set(optimizedBuffer);
+
+    // Headers
+    headers.set('Content-Type', 'image/webp');
+    headers.set('Content-Length', String(u8.byteLength));
+
+    // Responder
+    return new NextResponse(u8, {
       status: 200,
       headers,
     });
-  } catch (error) {
-    console.error('Image proxy error:', error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to fetch image',
-        timeout: error instanceof Error && error.name === 'AbortError',
-      },
-      {
-        status:
-          error instanceof Error && error.name === 'AbortError' ? 504 : 500,
-      }
-    );
-  }
+  } catch (error) {}
 }

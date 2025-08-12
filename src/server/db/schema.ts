@@ -987,3 +987,13 @@ export const classMeetings = pgTable('class_meetings', {
   // 🆕 Agregado: Ruta del video en S3
   video_key: varchar('video_key', { length: 255 }),
 });
+
+export const comercials = pgTable('comercials', {
+  id: serial('id').primaryKey(),
+  contact: text('contact').notNull(),
+});
+
+export const dates = pgTable('dates', {
+  id: serial('id').primaryKey(),
+  startDate: date('start_date').notNull(),
+});

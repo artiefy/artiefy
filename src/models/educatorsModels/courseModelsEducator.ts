@@ -351,19 +351,24 @@ export const updateCourse = async (
 ) => {
   try {
     // 🔄 Sincroniza courseTypeId en tabla intermedia si existe
-    if (Array.isArray(updateData.courseTypeId)) {
+    if (updateData.courseTypeId !== undefined) {
       // Borra relaciones anteriores
       await db
         .delete(courseCourseTypes)
         .where(eq(courseCourseTypes.courseId, courseId));
 
-      // Inserta nuevas relaciones
-      await db.insert(courseCourseTypes).values(
-        updateData.courseTypeId.map((typeId) => ({
-          courseId,
-          courseTypeId: typeId,
-        }))
-      );
+      // Inserta solo si hay valores
+      if (
+        Array.isArray(updateData.courseTypeId) &&
+        updateData.courseTypeId.length > 0
+      ) {
+        await db.insert(courseCourseTypes).values(
+          updateData.courseTypeId.map((typeId) => ({
+            courseId,
+            courseTypeId: typeId,
+          }))
+        );
+      }
     }
 
     // 🧼 Elimina courseTypeId para que no lo intente guardar en tabla principal

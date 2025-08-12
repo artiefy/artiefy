@@ -84,6 +84,16 @@ export interface Parametros {
   courseId: number;
 }
 
+type UIMeeting = ScheduledMeeting & {
+  id: number;
+  meetingId: string;
+  // Usa undefined (no null) para alinear con ModalScheduleMeeting.tsx
+  joinUrl?: string;
+  recordingContentUrl?: string;
+  videoUrl?: string;
+  video_key?: string;
+};
+
 // Add these interfaces after the existing interfaces
 interface Educator {
   id: string;
@@ -162,6 +172,60 @@ const FullscreenLoader = () => {
     </Portal>
   );
 };
+
+// --- Helpers de tipado seguros ---
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Tipo auxiliar con las props que necesitamos leer de forma segura
+type MaybeMeeting = Partial<
+  Pick<
+    UIMeeting,
+    | 'id'
+    | 'meetingId'
+    | 'joinUrl'
+    | 'recordingContentUrl'
+    | 'video_key'
+    | 'videoUrl'
+  >
+> &
+  Record<string, unknown>;
+
+function toUIMeeting(m: ScheduledMeeting): UIMeeting {
+  const obj: MaybeMeeting = isRecord(m)
+    ? (m as MaybeMeeting)
+    : ({} as MaybeMeeting);
+
+  const id = typeof obj.id === 'number' ? obj.id : 0;
+  const meetingId = typeof obj.meetingId === 'string' ? obj.meetingId : '';
+
+  // Todas como string | undefined (NO null)
+  const joinUrl = typeof obj.joinUrl === 'string' ? obj.joinUrl : undefined;
+  const recordingContentUrl =
+    typeof obj.recordingContentUrl === 'string'
+      ? obj.recordingContentUrl
+      : undefined;
+  const video_key =
+    typeof obj.video_key === 'string' ? obj.video_key : undefined;
+  const videoUrlRaw =
+    typeof obj.videoUrl === 'string' ? obj.videoUrl : undefined;
+
+  const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
+  const fromKey = video_key ? `${aws}/video_clase/${video_key}` : undefined;
+  const finalVideoUrl =
+    videoUrlRaw ?? recordingContentUrl ?? fromKey ?? undefined;
+
+  return {
+    ...(m as ScheduledMeeting),
+    id,
+    meetingId,
+    joinUrl,
+    recordingContentUrl,
+    video_key,
+    videoUrl: finalVideoUrl,
+  };
+}
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const router = useRouter(); // Obtener el router
@@ -1142,10 +1206,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 meetings={(scheduledMeetings.length
                   ? scheduledMeetings
                   : (course.meetings ?? [])
-                ).map((m) => ({
-                  ...m,
-                  videoUrl: m.videoUrl ?? m.recordingContentUrl ?? null, // asegura que exista
-                }))}
+                ).map((m) => {
+                  const ui = toUIMeeting(m);
+
+                  console.log('🎯 Meeting video resolve:', {
+                    id: ui.id,
+                    meetingId: ui.meetingId,
+                    video_key: ui.video_key,
+                    videoUrl: ui.videoUrl,
+                    recordingContentUrl: ui.recordingContentUrl,
+                    finalVideoUrl: ui.videoUrl,
+                  });
+
+                  return ui;
+                })}
                 color={selectedColor}
               />
             </div>
