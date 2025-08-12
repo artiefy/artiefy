@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+
 import { asc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { programas } from '~/server/db/schema';
 
@@ -10,7 +12,7 @@ export async function GET() {
       .from(programas)
       .orderBy(asc(programas.title));
     return NextResponse.json({ ok: true, programs: rows });
-  } catch (e) {
+  } catch (_err) {
     return NextResponse.json({ ok: false, error: 'Error' }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 // src/app/api/super-admin/teams/video/route.ts
 import { NextResponse } from 'next/server';
+
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { eq, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -52,15 +53,15 @@ const s3 = new S3Client({
 
 // ---------------------- Tipos ----------------------
 
-type GraphRecording = {
+interface GraphRecording {
   meetingId: string;
   recordingContentUrl?: string;
   createdDateTime?: string;
-};
+}
 
-type GetRecordingsResponse = {
+interface GetRecordingsResponse {
   value?: GraphRecording[];
-};
+}
 
 interface ClassMeetingRow {
   id: number;
@@ -111,11 +112,11 @@ export async function GET(req: Request) {
   const recordings = data.value ?? [];
   console.log('🎥 Grabaciones encontradas:', recordings.length);
 
-  const videos: Array<{
+  const videos: {
     meetingId: string;
     videoKey: string;
     videoUrl: string;
-  }> = [];
+  }[] = [];
 
   // 3) Recorremos recordings
   for (const recording of recordings) {
@@ -123,8 +124,6 @@ export async function GET(req: Request) {
 
     // a) Obtener el meetingId real desde base64
     const decodedId = decodeMeetingId(recording.meetingId);
-    const encodedIdInUrl = encodeURIComponent(decodedId);
-    console.log('📎 Meeting ID decodificado:', decodedId);
 
     // b) Buscar por meeting_id
     let existing = await db
@@ -137,27 +136,31 @@ export async function GET(req: Request) {
     // c) Si no está por meeting_id, intentar backfill buscando en join_url
     if (!existing) {
       // Trae todas las filas que tengan join_url (limit por seguridad)
-      const candidates = await db
+      const candidates = (await db
         .select()
         .from(classMeetings)
         .where(sql`${classMeetings.joinUrl} IS NOT NULL`)
-        .limit(500);
+        .limit(500)) as unknown as ClassMeetingRow[];
 
-      // Compara en Node: decodifica join_url y busca el decodedId "tal cual"
-      const match = (candidates as any[]).find((row) => {
+      // Compara en Node (tipado estricto)
+      const match = candidates.find((row) => {
         try {
-          const decodedJoin = decodeURIComponent(row.joinUrl as string);
-          return decodedJoin.includes(decodedId); // <-- aquí ya no afecta mayúsc/minúsc del %xx
+          const decodedJoin = decodeURIComponent(row.joinUrl ?? '');
+          return decodedJoin.includes(decodedId);
         } catch {
           return false;
         }
-      }) as ClassMeetingRow | undefined;
+      });
 
       if (match) {
         // Backfill del meeting_id en la fila encontrada
+        const updateMeetingId: Partial<typeof classMeetings.$inferInsert> = {
+          meetingId: decodedId,
+        };
+
         await db
           .update(classMeetings)
-          .set({ meetingId: decodedId } as any)
+          .set(updateMeetingId)
           .where(eq(classMeetings.id, match.id));
 
         existing = { ...match, meetingId: decodedId };
@@ -212,12 +215,14 @@ export async function GET(req: Request) {
     );
     console.log(`🚀 Subido a S3: ${videoKey}`);
 
-    // g) Guardar video_key en la fila encontrada
+    const updateVideoKey: Partial<typeof classMeetings.$inferInsert> = {
+      video_key: videoKey,
+    };
+
     await db
       .update(classMeetings)
-      .set({ video_key: videoKey } as any)
+      .set(updateVideoKey)
       .where(eq(classMeetings.id, existing.id));
-    console.log(`🗄️ video_key actualizado en class_meetings.id=${existing.id}`);
 
     // h) Añadir a payload de respuesta
     videos.push({

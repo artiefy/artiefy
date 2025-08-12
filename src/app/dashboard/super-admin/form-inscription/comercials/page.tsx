@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Commercial = { id: number; contact: string };
+interface Commercial { id: number; contact: string }
 
 export default function ComercialsPage() {
   const [contact, setContact] = useState('');

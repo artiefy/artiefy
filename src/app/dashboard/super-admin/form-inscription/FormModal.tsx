@@ -1,7 +1,8 @@
 'use client';
 
-import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
+
+import { Dialog } from '@headlessui/react';
 
 /* =======================
    Listas estáticas
@@ -99,26 +100,33 @@ const defaultFields = {
 
 type Fields = typeof defaultFields;
 
-type InscriptionConfig = {
+interface InscriptionConfig {
   dates?: { startDate: string }[];
-  comercials?: { name: string }[];
-};
+  comercials?: { contact: string }[];
+}
 
-type ProgramsResponse = {
+interface ProgramsResponse {
   ok: boolean;
   programs: { id: number; title: string; description: string | null }[];
   page?: number;
   pageSize?: number;
   total?: number;
-};
+}
 
-export default function FormModal({
-  isOpen,
-  onClose,
-}: {
+interface Props {
   isOpen: boolean;
-  onClose(): void;
-}) {
+  // <- serializable a ojos del checker
+  onClose: unknown;
+}
+
+function isFn(x: unknown): x is () => void {
+  return typeof x === 'function';
+}
+
+export default function FormModal({ isOpen, onClose }: Props) {
+  const handleClose = () => {
+    if (isFn(onClose)) onClose(); // ejecuta si realmente es función
+  };
   const [fields, setFields] = useState<Fields>({ ...defaultFields });
 
   // Opciones dinámicas
@@ -131,6 +139,13 @@ export default function FormModal({
   const [errorPrograms, setErrorPrograms] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submittedOK, setSubmittedOK] = useState<boolean | null>(null);
+  const [submitMessage, setSubmitMessage] = useState<string>('');
+  const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>(
+    {}
+  );
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
 
   // Cargar fechas y comerciales
   useEffect(() => {
@@ -168,31 +183,145 @@ export default function FormModal({
     if (isOpen) loadPrograms();
   }, [isOpen]);
 
+  function FieldSelect({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder = 'Selecciona una opción',
+    disabled = false,
+    error,
+  }: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    options: string[];
+    placeholder?: string;
+    disabled?: boolean;
+    error?: string;
+  }) {
+    return (
+      <label className="flex flex-col text-white">
+        <span className="mb-1">{label}</span>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          aria-invalid={!!error}
+          className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:opacity-60 ${error ? 'border border-red-500' : ''}`}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
+      </label>
+    );
+  }
+
   const handleChange = (key: keyof Fields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }));
+    // limpiar error al escribir
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  // Validación básica por campo
+  const validate = (f: Fields) => {
+    const e: Partial<Record<keyof Fields, string>> = {};
+
+    const required: (keyof Fields)[] = [
+      'nombres',
+      'apellidos',
+      'identificacionTipo',
+      'identificacionNumero',
+      'email',
+      'direccion',
+      'pais',
+      'ciudad',
+      'telefono',
+      'birthDate',
+      'nivelEducacion',
+      'programa',
+      'fechaInicio',
+      'comercial',
+      'sede',
+      'horario',
+      'pagoInscripcion',
+      'pagoCuota1',
+      'modalidad',
+      'numeroCuotas',
+    ];
+
+    required.forEach((k) => {
+      if (!String(f[k] ?? '').trim()) e[k] = 'Este campo es obligatorio';
+    });
+
+    // email formato
+    if (f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email))
+      e.email = 'Correo electrónico inválido';
+
+    // teléfono básico
+    if (f.telefono && !/^[\d\s+\-()]{7,20}$/.test(f.telefono))
+      e.telefono = 'Teléfono inválido';
+
+    // número de cuotas entero positivo
+    if (f.numeroCuotas && !/^[1-9]\d*$/.test(f.numeroCuotas))
+      e.numeroCuotas = 'Debe ser un número entero mayor a 0';
+
+    return e;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setSubmittedOK(null);
+    setSubmitMessage('');
+
+    // Validación cliente
+    const v = validate(fields);
+    if (Object.keys(v).length > 0) {
+      setErrors(v);
+      setSubmitting(false);
+      setSubmittedOK(false);
+      setSubmitMessage('Por favor corrige los campos marcados.');
+      return;
+    }
 
     try {
-      // TODO: Reemplaza por el id real del usuario logueado
-      const userId = 'usuario-logueado-id';
-
+      // POST al endpoint que crea en Clerk + BD + matrícula
       const res = await fetch('/api/super-admin/form-inscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, fields, startDate: fields.fechaInicio }),
+        body: JSON.stringify({ fields }),
       });
 
-      if (!res.ok) throw new Error('Error al enviar inscripción');
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as unknown;
+        const msg =
+          isRecord(j) && typeof j.error === 'string'
+            ? j.error
+            : `Error al enviar inscripción (HTTP ${res.status})`;
+        throw new Error(msg);
+      }
+
       setSubmittedOK(true);
-      // Si quieres limpiar:
-      // setFields({ ...defaultFields });
-    } catch {
+      setSubmitMessage('¡Inscripción enviada con éxito!');
+      // reset y cerrar modal después de 1.5s
+      setTimeout(() => {
+        setFields({ ...defaultFields });
+        setErrors({});
+        onClose={handleClose}
+      }, 1500);
+    } catch (err: unknown) {
       setSubmittedOK(false);
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo enviar la inscripción.';
+      setSubmitMessage(message);
     } finally {
       setSubmitting(false);
       setTimeout(() => setSubmittedOK(null), 4000);
@@ -202,12 +331,12 @@ export default function FormModal({
   return (
     <Dialog
       open={isOpen}
-      onClose={onClose}
+       onClose={handleClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
       {/* Panel con scroll interno */}
       <Dialog.Panel className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20">
-        {/* Header sticky dentro del modal */}
+        {/* Header sticky */}
         <div className="sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95 px-6 py-4 backdrop-blur">
           <Dialog.Title className="text-2xl font-semibold text-cyan-400">
             Formulario de Inscripción
@@ -217,6 +346,20 @@ export default function FormModal({
           </p>
         </div>
 
+        {/* Banner resultado */}
+        {submittedOK !== null && submitMessage && (
+          <div
+            className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${
+              submittedOK
+                ? 'bg-green-600/20 text-green-300'
+                : 'bg-red-600/20 text-red-300'
+            }`}
+            role="alert"
+          >
+            {submitMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
           {/* Datos personales */}
           <Section title="Datos personales">
@@ -225,11 +368,13 @@ export default function FormModal({
                 label="Nombres*"
                 value={fields.nombres}
                 onChange={(v) => handleChange('nombres', v)}
+                error={errors.nombres}
               />
               <FieldInput
                 label="Apellidos*"
                 value={fields.apellidos}
                 onChange={(v) => handleChange('apellidos', v)}
+                error={errors.apellidos}
               />
 
               <FieldSelect
@@ -243,11 +388,13 @@ export default function FormModal({
                   'Pasaporte',
                   'Tarjeta de Identidad',
                 ]}
+                error={errors.identificacionTipo}
               />
               <FieldInput
                 label="Número de Identificación*"
                 value={fields.identificacionNumero}
                 onChange={(v) => handleChange('identificacionNumero', v)}
+                error={errors.identificacionNumero}
               />
 
               <FieldInput
@@ -255,11 +402,13 @@ export default function FormModal({
                 type="email"
                 value={fields.email}
                 onChange={(v) => handleChange('email', v)}
+                error={errors.email}
               />
               <FieldInput
                 label="Dirección*"
                 value={fields.direccion}
                 onChange={(v) => handleChange('direccion', v)}
+                error={errors.direccion}
               />
             </div>
           </Section>
@@ -273,23 +422,27 @@ export default function FormModal({
                 onChange={(v) => handleChange('pais', v)}
                 placeholder="Selecciona un país"
                 options={COUNTRY_LIST}
+                error={errors.pais}
               />
               <FieldInput
                 label="Ciudad de Residencia*"
                 value={fields.ciudad}
                 onChange={(v) => handleChange('ciudad', v)}
+                error={errors.ciudad}
               />
 
               <FieldInput
                 label="Teléfono*"
                 value={fields.telefono}
                 onChange={(v) => handleChange('telefono', v)}
+                error={errors.telefono}
               />
               <FieldInput
                 label="Fecha de Nacimiento*"
                 type="date"
                 value={fields.birthDate}
                 onChange={(v) => handleChange('birthDate', v)}
+                error={errors.birthDate}
               />
 
               <FieldSelect
@@ -298,6 +451,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('nivelEducacion', v)}
                 placeholder="Elige"
                 options={[...NIVEL_EDUCACION_OPTS]}
+                error={errors.nivelEducacion}
               />
             </div>
           </Section>
@@ -311,6 +465,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('tieneAcudiente', v)}
                 placeholder="Selecciona una opción"
                 options={['Sí', 'No']}
+                error={errors.tieneAcudiente}
               />
 
               {fields.tieneAcudiente === 'Sí' && (
@@ -319,17 +474,20 @@ export default function FormModal({
                     label="Nombre Acudiente / Empresa"
                     value={fields.acudienteNombre}
                     onChange={(v) => handleChange('acudienteNombre', v)}
+                    error={errors.acudienteNombre}
                   />
                   <FieldInput
                     label="Contacto Acudiente / Empresa"
                     value={fields.acudienteContacto}
                     onChange={(v) => handleChange('acudienteContacto', v)}
+                    error={errors.acudienteContacto}
                   />
                   <FieldInput
                     label="Email Acudiente / Empresa"
                     type="email"
                     value={fields.acudienteEmail}
                     onChange={(v) => handleChange('acudienteEmail', v)}
+                    error={errors.acudienteEmail}
                   />
                 </>
               )}
@@ -364,6 +522,7 @@ export default function FormModal({
                   !!errorPrograms ||
                   programTitles.length === 0
                 }
+                error={errors.programa}
               />
 
               <FieldSelect
@@ -372,6 +531,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('fechaInicio', v)}
                 placeholder="Selecciona una fecha"
                 options={dateOptions}
+                error={errors.fechaInicio}
               />
 
               <FieldSelect
@@ -380,6 +540,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('comercial', v)}
                 placeholder="Selecciona un comercial"
                 options={commercialOptions}
+                error={errors.comercial}
               />
             </div>
           </Section>
@@ -393,11 +554,13 @@ export default function FormModal({
                 onChange={(v) => handleChange('sede', v)}
                 placeholder="Elige"
                 options={[...SEDES_OPTS]}
+                error={errors.sede}
               />
               <FieldInput
                 label="Horario*"
                 value={fields.horario}
                 onChange={(v) => handleChange('horario', v)}
+                error={errors.horario}
               />
 
               <FieldSelect
@@ -406,6 +569,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('pagoInscripcion', v)}
                 placeholder="Selecciona una opción"
                 options={['Sí', 'No']}
+                error={errors.pagoInscripcion}
               />
               <FieldSelect
                 label="Pago de Primera Cuota*"
@@ -413,6 +577,7 @@ export default function FormModal({
                 onChange={(v) => handleChange('pagoCuota1', v)}
                 placeholder="Selecciona una opción"
                 options={['Sí', 'No']}
+                error={errors.pagoCuota1}
               />
 
               <FieldSelect
@@ -421,12 +586,14 @@ export default function FormModal({
                 onChange={(v) => handleChange('modalidad', v)}
                 placeholder="Selecciona una modalidad"
                 options={['Virtual', 'Presencial']}
+                error={errors.modalidad}
               />
               <FieldInput
                 label="Número de Cuotas*"
                 type="number"
                 value={fields.numeroCuotas}
                 onChange={(v) => handleChange('numeroCuotas', v)}
+                error={errors.numeroCuotas}
               />
             </div>
           </Section>
@@ -435,7 +602,7 @@ export default function FormModal({
           <div className="sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30 bg-[#0B132B] py-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
             >
               Cancelar
@@ -447,17 +614,6 @@ export default function FormModal({
             >
               {submitting ? 'Enviando…' : 'Enviar Inscripción'}
             </button>
-
-            {submittedOK === true && (
-              <span className="self-center text-xs text-green-400">
-                Inscripción enviada correctamente.
-              </span>
-            )}
-            {submittedOK === false && (
-              <span className="self-center text-xs text-red-400">
-                No se pudo enviar la inscripción.
-              </span>
-            )}
           </div>
         </form>
       </Dialog.Panel>
@@ -488,11 +644,13 @@ function FieldInput({
   value,
   onChange,
   type = 'text',
+  error,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: React.HTMLInputTypeAttribute;
+  error?: string;
 }) {
   return (
     <label className="flex flex-col text-white">
@@ -501,43 +659,10 @@ function FieldInput({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded bg-[#1C2541] p-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+        aria-invalid={!!error}
+        className={`rounded bg-[#1C2541] p-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none ${error ? 'border border-red-500' : ''}`}
       />
-    </label>
-  );
-}
-
-function FieldSelect({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder = 'Selecciona una opción',
-  disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <label className="flex flex-col text-white">
-      <span className="mb-1">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:opacity-60"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
+      {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
     </label>
   );
 }

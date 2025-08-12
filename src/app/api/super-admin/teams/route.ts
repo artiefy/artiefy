@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { db } from '~/server/db';
 import { classMeetings } from '~/server/db/schema';
 
@@ -66,7 +67,7 @@ function generateClassDates(
 ): Date[] {
   const result: Date[] = [];
   const targetDays = daysOfWeek.map((d) => d.toLowerCase());
-  let current = new Date(startDate);
+  const current = new Date(startDate);
 
   while (result.length < totalCount) {
     const weekday = current
@@ -180,7 +181,12 @@ export async function POST(req: Request) {
       }
     );
 
-    const eventData = await res.json();
+    interface GraphEventResponse {
+      error?: { message?: string };
+      onlineMeeting?: { joinUrl?: string; id?: string };
+    }
+
+    const eventData = (await res.json()) as unknown as GraphEventResponse;
 
     if (!res.ok) {
       console.error('[❌ ERROR TEAMS]', eventData);
@@ -253,7 +259,7 @@ export async function POST(req: Request) {
       },
     }));
 
-    const diasUnicos = [
+    const _diasUnicos = [
       ...new Set(
         classDates.map((date) =>
           date.toLocaleDateString('es-CO', { weekday: 'long' })
@@ -263,7 +269,7 @@ export async function POST(req: Request) {
 
     const clasesListadoHTML = classDates
       .map((fecha, i) => {
-        const nombreClase = customTitles?.[i]?.trim() || `Clase ${i + 1}`;
+        const nombreClase = customTitles?.[i]?.trim() ?? `Clase ${i + 1}`;
         const fechaStr = fecha.toLocaleDateString('es-CO', {
           weekday: 'long',
           year: 'numeric',

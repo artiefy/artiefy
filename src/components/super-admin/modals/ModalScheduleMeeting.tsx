@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
 import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
@@ -51,7 +52,6 @@ export const ModalScheduleMeeting = ({
   const [repeatCount, setRepeatCount] = useState(1);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [customTitles, setCustomTitles] = useState<string[]>([]);
-  const [dayTitles, setDayTitles] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
   const firstDayOfWeek = useMemo(() => {
@@ -89,7 +89,7 @@ export const ModalScheduleMeeting = ({
       if (customTitles.length < totalWeeks) {
         setCustomTitles((prevTitles) => [
           ...prevTitles,
-          ...Array(totalWeeks - prevTitles.length).fill(''),
+          ...Array<string>(totalWeeks - prevTitles.length).fill(''),
         ]);
       }
 
@@ -102,11 +102,6 @@ export const ModalScheduleMeeting = ({
     updated[index] = value;
     setCustomTitles(updated);
   };
-
-  const displayedTitles = Array.from(
-    { length: repeatCount },
-    (_, i) => customTitles[i] || ''
-  );
 
   const handleSubmit = async () => {
     setFormError(null); // Limpiar error previo
@@ -143,7 +138,7 @@ export const ModalScheduleMeeting = ({
     }
 
     const missingTitleDays = selectedDays.filter((_, i) => {
-      return !customTitles[i] || !customTitles[i].trim();
+      return !customTitles[i]?.trim();
     });
 
     if (missingTitleDays.length > 0) {
@@ -159,7 +154,7 @@ export const ModalScheduleMeeting = ({
       // Expand titles: repetir el título correspondiente al día, para cada semana
       const expandedTitles = Array.from(
         { length: repeatCount },
-        (_, weekIndex) => {
+        (_, _weekIndex) => {
           return selectedDays.map((_, dayIndex) => {
             return customTitles[dayIndex] || '';
           });
@@ -275,7 +270,7 @@ export const ModalScheduleMeeting = ({
                 if (customTitles.length < total) {
                   setCustomTitles((prev) => [
                     ...prev,
-                    ...Array(total - prev.length).fill(''),
+                    ...Array<string>(newCount - prev.length).fill(''),
                   ]);
                 }
               }}

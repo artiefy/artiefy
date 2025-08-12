@@ -1,8 +1,10 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { type NextRequest,NextResponse } from 'next/server';
+
+import { asc } from 'drizzle-orm';
 import { z } from 'zod';
+
 import { db } from '~/server/db';
 import { comercials } from '~/server/db/schema';
-import { asc } from 'drizzle-orm';
 
 // Zod schema para POST
 const schema = z.object({

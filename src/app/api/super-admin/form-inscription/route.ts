@@ -1,21 +1,21 @@
 // src/app/api/super-admin/form-inscription/submit/route.ts
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import nodemailer from 'nodemailer';
-import { eq, sql } from 'drizzle-orm';
+
 import { clerkClient } from '@clerk/nextjs/server';
+import { eq, sql } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
+import { z } from 'zod';
 
 import { db } from '~/server/db';
 import {
-  users,
-  userCustomFields,
-  dates,
-  programas,
-  enrollmentPrograms,
-  userCredentials,
   comercials,
+  dates,
+  enrollmentPrograms,
+  programas,
+  userCredentials,
+  userCustomFields,
+  users,
 } from '~/server/db/schema';
-
 // 👉 Debe devolver: { user: { id, username? }, generatedPassword?: string }
 import { createUser } from '~/server/queries/queries';
 
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
     console.log('[FIELDS PARSED]:', JSON.stringify(fields));
 
     const fullName = `${fields.nombres} ${fields.apellidos}`.trim();
-    const role: 'estudiante' = 'estudiante';
+    const role = 'estudiante' as const;
 
     // 1) Crear SIEMPRE usuario en Clerk (para garantizar que usamos su id)
     console.time('[1] createUser (Clerk)');
@@ -237,7 +237,7 @@ export async function POST(req: Request) {
     }
 
     // 4) Custom fields: upsert por (user_id, field_key)
-    const entries = Object.entries(fields) as Array<[keyof Fields, string]>;
+    const entries = Object.entries(fields) as [keyof Fields, string][];
     if (entries.length > 0) {
       console.log('[CUSTOM FIELDS] Upserting', entries.length, 'campos');
       await db

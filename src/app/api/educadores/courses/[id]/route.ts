@@ -40,7 +40,8 @@ interface PutRequestBody {
   nivelid?: number;
   instructorId?: string; // Changed from instructor to instructorId
   rating?: number;
-  courseTypeId?: number | null;
+  courseTypeId?: number | number[] | null; // <- admite number o number[]
+  instructor?: string; // <- para evitar any en el punto 3
   isActive?: boolean;
   subjects?: { id: number }[];
   individualPrice?: number | null;
@@ -52,11 +53,19 @@ function extractMeetingIdFromUrl(joinUrl?: string | null) {
   try {
     const decoded = decodeURIComponent(joinUrl);
     // Formatos típicos: 19:meeting_...@thread.v2
-    const m = decoded.match(/19:meeting_[A-Za-z0-9-_]+@thread\.v2/);
+    const m = /19:meeting_[A-Za-z0-9-_]+@thread\.v2/.exec(decoded);
     return m ? m[0] : null;
   } catch {
     return null;
   }
+}
+
+// arriba del updateData (mismo archivo)
+function parseCourseTypeIds(input: unknown): number[] | undefined {
+  if (Array.isArray(input)) return input.map(Number).filter(Number.isFinite);
+  if (typeof input === 'number') return [input];
+  // si es null/undefined, no tocar relaciones
+  return undefined;
 }
 
 export async function getCourseByIdWithTypes(courseId: number) {
@@ -179,7 +188,14 @@ export async function getCourseByIdWithTypes(courseId: number) {
     }
 
     // lo que ya tiene la BD
-    const existingKey = (meeting as any).video_key ?? null;
+    // Tipado seguro para incluir video_key opcional
+    type ClassMeetingRow =
+      (typeof classMeetings)['_']['columns'] extends infer _Cols
+        ? typeof classMeetings.$inferSelect & { video_key?: string | null }
+        : typeof classMeetings.$inferSelect & { video_key?: string | null };
+
+    // lo que ya tiene la BD
+    const existingKey = (meeting as ClassMeetingRow).video_key ?? null;
 
     // preferimos el video_key del match, si no, lo derivamos del videoUrl del match
     const matchedKey =
@@ -284,6 +300,10 @@ export async function PUT(
     }
 
     const data = (await request.json()) as PutRequestBody;
+    const parsedCourseTypeIds = parseCourseTypeIds(
+      data.courseTypeId as unknown
+    );
+
     console.log(JSON.stringify(data, null, 2));
     // Create update data object with type checking
     const updateData = {
@@ -299,12 +319,14 @@ export async function PUT(
       nivelid: data.nivelid ? Number(data.nivelid) : undefined,
 
       // ✅ acepta instructorId o instructor (por compatibilidad)
-      instructor: data.instructorId ?? (data as any).instructor,
+      instructor: data.instructorId ?? data.instructor,
 
       rating: data.rating ? Number(data.rating) : undefined,
 
       // ✅ asegura que siempre sea array
-      courseTypeId: Array.isArray(data.courseTypeId) ? data.courseTypeId : [],
+
+      // dentro de updateData
+      courseTypeId: parsedCourseTypeIds, // number[] | undefined
 
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
     };

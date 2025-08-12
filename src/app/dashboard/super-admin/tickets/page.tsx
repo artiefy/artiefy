@@ -1076,7 +1076,7 @@ export default function TicketsPage() {
             receiverId={selectedChat.receiverId}
             userName={selectedChat.userName}
             unreadConversations={unreadConversationIds}
-            setUnreadConversations={() => {}} // puedes implementar si quieres
+            setUnreadConversations={() => undefined}
             onClose={() => setSelectedChat(null)}
           />
         )}

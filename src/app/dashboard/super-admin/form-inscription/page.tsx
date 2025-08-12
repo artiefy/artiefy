@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import FormModal from './FormModal';
 
 export default function FormInscriptionPage() {
@@ -24,8 +25,7 @@ export default function FormInscriptionPage() {
           Iniciar formulario
         </button>
       </div>
-
-      <FormModal isOpen={open} onClose={() => setOpen(false)} />
+      <FormModal isOpen={open} onClose={() => setOpen(false)} />{' '}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type DateRow = { id: number; startDate: string }; // startDate viene como 'YYYY-MM-DD'
+interface DateRow { id: number; startDate: string } // startDate viene como 'YYYY-MM-DD'
 
 export default function DatesPage() {
   const [date, setDate] = useState('');

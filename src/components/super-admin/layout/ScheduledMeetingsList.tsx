@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
 
 // ⬇️ añade esto arriba del archivo (después de imports)
@@ -35,17 +36,17 @@ export const ScheduledMeetingsList = ({
     timeStyle: 'short',
   });
 
-  // Agrupar por título base (ej. "matemáticas")
-  const groupedByMainTitle = meetings.reduce<
-    Record<string, (ScheduledMeeting & { videoUrl?: string | null })[]>
-  >((acc, meeting) => {
-    const rawTitle = meeting.title || 'Sin título';
-    const match = rawTitle.match(/^(.+?)(\s*\(.+\))?$/);
-    const base = match?.[1]?.trim() || 'Sin título';
-    if (!acc[base]) acc[base] = [];
-    acc[base].push(meeting);
-    return acc;
-  }, {});
+  const groupedByMainTitle = meetings.reduce<Record<string, UIMeeting[]>>(
+    (acc, meeting) => {
+      const rawTitle = meeting.title ?? 'Sin título';
+      const match = /^(.+?)(\s*\(.+\))?$/.exec(rawTitle);
+      const base = match?.[1]?.trim() ?? 'Sin título';
+      if (!acc[base]) acc[base] = [];
+      acc[base].push(meeting);
+      return acc;
+    },
+    {}
+  );
 
   // Extrae días únicos por grupo
   const getDaysOfWeek = (group: ScheduledMeeting[]) => {
@@ -111,22 +112,10 @@ export const ScheduledMeetingsList = ({
                         const isValidStart = !isNaN(start.getTime());
                         const isValidEnd = !isNaN(end.getTime());
 
-                        // ✅ arma una única URL de video
-                        const key = (m as any).video_key as
-                          | string
-                          | null
-                          | undefined;
+                        const key = m.video_key;
                         const finalVideo =
                           m.videoUrl ??
                           (key ? `${aws}/video_clase/${key}` : null);
-
-                        console.log('🎯 Meeting video resolve:', {
-                          id: (m as any).id,
-                          meetingId: (m as any).meetingId,
-                          videoUrl: m.videoUrl,
-                          video_key: key,
-                          finalVideo,
-                        });
 
                         return (
                           <li key={idx} className="text-sm text-gray-300">
