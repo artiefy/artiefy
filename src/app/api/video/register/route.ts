@@ -70,7 +70,7 @@ export async function POST(req: Request) {
           '[TRANSCRIPCIÓN] ⏳ Iniciando solicitud al servidor de transcripción...'
         );
         const res = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://3.135.198.149:8000/video2text',
           { url: s3Url },
           {
             headers: {

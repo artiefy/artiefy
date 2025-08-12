@@ -122,7 +122,7 @@ export async function POST() {
       // Procesar el video manual
       try {
         const response = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://3.135.198.149:8000/video2text',
           { url: manualVideoUrl },
           {
             headers: { 'Content-Type': 'application/json' },
@@ -216,7 +216,7 @@ export async function POST() {
 
       try {
         const response = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://3.135.198.149:8000/video2text',
           { url: videoUrl },
           {
             headers: { 'Content-Type': 'application/json' },
