@@ -309,11 +309,10 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
       setSubmittedOK(true);
       setSubmitMessage('¡Inscripción enviada con éxito!');
-      // reset y cerrar modal después de 1.5s
       setTimeout(() => {
         setFields({ ...defaultFields });
         setErrors({});
-        onClose={handleClose}
+        onClose = { handleClose };
       }, 1500);
     } catch (err: unknown) {
       setSubmittedOK(false);
@@ -331,7 +330,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
   return (
     <Dialog
       open={isOpen}
-       onClose={handleClose}
+      onClose={handleClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
       {/* Panel con scroll interno */}
