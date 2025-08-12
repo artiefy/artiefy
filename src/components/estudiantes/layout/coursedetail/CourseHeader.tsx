@@ -1307,19 +1307,6 @@ export function CourseHeader({
     );
   };
 
-  // Helper to format meeting date/time
-  const formatMeetingDateTime = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleString('es-CO', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   // Helper para calcular duración en minutos
   const getDurationMinutes = (meeting: ClassMeeting) =>
     meeting.startDateTime && meeting.endDateTime
@@ -1825,7 +1812,7 @@ export function CourseHeader({
         {/* --- MUEVE AQUÍ CLASES EN VIVO Y GRABADAS --- */}
         {(classMeetings?.length ?? 0) > 0 && (
           <>
-            {/* Clases en Vivo */}
+            {/* Clases en Vivo - mostrar todas las futuras */}
             {(() => {
               const now = new Date();
               const upcomingMeetings = classMeetings
@@ -1840,33 +1827,57 @@ export function CourseHeader({
                     new Date(b.startDateTime).getTime()
                 );
               return upcomingMeetings.length > 0 ? (
-                <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow">
-                  <div className="flex items-center gap-3">
-                    <FaVideo className="h-6 w-6 text-blue-600" />{' '}
-                    {/* Icono sala en vivo */}
-                    <div>
-                      <h3 className="text-lg font-bold">Clase en Vivo</h3>
-                      <p className="text-sm">
-                        <strong>{upcomingMeetings[0].title}</strong>
-                        <br />
-                        {formatMeetingDateTime(
-                          upcomingMeetings[0].startDateTime
-                        )}{' '}
-                        &mdash;{' '}
-                        {formatMeetingDateTime(upcomingMeetings[0].endDateTime)}
-                      </p>
-                      {upcomingMeetings[0].joinUrl && (
-                        <a
-                          href={upcomingMeetings[0].joinUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
-                        >
-                          Unirse a la Clase en Teams
-                        </a>
-                      )}
+                <div className="mb-4 space-y-4">
+                  {upcomingMeetings.map((meeting) => (
+                    <div
+                      key={meeting.id}
+                      className="rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FaVideo className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <h3 className="text-lg font-bold">{meeting.title}</h3>
+                          <p className="text-sm">
+                            <strong>{meeting.title}</strong>
+                            <br />
+                            {typeof meeting.startDateTime === 'string'
+                              ? new Date(meeting.startDateTime).toLocaleString(
+                                  'es-CO',
+                                  {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
+                              : ''}
+                            {' — '}
+                            {typeof meeting.endDateTime === 'string'
+                              ? new Date(meeting.endDateTime).toLocaleString(
+                                  'es-CO',
+                                  {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
+                              : ''}
+                          </p>
+                          {meeting.joinUrl && (
+                            <a
+                              href={meeting.joinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
+                            >
+                              Unirse a la Clase en Teams
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               ) : null;
             })()}
@@ -1952,7 +1963,7 @@ export function CourseHeader({
                                       <g style={{ filter: 'url(#shadow)' }}>
                                         <path
                                           fill="currentColor"
-                                          d="M14.2199 21.63C13.0399 21.63 11.3699 20.8 10.0499 16.83L9.32988 14.67L7.16988 13.95C3.20988 12.63 2.37988 10.96 2.37988 9.78001C2.37988 8.61001 3.20988 6.93001 7.16988 5.60001L15.6599 2.77001C17.7799 2.06001 19.5499 2.27001 20.6399 3.35001C21.7299 4.43001 21.9399 6.21001 21.2299 8.33001L18.3999 16.82C17.0699 20.8 15.3999 21.63 14.2199 21.63ZM7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001Z"
+                                          d="M14.2199 21.63C13.0399 21.63 11.3699 20.8 10.0499 16.83L9.32988 14.67L7.16988 13.95C3.20988 12.63 2.37988 10.96 2.37988 9.78001C2.37988 8.61001 3.20988 6.93001 7.16988 5.60001L15.6599 2.77001C17.7799 2.06001 19.5499 2.27001 20.6399 3.35001C21.7299 4.43001 21.9399 6.21001 21.2299 8.33001L18.3999 16.82C17.0699 20.8 15.3999 21.63 14.2199 21.63ZM7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001Z"
                                         />
                                         <path
                                           fill="currentColor"
