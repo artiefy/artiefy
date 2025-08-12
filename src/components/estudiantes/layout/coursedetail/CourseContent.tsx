@@ -659,7 +659,6 @@ export function CourseContent({
             className="mb-6 border-2 border-red-500 bg-red-50"
           >
             <div className="flex items-center gap-3">
-              <FaCrown className="size-8 text-red-500" />
               <div className="flex-1">
                 <AlertTitle className="mb-2 text-xl font-bold text-red-700">
                   ¡Tu suscripción ha expirado!
@@ -673,7 +672,6 @@ export function CourseContent({
                     onClick={handleSubscriptionRedirect}
                     className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
                   >
-                    <FaCrown className="mr-2" />
                     Renovar Suscripción Ahora
                   </Button>
                 </AlertDescription>
@@ -695,5 +693,4 @@ export function CourseContent({
   );
 }
 
-// No se requieren cambios aquí si el prop course.lessons ya viene sincronizado desde la BD.
 // No se requieren cambios aquí si el prop course.lessons ya viene sincronizado desde la BD.
