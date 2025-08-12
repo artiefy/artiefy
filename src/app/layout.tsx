@@ -88,6 +88,12 @@ export default async function RootLayout({
           content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
         />
 
+        {/* Verificación de dominio de Facebook */}
+        <meta
+          name="facebook-domain-verification"
+          content="zxh6j216xifuou0gxlb1hp0zomyjx0"
+        />
+
         {/* Meta Pixel Code */}
         {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
         {/*

@@ -179,8 +179,8 @@
     "initVersion": "7.38.1"
   },
   "engines": {
-    "node": "22.18.0",
-    "npm": "11.5.2"
+    "node": ">=18 <23",
+    "npm": ">=9 <12"
   },
   "packageManager": "npm@11.5.2"
 }
