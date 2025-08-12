@@ -241,7 +241,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const saveBotMessage = (trimmedInput: string) => {
     const currentChatId = chatModeRef.current.idChat;
 
-    if (currentChatId) {
+    // No guardar si es un chat temporal (ID muy grande o menor a 1000)
+    if (currentChatId && currentChatId < 1000000000000) {
       console.log(
         'Guardando mensaje del bot:',
         trimmedInput,
@@ -259,6 +260,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           },
         ]
       );
+    } else {
+      console.log('Chat temporal - no guardando mensaje del bot');
     }
   };
 
@@ -485,6 +488,96 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     ]
   );
 
+  // useEffect para manejar búsquedas desde StudentDetails
+  useEffect(() => {
+    const handleCreateNewChatWithSearch = (event: CustomEvent<{ query: string }>) => {
+      const query = event.detail.query;
+      if (!query) return;
+
+      console.log('🤖 Evento create-new-chat-with-search recibido:', query);
+
+      // Crear nuevo chat directamente con idChat temporal
+      const tempChatId = Date.now(); // ID temporal hasta que se cree en la DB
+      
+      setChatMode({ idChat: tempChatId, status: true, curso_title: '' });
+      setShowChatList(false);
+      
+      // Resetear mensajes y abrir chatbot
+      setMessages([
+        {
+          id: Date.now(),
+          text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+          sender: 'bot',
+          buttons: [
+            { label: '📚 Crear Proyecto', action: 'new_project' },
+            { label: '💬 Nueva Idea', action: 'new_idea' },
+            { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          ],
+        },
+      ]);
+      
+      setInputText('');
+      setIsOpen(true);
+      initialSearchDone.current = false;
+      setProcessingQuery(false);
+      // onSearchComplete?.(); // Comentado para evitar cierre automático
+
+      console.log('💬 Chatbot abierto, enviando búsqueda:', query);
+
+      // Forzar apertura del chatbot desde StudentDetails
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('force-open-chatbot'));
+      }, 50);
+
+      // Después de abrir el chatbot, enviar la búsqueda
+      setTimeout(() => {
+        // Agregar mensaje del usuario
+        const newUserMessage = {
+          id: Date.now(),
+          text: query,
+          sender: 'user' as const,
+        };
+        setMessages(prev => [...prev, newUserMessage]);
+        
+        // Procesar respuesta del bot
+        handleBotResponse(query);
+        
+        // Crear el chat real en la base de datos
+        const timestamp = Date.now();
+        const fecha = new Date(timestamp);
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const anio = fecha.getFullYear();
+        const hora = String(fecha.getHours()).padStart(2, '0');
+        const minuto = String(fecha.getMinutes()).padStart(2, '0');
+        const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
+
+        if (user?.id) {
+          getOrCreateConversation({
+            senderId: user.id,
+            cursoId: courseId ?? +Math.round(Math.random() * 100 + 1),
+            title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
+          })
+            .then((response) => {
+              console.log('✅ Chat creado en DB con ID:', response.id);
+              setChatMode({ idChat: response.id, status: true, curso_title: '' });
+            })
+            .catch((error) => {
+              console.error('❌ Error creando chat:', error);
+            });
+        }
+      }, 200);
+    };
+
+    console.log('👂 Listener create-new-chat-with-search registrado');
+    window.addEventListener('create-new-chat-with-search', handleCreateNewChatWithSearch as EventListener);
+
+    return () => {
+      console.log('🔇 Listener create-new-chat-with-search removido');
+      window.removeEventListener('create-new-chat-with-search', handleCreateNewChatWithSearch as EventListener);
+    };
+  }, [handleBotResponse, onSearchComplete, courseId, user?.id]);
+
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
@@ -588,7 +681,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       'en chat ID:',
       currentChatId
     );
-    if (currentChatId) {
+    // No guardar si es un chat temporal (ID muy grande o menor a 1000)
+    if (currentChatId && currentChatId < 1000000000000) {
       void saveMessages(
         user?.id ?? '', // senderId
         currentChatId, // cursoId
@@ -602,7 +696,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       );
     } else {
       console.log(
-        'No está entrando al chat para guardar el mensaje del usuario'
+        'Chat temporal - no guardando mensaje del usuario'
       );
     }
   };
@@ -1010,13 +1104,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                         (chatMode.status ? (
                           <GoArrowLeft
                             className="text-xl text-gray-500"
-                            onClick={() =>
+                            onClick={() => {
                               setChatMode({
                                 idChat: null,
-                                status: showChatList ? true : false,
+                                status: true,
                                 curso_title: '',
-                              })
-                            }
+                              });
+                              setShowChatList(true);
+                            }}
                           />
                         ) : null)}
                     </button>
@@ -1031,40 +1126,63 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 </div>
               </div>
 
-              {chatMode.status ? (
-                
-                  <ChatMessages
-                    idea={idea}
-                    setIdea={setIdea}
-                    setShowChatList={setShowChatList}
-                    courseId={courseId}
-                    isEnrolled={isEnrolled}
-                    courseTitle={courseTitle}
-                    messages={messages}
-                    setMessages={setMessages}
-                    chatMode={chatMode}
-                    setChatMode={setChatMode}
-                    inputText={inputText}
-                    setInputText={setInputText}
-                    handleSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                    messagesEndRef={
-                      messagesEndRef as React.RefObject<HTMLDivElement>
-                    }
-                    isSignedIn={isSignedIn}
-                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                    renderMessage={renderMessage}
-                  />
-                
-              ) : (
-                <ChatList
-                  setChatMode={setChatMode}
+              {chatMode.status && !isSignedIn ? (
+                <ChatMessages
+                  idea={idea}
+                  setIdea={setIdea}
                   setShowChatList={setShowChatList}
+                  courseId={courseId}
+                  isEnrolled={isEnrolled}
+                  courseTitle={courseTitle}
+                  messages={messages}
+                  setMessages={setMessages}
+                  chatMode={chatMode}
+                  setChatMode={setChatMode}
+                  inputText={inputText}
+                  setInputText={setInputText}
+                  handleSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  messagesEndRef={
+                    messagesEndRef as React.RefObject<HTMLDivElement>
+                  }
+                  isSignedIn={isSignedIn}
+                  inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                  renderMessage={renderMessage}
                 />
+              ) : chatMode.status && isSignedIn && chatMode.idChat ? (
+                <ChatMessages
+                  idea={idea}
+                  setIdea={setIdea}
+                  setShowChatList={setShowChatList}
+                  courseId={courseId}
+                  isEnrolled={isEnrolled}
+                  courseTitle={courseTitle}
+                  messages={messages}
+                  setMessages={setMessages}
+                  chatMode={chatMode}
+                  setChatMode={setChatMode}
+                  inputText={inputText}
+                  setInputText={setInputText}
+                  handleSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  messagesEndRef={
+                    messagesEndRef as React.RefObject<HTMLDivElement>
+                  }
+                  isSignedIn={isSignedIn}
+                  inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                  renderMessage={renderMessage}
+                />
+              ) : (
+                chatMode.status && isSignedIn && !chatMode.idChat && (
+                  <ChatList
+                    setChatMode={setChatMode}
+                    setShowChatList={setShowChatList}
+                  />
+                )
               )}
             </div>
 
-            {!chatMode.status && (
+            {chatMode.status && isSignedIn && showChatList && (
               <button
                 className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
                 onClick={() => newChatMessage()}

@@ -94,7 +94,9 @@ export default function StudentDetails({
   const latestTenCourses = useMemo(() => topCourses, [topCourses]);
 
   const handleSearchComplete = useCallback(() => {
-    setShowChatbot(false);
+    // No cerrar el chatbot automáticamente - dejar que el usuario lo controle
+    console.log('🔚 Búsqueda completada - manteniendo chatbot abierto');
+    // setShowChatbot(false); // Comentado para evitar cierre automático
   }, []);
 
   const handleSearch = useCallback(
@@ -103,6 +105,8 @@ export default function StudentDetails({
 
       if (!searchQuery.trim() || searchInProgress) return;
 
+      console.log('🔍 Iniciando búsqueda:', searchQuery.trim());
+      
       setSearchInProgress(true);
       setSearchBarDisabled(true);
 
@@ -110,6 +114,7 @@ export default function StudentDetails({
       const searchEvent = new CustomEvent('artiefy-search', {
         detail: { query: searchQuery.trim() },
       });
+      console.log('📤 Disparando evento artiefy-search');
       window.dispatchEvent(searchEvent);
 
       // Clear the search input
@@ -126,9 +131,21 @@ export default function StudentDetails({
       const query = event.detail.query;
       if (!query) return;
 
+      console.log('📥 Evento artiefy-search recibido:', query);
+      
       setLastSearchQuery(query);
-      setShowChatbot(true);
+      setShowChatbot(true); // Asegurar que esté abierto
       setChatbotKey((prev) => prev + 1);
+      
+      console.log('🚀 Disparando evento create-new-chat-with-search');
+      // Disparar evento para crear nuevo chat con la búsqueda
+      setTimeout(() => {
+        // Asegurar nuevamente que esté abierto
+        setShowChatbot(true);
+        window.dispatchEvent(new CustomEvent('create-new-chat-with-search', {
+          detail: { query }
+        }));
+      }, 100);
     };
 
     window.addEventListener(
@@ -136,11 +153,20 @@ export default function StudentDetails({
       handleGlobalSearch as EventListener
     );
 
+    // Listener para forzar apertura del chatbot
+    const handleForceOpenChatbot = () => {
+      console.log('🔓 Forzando apertura del chatbot');
+      setShowChatbot(true);
+    };
+
+    window.addEventListener('force-open-chatbot', handleForceOpenChatbot);
+
     return () => {
       window.removeEventListener(
         'artiefy-search',
         handleGlobalSearch as EventListener
       );
+      window.removeEventListener('force-open-chatbot', handleForceOpenChatbot);
     };
   }, []);
 

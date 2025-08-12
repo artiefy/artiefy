@@ -132,6 +132,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
     if (!conversation) return;
 
+    // No hacer consulta SQL si es un chat temporal (ID muy grande)
+    if (conversation.id && conversation.id > 1000000000000) {
+      console.log('Chat temporal detectado, saltando consulta SQL');
+      return;
+    }
+
     let inCourse = false;
 
     if (pathname.includes('cursos') || pathname.includes('curso')) {
@@ -147,8 +153,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
         messages: { id: number; message: string; sender: string }[];
       } = { messages: [] };
       try {
-        if (conversation.id !== null) {
+        if (conversation.id !== null && conversation.id < 1000000000000) {
           chats = await getConversationWithMessages(conversation.id);
+        } else {
+          console.log('ID temporal o null, no ejecutando consulta SQL');
         }
 
         console.log('Datos: ' + conversation.id + ' ' + conversation.id);
