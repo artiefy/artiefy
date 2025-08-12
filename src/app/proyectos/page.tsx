@@ -26,7 +26,7 @@ import {
 import { FaFolderOpen } from 'react-icons/fa';
 
 import { Header } from '~/components/estudiantes/layout/Header';
-import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
+import _ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import ModalProjectInfo from '~/components/projects/Modals/ModalProjectInfo';
 import {
   Avatar,
@@ -35,14 +35,8 @@ import {
 } from '~/components/projects/ui/avatar';
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
-import {
-  Card,
-  CardContent,
-  //  CardFooter,
-  CardHeader,
-} from '~/components/projects/ui/card';
+import { Card, CardContent, CardHeader } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
-import { ScrollArea } from '~/components/projects/ui/scroll-area';
 // Si usas NextAuth:
 // import { useSession } from "next-auth/react";
 
@@ -114,7 +108,10 @@ async function fetchPublicProjects(): Promise<PublicProject[]> {
 }
 
 // Utilidad para SelectItem
-function SelectItem({ children, ...props }: any) {
+function SelectItem({
+  children,
+  ...props
+}: React.PropsWithChildren<{ value: string }>) {
   return (
     <RadixSelect.Item
       {...props}
@@ -138,10 +135,6 @@ export default function Component() {
   const [selectedProject, setSelectedProject] = useState<PublicProject | null>(
     null
   );
-  const [integrantesModalOpen, setIntegrantesModalOpen] = useState<
-    number | null
-  >(null);
-  const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Clerk:
   const { user } = useUser();
@@ -308,32 +301,6 @@ export default function Component() {
 
   // Verificar si hay filtros activos
   const hasActiveFilters = selectedCategory !== 'all' || selectedType !== 'all';
-
-  // Cargar la cantidad de inscritos para todos los proyectos al cargar la lista
-  useEffect(() => {
-    const fetchAllInscritos = async () => {
-      const newMap: Record<number, number> = {};
-      await Promise.all(
-        projects.map(async (project) => {
-          try {
-            const res = await fetch(
-              `/api/projects/taken/count?projectId=${project.id}`
-            );
-            if (res.ok) {
-              const data: { count: number } = await res.json();
-              newMap[project.id] = data.count ?? 0;
-            } else {
-              newMap[project.id] = 0;
-            }
-          } catch {
-            newMap[project.id] = 0;
-          }
-        })
-      );
-      setInscritosMap(newMap);
-    };
-    if (projects.length > 0) fetchAllInscritos();
-  }, [projects]);
 
   // Close sidebar when clicking outside on mobile
   const closeSidebar = () => setSidebarOpen(false);
@@ -818,8 +785,7 @@ export default function Component() {
                               {project.name}
                             </h2>
                             <p className="line-clamp-3 text-sm leading-relaxed text-slate-300 md:line-clamp-none">
-                              {project.planteamiento ??
-                                'Sin descripción'}
+                              {project.planteamiento ?? 'Sin descripción'}
                             </p>
                           </div>
 

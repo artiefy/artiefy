@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { GetObjectCommand,S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { projectActivityDeliveries } from '~/server/db/schema';
@@ -19,6 +19,19 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+
+// Define the Delivery type for type safety
+interface Delivery {
+  documentKey?: string | null;
+  imageKey?: string | null;
+  videoKey?: string | null;
+  compressedFileKey?: string | null;
+  documentName?: string | null;
+  imageName?: string | null;
+  videoName?: string | null;
+  compressedFileName?: string | null;
+  // ...other fields if needed...
+}
 
 // GET - Obtener URL firmada para un archivo específico
 export async function GET(
@@ -102,16 +115,16 @@ export async function GET(
   }
 }
 
-function getFileNameByType(delivery: any, fileType: string): string {
+function getFileNameByType(delivery: Delivery, fileType: string): string {
   switch (fileType) {
     case 'document':
-      return delivery.documentName || 'Documento';
+      return delivery.documentName ?? 'Documento';
     case 'image':
-      return delivery.imageName || 'Imagen';
+      return delivery.imageName ?? 'Imagen';
     case 'video':
-      return delivery.videoName || 'Video';
+      return delivery.videoName ?? 'Video';
     case 'compressed':
-      return delivery.compressedFileName || 'Archivo comprimido';
+      return delivery.compressedFileName ?? 'Archivo comprimido';
     default:
       return 'Archivo';
   }

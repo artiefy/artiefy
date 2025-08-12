@@ -11,7 +11,7 @@ const respondWithError = (message: string, status: number) =>
 
 // GET - Obtener todas las entregas de una actividad
 export async function GET(
-  req: Request,
+  _req: Request,
   context: {
     params: Promise<{
       id: string;

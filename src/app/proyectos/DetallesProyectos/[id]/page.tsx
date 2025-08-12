@@ -8,17 +8,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs'; // Importar useUser de Clerk
 import {
   AlertCircle,
-  ArrowLeft,
   Calendar,
   CheckCircle,
   Clock,
   Download,
   Edit,
-  Eye, // Agregar ícono de reload
-  EyeOff,
   RotateCw,
   Trash2,
-  User,
   Users,
 } from 'lucide-react';
 
@@ -41,12 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/projects/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '~/components/projects/ui/tabs';
+import { Tabs, TabsContent } from '~/components/projects/ui/tabs';
 import {
   getProjectById,
   ProjectDetail,
@@ -58,6 +49,37 @@ import ModalConfirmacionEliminacion from '../../../../components/projects/Modals
 import ModalIntegrantesProyectoInfo from '../../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
 import ModalResumen from '../../../../components/projects/Modals/ModalResumen';
 import ModalSolicitudesParticipacion from '../../../../components/projects/Modals/ModalSolicitudesParticipacion';
+
+// Define a type for project activity delivery to avoid 'any'
+interface ProjectActivityDelivery {
+  documentKey?: string | null;
+  documentName?: string | null;
+  imageKey?: string | null;
+  imageName?: string | null;
+  videoKey?: string | null;
+  videoName?: string | null;
+  compressedFileKey?: string | null;
+  compressedFileName?: string | null;
+  comentario?: string | null;
+  entregaUrl?: string | null;
+  entregado?: boolean | number | string;
+  aprobado?: boolean | number | string | null;
+  feedback?: string | null;
+  [key: string]: unknown;
+}
+
+// Add missing type definition for ObjetivoEspecifico
+interface ObjetivoEspecifico {
+  id?: number | string;
+  description?: string;
+  title?: string;
+  name?: string;
+  actividades?: {
+    id?: number;
+    descripcion?: string;
+    meses?: number[];
+  }[];
+}
 
 export default function ProjectDetails() {
   const { user, isLoaded } = useUser(); // Usar Clerk para obtener usuario
@@ -77,15 +99,20 @@ export default function ProjectDetails() {
   );
   const [_categoria, setCategoria] = useState<Category | null>(null);
   const [inscritos, setInscritos] = useState<number>(0);
-  const [integrantes, setIntegrantes] = useState<any[]>([]);
+  const [integrantes, setIntegrantes] = useState<
+    {
+      id: string | number;
+      nombre: string;
+      rol: string;
+      especialidad: string;
+      email: string;
+      github?: string;
+      linkedin?: string;
+    }[]
+  >([]);
 
   // Nuevo estado para userId - ahora usando Clerk
   const [userId, setUserId] = useState<string>('');
-
-  // Estado para usuarios responsables
-  const [usersResponsables, setUsersResponsables] = useState<
-    { id: string; name: string }[]
-  >([]);
 
   // Estado para el tipo de visualización del cronograma
   const [cronogramaTipo, setCronogramaTipo] = useState<
@@ -94,7 +121,7 @@ export default function ProjectDetails() {
 
   // Estado para entregas de actividades
   const [entregasActividades, setEntregasActividades] = useState<
-    Record<number, any>
+    Record<number, ProjectActivityDelivery>
   >({});
 
   // NUEVO: Estado para controlar qué archivo se está descargando
@@ -111,8 +138,6 @@ export default function ProjectDetails() {
   const [comentarioPublicar, setComentarioPublicar] = useState('');
   // Nuevo estado para loading del botón de publicar
   const [publicandoProyecto, setPublicandoProyecto] = useState(false);
-  // Nuevo estado para despublicar
-  const [despublicandoProyecto, setDespublicandoProyecto] = useState(false);
 
   // Función para recargar el contador de solicitudes pendientes
   const recargarSolicitudesPendientes = async () => {
@@ -134,11 +159,6 @@ export default function ProjectDetails() {
     }
   };
 
-  // Función para abrir el modal de publicar proyecto
-  const handleAbrirModalPublicar = () => {
-    setModalPublicarOpen(true);
-  };
-
   // Obtener userId de Clerk cuando esté disponible
   useEffect(() => {
     if (isLoaded && user) {
@@ -146,22 +166,6 @@ export default function ProjectDetails() {
       console.log('Usuario logueado:', user.id); // Debug
     }
   }, [isLoaded, user]);
-
-  // Obtener todos los usuarios responsables al cargar el componente
-  useEffect(() => {
-    async function fetchResponsables() {
-      try {
-        const res = await fetch('/api/projects/UsersResponsable');
-        if (res.ok) {
-          const data = await res.json();
-          setUsersResponsables(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        setUsersResponsables([]);
-      }
-    }
-    fetchResponsables();
-  }, []);
 
   useEffect(() => {
     console.log('useEffect DetalleProyectoPage ejecutado');
@@ -254,11 +258,15 @@ export default function ProjectDetails() {
                   ) {
                     id = idValue;
                   } else if (idValue && typeof idValue === 'object') {
-                    id =
-                      typeof (idValue as { id?: unknown })?.id === 'string' ||
-                      typeof (idValue as { id?: unknown })?.id === 'number'
-                        ? (idValue as { id?: string | number }).id!
-                        : '';
+                    const nestedId = (idValue as { id?: unknown })?.id;
+                    if (
+                      typeof nestedId === 'string' ||
+                      typeof nestedId === 'number'
+                    ) {
+                      id = nestedId;
+                    } else {
+                      id = '';
+                    }
                   } else {
                     id = '';
                   }
@@ -290,20 +298,13 @@ export default function ProjectDetails() {
                   }
 
                   const integranteFinal = {
-                    id,
-                    nombre: (userInfo.name ??
-                      obj?.nombre ??
-                      obj?.name ??
-                      '') as string,
+                    id, // <-- always string | number
+                    nombre: (userInfo.name ?? obj?.nombre ?? obj?.name ?? '') as string,
                     rol: (obj?.rol ?? obj?.role ?? '') as string,
-                    especialidad: (userInfo.especialidad ??
-                      obj?.especialidad ??
-                      '') as string,
+                    especialidad: (userInfo.especialidad ?? obj?.especialidad ?? '') as string,
                     email: (userInfo.email ?? obj?.email ?? '') as string,
                     github: (userInfo.github ?? obj?.github ?? '') as string,
-                    linkedin: (userInfo.linkedin ??
-                      obj?.linkedin ??
-                      '') as string,
+                    linkedin: (userInfo.linkedin ?? obj?.linkedin ?? '') as string,
                   };
                   // Log del resultado final de cada integrante
                   console.log('Integrante final:', integranteFinal);
@@ -355,16 +356,8 @@ export default function ProjectDetails() {
     setLoading(false);
   };
 
-  // Construir la URL de la imagen usando la misma lógica que en la página de proyectos
-  const projectImageUrl = React.useMemo(() => {
-    if (!project?.coverImageKey) return null;
-
-    // Usar la misma lógica que en la página de proyectos
-    return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`;
-  }, [project?.coverImageKey]);
-
   // Detectar el tipo de cronograma usando el campo tipo_visualizacion si existe
-  const cronogramaInfo = React.useMemo(() => {
+  /* const cronogramaInfo = React.useMemo(() => {
     if (!project?.actividades?.length)
       return { tipo: 'sin_datos', maxUnidades: 0 };
 
@@ -421,7 +414,7 @@ export default function ProjectDetails() {
     }
 
     return { tipo, maxUnidades };
-  }, [project]);
+  }, [project]); */
 
   // Genera las cabeceras según el tipo seleccionado y las fechas reales del proyecto
   const unidadesHeader = React.useMemo(() => {
@@ -508,168 +501,20 @@ export default function ProjectDetails() {
     project?.actividades,
   ]);
 
-  // Publicar o despublicar proyecto
-  const handleTogglePublicarProyecto = async () => {
-    if (!projectId) return;
-    setDespublicandoProyecto(true); // Mostrar loading
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isPublic: !project?.isPublic }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setProject((prev) =>
-          prev
-            ? {
-                ...prev,
-                isPublic: updated.isPublic,
-                publicComment: updated.publicComment ?? prev.publicComment,
-              }
-            : prev
-        );
-      } else {
-        alert('No se pudo actualizar el estado público del proyecto');
-      }
-    } catch {
-      alert('Error al actualizar el estado público del proyecto');
-    } finally {
-      setDespublicandoProyecto(false); // Ocultar loading
-    }
-  };
-
   // Define una interfaz para el proyecto actualizado
-  interface UpdatedProjectData {
-    name?: string;
-    planteamiento?: string;
-    justificacion?: string;
-    objetivo_general?: string;
-    objetivos_especificos?: string[];
-    actividades?: {
-      id?: number;
-      descripcion: string;
-      meses: number[];
-      responsibleUserId?: string;
-      hoursPerDay?: number;
-    }[];
-    type_project?: string;
-    categoryId?: number;
-    coverImageKey?: string;
-    fechaInicio?: string;
-    fechaFin?: string;
-    tipoVisualizacion?: 'meses' | 'dias';
-  }
-
-  // Validación similar a la creación de proyecto
-  const validateProjectData = (data: UpdatedProjectData) => {
-    console.log('Validando datos del proyecto:', data);
-    if (
-      !data.name ||
-      !data.planteamiento ||
-      !data.justificacion ||
-      !data.objetivo_general ||
-      !data.fechaInicio ||
-      !data.fechaFin ||
-      !data.type_project ||
-      !data.categoryId ||
-      !data.objetivos_especificos ||
-      data.objetivos_especificos.length === 0 ||
-      !data.actividades ||
-      data.actividades.length === 0
-    ) {
-      console.warn('Validación fallida: faltan campos requeridos', data);
-      alert(
-        'Por favor completa todos los campos requeridos, incluyendo título, categoría, planteamiento, justificación, objetivo general, fechas, al menos un objetivo específico y una actividad.'
-      );
-      return false;
-    }
-    if (new Date(data.fechaInicio) > new Date(data.fechaFin)) {
-      console.warn(
-        'Validación fallida: fecha de inicio mayor a fecha de fin',
-        data.fechaInicio,
-        data.fechaFin
-      );
-      alert('La fecha de inicio no puede ser posterior a la fecha de fin.');
-      return false;
-    }
-    console.log('Validación exitosa');
-    return true;
-  };
-
-  const handleUpdateProject = (updatedProjectData: UpdatedProjectData) => {
-    console.log('Datos recibidos para actualizar:', updatedProjectData);
-    // Validar antes de actualizar
-    if (!validateProjectData(updatedProjectData)) return;
-
-    setProject((prev) => {
-      if (!prev) return prev;
-
-      let objetivos_especificos = prev.objetivos_especificos;
-      // Si updatedProjectData.objetivos_especificos es un array de string, conviértelo a la estructura esperada
-      if (
-        Array.isArray(updatedProjectData.objetivos_especificos) &&
-        updatedProjectData.objetivos_especificos.length > 0 &&
-        typeof updatedProjectData.objetivos_especificos[0] === 'string'
-      ) {
-        objetivos_especificos = updatedProjectData.objetivos_especificos.map(
-          (desc, idx) => ({
-            id: idx,
-            description: desc,
-            actividades: [],
-          })
-        );
-      } else if (
-        Array.isArray(updatedProjectData.objetivos_especificos) &&
-        typeof updatedProjectData.objetivos_especificos[0] === 'object'
-      ) {
-        objetivos_especificos =
-          updatedProjectData.objetivos_especificos as unknown as typeof prev.objetivos_especificos;
-      }
-
-      // Asegura que cada actividad tenga un id y los campos opcionales
-      const actividadesActualizadas = updatedProjectData.actividades
-        ? updatedProjectData.actividades.map((act, idx) => ({
-            id: act.id ?? idx,
-            descripcion: act.descripcion,
-            meses: act.meses || [],
-            responsibleUserId: act.responsibleUserId ?? null,
-            hoursPerDay: act.hoursPerDay ?? null,
-          }))
-        : prev.actividades;
-
-      const updatedProject: ProjectDetail = {
-        ...prev,
-        name: updatedProjectData.name ?? prev.name,
-        planteamiento: updatedProjectData.planteamiento ?? prev.planteamiento,
-        justificacion: updatedProjectData.justificacion ?? prev.justificacion,
-        objetivo_general:
-          updatedProjectData.objetivo_general ?? prev.objetivo_general,
-        objetivos_especificos,
-        actividades: actividadesActualizadas,
-        type_project: updatedProjectData.type_project ?? prev.type_project,
-        categoryId: updatedProjectData.categoryId ?? prev.categoryId,
-        coverImageKey: updatedProjectData.coverImageKey ?? prev.coverImageKey,
-        fecha_inicio: updatedProjectData.fechaInicio ?? prev.fecha_inicio,
-        fecha_fin: updatedProjectData.fechaFin ?? prev.fecha_fin,
-        tipo_visualizacion:
-          updatedProjectData.tipoVisualizacion ?? prev.tipo_visualizacion,
-        updatedAt: new Date().toISOString(),
-      };
-
-      console.log('Proyecto actualizado en setProject:', updatedProject);
-      return updatedProject;
-    });
-  };
 
   // Mapa de actividades por id para acceso rápido
   const actividadesPorId = React.useMemo(() => {
-    const map: Record<string, any> = {};
+    const map: Record<string, unknown> = {};
     if (project?.actividades) {
       project.actividades.forEach((act) => {
-        if (act.id !== undefined) {
+        if (
+          typeof act === 'object' &&
+          act &&
+          'id' in act &&
+          act.id !== undefined &&
+          (typeof act.id === 'string' || typeof act.id === 'number')
+        ) {
           map[String(act.id)] = act;
         }
       });
@@ -684,40 +529,55 @@ export default function ProjectDetails() {
   ) {
     if (id) {
       const act = actividadesPorId[String(id)];
-      if (act?.responsibleUserId) {
-        const responsable = usersResponsables.find(
-          (u) => String(u.id) === String(act.responsibleUserId)
-        );
-        return responsable?.name ?? '-';
+      if (
+        act &&
+        typeof act === 'object' &&
+        act !== null &&
+        'responsibleUserId' in act &&
+        typeof (act as { responsibleUserId?: string | number })
+          .responsibleUserId !== 'undefined'
+      ) {
+        return (act as { responsibleUserId?: string | number })
+          .responsibleUserId;
       }
     }
-    // Fallback: buscar por descripción si no hay id
     if (descripcion) {
       const act = Object.values(actividadesPorId).find(
-        (a) => a.descripcion === descripcion
+        (a) =>
+          typeof a === 'object' &&
+          a !== null &&
+          'descripcion' in a &&
+          (a as { descripcion?: string }).descripcion === descripcion
       );
-      if (act?.responsibleUserId) {
-        const responsable = usersResponsables.find(
-          (u) => String(u.id) === String(act.responsibleUserId)
-        );
-        return responsable?.name ?? '-';
+      if (
+        act &&
+        typeof act === 'object' &&
+        act !== null &&
+        'responsibleUserId' in act &&
+        typeof (act as { responsibleUserId?: string | number })
+          .responsibleUserId !== 'undefined'
+      ) {
+        return (act as { responsibleUserId?: string | number })
+          .responsibleUserId;
       }
     }
     return '-';
   }
 
   // Calcular la duración de cada actividad (por ejemplo, cantidad de meses/días)
-  const duracionesActividad: Record<string, number> = React.useMemo(() => {
+
+  const _duracionesActividad: Record<string, number> = React.useMemo(() => {
     const map: Record<string, number> = {};
     if (project && Array.isArray(project.objetivos_especificos)) {
-      project.objetivos_especificos.forEach((obj, objIdx) => {
+      project.objetivos_especificos.forEach((obj) => {
         if (Array.isArray(obj.actividades)) {
-          obj.actividades.forEach((act: any, actIdx: number) => {
-            const key =
-              typeof act.id !== 'undefined' ? String(act.id) : String(actIdx);
-            // Duración: cantidad de elementos en act.meses (puede ser días o meses según tipo)
-            map[key] = Array.isArray(act.meses) ? act.meses.length : 0;
-          });
+          obj.actividades.forEach(
+            (act: { meses?: number[]; id?: number | string }, actIdx: number) => {
+              if (act && Array.isArray(act.meses)) {
+                map[String(act.id ?? actIdx)] = act.meses.length;
+              }
+            }
+          );
         }
       });
     }
@@ -725,7 +585,7 @@ export default function ProjectDetails() {
   }, [project]);
 
   // Helper para obtener el índice del objetivo y actividad
-  function getOrdenActividad(act: any) {
+  function getOrdenActividad(act: unknown) {
     if (!project?.objetivos_especificos)
       return { objetivo: 9999, actividad: 9999 };
     for (let i = 0; i < project.objetivos_especificos.length; i++) {
@@ -733,16 +593,31 @@ export default function ProjectDetails() {
       if (Array.isArray(obj.actividades)) {
         for (let j = 0; j < obj.actividades.length; j++) {
           const a = obj.actividades[j];
-          // Compara por id si existe, si no por descripción
           if (
-            ('id' in a &&
-              'id' in act &&
-              a.id !== undefined &&
-              act.id !== undefined &&
-              String(a.id) === String(act.id)) ||
-            (a.descripcion &&
-              act.descripcion &&
-              a.descripcion === act.descripcion)
+            typeof a === 'object' &&
+            a !== null &&
+            typeof act === 'object' &&
+            act !== null &&
+            'id' in a &&
+            'id' in (act as object) &&
+            a.id !== undefined &&
+            (act as { id?: unknown }).id !== undefined &&
+            (typeof a.id === 'string' || typeof a.id === 'number') &&
+            (typeof (act as { id?: unknown }).id === 'string' ||
+              typeof (act as { id?: unknown }).id === 'number') &&
+            String(a.id) === String((act as { id?: unknown }).id)
+          ) {
+            return { objetivo: i, actividad: j };
+          }
+          if (
+            typeof a === 'object' &&
+            a !== null &&
+            typeof act === 'object' &&
+            act !== null &&
+            'descripcion' in a &&
+            'descripcion' in (act as object) &&
+            (a as { descripcion?: unknown }).descripcion ===
+              (act as { descripcion?: unknown }).descripcion
           ) {
             return { objetivo: i, actividad: j };
           }
@@ -756,13 +631,22 @@ export default function ProjectDetails() {
   const actividadesOrdenadas = React.useMemo(() => {
     if (!project?.actividades) return [];
     return [...project.actividades].sort((a, b) => {
-      const ordenA = getOrdenActividad(a);
-      const ordenB = getOrdenActividad(b);
+      const aId =
+        typeof a.id === 'string' || typeof a.id === 'number' ? a.id : undefined;
+      const bId =
+        typeof b.id === 'string' || typeof b.id === 'number' ? b.id : undefined;
+      const ordenA = getOrdenActividad(
+        aId ? ({ ...a, id: aId } as unknown) : a
+      );
+      const ordenB = getOrdenActividad(
+        bId ? ({ ...b, id: bId } as unknown) : b
+      );
       if (ordenA.objetivo !== ordenB.objetivo) {
         return ordenA.objetivo - ordenB.objetivo;
       }
       return ordenA.actividad - ordenB.actividad;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.actividades, project?.objetivos_especificos]);
 
   // Estado y funciones para el modal de entrega de actividad
@@ -848,28 +732,28 @@ export default function ProjectDetails() {
         // Agregar archivos existentes con sus URLs de descarga
         if (entregaExistente.documentKey) {
           archivos.push({
-            name: entregaExistente.documentName || 'Documento',
+            name: entregaExistente.documentName ?? 'Documento',
             url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.documentKey}`,
             type: 'document',
           });
         }
         if (entregaExistente.imageKey) {
           archivos.push({
-            name: entregaExistente.imageName || 'Imagen',
+            name: entregaExistente.imageName ?? 'Imagen',
             url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.imageKey}`,
             type: 'image',
           });
         }
         if (entregaExistente.videoKey) {
           archivos.push({
-            name: entregaExistente.videoName || 'Video',
+            name: entregaExistente.videoName ?? 'Video',
             url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.videoKey}`,
             type: 'video',
           });
         }
         if (entregaExistente.compressedFileKey) {
           archivos.push({
-            name: entregaExistente.compressedFileName || 'Archivo comprimido',
+            name: entregaExistente.compressedFileName ?? 'Archivo comprimido',
             url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${entregaExistente.compressedFileKey}`,
             type: 'compressed',
           });
@@ -877,7 +761,7 @@ export default function ProjectDetails() {
 
         setDatosEntregaEdicion({
           archivos,
-          comentario: entregaExistente.comentario || '',
+          comentario: entregaExistente.comentario ?? '',
         });
       }
     } else {
@@ -890,7 +774,7 @@ export default function ProjectDetails() {
 
   // Función para verificar si el usuario puede entregar una actividad específica
   const puedeEntregarActividad = React.useCallback(
-    (actividad: any) => {
+    (actividad: unknown) => {
       if (!userId || !project || !isLoaded) {
         console.log('No puede entregar - falta información:', {
           userId,
@@ -900,12 +784,21 @@ export default function ProjectDetails() {
         return false;
       }
 
+      // Use type guard for responsibleUserId
+      const responsibleUserId =
+        typeof actividad === 'object' &&
+        actividad !== null &&
+        'responsibleUserId' in actividad
+          ? (actividad as { responsibleUserId?: string | null })
+              .responsibleUserId
+          : undefined;
+
       console.log('Verificando permisos entrega:', {
         userId,
         projectUserId: project.userId,
-        activityResponsibleId: actividad.responsibleUserId,
+        activityResponsibleId: responsibleUserId,
         esResponsableProyecto: project.userId === userId,
-        esResponsableActividad: actividad.responsibleUserId === userId,
+        esResponsableActividad: responsibleUserId === userId,
       });
 
       // El responsable del proyecto puede entregar cualquier actividad
@@ -915,7 +808,7 @@ export default function ProjectDetails() {
       }
 
       // El responsable de la actividad específica puede entregarla
-      if (actividad.responsibleUserId === userId) {
+      if (responsibleUserId === userId) {
         console.log('Puede entregar: es responsable de la actividad');
         return true;
       }
@@ -969,91 +862,97 @@ export default function ProjectDetails() {
   }, [userId, project, isLoaded]);
 
   // Función para obtener el estado de una actividad basado en las entregas - MEJORADO
-  const getEstadoActividad = (actividadId?: number) => {
-    console.log(`🔍 === getEstadoActividad para ID: ${actividadId} ===`);
+  const getEstadoActividad = React.useCallback(
+    (actividadId?: number) => {
+      console.log(`🔍 === getEstadoActividad para ID: ${actividadId} ===`);
 
-    if (!actividadId) {
-      console.log('❌ Sin ID de actividad');
+      if (!actividadId) {
+        console.log('❌ Sin ID de actividad');
+        return { estado: 'pendiente', entregado: false, aprobado: false };
+      }
+
+      const entrega =
+        typeof actividadId === 'number'
+          ? entregasActividades[actividadId]
+          : undefined;
+      console.log(`📦 Entrega encontrada:`, entrega);
+      console.log(`📦 Tipo de entrega:`, typeof entrega);
+      console.log(`📦 Keys de entrega:`, entrega ? Object.keys(entrega) : 'N/A');
+
+      if (!entrega) {
+        console.log(`ℹ️ No hay entrega registrada para actividad ${actividadId}`);
+        return { estado: 'pendiente', entregado: false, aprobado: false };
+      }
+
+      // Log detallado de los campos de aprobación
+      console.log(`📋 Análisis de aprobación:`, {
+        aprobado_raw: entrega.aprobado,
+        aprobado_type: typeof entrega.aprobado,
+        aprobado_string: String(entrega.aprobado),
+        entregado_raw: entrega.entregado,
+        entregado_type: typeof entrega.entregado,
+      });
+
+      // Verificación más robusta del estado de aprobación
+      const aprobadoValue = entrega?.aprobado;
+
+      // Estado aprobado (valores truthy para aprobación)
+      if (
+        aprobadoValue === true ||
+        aprobadoValue === 1 ||
+        aprobadoValue === '1' ||
+        aprobadoValue === 'true'
+      ) {
+        console.log(`✅ Actividad ${actividadId} está APROBADA`);
+        return { estado: 'completada', entregado: true, aprobado: true };
+      }
+
+      // Estado rechazado (valores falsy explícitos para rechazo)
+      if (
+        aprobadoValue === false ||
+        aprobadoValue === 0 ||
+        aprobadoValue === '0' ||
+        aprobadoValue === 'false'
+      ) {
+        console.log(`❌ Actividad ${actividadId} está RECHAZADA`);
+        return { estado: 'rechazada', entregado: true, aprobado: false };
+      }
+
+      // Verificar si hay una entrega válida (archivos o comentario)
+      const tieneArchivos = Boolean(
+        entrega?.documentKey ??
+          entrega?.imageKey ??
+          entrega?.videoKey ??
+          entrega?.compressedFileKey
+      );
+      const tieneComentario = Boolean(
+        entrega?.comentario && entrega.comentario.trim() !== ''
+      );
+      const marcadoComoEntregado = Boolean(
+        entrega?.entregado === true ||
+          entrega?.entregado === 1 ||
+          entrega?.entregado === '1'
+      );
+
+      console.log(`🔍 Verificación de entrega:`, {
+        tieneArchivos,
+        tieneComentario,
+        marcadoComoEntregado,
+      });
+
+      const tieneEntrega =
+        tieneArchivos || tieneComentario || marcadoComoEntregado;
+
+      if (tieneEntrega) {
+        console.log(`📋 Actividad ${actividadId} tiene entrega EN EVALUACIÓN`);
+        return { estado: 'en_evaluacion', entregado: true, aprobado: false };
+      }
+
+      console.log(`⏳ Actividad ${actividadId} está PENDIENTE`);
       return { estado: 'pendiente', entregado: false, aprobado: false };
-    }
-
-    const entrega = entregasActividades[actividadId];
-    console.log(`📦 Entrega encontrada:`, entrega);
-    console.log(`📦 Tipo de entrega:`, typeof entrega);
-    console.log(`📦 Keys de entrega:`, entrega ? Object.keys(entrega) : 'N/A');
-
-    if (!entrega) {
-      console.log(`ℹ️ No hay entrega registrada para actividad ${actividadId}`);
-      return { estado: 'pendiente', entregado: false, aprobado: false };
-    }
-
-    // Log detallado de los campos de aprobación
-    console.log(`📋 Análisis de aprobación:`, {
-      aprobado_raw: entrega.aprobado,
-      aprobado_type: typeof entrega.aprobado,
-      aprobado_string: String(entrega.aprobado),
-      entregado_raw: entrega.entregado,
-      entregado_type: typeof entrega.entregado,
-    });
-
-    // Verificación más robusta del estado de aprobación
-    const aprobadoValue = entrega.aprobado;
-
-    // Estado aprobado (valores truthy para aprobación)
-    if (
-      aprobadoValue === true ||
-      aprobadoValue === 1 ||
-      aprobadoValue === '1' ||
-      aprobadoValue === 'true'
-    ) {
-      console.log(`✅ Actividad ${actividadId} está APROBADA`);
-      return { estado: 'completada', entregado: true, aprobado: true };
-    }
-
-    // Estado rechazado (valores falsy explícitos para rechazo)
-    if (
-      aprobadoValue === false ||
-      aprobadoValue === 0 ||
-      aprobadoValue === '0' ||
-      aprobadoValue === 'false'
-    ) {
-      console.log(`❌ Actividad ${actividadId} está RECHAZADA`);
-      return { estado: 'rechazada', entregado: true, aprobado: false };
-    }
-
-    // Verificar si hay una entrega válida (archivos o comentario)
-    const tieneArchivos = Boolean(
-      entrega.documentKey ||
-        entrega.imageKey ||
-        entrega.videoKey ||
-        entrega.compressedFileKey
-    );
-    const tieneComentario = Boolean(
-      entrega.comentario && entrega.comentario.trim() !== ''
-    );
-    const marcadoComoEntregado = Boolean(
-      entrega.entregado === true ||
-        entrega.entregado === 1 ||
-        entrega.entregado === '1'
-    );
-
-    console.log(`🔍 Verificación de entrega:`, {
-      tieneArchivos,
-      tieneComentario,
-      marcadoComoEntregado,
-    });
-
-    const tieneEntrega =
-      tieneArchivos || tieneComentario || marcadoComoEntregado;
-
-    if (tieneEntrega) {
-      console.log(`📋 Actividad ${actividadId} tiene entrega EN EVALUACIÓN`);
-      return { estado: 'en_evaluacion', entregado: true, aprobado: false };
-    }
-
-    console.log(`⏳ Actividad ${actividadId} está PENDIENTE`);
-    return { estado: 'pendiente', entregado: false, aprobado: false };
-  };
+    },
+    [entregasActividades]
+  );
 
   // Cargar entregas existentes - MEJORADO CON MÁS DEBUGGING
   useEffect(() => {
@@ -1062,7 +961,7 @@ export default function ProjectDetails() {
         '❌ No se pueden cargar entregas - condiciones no cumplidas:',
         {
           hasActividades: !!project?.actividades?.length,
-          actividadesCount: project?.actividades?.length || 0,
+          actividadesCount: project?.actividades?.length ?? 0,
           isLoaded,
           projectId,
         }
@@ -1078,11 +977,11 @@ export default function ProjectDetails() {
       console.log('👤 User ID:', userId);
 
       try {
-        const entregas: Record<number, any> = {};
+        const entregas: Record<number, ProjectActivityDelivery> = {};
         const resultadosCarga: {
           actividadId: number;
           estado: string;
-          datos?: any;
+          datos?: unknown;
         }[] = [];
 
         for (const actividad of project.actividades) {
@@ -1103,49 +1002,56 @@ export default function ProjectDetails() {
               });
 
               if (res.ok) {
-                const entrega = await res.json();
+                const entrega: unknown = await res.json();
                 console.log(`📦 Datos RAW recibidos:`, entrega);
                 console.log(`📦 Tipo de datos:`, typeof entrega);
                 console.log(`📦 Es array:`, Array.isArray(entrega));
-                console.log(`📦 Keys del objeto:`, Object.keys(entrega || {}));
+                console.log(`📦 Keys del objeto:`, Object.keys(entrega ?? {}));
 
                 // MEJORADO: Validación más exhaustiva
-                if (entrega && typeof entrega === 'object') {
+                if (entrega && typeof entrega === 'object' && entrega !== null) {
+                  // Use type assertion for ProjectActivityDelivery
+                  const entregaObj = entrega as ProjectActivityDelivery;
                   // Log de cada campo importante
                   console.log(`📋 Análisis detallado de entrega:`, {
-                    id: entrega.id,
-                    entregado: entrega.entregado,
-                    aprobado: entrega.aprobado,
-                    documentKey: entrega.documentKey,
-                    imageKey: entrega.imageKey,
-                    videoKey: entrega.videoKey,
-                    compressedFileKey: entrega.compressedFileKey,
-                    comentario: entrega.comentario,
-                    feedback: entrega.feedback,
-                    userId: entrega.userId,
-                    activityId: entrega.activityId,
-                    createdAt: entrega.createdAt,
-                    updatedAt: entrega.updatedAt,
+                    id: entregaObj.id,
+                    entregado: entregaObj.entregado,
+                    aprobado: entregaObj.aprobado,
+                    documentKey: entregaObj.documentKey,
+                    imageKey: entregaObj.imageKey,
+                    videoKey: entregaObj.videoKey,
+                    compressedFileKey: entregaObj.compressedFileKey,
+                    comentario: entregaObj.comentario,
+                    feedback: entregaObj.feedback,
+                    userId: entregaObj.userId,
+                    activityId: entregaObj.activityId,
+                    createdAt: entregaObj.createdAt,
+                    updatedAt: entregaObj.updatedAt,
                   });
 
                   // Verificar múltiples indicadores de entrega válida
-                  const tieneId = Boolean(entrega.id);
+                  const tieneId = Boolean('id' in entregaObj && entregaObj.id);
                   const tieneArchivos = Boolean(
-                    entrega.documentKey ||
-                      entrega.imageKey ||
-                      entrega.videoKey ||
-                      entrega.compressedFileKey
+                    ('documentKey' in entregaObj && entregaObj.documentKey) ??
+                      ('imageKey' in entregaObj && entregaObj.imageKey) ??
+                      ('videoKey' in entregaObj && entregaObj.videoKey) ??
+                      ('compressedFileKey' in entregaObj && entregaObj.compressedFileKey)
                   );
                   const tieneComentario = Boolean(
-                    entrega.comentario && entrega.comentario.trim() !== ''
+                    'comentario' in entregaObj &&
+                      typeof entregaObj.comentario === 'string' &&
+                      entregaObj.comentario.trim() !== ''
                   );
                   const tieneEstadoEntregado = Boolean(
-                    entrega.entregado === true ||
-                      entrega.entregado === 1 ||
-                      entrega.entregado === '1'
+                    'entregado' in entregaObj &&
+                      (entregaObj.entregado === true ||
+                        entregaObj.entregado === 1 ||
+                        entregaObj.entregado === '1')
                   );
                   const tieneEstadoAprobacion =
-                    entrega.aprobado !== undefined && entrega.aprobado !== null;
+                    'aprobado' in entregaObj &&
+                    entregaObj.aprobado !== undefined &&
+                    entregaObj.aprobado !== null;
 
                   console.log(`🔍 Validaciones individuales:`, {
                     tieneId,
@@ -1166,34 +1072,31 @@ export default function ProjectDetails() {
 
                   if (esEntregaValida) {
                     // Normalizar y limpiar datos
-                    const entregaNormalizada = {
-                      ...entrega,
-                      // Asegurar que entregado sea boolean
+                    const entregaNormalizada: ProjectActivityDelivery = {
+                      ...entregaObj,
                       entregado: Boolean(
-                        entrega.entregado === true ||
-                          entrega.entregado === 1 ||
-                          entrega.entregado === '1' ||
+                        entregaObj.entregado === true ||
+                          entregaObj.entregado === 1 ||
+                          entregaObj.entregado === '1' ||
                           tieneArchivos ||
                           tieneComentario
                       ),
-                      // Normalizar aprobado
                       aprobado:
-                        entrega.aprobado === true ||
-                        entrega.aprobado === 1 ||
-                        entrega.aprobado === '1'
+                        entregaObj.aprobado === true ||
+                        entregaObj.aprobado === 1 ||
+                        entregaObj.aprobado === '1'
                           ? true
-                          : entrega.aprobado === false ||
-                              entrega.aprobado === 0 ||
-                              entrega.aprobado === '0'
-                            ? false
-                            : null,
-                      // Asegurar campos de archivos
-                      documentKey: entrega.documentKey || null,
-                      imageKey: entrega.imageKey || null,
-                      videoKey: entrega.videoKey || null,
-                      compressedFileKey: entrega.compressedFileKey || null,
-                      comentario: entrega.comentario || '',
-                      feedback: entrega.feedback || null,
+                          : entregaObj.aprobado === false ||
+                            entregaObj.aprobado === 0 ||
+                            entregaObj.aprobado === '0'
+                          ? false
+                          : null,
+                      documentKey: 'documentKey' in entregaObj ? (entregaObj.documentKey ?? null) : null,
+                      imageKey: 'imageKey' in entregaObj ? (entregaObj.imageKey ?? null) : null,
+                      videoKey: 'videoKey' in entregaObj ? (entregaObj.videoKey ?? null) : null,
+                      compressedFileKey: 'compressedFileKey' in entregaObj ? (entregaObj.compressedFileKey ?? null) : null,
+                      comentario: 'comentario' in entregaObj ? (entregaObj.comentario ?? '') : '',
+                      feedback: 'feedback' in entregaObj ? (entregaObj.feedback ?? null) : null,
                     };
 
                     entregas[actividad.id] = entregaNormalizada;
@@ -1202,18 +1105,13 @@ export default function ProjectDetails() {
                       estado: 'ENCONTRADA',
                       datos: entregaNormalizada,
                     });
-
-                    console.log(
-                      `✅ Entrega VÁLIDA guardada:`,
-                      entregaNormalizada
-                    );
                   } else {
                     resultadosCarga.push({
                       actividadId: actividad.id,
                       estado: 'DATOS_INSUFICIENTES',
-                      datos: entrega,
+                      datos: entregaObj,
                     });
-                    console.log(`❌ Entrega con datos insuficientes:`, entrega);
+                    console.log(`❌ Entrega con datos insuficientes:`, entregaObj);
                   }
                 } else {
                   resultadosCarga.push({
@@ -1283,26 +1181,27 @@ export default function ProjectDetails() {
     };
 
     fetchEntregas();
-  }, [project?.actividades, projectId, isLoaded, userId]); // Agregar userId como dependencia
+  }, [project?.actividades, projectId, isLoaded, userId, project]); // Add 'project' to exhaustive-deps
 
   // Función de depuración para verificar estado actual
-  const debugEstadoEntregas = () => {
+  const debugEstadoEntregas = React.useCallback(() => {
     console.log('\n🐛 === DEBUG ESTADO ACTUAL ===');
     console.log('📦 entregasActividades:', entregasActividades);
     console.log('📋 project.actividades:', project?.actividades);
 
     if (project?.actividades) {
       project.actividades.forEach((act) => {
-        if (act.id) {
-          const entrega = entregasActividades[act.id];
-          const estado = getEstadoActividad(act.id);
-          console.log(`🎯 Actividad ${act.id}: ${act.descripcion}`);
-          console.log(`  └─ Entrega:`, entrega);
-          console.log(`  └─ Estado calculado:`, estado);
-        }
+        const entrega =
+          typeof act.id === 'number' ? entregasActividades[act.id] : undefined;
+        const estado = getEstadoActividad(
+          typeof act.id === 'number' ? act.id : undefined
+        );
+        console.log(`🎯 Actividad ${act.id}: ${act.descripcion}`);
+        console.log(`  └─ Entrega:`, entrega);
+        console.log(`  └─ Estado calculado:`, estado);
       });
     }
-  };
+  }, [entregasActividades, project?.actividades, getEstadoActividad]);
 
   // Llamar debug en desarrollo
   useEffect(() => {
@@ -1310,7 +1209,7 @@ export default function ProjectDetails() {
       const timer = setTimeout(debugEstadoEntregas, 2000);
       return () => clearTimeout(timer);
     }
-  }, [entregasActividades, project?.actividades]);
+  }, [entregasActividades, project?.actividades, debugEstadoEntregas]);
 
   // Función para entregar actividad (mejor manejo de errores y logs)
   const handleEntregarActividad = async (
@@ -1368,7 +1267,7 @@ export default function ProjectDetails() {
           (act) => act.descripcion === actividadSeleccionada.descripcion
         );
 
-        if (actividadEncontrada?.id) {
+        if (actividadEncontrada && typeof actividadEncontrada.id === 'number') {
           console.log(
             '✅ Actividad encontrada por descripción:',
             actividadEncontrada
@@ -1475,18 +1374,20 @@ export default function ProjectDetails() {
         console.log(`📋 Presigned URL obtenida para ${fileType}:`, uploadData);
 
         const { url, fields, key, coverImageKey } = uploadData;
-        const finalKey = coverImageKey || key;
+        const finalKey = coverImageKey ?? key;
 
         // 2. Subir archivo a S3 usando presigned POST
         const formData = new FormData();
-        Object.entries(fields).forEach(([k, v]) => {
-          if (typeof v === 'string') {
-            formData.append(k, v);
-          }
-        });
+        if (fields && typeof fields === 'object' && !Array.isArray(fields)) {
+          Object.entries(fields as Record<string, string>).forEach(([k, v]) => {
+            if (typeof v === 'string') {
+              formData.append(k, v);
+            }
+          });
+        }
         formData.append('file', file);
 
-        const s3Upload = await fetch(url, {
+        const s3Upload = await fetch(String(url), {
           method: 'POST',
           body: formData,
         });
@@ -1553,7 +1454,10 @@ export default function ProjectDetails() {
       }
 
       // Crear o actualizar la entrega
-      const entregaExistente = entregasActividades[actividadSeleccionada.id];
+      const entregaExistente =
+        typeof actividadSeleccionada.id === 'number'
+          ? entregasActividades[actividadSeleccionada.id]
+          : undefined;
       const method = entregaExistente ? 'PUT' : 'POST';
 
       console.log('=== GUARDANDO EN BASE DE DATOS ===');
@@ -1604,15 +1508,17 @@ export default function ProjectDetails() {
       console.log('✅ Entrega guardada exitosamente:', entregaActualizada);
 
       // CORREGIDO: Actualizar estado local asegurando que se resetee la aprobación
-      setEntregasActividades((prev: Record<number, any>) => ({
-        ...prev,
-        [actividadSeleccionada.id!]: {
-          ...entregaActualizada,
-          aprobado: null, // Asegurar que se resetee
-          feedback: null, // Asegurar que se resetee
-          entregado: true, // Asegurar que esté marcado como entregado
-        },
-      }));
+      setEntregasActividades(
+        (prev: Record<number, ProjectActivityDelivery>) => ({
+          ...prev,
+          [typeof actividadSeleccionada.id === 'number' ? actividadSeleccionada.id : 0]: {
+            ...entregaActualizada,
+            aprobado: null,
+            feedback: null,
+            entregado: true,
+          },
+        })
+      );
 
       setModalEntregaOpen(false);
       setActividadSeleccionada(null);
@@ -1662,17 +1568,18 @@ export default function ProjectDetails() {
         }
       );
 
-      if (!res.ok) throw new Error('Error al procesar aprobación');
+      if (!res.ok) {
+        alert('Error al aprobar/rechazar entrega');
+        return;
+      }
 
-      const result = await res.json();
-
-      // Actualizar estado local
-      setEntregasActividades((prev: Record<number, any>) => ({
+      const result: { message?: string; delivery?: ProjectActivityDelivery } =
+        await res.json();
+      setEntregasActividades((prev) => ({
         ...prev,
-        [actividadId]: result.delivery,
+        [actividadId]: result.delivery!,
       }));
-
-      alert(result.message);
+      alert(result.message ?? '');
     } catch (error) {
       console.error('Error aprobando entrega:', error);
       alert('Error al procesar la aprobación');
@@ -1707,15 +1614,28 @@ export default function ProjectDetails() {
         throw new Error(error);
       }
 
-      const result = await res.json();
-      console.log('✅ Respuesta de eliminación:', result);
-
+      const result: {
+        filesDeleted?: {
+          total: number;
+          successful: number;
+          failed: number;
+          details: {
+            file: string;
+            type: string;
+            key: string;
+            success: boolean;
+          }[];
+        };
+        message?: string;
+      } = await res.json();
       // Actualizar estado local eliminando completamente la entrega
-      setEntregasActividades((prev: Record<number, any>) => {
-        const updated = { ...prev };
-        delete updated[actividadId];
-        return updated;
-      });
+      setEntregasActividades(
+        (prev: Record<number, ProjectActivityDelivery>) => {
+          const newState = { ...prev };
+          delete newState[actividadId];
+          return newState;
+        }
+      );
 
       // Mostrar mensaje personalizado según el resultado
       let mensaje = '✅ Entrega eliminada exitosamente';
@@ -1725,12 +1645,11 @@ export default function ProjectDetails() {
         if (total > 0) {
           if (failed > 0) {
             mensaje += `\n⚠️ Advertencia: ${failed} archivo(s) no se pudieron eliminar de S3.`;
-            // Agregar detalles de los archivos fallidos
             if (Array.isArray(details) && details.length > 0) {
               mensaje += '\nArchivos no eliminados:\n';
               details
-                .filter((d: any) => d.success === false)
-                .forEach((d: any, idx: number) => {
+                .filter((d) => d.success === false)
+                .forEach((d) => {
                   mensaje += `  - ${d.file} [${d.type}]\n`;
                 });
             }
@@ -1747,41 +1666,6 @@ export default function ProjectDetails() {
       console.error('❌ Error eliminando entrega:', error);
       alert(
         `❌ Error al eliminar la entrega: ${(error as Error)?.message || 'Error desconocido'}`
-      );
-    }
-  };
-
-  // Función para descargar archivos de entrega
-  const handleDescargarArchivo = async (
-    actividadId: number,
-    tipoArchivo: 'document' | 'image' | 'video' | 'compressed',
-    userId: string
-  ) => {
-    try {
-      const res = await fetch(
-        `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?type=${tipoArchivo}&userId=${encodeURIComponent(userId)}`
-      );
-
-      if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
-      }
-
-      const { downloadUrl, fileName } = await res.json();
-
-      // Crear un enlace temporal para la descarga
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      console.log('Descarga iniciada:', fileName);
-    } catch (error) {
-      console.error('Error descargando archivo:', error);
-      alert(
-        `❌ Error al descargar el archivo: ${(error as Error)?.message || 'Error desconocido'}`
       );
     }
   };
@@ -1817,13 +1701,13 @@ export default function ProjectDetails() {
           // Crear enlace de descarga forzada
           const link = document.createElement('a');
           link.href = downloadUrl;
-          link.download = responseFileName || fileName;
+          link.download = responseFileName ?? fileName;
           link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
 
-          console.log(`✅ Descarga iniciada: ${responseFileName || fileName}`);
+          console.log(`✅ Descarga iniciada: ${responseFileName ?? fileName}`);
           return;
         }
       } catch (apiError) {
@@ -1871,10 +1755,10 @@ export default function ProjectDetails() {
 
   // Función para visualizar archivos (abre en una nueva pestaña)
   const handleVerArchivo = (
-    actividadId: number,
+    _actividadId: number,
     fileKey: string,
-    fileType: 'document' | 'image' | 'video' | 'compressed',
-    fileName: string
+    _fileType: 'document' | 'image' | 'video' | 'compressed',
+    _fileName: string
   ) => {
     // Construir la URL de S3
     const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fileKey}`;
@@ -1897,19 +1781,19 @@ export default function ProjectDetails() {
         }),
       });
       if (res.ok) {
-        const updated = await res.json();
+        // Type the response for safety
+        // Instead of using the PATCH response, update only the fields we know
         setModalPublicarOpen(false);
         setComentarioPublicar('');
-        // Actualiza el estado del proyecto localmente
-        setProject((prev) =>
+        /* setProject((prev) =>
           prev
-            ? {
+            ? ({
                 ...prev,
-                isPublic: updated.isPublic,
-                publicComment: updated.publicComment ?? comentarioPublicar,
-              }
+                isPublic: true,
+                publicComment: comentarioPublicar,
+              } as ProjectDetail)
             : prev
-        );
+        ); */
         alert('Proyecto publicado exitosamente');
       } else {
         alert('No se pudo publicar el proyecto');
@@ -1927,70 +1811,90 @@ export default function ProjectDetails() {
     entrega,
   }: {
     actividadId: number;
-    entrega: any;
+    entrega: ProjectActivityDelivery | null | undefined;
   }) => {
     if (!entrega) {
-      return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+      return null;
     }
 
-    const archivos = [];
+    const archivos: {
+      key: string;
+      name: string;
+      type: 'document' | 'image' | 'video' | 'compressed';
+      icon: string;
+    }[] = [];
 
     // Recopilar todos los archivos disponibles
-    if (entrega.documentKey && entrega.documentName) {
+    if (
+      typeof entrega.documentKey === 'string' &&
+      typeof entrega.documentName === 'string'
+    ) {
       archivos.push({
         key: entrega.documentKey,
         name: entrega.documentName,
-        type: 'document' as const,
+        type: 'document',
         icon: '📄',
       });
     }
 
-    if (entrega.imageKey && entrega.imageName) {
+    if (
+      typeof entrega.imageKey === 'string' &&
+      typeof entrega.imageName === 'string'
+    ) {
       archivos.push({
         key: entrega.imageKey,
         name: entrega.imageName,
-        type: 'image' as const,
+        type: 'image',
         icon: '🖼️',
       });
     }
 
-    if (entrega.videoKey && entrega.videoName) {
+    if (
+      typeof entrega.videoKey === 'string' &&
+      typeof entrega.videoName === 'string'
+    ) {
       archivos.push({
         key: entrega.videoKey,
         name: entrega.videoName,
-        type: 'video' as const,
+        type: 'video',
         icon: '🎥',
       });
     }
 
-    if (entrega.compressedFileKey && entrega.compressedFileName) {
+    if (
+      typeof entrega.compressedFileKey === 'string' &&
+      typeof entrega.compressedFileName === 'string'
+    ) {
       archivos.push({
         key: entrega.compressedFileKey,
         name: entrega.compressedFileName,
-        type: 'compressed' as const,
+        type: 'compressed',
         icon: '📦',
       });
     }
 
     if (archivos.length === 0) {
       // Verificar si hay comentario o URL
-      if (entrega.comentario || entrega.entregaUrl) {
+      if (
+        (typeof entrega.comentario === 'string' &&
+          entrega.comentario.trim() !== '') ||
+        (typeof entrega.entregaUrl === 'string' &&
+          entrega.entregaUrl.trim() !== '')
+      ) {
         return (
           <div className="max-w-full space-y-1 overflow-hidden">
-            {entrega.comentario && (
-              <div className="truncate text-xs text-blue-400">
-                💬 Comentario incluido
+            {typeof entrega.comentario === 'string' && (
+              <div className="mb-1 truncate text-xs text-blue-400">
+                💬 Con comentario
               </div>
             )}
-            {entrega.entregaUrl && (
-              <div className="truncate text-xs text-purple-400">
-                🔗 URL incluida
-              </div>
+            {typeof entrega.entregaUrl === 'string' && (
+              <div className="truncate text-xs text-purple-400">🔗 Con URL</div>
             )}
           </div>
         );
       }
-      return <span className="text-sm text-gray-500 italic">Sin archivos</span>;
+      return null;
     }
 
     return (
@@ -2011,7 +1915,7 @@ export default function ProjectDetails() {
                     archivo.name
                   )
                 }
-                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded bg-slate-700 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
+                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded bg-slate-700/50 p-1 text-left text-xs text-cyan-300 transition-colors hover:bg-slate-600 hover:text-cyan-100"
                 title={`Ver: ${archivo.name}`}
               >
                 <span className="flex-shrink-0">{archivo.icon}</span>
@@ -2055,18 +1959,21 @@ export default function ProjectDetails() {
         })}
 
         {/* Mostrar información adicional si existe */}
-        {(entrega.comentario || entrega.entregaUrl) && (
+        {(typeof entrega.comentario === 'string' &&
+          entrega.comentario.trim() !== '') ||
+        (typeof entrega.entregaUrl === 'string' &&
+          entrega.entregaUrl.trim() !== '') ? (
           <div className="mt-1 max-w-full overflow-hidden border-t border-slate-600 pt-1">
-            {entrega.comentario && (
+            {typeof entrega.comentario === 'string' && (
               <div className="mb-1 truncate text-xs text-blue-400">
                 💬 Con comentario
               </div>
             )}
-            {entrega.entregaUrl && (
+            {typeof entrega.entregaUrl === 'string' && (
               <div className="truncate text-xs text-purple-400">🔗 Con URL</div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     );
   };
@@ -2075,7 +1982,7 @@ export default function ProjectDetails() {
   if (!isLoaded || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-teal-900 to-slate-800 text-white">
-        {!isLoaded ? 'Cargando autenticación...' : 'Cargando proyecto...'}
+        Cargando...
       </div>
     );
   }
@@ -2213,7 +2120,7 @@ export default function ProjectDetails() {
                         Comentario al publicar:
                       </div>
                       <div className="text-sm break-words whitespace-pre-line text-blue-100">
-                        {project.publicComment}
+                                               {project.publicComment}
                       </div>
                     </div>
                   )}
@@ -2255,46 +2162,6 @@ export default function ProjectDetails() {
                       )}
                     </Button>
                   )}
-
-                  {/* Modifica el botón para abrir el modal */}
-                  <Button
-                    className="truncate bg-green-600 text-xs hover:bg-green-700 sm:text-sm"
-                    size="sm"
-                    onClick={
-                      project.isPublic
-                        ? handleTogglePublicarProyecto
-                        : handleAbrirModalPublicar
-                    }
-                    disabled={
-                      !puedeEditarProyecto() ||
-                      publicandoProyecto ||
-                      despublicandoProyecto
-                    }
-                  >
-                    {project.isPublic ? (
-                      <>
-                        <EyeOff className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
-                        <span className="hidden truncate lg:inline">
-                          Despublicar Proyecto
-                        </span>
-                        <span className="truncate lg:hidden">Despublicar</span>
-                        {despublicandoProyecto && (
-                          <RotateCw className="ml-2 inline-block h-4 w-4 animate-spin" />
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
-                        <span className="hidden truncate lg:inline">
-                          Publicar Proyecto
-                        </span>
-                        <span className="truncate lg:hidden">Publicar</span>
-                        {publicandoProyecto && (
-                          <RotateCw className="ml-2 inline-block h-4 w-4 animate-spin" />
-                        )}
-                      </>
-                    )}
-                  </Button>
 
                   {puedeEditarProyecto() && (
                     <>
@@ -2415,27 +2282,19 @@ export default function ProjectDetails() {
                     }
 
                     // Si no es array, intentar convertirlo o manejarlo
-                    let objetivos = project.objetivos_especificos;
-                    if (!Array.isArray(objetivos)) {
-                      console.log(
-                        '⚠️ objetivos_especificos no es array, intentando convertir...'
+                    let objetivos: ObjetivoEspecifico[] = [];
+                    if (Array.isArray(project.objetivos_especificos)) {
+                      objetivos = project.objetivos_especificos as ObjetivoEspecifico[];
+                    } else if (
+                      typeof project.objetivos_especificos === 'object' &&
+                      project.objetivos_especificos !== null
+                    ) {
+                      objetivos = Object.values(
+                        project.objetivos_especificos as Record<string, ObjetivoEspecifico>
                       );
-                      // Si es un objeto, intentar convertirlo a array
-                      if (typeof objetivos === 'object' && objetivos !== null) {
-                        objetivos = Object.values(objetivos);
-                      } else {
-                        console.log(
-                          '❌ No se puede convertir objetivos_especificos a array'
-                        );
-                        return (
-                          <div className="py-8 text-center text-gray-400 italic">
-                            Error: Formato de objetivos específicos no válido
-                          </div>
-                        );
-                      }
                     }
 
-                    if (objetivos.length === 0) {
+                    if (!objetivos || objetivos.length === 0) {
                       console.log(
                         'ℹ️ Array de objetivos específicos está vacío'
                       );
@@ -2453,7 +2312,7 @@ export default function ProjectDetails() {
                       'objetivos específicos'
                     );
 
-                    return objetivos.map((obj: any, idx: number) => {
+                    return objetivos.map((obj, idx) => {
                       console.log(`🎯 Procesando objetivo ${idx}:`, obj);
 
                       // Determinar el título del objetivo
@@ -2462,10 +2321,16 @@ export default function ProjectDetails() {
                         titulo = obj;
                       } else if (obj && typeof obj === 'object') {
                         titulo =
-                          obj.description ||
-                          obj.title ||
-                          obj.name ||
-                          `Objetivo Específico ${idx + 1}`;
+                          (('description' in obj && typeof obj.description === 'string'
+                            ? obj.description
+                            : undefined) ??
+                          ('title' in obj && typeof obj.title === 'string'
+                            ? obj.title
+                            : undefined) ??
+                          ('name' in obj && typeof obj.name === 'string'
+                            ? obj.name
+                            : undefined) ??
+                          `Objetivo Específico ${idx + 1}`);
                       } else {
                         titulo = `Objetivo Específico ${idx + 1}`;
                       }
@@ -2473,13 +2338,19 @@ export default function ProjectDetails() {
                       console.log(`📝 Título del objetivo ${idx}:`, titulo);
 
                       // Obtener actividades del objetivo
-                      let actividades: any[] = [];
+                      interface Actividad {
+                        id?: number;
+                        descripcion?: string;
+                        meses?: number[];
+                      }
+                      let actividades: Actividad[] = [];
                       if (
                         obj &&
                         typeof obj === 'object' &&
                         Array.isArray(obj.actividades)
+
                       ) {
-                        actividades = obj.actividades;
+                        actividades = obj.actividades as Actividad[];
                       }
 
                       console.log(
@@ -2489,7 +2360,7 @@ export default function ProjectDetails() {
 
                       return (
                         <div
-                          key={obj.id || idx}
+                          key={obj.id ?? idx}
                           className="overflow-hidden rounded-lg border border-slate-600 p-4"
                         >
                           <h4 className="mb-3 text-sm font-semibold break-words hyphens-auto text-teal-400 md:text-base">
@@ -2526,306 +2397,329 @@ export default function ProjectDetails() {
                               </TableHeader>
                               <TableBody>
                                 {actividades.length > 0 ? (
-                                  actividades.map(
-                                    (act: any, actIdx: number) => {
-                                      console.log(
-                                        `🔧 Procesando actividad ${actIdx} del objetivo ${idx}:`,
+                                  actividades.map(async (act, actIdx) => {
+                                    console.log(
+                                      `🔧 Procesando actividad ${actIdx} del objetivo ${idx}:`,
+                                      act
+                                    );
+
+                                    // Use type guard for act
+                                    const actObj: Actividad =
+                                      act && typeof act === 'object'
+                                        ? act
+                                        : { id: undefined, descripcion: undefined };
+
+                                    const actividadCompleta = project.actividades?.find(
+                                      (projectAct) =>
+                                        projectAct.id === actObj.id ||
+                                        projectAct.descripcion === actObj.descripcion
+                                    );
+
+                                    const actividadId = actividadCompleta?.id ?? actObj.id;
+
+                                    if (!actividadId) {
+                                      console.warn(
+                                        `⚠️ Actividad sin ID válido:`,
                                         act
                                       );
-
-                                      // Buscar la actividad completa en project.actividades
-                                      const actividadCompleta =
-                                        project.actividades?.find(
-                                          (projectAct) =>
-                                            projectAct.id === act.id ||
-                                            projectAct.descripcion ===
-                                              act.descripcion
-                                        );
-
-                                      const actividadId =
-                                        actividadCompleta?.id || act.id;
-
-                                      if (!actividadId) {
-                                        console.warn(
-                                          `⚠️ Actividad sin ID válido:`,
-                                          act
-                                        );
-                                        return (
-                                          <TableRow
-                                            key={actIdx}
-                                            className="border-slate-600"
-                                          >
-                                            <TableCell
-                                              colSpan={7}
-                                              className="text-center text-red-400 italic"
-                                            >
-                                              Actividad sin ID válido:{' '}
-                                              {act.descripcion ||
-                                                'Sin descripción'}
-                                            </TableCell>
-                                          </TableRow>
-                                        );
-                                      }
-
-                                      const responsable =
-                                        getResponsableNombrePorId(
-                                          actividadId,
-                                          act.descripcion
-                                        );
-                                      const estadoActividad =
-                                        getEstadoActividad(actividadId);
-
                                       return (
                                         <TableRow
-                                          key={act.id || actIdx}
+                                          key={actIdx}
                                           className="border-slate-600"
                                         >
-                                          <TableCell className="max-w-[200px] text-xs text-gray-300 md:text-sm">
-                                            <div className="overflow-wrap-anywhere break-words hyphens-auto">
-                                              {act.descripcion ||
-                                                `Actividad ${actIdx + 1}`}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell className="max-w-[100px]">
-                                            {(() => {
-                                              switch (estadoActividad.estado) {
-                                                case 'completada':
-                                                  return (
-                                                    <Badge className="truncate bg-green-600 text-xs text-white">
-                                                      <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                      <span className="truncate">
-                                                        Completada
-                                                      </span>
-                                                    </Badge>
-                                                  );
-                                                case 'rechazada':
-                                                  return (
-                                                    <Badge className="truncate bg-red-600 text-xs text-white">
-                                                      <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                      <span className="truncate">
-                                                        Rechazada
-                                                      </span>
-                                                    </Badge>
-                                                  );
-                                                case 'en_evaluacion':
-                                                  return (
-                                                    <Badge className="truncate bg-blue-600 text-xs text-white">
-                                                      <Clock className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                      <span className="truncate">
-                                                        En evaluación
-                                                      </span>
-                                                    </Badge>
-                                                  );
-                                                default:
-                                                  return (
-                                                    <Badge className="truncate bg-yellow-500 text-xs text-black">
-                                                      <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                      <span className="truncate">
-                                                        Pendiente
-                                                      </span>
-                                                    </Badge>
-                                                  );
-                                              }
-                                            })()}
-                                          </TableCell>
-                                          <TableCell className="max-w-[120px] text-xs text-gray-300 md:text-sm">
-                                            <div
-                                              className="truncate break-words"
-                                              title={responsable}
-                                            >
-                                              {responsable}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell>
-                                            {/* ...existing entregas logic... */}
-                                          </TableCell>
-                                          <TableCell className="max-w-[150px]">
-                                            <ArchivosEntrega
-                                              actividadId={actividadId}
-                                              entrega={
-                                                entregasActividades[actividadId]
-                                              }
-                                            />
-                                          </TableCell>
-                                          <TableCell className="max-w-[120px]">
-                                            {(() => {
-                                              const entrega =
-                                                entregasActividades[
-                                                  actividadId
-                                                ];
-                                              if (
-                                                !entrega?.feedback
-                                              ) {
-                                                return (
-                                                  <span className="truncate text-xs text-gray-500 italic">
-                                                    Sin comentarios
-                                                  </span>
-                                                );
-                                              }
-                                              const feedbackColor =
-                                                estadoActividad.estado ===
-                                                'completada'
-                                                  ? 'text-green-400'
-                                                  : estadoActividad.estado ===
-                                                      'rechazada'
-                                                    ? 'text-red-400'
-                                                    : 'text-blue-400';
-                                              return (
-                                                <div
-                                                  className="max-w-[120px]"
-                                                  title={entrega.feedback}
-                                                >
-                                                  <p
-                                                    className={`text-xs ${feedbackColor} truncate break-words`}
-                                                  >
-                                                    {entrega.feedback}
-                                                  </p>
-                                                </div>
-                                              );
-                                            })()}
-                                          </TableCell>
-                                          <TableCell className="max-w-[180px]">
-                                            {(() => {
-                                              const entrega =
-                                                entregasActividades[
-                                                  actividadId
-                                                ];
-                                              const actividadParaPermisos =
-                                                actividadCompleta || act;
-                                              const puedeEntregar =
-                                                puedeEntregarActividad(
-                                                  actividadParaPermisos
-                                                );
-                                              const puedeAprobar =
-                                                puedeAprobarEntregas();
-                                              const tieneEntrega =
-                                                estadoActividad.entregado;
-
-                                              if (tieneEntrega) {
-                                                return (
-                                                  <div className="flex max-w-[180px] min-w-[180px] flex-col gap-1 overflow-hidden">
-                                                    {puedeEntregar && (
-                                                      <div className="flex flex-col gap-1 sm:flex-row">
-                                                        <Button
-                                                          size="sm"
-                                                          className="truncate bg-blue-600 text-xs hover:bg-blue-700"
-                                                          onClick={() =>
-                                                            handleAbrirModalEntrega(
-                                                              {
-                                                                id: actividadId,
-                                                                descripcion:
-                                                                  act.descripcion,
-                                                              },
-                                                              true
-                                                            )
-                                                          }
-                                                        >
-                                                          <span className="truncate">
-                                                            {estadoActividad.estado ===
-                                                            'rechazada'
-                                                              ? 'Reenviar'
-                                                              : 'Editar'}
-                                                          </span>
-                                                        </Button>
-                                                        <Button
-                                                          size="sm"
-                                                          variant="destructive"
-                                                          className="px-2 text-xs"
-                                                          onClick={() =>
-                                                            handleEliminarEntrega(
-                                                              actividadId
-                                                            )
-                                                          }
-                                                        >
-                                                          <Trash2 className="h-3 w-3" />
-                                                        </Button>
-                                                      </div>
-                                                    )}
-                                                    {puedeAprobar &&
-                                                      estadoActividad.estado !==
-                                                        'completada' &&
-                                                      estadoActividad.estado !==
-                                                        'rechazada' && (
-                                                        <div className="flex flex-col gap-1 sm:flex-row">
-                                                          <Button
-                                                            size="sm"
-                                                            className="truncate bg-green-600 text-xs hover:bg-green-700"
-                                                            onClick={() =>
-                                                              handleAprobarEntrega(
-                                                                actividadId,
-                                                                entrega.userId,
-                                                                true,
-                                                                'Entrega aprobada'
-                                                              )
-                                                            }
-                                                          >
-                                                            <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                            <span className="truncate">
-                                                              Aprobar
-                                                            </span>
-                                                          </Button>
-                                                          <Button
-                                                            size="sm"
-                                                            variant="destructive"
-                                                            className="truncate text-xs"
-                                                            onClick={() => {
-                                                              const feedback =
-                                                                prompt(
-                                                                  'Motivo del rechazo:'
-                                                                );
-                                                              if (feedback) {
-                                                                handleAprobarEntrega(
-                                                                  actividadId,
-                                                                  entrega.userId,
-                                                                  false,
-                                                                  feedback
-                                                                );
-                                                              }
-                                                            }}
-                                                          >
-                                                            <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                            <span className="truncate">
-                                                              Rechazar
-                                                            </span>
-                                                          </Button>
-                                                        </div>
-                                                      )}
-                                                  </div>
-                                                );
-                                              } else if (puedeEntregar) {
-                                                return (
-                                                  <Button
-                                                    size="sm"
-                                                    className="max-w-full truncate bg-teal-600 text-xs hover:bg-teal-700"
-                                                    onClick={() =>
-                                                      handleAbrirModalEntrega(
-                                                        {
-                                                          id: actividadId,
-                                                          descripcion:
-                                                            act.descripcion,
-                                                        },
-                                                        false
-                                                      )
-                                                    }
-                                                  >
-                                                    <span className="truncate">
-                                                      Entregar
-                                                    </span>
-                                                  </Button>
-                                                );
-                                              } else {
-                                                return (
-                                                  <span className="truncate text-xs text-gray-500">
-                                                    Sin permisos
-                                                  </span>
-                                                );
-                                              }
-                                            })()}
+                                          <TableCell
+                                            colSpan={7}
+                                            className="text-center text-red-400 italic"
+                                          >
+                                            Actividad sin ID válido:{' '}
+                                            {act.descripcion ??
+                                              'Sin descripción'}
                                           </TableCell>
                                         </TableRow>
                                       );
                                     }
-                                  )
+
+                                    // Debug: mostrar el id que se va a usar
+                                    console.log('ID de actividad a usar:', actividadId);
+
+                                    // Obtener info del usuario si hay id
+                                    let userInfo: {
+                                      name?: string;
+                                      email?: string;
+                                      github?: string;
+                                      linkedin?: string;
+                                      especialidad?: string;
+                                    } = {};
+                                    if (actividadId) {
+                                      try {
+                                        const userRes = await fetch(
+                                          `/api/user?userId=${actividadId}`
+                                        );
+                                        if (userRes.ok) {
+                                          userInfo = await userRes.json();
+                                          // Debug: mostrar la info recibida
+                                          console.log('Respuesta de /api/user:', userInfo);
+                                        } else {
+                                          console.log('No se encontró usuario para id:', actividadId);
+                                        }
+                                      } catch (e) {
+                                        console.log('Error al buscar usuario:', actividadId, e);
+                                      }
+                                    }
+
+                                    const responsable = getResponsableNombrePorId(
+                                      actividadId,
+                                      actObj.descripcion
+                                    );
+                                    const estadoActividad = getEstadoActividad(actividadId);
+
+                                    return (
+                                      <TableRow
+                                        key={act.id ?? actIdx}
+                                        className="border-slate-600"
+                                      >
+                                        <TableCell className="max-w-[200px] text-xs text-gray-300 md:text-sm">
+                                          <div className="overflow-wrap-anywhere break-words hyphens-auto">
+                                            {act.descripcion ?? `Actividad ${actIdx + 1}`}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="max-w-[100px]">
+                                          {(() => {
+                                            switch (estadoActividad.estado) {
+                                              case 'completada':
+                                                return (
+                                                  <Badge className="truncate bg-green-600 text-xs text-white">
+                                                    <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                      Completada
+                                                    </span>
+                                                  </Badge>
+                                                );
+                                              case 'rechazada':
+                                                return (
+                                                  <Badge className="truncate bg-red-600 text-xs text-white">
+                                                    <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                      Rechazada
+                                                    </span>
+                                                  </Badge>
+                                                );
+                                              case 'en_evaluacion':
+                                                return (
+                                                  <Badge className="truncate bg-blue-600 text-xs text-white">
+                                                    <Clock className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                      En evaluación
+                                                    </span>
+                                                  </Badge>
+                                                );
+                                              default:
+                                                return (
+                                                  <Badge className="truncate bg-yellow-500 text-xs text-black">
+                                                    <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                      Pendiente
+                                                    </span>
+                                                  </Badge>
+                                                );
+                                            }
+                                          })()}
+                                        </TableCell>
+                                        <TableCell className="max-w-[120px] text-xs text-gray-300 md:text-sm">
+                                          <div
+                                            className="truncate break-words"
+                                            title={
+                                              typeof responsable === 'string'
+                                                ? responsable
+                                                : String(responsable ?? '')
+                                            }
+                                          >
+                                            {responsable}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          {/* ...existing entregas logic... */}
+                                        </TableCell>
+                                        <TableCell className="max-w-[150px]">
+                                          <ArchivosEntrega
+                                            actividadId={actividadId}
+                                            entrega={entregasActividades[actividadId]}
+                                          />
+                                        </TableCell>
+                                        <TableCell className="max-w-[120px]">
+                                          {(() => {
+                                            const entrega = entregasActividades[actividadId];
+                                            if (!entrega?.feedback) {
+                                              return (
+                                                <span className="truncate text-xs text-gray-500 italic">
+                                                  Sin comentarios
+                                                </span>
+                                              );
+                                            }
+                                            const feedbackColor =
+                                              estadoActividad.estado === 'completada'
+                                                ? 'text-green-400'
+                                                : estadoActividad.estado === 'rechazada'
+                                                  ? 'text-red-400'
+                                                  : 'text-blue-400';
+                                            return (
+                                              <div
+                                                className="max-w-[120px]"
+                                                title={typeof entrega.feedback === 'string' ? entrega.feedback : ''}
+                                              >
+                                                <p className={`text-xs ${feedbackColor} truncate break-words`}>
+                                                  {typeof entrega.feedback === 'string' ? entrega.feedback : ''}
+                                                </p>
+                                              </div>
+                                            );
+                                          })()}
+                                        </TableCell>
+                                        <TableCell className="max-w-[180px]">
+                                          {(() => {
+                                            const entrega = entregasActividades[actividadId];
+                                            const actividadParaPermisos =
+                                              actividadCompleta ?? act;
+                                            const puedeEntregar =
+                                              puedeEntregarActividad(
+                                                actividadParaPermisos
+                                              );
+                                            const puedeAprobar =
+                                              puedeAprobarEntregas();
+                                            const tieneEntrega =
+                                              estadoActividad.entregado;
+
+                                            if (tieneEntrega) {
+                                              return (
+                                                <div className="flex max-w-[180px] min-w-[180px] flex-col gap-1 overflow-hidden">
+                                                  {puedeEntregar && (
+                                                    <div className="flex flex-col gap-1 sm:flex-row">
+                                                      <Button
+                                                        size="sm"
+                                                        className="truncate bg-blue-600 text-xs hover:bg-blue-700"
+                                                        onClick={() =>
+                                                          handleAbrirModalEntrega(
+                                                            {
+                                                              id: actividadId,
+                                                              descripcion:
+                                                                act.descripcion,
+                                                            },
+                                                            true
+                                                          )
+                                                        }
+                                                      >
+                                                        <span className="truncate">
+                                                          {estadoActividad.estado ===
+                                                          'rechazada'
+                                                            ? 'Reenviar'
+                                                            : 'Editar'}
+                                                        </span>
+                                                      </Button>
+                                                      <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="px-2 text-xs"
+                                                        onClick={() =>
+                                                          handleEliminarEntrega(
+                                                            actividadId
+                                                          )
+                                                        }
+                                                      >
+                                                        <Trash2 className="h-3 w-3" />
+                                                      </Button>
+                                                    </div>
+                                                  )}
+                                                  {puedeAprobar &&
+                                                    estadoActividad.estado !==
+                                                      'completada' &&
+                                                    estadoActividad.estado !==
+                                                      'rechazada' && (
+                                                    <div className="flex flex-col gap-1 sm:flex-row">
+                                                      <Button
+                                                        size="sm"
+                                                        className="truncate bg-green-600 text-xs hover:bg-green-700"
+                                                        onClick={() =>
+                                                          handleAprobarEntrega(
+                                                            actividadId,
+                                                            typeof entrega.userId === 'string'
+                                                              ? entrega.userId
+                                                              : typeof entrega.userId === 'number'
+                                                                ? String(entrega.userId)
+                                                                : '',
+                                                            true,
+                                                            'Entrega aprobada'
+                                                          )
+                                                        }
+                                                      >
+                                                        <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                        <span className="truncate">
+                                                          Aprobar
+                                                        </span>
+                                                      </Button>
+                                                      <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="truncate text-xs"
+                                                        onClick={() => {
+                                                          const feedback =
+                                                            prompt(
+                                                              'Motivo del rechazo:'
+                                                            );
+                                                          if (feedback) {
+                                                            handleAprobarEntrega(
+                                                              actividadId,
+                                                              typeof entrega.userId === 'string'
+                                                                ? entrega.userId
+                                                                : typeof entrega.userId === 'number'
+                                                                  ? String(entrega.userId)
+                                                                  : '',
+                                                              false,
+                                                              feedback
+                                                            );
+                                                          }
+                                                        }}
+                                                      >
+                                                        <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                        <span className="truncate">
+                                                          Rechazar
+                                                        </span>
+                                                      </Button>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            } else if (puedeEntregar) {
+                                              return (
+                                                <Button
+                                                  size="sm"
+                                                  className="max-w-full truncate bg-teal-600 text-xs hover:bg-teal-700"
+                                                  onClick={() =>
+                                                    handleAbrirModalEntrega(
+                                                      {
+                                                        id: actividadId,
+                                                        descripcion:
+                                                          act.descripcion,
+                                                      },
+                                                      false
+                                                    )
+                                                  }
+                                                >
+                                                  <span className="truncate">
+                                                    Entregar
+                                                  </span>
+                                                </Button>
+                                              );
+                                            } else {
+                                              return (
+                                                <span className="truncate text-xs text-gray-500">
+                                                  Sin permisos
+                                                </span>
+                                              );
+                                            }
+                                          })()}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })
                                 ) : (
                                   <TableRow>
                                     <TableCell
@@ -3007,32 +2901,64 @@ export default function ProjectDetails() {
           objetivoGen={project.objetivo_general}
           objetivosEsp={
             Array.isArray(project.objetivos_especificos)
-              ? project.objetivos_especificos.map((obj, objIdx) => ({
-                  id: String(obj.id),
-                  title: obj.description,
-                  activities: Array.isArray(obj.actividades)
-                    ? obj.actividades.map((act: any, actIdx: number) => {
-                        const key =
-                          typeof act.id !== 'undefined'
-                            ? String(act.id)
-                            : String(actIdx);
-                        const responsable = getResponsableNombrePorId(act.id);
-                        return `${act.descripcion} (${responsable})`;
-                      })
-                    : [],
+              ? project.objetivos_especificos.map((obj) => ({
+                  id: String(
+                    typeof obj === 'object' && obj !== null && 'id' in obj
+                      ? obj.id
+                      : ''
+                  ),
+                  title:
+                    typeof obj === 'object' &&
+                    obj !== null &&
+                    'description' in obj
+                      ? ((obj as { description?: string }).description ?? '')
+                      : '',
+                  activities:
+                    typeof obj === 'object' &&
+                    obj !== null &&
+                    Array.isArray(
+                      (obj as { actividades?: unknown }).actividades
+                    )
+                      ? (obj as { actividades?: unknown[] }).actividades!.map(
+                          (act) =>
+                            typeof act === 'object' &&
+                            act !== null &&
+                            'descripcion' in act &&
+                            typeof (act as { descripcion?: string })
+                              .descripcion === 'string'
+                              ? (act as { descripcion: string }).descripcion
+                              : ''
+                        )
+                      : [],
                 }))
               : []
           }
-          actividad={
-            project.actividades?.map((a, idx) => {
-              const responsable = getResponsableNombrePorId(a.id);
-              return `${a.descripcion} (${responsable})`;
-            }) || []
+          actividades={
+            Array.isArray(project.actividades)
+              ? project.actividades.map((a) => ({
+                  descripcion:
+                    typeof a.descripcion === 'string' ? a.descripcion : '',
+                  meses: Array.isArray(a.meses) ? a.meses : [],
+                  objetivoId:
+                    typeof (a as { objetivoId?: string }).objetivoId === 'string'
+                      ? (a as { objetivoId?: string }).objetivoId
+                      : undefined,
+                  responsibleUserId:
+                    typeof (a as { responsibleUserId?: string })
+                      .responsibleUserId === 'string'
+                      ? (a as { responsibleUserId: string }).responsibleUserId
+                      : undefined,
+                  hoursPerDay:
+                    typeof (a as { hoursPerDay?: number }).hoursPerDay === 'number'
+                      ? (a as { hoursPerDay: number }).hoursPerDay
+                      : undefined,
+                }))
+              : []
           }
           categoriaId={project.categoryId}
           numMeses={0}
-          setActividades={() => ['']}
-          setObjetivosEsp={() => ['']}
+          setActividades={() => []}
+          setObjetivosEsp={() => []}
           projectId={project.id}
           coverImageKey={project.coverImageKey ?? undefined}
           tipoProyecto={project.type_project ?? undefined}
@@ -3045,8 +2971,8 @@ export default function ProjectDetails() {
           }
           fechaInicio={project.fecha_inicio ?? undefined}
           fechaFin={project.fecha_fin ?? undefined}
-          onUpdateProject={() => {}}
         />
+
         {/* Modal de entrega de actividad */}
         <ModalEntregaActividad
           isOpen={modalEntregaOpen}

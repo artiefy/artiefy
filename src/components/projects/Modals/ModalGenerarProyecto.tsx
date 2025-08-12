@@ -7,16 +7,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/projects/ui/dialog';
-import { Input } from '~/components/projects/ui/input';
 import { typeProjects } from '~/server/actions/project/typeProject';
+
+// Define explicit types for props and IA result
+interface ProyectoGenerado {
+  project_name?: string;
+  project_description?: string;
+  justification?: string;
+  general_objective?: string;
+  specific_objectives?: string[];
+  tasks?: { task_name: string }[];
+  categoryId?: number;
+  numMeses?: number;
+  project_type?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  [key: string]: unknown;
+}
 
 interface ModalGenerarProyectoProps {
   isOpen: boolean;
   onClose: () => void;
-  onProyectoGenerado: (data: any) => void;
+  onProyectoGenerado: (data: ProyectoGenerado) => void;
   resetOnOpen?: boolean;
   objetivoGen?: string;
-  currentUser?: { name: string }; // <-- Nuevo prop para el usuario logueado
+  currentUser?: { name: string };
 }
 
 export default function ModalGenerarProyecto({
@@ -31,25 +46,17 @@ export default function ModalGenerarProyecto({
     project_type: '',
     industry: '',
     project_objectives: '',
-    team_members: '', // Inicializar vacío, se llenará en useEffect
+    team_members: '',
     project_requirements: '',
   });
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<ProyectoGenerado | null>(null);
   const [error, setError] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState('');
-  const [createSuccess, setCreateSuccess] = useState('');
   const [categorias, setCategorias] = useState<{ id: number; name: string }[]>(
     []
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // Handler para textarea
+  // Handler for textarea
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -69,16 +76,6 @@ export default function ModalGenerarProyecto({
     } else {
       textarea.style.height = `${scrollHeight}px`;
       textarea.style.overflowY = 'hidden';
-    }
-  };
-
-  // Función para inicializar la altura de textareas existentes
-  const initializeTextAreaHeight = (element: HTMLTextAreaElement) => {
-    if (element && element.value) {
-      const event = {
-        target: element,
-      } as React.ChangeEvent<HTMLTextAreaElement>;
-      handleTextAreaChange(event);
     }
   };
 
@@ -105,10 +102,13 @@ export default function ModalGenerarProyecto({
         console.error('Error al generar el proyecto:', errorText);
         throw new Error('Error al generar el proyecto');
       }
-      const data = await res.json();
+      const data: ProyectoGenerado = await res.json();
       console.log('Información generada por IA:', data);
       // Añade el tipo de proyecto seleccionado por el usuario al objeto enviado al resumen
-      const resultadoFinal = { ...data, project_type: form.project_type };
+      const resultadoFinal: ProyectoGenerado = {
+        ...data,
+        project_type: form.project_type,
+      };
       setResultado(resultadoFinal);
       onProyectoGenerado(resultadoFinal);
       onClose();
@@ -127,7 +127,7 @@ export default function ModalGenerarProyecto({
         const res = await fetch('/api/super-admin/categories');
         const data = await res.json();
         setCategorias(Array.isArray(data) ? data : []);
-      } catch (error) {
+      } catch (_error) {
         setCategorias([]);
       }
     };
@@ -136,7 +136,6 @@ export default function ModalGenerarProyecto({
 
   // Efecto separado solo para cargar el usuario logueado
   React.useEffect(() => {
-    // Solo actualiza si está vacío
     if (currentUser?.name && !form.team_members) {
       setForm((prev) => ({
         ...prev,
@@ -147,7 +146,7 @@ export default function ModalGenerarProyecto({
     console.log('DEBUG - currentUser?.name:', currentUser?.name);
     console.log('DEBUG - typeof currentUser:', typeof currentUser);
     console.log('DEBUG - currentUser completo:', JSON.stringify(currentUser));
-  }, [currentUser]);
+  }, [currentUser, form.team_members]);
 
   // Efecto separado para manejar la apertura del modal
   React.useEffect(() => {
@@ -163,15 +162,11 @@ export default function ModalGenerarProyecto({
         project_type: '',
         industry: '',
         project_objectives: objetivoGen ?? '',
-        team_members: currentUser?.name || '',
+        team_members: currentUser?.name ?? '',
         project_requirements: '',
       });
       setResultado(null);
       setError('');
-      setShowConfirmModal(false);
-      setCreating(false);
-      setCreateError('');
-      setCreateSuccess('');
       return;
     }
 
@@ -198,8 +193,21 @@ export default function ModalGenerarProyecto({
       setTimeout(() => {
         const textareas = document.querySelectorAll('textarea');
         textareas.forEach((textarea) => {
-          if (textarea instanceof HTMLTextAreaElement) {
-            initializeTextAreaHeight(textarea);
+          if (textarea instanceof HTMLTextAreaElement && textarea.value) {
+            // Inline handleTextAreaChange logic to avoid dependency warning
+            textarea.style.height = 'auto';
+            const scrollHeight = textarea.scrollHeight;
+            const minHeight = 40;
+            const maxHeight = 80;
+            if (scrollHeight <= minHeight) {
+              textarea.style.height = `${minHeight}px`;
+            } else if (scrollHeight >= maxHeight) {
+              textarea.style.height = `${maxHeight}px`;
+              textarea.style.overflowY = 'auto';
+            } else {
+              textarea.style.height = `${scrollHeight}px`;
+              textarea.style.overflowY = 'hidden';
+            }
           }
         });
       }, 100);

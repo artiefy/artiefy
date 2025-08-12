@@ -35,7 +35,13 @@ export async function PATCH(
     console.log('📋 Procesando solicitud ID:', solicitudId);
     console.log('👤 Usuario responsable:', userId);
 
-    const body = await request.json();
+    // Use a typed interface for the request body to avoid 'any'
+    interface PatchRequestBody {
+      status: string;
+      responseMessage?: string;
+    }
+
+    const body = (await request.json()) as PatchRequestBody;
     const { status, responseMessage } = body;
 
     console.log('📦 Datos recibidos:', { status, responseMessage });
@@ -105,7 +111,7 @@ export async function PATCH(
       .update(projectParticipationRequests)
       .set({
         status: status as 'approved' | 'rejected',
-        responseMessage: responseMessage || null,
+        responseMessage: responseMessage ?? null,
         respondedBy: userId,
         respondedAt: new Date(),
         updatedAt: new Date(),

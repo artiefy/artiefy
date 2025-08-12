@@ -100,17 +100,29 @@ export async function PUT(
     const { id, userId, createdAt, updatedAt, ...updateFields } = body;
 
     // --- Normaliza actividades para que coincidan con el schema ---
+    interface IncomingActividad {
+      descripcion?: unknown;
+      description?: unknown;
+      meses?: unknown;
+      responsableId?: unknown;
+      responsibleUserId?: unknown;
+      horas?: unknown;
+      hoursPerDay?: unknown;
+      objetivoId?: unknown;
+    }
+
     if (updateFields.actividades && Array.isArray(updateFields.actividades)) {
-      updateFields.actividades = (updateFields.actividades as any[])
+      updateFields.actividades = (
+        updateFields.actividades as IncomingActividad[]
+      )
         .map((a) => {
-          let desc =
+          const rawDesc =
             typeof a.descripcion === 'string'
               ? a.descripcion
               : typeof a.description === 'string'
                 ? a.description
                 : '';
-          desc = desc.trim();
-          // Si description es string vacío, null o 'default', retorna null
+          const desc = typeof rawDesc === 'string' ? rawDesc.trim() : '';
           if (!desc || desc === 'default') return null;
 
           return {
@@ -134,7 +146,7 @@ export async function PUT(
         })
         // Filtra cualquier actividad null (sin descripción válida)
         .filter(
-          (act) =>
+          (act): act is NonNullable<typeof act> =>
             !!act &&
             typeof act.description === 'string' &&
             act.description.trim() !== '' &&

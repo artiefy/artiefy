@@ -31,7 +31,7 @@ export async function GET(
       : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
 
     return NextResponse.json({ coverImageUrl });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

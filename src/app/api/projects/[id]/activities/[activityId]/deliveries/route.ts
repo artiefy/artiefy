@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -123,49 +123,78 @@ async function getSignedUrlForFile(key: string): Promise<string | null> {
   }
 }
 
+// Define a type for delivery (adjust fields as needed)
+interface Delivery {
+  documentKey?: string | null;
+  documentName?: string | null;
+  imageKey?: string | null;
+  imageName?: string | null;
+  videoKey?: string | null;
+  videoName?: string | null;
+  compressedFileKey?: string | null;
+  compressedFileName?: string | null;
+  comentario?: string | null;
+  entregaUrl?: string | null;
+  [key: string]: unknown;
+}
+
 // Función helper para obtener información de archivos con URLs
-async function getFilesInfo(delivery: any) {
+async function getFilesInfo(delivery: Delivery) {
   const files = [];
 
-  if (delivery.documentKey && delivery.documentName) {
-    const url = await getSignedUrlForFile(delivery.documentKey);
+  if (
+    (delivery as Delivery).documentKey &&
+    typeof (delivery as Delivery).documentName === 'string'
+  ) {
+    const url = await getSignedUrlForFile((delivery as Delivery).documentKey!);
     files.push({
       type: 'document',
-      name: delivery.documentName,
-      key: delivery.documentKey,
+      name: (delivery as Delivery).documentName,
+      key: (delivery as Delivery).documentKey,
       url,
       icon: '📄',
     });
   }
 
-  if (delivery.imageKey && delivery.imageName) {
-    const url = await getSignedUrlForFile(delivery.imageKey);
+  if (
+    (delivery as Delivery).imageKey &&
+    typeof (delivery as Delivery).imageName === 'string'
+  ) {
+    const url = await getSignedUrlForFile((delivery as Delivery).imageKey!);
     files.push({
       type: 'image',
-      name: delivery.imageName,
-      key: delivery.imageKey,
+      name: (delivery as Delivery).imageName,
+      key: (delivery as Delivery).imageKey,
       url,
       icon: '🖼️',
     });
   }
 
-  if (delivery.videoKey && delivery.videoName) {
-    const url = await getSignedUrlForFile(delivery.videoKey);
+  if (
+    (delivery as Delivery).videoKey &&
+    typeof (delivery as Delivery).videoName === 'string'
+  ) {
+    const url = await getSignedUrlForFile((delivery as Delivery).videoKey!);
     files.push({
       type: 'video',
-      name: delivery.videoName,
-      key: delivery.videoKey,
+      name: (delivery as Delivery).videoName,
+      key: (delivery as Delivery).videoKey,
       url,
       icon: '🎥',
     });
   }
 
-  if (delivery.compressedFileKey && delivery.compressedFileName) {
-    const url = await getSignedUrlForFile(delivery.compressedFileKey);
+  if (
+    (delivery as Delivery).compressedFileKey &&
+    typeof (delivery as Delivery).compressedFileName === 'string'
+  ) {
+    const url = await getSignedUrlForFile(
+      (delivery as Delivery).compressedFileKey!
+    );
     files.push({
       type: 'compressed',
-      name: delivery.compressedFileName,
-      key: delivery.compressedFileKey,
+      name: (delivery as Delivery).compressedFileName,
+      key: (delivery as Delivery).compressedFileKey,
       url,
       icon: '📦',
     });
@@ -176,7 +205,7 @@ async function getFilesInfo(delivery: any) {
 
 // GET - Obtener entrega de actividad
 export async function GET(
-  req: Request,
+  _req: Request,
   context: {
     params: Promise<{
       id: string;
@@ -210,7 +239,7 @@ export async function GET(
     }
 
     // Obtener información de archivos con URLs firmadas
-    const files = await getFilesInfo(delivery);
+    const files = await getFilesInfo(delivery as Delivery);
 
     // Preparar respuesta enriquecida
     const enrichedDelivery = {
@@ -218,8 +247,12 @@ export async function GET(
       files,
       filesCount: files.length,
       hasFiles: files.length > 0,
-      hasComment: !!(delivery.comentario && delivery.comentario.trim()),
-      hasUrl: !!(delivery.entregaUrl && delivery.entregaUrl.trim()),
+      hasComment:
+        typeof delivery.comentario === 'string' &&
+        delivery.comentario.trim().length > 0,
+      hasUrl:
+        typeof delivery.entregaUrl === 'string' &&
+        delivery.entregaUrl.trim().length > 0,
     };
 
     return NextResponse.json(enrichedDelivery);
@@ -300,26 +333,36 @@ export async function POST(
       return respondWithError('Ya existe una entrega para esta actividad', 409);
     }
 
-    const body = await req.json();
+    const body: {
+      documentKey?: string;
+      documentName?: string;
+      imageKey?: string;
+      imageName?: string;
+      videoKey?: string;
+      videoName?: string;
+      compressedFileKey?: string;
+      compressedFileName?: string;
+      comentario?: string;
+      entregaUrl?: string;
+    } = await req.json();
     console.log('Datos recibidos:', body);
 
+    // Only destructure used fields
     const {
       documentKey,
-      documentName,
       imageKey,
-      imageName,
       videoKey,
-      videoName,
       compressedFileKey,
-      compressedFileName,
       comentario,
       entregaUrl,
     } = body;
 
     // Validar que al menos haya algo para entregar
-    const hasFiles = documentKey || imageKey || videoKey || compressedFileKey;
-    const hasComment = comentario && comentario.trim().length > 0;
-    const hasUrl = entregaUrl && entregaUrl.trim().length > 0;
+    const hasFiles = documentKey ?? imageKey ?? videoKey ?? compressedFileKey;
+    const hasComment =
+      typeof comentario === 'string' && comentario.trim().length > 0;
+    const hasUrl =
+      typeof entregaUrl === 'string' && entregaUrl.trim().length > 0;
 
     if (!hasFiles && !hasComment && !hasUrl) {
       return respondWithError(
@@ -352,16 +395,16 @@ export async function POST(
     const deliveryData = {
       activityId: activityIdNum,
       userId,
-      documentKey: documentKey || null,
-      documentName: documentName || null,
-      imageKey: imageKey || null,
-      imageName: imageName || null,
-      videoKey: videoKey || null,
-      videoName: videoName || null,
-      compressedFileKey: compressedFileKey || null,
-      compressedFileName: compressedFileName || null,
-      comentario: comentario || null,
-      entregaUrl: entregaUrl || null,
+      documentKey: documentKey ?? null,
+      documentName: body.documentName ?? null,
+      imageKey: imageKey ?? null,
+      imageName: body.imageName ?? null,
+      videoKey: videoKey ?? null,
+      videoName: body.videoName ?? null,
+      compressedFileKey: compressedFileKey ?? null,
+      compressedFileName: body.compressedFileName ?? null,
+      comentario: comentario ?? null,
+      entregaUrl: entregaUrl ?? null,
       fileTypes: fileTypes.length > 0 ? JSON.stringify(fileTypes) : null,
       totalFiles,
       entregado: totalFiles > 0 || hasComment || hasUrl,
@@ -444,26 +487,36 @@ export async function PUT(
       return respondWithError('Entrega no encontrada', 404);
     }
 
-    const body = await req.json();
+    const body: {
+      documentKey?: string;
+      documentName?: string;
+      imageKey?: string;
+      imageName?: string;
+      videoKey?: string;
+      videoName?: string;
+      compressedFileKey?: string;
+      compressedFileName?: string;
+      comentario?: string;
+      entregaUrl?: string;
+    } = await req.json();
     console.log('Datos para actualizar:', body);
 
+    // Only destructure used fields
     const {
       documentKey,
-      documentName,
       imageKey,
-      imageName,
       videoKey,
-      videoName,
       compressedFileKey,
-      compressedFileName,
       comentario,
       entregaUrl,
     } = body;
 
     // Validar que al menos haya algo para entregar
-    const hasFiles = documentKey || imageKey || videoKey || compressedFileKey;
-    const hasComment = comentario && comentario.trim().length > 0;
-    const hasUrl = entregaUrl && entregaUrl.trim().length > 0;
+    const hasFiles = documentKey ?? imageKey ?? videoKey ?? compressedFileKey;
+    const hasComment =
+      typeof comentario === 'string' && comentario.trim().length > 0;
+    const hasUrl =
+      typeof entregaUrl === 'string' && entregaUrl.trim().length > 0;
 
     if (!hasFiles && !hasComment && !hasUrl) {
       return respondWithError(
@@ -494,16 +547,16 @@ export async function PUT(
     }
 
     const updateData = {
-      documentKey: documentKey || null,
-      documentName: documentName || null,
-      imageKey: imageKey || null,
-      imageName: imageName || null,
-      videoKey: videoKey || null,
-      videoName: videoName || null,
-      compressedFileKey: compressedFileKey || null,
-      compressedFileName: compressedFileName || null,
-      comentario: comentario || null,
-      entregaUrl: entregaUrl || null,
+      documentKey: body.documentKey ?? null,
+      documentName: body.documentName ?? null,
+      imageKey: body.imageKey ?? null,
+      imageName: body.imageName ?? null,
+      videoKey: body.videoKey ?? null,
+      videoName: body.videoName ?? null,
+      compressedFileKey: body.compressedFileKey ?? null,
+      compressedFileName: body.compressedFileName ?? null,
+      comentario: comentario ?? null,
+      entregaUrl: entregaUrl ?? null,
       fileTypes: fileTypes.length > 0 ? JSON.stringify(fileTypes) : null,
       totalFiles,
       entregado: totalFiles > 0 || hasComment || hasUrl,
@@ -542,7 +595,7 @@ export async function PUT(
 
 // DELETE - Eliminar entrega completamente
 export async function DELETE(
-  req: Request,
+  _req: Request,
   context: {
     params: Promise<{
       id: string;
@@ -600,40 +653,51 @@ export async function DELETE(
       return respondWithError('Entrega no encontrada', 404);
     }
 
-    console.log('📦 Entrega encontrada para eliminar:', existingDelivery);
-
     // Recopilar todos los archivos a eliminar de S3
     const filesToDelete = [];
+    const deliveryTyped = existingDelivery as Delivery;
 
-    if (existingDelivery.documentKey) {
+    if (deliveryTyped.documentKey) {
       filesToDelete.push({
-        key: existingDelivery.documentKey,
+        key: deliveryTyped.documentKey,
         type: 'document',
-        name: existingDelivery.documentName || 'Documento',
+        name:
+          typeof deliveryTyped.documentName === 'string'
+            ? deliveryTyped.documentName
+            : 'Documento',
       });
     }
 
-    if (existingDelivery.imageKey) {
+    if (deliveryTyped.imageKey) {
       filesToDelete.push({
-        key: existingDelivery.imageKey,
+        key: deliveryTyped.imageKey,
         type: 'image',
-        name: existingDelivery.imageName || 'Imagen',
+        name:
+          typeof deliveryTyped.imageName === 'string'
+            ? deliveryTyped.imageName
+            : 'Imagen',
       });
     }
 
-    if (existingDelivery.videoKey) {
+    if (deliveryTyped.videoKey) {
       filesToDelete.push({
-        key: existingDelivery.videoKey,
+        key: deliveryTyped.videoKey,
         type: 'video',
-        name: existingDelivery.videoName || 'Video',
+        name:
+          typeof deliveryTyped.videoName === 'string'
+            ? deliveryTyped.videoName
+            : 'Video',
       });
     }
 
-    if (existingDelivery.compressedFileKey) {
+    if (deliveryTyped.compressedFileKey) {
       filesToDelete.push({
-        key: existingDelivery.compressedFileKey,
+        key: deliveryTyped.compressedFileKey,
         type: 'compressed',
-        name: existingDelivery.compressedFileName || 'Archivo comprimido',
+        name:
+          typeof deliveryTyped.compressedFileName === 'string'
+            ? deliveryTyped.compressedFileName
+            : 'Archivo comprimido',
       });
     }
 

@@ -116,7 +116,7 @@ export async function POST(req: Request) {
           descripcion: actividad.descripcion || '',
           meses: Array.isArray(actividad.meses) ? actividad.meses : [],
           objetivoId: actividad.objetivoId,
-          responsibleUserId: actividad.responsibleUserId || undefined,
+          responsibleUserId: actividad.responsibleUserId ?? undefined,
           hoursPerDay:
             typeof actividad.hoursPerDay === 'number'
               ? actividad.hoursPerDay
@@ -136,8 +136,8 @@ export async function POST(req: Request) {
       userId,
       objetivos_especificos:
         (body.objetivos_especificos as { id: string; title: string }[]) || [], // <-- Asegura el tipo correcto
-      actividades: body.actividades || [],
-      integrantes: body.integrantes || [],
+      actividades: body.actividades ?? [],
+      integrantes: body.integrantes ?? [],
       coverImageKey: coverImageKey ?? undefined,
       fechaInicio:
         body.fechaInicio && !isNaN(Date.parse(body.fechaInicio))
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
         body.fechaFin && !isNaN(Date.parse(body.fechaFin))
           ? new Date(body.fechaFin).toISOString().split('T')[0]
           : undefined,
-      tipoVisualizacion: body.tipoVisualizacion || 'meses',
+      tipoVisualizacion: body.tipoVisualizacion ?? 'meses',
       isPublic: body.isPublic ?? false,
     };
 

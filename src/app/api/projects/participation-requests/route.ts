@@ -18,8 +18,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { projectId, requestMessage, requestType = 'participation' } = body;
+    interface ParticipationRequestBody {
+      projectId: number | string;
+      requestMessage?: string;
+      requestType?: 'participation' | 'resignation';
+    }
+
+    const body: ParticipationRequestBody = await request.json();
+    const projectId = Number(body.projectId);
+    const requestMessage: string = body.requestMessage ?? '';
+    const requestType: 'participation' | 'resignation' =
+      body.requestType ?? 'participation';
 
     if (!projectId) {
       return NextResponse.json(
@@ -130,15 +139,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get('projectId');
+    const projectIdParam = searchParams.get('projectId');
     const checkUserId = searchParams.get('userId');
 
-    if (!projectId) {
+    if (!projectIdParam) {
       return NextResponse.json(
         { error: 'projectId es requerido' },
         { status: 400 }
       );
     }
+    const projectId = Number(projectIdParam);
 
     // Si se proporciona userId, verificar solicitud específica
     if (checkUserId) {
@@ -156,7 +166,7 @@ export async function GET(request: NextRequest) {
         .where(
           and(
             eq(projectParticipationRequests.userId, checkUserId),
-            eq(projectParticipationRequests.projectId, parseInt(projectId)),
+            eq(projectParticipationRequests.projectId, projectId),
             eq(projectParticipationRequests.status, 'pending')
           )
         )
@@ -188,7 +198,7 @@ export async function GET(request: NextRequest) {
       })
       .from(projectParticipationRequests)
       .innerJoin(users, eq(projectParticipationRequests.userId, users.id))
-      .where(eq(projectParticipationRequests.projectId, parseInt(projectId)))
+      .where(eq(projectParticipationRequests.projectId, projectId))
       .orderBy(projectParticipationRequests.createdAt);
 
     return NextResponse.json(requests);
@@ -210,19 +220,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get('projectId');
+    const projectIdParam = searchParams.get('projectId');
 
-    if (!projectId) {
+    if (!projectIdParam) {
       return NextResponse.json(
         { error: 'projectId es requerido' },
         { status: 400 }
       );
     }
+    const projectId = Number(projectIdParam);
 
     // Eliminar todas las solicitudes del proyecto
     const deletedRequests = await db
       .delete(projectParticipationRequests)
-      .where(eq(projectParticipationRequests.projectId, parseInt(projectId)))
+      .where(eq(projectParticipationRequests.projectId, projectId))
       .returning();
 
     return NextResponse.json({

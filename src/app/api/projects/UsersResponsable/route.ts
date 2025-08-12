@@ -17,7 +17,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Error al obtener usuarios' },
       { status: 500 }

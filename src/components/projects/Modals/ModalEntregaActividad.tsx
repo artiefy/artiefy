@@ -88,7 +88,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
   const getFileType = (
     file: File
   ): 'document' | 'image' | 'video' | 'compressed' => {
-    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
 
     // Documentos
     if (
@@ -225,16 +225,16 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
         const type = getFileType(file);
         switch (type) {
           case 'document':
-            if (!documentFile) documentFile = file;
+            if (documentFile) documentFile = file;
             break;
           case 'image':
-            if (!imageFile) imageFile = file;
+            if (imageFile) imageFile = file;
             break;
           case 'video':
-            if (!videoFile) videoFile = file;
+            if (videoFile) videoFile = file;
             break;
           case 'compressed':
-            if (!compressedFile) compressedFile = file;
+            if (compressedFile) compressedFile = file;
             break;
         }
       });

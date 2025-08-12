@@ -1,14 +1,10 @@
 'use client';
 
-import React, { useEffect,useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Check, Clock, MessageSquare, Trash2,X } from 'lucide-react';
+import { Check, Clock, MessageSquare, Trash2, X } from 'lucide-react';
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '~/components/projects/ui/avatar';
+import { Avatar, AvatarFallback } from '~/components/projects/ui/avatar';
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
 import {
@@ -42,6 +38,26 @@ interface ModalSolicitudesParticipacionProps {
   onSolicitudProcesada?: () => void;
 }
 
+// Safe access to error/message properties (declarada global para todo el componente)
+const getErrorString = (data: unknown): string => {
+  if (typeof data === 'string') return data;
+  if (data && typeof data === 'object') {
+    if (
+      'error' in data &&
+      typeof (data as { error?: unknown }).error === 'string'
+    ) {
+      return (data as { error: string }).error;
+    }
+    if (
+      'message' in data &&
+      typeof (data as { message?: unknown }).message === 'string'
+    ) {
+      return (data as { message: string }).message;
+    }
+  }
+  return '';
+};
+
 export default function ModalSolicitudesParticipacion({
   isOpen,
   onClose,
@@ -55,7 +71,7 @@ export default function ModalSolicitudesParticipacion({
   const [eliminandoTodas, setEliminandoTodas] = useState(false);
 
   // MEJORADA: Función única para cargar solicitudes con mejor manejo de errores
-  const fetchSolicitudes = async () => {
+  const fetchSolicitudes = React.useCallback(async () => {
     if (!projectId || !userId) {
       console.log('⚠️ No se pueden cargar solicitudes - faltan datos:', {
         projectId,
@@ -110,14 +126,14 @@ export default function ModalSolicitudesParticipacion({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, userId]);
 
   // Cargar solicitudes cuando se abre el modal
   useEffect(() => {
     if (isOpen && projectId) {
       fetchSolicitudes();
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, projectId, fetchSolicitudes]);
 
   const handleResponderSolicitud = async (
     solicitudId: number,
@@ -171,7 +187,7 @@ export default function ModalSolicitudesParticipacion({
       // MEJORADO: Payload más completo y específico
       const payload = {
         status: accion, // Ahora será 'approved' o 'rejected'
-        responseMessage: motivoRechazo || null,
+        responseMessage: motivoRechazo ?? null,
         projectId: Number(projectId),
         respondedBy: userId.toString(),
         respondedAt: new Date().toISOString(),
@@ -233,7 +249,7 @@ export default function ModalSolicitudesParticipacion({
         switch (response.status) {
           case 400:
             errorMessage = `Error de solicitud incorrecta: ${
-              responseData?.error || responseData?.message || 'Datos inválidos'
+              getErrorString(responseData) ?? 'Datos inválidos'
             }`;
             break;
           case 401:
@@ -249,16 +265,12 @@ export default function ModalSolicitudesParticipacion({
             break;
           case 500:
             errorMessage = `Error interno del servidor: ${
-              responseData?.error ||
-              responseData?.message ||
-              'Error no especificado'
+              getErrorString(responseData) ?? 'Error no especificado'
             }`;
             break;
           default:
             errorMessage = `Error ${response.status}: ${
-              responseData?.error ||
-              responseData?.message ||
-              response.statusText
+              getErrorString(responseData) ?? response.statusText
             }`;
         }
 
@@ -356,9 +368,10 @@ export default function ModalSolicitudesParticipacion({
       );
 
       if (verificacionRes.ok) {
-        const todasLasSolicitudes = await verificacionRes.json();
+        const todasLasSolicitudes: SolicitudParticipacion[] =
+          await verificacionRes.json();
         const solicitudActual = Array.isArray(todasLasSolicitudes)
-          ? todasLasSolicitudes.find((s: any) => s.id === solicitud.id)
+          ? todasLasSolicitudes.find((s) => s.id === solicitud.id)
           : null;
 
         console.log('📋 Estado actual de la solicitud:', solicitudActual);
@@ -387,7 +400,7 @@ export default function ModalSolicitudesParticipacion({
       // Continuar con la aprobación pero alertar al usuario
     }
 
-    const nombreUsuario = solicitud.userName || 'usuario desconocido';
+    const nombreUsuario = solicitud.userName ?? 'usuario desconocido';
     console.log('👤 Usuario a aprobar:', nombreUsuario);
 
     if (
@@ -435,9 +448,10 @@ export default function ModalSolicitudesParticipacion({
       );
 
       if (verificacionRes.ok) {
-        const todasLasSolicitudes = await verificacionRes.json();
+        const todasLasSolicitudes: SolicitudParticipacion[] =
+          await verificacionRes.json();
         const solicitudActual = Array.isArray(todasLasSolicitudes)
-          ? todasLasSolicitudes.find((s: any) => s.id === solicitud.id)
+          ? todasLasSolicitudes.find((s) => s.id === solicitud.id)
           : null;
 
         if (!solicitudActual || solicitudActual.status !== 'pending') {
@@ -457,7 +471,7 @@ export default function ModalSolicitudesParticipacion({
       return;
     }
 
-    const nombreUsuario = solicitud.userName || 'usuario desconocido';
+    const nombreUsuario = solicitud.userName ?? 'usuario desconocido';
 
     if (
       !confirm(
@@ -472,7 +486,7 @@ export default function ModalSolicitudesParticipacion({
     await handleResponderSolicitud(
       solicitud.id,
       'rejected',
-      motivo || undefined
+      motivo ?? undefined
     );
   };
 
@@ -550,7 +564,9 @@ export default function ModalSolicitudesParticipacion({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar solicitudes');
+        throw new Error(
+          getErrorString(errorData) ?? 'Error al eliminar solicitudes'
+        );
       }
 
       const resultado = await response.json();
@@ -564,7 +580,9 @@ export default function ModalSolicitudesParticipacion({
         onSolicitudProcesada();
       }
 
-      alert(`✅ ${resultado.deletedCount} solicitudes eliminadas exitosamente`);
+      alert(
+        `✅ ${(resultado as { deletedCount?: number }).deletedCount ?? 0} solicitudes eliminadas exitosamente`
+      );
     } catch (error) {
       console.error('❌ Error eliminando solicitudes:', error);
       alert(
@@ -902,7 +920,7 @@ export default function ModalSolicitudesParticipacion({
                               </div>
                               {solicitud.responseMessage && (
                                 <p className="mt-1 text-xs break-words whitespace-pre-wrap text-slate-300">
-                                  "{solicitud.responseMessage}"
+                                  &quot;{solicitud.responseMessage}&quot;
                                 </p>
                               )}
                             </div>

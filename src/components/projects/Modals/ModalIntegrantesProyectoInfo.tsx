@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Loader2,Mail, Users, X } from 'lucide-react';
+import { Loader2, Mail, Users, X } from 'lucide-react';
 
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
@@ -33,7 +33,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
   ModalIntegrantesProyectoInfoProps
 > = ({ isOpen, onClose, proyecto, integrantes: integrantesProp }) => {
   const [integrantes, setIntegrantes] = useState<Integrante[]>(
-    integrantesProp || []
+    integrantesProp ?? []
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +49,20 @@ const ModalIntegrantesProyectoInfo: React.FC<
             `/api/projects/taken?projectId=${proyecto.id}`
           );
           if (response.ok) {
-            const data = await response.json();
-            setIntegrantes(data.integrantes || []);
+            const data: unknown = await response.json();
+            // Safe type check for data.integrantes
+            if (
+              data &&
+              typeof data === 'object' &&
+              'integrantes' in data &&
+              Array.isArray((data as { integrantes?: unknown }).integrantes)
+            ) {
+              setIntegrantes(
+                (data as { integrantes: Integrante[] }).integrantes
+              );
+            } else {
+              setIntegrantes([]);
+            }
           } else {
             setError('Error al cargar los integrantes');
           }
@@ -161,7 +173,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
                     <div className="flex flex-col items-center space-y-4 text-center">
                       {/* Avatar con iniciales del nombre */}
                       <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-lg font-semibold text-slate-900">
-                        {integrante.nombre && integrante.nombre.trim()
+                        {integrante.nombre?.trim()
                           ? integrante.nombre
                               .trim()
                               .split(' ')

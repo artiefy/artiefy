@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface ModalConfirmacionRegistroProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,10 +28,11 @@ const ModalConfirmacionRegistro: React.FC<ModalConfirmacionRegistroProps> = ({
             onClick={onClose}
             className="w-full rounded bg-gray-300 px-4 py-2 text-black hover:bg-gray-400 sm:w-auto"
           >
-            Cancelar
-          </button>
-          <button className="w-full rounded bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700 sm:w-auto">
-            <a href="/proyectos/DetallesProyectos">Confirmar</a>
+          <Link href="/proyectos/DetallesProyectos" passHref legacyBehavior>
+            <button className="w-full rounded bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700 sm:w-auto">
+              Confirmar
+            </button>
+          </Link>
           </button>
         </div>
       </div>

@@ -190,7 +190,7 @@ export async function GET(
 
     return NextResponse.json({
       downloadUrl,
-      fileName: fileName || `archivo_${fileType}`,
+      fileName: fileName ?? `archivo_${fileType}`,
       fileType,
       expiresIn: 3600,
     });

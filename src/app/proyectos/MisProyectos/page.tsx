@@ -1390,24 +1390,13 @@ export default function ProyectosPage() {
             justificacion={justificacionTexto}
             objetivoGen={objetivoGenTexto}
             objetivosEsp={ObjetivosEspTexto}
-            actividad={[]}
-            setObjetivosEsp={() => undefined}
-            setActividades={() => undefined}
             cronograma={undefined}
             categoriaId={undefined}
             numMeses={undefined}
+            setObjetivosEsp={() => undefined}
+            setActividades={() => undefined}
             responsablesPorActividad={responsablesPorActividad}
-            horasPorActividad={(() => {
-              console.log(
-                'Pasando horasPorActividad a ModalResumen:',
-                horasPorActividad
-              );
-              console.log(
-                'Keys que se están pasando:',
-                Object.keys(horasPorActividad)
-              );
-              return horasPorActividad;
-            })()}
+            horasPorActividad={horasPorActividad}
             setHorasPorActividad={setHorasPorActividad}
             horasPorDiaProyecto={horasPorDiaProyecto}
             setHorasPorDiaProyecto={setHorasPorDiaProyecto}
@@ -1448,7 +1437,6 @@ export default function ProyectosPage() {
               justificacion={editingProjectDetails.justificacion}
               objetivoGen={editingProjectDetails.objetivo_general}
               objetivosEsp={
-                // Adaptar los objetivos específicos para el resumen de edición
                 Array.isArray(editingProjectDetails.objetivos_especificos)
                   ? editingProjectDetails.objetivos_especificos.map(
                       (title, idx) => ({
@@ -1458,10 +1446,6 @@ export default function ProyectosPage() {
                       })
                     )
                   : []
-              }
-              actividad={
-                editingProjectDetails.actividades?.map((a) => a.descripcion) ??
-                []
               }
               cronograma={cronogramaEdicion}
               categoriaId={editingProjectDetails.categoryId}
@@ -1505,11 +1489,6 @@ export default function ProyectosPage() {
                     )
                   : []
               }
-              actividad={
-                Array.isArray(proyectoGenerado?.tasks)
-                  ? proyectoGenerado.tasks.map((t) => t.task_name)
-                  : []
-              }
               cronograma={
                 Array.isArray(proyectoGenerado?.tasks)
                   ? proyectoGenerado.tasks.reduce<Record<string, number[]>>(
@@ -1525,8 +1504,8 @@ export default function ProyectosPage() {
               }
               categoriaId={proyectoGenerado?.categoryId}
               numMeses={proyectoGenerado?.numMeses}
-              setObjetivosEsp={() => undefined} // función vacía del tipo (value: SpecificObjective[]) => void
-              setActividades={() => undefined} // función vacía del tipo (value: string[]) => void
+              setObjetivosEsp={() => undefined}
+              setActividades={() => undefined}
               coverImageKey={undefined}
               tipoProyecto={proyectoGenerado?.project_type ?? ''}
               fechaInicio={proyectoGenerado?.fechaInicio ?? ''}

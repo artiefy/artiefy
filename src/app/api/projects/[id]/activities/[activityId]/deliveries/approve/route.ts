@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { projectActivityDeliveries, projects } from '~/server/db/schema';
@@ -59,7 +59,7 @@ export async function POST(
       .where(
         and(
           eq(projectActivityDeliveries.activityId, activityIdNum),
-          eq(projectActivityDeliveries.userId, estudianteUserId)
+          eq(projectActivityDeliveries.userId, estudianteUserId as string)
         )
       )
       .returning();

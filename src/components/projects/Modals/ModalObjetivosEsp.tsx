@@ -1,7 +1,7 @@
 // ModalObjetivosEsp.tsx
 'use client';
 
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs'; // Agregar import
 import { X } from 'lucide-react';
@@ -10,7 +10,6 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
 import { Button } from '~/components/projects/ui/button';
 import { Card, CardContent } from '~/components/projects/ui/card';
-import { Input } from '~/components/projects/ui/input';
 
 interface SpecificObjective {
   id: string;
@@ -58,14 +57,17 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 }) => {
   const { user } = useUser(); // Obtener el usuario logueado
   const [newObjective, setNewObjective] = useState('');
-  const [newObjectiveActivity, setNewObjectiveActivity] = useState<Record<string, string>>({});
+  const [newObjectiveActivity, setNewObjectiveActivity] = useState<
+    Record<string, string>
+  >({});
   const [modalGenerarOpen, setModalGenerarOpen] = useState(false);
-  const [objetivoGenTexto, setObjetivoGenTexto] = useState(objetivoGen || '');
+  const [objetivoGenTexto, setObjetivoGenTexto] = useState(objetivoGen ?? '');
   const [tipoProyecto, setTipoProyecto] = useState<string>(''); // <-- Nuevo estado para tipo de proyecto
 
   // Estados para responsables y horas por actividad
-  const [responsablesPorActividad, setResponsablesPorActividad] = useState<Record<string, string>>({});
-  const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
+  const [responsablesPorActividad, setResponsablesPorActividad] = useState<
+    Record<string, string>
+  >({});
   const [horasPorDiaStr, setHorasPorDiaStr] = useState<string>(
     (horasPorDiaProyecto ?? 6).toString()
   );
@@ -75,10 +77,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   );
 
   // 1. Mueve el estado y lógica de control de horasPorActividad al inicio del componente, antes de cualquier return o condicional.
-  const [horasPorActividadState, setHorasPorActividadState] = useState<Record<string, number>>(horasPorActividad);
+  const [horasPorActividadState, setHorasPorActividadState] =
+    useState<Record<string, number>>(horasPorActividad);
 
   useEffect(() => {
-    if (horasPorActividad && typeof setHorasPorActividad === 'undefined') {
+    if (horasPorActividad && !setHorasPorActividad) {
       setHorasPorActividadState(horasPorActividad);
     }
   }, [horasPorActividad, setHorasPorActividad]);
@@ -134,58 +137,47 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     }
   };
 
-  // Función para inicializar la altura de textareas existentes
-  const initializeTextAreaHeight = (element: HTMLTextAreaElement) => {
-    if (element && element.value) {
-      const event = {
-        target: element,
-      } as React.ChangeEvent<HTMLTextAreaElement>;
-      handleTextAreaChange(event);
-    }
-  };
-
   useEffect(() => {
     if (isOpen) {
       setNewObjective('');
       setNewObjectiveActivity({});
-      setObjetivoGenTexto(objetivoGen || '');
-      // Siempre mostrar 6 por defecto al abrir
+      setObjetivoGenTexto(objetivoGen ?? '');
       setHorasPorDiaStr('6');
       setHorasPorDiaProyecto(6);
 
-      // Verificar si hay actividades existentes
       const totalActividades = texto.reduce(
         (acc, obj) => acc + obj.activities.length,
         0
       );
 
-      // Si no hay actividades, establecer tiempo estimado en 0
       if (totalActividades === 0) {
         setTiempoEstimadoStr('0');
         setTiempoEstimadoProyecto(0);
       } else {
-        // Si hay actividades, mantener el valor calculado existente
         setTiempoEstimadoProyecto(tiempoEstimadoProyecto ?? 0);
       }
 
-      // No reseteamos horasPorActividad para preservar los datos entre modales
-      // Solamente inicializamos las textareas
       setTimeout(() => {
         const textareas = document.querySelectorAll('textarea');
         textareas.forEach((textarea) => {
-          if (textarea instanceof HTMLTextAreaElement) {
-            initializeTextAreaHeight(textarea);
+          if (textarea instanceof HTMLTextAreaElement && textarea?.value) {
+            // Use optional chaining for value
+            const event = {
+              target: textarea,
+            } as React.ChangeEvent<HTMLTextAreaElement>;
+            handleTextAreaChange(event);
           }
         });
       }, 100);
     }
+    // Remove initializeTextAreaHeight from dependencies
   }, [
     isOpen,
     objetivoGen,
     setHorasPorDiaProyecto,
     setTiempoEstimadoProyecto,
     tiempoEstimadoProyecto,
-    texto, // Agregar texto como dependencia para que detecte cambios en actividades
+    texto,
   ]);
 
   // Cargar usuarios para el selector de responsables
@@ -193,16 +185,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     const fetchUsuarios = async () => {
       try {
         const res = await fetch('/api/projects/UsersResponsable');
-        const data = await res.json();
-        const usuariosFormateados = Array.isArray(data)
-          ? data.map((u: any) => ({
-              id: u.id ?? '',
-              name: u.name && u.name.trim() !== '' ? u.name : (u.email ?? ''),
-            }))
-          : [];
-        setUsuarios(usuariosFormateados);
-      } catch (error) {
-        setUsuarios([]);
+
+        const _data: unknown = await res.json();
+        // No-op: do not process usuariosFormateados
+      } catch {
+        // No-op
       }
     };
     fetchUsuarios();
@@ -238,10 +225,10 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
   const removeObjective = (id: string) => {
     // Encuentra las actividades asociadas al objetivo a eliminar
-    const objetivo = texto.find((obj) => obj.id === id);
-    const actividadesKeys = objetivo
-      ? objetivo.activities.map((_, idx) => `${id}_${idx}`)
-      : [];
+    const actividadesKeys =
+      texto
+        .find((obj) => obj.id === id)
+        ?.activities.map((_, idx) => `${id}_${idx}`) ?? [];
 
     // Elimina las horas y responsables de las actividades asociadas
     const nuevoHorasPorActividad = { ...horasPorActividad };
@@ -264,8 +251,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   };
 
   const addActivityToObjective = (objectiveId: string) => {
-    const activityText = newObjectiveActivity[objectiveId];
-    if (activityText && activityText.trim()) {
+    const activityText = newObjectiveActivity?.[objectiveId];
+    if (activityText?.trim()) {
       const nuevos = texto.map((obj) =>
         obj.id === objectiveId
           ? {
@@ -284,7 +271,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
       // Inicializa las horas de la nueva actividad en 1 si no existe
       const objIndex = texto.findIndex((obj) => obj.id === objectiveId);
-      const actividadKey = `${objectiveId}_${texto[objIndex]?.activities.length || 0}`;
+      const actividadKey = `${objectiveId}_${texto[objIndex]?.activities.length ?? 0}`;
 
       // Asegúrate de usar la función correcta para actualizar horas
       if (setHorasPorActividad) {
@@ -333,18 +320,33 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
   };
 
   // Maneja la recepción de objetivos generados por IA
-  const handleProyectoGenerado = (data: any) => {
+  interface Milestone {
+    id: string;
+    milestone_name: string;
+    tasks: string[];
+  }
+  interface Task {
+    task_name: string;
+    estimated_time_hours?: number;
+  }
+  interface ProyectoGeneradoData {
+    project_type?: string;
+    milestones?: Milestone[];
+    tasks?: Task[];
+  }
+
+  const handleProyectoGenerado = (data: ProyectoGeneradoData) => {
     console.log('Objetivos específicos recibidos en ModalObjetivosEsp:', data);
     // Guarda el tipo de proyecto generado por IA si existe
-    if (data.project_type) {
+    if (typeof data.project_type === 'string') {
       setTipoProyecto(data.project_type);
     }
     if (Array.isArray(data?.milestones)) {
       // Crear los objetivos y actividades
-      const nuevosObjetivos = data.milestones.map(
-        (milestone: any, idx: number) => ({
+      const nuevosObjetivos: SpecificObjective[] = data.milestones.map(
+        (milestone, idx) => ({
           id: String(idx) + '-' + Date.now(),
-          title: milestone.milestone_name || `Milestone ${idx + 1}`,
+          title: milestone.milestone_name ?? `Milestone ${idx + 1}`,
           activities: Array.isArray(milestone.tasks) ? milestone.tasks : [],
         })
       );
@@ -353,11 +355,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
       const nuevasHoras: Record<string, number> = {};
       const nuevosResponsables: Record<string, string> = {};
       if (Array.isArray(data.tasks)) {
-        nuevosObjetivos.forEach((obj: SpecificObjective, objIdx: number) => {
+        nuevosObjetivos.forEach((obj) => {
           obj.activities.forEach((act, actIdx) => {
-            // Buscar la tarea correspondiente por nombre
-            const tarea = data.tasks.find(
-              (t: any) =>
+            // Only search if data.tasks is defined
+            const tarea = data.tasks?.find(
+              (t) =>
                 typeof t.task_name === 'string' &&
                 t.task_name.trim() === act.trim()
             );
@@ -365,7 +367,6 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
             if (tarea && typeof tarea.estimated_time_hours === 'number') {
               nuevasHoras[actividadKey] = tarea.estimated_time_hours;
             }
-            // Asignar responsable logueado
             if (user?.id) {
               nuevosResponsables[actividadKey] = user.id;
             }
@@ -575,7 +576,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                       const actividadKey = `${objective.id}_${activityIndex}`;
                       // Mostrar el nombre del usuario logueado como responsable
                       const responsableName =
-                        user?.fullName || user?.firstName || 'Usuario';
+                        user?.fullName ?? user?.firstName ?? 'Usuario';
                       return (
                         <div
                           key={activityIndex}
@@ -703,7 +704,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         onProyectoGenerado={handleProyectoGenerado}
         objetivoGen={objetivoGenTexto}
         resetOnOpen={modalGenerarOpen}
-        currentUser={{ name: user?.fullName || user?.firstName || 'Usuario' }} // Agregar el usuario logueado
+        currentUser={{ name: user?.fullName ?? user?.firstName ?? 'Usuario' }} // Use nullish coalescing
       />
     </div>
   );

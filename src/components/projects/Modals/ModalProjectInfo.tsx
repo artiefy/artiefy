@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import Image from 'next/image'; // Importar el componente Image
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Calendar, Eye, Users } from 'lucide-react';
@@ -81,6 +81,7 @@ export default function ProjectInfoModal({
     React.useState<Category | null>(null);
 
   // Datos simulados para ModalIntegrantesProyectoInfo (ajusta según tu estructura real)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const integrantes = project?.user
     ? [
         {
@@ -94,7 +95,7 @@ export default function ProjectInfoModal({
     : [];
 
   const proyectoInfo = {
-    id: project?.id ?? 0, // Añadir el ID del proyecto
+    id: project?.id ?? 0,
     titulo: project?.name ?? '',
     rama: project?.category?.name ?? '',
     especialidades: project?.objetivosEsp?.length ?? 0,
@@ -116,8 +117,8 @@ export default function ProjectInfoModal({
           setInscritos(0);
           return;
         }
-        const data: { count: number } = await res.json();
-        setInscritos(data.count ?? 0);
+        const data: { count?: number } = await res.json();
+        setInscritos(data?.count ?? 0);
       } catch {
         setInscritos(0);
       }
@@ -144,8 +145,8 @@ export default function ProjectInfoModal({
           setAlreadyTaken(false);
           return;
         }
-        const data: { taken: boolean } = await res.json();
-        setAlreadyTaken(data.taken === true);
+        const data: { taken?: boolean } = await res.json();
+        setAlreadyTaken(data?.taken === true);
       } catch {
         setAlreadyTaken(false);
       }
@@ -183,15 +184,27 @@ export default function ProjectInfoModal({
           return;
         }
 
-        const data = await res.json();
+        const data: unknown = await res.json();
         console.log('📋 Datos de categoría recibidos:', data);
 
-        if (data && data.length > 0) {
+        if (
+          Array.isArray(data) &&
+          data.length > 0 &&
+          typeof data[0] === 'object' &&
+          data[0] !== null &&
+          'id' in data[0] &&
+          'name' in data[0] &&
+          'description' in data[0] &&
+          'is_featured' in data[0]
+        ) {
           setCategoriaCompleta({
-            id: data[0].id,
-            name: data[0].name,
-            description: data[0].description || 'Sin descripción disponible',
-            is_featured: data[0].is_featured || false,
+            id: (data[0] as { id: number }).id,
+            name: (data[0] as { name: string }).name,
+            description:
+              (data[0] as { description?: string }).description ??
+              'Sin descripción disponible',
+            is_featured:
+              (data[0] as { is_featured?: boolean }).is_featured ?? false,
           });
           console.log('✅ Categoría completa establecida:', data[0]);
         }
@@ -238,45 +251,46 @@ export default function ProjectInfoModal({
         });
 
         if (res.ok) {
-          const solicitud = await res.json();
+          const solicitud: unknown = await res.json();
           console.log('📋 Datos de solicitud recibidos:', solicitud);
 
-          // MEJORADO: Verificar diferentes estados de solicitud
-          if (!solicitud) {
-            setSolicitudPendiente(false);
-          } else if (
-            solicitud.status === 'pending' ||
-            solicitud.status === 'PENDING'
+          if (
+            solicitud &&
+            typeof solicitud === 'object' &&
+            'status' in solicitud
           ) {
-            setSolicitudPendiente(true);
-          } else if (solicitud.status === 'approved') {
-            // Si la solicitud fue aprobada, verificar si ya está inscrito
-            setSolicitudPendiente(false);
-            // Forzar re-verificación del estado de inscripción
-            if (userId && project.id) {
-              try {
-                const checkRes = await fetch(
-                  `/api/projects/taken/check?userId=${userId}&projectId=${project.id}`
-                );
-                if (checkRes.ok) {
-                  const checkData: { taken: boolean } = await checkRes.json();
-                  setAlreadyTaken(checkData.taken === true);
+            const status = (solicitud as { status?: string }).status;
+            if (!status) {
+              setSolicitudPendiente(false);
+            } else if (status === 'pending' || status === 'PENDING') {
+              setSolicitudPendiente(true);
+            } else if (status === 'approved') {
+              setSolicitudPendiente(false);
+              if (userId && project.id) {
+                try {
+                  const checkRes = await fetch(
+                    `/api/projects/taken/check?userId=${userId}&projectId=${project.id}`
+                  );
+                  if (checkRes.ok) {
+                    const checkData: { taken?: boolean } =
+                      await checkRes.json();
+                    setAlreadyTaken(checkData?.taken === true);
+                  }
+                } catch (error) {
+                  console.warn('Error verificando inscripción:', error);
                 }
-              } catch (error) {
-                console.warn('Error verificando inscripción:', error);
               }
+            } else {
+              setSolicitudPendiente(false);
             }
+            console.log('✅ Estado final de solicitud:', {
+              solicitudPendiente: status === 'pending',
+              estadoSolicitud: status,
+            });
           } else {
-            // rejected o cualquier otro estado
             setSolicitudPendiente(false);
           }
-
-          console.log('✅ Estado final de solicitud:', {
-            solicitudPendiente: solicitud?.status === 'pending',
-            estadoSolicitud: solicitud?.status,
-          });
         } else if (res.status === 404) {
-          // 404 significa que no hay solicitud, esto es normal
           console.log('ℹ️ No hay solicitud registrada (404)');
           setSolicitudPendiente(false);
         } else {
@@ -301,60 +315,6 @@ export default function ProjectInfoModal({
     }
   }, [open, userId, project?.id]);
 
-  const handleInscribirse = async () => {
-    if (!userId || !project) {
-      setError('Usuario no autenticado o proyecto inválido');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/projects/taken', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, projectId: project.id }),
-      });
-      if (!res.ok) throw new Error('No se pudo inscribir al proyecto');
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-        router.push(`/proyectos/DetallesProyectos/${project.id}`);
-      }, 800);
-    } catch (_e) {
-      setError('No se pudo inscribir al proyecto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRenunciar = async () => {
-    if (!userId || !project) {
-      setError('Usuario no autenticado o proyecto inválido');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/projects/taken', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, projectId: project.id }),
-      });
-      if (!res.ok) throw new Error('No se pudo renunciar al proyecto');
-      setSuccess(true);
-      setAlreadyTaken(false);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 800);
-    } catch (_e) {
-      setError('No se pudo renunciar al proyecto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleVerProyecto = () => {
     if (project?.id) {
       onClose();
@@ -375,7 +335,7 @@ export default function ProjectInfoModal({
     console.log('📤 Enviando solicitud de participación:', {
       userId,
       projectId: project.id,
-      mensaje: mensaje || 'Sin mensaje',
+      mensaje: mensaje ?? 'Sin mensaje',
     });
 
     setLoading(true);
@@ -387,7 +347,7 @@ export default function ProjectInfoModal({
         body: JSON.stringify({
           userId,
           projectId: project.id,
-          requestMessage: mensaje || null,
+          requestMessage: mensaje ?? null,
         }),
       });
 
@@ -398,9 +358,18 @@ export default function ProjectInfoModal({
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData: unknown = await res.json();
+        let errorMsg = 'No se pudo enviar la solicitud';
+        if (
+          errorData &&
+          typeof errorData === 'object' &&
+          'error' in errorData &&
+          typeof (errorData as { error?: unknown }).error === 'string'
+        ) {
+          errorMsg = (errorData as { error: string }).error;
+        }
         console.error('❌ Error en solicitud:', errorData);
-        throw new Error(errorData.error || 'No se pudo enviar la solicitud');
+        throw new Error(errorMsg);
       }
 
       const responseData = await res.json();
@@ -431,13 +400,13 @@ export default function ProjectInfoModal({
     const mensaje = prompt('Motivo de la renuncia (opcional):');
 
     if (mensaje === null) {
-      return; // Usuario canceló
+      return;
     }
 
     console.log('📤 Enviando solicitud de renuncia:', {
       userId,
       projectId: project.id,
-      mensaje: mensaje || 'Sin mensaje',
+      mensaje: mensaje ?? 'Sin mensaje',
     });
 
     setLoading(true);
@@ -450,7 +419,7 @@ export default function ProjectInfoModal({
           userId,
           projectId: project.id,
           requestType: 'resignation',
-          requestMessage: mensaje || null,
+          requestMessage: mensaje ?? null,
         }),
       });
 
@@ -461,11 +430,18 @@ export default function ProjectInfoModal({
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData: unknown = await res.json();
+        let errorMsg = 'No se pudo enviar la solicitud de renuncia';
+        if (
+          errorData &&
+          typeof errorData === 'object' &&
+          'error' in errorData &&
+          typeof (errorData as { error?: unknown }).error === 'string'
+        ) {
+          errorMsg = (errorData as { error: string }).error;
+        }
         console.error('❌ Error en solicitud:', errorData);
-        throw new Error(
-          errorData.error || 'No se pudo enviar la solicitud de renuncia'
-        );
+        throw new Error(errorMsg);
       }
 
       const responseData = await res.json();
@@ -514,7 +490,7 @@ export default function ProjectInfoModal({
 
   // Adaptar la categoría para ModalCategoria (usar la información completa obtenida de la API)
   const categoriaForModal: Category | undefined =
-    categoriaCompleta ||
+    categoriaCompleta ??
     (project?.category
       ? {
           id:
@@ -568,7 +544,14 @@ export default function ProjectInfoModal({
           <div className="mb-4 w-full">
             <div className="relative w-full">
               <Image
-                src={project.image ?? project.coverImageKey ?? ''}
+                src={
+                  typeof project.image === 'string' && project.image
+                    ? project.image
+                    : typeof project.coverImageKey === 'string' &&
+                        project.coverImageKey
+                      ? project.coverImageKey
+                      : ''
+                }
                 alt="Imagen del proyecto"
                 width={1200}
                 height={320}
