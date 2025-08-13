@@ -3,22 +3,19 @@
 import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // Si usas Clerk:
 import { useUser } from '@clerk/nextjs';
 import * as RadixSelect from '@radix-ui/react-select';
 import {
   ArrowRight,
-  //  Bookmark,
   Filter,
   Folder,
-  //  Heart,
   ImageIcon,
   Menu,
-  //  MessageCircle,
   MoreHorizontal,
   Search,
-  //  Share2,
   TrendingUp,
   Users,
   X,
@@ -37,8 +34,6 @@ import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
 import { Card, CardContent, CardHeader } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
-// Si usas NextAuth:
-// import { useSession } from "next-auth/react";
 
 // Define el tipo para los proyectos públicos
 interface PublicProject {
@@ -142,6 +137,7 @@ export default function Component() {
   // NextAuth:
   // const { data: session } = useSession();
   // const userId = session?.user?.id;
+  const router = useRouter();
 
   // Función para cargar proyectos
   const loadProjects = React.useCallback(async () => {
@@ -156,34 +152,6 @@ export default function Component() {
       setIsLoading(false);
     }
   }, []);
-
-  // Obtener categorías únicas de los proyectos filtrados
-  const categories = React.useMemo(() => {
-    const uniqueCategories = new Set<string>();
-    filteredProjects.forEach((project) => {
-      if (project.category?.name) {
-        uniqueCategories.add(project.category.name);
-      }
-    });
-    return Array.from(uniqueCategories).map((name) => ({
-      name,
-      count: filteredProjects.filter((p) => p.category?.name === name).length,
-    }));
-  }, [filteredProjects]);
-
-  // Obtener tipos de proyecto únicos de los proyectos filtrados
-  const projectTypes = React.useMemo(() => {
-    const uniqueTypes = new Set<string>();
-    filteredProjects.forEach((project) => {
-      if (project.type_project) {
-        uniqueTypes.add(project.type_project);
-      }
-    });
-    return Array.from(uniqueTypes).map((type) => ({
-      name: type,
-      count: filteredProjects.filter((p) => p.type_project === type).length,
-    }));
-  }, [filteredProjects]);
 
   // Filtrar proyectos
   React.useEffect(() => {
@@ -246,6 +214,123 @@ export default function Component() {
       .slice(0, 5)
       .map(([name, posts]) => ({ name, posts }));
   }, [projects]);
+
+  // Obtener tendencias (tipos de proyecto más frecuentes) según los filtros aplicados,
+  // pero si solo hay el filtro de tendencia activo, mostrar todas las tendencias globales
+  const filteredTrendingTopics = React.useMemo(() => {
+    // Si solo hay tendencia activa (los demás filtros están en 'all'), usar trendingTopics global
+    const onlyTrendingActive =
+      selectedTrending !== 'all' &&
+      selectedCategory === 'all' &&
+      selectedType === 'all' &&
+      searchTerm === '';
+    if (onlyTrendingActive) {
+      return trendingTopics;
+    }
+    // Si hay más de un filtro activo, usar los tipos de los proyectos filtrados
+    const tagCount = new Map<string, number>();
+    filteredProjects.forEach((project) => {
+      if (project.type_project) {
+        tagCount.set(
+          project.type_project,
+          (tagCount.get(project.type_project) ?? 0) + 1
+        );
+      }
+    });
+    return Array.from(tagCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, posts]) => ({ name, posts }));
+  }, [
+    filteredProjects,
+    trendingTopics,
+    selectedTrending,
+    selectedCategory,
+    selectedType,
+    searchTerm,
+  ]);
+
+  // Obtener categorías únicas de los proyectos filtrados,
+  // pero si solo hay categoría activa, mostrar todas las categorías globales
+  const filteredCategories = React.useMemo(() => {
+    const onlyCategoryActive =
+      selectedCategory !== 'all' &&
+      selectedTrending === 'all' &&
+      selectedType === 'all' &&
+      searchTerm === '';
+    if (onlyCategoryActive) {
+      // Todas las categorías globales
+      const uniqueCategories = new Set<string>();
+      projects.forEach((project) => {
+        if (project.category?.name) {
+          uniqueCategories.add(project.category.name);
+        }
+      });
+      return Array.from(uniqueCategories).map((name) => ({
+        name,
+        count: projects.filter((p) => p.category?.name === name).length,
+      }));
+    }
+    // Si hay más de un filtro activo, usar los proyectos filtrados
+    const uniqueCategories = new Set<string>();
+    filteredProjects.forEach((project) => {
+      if (project.category?.name) {
+        uniqueCategories.add(project.category.name);
+      }
+    });
+    return Array.from(uniqueCategories).map((name) => ({
+      name,
+      count: filteredProjects.filter((p) => p.category?.name === name).length,
+    }));
+  }, [
+    filteredProjects,
+    projects,
+    selectedCategory,
+    selectedTrending,
+    selectedType,
+    searchTerm,
+  ]);
+
+  // Obtener tipos de proyecto únicos de los proyectos filtrados,
+  // pero si solo hay tipo activo, mostrar todos los tipos globales
+  const filteredProjectTypes = React.useMemo(() => {
+    const onlyTypeActive =
+      selectedType !== 'all' &&
+      selectedTrending === 'all' &&
+      selectedCategory === 'all' &&
+      searchTerm === '';
+    if (onlyTypeActive) {
+      // Todos los tipos globales
+      const uniqueTypes = new Set<string>();
+      projects.forEach((project) => {
+        if (project.type_project) {
+          uniqueTypes.add(project.type_project);
+        }
+      });
+      return Array.from(uniqueTypes).map((type) => ({
+        name: type,
+        count: projects.filter((p) => p.type_project === type).length,
+      }));
+    }
+    // Si hay más de un filtro activo, usar los proyectos filtrados
+    const uniqueTypes = new Set<string>();
+    filteredProjects.forEach((project) => {
+      if (project.type_project) {
+        uniqueTypes.add(project.type_project);
+      }
+    });
+    return Array.from(uniqueTypes).map((type) => ({
+      name: type,
+      count: filteredProjects.filter((p) => p.type_project === type).length,
+    }));
+  }, [
+    filteredProjects,
+    projects,
+    selectedType,
+    selectedTrending,
+    selectedCategory,
+    searchTerm,
+  ]);
 
   // Cargar proyectos inicialmente
   useEffect(() => {
@@ -344,8 +429,8 @@ export default function Component() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="relative flex gap-6">
+      <div className="mx-auto min-h-[calc(100vh-64px)] w-full max-w-full px-2 py-4 sm:px-4 sm:py-6">
+        <div className="relative flex h-full flex-col items-stretch gap-4 md:flex-row md:gap-6">
           {/* Mobile Sidebar Overlay */}
           {sidebarOpen && (
             <div
@@ -354,11 +439,13 @@ export default function Component() {
             />
           )}
 
-          {/* Sidebar */}
+          {/* Sidebar / Hamburger Menu */}
           <div
-            className={`fixed top-0 left-0 z-50 h-full w-80 transform bg-[#041C3C] transition-transform duration-300 ease-in-out md:relative md:w-auto md:transform-none md:bg-transparent ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} `}
+            className={`fixed top-0 left-0 z-50 h-full w-[80vw] bg-[#041C3C] shadow-lg transition-transform duration-300 ease-in-out md:static md:top-[104px] md:z-auto md:w-auto md:max-w-93 md:bg-transparent md:shadow-none ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            } md:translate-x-0`}
           >
-            <div className="h-full overflow-y-auto p-4 md:p-0">
+            <div className="flex h-full flex-col p-4 md:p-0">
               {/* Mobile close button */}
               <div className="mb-4 flex justify-end md:hidden">
                 <Button
@@ -371,26 +458,34 @@ export default function Component() {
                 </Button>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6">
                 {/* My Projects Button */}
                 <div className="relative">
-                  <a href={userId ? '/proyectos/MisProyectos' : '/sign-in'}>
-                    <button className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative w-full rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30">
-                      <div className="flex items-center justify-center space-x-2 rounded-3xl bg-slate-900 px-6 py-4 transition-all duration-300 group-hover:bg-slate-800 md:space-x-4 md:px-12 md:py-6">
-                        {userId && (
-                          <div className="relative">
-                            <Folder className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:opacity-0 md:h-8 md:w-8" />
-                            <FaFolderOpen className="absolute top-0 left-0 h-6 w-6 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100 md:h-8 md:w-8" />
-                            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100" />
-                          </div>
-                        )}
-                        <span className="text-lg font-bold tracking-wide text-white md:text-2xl">
-                          {userId ? 'Mis Proyectos' : 'Iniciar Sesión'}
-                        </span>
-                        <ArrowRight className="h-5 w-5 text-cyan-400 transition-all duration-300 group-hover:translate-x-2 md:h-6 md:w-6" />
-                      </div>
-                    </button>
-                  </a>
+                  <button
+                    className="group bg-size-100 bg-pos-0 hover:bg-pos-100 relative w-full rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30"
+                    onClick={() => {
+                      if (userId) {
+                        router.push('/proyectos/MisProyectos');
+                      } else {
+                        router.push('/sign-in');
+                      }
+                      closeSidebar();
+                    }}
+                  >
+                    <div className="flex items-center justify-center space-x-2 rounded-3xl bg-slate-900 px-6 py-4 transition-all duration-300 group-hover:bg-slate-800 md:space-x-4 md:px-12 md:py-6">
+                      {userId && (
+                        <div className="relative">
+                          <Folder className="h-6 w-6 text-cyan-400 transition-all duration-300 group-hover:opacity-0 md:h-8 md:w-8" />
+                          <FaFolderOpen className="absolute top-0 left-0 h-6 w-6 text-cyan-400 opacity-0 transition-all duration-300 group-hover:opacity-100 md:h-8 md:w-8" />
+                          <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 transition-opacity duration-300 group-hover:animate-pulse group-hover:opacity-100" />
+                        </div>
+                      )}
+                      <span className="text-lg font-bold tracking-wide text-white md:text-2xl">
+                        {userId ? 'Mis Proyectos' : 'Iniciar Sesión'}
+                      </span>
+                      <ArrowRight className="h-5 w-5 text-cyan-400 transition-all duration-300 group-hover:translate-x-2 md:h-6 md:w-6" />
+                    </div>
+                  </button>
                 </div>
 
                 {/* Desktop Search */}
@@ -420,50 +515,10 @@ export default function Component() {
                   selectedType !== 'all' ||
                   selectedTrending !== 'all') && (
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-slate-300">
-                      Filtros activos:
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {searchTerm && (
-                        <Badge
-                          variant="outline"
-                          className="cursor-pointer border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/20"
-                          onClick={clearSearch}
-                        >
-                          Búsqueda: &quot;{searchTerm}&quot; ✕
-                        </Badge>
-                      )}
-
-                      {selectedCategory !== 'all' && (
-                        <Badge
-                          variant="outline"
-                          className="cursor-pointer border-teal-400/50 text-teal-300 hover:bg-teal-400/20"
-                          onClick={() => setSelectedCategory('all')}
-                        >
-                          Categoría: {selectedCategory} ✕
-                        </Badge>
-                      )}
-
-                      {selectedType !== 'all' && (
-                        <Badge
-                          variant="outline"
-                          className="cursor-pointer border-purple-400/50 text-purple-300 hover:bg-purple-400/20"
-                          onClick={() => setSelectedType('all')}
-                        >
-                          Tipo: {selectedType} ✕
-                        </Badge>
-                      )}
-
-                      {selectedTrending !== 'all' && (
-                        <Badge
-                          variant="outline"
-                          className="cursor-pointer border-orange-400/50 text-orange-300 hover:bg-orange-400/20"
-                          onClick={() => setSelectedTrending('all')}
-                        >
-                          Tendencia: {selectedTrending} ✕
-                        </Badge>
-                      )}
-
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-300">
+                        Filtros activos:
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -473,25 +528,94 @@ export default function Component() {
                           setSelectedType('all');
                           setSelectedTrending('all');
                         }}
-                        className="text-xs text-gray-500 hover:text-gray-300"
+                        className="text-xs text-slate-400 hover:bg-cyan-300 hover:text-black"
                       >
                         Limpiar todo
                       </Button>
+                    </div>
+                    <div className="flex w-full flex-col gap-2">
+                      {searchTerm && (
+                        <Badge
+                          variant="outline"
+                          className="flex max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden border-cyan-400/50 p-0 break-words whitespace-normal text-cyan-300"
+                        >
+                          <span className="min-w-0 flex-grow px-2 py-2 break-words whitespace-normal">{`Búsqueda: "${searchTerm}"`}</span>
+                          <Button
+                            variant="ghost"
+                            onClick={clearSearch}
+                            className="flex h-auto min-h-full w-7 flex-shrink-0 items-center justify-center rounded-none p-0 text-slate-400 hover:bg-cyan-400/20 hover:text-teal-100"
+                            style={{ alignSelf: 'stretch' }}
+                          >
+                            ✕
+                          </Button>
+                        </Badge>
+                      )}
+
+                      {selectedCategory !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="flex max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden border-teal-400/50 p-0 text-teal-300"
+                        >
+                          <span className="min-w-0 flex-grow truncate px-2 py-2 break-words">{`Categoría: "${selectedCategory}"`}</span>
+                          <Button
+                            variant="ghost"
+                            className="flex h-auto min-h-full w-7 flex-shrink-0 items-center justify-center rounded-none p-0 text-slate-400 hover:bg-teal-400/20 hover:text-teal-100"
+                            style={{ alignSelf: 'stretch' }}
+                            onClick={() => setSelectedCategory('all')}
+                          >
+                            ✕
+                          </Button>
+                        </Badge>
+                      )}
+
+                      {selectedType !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="flex max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden border-purple-400/50 p-0 text-purple-300"
+                        >
+                          <span className="min-w-0 flex-grow truncate px-2 py-2 break-words">{`Tipo: "${selectedType}"`}</span>
+                          <Button
+                            variant="ghost"
+                            className="flex h-auto min-h-full w-7 flex-shrink-0 items-center justify-center rounded-none p-0 text-slate-400 hover:bg-purple-400/20 hover:text-teal-100"
+                            style={{ alignSelf: 'stretch' }}
+                            onClick={() => setSelectedType('all')}
+                          >
+                            ✕
+                          </Button>
+                        </Badge>
+                      )}
+
+                      {selectedTrending !== 'all' && (
+                        <Badge
+                          variant="outline"
+                          className="flex max-w-full min-w-0 cursor-pointer items-stretch overflow-hidden border-orange-400/50 p-0 text-orange-300"
+                        >
+                          <span className="min-w-0 flex-grow truncate px-2 py-2 break-words">{`Tendencia: "${selectedTrending}"`}</span>
+                          <Button
+                            variant="ghost"
+                            className="flex h-auto min-h-full w-7 flex-shrink-0 items-center justify-center rounded-none p-0 text-slate-400 hover:bg-orange-400/20 hover:text-teal-100"
+                            style={{ alignSelf: 'stretch' }}
+                            onClick={() => setSelectedTrending('all')}
+                          >
+                            ✕
+                          </Button>
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Filters Card */}
-                <Card className="border-slate-700 bg-slate-800/50">
+                <Card className="w-full max-w-full overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Filter className="h-4 w-4 text-cyan-400" />
-                        <h3 className="font-semibold text-slate-200">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center space-x-2">
+                        <Filter className="h-4 w-4 flex-shrink-0 text-cyan-400" />
+                        <h3 className="max-w-[70vw] truncate font-semibold text-slate-200 sm:max-w-xs">
                           Filtros
                         </h3>
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex flex-row flex-wrap items-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
@@ -546,9 +670,10 @@ export default function Component() {
                           <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
                             <RadixSelect.Viewport className="p-1">
                               <SelectItem value="all">
-                                Todas las categorías ({categories.length})
+                                Todas las categorías (
+                                {filteredCategories.length})
                               </SelectItem>
-                              {categories.map((category) => (
+                              {filteredCategories.map((category) => (
                                 <SelectItem
                                   key={category.name}
                                   value={category.name}
@@ -591,9 +716,9 @@ export default function Component() {
                           <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
                             <RadixSelect.Viewport className="p-1">
                               <SelectItem value="all">
-                                Todos los tipos ({projectTypes.length})
+                                Todos los tipos ({filteredProjectTypes.length})
                               </SelectItem>
-                              {projectTypes.map((type) => (
+                              {filteredProjectTypes.map((type) => (
                                 <SelectItem key={type.name} value={type.name}>
                                   {type.name} ({type.count})
                                 </SelectItem>
@@ -607,16 +732,16 @@ export default function Component() {
                 </Card>
 
                 {/* Trending Card */}
-                <Card className="border-slate-700 bg-slate-800/50">
+                <Card className="w-full max-w-full overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <TrendingUp className="h-4 w-4 text-cyan-400" />
-                        <h3 className="font-semibold text-slate-200">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center space-x-2">
+                        <TrendingUp className="h-4 w-4 flex-shrink-0 text-cyan-400" />
+                        <h3 className="max-w-[70vw] truncate font-semibold text-slate-200 sm:max-w-xs">
                           Tendencias
                         </h3>
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex flex-row flex-wrap items-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
@@ -666,9 +791,10 @@ export default function Component() {
                       <RadixSelect.Content className="mt-2 rounded-xl bg-slate-700 shadow-lg">
                         <RadixSelect.Viewport className="p-1">
                           <SelectItem value="all">
-                            Todas las tendencias ({trendingTopics.length})
+                            Todas las tendencias (
+                            {filteredTrendingTopics.length})
                           </SelectItem>
-                          {trendingTopics.map((topic) => (
+                          {filteredTrendingTopics.map((topic) => (
                             <SelectItem key={topic.name} value={topic.name}>
                               #{topic.name} ({topic.posts} posts)
                             </SelectItem>
@@ -683,10 +809,10 @@ export default function Component() {
           </div>
 
           {/* Main Feed */}
-          <div className="min-w-0 flex-1">
-            <div className="h-[calc(100vh-180px)] md:h-[calc(100vh-140px)]">
+          <div className="w-full min-w-0 flex-1">
+            <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-80px)]">
               <div
-                className="custom-scrollbar h-full overflow-x-hidden overflow-y-auto"
+                className="custom-scrollbar h-full overflow-x-auto overflow-y-auto md:overflow-x-hidden"
                 style={{
                   height: '100%',
                 }}
@@ -910,7 +1036,6 @@ export default function Component() {
 
       {/* Scrollbar color personalizado */}
       <style jsx global>{`
-        /* Oculta el scroll global del html/body */
         html,
         body {
           scrollbar-width: none !important; /* Firefox */

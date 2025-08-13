@@ -142,10 +142,6 @@ export default function ModalGenerarProyecto({
         team_members: currentUser.name,
       }));
     }
-    console.log('DEBUG - currentUser cambió:', currentUser);
-    console.log('DEBUG - currentUser?.name:', currentUser?.name);
-    console.log('DEBUG - typeof currentUser:', typeof currentUser);
-    console.log('DEBUG - currentUser completo:', JSON.stringify(currentUser));
   }, [currentUser, form.team_members]);
 
   // Efecto separado para manejar la apertura del modal
@@ -175,14 +171,6 @@ export default function ModalGenerarProyecto({
       setForm((prev) => ({
         ...prev,
         project_objectives: objetivoGen,
-      }));
-    }
-
-    // Forzar la carga del usuario si está disponible
-    if (currentUser?.name) {
-      setForm((prev) => ({
-        ...prev,
-        team_members: currentUser.name,
       }));
     }
   }, [isOpen, resetOnOpen, objetivoGen, currentUser]);
@@ -222,12 +210,20 @@ export default function ModalGenerarProyecto({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent
+          className="max-h-[90vh] max-w-2xl overflow-y-auto"
+          aria-describedby="modal-generar-proyecto-desc"
+        >
           <DialogHeader>
             <DialogTitle className="break-words">
               Generar Proyecto con IA
             </DialogTitle>
           </DialogHeader>
+          {/* Descripción accesible para el modal */}
+          <p id="modal-generar-proyecto-desc" className="sr-only">
+            Complete los campos para generar un proyecto automáticamente con
+            inteligencia artificial.
+          </p>
           <div className="space-y-3">
             {/* Selector para el tipo de proyecto */}
             <div>

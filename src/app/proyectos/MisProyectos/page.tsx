@@ -219,6 +219,11 @@ export default function ProyectosPage() {
     setResumenOpen(true);
   };
 
+  const handleAnteriorResumen = () => {
+    setResumenOpen(false);
+    setObjetivosEspOpen(true);
+  };
+
   // Estado para los proyectos cargados desde la BD
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1029,7 +1034,7 @@ export default function ProyectosPage() {
                 filteredProjects.map((project) => (
                   <Card
                     key={`${project.projectType}-${project.id}`}
-                    className="relative border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+                    className="relative flex min-w-0 flex-col border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
                   >
                     {/* Burbuja roja de solicitudes pendientes - SOLO para proyectos propios */}
                     {project.projectType === 'own' &&
@@ -1079,14 +1084,14 @@ export default function ProyectosPage() {
                         )}
                       </div>
 
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="mb-2 line-clamp-2 text-xl text-white">
+                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                        <CardTitle className="mb-2 line-clamp-2 min-w-0 text-lg break-words text-white sm:text-xl md:text-2xl">
                           {project.title}
                         </CardTitle>
                         {/* Mostrar botones solo si el proyecto es propio */}
                         {project.projectType === 'own' &&
                           project.userId === userId && (
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1106,19 +1111,20 @@ export default function ProyectosPage() {
                             </div>
                           )}
                       </div>
-                      <p className="line-clamp-3 text-sm text-slate-400">
+                      <p className="line-clamp-3 text-xs text-slate-400 sm:text-sm md:text-base">
                         {project.description}
                       </p>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="flex min-w-0 flex-1 flex-col space-y-4">
                       {/* Status Badges */}
                       <div className="flex flex-wrap gap-2">
                         <Badge
                           variant="secondary"
                           className={
-                            project.projectType === 'own'
+                            (project.projectType === 'own'
                               ? 'border-cyan-400/30 bg-slate-700 text-cyan-400'
-                              : 'border-purple-400/30 bg-slate-700 text-purple-400'
+                              : 'border-purple-400/30 bg-slate-700 text-purple-400') +
+                            ' text-xs sm:text-sm'
                           }
                         >
                           {project.projectType === 'own' ? 'Propio' : 'Tomado'}
@@ -1126,16 +1132,17 @@ export default function ProyectosPage() {
                         <Badge
                           variant="secondary"
                           className={
-                            project.isPublic
+                            (project.isPublic
                               ? 'border-green-400/30 bg-slate-700 text-green-400'
-                              : 'border-orange-400/30 bg-slate-700 text-orange-400'
+                              : 'border-orange-400/30 bg-slate-700 text-orange-400') +
+                            ' text-xs sm:text-sm'
                           }
                         >
                           {project.isPublic ? 'Publico' : 'Privado'}
                         </Badge>
                         <Badge
                           variant="secondary"
-                          className="border-blue-400/30 bg-slate-700 text-blue-400"
+                          className="border-blue-400/30 bg-slate-700 text-xs text-blue-400 sm:text-sm"
                         >
                           {project.status}
                         </Badge>
@@ -1143,7 +1150,7 @@ export default function ProyectosPage() {
 
                       {/* Progress Bar */}
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-slate-400">Progreso</span>
                           <span className="text-cyan-400">
                             {Math.floor(Math.random() * 100)}%
@@ -1161,18 +1168,19 @@ export default function ProyectosPage() {
 
                       {/* Project Details */}
                       <div className="space-y-3 pt-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center text-slate-400">
+                        <div className="flex min-w-0 flex-col flex-wrap items-start justify-between gap-2 text-xs sm:flex-row sm:items-center sm:text-sm">
+                          <div className="flex min-w-0 flex-1 items-center text-slate-400">
                             <button
                               type="button"
                               onClick={() =>
                                 setIntegrantesModalOpen(project.id)
                               }
-                              className="flex items-center gap-1 rounded bg-[#1F3246] px-2 py-1 text-xs text-purple-300 hover:scale-105"
+                              className="flex items-center gap-1 truncate rounded bg-[#1F3246] px-2 py-1 text-[10px] text-purple-300 hover:scale-105 sm:text-xs"
+                              style={{ maxWidth: '100%' }}
                             >
                               {inscritosMap[project.id] ?? 0}{' '}
                               <Users className="inline h-4 w-4 text-purple-300" />{' '}
-                              Integrantes
+                              <span className="truncate">Integrantes</span>
                             </button>
                             {/* Modal para ver integrantes */}
                             {integrantesModalOpen === project.id && (
@@ -1203,9 +1211,9 @@ export default function ProyectosPage() {
                               />
                             )}
                           </div>
-                          <div className="flex items-center text-slate-400">
-                            <Calendar className="mr-2 h-4 w-4" />
-                            <span>
+                          <div className="mt-1 flex min-w-0 items-center text-slate-400 sm:mt-0">
+                            <Calendar className="mr-2 h-4 w-4 flex-shrink-0" />
+                            <span className="block truncate">
                               {project.date
                                 ? new Date(project.date).toLocaleDateString(
                                     'es-ES'
@@ -1216,13 +1224,13 @@ export default function ProyectosPage() {
                         </div>
 
                         <div className="border-t border-slate-700 pt-3">
-                          <div className="text-sm">
+                          <div className="text-xs sm:text-sm">
                             <span className="text-slate-400">Tipo: </span>
                             <span className="font-medium text-cyan-400">
                               {project.type_project}
                             </span>
                           </div>
-                          <div className="text-sm">
+                          <div className="text-xs sm:text-sm">
                             <span className="text-slate-400">Categoría: </span>
                             <span className="font-medium text-cyan-400">
                               {project.category}
@@ -1232,21 +1240,23 @@ export default function ProyectosPage() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
+                      <div className="flex w-full flex-col gap-2 pt-2 sm:flex-row">
                         <Button
-                          className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
+                          className="min-w-0 flex-1 overflow-hidden bg-cyan-500 text-white hover:bg-cyan-600"
                           onClick={() =>
                             (window.location.href = `/proyectos/DetallesProyectos/${project.id}`)
                           }
                         >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver Proyecto
+                          <Eye className="mr-2 h-4 w-4 flex-shrink-0" />
+                          <span className="block truncate text-ellipsis">
+                            {'Ver Proyecto'}
+                          </span>
                         </Button>
                         {/* Mostrar botón de renunciar solo si es tomado */}
                         {project.projectType === 'taken' && (
                           <Button
                             variant="outline"
-                            className="border-orange-500 bg-transparent text-orange-400 hover:bg-orange-500/10"
+                            className="min-w-0 flex-1 overflow-hidden border-orange-500 bg-transparent text-orange-400 hover:bg-orange-500/10"
                             onClick={async () => {
                               const mensaje = prompt(
                                 'Motivo de la renuncia (opcional):'
@@ -1299,7 +1309,9 @@ export default function ProyectosPage() {
                               }
                             }}
                           >
-                            Solicitar Renuncia
+                            <span className="block truncate text-ellipsis">
+                              {'Solicitar Renuncia'}
+                            </span>
                           </Button>
                         )}
                       </div>
@@ -1386,6 +1398,7 @@ export default function ProyectosPage() {
           <ModalResumen
             isOpen={ResumenOpen}
             onClose={() => setResumenOpen(false)}
+            onAnterior={handleAnteriorResumen}
             planteamiento={planteamientoTexto}
             justificacion={justificacionTexto}
             objetivoGen={objetivoGenTexto}

@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
+import { FaArrowLeft } from 'react-icons/fa';
+
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
 
@@ -63,6 +65,7 @@ interface ModalResumenProps {
   setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
+  onAnterior?: () => void; // <-- Nueva prop opcional para volver atrás
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -92,6 +95,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   horasPorDiaProyecto: horasPorDiaProyectoProp,
   setHorasPorDiaProyecto,
   setTiempoEstimadoProyecto,
+  onAnterior, // <-- Recibe la prop
 }) => {
   // Solo mantener un estado local para horas por actividad
   const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<
@@ -183,9 +187,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [objetivoGenEditado, setObjetivoGenEditado] = useState(objetivoGen);
   const [objetivosEspEditado, setObjetivosEspEditado] =
     useState<SpecificObjective[]>(objetivosEsp);
+  const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
+    useState<boolean>(false);
 
   // Calcular el total de horas dinámicamente
   const totalHorasActividadesCalculado = useMemo(() => {
+    if (!objetivosEspEditado || objetivosEspEditado.length === 0) {
+      // No mostrar logs ni calcular si no hay objetivos
+      return 0;
+    }
     console.log('=== CALCULANDO TOTAL DE HORAS ===');
     console.log('Objetivos:', objetivosEspEditado);
     console.log('Horas finales:', horasPorActividadFinal);
@@ -241,18 +251,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<
     Record<string, string>
   >({});
-  const [cronogramaState, setCronograma] =
+  const [cronogramaState /* setCronograma */] =
     useState<Record<string, number[]>>(cronograma);
-  const [fechaInicio, setFechaInicio] = useState<string>(fechaInicioProp ?? '');
+  const [fechaInicio, setFechaInicio] = useState<string>(
+    fechaInicioProp && fechaInicioProp.trim() !== ''
+      ? fechaInicioProp
+      : getTodayDateString()
+  );
   const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
-
-  // Estado para controlar si la fecha final ha sido editada manualmente
-  const [fechaFinEditadaManualmente, setFechaFinEditadaManualmente] =
-    useState<boolean>(false);
-
-  // Estado para controlar si la fecha inicial ha sido editada manualmente
-  const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
-    useState<boolean>(false);
 
   // Remove unused states
   // const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
@@ -333,11 +339,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   useEffect(() => {
     if (
       typeof horasPorDiaProyectoProp === 'number' &&
-      !setHorasPorDiaProyecto
+      !setHorasPorDiaProyecto &&
+      horasPorDiaProyectoProp !== horasPorDiaProyectoState
     ) {
       setHorasPorDiaProyectoState(horasPorDiaProyectoProp);
     }
-  }, [horasPorDiaProyectoProp, setHorasPorDiaProyecto]);
+  }, [
+    horasPorDiaProyectoProp,
+    setHorasPorDiaProyecto,
+    horasPorDiaProyectoState,
+  ]);
 
   // Decide el valor y el setter a usar
   const horasPorDiaValue =
@@ -531,6 +542,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }, [isOpen, titulo, planteamiento, justificacion, objetivoGen]);
 
   // Sincronizar fecha y cronograma al abrir el modal
+  /*
   useEffect(() => {
     if (isOpen) {
       setFechaInicio(fechaInicioProp ?? '');
@@ -538,6 +550,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       setCronograma(cronograma);
     }
   }, [isOpen, fechaInicioProp, fechaFinProp, cronograma]);
+  */
 
   // Sincronizar responsables y horas de actividades en modo edición
   useEffect(() => {
@@ -576,133 +589,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isEditMode, isOpen, actividadesProp, objetivosEsp, setHorasPorActividad]);
 
-  // Función para calcular la fecha final basada en horas totales y horas por día
-  const calcularFechaFinal = (
-    fechaInicio: string,
-    totalHoras: number,
-    horasPorDia: number
-  ): string => {
-    if (!fechaInicio || totalHoras <= 0 || horasPorDia <= 0) return '';
-
-    const diasNecesarios = Math.ceil(totalHoras / horasPorDia);
-
-    // Contar días laborables necesarios empezando desde la fecha inicial
-    let diasContados = 0;
-    const fechaActual = new Date(fechaInicio);
-
-    while (diasContados < diasNecesarios) {
-      const diaSemana = fechaActual.getDay();
-
-      // Si es día laborable (lunes a viernes), contarlo
-      if (diaSemana !== 0 && diaSemana !== 6) {
-        diasContados++;
-      }
-
-      // Si ya contamos todos los días necesarios, no avanzar más
-      if (diasContados < diasNecesarios) {
-        fechaActual.setDate(fechaActual.getDate() + 1);
-      }
-    }
-
-    return fechaActual.toISOString().split('T')[0];
-  };
-
-  // Función para obtener la fecha actual en formato YYYY-MM-DD
-  const obtenerFechaActual = (): string => {
-    return new Date().toISOString().split('T')[0];
-  };
-
-  // Función para manejar cambio manual de fecha inicial
-  const handleFechaInicioChange = (nuevaFecha: string) => {
-    setFechaInicio(nuevaFecha);
-    // Marcar que la fecha inicial ha sido editada manualmente
-    const fechaActual = obtenerFechaActual();
-    setFechaInicioEditadaManualmente(nuevaFecha !== fechaActual);
-    // Resetear el flag de edición manual para permitir recálculo automático
-    setFechaFinEditadaManualmente(false);
-  };
-
-  // Función para manejar cambio manual de fecha final
-  const handleFechaFinChange = (nuevaFecha: string) => {
-    setFechaFin(nuevaFecha);
-    // Marcar que la fecha final ha sido editada manualmente
-    setFechaFinEditadaManualmente(true);
-  };
-
-  // Función para volver a la fecha actual
-  const volverAFechaActual = () => {
-    const fechaActual = obtenerFechaActual();
-    setFechaInicio(fechaActual);
-    setFechaInicioEditadaManualmente(false);
-    setFechaFinEditadaManualmente(false);
-  };
-
-  // Función para volver al cálculo automático
-  const volverACalculoAutomatico = () => {
-    setFechaFinEditadaManualmente(false);
-    // Forzar recálculo inmediato
-    if (
-      fechaInicio &&
-      totalHorasActividadesCalculado > 0 &&
-      horasPorDiaValue > 0
-    ) {
-      const nuevaFechaFin = calcularFechaFinal(
-        fechaInicio,
-        totalHorasActividadesCalculado,
-        horasPorDiaValue
-      );
-      if (nuevaFechaFin) {
-        setFechaFin(nuevaFechaFin);
-      }
-    }
-  };
-
-  // Efecto para calcular fecha final automáticamente (solo si no ha sido editada manualmente)
-  // MODIFICADO: recalcula también al abrir el modal si hay datos y no fue editada manualmente
-  useEffect(() => {
-    if (
-      isOpen && // <-- Solo cuando el modal está abierto
-      !fechaFinEditadaManualmente &&
-      fechaInicio &&
-      totalHorasActividadesCalculado > 0 &&
-      horasPorDiaValue > 0
-    ) {
-      const nuevaFechaFin = calcularFechaFinal(
-        fechaInicio,
-        totalHorasActividadesCalculado,
-        horasPorDiaValue
-      );
-
-      if (nuevaFechaFin && nuevaFechaFin !== fechaFin) {
-        setFechaFin(nuevaFechaFin);
-      }
-    }
-  }, [
-    isOpen, // <-- Añadido para recalcular al abrir el modal
-    fechaInicio,
-    fechaFin, // <-- Añadido para cumplir con exhaustive-deps
-    totalHorasActividadesCalculado,
-    horasPorDiaValue,
-    fechaFinEditadaManualmente,
-  ]);
-
-  // Limpiar el flag de edición manual cuando se abre el modal en modo crear
-  useEffect(() => {
-    if (!isEditMode && isOpen) {
-      setFechaFinEditadaManualmente(false);
-      setFechaInicioEditadaManualmente(false);
-    }
-  }, [isEditMode, isOpen]);
-
-  // Efecto para establecer fecha inicial automáticamente en modo crear
-  useEffect(() => {
-    if (!isEditMode && isOpen && !fechaInicio) {
-      const fechaActual = obtenerFechaActual();
-      console.log('Estableciendo fecha actual como inicial:', fechaActual);
-      setFechaInicio(fechaActual);
-      setFechaInicioEditadaManualmente(false);
-    }
-  }, [isEditMode, isOpen, fechaInicio]);
+  // Elimina el siguiente useEffect para quitar la lógica de asignar automáticamente la fecha de inicio
+  // useEffect(() => {
+  //   // Solo establecer la fecha de inicio automáticamente si está vacío
+  //   if (!isEditMode && isOpen && !fechaInicio) {
+  //     const fechaActual = toLocalDateString(new Date());
+  //     setFechaInicio(fechaActual);
+  //   }
+  // }, [isEditMode, isOpen, fechaInicio]);
 
   // --- MES RENDER LOGIC ---
   // El problema es que el cronograma solo muestra columnas para las fechas existentes en el rango,
@@ -919,7 +813,28 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     alert('Funcionalidad de guardar proyecto no implementada.');
   };
 
-  // Fix: agregar key a cada option en los select
+  // Utilidad para obtener la fecha actual en formato YYYY-MM-DD
+  function getTodayDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Nuevo: mostrar botón de reset si la fecha fue editada manualmente
+  const isFechaInicioEditada =
+    fechaInicio !== '' && fechaInicio !== getTodayDateString();
+
+  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
+  useEffect(() => {
+    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
+      setFechaFin(fechaInicio);
+    }
+  }, [fechaInicio, fechaFin]);
+
+  if (!isOpen) return null;
+
   return (
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -1096,25 +1011,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 </span>
               )}
             </label>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={fechaInicio}
-                onChange={(e) => handleFechaInicioChange(e.target.value)}
+                onChange={(e) => setFechaInicio(e.target.value)}
                 className="w-full rounded bg-gray-400 p-2 text-black"
                 required
-                title={
-                  fechaInicioEditadaManualmente
-                    ? "Fecha editada manualmente. Usa el botón 'Hoy' para volver a la fecha actual"
-                    : 'Fecha inicial del proyecto. Se establece automáticamente como hoy'
-                }
+                title="Fecha inicial del proyecto"
               />
-              {fechaInicioEditadaManualmente && (
+              {isFechaInicioEditada && (
                 <button
                   type="button"
-                  onClick={volverAFechaActual}
-                  className="flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 sm:text-sm"
-                  title="Volver a la fecha actual"
+                  onClick={() => setFechaInicio(getTodayDateString())}
+                  className="ml-2 rounded bg-cyan-700 px-2 py-1 text-xs font-semibold text-white transition hover:bg-cyan-800"
+                  title="Restablecer a la fecha actual"
                 >
                   Hoy
                 </button>
@@ -1125,41 +1036,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Fin del Proyecto
-              {!fechaFinEditadaManualmente && (
-                <span className="ml-2 text-xs text-gray-300">
-                  (Calculada automáticamente)
-                </span>
-              )}
-              {fechaFinEditadaManualmente && (
-                <span className="ml-2 text-xs text-orange-300">
-                  (Editada manualmente)
-                </span>
-              )}
             </label>
             <div className="flex gap-2">
               <input
                 type="date"
                 value={fechaFin}
-                onChange={(e) => handleFechaFinChange(e.target.value)}
+                onChange={(e) => setFechaFin(e.target.value)}
                 min={fechaInicio}
                 className="w-full rounded bg-gray-400 p-2 text-black"
                 required
-                title={
-                  fechaFinEditadaManualmente
-                    ? "Fecha editada manualmente. Usa el botón 'Auto' para volver al cálculo automático"
-                    : 'Esta fecha se calcula automáticamente. Puedes editarla manualmente si lo deseas'
-                }
+                title="Fecha final del proyecto"
               />
-              {fechaFinEditadaManualmente && (
-                <button
-                  type="button"
-                  onClick={volverACalculoAutomatico}
-                  className="flex-shrink-0 rounded bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700 sm:text-sm"
-                  title="Volver al cálculo automático"
-                >
-                  Auto
-                </button>
-              )}
             </div>
           </div>
 
@@ -1175,11 +1062,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 <span className="text-sm font-semibold text-green-300 sm:text-base">
                   Días laborables necesarios:{' '}
                   {Math.ceil(totalHorasActividadesCalculado / horasPorDiaValue)}
-                  {fechaFinEditadaManualmente && (
-                    <span className="ml-2 text-xs text-orange-300">
-                      (Fecha manual activa)
-                    </span>
-                  )}
                 </span>
               </div>
             </>
@@ -1582,7 +1464,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         )}
 
         {/* Botones responsive */}
-        <div className="mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+        <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
+          {/* Nuevo botón para volver a Objetivos Específicos */}
+          {onAnterior && (
+            <button
+              type="button"
+              onClick={onAnterior}
+              className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
+            >
+              {/* Ícono de flecha izquierda */}
+              <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
+              Objetivos Específicos
+            </button>
+          )}
           <button
             onClick={handleGuardarProyecto}
             className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
