@@ -35,7 +35,6 @@
     "next-env.d.ts",
     "next-video.config.js",
     "video.d.ts",
-    ".next/types/**/*.ts",
     "src/types/**/*.ts",
     "src/types/**/*.d.ts",
     "drizzle.config.ts"

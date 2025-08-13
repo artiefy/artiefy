@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { Dialog } from '@headlessui/react'; // Para el modal de video grabado
 import { PencilRuler } from 'lucide-react';
 import {
   FaCheck,
@@ -27,6 +26,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
+
+import CourseModalTeams from './CourseModalTeams';
 
 import type { ClassMeeting, Course } from '~/types';
 
@@ -60,6 +61,7 @@ export function CourseContent({
   const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
     title: string;
     videoKey: string;
+    progress?: number;
   } | null>(null);
   const router = useRouter();
   const { user } = useUser();
@@ -108,6 +110,9 @@ export function CourseContent({
       setCurrentRecordedVideo({
         title: meeting.title,
         videoKey: meeting.video_key,
+        // Asegura que progress nunca sea null, solo undefined o number
+        progress:
+          typeof meeting.progress === 'number' ? meeting.progress : undefined,
       });
       setOpenRecordedModal(true);
     }
@@ -773,18 +778,24 @@ export function CourseContent({
                                   'Clase grabada disponible para repaso y consulta.'
                                 }
                               </p>
-                              <div className="mb-4">
-                                <div className="mb-2 flex items-center justify-between">
-                                  <p className="text-sm font-semibold text-gray-700">
-                                    Progreso De La Clase:
-                                  </p>
+                              {/* Barra de progreso de la clase grabada */}
+                              {typeof meeting.progress === 'number' && (
+                                <div className="mb-4">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <p className="text-sm font-semibold text-gray-700">
+                                      Progreso De La Clase Grabada:
+                                    </p>
+                                    <span className="text-xs text-gray-500">
+                                      {meeting.progress}%
+                                    </span>
+                                  </div>
+                                  <Progress
+                                    value={meeting.progress}
+                                    showPercentage={true}
+                                    className="transition-none"
+                                  />
                                 </div>
-                                <Progress
-                                  value={100}
-                                  showPercentage={true}
-                                  className="transition-none"
-                                />
-                              </div>
+                              )}
                               {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
                               <button
                                 className={cn(
@@ -844,32 +855,13 @@ export function CourseContent({
 
       {/* MODAL para reproducir clase grabada */}
       {openRecordedModal && currentRecordedVideo && (
-        <Dialog
+        <CourseModalTeams
           open={openRecordedModal}
+          title={currentRecordedVideo.title}
+          videoKey={currentRecordedVideo.videoKey}
+          progress={currentRecordedVideo.progress} // <-- pasa el progreso
           onClose={handleCloseRecordedModal}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-        >
-          <div className="relative w-full max-w-2xl rounded-lg bg-white p-4 shadow-lg">
-            <button
-              className="absolute top-2 right-2 text-gray-700 hover:text-red-600"
-              onClick={handleCloseRecordedModal}
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-            <h2 className="mb-4 text-lg font-bold text-gray-900">
-              {currentRecordedVideo.title}
-            </h2>
-            <div className="aspect-video w-full">
-              <video
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${currentRecordedVideo.videoKey}`}
-                controls
-                autoPlay
-                className="h-full w-full rounded-lg bg-black"
-              />
-            </div>
-          </div>
-        </Dialog>
+        />
       )}
 
       {/* ...existing code for alert, lessons, etc... */}

@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 
 import Player from 'next-video/player';
 
-import type { ClassMeeting } from '~/types';
-
 import '~/styles/videoloading.css';
 
 interface VideoPlayerProps {
@@ -179,18 +177,5 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     </div>
   );
 };
-
-export function LessonVideo({ meeting }: { meeting: ClassMeeting }) {
-  if (!meeting?.video_key) return null;
-  return (
-    <video
-      controls
-      className="w-full max-w-lg rounded shadow"
-      src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key ?? ''}`}
-    >
-      Tu navegador no soporta el video.
-    </video>
-  );
-}
 
 export default VideoPlayer;

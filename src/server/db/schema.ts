@@ -986,8 +986,8 @@ export const classMeetings = pgTable('class_meetings', {
   meetingId: varchar('meeting_id', { length: 255 }).notNull(),
   // 🆕 Agregado: Ruta del video en S3
   video_key: varchar('video_key', { length: 255 }),
+  progress: integer('progress'), // <-- Nuevo campo opcional para progreso (0-100)
 });
-
 export const comercials = pgTable('comercials', {
   id: serial('id').primaryKey(),
   contact: text('contact').notNull(),
