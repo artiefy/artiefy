@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
+import { Dialog } from '@headlessui/react'; // Agrega este import para el modal
 import { StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
@@ -123,10 +124,7 @@ export function CourseHeader({
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
-  // const [showPaymentModal, setShowPaymentModal] = useState(false);
-  // const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [programToastShown, setProgramToastShown] = useState(false);
-  // Add state to track local enrollment status to hide the top button after enrolling
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
 
   // Ref para controlar el video
@@ -815,8 +813,6 @@ export function CourseHeader({
         (type) => type.requiredSubscriptionLevel === 'pro'
       );
 
-      // Fix this line - use logical OR instead of nullish coalescing
-
       const userCanAccessWithSubscription =
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         (userPlanType === 'Premium' && hasPremiumType) ||
@@ -1340,6 +1336,51 @@ export function CourseHeader({
     },
     [expandedRecorded]
   );
+
+  // --- NUEVO: Clases en vivo (Teams) ---
+  // Elimina la variable 'upcomingMeetings' no usada
+  // const upcomingMeetings: ClassMeeting[] = useMemo(() => {
+  //   if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
+  //   const now = new Date();
+  //   return classMeetings
+  //     .filter(
+  //       (m): m is ClassMeeting =>
+  //         typeof m.startDateTime === 'string' && new Date(m.startDateTime) > now
+  //     )
+  //     .sort(
+  //       (a, b) =>
+  //         new Date(a.startDateTime).getTime() -
+  //         new Date(b.startDateTime).getTime()
+  //     );
+  // }, [classMeetings]);
+
+  // --- NUEVO: Validación de suscripción vencida para todas las secciones ---
+  // Elimina las siguientes variables no usadas:
+  // const shouldShowSubscriptionAlert = useMemo(() => { ... });
+  // const shouldBlurContent = useMemo(() => { ... });
+  // const handleSubscriptionRedirect = useCallback(() => { ... });
+
+  // Estado para modal de clase grabada
+  const [openRecordedModal, setOpenRecordedModal] = useState(false);
+  const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
+    title: string;
+    videoKey: string;
+  } | null>(null);
+
+  const handleOpenRecordedModal = (meeting: ClassMeeting) => {
+    if (meeting.video_key) {
+      setCurrentRecordedVideo({
+        title: meeting.title,
+        videoKey: meeting.video_key,
+      });
+      setOpenRecordedModal(true);
+    }
+  };
+
+  const handleCloseRecordedModal = () => {
+    setOpenRecordedModal(false);
+    setCurrentRecordedVideo(null);
+  };
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
@@ -1890,12 +1931,6 @@ export function CourseHeader({
                 <div className="space-y-3">
                   {recordedMeetings.map((meeting) => {
                     const isExpanded = expandedRecorded === meeting.id;
-                    const handleClick = (
-                      e: React.MouseEvent<HTMLAnchorElement>
-                    ) => {
-                      e.preventDefault();
-                      router.push(`/estudiantes/clases/${meeting.id}`);
-                    };
                     const durationMinutes = getDurationMinutes(meeting);
                     return (
                       <div
@@ -1944,181 +1979,68 @@ export function CourseHeader({
                                 className="transition-none"
                               />
                             </div>
-                            <Link
-                              href={`/estudiantes/clases/${meeting.id}`}
-                              onClick={handleClick}
+                            {/* Cambia el botón: ahora muestra "Ver Clase Grabada" y abre el modal */}
+                            <button
+                              className="buttonclass text-background transition-none active:scale-95"
+                              onClick={() => handleOpenRecordedModal(meeting)}
                             >
-                              <button className="buttonclass text-background transition-none active:scale-95">
-                                <div className="outline" />
-                                <div className="state state--default">
-                                  <div className="icon">
-                                    {/* SVG igual que el botón normal */}
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      height="1.2em"
-                                      width="1.2em"
-                                    >
-                                      <g style={{ filter: 'url(#shadow)' }}>
-                                        <path
-                                          fill="currentColor"
-                                          d="M14.2199 21.63C13.0399 21.63 11.3699 20.8 10.0499 16.83L9.32988 14.67L7.16988 13.95C3.20988 12.63 2.37988 10.96 2.37988 9.78001C2.37988 8.61001 3.20988 6.93001 7.16988 5.60001L15.6599 2.77001C17.7799 2.06001 19.5499 2.27001 20.6399 3.35001C21.7299 4.43001 21.9399 6.21001 21.2299 8.33001L18.3999 16.82C17.0699 20.8 15.3999 21.63 14.2199 21.63ZM7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001Z"
-                                        />
-                                        <path
-                                          fill="currentColor"
-                                          d="M10.11 14.4C9.92005 14.4 9.73005 14.33 9.58005 14.18C9.29005 13.89 9.29005 13.41 9.58005 13.12L13.16 9.53C13.45 9.24  13.45 9.24 13.93 9.24 14.22 9.53C14.51 9.82 14.51 10.3 14.22 10.59L10.64 14.18C10.5 14.33 10.3 14.4 10.11 14.4Z"
-                                        />
-                                      </g>
-                                      <defs>
-                                        <filter id="shadow">
-                                          <feDropShadow
-                                            floodOpacity="0.6"
-                                            stdDeviation="0.8"
-                                            dy="1"
-                                            dx="0"
-                                          />
-                                        </filter>
-                                      </defs>
-                                    </svg>
-                                  </div>
-                                  <p>
-                                    <span
-                                      style={
-                                        { '--i': 0 } as React.CSSProperties
-                                      }
-                                    >
-                                      V
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 1 } as React.CSSProperties
-                                      }
-                                    >
-                                      e
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 2 } as React.CSSProperties
-                                      }
-                                    >
-                                      r
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 3 } as React.CSSProperties
-                                      }
-                                    >
-                                      {' '}
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 4 } as React.CSSProperties
-                                      }
-                                    >
-                                      C
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 5 } as React.CSSProperties
-                                      }
-                                    >
-                                      l
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 6 } as React.CSSProperties
-                                      }
-                                    >
-                                      a
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 7 } as React.CSSProperties
-                                      }
-                                    >
-                                      s
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 8 } as React.CSSProperties
-                                      }
-                                    >
-                                      e
-                                    </span>
-                                  </p>
+                              <div className="outline" />
+                              <div className="state state--default">
+                                <div className="icon">
+                                  <FaVideo className="text-green-600" />
                                 </div>
-                                <div className="state state--sent">
-                                  <div className="icon">
-                                    <svg
-                                      stroke="black"
-                                      strokeWidth="0.5px"
-                                      width="1.2em"
-                                      height="1.2em"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <g style={{ filter: 'url(#shadow)' }}>
-                                        <path
-                                          d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z"
-                                          fill="currentColor"
-                                        />
-                                        <path
-                                          d="M10.5795 15.5801C10.3795 15.5801 10.1895 15.5001 10.0495 15.3601L7.21945 12.5301C6.92945 12.2401 6.92945 11.7601 7.21945 11.4701C7.50945 11.1801 7.98945 11.1801 8.27945 11.4701L10.5795 13.7701L15.7195 8.6301C16.0095 8.3401 16.4895 8.3401 16.7795 8.6301C17.0695 8.9201 17.0695 9.4001 16.7795 9.6901L11.1095 15.3601C10.9695 15.5001 10.7795 15.5801 10.5795 15.5801Z"
-                                          fill="currentColor"
-                                        />
-                                      </g>
-                                    </svg>
-                                  </div>
-                                  <p>
-                                    <span
-                                      style={
-                                        { '--i': 5 } as React.CSSProperties
-                                      }
-                                    >
-                                      V
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 6 } as React.CSSProperties
-                                      }
-                                    >
-                                      i
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 7 } as React.CSSProperties
-                                      }
-                                    >
-                                      s
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 8 } as React.CSSProperties
-                                      }
-                                    >
-                                      t
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 9 } as React.CSSProperties
-                                      }
-                                    >
-                                      o
-                                    </span>
-                                    <span
-                                      style={
-                                        { '--i': 10 } as React.CSSProperties
-                                      }
-                                    >
-                                      !
-                                    </span>
-                                  </p>
-                                </div>
-                              </button>
-                            </Link>
-                            {/* Elimina el video aquí */}
+                                <span>
+                                  <span
+                                    style={{ '--i': 0 } as React.CSSProperties}
+                                  >
+                                    V
+                                  </span>
+                                  <span
+                                    style={{ '--i': 1 } as React.CSSProperties}
+                                  >
+                                    e
+                                  </span>
+                                  <span
+                                    style={{ '--i': 2 } as React.CSSProperties}
+                                  >
+                                    r
+                                  </span>
+                                  <span
+                                    style={{ '--i': 3 } as React.CSSProperties}
+                                  >
+                                    {' '}
+                                  </span>
+                                  <span
+                                    style={{ '--i': 4 } as React.CSSProperties}
+                                  >
+                                    C
+                                  </span>
+                                  <span
+                                    style={{ '--i': 5 } as React.CSSProperties}
+                                  >
+                                    l
+                                  </span>
+                                  <span
+                                    style={{ '--i': 6 } as React.CSSProperties}
+                                  >
+                                    a
+                                  </span>
+                                  <span
+                                    style={{ '--i': 7 } as React.CSSProperties}
+                                  >
+                                    s
+                                  </span>
+                                  <span
+                                    style={{ '--i': 8 } as React.CSSProperties}
+                                  >
+                                    e
+                                  </span>
+                                  <span
+                                    style={{ '--i': 9 } as React.CSSProperties}
+                                  />
+                                </span>
+                              </div>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -2198,6 +2120,35 @@ export function CourseHeader({
           courseId={course.id}
           userId={user?.id ?? ''} // Pass dynamic user ID
         />
+        {/* MODAL para reproducir clase grabada */}
+        {openRecordedModal && currentRecordedVideo && (
+          <Dialog
+            open={openRecordedModal}
+            onClose={handleCloseRecordedModal}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          >
+            <div className="relative w-full max-w-2xl rounded-lg bg-white p-4 shadow-lg">
+              <button
+                className="absolute top-2 right-2 text-gray-700 hover:text-red-600"
+                onClick={handleCloseRecordedModal}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+              <h2 className="mb-4 text-lg font-bold text-gray-900">
+                {currentRecordedVideo.title}
+              </h2>
+              <div className="aspect-video w-full">
+                <video
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${currentRecordedVideo.videoKey}`}
+                  controls
+                  autoPlay
+                  className="h-full w-full rounded-lg bg-black"
+                />
+              </div>
+            </div>
+          </Dialog>
+        )}
       </CardContent>
     </Card>
   );
