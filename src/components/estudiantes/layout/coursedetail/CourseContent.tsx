@@ -659,24 +659,70 @@ export function CourseContent({
         <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
           {/* Show different content based on authentication and enrollment */}
           {!isSignedIn || !isEnrolled ? (
-            <div className="border-secondary bg-secondary/10 rounded-lg border p-6 text-center shadow">
-              <h3 className="mb-4 text-lg font-semibold text-black">
-                {upcomingMeetings.length > 0 ? (
-                  <>
-                    La primera clase en vivo del programa es el{' '}
-                    <span className="font-bold">
-                      {formatSpanishDate(upcomingMeetings[0].startDateTime)}
-                    </span>
-                  </>
-                ) : (
-                  'Próximamente clases en vivo'
-                )}
-              </h3>
-              <p className="text-black">
-                {!isSignedIn
-                  ? 'Inicia sesión para ver todas las clases disponibles'
-                  : 'Inscríbete al curso para acceder a todas las clases'}
-              </p>
+            <div className="border-secondary flex flex-col items-center justify-center gap-4 rounded-2xl border bg-gradient-to-br from-cyan-100 via-white to-cyan-50 p-8 text-center shadow-lg">
+              <div className="flex flex-col items-center gap-2">
+                <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-sm font-semibold text-cyan-800 shadow-sm">
+                  <FaVideo className="mr-2 inline-block text-cyan-600" />
+                  Clase en Vivo
+                </span>
+                <h3 className="mb-2 text-2xl font-extrabold text-cyan-900 drop-shadow-sm">
+                  {upcomingMeetings.length > 0 ? (
+                    <>
+                      La primera clase en vivo del programa es el{' '}
+                      <span className="font-extrabold text-yellow-600">
+                        {formatSpanishDate(upcomingMeetings[0].startDateTime)}
+                      </span>
+                      {upcomingMeetings[0].startDateTime && (
+                        <>
+                          {' '}
+                          <span className="ml-2 inline-block rounded border border-cyan-300 bg-cyan-200 px-2 py-0.5 text-base font-bold text-cyan-800">
+                            {new Date(
+                              upcomingMeetings[0].startDateTime
+                            ).toLocaleTimeString('es-CO', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}{' '}
+                            -{' '}
+                            {upcomingMeetings[0].endDateTime
+                              ? new Date(
+                                  upcomingMeetings[0].endDateTime
+                                ).toLocaleTimeString('es-CO', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : ''}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    'Próximamente clases en vivo'
+                  )}
+                </h3>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-lg font-medium text-cyan-900">
+                  {!isSignedIn ? (
+                    <>
+                      <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
+                        <FaLock className="mr-1 inline-block" />
+                        Inicia sesión
+                      </span>
+                      <br />
+                      para ver todas las clases disponibles
+                    </>
+                  ) : (
+                    <>
+                      <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
+                        <FaLock className="mr-1 inline-block" />
+                        Inscríbete al curso
+                      </span>
+                      <br />
+                      para acceder a todas las clases
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
           ) : (
             <>
