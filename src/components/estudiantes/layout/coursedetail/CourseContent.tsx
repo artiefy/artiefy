@@ -64,6 +64,10 @@ export function CourseContent({
   const router = useRouter();
   const { user } = useUser();
 
+  // New state variables to track section visibility
+  const [showLiveClasses, setShowLiveClasses] = useState(true);
+  const [showRecordedClasses, setShowRecordedClasses] = useState(true);
+
   // Helper para calcular duración en minutos
   const getDurationMinutes = (meeting: ClassMeeting) =>
     meeting.startDateTime && meeting.endDateTime
@@ -73,6 +77,15 @@ export function CourseContent({
             60000
         )
       : 5;
+
+  // Add toggle functions for sections
+  const toggleLiveClasses = useCallback(() => {
+    setShowLiveClasses((prev) => !prev);
+  }, []);
+
+  const toggleRecordedClasses = useCallback(() => {
+    setShowRecordedClasses((prev) => !prev);
+  }, []);
 
   const toggleLesson = useCallback(
     (lessonId: number) => {
@@ -436,6 +449,42 @@ export function CourseContent({
     ? classMeetings.filter((meeting) => !!meeting.video_key)
     : [];
 
+  // Add this helper function to format the date in Spanish
+  const formatSpanishDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    };
+    return date.toLocaleDateString('es-ES', options);
+  };
+
+  // Add this helper function to check if a meeting is scheduled for today in Bogotá time zone
+  const isMeetingToday = (meeting: ClassMeeting): boolean => {
+    if (!meeting.startDateTime) return false;
+
+    // Get current date in Colombia time (UTC-5)
+    const colombiaOptions = { timeZone: 'America/Bogota' };
+    const now = new Date();
+    const todayInColombia = new Date(
+      now.toLocaleString('en-US', colombiaOptions)
+    );
+
+    // Get meeting date in Colombia time
+    const meetingDate = new Date(meeting.startDateTime);
+    const meetingDateInColombia = new Date(
+      meetingDate.toLocaleString('en-US', colombiaOptions)
+    );
+
+    // Compare year, month, and day
+    return (
+      todayInColombia.getFullYear() === meetingDateInColombia.getFullYear() &&
+      todayInColombia.getMonth() === meetingDateInColombia.getMonth() &&
+      todayInColombia.getDate() === meetingDateInColombia.getDate()
+    );
+  };
+
   return (
     <div className="relative px-6 pt-6">
       {/* Removed bg-white class from the main container */}
@@ -515,180 +564,264 @@ export function CourseContent({
       {/* --- Clases en Vivo y Grabadas --- */}
       {(upcomingMeetings.length > 0 || recordedMeetings.length > 0) && (
         <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
-          {/* Increased padding from p-4 to p-6 */}
-          <h2 className="text-background mb-4 text-xl font-bold">
-            Clases en línea y grabadas
-          </h2>
-
+          {/* Header with toggle button - adjusted vertical spacing */}
           <div
             className={cn(
-              'transition-all duration-300',
-              shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]'
+              'flex items-center justify-between',
+              showLiveClasses ? 'mb-4' : 'my-2' // Equal spacing when collapsed
             )}
           >
-            {/* Clases en Vivo */}
-            {upcomingMeetings.length > 0 && (
-              <div className="mb-6 space-y-4">
-                {upcomingMeetings.map((meeting: ClassMeeting) => (
-                  <div
-                    key={meeting.id}
-                    className="rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FaVideo className="h-6 w-6 text-blue-600" />
-                      <div>
-                        <h3 className="text-lg font-bold">{meeting.title}</h3>
-                        <p className="text-sm">
-                          <strong>{meeting.title}</strong>
-                          <br />
-                          {typeof meeting.startDateTime === 'string'
-                            ? new Date(meeting.startDateTime).toLocaleString(
-                                'es-CO',
-                                {
-                                  weekday: 'short',
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
+            <h2 className="text-background text-xl font-bold">
+              Clases en línea y grabadas
+            </h2>
+            <button
+              onClick={toggleLiveClasses}
+              className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
+            >
+              <span className="tracking-wide">
+                {showLiveClasses ? 'Ver menos' : 'Ver más'}
+              </span>
+              {showLiveClasses ? (
+                <FaChevronUp className="text-black transition-transform duration-200" />
+              ) : (
+                <FaChevronDown className="text-black transition-transform duration-200" />
+              )}
+            </button>
+          </div>
+
+          {/* Show different content based on authentication and enrollment */}
+          {!isSignedIn || !isEnrolled ? (
+            <div className="border-secondary bg-secondary/10 rounded-lg border p-6 text-center shadow">
+              <h3 className="mb-4 text-lg font-semibold text-black">
+                {upcomingMeetings.length > 0 ? (
+                  <>
+                    La primera clase en vivo del programa es el{' '}
+                    <span className="font-bold">
+                      {formatSpanishDate(upcomingMeetings[0].startDateTime)}
+                    </span>
+                  </>
+                ) : (
+                  'Próximamente clases en vivo'
+                )}
+              </h3>
+              <p className="text-black">
+                {!isSignedIn
+                  ? 'Inicia sesión para ver todas las clases disponibles'
+                  : 'Inscríbete al curso para acceder a todas las clases'}
+              </p>
+            </div>
+          ) : (
+            <div
+              className={cn(
+                'transition-all duration-300',
+                shouldBlurContent &&
+                  'pointer-events-none opacity-100 blur-[2px]',
+                !showLiveClasses && 'hidden' // Hide when collapsed
+              )}
+            >
+              {/* Clases en Vivo */}
+              {upcomingMeetings.length > 0 && (
+                <div className="mb-6 space-y-4">
+                  {upcomingMeetings.map((meeting: ClassMeeting) => (
+                    <div
+                      key={meeting.id}
+                      className="border-secondary bg-secondary/10 rounded-lg border p-4 text-black shadow"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FaVideo className="text-secondary h-6 w-6" />
+                        <div>
+                          <h3 className="text-lg font-bold">{meeting.title}</h3>
+                          <p className="text-sm">
+                            <strong>{meeting.title}</strong>
+                            <br />
+                            {typeof meeting.startDateTime === 'string'
+                              ? new Date(meeting.startDateTime).toLocaleString(
+                                  'es-CO',
+                                  {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
+                              : ''}
+                            {' — '}
+                            {typeof meeting.endDateTime === 'string'
+                              ? new Date(meeting.endDateTime).toLocaleString(
+                                  'es-CO',
+                                  {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
+                              : ''}
+                          </p>
+                          {meeting.joinUrl && (
+                            <>
+                              <a
+                                href={meeting.joinUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                  'bg-secondary mt-2 inline-block rounded px-4 py-2 font-bold text-white hover:bg-[#00A5C0]',
+                                  (!isSubscriptionActive ||
+                                    !isMeetingToday(meeting)) &&
+                                    'pointer-events-none cursor-not-allowed opacity-60'
+                                )}
+                                tabIndex={
+                                  !isSubscriptionActive ||
+                                  !isMeetingToday(meeting)
+                                    ? -1
+                                    : 0
                                 }
-                              )
-                            : ''}
-                          {' — '}
-                          {typeof meeting.endDateTime === 'string'
-                            ? new Date(meeting.endDateTime).toLocaleString(
-                                'es-CO',
-                                {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
+                                aria-disabled={
+                                  !isSubscriptionActive ||
+                                  !isMeetingToday(meeting)
                                 }
-                              )
-                            : ''}
-                        </p>
-                        {meeting.joinUrl && (
-                          <a
-                            href={meeting.joinUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                              'mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700',
-                              !isSubscriptionActive &&
-                                'pointer-events-none cursor-not-allowed opacity-60'
-                            )}
-                            tabIndex={!isSubscriptionActive ? -1 : 0}
-                            aria-disabled={!isSubscriptionActive}
-                            onClick={(e) => {
-                              if (!isSubscriptionActive) e.preventDefault();
-                            }}
-                          >
-                            Unirse a la Clase en Teams
-                          </a>
-                        )}
-                        {!isSubscriptionActive && (
-                          <div className="mt-2 text-xs font-semibold text-red-600">
-                            Debes tener una suscripción activa para acceder a
-                            las clases en vivo.
-                          </div>
-                        )}
+                                onClick={(e) => {
+                                  if (
+                                    !isSubscriptionActive ||
+                                    !isMeetingToday(meeting)
+                                  )
+                                    e.preventDefault();
+                                }}
+                              >
+                                {!isMeetingToday(meeting) && (
+                                  <FaLock className="mr-2 inline-block" />
+                                )}
+                                Unirse a la Clase en Teams
+                              </a>
+                              {!isSubscriptionActive && (
+                                <div className="mt-2 text-xs font-semibold text-red-600">
+                                  Debes tener una suscripción activa para
+                                  acceder a las clases en vivo.
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Clases Grabadas */}
-            {recordedMeetings.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-background mb-2 text-lg font-bold">
-                  Clases Grabadas
-                </h3>
-                <div className="space-y-3">
-                  {recordedMeetings.map((meeting: ClassMeeting) => {
-                    const isExpanded = expandedRecorded === meeting.id;
-                    const durationMinutes = getDurationMinutes(meeting);
-                    return (
-                      <div
-                        key={meeting.id}
-                        className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
-                      >
-                        <button
-                          className="flex w-full items-center justify-between px-6 py-4"
-                          onClick={() => toggleRecorded(meeting.id)}
-                        >
-                          <div className="flex w-full items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                              <span className="text-background font-medium">
-                                {meeting.title}{' '}
-                                <span className="ml-2 text-sm text-gray-500">
-                                  ({durationMinutes} mins)
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {isExpanded ? (
-                                <FaChevronUp className="text-gray-400" />
-                              ) : (
-                                <FaChevronDown className="text-gray-400" />
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                        {isExpanded && (
-                          <div className="border-t bg-white px-6 py-4">
-                            <p className="mb-4 text-gray-700">
-                              {
-                                'Clase grabada disponible para repaso y consulta.'
-                              }
-                            </p>
-                            <div className="mb-4">
-                              <div className="mb-2 flex items-center justify-between">
-                                <p className="text-sm font-semibold text-gray-700">
-                                  Progreso De La Clase:
-                                </p>
-                              </div>
-                              <Progress
-                                value={100}
-                                showPercentage={true}
-                                className="transition-none"
-                              />
-                            </div>
-                            {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
-                            <button
-                              className={cn(
-                                'buttonclass text-background transition-none active:scale-95',
-                                !isSubscriptionActive &&
-                                  'pointer-events-none cursor-not-allowed opacity-60'
-                              )}
-                              onClick={() =>
-                                isSubscriptionActive &&
-                                handleOpenRecordedModal(meeting)
-                              }
-                              disabled={!isSubscriptionActive}
-                            >
-                              <div className="outline" />
-                              <div className="state state--default">
-                                <div className="icon">
-                                  <FaVideo className="text-green-600" />
-                                </div>
-                                <span>Ver Clase Grabada</span>
-                              </div>
-                            </button>
-                            {!isSubscriptionActive && (
-                              <div className="mt-2 text-xs font-semibold text-red-600">
-                                Debes tener una suscripción activa para ver la
-                                clase grabada.
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  ))}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              {/* Clases Grabadas */}
+              {recordedMeetings.length > 0 && (
+                <div className="mb-6">
+                  {/* Header with toggle button */}
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-background text-lg font-bold">
+                      Clases Grabadas
+                    </h3>
+                    <button
+                      onClick={toggleRecordedClasses}
+                      className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
+                    >
+                      <span className="tracking-wide">
+                        {showRecordedClasses ? 'Ver menos' : 'Ver más'}
+                      </span>
+                      {showRecordedClasses ? (
+                        <FaChevronUp className="text-black transition-transform duration-200" />
+                      ) : (
+                        <FaChevronDown className="text-black transition-transform duration-200" />
+                      )}
+                    </button>
+                  </div>
+                  <div
+                    className={cn(
+                      'space-y-3',
+                      !showRecordedClasses && 'hidden'
+                    )}
+                  >
+                    {recordedMeetings.map((meeting: ClassMeeting) => {
+                      const isExpanded = expandedRecorded === meeting.id;
+                      const durationMinutes = getDurationMinutes(meeting);
+                      return (
+                        <div
+                          key={meeting.id}
+                          className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
+                        >
+                          <button
+                            className="flex w-full items-center justify-between px-6 py-4"
+                            onClick={() => toggleRecorded(meeting.id)}
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                                <span className="text-background font-medium">
+                                  {meeting.title}{' '}
+                                  <span className="ml-2 text-sm text-gray-500">
+                                    ({durationMinutes} mins)
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {isExpanded ? (
+                                  <FaChevronUp className="text-gray-400" />
+                                ) : (
+                                  <FaChevronDown className="text-gray-400" />
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="border-t bg-white px-6 py-4">
+                              <p className="mb-4 text-gray-700">
+                                {
+                                  'Clase grabada disponible para repaso y consulta.'
+                                }
+                              </p>
+                              <div className="mb-4">
+                                <div className="mb-2 flex items-center justify-between">
+                                  <p className="text-sm font-semibold text-gray-700">
+                                    Progreso De La Clase:
+                                  </p>
+                                </div>
+                                <Progress
+                                  value={100}
+                                  showPercentage={true}
+                                  className="transition-none"
+                                />
+                              </div>
+                              {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
+                              <button
+                                className={cn(
+                                  'buttonclass text-background transition-none active:scale-95',
+                                  !isSubscriptionActive &&
+                                    'pointer-events-none cursor-not-allowed opacity-60'
+                                )}
+                                onClick={() =>
+                                  isSubscriptionActive &&
+                                  handleOpenRecordedModal(meeting)
+                                }
+                                disabled={!isSubscriptionActive}
+                              >
+                                <div className="outline" />
+                                <div className="state state--default">
+                                  <div className="icon">
+                                    <FaVideo className="text-green-600" />
+                                  </div>
+                                  <span>Clase Grabada</span>
+                                </div>
+                              </button>
+                              {!isSubscriptionActive && (
+                                <div className="mt-2 text-xs font-semibold text-red-600">
+                                  Debes tener una suscripción activa para ver la
+                                  clase grabada.
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
