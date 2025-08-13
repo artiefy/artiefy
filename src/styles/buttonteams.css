@@ -1,0 +1,100 @@
+/* From Uiverse.io by elijahgummer - adaptado para Artiefy */
+.button-with-icon {
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #01142b;
+  font-family: 'Istok Web', sans-serif;
+  letter-spacing: 1px;
+  padding: 0 12px;
+  text-align: center;
+  width: 160px;
+  height: 40px;
+  font-size: 13px;
+  text-transform: uppercase;
+  font-weight: normal;
+  border-radius: 3px;
+  outline: none;
+  user-select: none;
+  cursor: pointer;
+  transform: translateY(0px);
+  position: relative;
+  box-shadow:
+    inset 0 30px 30px -15px rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 20px rgba(0, 0, 0, 0),
+    0 3px 0 #01142b,
+    0 3px 2px rgba(0, 0, 0, 0.2),
+    0 5px 10px rgba(0, 0, 0, 0.1),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  background: #01142b;
+  color: white;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  transition: 150ms all ease-in-out;
+}
+
+.button-with-icon .icon {
+  margin-right: 8px;
+  width: 24px;
+  height: 24px;
+  transition: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estados personalizados para botones de Teams */
+.button-with-icon.bg-green-600,
+.button-with-icon.bg-green-600:hover,
+.button-with-icon.bg-green-600:focus-visible {
+  background: #16a34a !important; /* verde */
+  color: #fff !important;
+  border-color: #16a34a !important;
+}
+
+.button-with-icon.bg-yellow-400,
+.button-with-icon.bg-yellow-400:hover,
+.button-with-icon.bg-yellow-400:focus-visible {
+  background: #fde047 !important; /* amarillo */
+  color: #1e293b !important;
+  border-color: #fde047 !important;
+}
+
+.button-with-icon.bg-gray-400,
+.button-with-icon.bg-gray-400:hover,
+.button-with-icon.bg-gray-400:focus-visible {
+  background: #9ca3af !important; /* gris */
+  color: #fff !important;
+  border-color: #9ca3af !important;
+}
+
+/* Quitar efecto de zoom y desplazamiento en hover, poner fondo blanco transparente */
+.button-with-icon:hover,
+.button-with-icon:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  box-shadow:
+    inset 0 30px 30px -15px rgba(255, 255, 255, 0.13),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 20px rgba(0, 0, 0, 0),
+    0 3px 0 #01142b,
+    0 3px 2px rgba(0, 0, 0, 0.2),
+    0 5px 10px rgba(0, 0, 0, 0.1),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.button-with-icon:hover .text,
+.button-with-icon:focus-visible .text {
+  transform: none;
+}
+
+.button-with-icon:hover .icon,
+.button-with-icon:focus-visible .icon {
+  transform: none;
+  scale: 1;
+}
+
+.text {
+  transition: none;
+}

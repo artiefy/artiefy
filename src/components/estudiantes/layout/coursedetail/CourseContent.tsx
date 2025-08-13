@@ -34,6 +34,7 @@ import type { ClassMeeting, Course } from '~/types';
 
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
+import '~/styles/buttonteams.css';
 
 interface CourseContentProps {
   course: Course;
@@ -659,13 +660,19 @@ export function CourseContent({
         <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
           {/* Show different content based on authentication and enrollment */}
           {!isSignedIn || !isEnrolled ? (
-            <div className="border-secondary flex flex-col items-center justify-center gap-4 rounded-2xl border bg-gradient-to-br from-cyan-100 via-white to-cyan-50 p-8 text-center shadow-lg">
+            <div
+              className="border-secondary flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 text-center shadow-lg"
+              style={{ background: '#1e2939' }}
+            >
               <div className="flex flex-col items-center gap-2">
                 <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-sm font-semibold text-cyan-800 shadow-sm">
                   <FaVideo className="mr-2 inline-block text-cyan-600" />
                   Clase en Vivo
                 </span>
-                <h3 className="mb-2 text-2xl font-extrabold text-cyan-900 drop-shadow-sm">
+                <h3
+                  className="mb-2 text-2xl font-extrabold drop-shadow-sm"
+                  style={{ color: '#fff' }}
+                >
                   {upcomingMeetings.length > 0 ? (
                     <>
                       La primera clase en vivo del programa es el{' '}
@@ -701,7 +708,7 @@ export function CourseContent({
                 </h3>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <p className="text-lg font-medium text-cyan-900">
+                <p className="text-lg font-medium" style={{ color: '#fff' }}>
                   {!isSignedIn ? (
                     <>
                       <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
@@ -709,7 +716,9 @@ export function CourseContent({
                         Inicia sesión
                       </span>
                       <br />
-                      para ver todas las clases disponibles
+                      <span style={{ color: '#fff' }}>
+                        para ver todas las clases disponibles
+                      </span>
                     </>
                   ) : (
                     <>
@@ -795,32 +804,46 @@ export function CourseContent({
                           isToday && isMeetingStarted && !isMeetingEnded;
                       }
 
+                      // --- NUEVO: Definir estilos de botón y badge según estado ---
+                      // Botón: Unirse (verde), Próxima Clase (amarillo), Clase Finalizada (gris), Clase Bloqueada (azul oscuro)
+                      const joinButtonBg =
+                        'bg-green-600 hover:bg-green-700 text-white';
+                      const nextButtonBg =
+                        'bg-yellow-400 hover:bg-yellow-500 text-gray-900';
+                      const finishedButtonBg = 'bg-gray-400 text-white';
+                      const blockedButtonBg = 'bg-[#01142B] text-white';
+
+                      // Badge: Hoy (verde), Próxima Clase (amarillo), Clase Finalizada (gris)
+                      const badgeHoyClass =
+                        'rounded-full border border-green-500 bg-green-100 px-3 py-1 font-bold text-green-700 shadow-sm sm:ml-auto';
+                      const badgeFinalizadaClass =
+                        'rounded-full border border-gray-400 bg-gray-200 px-3 py-1 font-bold text-gray-700 shadow-sm sm:ml-auto';
+
                       return (
                         <div
                           key={meeting.id}
                           className={cn(
-                            'border-secondary relative flex flex-col rounded-lg border p-4 text-black shadow sm:flex-row sm:items-center',
-                            {
-                              'bg-secondary/10': !isAvailable,
-                              'from-secondary/20 bg-gradient-to-r to-cyan-100':
-                                isAvailable,
-                            }
+                            'border-secondary relative flex flex-col rounded-lg border p-4 shadow sm:flex-row sm:items-center',
+                            'bg-gray-800'
                           )}
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <FaVideo
                               className={cn(
-                                'h-6 w-6 flex-shrink-0',
-                                isAvailable
-                                  ? 'text-green-600'
-                                  : 'text-secondary'
+                                'h-5 w-5 flex-shrink-0 text-cyan-600'
                               )}
                             />
                             <div className="min-w-0">
-                              <h3 className="truncate text-lg font-bold">
+                              <h3
+                                className="truncate text-lg font-bold"
+                                style={{ color: '#fff' }}
+                              >
                                 {meeting.title}
                               </h3>
-                              <p className="truncate text-sm">
+                              <p
+                                className="truncate text-sm"
+                                style={{ color: '#fff' }}
+                              >
                                 <strong>{meeting.title}</strong>
                                 <br />
                                 {typeof meeting.startDateTime === 'string'
@@ -853,12 +876,20 @@ export function CourseContent({
                           </div>
                           {/* Badges al extremo derecho */}
                           <div className="mt-3 flex min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex-col sm:items-end">
-                            {isToday && (
+                            {isToday && !isMeetingEnded && (
                               <Badge
                                 variant="secondary"
-                                className="rounded-full border border-cyan-500 bg-cyan-100 px-3 py-1 font-bold text-cyan-700 shadow-sm sm:ml-auto"
+                                className={badgeHoyClass}
                               >
                                 Hoy
+                              </Badge>
+                            )}
+                            {isToday && isMeetingEnded && (
+                              <Badge
+                                variant="secondary"
+                                className={badgeFinalizadaClass}
+                              >
+                                Finalizada
                               </Badge>
                             )}
                             {isNext && (
@@ -874,81 +905,106 @@ export function CourseContent({
                           <div className="mt-3 flex min-w-fit flex-col sm:mt-0 sm:ml-4">
                             {meeting.joinUrl && (
                               <>
-                                {/* Botón para "Próxima Clase" (candado, nunca clickable) */}
+                                {/* Botón para "Próxima Clase" (amarillo, nunca clickable) */}
                                 {isNext && !isJoinEnabled && (
                                   <button
                                     type="button"
-                                    className={cn(
-                                      'mt-2 w-full items-center justify-center rounded border border-yellow-500 bg-yellow-500 px-4 py-2 font-bold text-white opacity-80 sm:w-auto',
-                                      'cursor-not-allowed',
-                                      'hover:bg-yellow-600',
-                                      'flex'
-                                    )}
+                                    className={`button-with-icon ${nextButtonBg}`}
                                     disabled
-                                    style={{ cursor: 'not-allowed' }}
+                                    style={{
+                                      cursor: 'not-allowed',
+                                      width: '220px',
+                                      fontFamily:
+                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                    }}
                                   >
-                                    <FaLock className="mr-2 inline-block" />
-                                    Próxima Clase
+                                    <span className="icon">
+                                      <FaLock
+                                        style={{ width: 18, height: 18 }}
+                                      />
+                                    </span>
+                                    <span className="text">Próxima Clase</span>
                                   </button>
                                 )}
-                                {/* Botón para "Unirse a la Clase en Teams" (solo si está habilitado y no terminó) */}
+                                {/* Botón para "Unirse a la Clase en Teams" (verde) */}
                                 {isToday && isJoinEnabled && (
                                   <a
                                     href={meeting.joinUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={cn(
-                                      'mt-2 flex w-full items-center justify-center rounded px-4 py-2 font-bold text-white sm:w-auto',
-                                      {
-                                        'bg-green-600 hover:bg-green-700':
-                                          isSubscriptionActive,
-                                        'pointer-events-none cursor-not-allowed opacity-60':
-                                          !isSubscriptionActive,
-                                      }
-                                    )}
+                                    className={`button-with-icon ${joinButtonBg}`}
                                     tabIndex={!isSubscriptionActive ? -1 : 0}
                                     aria-disabled={!isSubscriptionActive}
                                     onClick={(e) => {
                                       if (!isSubscriptionActive)
                                         e.preventDefault();
                                     }}
+                                    style={{
+                                      pointerEvents: !isSubscriptionActive
+                                        ? 'none'
+                                        : undefined,
+                                      opacity: !isSubscriptionActive ? 0.6 : 1,
+                                      width: '220px',
+                                      fontFamily:
+                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                    }}
                                   >
-                                    {!isSubscriptionActive && (
-                                      <FaLock className="mr-2 inline-block" />
-                                    )}
-                                    Unirse a la Clase en Teams
+                                    <span className="icon">
+                                      <FaVideo
+                                        style={{ width: 18, height: 18 }}
+                                      />
+                                    </span>
+                                    <span className="text">
+                                      Unirse a la Clase
+                                    </span>
                                   </a>
                                 )}
-                                {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado */}
-                                {isToday && !isJoinEnabled && (
-                                  <button
-                                    type="button"
-                                    className={cn(
-                                      'mt-2 flex w-full items-center justify-center rounded border border-gray-400 bg-gray-400 px-4 py-2 font-bold text-white opacity-60 sm:w-auto',
-                                      'cursor-not-allowed'
-                                    )}
-                                    disabled
-                                    style={{ cursor: 'not-allowed' }}
-                                  >
-                                    <FaLock className="mr-2 inline-block" />
-                                    Clase Finalizada
-                                  </button>
-                                )}
-                                {/* Botón para "Clase Bloqueada" (candado, no clickable, cursor bloqueado) */}
+                                {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado (gris) */}
+                                {isToday &&
+                                  !isJoinEnabled &&
+                                  isMeetingEnded && (
+                                    <button
+                                      type="button"
+                                      className={`button-with-icon ${finishedButtonBg}`}
+                                      disabled
+                                      style={{
+                                        cursor: 'not-allowed',
+                                        width: '220px',
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                      }}
+                                    >
+                                      <span className="icon">
+                                        <FaLock
+                                          style={{ width: 18, height: 18 }}
+                                        />
+                                      </span>
+                                      <span className="text">
+                                        Clase Finalizada
+                                      </span>
+                                    </button>
+                                  )}
+                                {/* Botón para "Clase Bloqueada" (azul oscuro) */}
                                 {!isAvailable && !isNext && !isToday && (
                                   <button
                                     type="button"
-                                    className={cn(
-                                      'border-secondary bg-secondary mt-2 w-full items-center justify-center rounded border px-4 py-2 font-bold text-white opacity-60 sm:w-auto',
-                                      'cursor-not-allowed',
-                                      'hover:bg-secondary',
-                                      'flex'
-                                    )}
+                                    className={`button-with-icon ${blockedButtonBg}`}
                                     disabled
-                                    style={{ cursor: 'not-allowed' }}
+                                    style={{
+                                      cursor: 'not-allowed',
+                                      width: '220px',
+                                      fontFamily:
+                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                    }}
                                   >
-                                    <FaLock className="mr-2 inline-block" />
-                                    Clase Bloqueada
+                                    <span className="icon">
+                                      <FaLock
+                                        style={{ width: 18, height: 18 }}
+                                      />
+                                    </span>
+                                    <span className="text">
+                                      Clase Bloqueada
+                                    </span>
                                   </button>
                                 )}
                                 {!isSubscriptionActive && (
@@ -1125,8 +1181,6 @@ export function CourseContent({
           onProgressUpdated={handleVideoProgressUpdate} // <-- Pasamos la nueva función
         />
       )}
-
-      {/* ...existing code for alert, lessons, etc... */}
     </div>
   );
 }
