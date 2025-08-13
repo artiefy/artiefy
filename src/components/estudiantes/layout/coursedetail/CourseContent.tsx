@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
+import { Dialog } from '@headlessui/react'; // Para el modal de video grabado
 import { PencilRuler } from 'lucide-react';
 import {
   FaCheck,
@@ -14,6 +15,7 @@ import {
   FaChevronUp,
   FaLock,
   FaTimes,
+  FaVideo, // Para el icono del botón grabado
 } from 'react-icons/fa';
 
 import {
@@ -26,7 +28,7 @@ import { Progress } from '~/components/estudiantes/ui/progress';
 import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
 
-import type { Course } from '~/types';
+import type { ClassMeeting, Course } from '~/types';
 
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
@@ -37,6 +39,7 @@ interface CourseContentProps {
   isSubscriptionActive: boolean;
   subscriptionEndDate: string | null;
   isSignedIn: boolean;
+  classMeetings?: import('~/types').ClassMeeting[]; // <-- Añade classMeetings aquí
 }
 
 export const dynamic = 'force-dynamic';
@@ -48,10 +51,28 @@ export function CourseContent({
   isSubscriptionActive,
   subscriptionEndDate,
   isSignedIn,
+  classMeetings = [],
 }: CourseContentProps) {
+  // --- Clases grabadas y en vivo ---
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
+  const [expandedRecorded, setExpandedRecorded] = useState<number | null>(null);
+  const [openRecordedModal, setOpenRecordedModal] = useState(false);
+  const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
+    title: string;
+    videoKey: string;
+  } | null>(null);
   const router = useRouter();
   const { user } = useUser();
+
+  // Helper para calcular duración en minutos
+  const getDurationMinutes = (meeting: ClassMeeting) =>
+    meeting.startDateTime && meeting.endDateTime
+      ? Math.round(
+          (new Date(meeting.endDateTime).getTime() -
+            new Date(meeting.startDateTime).getTime()) /
+            60000
+        )
+      : 5;
 
   const toggleLesson = useCallback(
     (lessonId: number) => {
@@ -61,6 +82,28 @@ export function CourseContent({
     },
     [expandedLesson, isEnrolled]
   );
+
+  const toggleRecorded = useCallback(
+    (meetingId: number) => {
+      setExpandedRecorded(expandedRecorded === meetingId ? null : meetingId);
+    },
+    [expandedRecorded]
+  );
+
+  const handleOpenRecordedModal = (meeting: ClassMeeting) => {
+    if (meeting.video_key) {
+      setCurrentRecordedVideo({
+        title: meeting.title,
+        videoKey: meeting.video_key,
+      });
+      setOpenRecordedModal(true);
+    }
+  };
+
+  const handleCloseRecordedModal = () => {
+    setOpenRecordedModal(false);
+    setCurrentRecordedVideo(null);
+  };
 
   const memoizedLessons = useMemo(() => {
     return sortLessons(course.lessons).map((lesson) => {
@@ -378,12 +421,28 @@ export function CourseContent({
     return endDate > new Date();
   }, [isEnrolled, isSubscriptionActive, subscriptionEndDate]);
 
+  // --- Clases grabadas y en vivo ---
+  // Filter classMeetings into upcoming and recorded
+  const now = new Date();
+  const upcomingMeetings: ClassMeeting[] = Array.isArray(classMeetings)
+    ? classMeetings.filter(
+        (meeting) =>
+          meeting.startDateTime &&
+          new Date(meeting.startDateTime) > now &&
+          !meeting.video_key
+      )
+    : [];
+  const recordedMeetings: ClassMeeting[] = Array.isArray(classMeetings)
+    ? classMeetings.filter((meeting) => !!meeting.video_key)
+    : [];
+
   return (
-    <div className="relative rounded-lg border bg-white p-6 shadow-sm">
+    <div className="relative px-6 pt-6">
+      {/* Removed bg-white class from the main container */}
       <div className="mb-6">
         <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
-            Contenido del curso
+          <h2 className="text-primary mt-2 text-2xl font-bold sm:mt-0">
+            Contenido Del Curso
           </h2>
           {isSignedIn && subscriptionStatusInfo && (
             <div className="flex flex-col items-end gap-1">
@@ -423,6 +482,7 @@ export function CourseContent({
           expandedLesson !== null ? 'text-orange-500' : 'text-gray-400'
         }`}
       />
+
       {isEnrolled &&
         !isSubscriptionReallyActive &&
         shouldShowSubscriptionAlert && (
@@ -452,15 +512,234 @@ export function CourseContent({
           </Alert>
         )}
 
-      <div
-        className={cn(
-          'transition-all duration-300',
-          shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]',
-          !isEnrolled && 'pointer-events-none opacity-100'
-        )}
-      >
-        <div className="space-y-4">{memoizedLessons}</div>
+      {/* --- Clases en Vivo y Grabadas --- */}
+      {(upcomingMeetings.length > 0 || recordedMeetings.length > 0) && (
+        <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
+          {/* Increased padding from p-4 to p-6 */}
+          <h2 className="text-background mb-4 text-xl font-bold">
+            Clases en línea y grabadas
+          </h2>
+
+          <div
+            className={cn(
+              'transition-all duration-300',
+              shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]'
+            )}
+          >
+            {/* Clases en Vivo */}
+            {upcomingMeetings.length > 0 && (
+              <div className="mb-6 space-y-4">
+                {upcomingMeetings.map((meeting: ClassMeeting) => (
+                  <div
+                    key={meeting.id}
+                    className="rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FaVideo className="h-6 w-6 text-blue-600" />
+                      <div>
+                        <h3 className="text-lg font-bold">{meeting.title}</h3>
+                        <p className="text-sm">
+                          <strong>{meeting.title}</strong>
+                          <br />
+                          {typeof meeting.startDateTime === 'string'
+                            ? new Date(meeting.startDateTime).toLocaleString(
+                                'es-CO',
+                                {
+                                  weekday: 'short',
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )
+                            : ''}
+                          {' — '}
+                          {typeof meeting.endDateTime === 'string'
+                            ? new Date(meeting.endDateTime).toLocaleString(
+                                'es-CO',
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )
+                            : ''}
+                        </p>
+                        {meeting.joinUrl && (
+                          <a
+                            href={meeting.joinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              'mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700',
+                              !isSubscriptionActive &&
+                                'pointer-events-none cursor-not-allowed opacity-60'
+                            )}
+                            tabIndex={!isSubscriptionActive ? -1 : 0}
+                            aria-disabled={!isSubscriptionActive}
+                            onClick={(e) => {
+                              if (!isSubscriptionActive) e.preventDefault();
+                            }}
+                          >
+                            Unirse a la Clase en Teams
+                          </a>
+                        )}
+                        {!isSubscriptionActive && (
+                          <div className="mt-2 text-xs font-semibold text-red-600">
+                            Debes tener una suscripción activa para acceder a
+                            las clases en vivo.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Clases Grabadas */}
+            {recordedMeetings.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-background mb-2 text-lg font-bold">
+                  Clases Grabadas
+                </h3>
+                <div className="space-y-3">
+                  {recordedMeetings.map((meeting: ClassMeeting) => {
+                    const isExpanded = expandedRecorded === meeting.id;
+                    const durationMinutes = getDurationMinutes(meeting);
+                    return (
+                      <div
+                        key={meeting.id}
+                        className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
+                      >
+                        <button
+                          className="flex w-full items-center justify-between px-6 py-4"
+                          onClick={() => toggleRecorded(meeting.id)}
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                              <span className="text-background font-medium">
+                                {meeting.title}{' '}
+                                <span className="ml-2 text-sm text-gray-500">
+                                  ({durationMinutes} mins)
+                                </span>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {isExpanded ? (
+                                <FaChevronUp className="text-gray-400" />
+                              ) : (
+                                <FaChevronDown className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="border-t bg-white px-6 py-4">
+                            <p className="mb-4 text-gray-700">
+                              {
+                                'Clase grabada disponible para repaso y consulta.'
+                              }
+                            </p>
+                            <div className="mb-4">
+                              <div className="mb-2 flex items-center justify-between">
+                                <p className="text-sm font-semibold text-gray-700">
+                                  Progreso De La Clase:
+                                </p>
+                              </div>
+                              <Progress
+                                value={100}
+                                showPercentage={true}
+                                className="transition-none"
+                              />
+                            </div>
+                            {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
+                            <button
+                              className={cn(
+                                'buttonclass text-background transition-none active:scale-95',
+                                !isSubscriptionActive &&
+                                  'pointer-events-none cursor-not-allowed opacity-60'
+                              )}
+                              onClick={() =>
+                                isSubscriptionActive &&
+                                handleOpenRecordedModal(meeting)
+                              }
+                              disabled={!isSubscriptionActive}
+                            >
+                              <div className="outline" />
+                              <div className="state state--default">
+                                <div className="icon">
+                                  <FaVideo className="text-green-600" />
+                                </div>
+                                <span>Ver Clase Grabada</span>
+                              </div>
+                            </button>
+                            {!isSubscriptionActive && (
+                              <div className="mt-2 text-xs font-semibold text-red-600">
+                                Debes tener una suscripción activa para ver la
+                                clase grabada.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Regular lessons - Now with white container */}
+      <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
+        {/* Increased padding from p-4 to p-6 */}
+        <h2 className="text-background mb-4 text-xl font-bold">
+          Clases del curso
+        </h2>
+        <div
+          className={cn(
+            'transition-all duration-300',
+            shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]',
+            !isEnrolled && 'pointer-events-none opacity-100'
+          )}
+        >
+          <div className="space-y-4">{memoizedLessons}</div>
+        </div>
       </div>
+
+      {/* MODAL para reproducir clase grabada */}
+      {openRecordedModal && currentRecordedVideo && (
+        <Dialog
+          open={openRecordedModal}
+          onClose={handleCloseRecordedModal}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+        >
+          <div className="relative w-full max-w-2xl rounded-lg bg-white p-4 shadow-lg">
+            <button
+              className="absolute top-2 right-2 text-gray-700 hover:text-red-600"
+              onClick={handleCloseRecordedModal}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <h2 className="mb-4 text-lg font-bold text-gray-900">
+              {currentRecordedVideo.title}
+            </h2>
+            <div className="aspect-video w-full">
+              <video
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${currentRecordedVideo.videoKey}`}
+                controls
+                autoPlay
+                className="h-full w-full rounded-lg bg-black"
+              />
+            </div>
+          </div>
+        </Dialog>
+      )}
+
+      {/* ...existing code for alert, lessons, etc... */}
     </div>
   );
 }

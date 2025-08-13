@@ -1,27 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { Dialog } from '@headlessui/react'; // Agrega este import para el modal
 import { StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
   FaCheck,
-  FaCheckCircle,
-  FaChevronDown,
-  FaChevronUp,
-  FaClock,
+  FaClock, // <-- Add missing import
   FaCrown,
   FaExpand,
   FaStar,
-  FaTrophy,
   FaUserGraduate,
-  FaVideo,
   FaVolumeMute,
   FaVolumeUp,
 } from 'react-icons/fa';
@@ -38,15 +32,12 @@ import {
   CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { cn } from '~/lib/utils';
 import { type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
-import { GradeModal } from './CourseGradeModal';
 
 import type { ClassMeeting, Course, CourseMateria } from '~/types';
 
@@ -121,7 +112,6 @@ export function CourseHeader({
 }: CourseHeaderProps) {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
-  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [programToastShown, setProgramToastShown] = useState(false);
@@ -1303,85 +1293,6 @@ export function CourseHeader({
     );
   };
 
-  // Helper para calcular duración en minutos
-  const getDurationMinutes = (meeting: ClassMeeting) =>
-    meeting.startDateTime && meeting.endDateTime
-      ? Math.round(
-          (new Date(meeting.endDateTime).getTime() -
-            new Date(meeting.startDateTime).getTime()) /
-            60000
-        )
-      : 5;
-
-  // --- Clases grabadas organizadas ---
-  const recordedMeetings: ClassMeeting[] = useMemo(() => {
-    if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
-    return classMeetings
-      .filter(
-        (m): m is ClassMeeting =>
-          typeof m.video_key === 'string' && m.video_key.length > 0
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.startDateTime).getTime() -
-          new Date(b.startDateTime).getTime()
-      );
-  }, [classMeetings]);
-
-  // Estado para expandir/cerrar clases grabadas
-  const [expandedRecorded, setExpandedRecorded] = useState<number | null>(null);
-  const toggleRecorded = useCallback(
-    (meetingId: number) => {
-      setExpandedRecorded(expandedRecorded === meetingId ? null : meetingId);
-    },
-    [expandedRecorded]
-  );
-
-  // --- NUEVO: Clases en vivo (Teams) ---
-  // Elimina la variable 'upcomingMeetings' no usada
-  // const upcomingMeetings: ClassMeeting[] = useMemo(() => {
-  //   if (!Array.isArray(classMeetings) || classMeetings.length === 0) return [];
-  //   const now = new Date();
-  //   return classMeetings
-  //     .filter(
-  //       (m): m is ClassMeeting =>
-  //         typeof m.startDateTime === 'string' && new Date(m.startDateTime) > now
-  //     )
-  //     .sort(
-  //       (a, b) =>
-  //         new Date(a.startDateTime).getTime() -
-  //         new Date(b.startDateTime).getTime()
-  //     );
-  // }, [classMeetings]);
-
-  // --- NUEVO: Validación de suscripción vencida para todas las secciones ---
-  // Elimina las siguientes variables no usadas:
-  // const shouldShowSubscriptionAlert = useMemo(() => { ... });
-  // const shouldBlurContent = useMemo(() => { ... });
-  // const handleSubscriptionRedirect = useCallback(() => { ... });
-
-  // Estado para modal de clase grabada
-  const [openRecordedModal, setOpenRecordedModal] = useState(false);
-  const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
-    title: string;
-    videoKey: string;
-  } | null>(null);
-
-  const handleOpenRecordedModal = (meeting: ClassMeeting) => {
-    if (meeting.video_key) {
-      setCurrentRecordedVideo({
-        title: meeting.title,
-        videoKey: meeting.video_key,
-      });
-      setOpenRecordedModal(true);
-    }
-  };
-
-  const handleCloseRecordedModal = () => {
-    setOpenRecordedModal(false);
-    setCurrentRecordedVideo(null);
-  };
-
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {/* Cambia el CardHeader para reducir el espacio en móviles */}
@@ -1728,6 +1639,7 @@ export function CourseHeader({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Grade button */}
           {/* Ocultar botón en mobile si no está logueado */}
+          {/* 
           {(isSignedIn ?? window.innerWidth >= 640) && (
             <Button
               onClick={() => setIsGradeModalOpen(true)}
@@ -1760,7 +1672,7 @@ export function CourseHeader({
               </span>
             </Button>
           )}
-
+          */}
           {/* Price button with space theme */}
           {course.courseTypeId === 4 &&
             course.individualPrice &&
@@ -1850,207 +1762,6 @@ export function CourseHeader({
             </div>
           </div>
         )}
-        {/* --- MUEVE AQUÍ CLASES EN VIVO Y GRABADAS --- */}
-        {(classMeetings?.length ?? 0) > 0 && (
-          <>
-            {/* Clases en Vivo - mostrar todas las futuras */}
-            {(() => {
-              const now = new Date();
-              const upcomingMeetings = classMeetings
-                .filter(
-                  (m) =>
-                    typeof m.startDateTime === 'string' &&
-                    new Date(m.startDateTime) > now
-                )
-                .sort(
-                  (a, b) =>
-                    new Date(a.startDateTime).getTime() -
-                    new Date(b.startDateTime).getTime()
-                );
-              return upcomingMeetings.length > 0 ? (
-                <div className="mb-4 space-y-4">
-                  {upcomingMeetings.map((meeting) => (
-                    <div
-                      key={meeting.id}
-                      className="rounded-lg border border-blue-400 bg-blue-50 p-4 text-blue-900 shadow"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FaVideo className="h-6 w-6 text-blue-600" />
-                        <div>
-                          <h3 className="text-lg font-bold">{meeting.title}</h3>
-                          <p className="text-sm">
-                            <strong>{meeting.title}</strong>
-                            <br />
-                            {typeof meeting.startDateTime === 'string'
-                              ? new Date(meeting.startDateTime).toLocaleString(
-                                  'es-CO',
-                                  {
-                                    weekday: 'short',
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  }
-                                )
-                              : ''}
-                            {' — '}
-                            {typeof meeting.endDateTime === 'string'
-                              ? new Date(meeting.endDateTime).toLocaleString(
-                                  'es-CO',
-                                  {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  }
-                                )
-                              : ''}
-                          </p>
-                          {meeting.joinUrl && (
-                            <a
-                              href={meeting.joinUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-2 inline-block rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
-                            >
-                              Unirse a la Clase en Teams
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null;
-            })()}
-            {/* --- Clases grabadas debajo de la clase en vivo --- */}
-            {recordedMeetings.length > 0 && (
-              <div className="mb-6">
-                <h2 className="mb-2 text-xl font-bold text-green-700">
-                  Clases Grabadas
-                </h2>
-                <div className="space-y-3">
-                  {recordedMeetings.map((meeting) => {
-                    const isExpanded = expandedRecorded === meeting.id;
-                    const durationMinutes = getDurationMinutes(meeting);
-                    return (
-                      <div
-                        key={meeting.id}
-                        className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
-                      >
-                        <button
-                          className="flex w-full items-center justify-between px-6 py-4"
-                          onClick={() => toggleRecorded(meeting.id)}
-                        >
-                          <div className="flex w-full items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                              <span className="text-background font-medium">
-                                {meeting.title}{' '}
-                                <span className="ml-2 text-sm text-gray-500">
-                                  ({durationMinutes} mins)
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {isExpanded ? (
-                                <FaChevronUp className="text-gray-400" />
-                              ) : (
-                                <FaChevronDown className="text-gray-400" />
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                        {isExpanded && (
-                          <div className="border-t bg-white px-6 py-4">
-                            <p className="mb-4 text-gray-700">
-                              {
-                                'Clase grabada disponible para repaso y consulta.'
-                              }
-                            </p>
-                            <div className="mb-4">
-                              <div className="mb-2 flex items-center justify-between">
-                                <p className="text-sm font-semibold text-gray-700">
-                                  Progreso De La Clase:
-                                </p>
-                              </div>
-                              <Progress
-                                value={100}
-                                showPercentage={true}
-                                className="transition-none"
-                              />
-                            </div>
-                            {/* Cambia el botón: ahora muestra "Ver Clase Grabada" y abre el modal */}
-                            <button
-                              className="buttonclass text-background transition-none active:scale-95"
-                              onClick={() => handleOpenRecordedModal(meeting)}
-                            >
-                              <div className="outline" />
-                              <div className="state state--default">
-                                <div className="icon">
-                                  <FaVideo className="text-green-600" />
-                                </div>
-                                <span>
-                                  <span
-                                    style={{ '--i': 0 } as React.CSSProperties}
-                                  >
-                                    V
-                                  </span>
-                                  <span
-                                    style={{ '--i': 1 } as React.CSSProperties}
-                                  >
-                                    e
-                                  </span>
-                                  <span
-                                    style={{ '--i': 2 } as React.CSSProperties}
-                                  >
-                                    r
-                                  </span>
-                                  <span
-                                    style={{ '--i': 3 } as React.CSSProperties}
-                                  >
-                                    {' '}
-                                  </span>
-                                  <span
-                                    style={{ '--i': 4 } as React.CSSProperties}
-                                  >
-                                    C
-                                  </span>
-                                  <span
-                                    style={{ '--i': 5 } as React.CSSProperties}
-                                  >
-                                    l
-                                  </span>
-                                  <span
-                                    style={{ '--i': 6 } as React.CSSProperties}
-                                  >
-                                    a
-                                  </span>
-                                  <span
-                                    style={{ '--i': 7 } as React.CSSProperties}
-                                  >
-                                    s
-                                  </span>
-                                  <span
-                                    style={{ '--i': 8 } as React.CSSProperties}
-                                  >
-                                    e
-                                  </span>
-                                  <span
-                                    style={{ '--i': 9 } as React.CSSProperties}
-                                  />
-                                </span>
-                              </div>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
         {/* Course lessons */}
         <CourseContent
           course={course}
@@ -2058,6 +1769,7 @@ export function CourseHeader({
           isSubscriptionActive={isSubscriptionActive}
           subscriptionEndDate={subscriptionEndDate}
           isSignedIn={!!isSignedIn}
+          classMeetings={classMeetings} // <-- Pasa classMeetings aquí
         />
         {/* --- Botón de inscripción/cancelación abajo como antes --- */}
         <div className="flex justify-center pt-4">
@@ -2112,43 +1824,6 @@ export function CourseHeader({
             )}
           </div>
         </div>
-        {/* Add GradeModal */}
-        <GradeModal
-          isOpen={isGradeModalOpen}
-          onCloseAction={() => setIsGradeModalOpen(false)}
-          courseTitle={course.title}
-          courseId={course.id}
-          userId={user?.id ?? ''} // Pass dynamic user ID
-        />
-        {/* MODAL para reproducir clase grabada */}
-        {openRecordedModal && currentRecordedVideo && (
-          <Dialog
-            open={openRecordedModal}
-            onClose={handleCloseRecordedModal}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          >
-            <div className="relative w-full max-w-2xl rounded-lg bg-white p-4 shadow-lg">
-              <button
-                className="absolute top-2 right-2 text-gray-700 hover:text-red-600"
-                onClick={handleCloseRecordedModal}
-                aria-label="Cerrar"
-              >
-                ×
-              </button>
-              <h2 className="mb-4 text-lg font-bold text-gray-900">
-                {currentRecordedVideo.title}
-              </h2>
-              <div className="aspect-video w-full">
-                <video
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${currentRecordedVideo.videoKey}`}
-                  controls
-                  autoPlay
-                  className="h-full w-full rounded-lg bg-black"
-                />
-              </div>
-            </div>
-          </Dialog>
-        )}
       </CardContent>
     </Card>
   );
