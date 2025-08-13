@@ -99,7 +99,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
         if (onProgressUpdated) {
           onProgressUpdated(meetingId, videoProgress);
         }
-      }, 1000); // Espera 1 segundo para evitar múltiples llamadas
+      }, 1000); // Espera 1 segundo para evitar multiples llamadas
 
       return () => clearTimeout(debounceTimeout);
     }
