@@ -621,8 +621,8 @@ export function CourseContent({
       )}
 
       <PencilRuler
-        className={`absolute top-4 right-7 transition-colors ${
-          expandedLesson !== null ? 'text-orange-500' : 'text-gray-400'
+        className={`text-primary absolute top-4 right-7 transition-colors ${
+          expandedLesson !== null ? 'text-orange-500' : 'text-primary'
         }`}
       />
 

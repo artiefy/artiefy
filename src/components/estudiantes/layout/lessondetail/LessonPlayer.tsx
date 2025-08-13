@@ -106,11 +106,18 @@ const LessonPlayer = ({
         <div className="absolute inset-0 flex items-center justify-center">
           <VideoPlayer
             videoKey={lesson.coverVideoKey}
-            onVideoEnd={handleVideoEndWrapper} // Usa el wrapper
+            onVideoEnd={handleVideoEndWrapper}
             onProgressUpdate={handleProgressUpdate}
             isVideoCompleted={progress === 100}
             isLocked={isLocked}
             onTimeUpdate={handleVideoTimeUpdate}
+            startAt={
+              lesson.porcentajecompletado
+                ? Math.round(
+                    (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
+                  )
+                : 0
+            }
           />
         </div>
       </div>
