@@ -34,7 +34,7 @@ import type { ClassMeeting, Course } from '~/types';
 
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
-import '~/styles/buttonteams.css';
+import '~/styles/pattenrliveclass.css';
 
 interface CourseContentProps {
   course: Course;
@@ -658,79 +658,82 @@ export function CourseContent({
       {/* --- Clases en Vivo y Grabadas --- */}
       {(upcomingMeetings.length > 0 || recordedMeetings.length > 0) && (
         <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
-          {/* Show different content based on authentication and enrollment */}
+          {/* Fondo animado SOLO para el bloque interno de bienvenida/no inscrito */}
           {!isSignedIn || !isEnrolled ? (
             <div
-              className="border-secondary flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 text-center shadow-lg"
-              style={{ background: '#1e2939' }}
+              className="border-secondary overflow-hidden rounded-2xl border p-0 text-center shadow-lg"
+              style={{ background: '#1e2939', position: 'relative' }}
             >
-              <div className="flex flex-col items-center gap-2">
-                <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-sm font-semibold text-cyan-800 shadow-sm">
-                  <FaVideo className="mr-2 inline-block text-cyan-600" />
-                  Clase en Vivo
-                </span>
-                <h3
-                  className="mb-2 text-2xl font-extrabold drop-shadow-sm"
-                  style={{ color: '#fff' }}
-                >
-                  {upcomingMeetings.length > 0 ? (
-                    <>
-                      La primera clase en vivo del programa es el{' '}
-                      <span className="font-extrabold text-yellow-600">
-                        {formatSpanishDate(upcomingMeetings[0].startDateTime)}
-                      </span>
-                      {upcomingMeetings[0].startDateTime && (
-                        <>
-                          {' '}
-                          <span className="ml-2 inline-block rounded border border-cyan-300 bg-cyan-200 px-2 py-0.5 text-base font-bold text-cyan-800">
-                            {new Date(
-                              upcomingMeetings[0].startDateTime
-                            ).toLocaleTimeString('es-CO', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}{' '}
-                            -{' '}
-                            {upcomingMeetings[0].endDateTime
-                              ? new Date(
-                                  upcomingMeetings[0].endDateTime
-                                ).toLocaleTimeString('es-CO', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
-                              : ''}
-                          </span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    'Próximamente clases en vivo'
-                  )}
-                </h3>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-lg font-medium" style={{ color: '#fff' }}>
-                  {!isSignedIn ? (
-                    <>
-                      <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
-                        <FaLock className="mr-1 inline-block" />
-                        Inicia sesión
-                      </span>
-                      <br />
-                      <span style={{ color: '#fff' }}>
-                        para ver todas las clases disponibles
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
-                        <FaLock className="mr-1 inline-block" />
-                        Inscríbete al curso
-                      </span>
-                      <br />
-                      para acceder a todas las clases
-                    </>
-                  )}
-                </p>
+              <div className="pattenrs" style={{ zIndex: 0 }} />
+              <div style={{ position: 'relative', zIndex: 2 }}>
+                <div className="flex flex-col items-center gap-2 px-8 pt-8 pb-4">
+                  <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-sm font-semibold text-cyan-800 shadow-sm">
+                    <FaVideo className="mr-2 inline-block text-cyan-600" />
+                    Clase en Vivo
+                  </span>
+                  <h3
+                    className="relative mb-2 text-2xl font-extrabold drop-shadow-sm"
+                    style={{ color: '#fff', zIndex: 2 }}
+                  >
+                    {upcomingMeetings.length > 0 ? (
+                      <>
+                        La primera clase en vivo del programa es el{' '}
+                        <span className="font-extrabold text-yellow-600">
+                          {formatSpanishDate(upcomingMeetings[0].startDateTime)}
+                        </span>
+                        {upcomingMeetings[0].startDateTime && (
+                          <>
+                            {' '}
+                            <span className="ml-2 inline-block rounded border border-cyan-300 bg-cyan-200 px-2 py-0.5 text-base font-bold text-cyan-800">
+                              {new Date(
+                                upcomingMeetings[0].startDateTime
+                              ).toLocaleTimeString('es-CO', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}{' '}
+                              -{' '}
+                              {upcomingMeetings[0].endDateTime
+                                ? new Date(
+                                    upcomingMeetings[0].endDateTime
+                                  ).toLocaleTimeString('es-CO', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : ''}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      'Próximamente clases en vivo'
+                    )}
+                  </h3>
+                </div>
+                <div className="flex flex-col items-center gap-2 px-8 pb-8">
+                  <p className="text-lg font-medium" style={{ color: '#fff' }}>
+                    {!isSignedIn ? (
+                      <>
+                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
+                          <FaLock className="mr-1 inline-block" />
+                          Inicia sesión
+                        </span>
+                        <br />
+                        <span style={{ color: '#fff' }}>
+                          para ver todas las clases disponibles
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
+                          <FaLock className="mr-1 inline-block" />
+                          Inscríbete al curso
+                        </span>
+                        <br />
+                        para acceder a todas las clases
+                      </>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
@@ -804,28 +807,53 @@ export function CourseContent({
                           isToday && isMeetingStarted && !isMeetingEnded;
                       }
 
-                      // --- NUEVO: Definir estilos de botón y badge según estado ---
-                      // Botón: Unirse (verde), Próxima Clase (amarillo), Clase Finalizada (gris), Clase Bloqueada (azul oscuro)
-                      const joinButtonBg =
-                        'bg-green-600 hover:bg-green-700 text-white';
-                      const nextButtonBg =
-                        'bg-yellow-400 hover:bg-yellow-500 text-gray-900';
-                      const finishedButtonBg = 'bg-gray-400 text-white';
-                      const blockedButtonBg = 'bg-[#01142B] text-white';
-
-                      // Badge: Hoy (verde), Próxima Clase (amarillo), Clase Finalizada (gris)
+                      // Badge: Hoy (verde SOLO si botón es "Unirse a la Clase"), gris si "Clase Finalizada"
                       const badgeHoyClass =
                         'rounded-full border border-green-500 bg-green-100 px-3 py-1 font-bold text-green-700 shadow-sm sm:ml-auto';
                       const badgeFinalizadaClass =
                         'rounded-full border border-gray-400 bg-gray-200 px-3 py-1 font-bold text-gray-700 shadow-sm sm:ml-auto';
 
+                      // --- Botón: color según estado ---
+                      const buttonClass =
+                        'inline-flex h-8 w-[180px] items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold transition-all border-0';
+                      let buttonBg = '';
+                      let buttonDisabled = false;
+                      let buttonText = '';
+                      let buttonIcon = null;
+
+                      if (isNext && !isJoinEnabled) {
+                        buttonBg = 'bg-yellow-400 text-gray-900';
+                        buttonDisabled = true;
+                        buttonText = 'Próxima Clase';
+                        buttonIcon = <FaLock className="size-4" />;
+                      } else if (isToday && isJoinEnabled) {
+                        buttonBg = 'bg-green-600 text-white hover:bg-green-700';
+                        buttonDisabled = false;
+                        buttonText = 'Unirse a la Clase';
+                        buttonIcon = <FaVideo className="size-4" />;
+                      } else if (isToday && !isJoinEnabled && isMeetingEnded) {
+                        buttonBg = 'bg-gray-400 text-white';
+                        buttonDisabled = true;
+                        buttonText = 'Clase Finalizada';
+                        buttonIcon = <FaLock className="size-4" />;
+                      } else if (!isAvailable && !isNext && !isToday) {
+                        buttonBg = 'bg-[#01142B] text-white';
+                        buttonDisabled = true;
+                        buttonText = 'Clase Bloqueada';
+                        buttonIcon = <FaLock className="size-4" />;
+                      }
+
                       return (
                         <div
                           key={meeting.id}
                           className={cn(
-                            'border-secondary relative flex flex-col rounded-lg border p-4 shadow sm:flex-row sm:items-center',
+                            'animate-glow-blue relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
                             'bg-gray-800'
                           )}
+                          style={{
+                            boxShadow:
+                              '0 0 16px 2px #3AF4EF, 0 0 8px 1px #01142B inset',
+                          }}
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <FaVideo
@@ -876,7 +904,7 @@ export function CourseContent({
                           </div>
                           {/* Badges al extremo derecho */}
                           <div className="mt-3 flex min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex-col sm:items-end">
-                            {isToday && !isMeetingEnded && (
+                            {isToday && isJoinEnabled && (
                               <Badge
                                 variant="secondary"
                                 className={badgeHoyClass}
@@ -884,12 +912,12 @@ export function CourseContent({
                                 Hoy
                               </Badge>
                             )}
-                            {isToday && isMeetingEnded && (
+                            {isToday && !isJoinEnabled && isMeetingEnded && (
                               <Badge
                                 variant="secondary"
                                 className={badgeFinalizadaClass}
                               >
-                                Finalizada
+                                Hoy
                               </Badge>
                             )}
                             {isNext && (
@@ -909,21 +937,17 @@ export function CourseContent({
                                 {isNext && !isJoinEnabled && (
                                   <button
                                     type="button"
-                                    className={`button-with-icon ${nextButtonBg}`}
-                                    disabled
+                                    className={`${buttonClass} ${buttonBg}`}
+                                    disabled={buttonDisabled}
                                     style={{
-                                      cursor: 'not-allowed',
-                                      width: '220px',
                                       fontFamily:
                                         'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                     }}
                                   >
-                                    <span className="icon">
-                                      <FaLock
-                                        style={{ width: 18, height: 18 }}
-                                      />
+                                    {buttonIcon}
+                                    <span className="relative z-10">
+                                      {buttonText}
                                     </span>
-                                    <span className="text">Próxima Clase</span>
                                   </button>
                                 )}
                                 {/* Botón para "Unirse a la Clase en Teams" (verde) */}
@@ -932,7 +956,7 @@ export function CourseContent({
                                     href={meeting.joinUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`button-with-icon ${joinButtonBg}`}
+                                    className={`${buttonClass} ${buttonBg}`}
                                     tabIndex={!isSubscriptionActive ? -1 : 0}
                                     aria-disabled={!isSubscriptionActive}
                                     onClick={(e) => {
@@ -944,18 +968,13 @@ export function CourseContent({
                                         ? 'none'
                                         : undefined,
                                       opacity: !isSubscriptionActive ? 0.6 : 1,
-                                      width: '220px',
                                       fontFamily:
                                         'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                     }}
                                   >
-                                    <span className="icon">
-                                      <FaVideo
-                                        style={{ width: 18, height: 18 }}
-                                      />
-                                    </span>
-                                    <span className="text">
-                                      Unirse a la Clase
+                                    {buttonIcon}
+                                    <span className="relative z-10">
+                                      {buttonText}
                                     </span>
                                   </a>
                                 )}
@@ -965,22 +984,16 @@ export function CourseContent({
                                   isMeetingEnded && (
                                     <button
                                       type="button"
-                                      className={`button-with-icon ${finishedButtonBg}`}
-                                      disabled
+                                      className={`${buttonClass} ${buttonBg}`}
+                                      disabled={buttonDisabled}
                                       style={{
-                                        cursor: 'not-allowed',
-                                        width: '220px',
                                         fontFamily:
                                           'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                       }}
                                     >
-                                      <span className="icon">
-                                        <FaLock
-                                          style={{ width: 18, height: 18 }}
-                                        />
-                                      </span>
-                                      <span className="text">
-                                        Clase Finalizada
+                                      {buttonIcon}
+                                      <span className="relative z-10">
+                                        {buttonText}
                                       </span>
                                     </button>
                                   )}
@@ -988,22 +1001,16 @@ export function CourseContent({
                                 {!isAvailable && !isNext && !isToday && (
                                   <button
                                     type="button"
-                                    className={`button-with-icon ${blockedButtonBg}`}
-                                    disabled
+                                    className={`${buttonClass} ${buttonBg}`}
+                                    disabled={buttonDisabled}
                                     style={{
-                                      cursor: 'not-allowed',
-                                      width: '220px',
                                       fontFamily:
                                         'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                     }}
                                   >
-                                    <span className="icon">
-                                      <FaLock
-                                        style={{ width: 18, height: 18 }}
-                                      />
-                                    </span>
-                                    <span className="text">
-                                      Clase Bloqueada
+                                    {buttonIcon}
+                                    <span className="relative z-10">
+                                      {buttonText}
                                     </span>
                                   </button>
                                 )}
