@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -62,6 +62,7 @@ export function CourseContent({
     title: string;
     videoKey: string;
     progress?: number;
+    meetingId?: number; // <-- Añadido para el ID de la reunión
   } | null>(null);
   const router = useRouter();
   const { user } = useUser();
@@ -69,6 +70,11 @@ export function CourseContent({
   // New state variables to track section visibility
   const [showLiveClasses, setShowLiveClasses] = useState(true);
   const [showRecordedClasses, setShowRecordedClasses] = useState(true);
+
+  // Estado local para mantener actualizados los progresos de los videos
+  const [meetingsProgress, setMeetingsProgress] = useState<
+    Record<number, number>
+  >({});
 
   // Helper para calcular duración en minutos
   const getDurationMinutes = (meeting: ClassMeeting) =>
@@ -105,14 +111,34 @@ export function CourseContent({
     [expandedRecorded]
   );
 
+  // Inicializar el estado con los progresos existentes
+  useEffect(() => {
+    if (Array.isArray(classMeetings)) {
+      const initialProgress = classMeetings.reduce(
+        (acc, meeting) => {
+          if (typeof meeting.progress === 'number') {
+            acc[meeting.id] = meeting.progress;
+          }
+          return acc;
+        },
+        {} as Record<number, number>
+      );
+
+      setMeetingsProgress(initialProgress);
+    }
+  }, [classMeetings]);
+
   const handleOpenRecordedModal = (meeting: ClassMeeting) => {
     if (meeting.video_key) {
+      // Usa el progreso del estado local o el de la BD como respaldo
+      const currentProgress =
+        meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
+
       setCurrentRecordedVideo({
         title: meeting.title,
         videoKey: meeting.video_key,
-        // Asegura que progress nunca sea null, solo undefined o number
-        progress:
-          typeof meeting.progress === 'number' ? meeting.progress : undefined,
+        progress: currentProgress,
+        meetingId: meeting.id,
       });
       setOpenRecordedModal(true);
     }
@@ -121,6 +147,14 @@ export function CourseContent({
   const handleCloseRecordedModal = () => {
     setOpenRecordedModal(false);
     setCurrentRecordedVideo(null);
+  };
+
+  // Nueva función para actualizar el progreso localmente
+  const handleVideoProgressUpdate = (meetingId: number, progress: number) => {
+    setMeetingsProgress((prev) => ({
+      ...prev,
+      [meetingId]: progress,
+    }));
   };
 
   const memoizedLessons = useMemo(() => {
@@ -743,6 +777,10 @@ export function CourseContent({
                     {recordedMeetings.map((meeting: ClassMeeting) => {
                       const isExpanded = expandedRecorded === meeting.id;
                       const durationMinutes = getDurationMinutes(meeting);
+                      // Obtén el progreso actualizado del estado local o usa el de la BD como respaldo
+                      const currentProgress =
+                        meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
+
                       return (
                         <div
                           key={meeting.id}
@@ -778,24 +816,22 @@ export function CourseContent({
                                   'Clase grabada disponible para repaso y consulta.'
                                 }
                               </p>
-                              {/* Barra de progreso de la clase grabada */}
-                              {typeof meeting.progress === 'number' && (
-                                <div className="mb-4">
-                                  <div className="mb-2 flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-gray-700">
-                                      Progreso De La Clase Grabada:
-                                    </p>
-                                    <span className="text-xs text-gray-500">
-                                      {meeting.progress}%
-                                    </span>
-                                  </div>
-                                  <Progress
-                                    value={meeting.progress}
-                                    showPercentage={true}
-                                    className="transition-none"
-                                  />
+                              {/* Barra de progreso de la clase grabada (shadcn) */}
+                              <div className="mb-4">
+                                <div className="mb-2 flex items-center justify-between">
+                                  <p className="text-sm font-semibold text-gray-700">
+                                    Progreso De La Clase Grabada:
+                                  </p>
+                                  <span className="text-xs text-gray-500">
+                                    {currentProgress}%
+                                  </span>
                                 </div>
-                              )}
+                                <Progress
+                                  value={currentProgress}
+                                  showPercentage={true}
+                                  className="transition-none"
+                                />
+                              </div>
                               {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
                               <button
                                 className={cn(
@@ -859,8 +895,10 @@ export function CourseContent({
           open={openRecordedModal}
           title={currentRecordedVideo.title}
           videoKey={currentRecordedVideo.videoKey}
-          progress={currentRecordedVideo.progress} // <-- pasa el progreso
+          progress={currentRecordedVideo.progress}
+          meetingId={currentRecordedVideo.meetingId}
           onClose={handleCloseRecordedModal}
+          onProgressUpdated={handleVideoProgressUpdate} // <-- Pasamos la nueva función
         />
       )}
 
