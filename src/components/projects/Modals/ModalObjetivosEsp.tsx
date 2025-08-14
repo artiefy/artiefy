@@ -404,6 +404,20 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
 
   if (!isOpen) return null;
 
+  // Añade estas funciones utilitarias antes del return principal:
+  function limpiarNumeracionObjetivo(texto: string) {
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    let t = texto;
+    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
+    return t.trim();
+  }
+  function limpiarNumeracionActividad(texto: string) {
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    let t = texto;
+    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
+    return t.trim();
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
@@ -523,7 +537,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                   {/* Objective header */}
                   <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
                     <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
-                      {objective.title}
+                      {`OE ${texto.findIndex((obj) => obj.id === objective.id) + 1}. ${limpiarNumeracionObjetivo(objective.title)}`}
                     </h3>
                     <Button
                       size="sm"
@@ -583,7 +597,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                           className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
                         >
                           <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                            {activity}
+                            {`OE ${texto.findIndex((obj) => obj.id === objective.id) + 1}. ACT ${activityIndex + 1}. ${limpiarNumeracionActividad(activity)}`}
                           </span>
                           {/* Responsable */}
                           <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">

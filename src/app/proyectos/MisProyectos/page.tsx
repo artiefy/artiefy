@@ -158,6 +158,25 @@ export default function ProyectosPage() {
 
   const [tipoProyectoResumen, setTipoProyectoResumen] = useState<string>(''); // <-- Nuevo estado
 
+  // Función utilitaria para obtener la fecha actual en formato YYYY-MM-DD
+  function getTodayDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Nuevo estado para la fecha de inicio del proyecto (inicia vacío)
+  const [fechaInicioProyecto, setFechaInicioProyecto] = useState<string>('');
+
+  // Reinicia la fecha de inicio solo cuando se abre el modal de planteamiento y está vacía
+  useEffect(() => {
+    if (planteamientoOpen && !fechaInicioProyecto) {
+      setFechaInicioProyecto(getTodayDateString());
+    }
+  }, [planteamientoOpen, fechaInicioProyecto]);
+
   const handleConfirmarPlanteamiento = () => {
     setPlanteamientoOpen(false);
     setJustificacionOpen(true);
@@ -700,6 +719,7 @@ export default function ProyectosPage() {
     setSearchTerm('');
     setSelectedCategory('all');
     setProjectTypeFilter('all');
+    setFechaInicioProyecto(getTodayDateString()); // <-- Reinicia la fecha de inicio al limpiar todo
   };
 
   // Filtra los proyectos según búsqueda y categoría
@@ -838,6 +858,19 @@ export default function ProyectosPage() {
     );
   }
 
+  // Función para limpiar todos los campos del flujo de creación
+  function limpiarFlujoCreacion() {
+    setPlanteamientoTexto('');
+    setJustificacionTexto('');
+    setObjetivoGenTexto('');
+    setObjetivosEspTexto([]);
+    setHorasPorActividad({});
+    setResponsablesPorActividad({});
+    setHorasPorDiaProyecto(6);
+    setTiempoEstimadoProyecto(0);
+    setFechaInicioProyecto(''); // <-- Deja la fecha vacía, se calculará al abrir el modal
+  }
+
   return (
     <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
       {/* Header superior */}
@@ -955,14 +988,7 @@ export default function ProyectosPage() {
             <Button
               className="bg-cyan-500 text-white hover:bg-cyan-600"
               onClick={() => {
-                setPlanteamientoTexto('');
-                setJustificacionTexto('');
-                setObjetivoGenTexto('');
-                setObjetivosEspTexto([]);
-                setHorasPorActividad({}); // <-- Limpia aquí SOLO al crear nuevo proyecto
-                setResponsablesPorActividad({});
-                setHorasPorDiaProyecto(6);
-                setTiempoEstimadoProyecto(0);
+                limpiarFlujoCreacion();
                 setPlanteamientoOpen(true);
               }}
             >
@@ -1337,14 +1363,7 @@ export default function ProyectosPage() {
                   <Button
                     className="bg-cyan-500 text-white hover:bg-cyan-600"
                     onClick={() => {
-                      setPlanteamientoTexto('');
-                      setJustificacionTexto('');
-                      setObjetivoGenTexto('');
-                      setObjetivosEspTexto([]);
-                      setHorasPorActividad({}); // <-- Limpia aquí SOLO al crear nuevo proyecto
-                      setResponsablesPorActividad({});
-                      setHorasPorDiaProyecto(6);
-                      setTiempoEstimadoProyecto(0);
+                      limpiarFlujoCreacion();
                       setPlanteamientoOpen(true);
                     }}
                   >
@@ -1416,6 +1435,7 @@ export default function ProyectosPage() {
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
             tipoProyecto={tipoProyectoResumen}
+            fechaInicio={fechaInicioProyecto} // <-- Pasa la fecha de inicio aquí
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}

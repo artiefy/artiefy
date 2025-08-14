@@ -187,6 +187,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [objetivoGenEditado, setObjetivoGenEditado] = useState(objetivoGen);
   const [objetivosEspEditado, setObjetivosEspEditado] =
     useState<SpecificObjective[]>(objetivosEsp);
+  // Estado para controlar si la fecha inicial ha sido editada manualmente
   const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
     useState<boolean>(false);
 
@@ -259,6 +260,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       : getTodayDateString()
   );
   const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
+
+  // Solo sincroniza la fecha de inicio cuando cambia el prop desde el padre
+  useEffect(() => {
+    console.log(
+      '[ModalResumen] fechaInicioProp desde el padre:',
+      fechaInicioProp
+    );
+    if (fechaInicioProp && fechaInicioProp.trim() !== '') {
+      setFechaInicio(fechaInicioProp);
+    } else {
+      setFechaInicio(getTodayDateString());
+    }
+  }, [fechaInicioProp]);
 
   // Remove unused states
   // const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
@@ -822,9 +836,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  // Nuevo: mostrar botón de reset si la fecha fue editada manualmente
-  const isFechaInicioEditada =
-    fechaInicio !== '' && fechaInicio !== getTodayDateString();
+  // Maneja el cambio manual de la fecha de inicio
+  function handleFechaInicioChange(nuevaFecha: string) {
+    setFechaInicio(nuevaFecha);
+    setFechaInicioEditadaManualmente(nuevaFecha !== getTodayDateString());
+  }
 
   // Si la fecha de inicio es mayor a la de fin, intercambiarlas
   useEffect(() => {
@@ -832,6 +848,30 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       setFechaFin(fechaInicio);
     }
   }, [fechaInicio, fechaFin]);
+
+  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
+  useEffect(() => {
+    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
+      setFechaFin(fechaInicio);
+    }
+  }, [fechaInicio, fechaFin]);
+
+  // Añade esta función utilitaria antes del return principal (por ejemplo, después de los hooks y antes de if (!isOpen) return null;)
+  function limpiarNumeracionObjetivo(texto: string) {
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    let t = texto;
+    // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
+    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
+    return t.trim();
+  }
+
+  function limpiarNumeracionActividad(texto: string) {
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    let t = texto;
+    // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
+    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
+    return t.trim();
+  }
 
   if (!isOpen) return null;
 
@@ -1005,31 +1045,43 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="col-span-1">
             <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
               Fecha de Inicio del Proyecto
-              {fechaInicioEditadaManualmente && (
-                <span className="ml-2 text-xs text-orange-300">
-                  (Editada manualmente)
-                </span>
-              )}
+              {/* Solo mostrar el texto si la fecha es distinta a la actual */}
+              {fechaInicioEditadaManualmente &&
+                fechaInicio !== getTodayDateString() && (
+                  <span className="ml-2 text-xs text-orange-300">
+                    (Editada manualmente)
+                  </span>
+                )}
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
+                onChange={(e) => handleFechaInicioChange(e.target.value)}
                 className="w-full rounded bg-gray-400 p-2 text-black"
                 required
-                title="Fecha inicial del proyecto"
+                title={
+                  fechaInicioEditadaManualmente &&
+                  fechaInicio !== getTodayDateString()
+                    ? "Fecha editada manualmente. Usa el botón 'Hoy' para volver a la fecha actual"
+                    : 'Fecha inicial del proyecto. Se establece automáticamente como hoy'
+                }
               />
-              {isFechaInicioEditada && (
-                <button
-                  type="button"
-                  onClick={() => setFechaInicio(getTodayDateString())}
-                  className="ml-2 rounded bg-cyan-700 px-2 py-1 text-xs font-semibold text-white transition hover:bg-cyan-800"
-                  title="Restablecer a la fecha actual"
-                >
-                  Hoy
-                </button>
-              )}
+              {/* Solo mostrar el botón si la fecha es distinta a la actual */}
+              {fechaInicioEditadaManualmente &&
+                fechaInicio !== getTodayDateString() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFechaInicio(getTodayDateString());
+                      setFechaInicioEditadaManualmente(false);
+                    }}
+                    className="flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 sm:text-sm"
+                    title="Restablecer a la fecha actual"
+                  >
+                    Hoy
+                  </button>
+                )}
             </div>
           </div>
 
@@ -1111,7 +1163,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       {/* Header objetivo */}
                       <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
                         <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
-                          {obj.title}
+                          {/* Añade la numeración aquí */}
+                          {`OE ${idx + 1}. ${limpiarNumeracionObjetivo(obj.title)}`}
                         </h3>
                         <button
                           type="button"
@@ -1174,8 +1227,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               key={actIdx}
                               className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
                             >
+                              {/* Añade la numeración aquí */}
                               <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                {act}
+                                {`OE ${idx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                                  act
+                                )}`}
                               </span>
                               {/* Responsable */}
                               <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
@@ -1342,16 +1398,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         </form>
 
         {/* Cronograma responsive */}
+        <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
+          Cronograma{' '}
+          {tipoVisualizacion === 'meses'
+            ? 'por Meses'
+            : tipoVisualizacion === 'dias'
+              ? 'por Días'
+              : ' por Horas'}
+        </h3>
         {fechaInicio && fechaFin && duracionDias > 0 && (
           <div className="mt-4 overflow-x-auto sm:mt-6">
-            <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-              Cronograma{' '}
-              {tipoVisualizacion === 'meses'
-                ? 'por Meses'
-                : tipoVisualizacion === 'dias'
-                  ? 'por Días'
-                  : ' por Horas'}
-            </h3>
             {tipoVisualizacion === 'horas' ? (
               <table className="w-full table-auto border-collapse text-sm text-black">
                 <thead className="sticky top-0 z-10 bg-gray-300">
@@ -1368,9 +1424,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {objetivosEspEditado.map((obj) =>
-                    obj.activities.map((act, idx) => {
-                      const actividadKey = `${obj.id}_${idx}`;
+                  {objetivosEspEditado.map((obj, objIdx) =>
+                    obj.activities.map((act, actIdx) => {
+                      const actividadKey = `${obj.id}_${actIdx}`;
                       const horasActividad =
                         typeof horasPorActividadFinal[actividadKey] ===
                           'number' && horasPorActividadFinal[actividadKey] > 0
@@ -1382,7 +1438,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
                             style={{ minWidth: 250, maxWidth: 300 }}
                           >
-                            {act}
+                            {/* Añade la numeración aquí */}
+                            {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                              act
+                            )}`}
                           </td>
                           <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
                             {horasActividad}
@@ -1419,16 +1478,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {objetivosEspEditado.map((obj) =>
-                    obj.activities.map((act, idx) => {
-                      const actividadKey = `${obj.id}_${idx}`;
+                  {objetivosEspEditado.map((obj, objIdx) =>
+                    obj.activities.map((act, actIdx) => {
+                      const actividadKey = `${obj.id}_${actIdx}`;
                       return (
                         <tr key={actividadKey}>
                           <td
                             className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
                             style={{ minWidth: 180 }}
                           >
-                            {act}
+                            {/* Añade la numeración aquí */}
+                            {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                              act
+                            )}`}
                           </td>
                           {/* Cambia aquí: */}
                           {mesesRender.map((_, i) => (
