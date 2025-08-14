@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -53,36 +53,38 @@ const unlockNextLesson = async (lessonId: number, userId: string) => {
   }
 };
 
-// Función auxiliar para verificar si todas las actividades de una lección están completadas
-const areAllActivitiesCompleted = async (
-  lessonId: number,
-  userId: string
-): Promise<boolean> => {
-  // Obtener todas las actividades de la lección
-  const lessonActivities = await db.query.activities.findMany({
-    where: eq(activities.lessonsId, lessonId),
-  });
+/**
+ * Verifica si el usuario completó todas las actividades de una lección.
+ */
+export async function areAllActivitiesCompleted(
+  userId: string,
+  lessonId: number
+) {
+  // 1. Obtener los IDs de las actividades de la lección
+  const activityIds = await db
+    .select({ id: activities.id })
+    .from(activities)
+    .where(eq(activities.lessonsId, lessonId));
 
-  if (lessonActivities.length === 0) {
-    return true; // Si no hay actividades, se considera completado
-  }
+  const ids = activityIds.map((a) => a.id);
+  if (ids.length === 0) return true; // No hay actividades, se considera completado
 
-  // Obtener progreso de actividades del usuario
-  // Fix: Use activityId instead of lessonId in the where condition
-  const activitiesProgress = await db.query.userActivitiesProgress.findMany({
-    where: and(
-      eq(userActivitiesProgress.userId, userId),
-      // This is the corrected line - we need to check activities that belong to the lesson
-      eq(activities.lessonsId, lessonId)
-    ),
-  });
+  // 2. Buscar progreso de esas actividades para el usuario
+  const progresses = await db
+    .select()
+    .from(userActivitiesProgress)
+    .where(
+      and(
+        eq(userActivitiesProgress.userId, userId),
+        inArray(userActivitiesProgress.activityId, ids)
+      )
+    );
 
-  // Verificar si todas las actividades tienen progreso y están completadas
+  // 3. Verificar si todas están completadas
   return (
-    activitiesProgress.length === lessonActivities.length &&
-    activitiesProgress.every((progress) => progress.isCompleted)
+    progresses.length === ids.length && progresses.every((p) => p.isCompleted)
   );
-};
+}
 
 export async function updateLessonProgress(
   lessonId: number,
@@ -119,8 +121,8 @@ export async function updateLessonProgress(
 
   // Verificar si todas las actividades están completadas (si hay)
   const allActivitiesCompleted = await areAllActivitiesCompleted(
-    lessonId,
-    userId
+    userId,
+    lessonId
   );
 
   // Determinar si la lección está completada según las reglas:
