@@ -32,12 +32,13 @@
     "**/*",
     ".*/**/*",
     "./**/.*",
+    "drizzle.config.ts",
     "next-env.d.ts",
     "next-video.config.js",
-    "video.d.ts",
-    "src/types/**/*.ts",
     "src/types/**/*.d.ts",
-    "drizzle.config.ts"
+    "src/types/**/*.ts",
+    "video.d.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", "build", "dist", ".vercel", "coverage"]
 }

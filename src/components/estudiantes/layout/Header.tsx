@@ -21,7 +21,13 @@ import '~/styles/searchBar.css';
 import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
 
-export function Header() {
+export function Header({
+  onProyectosClickAction,
+  onEspaciosClickAction,
+}: {
+  onProyectosClickAction?: () => void;
+  onEspaciosClickAction?: () => void;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -183,6 +189,38 @@ export function Header() {
               <div className="div-header-nav flex gap-24">
                 {navItems.map((item) => {
                   const extraClass = `div-header-${item.label.toLowerCase()}`;
+                  // Interceptar click en "Proyectos"
+                  if (item.label === 'Proyectos' && onProyectosClickAction) {
+                    return (
+                      <button
+                        key={item.href}
+                        type="button"
+                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onProyectosClickAction();
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  }
+                  // Interceptar click en "Espacios"
+                  if (item.label === 'Espacios' && onEspaciosClickAction) {
+                    return (
+                      <button
+                        key={item.href}
+                        type="button"
+                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onEspaciosClickAction();
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  }
                   return (
                     <Link
                       key={item.href}
@@ -332,17 +370,53 @@ export function Header() {
           </div>
           <nav className="pb-7">
             <ul className="space-y-12">
-              {navItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {navItems.map((item) => {
+                // Interceptar click en "Proyectos" en móvil
+                if (item.label === 'Proyectos' && onProyectosClickAction) {
+                  return (
+                    <li key={item.href}>
+                      <button
+                        type="button"
+                        className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onProyectosClickAction();
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    </li>
+                  );
+                }
+                // Interceptar click en "Espacios" en móvil
+                if (item.label === 'Espacios' && onEspaciosClickAction) {
+                  return (
+                    <li key={item.href}>
+                      <button
+                        type="button"
+                        className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onEspaciosClickAction();
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
           <div className="div-auth mt-6 flex items-center justify-center">

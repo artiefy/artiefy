@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { Dialog, DialogPanel } from '@headlessui/react';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
@@ -22,6 +23,8 @@ export default function HomePage() {
   const [chatbotKey] = useState<number>(0);
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
   const [lastSearchQuery] = useState<string>('');
+  const [showProyectosModal, setShowProyectosModal] = useState(false);
+  const [showEspaciosModal, setShowEspaciosModal] = useState(false);
   void showAnuncio;
   const { isSignedIn } = useAuth();
   const [anuncios, setAnuncios] = useState<
@@ -85,11 +88,97 @@ export default function HomePage() {
 
   return (
     <div className="relative flex min-h-screen flex-col">
+      {/* Modal "Disponible muy pronto" para Proyectos */}
+      <Dialog
+        open={showProyectosModal}
+        onClose={() => setShowProyectosModal(false)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
+          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+              />
+            </svg>
+          </span>
+          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+            ¡Disponible muy pronto!
+          </h2>
+          <p className="mb-4 text-center text-gray-600">
+            La sección de{' '}
+            <span className="text-secondary font-semibold">Proyectos</span>{' '}
+            estará habilitada próximamente.
+            <br />
+            ¡Gracias por tu interés!
+          </p>
+          <button
+            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={() => setShowProyectosModal(false)}
+          >
+            Cerrar
+          </button>
+        </DialogPanel>
+      </Dialog>
+      {/* Modal "Disponible muy pronto" para Espacios */}
+      <Dialog
+        open={showEspaciosModal}
+        onClose={() => setShowEspaciosModal(false)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
+          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+              />
+            </svg>
+          </span>
+          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+            ¡Disponible muy pronto!
+          </h2>
+          <p className="mb-4 text-center text-gray-600">
+            La sección de{' '}
+            <span className="text-secondary font-semibold">Espacios</span>{' '}
+            estará habilitada próximamente.
+            <br />
+            ¡Gracias por tu interés!
+          </p>
+          <button
+            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={() => setShowEspaciosModal(false)}
+          >
+            Cerrar
+          </button>
+        </DialogPanel>
+      </Dialog>
+
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
       <SmoothGradient />
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Header />
+        <Header
+          onProyectosClickAction={() => setShowProyectosModal(true)}
+          onEspaciosClickAction={() => setShowEspaciosModal(true)}
+        />
         <main className="mt-[-10vh] flex grow items-center justify-center">
           <section className="container mx-auto px-4 py-12 text-center">
             <h1 className="mb-5 text-5xl leading-snug font-bold text-white">
