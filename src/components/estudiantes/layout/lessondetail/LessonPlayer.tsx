@@ -4,10 +4,9 @@ import { Lock } from 'lucide-react';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
+import { type LessonWithProgress } from '~/types';
 
-import VideoPlayer, { LessonVideo } from './LessonVideo';
-
-import type { ClassMeeting, LessonWithProgress } from '~/types';
+import VideoPlayer from './LessonVideo';
 
 interface LessonPlayerProps {
   lesson: LessonWithProgress;
@@ -112,6 +111,13 @@ const LessonPlayer = ({
             isVideoCompleted={progress === 100}
             isLocked={isLocked}
             onTimeUpdate={handleVideoTimeUpdate}
+            startAt={
+              lesson.porcentajecompletado
+                ? Math.round(
+                    (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
+                  )
+                : 0
+            }
           />
         </div>
       </div>
@@ -291,16 +297,5 @@ const LessonPlayer = ({
     </div>
   );
 };
-
-export function LessonPlayerMeeting({ meeting }: { meeting: ClassMeeting }) {
-  if (!meeting?.video_key) return null;
-  // Usa LessonVideo correctamente
-  return (
-    <div className="lesson-player">
-      <LessonVideo meeting={meeting} />
-      {/* Puedes agregar controles adicionales aquí */}
-    </div>
-  );
-}
 
 export default LessonPlayer;

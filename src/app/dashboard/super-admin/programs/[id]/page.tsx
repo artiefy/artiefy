@@ -1,4 +1,7 @@
 import ProgramDetail from './ProgramDetail'; // El componente ProgramDetail
+// Importar el chatbot
+
+
 
 export default async function Page({
   params,

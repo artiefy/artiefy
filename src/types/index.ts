@@ -507,4 +507,5 @@ export interface ClassMeeting {
   createdAt?: string | null;
   meetingId: string;
   video_key?: string | null;
+  progress?: number | null;
 }

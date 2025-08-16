@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Player from 'next-video/player';
-
-import type { ClassMeeting } from '~/types';
 
 import '~/styles/videoloading.css';
 
@@ -14,6 +12,7 @@ interface VideoPlayerProps {
   isLocked?: boolean;
   // Nuevo prop para sincronizar transcripción
   onTimeUpdate?: (currentTime: number) => void;
+  startAt?: number; // <-- NUEVO: segundos para iniciar el video
 }
 
 // Lista de videos que deben usar el reproductor nativo
@@ -28,12 +27,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onProgressUpdate,
   isVideoCompleted,
   isLocked = false,
-  onTimeUpdate, // Nuevo prop
+  onTimeUpdate,
+  startAt = 0, // <-- NUEVO
 }) => {
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [useNativePlayer, setUseNativePlayer] = useState(false);
   const [playerError, setPlayerError] = useState<string | null>(null);
+  // Usa el tipo correcto para el ref de Player
+  const playerRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!videoKey || videoKey === 'null' || isLocked) {
@@ -55,6 +57,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
     setIsLoading(false);
   }, [videoKey, isLocked]);
+
+  // NUEVO: Saltar al tiempo guardado al cargar el video (nativo y next-video)
+  useEffect(() => {
+    if (!videoUrl || isLocked) return;
+    // Para el reproductor nativo
+    if (useNativePlayer && playerRef.current && startAt > 0) {
+      const video = playerRef.current;
+      const seek = () => {
+        if (Math.abs(video.currentTime - startAt) > 1) {
+          video.currentTime = startAt;
+        }
+      };
+      video.addEventListener('loadedmetadata', seek, { once: true });
+      return () => video.removeEventListener('loadedmetadata', seek);
+    }
+  }, [videoUrl, useNativePlayer, startAt, isLocked]);
 
   const handlePlayerError = (error?: unknown) => {
     console.warn(
@@ -120,6 +138,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           controls
           onEnded={onVideoEnd}
           onError={handlePlayerError}
+          // Cambia el tipo del ref para evitar 'any'
+          ref={playerRef as React.RefObject<HTMLVideoElement>}
+          onLoadedMetadata={(e) => {
+            if (
+              startAt > 0 &&
+              Math.abs(e.currentTarget.currentTime - startAt) > 1
+            ) {
+              e.currentTarget.currentTime = startAt;
+            }
+          }}
           onTimeUpdate={(e) => {
             const video = e.currentTarget;
             if (video && !isVideoCompleted) {
@@ -128,7 +156,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
               onProgressUpdate(progress);
             }
-            // Llama al callback para sincronizar transcripción
             if (onTimeUpdate) {
               onTimeUpdate(video.currentTime);
             }
@@ -149,6 +176,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       )}
       {(videoUrl && useNativePlayer) || playerError ? (
         <video
+          ref={playerRef}
           src={videoUrl}
           className="absolute inset-0 h-full w-full bg-black object-contain"
           controls
@@ -156,9 +184,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           controlsList="nodownload"
           onEnded={onVideoEnd}
           onError={(_e) => {
-            // El evento onError de <video> no expone detalles del error en todos los navegadores.
-            // Solo loguea un mensaje genérico.
             console.error('Native player error: Video failed to load or play');
+          }}
+          onLoadedMetadata={(e) => {
+            if (
+              startAt > 0 &&
+              Math.abs(e.currentTarget.currentTime - startAt) > 1
+            ) {
+              e.currentTarget.currentTime = startAt;
+            }
           }}
           onTimeUpdate={(e) => {
             const video = e.currentTarget;
@@ -168,7 +202,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
               onProgressUpdate(progress);
             }
-            // Llama al callback para sincronizar transcripción
             if (onTimeUpdate) {
               onTimeUpdate(video.currentTime);
             }
@@ -179,18 +212,5 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     </div>
   );
 };
-
-export function LessonVideo({ meeting }: { meeting: ClassMeeting }) {
-  if (!meeting?.video_key) return null;
-  return (
-    <video
-      controls
-      className="w-full max-w-lg rounded shadow"
-      src={`https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${meeting.video_key ?? ''}`}
-    >
-      Tu navegador no soporta el video.
-    </video>
-  );
-}
 
 export default VideoPlayer;

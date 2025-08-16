@@ -113,7 +113,7 @@ Colores del manual de marca:
 #01142B -background //variable de tailwindcss
 #3AF4EF -primary //variable de tailwindcss
 #00BDD8 -secondary //variable de tailwindcss
-
+#1e2939 //color de fondo de las tarjetas de cursos
 #00A5C0 //color parecido mas oscuro de -secondary para el hover
 ```
 
