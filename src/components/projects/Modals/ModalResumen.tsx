@@ -4,10 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
-import { FaArrowLeft } from 'react-icons/fa';
+import DatePicker from 'react-datepicker';
+import { FaArrowLeft, FaRegCalendarAlt } from 'react-icons/fa';
 
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
+
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface UpdatedProjectData {
   name?: string;
@@ -190,6 +193,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Estado para controlar si la fecha inicial ha sido editada manualmente
   const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
     useState<boolean>(false);
+  // Estado para controlar si la fecha final ha sido editada manualmente
+  const [fechaFinEditadaManualmente, setFechaFinEditadaManualmente] =
+    useState<boolean>(false);
+  const [fechaInicioDomingoError, setFechaInicioDomingoError] = useState(false);
 
   // Calcular el total de horas dinámicamente
   const totalHorasActividadesCalculado = useMemo(() => {
@@ -268,11 +275,40 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       fechaInicioProp
     );
     if (fechaInicioProp && fechaInicioProp.trim() !== '') {
-      setFechaInicio(fechaInicioProp);
+      // Si la fecha de inicio recibida es domingo, ajusta al lunes siguiente
+      const date = new Date(fechaInicioProp);
+      if (date.getDay() === 0) {
+        date.setDate(date.getDate() + 1);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        setFechaInicio(`${yyyy}-${mm}-${dd}`);
+      } else {
+        setFechaInicio(fechaInicioProp);
+      }
     } else {
       setFechaInicio(getTodayDateString());
     }
   }, [fechaInicioProp]);
+
+  // Al abrir el modal, asegura que la fecha de inicio nunca sea domingo
+  useEffect(() => {
+    if (isOpen) {
+      // Si la fecha de inicio actual es domingo, ajusta al lunes siguiente
+      if (fechaInicio) {
+        const date = new Date(fechaInicio);
+        if (date.getDay() === 0) {
+          date.setDate(date.getDate() + 1);
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          setFechaInicio(`${yyyy}-${mm}-${dd}`);
+        }
+      }
+    }
+    // Solo depende de isOpen y fechaInicio para evitar loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Remove unused states
   // const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
@@ -392,77 +428,89 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [_tiempoEstimadoProyectoProp, setTiempoEstimadoProyecto]);
 
-  // Nueva función para contar días laborables entre dos fechas (inclusive)
-  const contarDiasLaborables = (inicio: string, fin: string): number => {
-    if (!inicio || !fin) return 0;
-    const fechaInicio = new Date(inicio);
-    const fechaFin = new Date(fin);
-    if (fechaInicio > fechaFin) return 0;
-    let count = 0;
-    const current = new Date(fechaInicio);
-    while (current <= fechaFin) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) count++; // lunes a viernes
-      current.setDate(current.getDate() + 1);
-    }
-    return count;
-  };
-
-  // Calcular el total de horas del proyecto SOLO considerando días laborables
-  const totalDiasLaborables =
-    fechaInicio && fechaFin ? contarDiasLaborables(fechaInicio, fechaFin) : 0;
-  const totalHorasProyecto =
-    totalDiasLaborables > 0 ? totalDiasLaborables * horasPorDiaValue : 0;
-
-  // Calcular la cantidad total de actividades (sumando todas las actividades de todos los objetivos)
-  const totalActividades = objetivosEspEditado.reduce(
-    (acc, obj) => acc + obj.activities.length,
-    0
-  );
-
-  // Calcular las horas por actividad (distribución equitativa)
-  const horasPorActividadDistribuidas =
-    totalActividades > 0
-      ? Math.floor(totalHorasProyecto / totalActividades)
-      : 0;
-
-  // Sincronizar automáticamente las horas por actividad distribuidas
+  // Corrige el error de variable no definida y prefer-const en el cálculo de la fecha de fin automática:
   useEffect(() => {
-    if (totalActividades > 0 && horasPorActividadDistribuidas > 0) {
-      console.log(
-        `Distribuyendo ${horasPorActividadDistribuidas} horas por actividad para ${totalActividades} actividades`
+    // Corrige el cálculo de la fecha de fin: solo calcula automáticamente si el usuario NO la ha editado manualmente Y existen actividades
+    // Verifica si hay al menos una actividad en los objetivos específicos
+    const hayActividades =
+      Array.isArray(objetivosEspEditado) &&
+      objetivosEspEditado.some(
+        (obj) => Array.isArray(obj.activities) && obj.activities.length > 0
       );
-      const nuevasHoras: Record<string, number> = {};
-      objetivosEspEditado.forEach((obj) => {
-        obj.activities.forEach((_, actIdx) => {
-          const actividadKey = `${obj.id}_${actIdx}`;
-          // Solo asignar horas automáticas si no tiene horas ya asignadas
-          if (!horasPorActividadFinal[actividadKey]) {
-            nuevasHoras[actividadKey] = horasPorActividadDistribuidas;
-          }
-        });
-      });
 
-      // Actualizar solo si hay actividades sin asignación previa
-      if (Object.keys(nuevasHoras).length > 0) {
-        console.log('Asignando horas automáticamente:', nuevasHoras);
-        if (typeof setHorasPorActividad === 'function') {
-          setHorasPorActividad({
-            ...horasPorActividadFinal,
-            ...nuevasHoras,
-          });
-        } else {
-          setHorasPorActividadLocal((prev) => ({ ...prev, ...nuevasHoras }));
+    // Solo calcular si hay fecha de inicio, horas estimadas, el usuario NO ha editado la fecha fin manualmente y existen actividades
+    if (
+      !fechaInicio ||
+      !totalHorasActividadesCalculado ||
+      !horasPorDiaValue ||
+      fechaFinEditadaManualmente ||
+      !hayActividades
+    )
+      return;
+
+    // Calcula la cantidad de días necesarios (redondea hacia arriba)
+    const diasNecesarios = Math.ceil(
+      totalHorasActividadesCalculado / horasPorDiaValue
+    );
+
+    // Calcula la fecha de fin sumando días laborables (lunes a sábado)
+    let diasAgregados = 0;
+    const fecha = new Date(fechaInicio);
+
+    // Si la fecha de inicio es domingo, avanza al lunes siguiente
+    if (fecha.getDay() === 0) {
+      fecha.setDate(fecha.getDate() + 1);
+    }
+
+    while (diasAgregados < diasNecesarios) {
+      const day = fecha.getDay();
+      if (day !== 0) {
+        // lunes a sábado
+        diasAgregados++;
+      }
+      if (diasAgregados < diasNecesarios) {
+        fecha.setDate(fecha.getDate() + 1);
+        // Si cae en domingo, saltar al lunes
+        if (fecha.getDay() === 0) {
+          fecha.setDate(fecha.getDate() + 1);
         }
       }
     }
+    // Si el último día cae en domingo, avanza al lunes siguiente
+    if (fecha.getDay() === 0) {
+      fecha.setDate(fecha.getDate() + 1);
+    }
+    // Formatea la fecha a YYYY-MM-DD
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    const nuevaFechaFin = `${yyyy}-${mm}-${dd}`;
+
+    // Solo actualiza si es diferente para evitar loops infinitos
+    if (fechaFin !== nuevaFechaFin) {
+      setFechaFin(nuevaFechaFin);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    totalActividades,
-    horasPorActividadDistribuidas,
-    objetivosEspEditado,
-    horasPorActividadFinal,
-    setHorasPorActividad,
+    fechaInicio,
+    totalHorasActividadesCalculado,
+    horasPorDiaValue,
+    fechaFinEditadaManualmente,
+    objetivosEspEditado, // para detectar cambios en actividades
   ]);
+
+  // Elimina la función no usada para evitar el warning de ESLint
+  // function handleFechaFinChange(nuevaFecha: string) {
+  //   setFechaFin(nuevaFecha);
+  //   setFechaFinEditadaManualmente(true);
+  // }
+
+  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
+  useEffect(() => {
+    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
+      setFechaFin(fechaInicio);
+    }
+  }, [fechaInicio, fechaFin]);
 
   // Fix unsafe member access for users in fetchUsuarios
   useEffect(() => {
@@ -827,19 +875,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     alert('Funcionalidad de guardar proyecto no implementada.');
   };
 
-  // Utilidad para obtener la fecha actual en formato YYYY-MM-DD
+  // Utilidad para obtener la fecha actual en formato YYYY-MM-DD, ajustando si es domingo
   function getTodayDateString() {
     const today = new Date();
+    // Si hoy es domingo, avanzar al lunes siguiente
+    if (today.getDay() === 0) {
+      today.setDate(today.getDate() + 1);
+    }
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
-  }
-
-  // Maneja el cambio manual de la fecha de inicio
-  function handleFechaInicioChange(nuevaFecha: string) {
-    setFechaInicio(nuevaFecha);
-    setFechaInicioEditadaManualmente(nuevaFecha !== getTodayDateString());
   }
 
   // Si la fecha de inicio es mayor a la de fin, intercambiarlas
@@ -858,7 +904,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   // Añade esta función utilitaria antes del return principal (por ejemplo, después de los hooks y antes de if (!isOpen) return null;)
   function limpiarNumeracionObjetivo(texto: string) {
-    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio, incluso si hay varios y en cualquier orden
     let t = texto;
     // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
     t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
@@ -866,206 +912,290 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }
 
   function limpiarNumeracionActividad(texto: string) {
-    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio del texto, incluso si hay varios y en cualquier orden
+    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio, incluso si hay varios y en cualquier orden
     let t = texto;
     // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
     t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
     return t.trim();
   }
 
+  // Utilidad para convertir yyyy-mm-dd a Date
+  function parseYMDToDate(str: string): Date | null {
+    if (!str) return null;
+    const [yyyy, mm, dd] = str.split('-');
+    if (!yyyy || !mm || !dd) return null;
+    const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    // Si cae en domingo, sumar 1 día para que sea lunes
+    if (date.getDay() === 0) {
+      date.setDate(date.getDate() + 1);
+    }
+    return date;
+  }
+
+  // Utilidad para convertir Date a yyyy-mm-dd
+  function formatDateYMD(date: Date): string {
+    const d = new Date(date);
+    // Si cae en domingo, sumar 1 día para que sea lunes
+    if (d.getDay() === 0) {
+      d.setDate(d.getDate() + 1);
+    }
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Utilidad para comparar si dos fechas (Date) son el mismo día (sin horas)
+  function isSameDay(a: Date, b: Date) {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
   if (!isOpen) return null;
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
-    >
-      <div className="relative h-full max-h-[95vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-[#0F2940] p-3 text-white shadow-lg sm:p-6">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-xl font-bold text-white hover:text-red-500 sm:top-3 sm:right-4 sm:text-2xl"
-        >
-          ✕
-        </button>
+    <>
+      {/* Estilo para el contorno del día actual */}
+      <style>
+        {`
+          .datepicker-today-outline {
+            outline: 2px solid #10b981 !important;
+            outline-offset: 1px;
+            border-radius: 50% !important;
+          }
+        `}
+      </style>
+      <div
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
+      >
+        <div className="relative h-full max-h-[95vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-[#0F2940] p-3 text-white shadow-lg sm:p-6">
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-xl font-bold text-white hover:text-red-500 sm:top-3 sm:right-4 sm:text-2xl"
+          >
+            ✕
+          </button>
 
-        {/* Espacio para la imagen del proyecto */}
-        <div className="mb-4 flex flex-col items-center sm:mb-6">
-          <div className="mb-2 flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-gray-200 sm:h-40 sm:w-40">
-            {previewImagen ? (
-              <Image
-                src={previewImagen}
-                alt="Imagen del proyecto"
-                width={160}
-                height={160}
-                className="h-full w-full object-cover"
-                style={{ objectFit: 'cover' }}
-              />
-            ) : imagenExistente ? (
-              <Image
-                src={imagenExistente}
-                alt="Imagen del proyecto"
-                width={160}
-                height={160}
-                className="h-full w-full object-cover"
-                style={{ objectFit: 'cover' }}
-                unoptimized
-              />
-            ) : (
-              <span className="text-gray-500">Sin imagen</span>
-            )}
-          </div>
-          <label className="cursor-pointer rounded bg-cyan-700 px-3 py-1 text-sm text-white hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-base">
-            {isEditMode ? 'Cambiar imagen' : 'Seleccionar imagen'}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setImagenProyecto(file);
-                }
-              }}
-            />
-          </label>
-        </div>
-
-        <br />
-        <br />
-        <textarea
-          value={tituloState}
-          onChange={(e) => {
-            setTitulo(e.target.value);
-            handleTextAreaChange(e);
-          }}
-          rows={1}
-          className="mb-4 w-full resize-none overflow-hidden rounded border p-2 text-center text-xl font-semibold text-cyan-300 sm:mb-6 sm:text-2xl md:text-3xl"
-          placeholder="Título del Proyecto"
-        />
-
-        <form className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-          <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Planteamiento del problema
-            </label>
-            <textarea
-              value={planteamientoEditado}
-              onChange={(e) => {
-                setPlanteamientoEditado(e.target.value);
-                handleTextAreaChange(e);
-              }}
-              rows={1}
-              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-              placeholder="Describe el planteamiento del problema"
-            />
-          </div>
-
-          <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Justificación
-            </label>
-            <textarea
-              value={justificacionEditada}
-              onChange={(e) => {
-                setJustificacionEditada(e.target.value);
-                handleTextAreaChange(e);
-              }}
-              rows={1}
-              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-              placeholder="Justifica la necesidad del proyecto"
-            />
-          </div>
-
-          <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Objetivo General
-            </label>
-            <textarea
-              value={objetivoGenEditado}
-              onChange={(e) => {
-                setObjetivoGenEditado(e.target.value);
-                handleTextAreaChange(e);
-              }}
-              rows={1}
-              className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-              placeholder="Define el objetivo general del proyecto"
-            />
-          </div>
-
-          <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <label
-              className="text-sm font-medium text-cyan-300 sm:text-base"
-              htmlFor="horasPorDiaProyecto"
-            >
-              Horas por día de trabajo:
-            </label>
-            <input
-              id="horasPorDiaProyecto"
-              type="number"
-              min={1}
-              max={24}
-              value={horasPorDiaValue}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (!isNaN(num) && num >= 1 && num <= 24) {
-                  handleHorasPorDiaChange(num);
-                }
-              }}
-              className="rounded bg-gray-400 p-1 text-black"
-            />
-          </div>
-          {/* Izquierda: Horas totales del proyecto*/}
-          <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <label
-              className="text-sm font-medium text-cyan-300 sm:text-base"
-              htmlFor="horasPorProyecto"
-            >
-              Tiempo estimado del proyecto:
-            </label>
-            <input
-              id="horasPorProyecto"
-              type="number"
-              min={0}
-              value={totalHorasActividadesCalculado}
-              readOnly
-              className="rounded bg-gray-400 p-1 text-black"
-              style={{
-                width: `${String(totalHorasActividadesCalculado).length + 3}ch`,
-                minWidth: '4ch',
-                textAlign: 'center',
-                border: '2px solid #10b981',
-                fontWeight: 'bold',
-              }}
-            />
-            <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
-              horas
-            </span>
-          </div>
-          {/* Fechas responsive */}
-          <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
-              Fecha de Inicio del Proyecto
-              {/* Solo mostrar el texto si la fecha es distinta a la actual */}
-              {fechaInicioEditadaManualmente &&
-                fechaInicio !== getTodayDateString() && (
-                  <span className="ml-2 text-xs text-orange-300">
-                    (Editada manualmente)
-                  </span>
-                )}
-            </label>
-            <div className="flex items-center gap-2">
+          {/* Espacio para la imagen del proyecto */}
+          <div className="mb-4 flex flex-col items-center sm:mb-6">
+            <div className="mb-2 flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-gray-200 sm:h-40 sm:w-40">
+              {previewImagen ? (
+                <Image
+                  src={previewImagen}
+                  alt="Imagen del proyecto"
+                  width={160}
+                  height={160}
+                  className="h-full w-full object-cover"
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : imagenExistente ? (
+                <Image
+                  src={imagenExistente}
+                  alt="Imagen del proyecto"
+                  width={160}
+                  height={160}
+                  className="h-full w-full object-cover"
+                  style={{ objectFit: 'cover' }}
+                  unoptimized
+                />
+              ) : (
+                <span className="text-gray-500">Sin imagen</span>
+              )}
+            </div>
+            <label className="cursor-pointer rounded bg-cyan-700 px-3 py-1 text-sm text-white hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-base">
+              {isEditMode ? 'Cambiar imagen' : 'Seleccionar imagen'}
               <input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => handleFechaInicioChange(e.target.value)}
-                className="w-full rounded bg-gray-400 p-2 text-black"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImagenProyecto(file);
+                  }
+                }}
+              />
+            </label>
+          </div>
+
+          <br />
+          <br />
+          <textarea
+            value={tituloState}
+            onChange={(e) => {
+              setTitulo(e.target.value);
+              handleTextAreaChange(e);
+            }}
+            rows={1}
+            className="mb-4 w-full resize-none overflow-hidden rounded border p-2 text-center text-xl font-semibold text-cyan-300 sm:mb-6 sm:text-2xl md:text-3xl"
+            placeholder="Título del Proyecto"
+          />
+
+          <form className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+            <div className="col-span-1 lg:col-span-2">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Planteamiento del problema
+              </label>
+              <textarea
+                value={planteamientoEditado}
+                onChange={(e) => {
+                  setPlanteamientoEditado(e.target.value);
+                  handleTextAreaChange(e);
+                }}
+                rows={1}
+                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+                placeholder="Describe el planteamiento del problema"
+              />
+            </div>
+
+            <div className="col-span-1 lg:col-span-2">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Justificación
+              </label>
+              <textarea
+                value={justificacionEditada}
+                onChange={(e) => {
+                  setJustificacionEditada(e.target.value);
+                  handleTextAreaChange(e);
+                }}
+                rows={1}
+                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+                placeholder="Justifica la necesidad del proyecto"
+              />
+            </div>
+
+            <div className="col-span-1 lg:col-span-2">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Objetivo General
+              </label>
+              <textarea
+                value={objetivoGenEditado}
+                onChange={(e) => {
+                  setObjetivoGenEditado(e.target.value);
+                  handleTextAreaChange(e);
+                }}
+                rows={1}
+                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
+                placeholder="Define el objetivo general del proyecto"
+              />
+            </div>
+
+            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <label
+                className="text-sm font-medium text-cyan-300 sm:text-base"
+                htmlFor="horasPorDiaProyecto"
+              >
+                Horas por día de trabajo:
+              </label>
+              <input
+                id="horasPorDiaProyecto"
+                type="number"
+                min={1}
+                max={24}
+                value={horasPorDiaValue}
+                onChange={(e) => {
+                  const num = Number(e.target.value);
+                  if (!isNaN(num) && num >= 1 && num <= 24) {
+                    handleHorasPorDiaChange(num);
+                  }
+                }}
+                className="rounded bg-gray-400 p-1 text-black"
+              />
+            </div>
+            {/* Izquierda: Horas totales del proyecto*/}
+            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <label
+                className="text-sm font-medium text-cyan-300 sm:text-base"
+                htmlFor="horasPorProyecto"
+              >
+                Tiempo estimado del proyecto:
+              </label>
+              <input
+                id="horasPorProyecto"
+                type="number"
+                min={0}
+                value={totalHorasActividadesCalculado}
+                readOnly
+                className="rounded bg-gray-400 p-1 text-black"
+                style={{
+                  width: `${String(totalHorasActividadesCalculado).length + 3}ch`,
+                  minWidth: '4ch',
+                  textAlign: 'center',
+                  border: '2px solid #10b981',
+                  fontWeight: 'bold',
+                }}
+              />
+              <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
+                horas
+              </span>
+            </div>
+            {/* Fechas responsive */}
+            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
+                Fecha de Inicio del Proyecto:
+                {/* Solo mostrar el texto si la fecha es distinta a la actual */}
+                {fechaInicioEditadaManualmente &&
+                  fechaInicio !== getTodayDateString() && (
+                    <span className="ml-2 text-xs text-orange-300">
+                      (Editada manualmente)
+                    </span>
+                  )}
+              </label>
+              {/* Cambia aquí: fuerza el contenedor a w-full */}
+              <DatePicker
+                selected={fechaInicio ? parseYMDToDate(fechaInicio) : null}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  if (date instanceof Date && !isNaN(date.getTime())) {
+                    if (date.getDay() === 0) return;
+                    const ymd = formatDateYMD(date);
+                    setFechaInicio(ymd);
+                    setFechaInicioEditadaManualmente(
+                      ymd !== getTodayDateString()
+                    );
+                    setFechaInicioDomingoError(false);
+                  }
+                }}
+                filterDate={(date: Date) => date.getDay() !== 0}
+                dateFormat="dd / MM / yyyy"
+                minDate={new Date(getTodayDateString())}
+                className={`w-20 rounded bg-gray-400 p-2 text-black ${fechaInicioDomingoError ? 'border-2 border-red-500' : ''}`}
+                placeholderText="Selecciona la fecha de inicio"
                 required
-                title={
-                  fechaInicioEditadaManualmente &&
-                  fechaInicio !== getTodayDateString()
-                    ? "Fecha editada manualmente. Usa el botón 'Hoy' para volver a la fecha actual"
-                    : 'Fecha inicial del proyecto. Se establece automáticamente como hoy'
+                customInput={
+                  // Cambia aquí: fuerza el input personalizado a w-full
+                  <CustomDateInput
+                    className={`w-full rounded bg-gray-400 p-2 pr-10 text-black ${fechaInicioDomingoError ? 'border-2 border-red-500' : ''}`}
+                  />
                 }
+                dayClassName={(date) => {
+                  // Solo resalta si la seleccionada NO es la actual
+                  const today = new Date(getTodayDateString());
+                  const selected = fechaInicio
+                    ? parseYMDToDate(fechaInicio)
+                    : null;
+                  if (
+                    date instanceof Date &&
+                    today instanceof Date &&
+                    (selected === null || selected instanceof Date)
+                  ) {
+                    if (
+                      selected &&
+                      isSameDay(date as Date, today as Date) &&
+                      !isSameDay(date as Date, selected as Date)
+                    ) {
+                      return 'datepicker-today-outline';
+                    }
+                    if (!selected && isSameDay(date as Date, today as Date)) {
+                      return 'datepicker-today-outline';
+                    }
+                  }
+                  return '';
+                }}
               />
               {/* Solo mostrar el botón si la fecha es distinta a la actual */}
               {fechaInicioEditadaManualmente &&
@@ -1082,278 +1212,353 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     Hoy
                   </button>
                 )}
+              {fechaInicioDomingoError && (
+                <span className="text-xs text-red-400">
+                  No puedes seleccionar un domingo como fecha de inicio.
+                </span>
+              )}
             </div>
-          </div>
 
-          <div className="col-span-1">
-            <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
-              Fecha de Fin del Proyecto
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                min={fechaInicio}
+            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
+                Fecha de Fin del Proyecto:
+                {/* Mostrar si la fecha fue editada manualmente */}
+                {fechaFinEditadaManualmente && (
+                  <span className="ml-2 text-xs text-orange-300">
+                    (Editada manualmente)
+                  </span>
+                )}
+              </label>
+              {/* Cambia aquí: fuerza el contenedor a w-full */}
+              <DatePicker
+                selected={fechaFin ? parseYMDToDate(fechaFin) : null}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  if (date instanceof Date && !isNaN(date.getTime())) {
+                    const ymd = formatDateYMD(date);
+                    setFechaFin(ymd);
+                    setFechaFinEditadaManualmente(true);
+                  }
+                }}
+                dateFormat="dd / MM / yyyy"
+                minDate={
+                  fechaInicio
+                    ? (parseYMDToDate(fechaInicio) ?? undefined)
+                    : undefined
+                }
                 className="w-full rounded bg-gray-400 p-2 text-black"
+                placeholderText="DD / MM / YYYY"
                 required
-                title="Fecha final del proyecto"
-              />
-            </div>
-          </div>
-
-          {/* Horas por día responsive con información adicional */}
-          {fechaInicio && fechaFin && (
-            <>
-              <div className="col-span-1 flex items-center">
-                <span className="text-sm font-semibold text-cyan-200 sm:text-base">
-                  Total de horas: {totalHorasProyecto}
-                </span>
-              </div>
-              <div className="col-span-1 flex items-center">
-                <span className="text-sm font-semibold text-green-300 sm:text-base">
-                  Días laborables necesarios:{' '}
-                  {Math.ceil(totalHorasActividadesCalculado / horasPorDiaValue)}
-                </span>
-              </div>
-            </>
-          )}
-
-          {/* Objetivos específicos */}
-          <div className="col-span-1 lg:col-span-2">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Objetivos Específicos
-            </label>
-
-            {/* Sección para agregar nuevo objetivo */}
-            <div className="mb-4 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <textarea
-                  value={nuevoObjetivo}
-                  onChange={(e) => {
-                    setNuevoObjetivo(e.target.value);
-                    handleTextAreaChange(e);
-                  }}
-                  rows={1}
-                  className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
-                  placeholder="Agregar nuevo objetivo específico..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAgregarObjetivo();
+                customInput={
+                  // Cambia aquí: fuerza el input personalizado a w-full
+                  <CustomDateInput className="w-full rounded bg-gray-400 p-2 pr-10 text-black" />
+                }
+                dayClassName={(date) => {
+                  const today = new Date(getTodayDateString());
+                  const selected = fechaFin ? parseYMDToDate(fechaFin) : null;
+                  if (
+                    date instanceof Date &&
+                    today instanceof Date &&
+                    (selected === null || selected instanceof Date)
+                  ) {
+                    if (
+                      selected &&
+                      isSameDay(date as Date, today as Date) &&
+                      !isSameDay(date as Date, selected as Date)
+                    ) {
+                      return 'datepicker-today-outline';
                     }
-                  }}
-                />
+                    if (!selected && isSameDay(date as Date, today as Date)) {
+                      return 'datepicker-today-outline';
+                    }
+                  }
+                  return '';
+                }}
+              />
+              {/* Botón para volver a calcular automáticamente la fecha fin */}
+              {fechaFinEditadaManualmente && (
                 <button
                   type="button"
-                  onClick={handleAgregarObjetivo}
-                  className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
+                  onClick={() => {
+                    setFechaFinEditadaManualmente(false);
+                  }}
+                  className="flex-shrink-0 rounded bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700 sm:text-sm"
+                  title="Recalcular automáticamente la fecha de fin"
                 >
-                  +
+                  Auto
                 </button>
+              )}
+            </div>
+
+            {/* Horas por día responsive con información adicional */}
+            {fechaInicio && fechaFin && (
+              <>
+                <div className="col-span-1 flex items-center">
+                  <span className="text-sm font-semibold text-cyan-200 sm:text-base">
+                    Total de horas: {totalHorasActividadesCalculado}
+                  </span>
+                </div>
+                <div className="col-span-1 flex items-center">
+                  <span className="text-sm font-semibold text-green-300 sm:text-base">
+                    Días laborables necesarios:{' '}
+                    {Math.ceil(
+                      totalHorasActividadesCalculado / horasPorDiaValue
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* Objetivos específicos */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Objetivos Específicos
+              </label>
+
+              {/* Sección para agregar nuevo objetivo */}
+              <div className="mb-4 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <textarea
+                    value={nuevoObjetivo}
+                    onChange={(e) => {
+                      setNuevoObjetivo(e.target.value);
+                      handleTextAreaChange(e);
+                    }}
+                    rows={1}
+                    className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
+                    placeholder="Agregar nuevo objetivo específico..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAgregarObjetivo();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAgregarObjetivo}
+                    className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista de objetivos responsive */}
+              <div className="m-2 mb-2 gap-2">
+                <ul className="mb-2 space-y-4">
+                  {objetivosEspEditado.map((obj, idx) => (
+                    <li key={obj.id}>
+                      <div className="mb-2 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
+                        {/* Header objetivo */}
+                        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
+                          <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
+                            {/* Añade la numeración aquí */}
+                            {`OE ${idx + 1}. ${limpiarNumeracionObjetivo(obj.title)}`}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarObjetivo(idx)}
+                            className="h-7 w-7 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-8 sm:w-8 sm:self-start"
+                          >
+                            <span className="text-xs sm:text-sm">✕</span>
+                          </button>
+                        </div>
+                        {/* Agregar actividad */}
+                        <div className="mb-3 flex flex-col gap-2 sm:flex-row">
+                          <textarea
+                            value={nuevaActividadPorObjetivo[obj.id] || ''}
+                            onChange={(e) => {
+                              setNuevaActividadPorObjetivo((prev) => ({
+                                ...prev,
+                                [obj.id]: e.target.value,
+                              }));
+                              handleTextAreaChange(e);
+                            }}
+                            rows={1}
+                            className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
+                            placeholder="Nueva actividad para este objetivo..."
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAgregarActividad(obj.id);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAgregarActividad(obj.id)}
+                            className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
+                          >
+                            +
+                          </button>
+                        </div>
+                        {/* Lista de actividades */}
+                        <div className="space-y-2">
+                          {obj.activities.length > 0 && (
+                            <div className="mb-2 text-xs text-gray-300 sm:text-sm">
+                              Actividades ({obj.activities.length}):
+                            </div>
+                          )}
+                          {obj.activities.map((act, actIdx) => {
+                            const actividadKey = `${obj.id}_${actIdx}`;
+                            const responsableId =
+                              responsablesPorActividadLocal[actividadKey] || '';
+                            const responsableObj = usuarios?.find(
+                              (u) => u.id === responsableId
+                            );
+
+                            // Obtener horas de forma simple
+                            const horasActividad =
+                              horasPorActividadFinal[actividadKey] || 1;
+
+                            return (
+                              <div
+                                key={actIdx}
+                                className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
+                              >
+                                {/* Añade la numeración aquí */}
+                                <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                                  {`OE ${idx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                                    act
+                                  )}`}
+                                </span>
+                                {/* Responsable */}
+                                <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
+                                  {responsableObj ? responsableObj.name : ''}
+                                </span>
+                                {/* Input de horas SIMPLIFICADO */}
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={horasActividad}
+                                  onChange={(e) => {
+                                    const newValue = Number(e.target.value);
+                                    if (!isNaN(newValue) && newValue >= 1) {
+                                      handleHorasCambio(actividadKey, newValue);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    const value = Number(e.target.value);
+                                    if (value < 1 || isNaN(value)) {
+                                      handleHorasCambio(actividadKey, 1);
+                                    }
+                                  }}
+                                  className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
+                                  placeholder="Horas"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleEliminarActividad(obj.id, actIdx)
+                                  }
+                                  className="h-5 w-5 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-6 sm:w-6 sm:self-start"
+                                >
+                                  <span className="text-xs sm:text-sm">✕</span>
+                                </button>
+                              </div>
+                            );
+                          })}
+                          {obj.activities.length === 0 && (
+                            <div className="text-xs text-gray-400 italic sm:text-sm">
+                              No hay actividades agregadas para este objetivo
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
-            {/* Lista de objetivos responsive */}
-            <div className="m-2 mb-2 gap-2">
-              <ul className="mb-2 space-y-4">
-                {objetivosEspEditado.map((obj, idx) => (
-                  <li key={obj.id}>
-                    <div className="mb-2 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
-                      {/* Header objetivo */}
-                      <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
-                        <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
-                          {/* Añade la numeración aquí */}
-                          {`OE ${idx + 1}. ${limpiarNumeracionObjetivo(obj.title)}`}
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => handleEliminarObjetivo(idx)}
-                          className="h-7 w-7 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-8 sm:w-8 sm:self-start"
-                        >
-                          <span className="text-xs sm:text-sm">✕</span>
-                        </button>
-                      </div>
-                      {/* Agregar actividad */}
-                      <div className="mb-3 flex flex-col gap-2 sm:flex-row">
-                        <textarea
-                          value={nuevaActividadPorObjetivo[obj.id] || ''}
-                          onChange={(e) => {
-                            setNuevaActividadPorObjetivo((prev) => ({
-                              ...prev,
-                              [obj.id]: e.target.value,
-                            }));
-                            handleTextAreaChange(e);
-                          }}
-                          rows={1}
-                          className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
-                          placeholder="Nueva actividad para este objetivo..."
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleAgregarActividad(obj.id);
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleAgregarActividad(obj.id)}
-                          className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-green-700 sm:w-auto sm:px-4 sm:text-2xl"
-                        >
-                          +
-                        </button>
-                      </div>
-                      {/* Lista de actividades */}
-                      <div className="space-y-2">
-                        {obj.activities.length > 0 && (
-                          <div className="mb-2 text-xs text-gray-300 sm:text-sm">
-                            Actividades ({obj.activities.length}):
-                          </div>
-                        )}
-                        {obj.activities.map((act, actIdx) => {
-                          const actividadKey = `${obj.id}_${actIdx}`;
-                          const responsableId =
-                            responsablesPorActividadLocal[actividadKey] || '';
-                          const responsableObj = usuarios?.find(
-                            (u) => u.id === responsableId
-                          );
-
-                          // Obtener horas de forma simple
-                          const horasActividad =
-                            horasPorActividadFinal[actividadKey] || 1;
-
-                          return (
-                            <div
-                              key={actIdx}
-                              className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
-                            >
-                              {/* Añade la numeración aquí */}
-                              <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                {`OE ${idx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                                  act
-                                )}`}
-                              </span>
-                              {/* Responsable */}
-                              <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                {responsableObj ? responsableObj.name : ''}
-                              </span>
-                              {/* Input de horas SIMPLIFICADO */}
-                              <input
-                                type="number"
-                                min={1}
-                                value={horasActividad}
-                                onChange={(e) => {
-                                  const newValue = Number(e.target.value);
-                                  if (!isNaN(newValue) && newValue >= 1) {
-                                    handleHorasCambio(actividadKey, newValue);
-                                  }
-                                }}
-                                onBlur={(e) => {
-                                  const value = Number(e.target.value);
-                                  if (value < 1 || isNaN(value)) {
-                                    handleHorasCambio(actividadKey, 1);
-                                  }
-                                }}
-                                className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
-                                placeholder="Horas"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleEliminarActividad(obj.id, actIdx)
-                                }
-                                className="h-5 w-5 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-6 sm:w-6 sm:self-start"
-                              >
-                                <span className="text-xs sm:text-sm">✕</span>
-                              </button>
-                            </div>
-                          );
-                        })}
-                        {obj.activities.length === 0 && (
-                          <div className="text-xs text-gray-400 italic sm:text-sm">
-                            No hay actividades agregadas para este objetivo
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Selectores responsive */}
-          <div className="flex flex-col">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Categoría
-            </label>
-            <select
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              className="mt-1 rounded border bg-gray-400 p-2 text-black"
-              required
-            >
-              <option value="" className="text-gray-500">
-                -- Seleccione una Categoría --
-              </option>
-              {categorias.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm text-cyan-300 sm:text-base">
-              Tipo de Proyecto
-            </label>
-            <select
-              value={tipoProyecto}
-              onChange={(e) => setTipoProyecto(e.target.value)}
-              className="mt-1 rounded border bg-gray-400 p-2 text-black"
-              required
-            >
-              <option value="" className="text-gray-500">
-                -- Seleccione un tipo de proyecto --
-              </option>
-              {typeProjects.map((tp) => (
-                <option key={tp.value} value={tp.value}>
-                  {tp?.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Información de duración responsive */}
-          {fechaInicio && fechaFin && (
-            <div className="col-span-1 mb-4 lg:col-span-2">
-              <span className="block text-xs text-gray-300 sm:text-sm">
-                Duración: {formatearDuracion(duracionDias)} ({duracionDias} días
-                en total)
-              </span>
-              <span className="block text-xs text-gray-400">
-                Cronograma:{' '}
-                {tipoVisualizacion === 'meses'
-                  ? `${calcularMesesEntreFechas(fechaInicio, fechaFin).length} mes${calcularMesesEntreFechas(fechaInicio, fechaFin).length !== 1 ? 'es' : ''}`
-                  : `${duracionDias} día${duracionDias !== 1 ? 's' : ''}`}
-              </span>
-            </div>
-          )}
-
-          {/* Selector de visualización responsive */}
-          {fechaInicio && fechaFin && (
-            <div className="col-span-1 mb-4 lg:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-cyan-300 sm:text-base">
-                Visualización del Cronograma
+            {/* Selectores responsive */}
+            <div className="flex flex-col">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Categoría
               </label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                {duracionDias >= 28 && (
+              <select
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                className="mt-1 rounded border bg-gray-400 p-2 text-black"
+                required
+              >
+                <option value="" className="text-gray-500">
+                  -- Seleccione una Categoría --
+                </option>
+                {categorias.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm text-cyan-300 sm:text-base">
+                Tipo de Proyecto
+              </label>
+              <select
+                value={tipoProyecto}
+                onChange={(e) => setTipoProyecto(e.target.value)}
+                className="mt-1 rounded border bg-gray-400 p-2 text-black"
+                required
+              >
+                <option value="" className="text-gray-500">
+                  -- Seleccione un tipo de proyecto --
+                </option>
+                {typeProjects.map((tp) => (
+                  <option key={tp.value} value={tp.value}>
+                    {tp?.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Información de duración responsive */}
+            {fechaInicio && fechaFin && (
+              <div className="col-span-1 mb-4 lg:col-span-2">
+                <span className="block text-xs text-gray-300 sm:text-sm">
+                  Duración: {formatearDuracion(duracionDias)} ({duracionDias}{' '}
+                  días en total)
+                </span>
+                <span className="block text-xs text-gray-400">
+                  Cronograma:{' '}
+                  {tipoVisualizacion === 'meses'
+                    ? `${calcularMesesEntreFechas(fechaInicio, fechaFin).length} mes${calcularMesesEntreFechas(fechaInicio, fechaFin).length !== 1 ? 'es' : ''}`
+                    : `${duracionDias} día${duracionDias !== 1 ? 's' : ''}`}
+                </span>
+              </div>
+            )}
+
+            {/* Selector de visualización responsive */}
+            {fechaInicio && fechaFin && (
+              <div className="col-span-1 mb-4 lg:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-cyan-300 sm:text-base">
+                  Visualización del Cronograma
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                  {duracionDias >= 28 && (
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="meses"
+                        checked={tipoVisualizacion === 'meses'}
+                        onChange={(e) =>
+                          setTipoVisualizacion(
+                            e.target.value as 'meses' | 'dias' | 'horas'
+                          )
+                        }
+                        className="text-cyan-500"
+                      />
+                      <span className="text-sm sm:text-base">Por Meses</span>
+                    </label>
+                  )}
                   <label className="flex items-center gap-2">
                     <input
                       type="radio"
-                      value="meses"
-                      checked={tipoVisualizacion === 'meses'}
+                      value="dias"
+                      checked={tipoVisualizacion === 'dias'}
                       onChange={(e) =>
                         setTipoVisualizacion(
                           e.target.value as 'meses' | 'dias' | 'horas'
@@ -1361,203 +1566,212 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       }
                       className="text-cyan-500"
                     />
-                    <span className="text-sm sm:text-base">Por Meses</span>
+                    <span className="text-sm sm:text-base">Por Días</span>
                   </label>
-                )}
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value="dias"
-                    checked={tipoVisualizacion === 'dias'}
-                    onChange={(e) =>
-                      setTipoVisualizacion(
-                        e.target.value as 'meses' | 'dias' | 'horas'
-                      )
-                    }
-                    className="text-cyan-500"
-                  />
-                  <span className="text-sm sm:text-base">Por Días</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value="horas"
-                    checked={tipoVisualizacion === 'horas'}
-                    onChange={(e) =>
-                      setTipoVisualizacion(
-                        e.target.value as 'meses' | 'dias' | 'horas'
-                      )
-                    }
-                    className="text-cyan-500"
-                  />
-                  <span className="text-sm sm:text-base">Por Horas</span>
-                </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="horas"
+                      checked={tipoVisualizacion === 'horas'}
+                      onChange={(e) =>
+                        setTipoVisualizacion(
+                          e.target.value as 'meses' | 'dias' | 'horas'
+                        )
+                      }
+                      className="text-cyan-500"
+                    />
+                    <span className="text-sm sm:text-base">Por Horas</span>
+                  </label>
+                </div>
               </div>
+            )}
+          </form>
+
+          {/* Cronograma responsive */}
+          <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
+            Cronograma{' '}
+            {tipoVisualizacion === 'meses'
+              ? 'por Meses'
+              : tipoVisualizacion === 'dias'
+                ? 'por Días'
+                : ' por Horas'}
+          </h3>
+          {fechaInicio && fechaFin && duracionDias > 0 && (
+            <div className="mt-4 overflow-x-auto sm:mt-6">
+              {tipoVisualizacion === 'horas' ? (
+                <table className="w-full table-auto border-collapse text-sm text-black">
+                  <thead className="sticky top-0 z-10 bg-gray-300">
+                    <tr>
+                      <th
+                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                        style={{ minWidth: 180 }}
+                      >
+                        Actividad
+                      </th>
+                      <th className="border px-2 py-2 text-left break-words">
+                        Total de Horas
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objetivosEspEditado.map((obj, objIdx) =>
+                      obj.activities.map((act, actIdx) => {
+                        const actividadKey = `${obj.id}_${actIdx}`;
+                        const horasActividad =
+                          typeof horasPorActividadFinal[actividadKey] ===
+                            'number' && horasPorActividadFinal[actividadKey] > 0
+                            ? horasPorActividadFinal[actividadKey]
+                            : 1;
+                        return (
+                          <tr key={actividadKey}>
+                            <td
+                              className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                              style={{ minWidth: 250, maxWidth: 300 }}
+                            >
+                              {/* Añade la numeración aquí */}
+                              {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                                act
+                              )}`}
+                            </td>
+                            <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
+                              {horasActividad}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full table-auto border-collapse text-sm text-black">
+                  <thead className="sticky top-0 z-10 bg-gray-300">
+                    <tr>
+                      <th
+                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
+                        style={{ minWidth: 180 }}
+                      >
+                        Actividad
+                      </th>
+                      {/* Cambia aquí: */}
+                      {mesesRender.map((periodo, i) => (
+                        <th
+                          key={i}
+                          className="border px-2 py-2 text-left break-words whitespace-normal"
+                          style={{
+                            minWidth:
+                              tipoVisualizacion === 'dias' ? '80px' : '120px',
+                          }}
+                        >
+                          {periodo}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {objetivosEspEditado.map((obj, objIdx) =>
+                      obj.activities.map((act, actIdx) => {
+                        const actividadKey = `${obj.id}_${actIdx}`;
+                        return (
+                          <tr key={actividadKey}>
+                            <td
+                              className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
+                              style={{ minWidth: 180 }}
+                            >
+                              {/* Añade la numeración aquí */}
+                              {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
+                                act
+                              )}`}
+                            </td>
+                            {/* Cambia aquí: */}
+                            {mesesRender.map((_, i) => (
+                              <td
+                                key={i}
+                                className={`border px-2 py-2 text-center ${
+                                  tipoVisualizacion === 'dias' &&
+                                  diasPorActividad[actividadKey]?.includes(i)
+                                    ? 'bg-cyan-300 font-bold text-white'
+                                    : cronogramaState[act]?.includes(i)
+                                      ? 'bg-cyan-300 font-bold text-white'
+                                      : 'bg-white'
+                                }`}
+                              >
+                                {tipoVisualizacion === 'dias' &&
+                                diasPorActividad[actividadKey]?.includes(i)
+                                  ? '✔️'
+                                  : ''}
+                                {tipoVisualizacion !== 'dias' &&
+                                cronogramaState[act]?.includes(i)
+                                  ? '✔️'
+                                  : ''}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
-        </form>
 
-        {/* Cronograma responsive */}
-        <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-          Cronograma{' '}
-          {tipoVisualizacion === 'meses'
-            ? 'por Meses'
-            : tipoVisualizacion === 'dias'
-              ? 'por Días'
-              : ' por Horas'}
-        </h3>
-        {fechaInicio && fechaFin && duracionDias > 0 && (
-          <div className="mt-4 overflow-x-auto sm:mt-6">
-            {tipoVisualizacion === 'horas' ? (
-              <table className="w-full table-auto border-collapse text-sm text-black">
-                <thead className="sticky top-0 z-10 bg-gray-300">
-                  <tr>
-                    <th
-                      className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                      style={{ minWidth: 180 }}
-                    >
-                      Actividad
-                    </th>
-                    <th className="border px-2 py-2 text-left break-words">
-                      Total de Horas
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {objetivosEspEditado.map((obj, objIdx) =>
-                    obj.activities.map((act, actIdx) => {
-                      const actividadKey = `${obj.id}_${actIdx}`;
-                      const horasActividad =
-                        typeof horasPorActividadFinal[actividadKey] ===
-                          'number' && horasPorActividadFinal[actividadKey] > 0
-                          ? horasPorActividadFinal[actividadKey]
-                          : 1;
-                      return (
-                        <tr key={actividadKey}>
-                          <td
-                            className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                            style={{ minWidth: 250, maxWidth: 300 }}
-                          >
-                            {/* Añade la numeración aquí */}
-                            {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                              act
-                            )}`}
-                          </td>
-                          <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
-                            {horasActividad}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full table-auto border-collapse text-sm text-black">
-                <thead className="sticky top-0 z-10 bg-gray-300">
-                  <tr>
-                    <th
-                      className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                      style={{ minWidth: 180 }}
-                    >
-                      Actividad
-                    </th>
-                    {/* Cambia aquí: */}
-                    {mesesRender.map((periodo, i) => (
-                      <th
-                        key={i}
-                        className="border px-2 py-2 text-left break-words whitespace-normal"
-                        style={{
-                          minWidth:
-                            tipoVisualizacion === 'dias' ? '80px' : '120px',
-                        }}
-                      >
-                        {periodo}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {objetivosEspEditado.map((obj, objIdx) =>
-                    obj.activities.map((act, actIdx) => {
-                      const actividadKey = `${obj.id}_${actIdx}`;
-                      return (
-                        <tr key={actividadKey}>
-                          <td
-                            className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                            style={{ minWidth: 180 }}
-                          >
-                            {/* Añade la numeración aquí */}
-                            {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                              act
-                            )}`}
-                          </td>
-                          {/* Cambia aquí: */}
-                          {mesesRender.map((_, i) => (
-                            <td
-                              key={i}
-                              className={`border px-2 py-2 text-center ${
-                                tipoVisualizacion === 'dias' &&
-                                diasPorActividad[actividadKey]?.includes(i)
-                                  ? 'bg-cyan-300 font-bold text-white'
-                                  : cronogramaState[act]?.includes(i)
-                                    ? 'bg-cyan-300 font-bold text-white'
-                                    : 'bg-white'
-                              }`}
-                            >
-                              {tipoVisualizacion === 'dias' &&
-                              diasPorActividad[actividadKey]?.includes(i)
-                                ? '✔️'
-                                : ''}
-                              {tipoVisualizacion !== 'dias' &&
-                              cronogramaState[act]?.includes(i)
-                                ? '✔️'
-                                : ''}
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+          {/* Botones responsive */}
+          <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
+            {/* Nuevo botón para volver a Objetivos Específicos */}
+            {onAnterior && (
+              <button
+                type="button"
+                onClick={onAnterior}
+                className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
+              >
+                {/* Ícono de flecha izquierda */}
+                <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
+                Objetivos Específicos
+              </button>
             )}
-          </div>
-        )}
-
-        {/* Botones responsive */}
-        <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
-          {/* Nuevo botón para volver a Objetivos Específicos */}
-          {onAnterior && (
+            <button
+              onClick={handleGuardarProyecto}
+              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
+              disabled={isUpdating}
+            >
+              {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
+            </button>
             <button
               type="button"
-              onClick={onAnterior}
-              className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
+              onClick={onClose}
+              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
+              disabled={isUpdating}
             >
-              {/* Ícono de flecha izquierda */}
-              <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
-              Objetivos Específicos
+              Cancelar
             </button>
-          )}
-          <button
-            onClick={handleGuardarProyecto}
-            className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
-            disabled={isUpdating}
-          >
-            {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
-            disabled={isUpdating}
-          >
-            Cancelar
-          </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
+
+const CustomDateInput = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>(({ value, onClick, placeholder, className }, ref) => (
+  // Cambia aquí: fuerza el div y el input a w-full
+  <div className="relative w-full">
+    <input
+      type="text"
+      ref={ref}
+      value={value && value !== '' ? value : ''}
+      onClick={onClick}
+      placeholder={placeholder}
+      className={className ?? 'w-full rounded bg-gray-400 p-2 pr-10 text-black'}
+      readOnly
+      style={{ cursor: 'pointer', width: '100%' }}
+    />
+    <FaRegCalendarAlt
+      className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-cyan-700"
+      size={16}
+    />
+  </div>
+));
 
 export default ModalResumen;
