@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useUser } from '@clerk/nextjs'; // Añade este import
 import DatePicker from 'react-datepicker';
 import { FaArrowLeft, FaRegCalendarAlt, FaRegClock } from 'react-icons/fa';
 
@@ -106,6 +107,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setJustificacion,
   setObjetivoGen,
 }) => {
+  const { user } = useUser(); // Obtén el usuario logueado
+
   // Solo mantener un estado local para horas por actividad
   const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<
     Record<string, number>
@@ -138,7 +141,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // >({});
 
   // Estado para responsables
-  const [responsablesPorActividadLocal, _setResponsablesPorActividadLocal] =
+  const [responsablesPorActividadLocal, setResponsablesPorActividadLocal] =
     useState<Record<string, string>>(responsablesPorActividadProp);
 
   // Estado para tipo de visualización
@@ -778,6 +781,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
       return nuevos;
     });
+    // Asigna responsable logueado si no existe
+    const actIdx =
+      objetivosEspEditado.find((obj) => obj.id === objetivoId)?.activities
+        .length ?? 0;
+    const actividadKey = `${objetivoId}_${actIdx}`;
+    setResponsablesPorActividadLocal((prev) => ({
+      ...prev,
+      [actividadKey]: user?.id ?? '',
+    }));
     setNuevaActividadPorObjetivo((prev) => ({ ...prev, [objetivoId]: '' }));
   };
 
@@ -1611,7 +1623,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             const actIdx = _idx; // Use _idx to avoid eslint unused var warning
                             const actividadKey = `${obj.id}_${actIdx}`;
                             const responsableId =
-                              responsablesPorActividadLocal[actividadKey] || '';
+                              responsablesPorActividadProp[actividadKey] ||
+                              responsablesPorActividadLocal[actividadKey] ||
+                              '';
                             const responsableObj = usuarios?.find(
                               (u) => u.id === responsableId
                             );
@@ -1632,7 +1646,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 </span>
                                 {/* Responsable */}
                                 <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                  {responsableObj ? responsableObj.name : ''}
+                                  {responsableObj
+                                    ? responsableObj.name
+                                    : (user?.fullName ??
+                                      user?.firstName ??
+                                      'Usuario')}
                                 </span>
                                 {/* Input de horas SIMPLIFICADO */}
                                 <input

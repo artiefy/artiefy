@@ -286,6 +286,12 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         }));
       }
 
+      // Asignar responsable automáticamente al usuario logueado
+      setResponsablesPorActividad((prev) => ({
+        ...prev,
+        [actividadKey]: user?.id ?? '',
+      }));
+
       setNewObjectiveActivity((prev) => ({ ...prev, [objectiveId]: '' }));
     }
   };
@@ -367,9 +373,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
             if (tarea && typeof tarea.estimated_time_hours === 'number') {
               nuevasHoras[actividadKey] = tarea.estimated_time_hours;
             }
-            if (user?.id) {
-              nuevosResponsables[actividadKey] = user.id;
-            }
+            // Asignar responsable automáticamente al usuario logueado
+            nuevosResponsables[actividadKey] = user?.id ?? '';
           });
         });
       }
