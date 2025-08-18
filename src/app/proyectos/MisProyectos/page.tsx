@@ -1425,7 +1425,7 @@ export default function ProyectosPage() {
             cronograma={undefined}
             categoriaId={undefined}
             numMeses={undefined}
-            setObjetivosEsp={() => undefined}
+            setObjetivosEsp={setObjetivosEspTexto}
             setActividades={() => undefined}
             responsablesPorActividad={responsablesPorActividad}
             horasPorActividad={horasPorActividad}
@@ -1435,7 +1435,10 @@ export default function ProyectosPage() {
             tiempoEstimadoProyecto={tiempoEstimadoProyecto}
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
             tipoProyecto={tipoProyectoResumen}
-            fechaInicio={fechaInicioProyecto} // <-- Pasa la fecha de inicio aquí
+            fechaInicio={fechaInicioProyecto}
+            setPlanteamiento={setPlanteamientoTexto} // <-- Añade este setter
+            setJustificacion={setJustificacionTexto} // <-- Añade este setter
+            setObjetivoGen={setObjetivoGenTexto} // <-- Añade este setter
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}

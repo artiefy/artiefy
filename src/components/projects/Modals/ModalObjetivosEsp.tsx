@@ -104,7 +104,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         [actividadKey]: value,
       };
       console.log('Nuevas horas a establecer:', nuevasHoras);
-      setHorasPorActividad(nuevasHoras);
+      setHorasPorActividad(nuevasHoras); // <-- Propaga cambio global
     } else {
       setHorasPorActividadState((prev) => {
         const nuevasHoras = {
@@ -449,11 +449,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                   const val = e.target.value;
                   setHorasPorDiaStr(val);
                   if (val === '') {
-                    setHorasPorDiaProyecto(6);
+                    setHorasPorDiaProyecto(6); // <-- Propaga cambio global
                   } else {
                     const num = Number(val);
                     if (!isNaN(num) && num >= 1 && num <= 24) {
-                      setHorasPorDiaProyecto(num);
+                      setHorasPorDiaProyecto(num); // <-- Propaga cambio global
                     }
                   }
                 }}

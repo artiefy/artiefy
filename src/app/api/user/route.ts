@@ -19,10 +19,8 @@ export async function GET(req: Request) {
     .limit(1);
   const user = result[0];
   if (!user) {
-    return NextResponse.json(
-      { error: 'Usuario no encontrado' },
-      { status: 404 }
-    );
+    // Devuelve un nombre genérico si no existe el usuario
+    return NextResponse.json({ name: 'No disponible' });
   }
 
   return NextResponse.json({ name: user.name });

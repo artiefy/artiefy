@@ -111,9 +111,6 @@ export default function ProjectDetails() {
     }[]
   >([]);
 
-  // Nuevo estado para userId - ahora usando Clerk
-  const [userId, setUserId] = useState<string>('');
-
   // Estado para el tipo de visualización del cronograma
   const [cronogramaTipo, setCronogramaTipo] = useState<
     'horas' | 'dias' | 'meses'
@@ -159,17 +156,9 @@ export default function ProjectDetails() {
     }
   };
 
-  // Obtener userId de Clerk cuando esté disponible
-  useEffect(() => {
-    if (isLoaded && user) {
-      setUserId(user.id);
-      console.log('Usuario logueado:', user.id); // Debug
-    }
-  }, [isLoaded, user]);
-
   useEffect(() => {
     console.log('useEffect DetalleProyectoPage ejecutado');
-    if (!projectId || !isLoaded) return; // Esperar a que Clerk cargue
+    if (!projectId || !isLoaded || !user?.id) return; // Esperar a que Clerk cargue y user esté disponible
 
     (async () => {
       setLoading(true);
@@ -178,7 +167,7 @@ export default function ProjectDetails() {
       setLoading(false);
 
       console.log('Proyecto cargado:', data); // Debug
-      console.log('Usuario logueado ID:', userId); // Debug
+      console.log('Usuario logueado ID:', user?.id); // Debug
       console.log('Responsable del proyecto ID:', data?.userId); // Debug
 
       // Obtener el nombre del responsable si el proyecto existe
@@ -299,12 +288,19 @@ export default function ProjectDetails() {
 
                   const integranteFinal = {
                     id, // <-- always string | number
-                    nombre: (userInfo.name ?? obj?.nombre ?? obj?.name ?? '') as string,
+                    nombre: (userInfo.name ??
+                      obj?.nombre ??
+                      obj?.name ??
+                      '') as string,
                     rol: (obj?.rol ?? obj?.role ?? '') as string,
-                    especialidad: (userInfo.especialidad ?? obj?.especialidad ?? '') as string,
+                    especialidad: (userInfo.especialidad ??
+                      obj?.especialidad ??
+                      '') as string,
                     email: (userInfo.email ?? obj?.email ?? '') as string,
                     github: (userInfo.github ?? obj?.github ?? '') as string,
-                    linkedin: (userInfo.linkedin ?? obj?.linkedin ?? '') as string,
+                    linkedin: (userInfo.linkedin ??
+                      obj?.linkedin ??
+                      '') as string,
                   };
                   // Log del resultado final de cada integrante
                   console.log('Integrante final:', integranteFinal);
@@ -345,7 +341,7 @@ export default function ProjectDetails() {
       };
       fetchSolicitudesPendientes();
     })();
-  }, [projectId, isLoaded, userId]); // Agregar isLoaded y userId como dependencias
+  }, [projectId, isLoaded, user?.id]); // Cambia dependencia a user?.id
 
   // Recargar el proyecto desde el backend
   const reloadProject = async () => {
@@ -572,7 +568,10 @@ export default function ProjectDetails() {
       project.objetivos_especificos.forEach((obj) => {
         if (Array.isArray(obj.actividades)) {
           obj.actividades.forEach(
-            (act: { meses?: number[]; id?: number | string }, actIdx: number) => {
+            (
+              act: { meses?: number[]; id?: number | string },
+              actIdx: number
+            ) => {
               if (act && Array.isArray(act.meses)) {
                 map[String(act.id ?? actIdx)] = act.meses.length;
               }
@@ -775,9 +774,9 @@ export default function ProjectDetails() {
   // Función para verificar si el usuario puede entregar una actividad específica
   const puedeEntregarActividad = React.useCallback(
     (actividad: unknown) => {
-      if (!userId || !project || !isLoaded) {
+      if (!user?.id || !project || !isLoaded) {
         console.log('No puede entregar - falta información:', {
-          userId,
+          user: !!user,
           project: !!project,
           isLoaded,
         });
@@ -794,21 +793,21 @@ export default function ProjectDetails() {
           : undefined;
 
       console.log('Verificando permisos entrega:', {
-        userId,
+        userId: user?.id,
         projectUserId: project.userId,
         activityResponsibleId: responsibleUserId,
-        esResponsableProyecto: project.userId === userId,
-        esResponsableActividad: responsibleUserId === userId,
+        esResponsableProyecto: project.userId === user?.id,
+        esResponsableActividad: responsibleUserId === user?.id,
       });
 
       // El responsable del proyecto puede entregar cualquier actividad
-      if (project.userId === userId) {
+      if (project.userId === user?.id) {
         console.log('Puede entregar: es responsable del proyecto');
         return true;
       }
 
       // El responsable de la actividad específica puede entregarla
-      if (responsibleUserId === userId) {
+      if (responsibleUserId === user?.id) {
         console.log('Puede entregar: es responsable de la actividad');
         return true;
       }
@@ -816,50 +815,50 @@ export default function ProjectDetails() {
       console.log('No puede entregar: no es responsable');
       return false;
     },
-    [userId, project, isLoaded]
+    [user, project, isLoaded]
   );
 
   // Función para verificar si el usuario puede aprobar entregas
   const puedeAprobarEntregas = React.useCallback(() => {
-    if (!userId || !project || !isLoaded) {
+    if (!user?.id || !project || !isLoaded) {
       console.log('No puede aprobar - falta información:', {
-        userId,
+        user: !!user,
         project: !!project,
         isLoaded,
       });
       return false;
     }
 
-    const puedeAprobar = project.userId === userId;
+    const puedeAprobar = project.userId === user?.id;
     console.log('Verificando permisos aprobación:', {
-      userId,
+      userId: user?.id,
       projectUserId: project.userId,
       puedeAprobar,
     });
 
     return puedeAprobar;
-  }, [userId, project, isLoaded]);
+  }, [user, project, isLoaded]);
 
   // Función para verificar si el usuario puede editar el proyecto
   const puedeEditarProyecto = React.useCallback(() => {
-    if (!userId || !project || !isLoaded) {
+    if (!user?.id || !project || !isLoaded) {
       console.log('No puede editar - falta información:', {
-        userId,
+        user: !!user,
         project: !!project,
         isLoaded,
       });
       return false;
     }
 
-    const puedeEditar = project.userId === userId;
+    const puedeEditar = project.userId === user?.id;
     console.log('Verificando permisos edición:', {
-      userId,
+      userId: user?.id,
       projectUserId: project.userId,
       puedeEditar,
     });
 
     return puedeEditar;
-  }, [userId, project, isLoaded]);
+  }, [user, project, isLoaded]);
 
   // Función para obtener el estado de una actividad basado en las entregas - MEJORADO
   const getEstadoActividad = React.useCallback(
@@ -877,10 +876,15 @@ export default function ProjectDetails() {
           : undefined;
       console.log(`📦 Entrega encontrada:`, entrega);
       console.log(`📦 Tipo de entrega:`, typeof entrega);
-      console.log(`📦 Keys de entrega:`, entrega ? Object.keys(entrega) : 'N/A');
+      console.log(
+        `📦 Keys de entrega:`,
+        entrega ? Object.keys(entrega) : 'N/A'
+      );
 
       if (!entrega) {
-        console.log(`ℹ️ No hay entrega registrada para actividad ${actividadId}`);
+        console.log(
+          `ℹ️ No hay entrega registrada para actividad ${actividadId}`
+        );
         return { estado: 'pendiente', entregado: false, aprobado: false };
       }
 
@@ -974,7 +978,7 @@ export default function ProjectDetails() {
       console.log('📋 Proyecto completo:', project);
       console.log('📋 Actividades del proyecto:', project.actividades);
       console.log('🆔 Project ID:', projectId);
-      console.log('👤 User ID:', userId);
+      console.log('👤 User ID:', user?.id);
 
       try {
         const entregas: Record<number, ProjectActivityDelivery> = {};
@@ -1009,7 +1013,11 @@ export default function ProjectDetails() {
                 console.log(`📦 Keys del objeto:`, Object.keys(entrega ?? {}));
 
                 // MEJORADO: Validación más exhaustiva
-                if (entrega && typeof entrega === 'object' && entrega !== null) {
+                if (
+                  entrega &&
+                  typeof entrega === 'object' &&
+                  entrega !== null
+                ) {
                   // Use type assertion for ProjectActivityDelivery
                   const entregaObj = entrega as ProjectActivityDelivery;
                   // Log de cada campo importante
@@ -1035,7 +1043,8 @@ export default function ProjectDetails() {
                     ('documentKey' in entregaObj && entregaObj.documentKey) ??
                       ('imageKey' in entregaObj && entregaObj.imageKey) ??
                       ('videoKey' in entregaObj && entregaObj.videoKey) ??
-                      ('compressedFileKey' in entregaObj && entregaObj.compressedFileKey)
+                      ('compressedFileKey' in entregaObj &&
+                        entregaObj.compressedFileKey)
                   );
                   const tieneComentario = Boolean(
                     'comentario' in entregaObj &&
@@ -1087,16 +1096,34 @@ export default function ProjectDetails() {
                         entregaObj.aprobado === '1'
                           ? true
                           : entregaObj.aprobado === false ||
-                            entregaObj.aprobado === 0 ||
-                            entregaObj.aprobado === '0'
-                          ? false
+                              entregaObj.aprobado === 0 ||
+                              entregaObj.aprobado === '0'
+                            ? false
+                            : null,
+                      documentKey:
+                        'documentKey' in entregaObj
+                          ? (entregaObj.documentKey ?? null)
                           : null,
-                      documentKey: 'documentKey' in entregaObj ? (entregaObj.documentKey ?? null) : null,
-                      imageKey: 'imageKey' in entregaObj ? (entregaObj.imageKey ?? null) : null,
-                      videoKey: 'videoKey' in entregaObj ? (entregaObj.videoKey ?? null) : null,
-                      compressedFileKey: 'compressedFileKey' in entregaObj ? (entregaObj.compressedFileKey ?? null) : null,
-                      comentario: 'comentario' in entregaObj ? (entregaObj.comentario ?? '') : '',
-                      feedback: 'feedback' in entregaObj ? (entregaObj.feedback ?? null) : null,
+                      imageKey:
+                        'imageKey' in entregaObj
+                          ? (entregaObj.imageKey ?? null)
+                          : null,
+                      videoKey:
+                        'videoKey' in entregaObj
+                          ? (entregaObj.videoKey ?? null)
+                          : null,
+                      compressedFileKey:
+                        'compressedFileKey' in entregaObj
+                          ? (entregaObj.compressedFileKey ?? null)
+                          : null,
+                      comentario:
+                        'comentario' in entregaObj
+                          ? (entregaObj.comentario ?? '')
+                          : '',
+                      feedback:
+                        'feedback' in entregaObj
+                          ? (entregaObj.feedback ?? null)
+                          : null,
                     };
 
                     entregas[actividad.id] = entregaNormalizada;
@@ -1111,7 +1138,10 @@ export default function ProjectDetails() {
                       estado: 'DATOS_INSUFICIENTES',
                       datos: entregaObj,
                     });
-                    console.log(`❌ Entrega con datos insuficientes:`, entregaObj);
+                    console.log(
+                      `❌ Entrega con datos insuficientes:`,
+                      entregaObj
+                    );
                   }
                 } else {
                   resultadosCarga.push({
@@ -1181,7 +1211,7 @@ export default function ProjectDetails() {
     };
 
     fetchEntregas();
-  }, [project?.actividades, projectId, isLoaded, userId, project]); // Add 'project' to exhaustive-deps
+  }, [project?.actividades, projectId, isLoaded, user?.id, project]); // Add 'project' to exhaustive-deps
 
   // Función de depuración para verificar estado actual
   const debugEstadoEntregas = React.useCallback(() => {
@@ -1231,7 +1261,7 @@ export default function ProjectDetails() {
       actividadSeleccionada,
       actividadSeleccionadaId: actividadSeleccionada?.id,
       actividadSeleccionadaDescripcion: actividadSeleccionada?.descripcion,
-      userId,
+      userId: user?.id,
       isLoaded,
       projectId,
     });
@@ -1291,8 +1321,11 @@ export default function ProjectDetails() {
       }
     }
 
-    if (!userId || !isLoaded) {
-      console.error('❌ Error: Usuario no cargado', { userId, isLoaded });
+    if (!user?.id || !isLoaded) {
+      console.error('❌ Error: Usuario no cargado', {
+        user: user?.id,
+        isLoaded,
+      });
       alert('Error: Usuario no autenticado');
       return;
     }
@@ -1326,7 +1359,7 @@ export default function ProjectDetails() {
     console.log('✅ Validaciones pasadas, iniciando proceso de entrega...');
     console.log('📋 Datos finales para entrega:', {
       actividadId: actividadSeleccionada.id,
-      userId,
+      userId: user?.id,
       projectId,
     });
 
@@ -1470,7 +1503,7 @@ export default function ProjectDetails() {
       // CORREGIDO: Resetear estado de aprobación al editar/reenviar entrega
       const payload = {
         activityId: actividadSeleccionada.id,
-        userId: userId,
+        userId: user?.id,
         documentKey,
         documentName,
         imageKey,
@@ -1511,7 +1544,9 @@ export default function ProjectDetails() {
       setEntregasActividades(
         (prev: Record<number, ProjectActivityDelivery>) => ({
           ...prev,
-          [typeof actividadSeleccionada.id === 'number' ? actividadSeleccionada.id : 0]: {
+          [typeof actividadSeleccionada.id === 'number'
+            ? actividadSeleccionada.id
+            : 0]: {
             ...entregaActualizada,
             aprobado: null,
             feedback: null,
@@ -1691,7 +1726,7 @@ export default function ProjectDetails() {
         const res = await fetch(
           `/api/projects/${projectId}/activities/${actividadId}/deliveries/download?key=${encodeURIComponent(
             fileKey
-          )}&type=${fileType}&userId=${encodeURIComponent(userId)}`
+          )}&type=${fileType}&userId=${encodeURIComponent(user?.id ?? '')}`
         );
 
         if (res.ok) {
@@ -2120,7 +2155,7 @@ export default function ProjectDetails() {
                         Comentario al publicar:
                       </div>
                       <div className="text-sm break-words whitespace-pre-line text-blue-100">
-                                               {project.publicComment}
+                        {project.publicComment}
                       </div>
                     </div>
                   )}
@@ -2284,13 +2319,17 @@ export default function ProjectDetails() {
                     // Si no es array, intentar convertirlo o manejarlo
                     let objetivos: ObjetivoEspecifico[] = [];
                     if (Array.isArray(project.objetivos_especificos)) {
-                      objetivos = project.objetivos_especificos as ObjetivoEspecifico[];
+                      objetivos =
+                        project.objetivos_especificos as ObjetivoEspecifico[];
                     } else if (
                       typeof project.objetivos_especificos === 'object' &&
                       project.objetivos_especificos !== null
                     ) {
                       objetivos = Object.values(
-                        project.objetivos_especificos as Record<string, ObjetivoEspecifico>
+                        project.objetivos_especificos as Record<
+                          string,
+                          ObjetivoEspecifico
+                        >
                       );
                     }
 
@@ -2321,7 +2360,8 @@ export default function ProjectDetails() {
                         titulo = obj;
                       } else if (obj && typeof obj === 'object') {
                         titulo =
-                          (('description' in obj && typeof obj.description === 'string'
+                          (('description' in obj &&
+                          typeof obj.description === 'string'
                             ? obj.description
                             : undefined) ??
                           ('title' in obj && typeof obj.title === 'string'
@@ -2348,7 +2388,6 @@ export default function ProjectDetails() {
                         obj &&
                         typeof obj === 'object' &&
                         Array.isArray(obj.actividades)
-
                       ) {
                         actividades = obj.actividades as Actividad[];
                       }
@@ -2407,15 +2446,21 @@ export default function ProjectDetails() {
                                     const actObj: Actividad =
                                       act && typeof act === 'object'
                                         ? act
-                                        : { id: undefined, descripcion: undefined };
+                                        : {
+                                            id: undefined,
+                                            descripcion: undefined,
+                                          };
 
-                                    const actividadCompleta = project.actividades?.find(
-                                      (projectAct) =>
-                                        projectAct.id === actObj.id ||
-                                        projectAct.descripcion === actObj.descripcion
-                                    );
+                                    const actividadCompleta =
+                                      project.actividades?.find(
+                                        (projectAct) =>
+                                          projectAct.id === actObj.id ||
+                                          projectAct.descripcion ===
+                                            actObj.descripcion
+                                      );
 
-                                    const actividadId = actividadCompleta?.id ?? actObj.id;
+                                    const actividadId =
+                                      actividadCompleta?.id ?? actObj.id;
 
                                     if (!actividadId) {
                                       console.warn(
@@ -2440,7 +2485,10 @@ export default function ProjectDetails() {
                                     }
 
                                     // Debug: mostrar el id que se va a usar
-                                    console.log('ID de actividad a usar:', actividadId);
+                                    console.log(
+                                      'ID de actividad a usar:',
+                                      actividadId
+                                    );
 
                                     // Obtener info del usuario si hay id
                                     let userInfo: {
@@ -2458,20 +2506,32 @@ export default function ProjectDetails() {
                                         if (userRes.ok) {
                                           userInfo = await userRes.json();
                                           // Debug: mostrar la info recibida
-                                          console.log('Respuesta de /api/user:', userInfo);
+                                          console.log(
+                                            'Respuesta de /api/user:',
+                                            userInfo
+                                          );
                                         } else {
-                                          console.log('No se encontró usuario para id:', actividadId);
+                                          console.log(
+                                            'No se encontró usuario para id:',
+                                            actividadId
+                                          );
                                         }
                                       } catch (e) {
-                                        console.log('Error al buscar usuario:', actividadId, e);
+                                        console.log(
+                                          'Error al buscar usuario:',
+                                          actividadId,
+                                          e
+                                        );
                                       }
                                     }
 
-                                    const responsable = getResponsableNombrePorId(
-                                      actividadId,
-                                      actObj.descripcion
-                                    );
-                                    const estadoActividad = getEstadoActividad(actividadId);
+                                    const responsable =
+                                      getResponsableNombrePorId(
+                                        actividadId,
+                                        actObj.descripcion
+                                      );
+                                    const estadoActividad =
+                                      getEstadoActividad(actividadId);
 
                                     return (
                                       <TableRow
@@ -2480,7 +2540,8 @@ export default function ProjectDetails() {
                                       >
                                         <TableCell className="max-w-[200px] text-xs text-gray-300 md:text-sm">
                                           <div className="overflow-wrap-anywhere break-words hyphens-auto">
-                                            {act.descripcion ?? `Actividad ${actIdx + 1}`}
+                                            {act.descripcion ??
+                                              `Actividad ${actIdx + 1}`}
                                           </div>
                                         </TableCell>
                                         <TableCell className="max-w-[100px]">
@@ -2543,12 +2604,15 @@ export default function ProjectDetails() {
                                         <TableCell className="max-w-[150px]">
                                           <ArchivosEntrega
                                             actividadId={actividadId}
-                                            entrega={entregasActividades[actividadId]}
+                                            entrega={
+                                              entregasActividades[actividadId]
+                                            }
                                           />
                                         </TableCell>
                                         <TableCell className="max-w-[120px]">
                                           {(() => {
-                                            const entrega = entregasActividades[actividadId];
+                                            const entrega =
+                                              entregasActividades[actividadId];
                                             if (!entrega?.feedback) {
                                               return (
                                                 <span className="truncate text-xs text-gray-500 italic">
@@ -2557,18 +2621,30 @@ export default function ProjectDetails() {
                                               );
                                             }
                                             const feedbackColor =
-                                              estadoActividad.estado === 'completada'
+                                              estadoActividad.estado ===
+                                              'completada'
                                                 ? 'text-green-400'
-                                                : estadoActividad.estado === 'rechazada'
+                                                : estadoActividad.estado ===
+                                                    'rechazada'
                                                   ? 'text-red-400'
                                                   : 'text-blue-400';
                                             return (
                                               <div
                                                 className="max-w-[120px]"
-                                                title={typeof entrega.feedback === 'string' ? entrega.feedback : ''}
+                                                title={
+                                                  typeof entrega.feedback ===
+                                                  'string'
+                                                    ? entrega.feedback
+                                                    : ''
+                                                }
                                               >
-                                                <p className={`text-xs ${feedbackColor} truncate break-words`}>
-                                                  {typeof entrega.feedback === 'string' ? entrega.feedback : ''}
+                                                <p
+                                                  className={`text-xs ${feedbackColor} truncate break-words`}
+                                                >
+                                                  {typeof entrega.feedback ===
+                                                  'string'
+                                                    ? entrega.feedback
+                                                    : ''}
                                                 </p>
                                               </div>
                                             );
@@ -2576,7 +2652,8 @@ export default function ProjectDetails() {
                                         </TableCell>
                                         <TableCell className="max-w-[180px]">
                                           {(() => {
-                                            const entrega = entregasActividades[actividadId];
+                                            const entrega =
+                                              entregasActividades[actividadId];
                                             const actividadParaPermisos =
                                               actividadCompleta ?? act;
                                             const puedeEntregar =
@@ -2633,58 +2710,66 @@ export default function ProjectDetails() {
                                                       'completada' &&
                                                     estadoActividad.estado !==
                                                       'rechazada' && (
-                                                    <div className="flex flex-col gap-1 sm:flex-row">
-                                                      <Button
-                                                        size="sm"
-                                                        className="truncate bg-green-600 text-xs hover:bg-green-700"
-                                                        onClick={() =>
-                                                          handleAprobarEntrega(
-                                                            actividadId,
-                                                            typeof entrega.userId === 'string'
-                                                              ? entrega.userId
-                                                              : typeof entrega.userId === 'number'
-                                                                ? String(entrega.userId)
-                                                                : '',
-                                                            true,
-                                                            'Entrega aprobada'
-                                                          )
-                                                        }
-                                                      >
-                                                        <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                        <span className="truncate">
-                                                          Aprobar
-                                                        </span>
-                                                      </Button>
-                                                      <Button
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        className="truncate text-xs"
-                                                        onClick={() => {
-                                                          const feedback =
-                                                            prompt(
-                                                              'Motivo del rechazo:'
-                                                            );
-                                                          if (feedback) {
+                                                      <div className="flex flex-col gap-1 sm:flex-row">
+                                                        <Button
+                                                          size="sm"
+                                                          className="truncate bg-green-600 text-xs hover:bg-green-700"
+                                                          onClick={() =>
                                                             handleAprobarEntrega(
                                                               actividadId,
-                                                              typeof entrega.userId === 'string'
+                                                              typeof entrega.userId ===
+                                                                'string'
                                                                 ? entrega.userId
-                                                                : typeof entrega.userId === 'number'
-                                                                  ? String(entrega.userId)
+                                                                : typeof entrega.userId ===
+                                                                    'number'
+                                                                  ? String(
+                                                                      entrega.userId
+                                                                    )
                                                                   : '',
-                                                              false,
-                                                              feedback
-                                                            );
+                                                              true,
+                                                              'Entrega aprobada'
+                                                            )
                                                           }
-                                                        }}
-                                                      >
-                                                        <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
-                                                        <span className="truncate">
-                                                          Rechazar
-                                                        </span>
-                                                      </Button>
-                                                    </div>
-                                                  )}
+                                                        >
+                                                          <CheckCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                          <span className="truncate">
+                                                            Aprobar
+                                                          </span>
+                                                        </Button>
+                                                        <Button
+                                                          size="sm"
+                                                          variant="destructive"
+                                                          className="truncate text-xs"
+                                                          onClick={() => {
+                                                            const feedback =
+                                                              prompt(
+                                                                'Motivo del rechazo:'
+                                                              );
+                                                            if (feedback) {
+                                                              handleAprobarEntrega(
+                                                                actividadId,
+                                                                typeof entrega.userId ===
+                                                                  'string'
+                                                                  ? entrega.userId
+                                                                  : typeof entrega.userId ===
+                                                                      'number'
+                                                                    ? String(
+                                                                        entrega.userId
+                                                                      )
+                                                                    : '',
+                                                                false,
+                                                                feedback
+                                                              );
+                                                            }
+                                                          }}
+                                                        >
+                                                          <AlertCircle className="mr-1 h-3 w-3 flex-shrink-0" />
+                                                          <span className="truncate">
+                                                            Rechazar
+                                                          </span>
+                                                        </Button>
+                                                      </div>
+                                                    )}
                                                 </div>
                                               );
                                             } else if (puedeEntregar) {
@@ -2940,7 +3025,8 @@ export default function ProjectDetails() {
                     typeof a.descripcion === 'string' ? a.descripcion : '',
                   meses: Array.isArray(a.meses) ? a.meses : [],
                   objetivoId:
-                    typeof (a as { objetivoId?: string }).objetivoId === 'string'
+                    typeof (a as { objetivoId?: string }).objetivoId ===
+                    'string'
                       ? (a as { objetivoId?: string }).objetivoId
                       : undefined,
                   responsibleUserId:
@@ -2949,7 +3035,8 @@ export default function ProjectDetails() {
                       ? (a as { responsibleUserId: string }).responsibleUserId
                       : undefined,
                   hoursPerDay:
-                    typeof (a as { hoursPerDay?: number }).hoursPerDay === 'number'
+                    typeof (a as { hoursPerDay?: number }).hoursPerDay ===
+                    'number'
                       ? (a as { hoursPerDay: number }).hoursPerDay
                       : undefined,
                 }))
@@ -3007,7 +3094,7 @@ export default function ProjectDetails() {
           isOpen={modalSolicitudesOpen}
           onClose={() => setModalSolicitudesOpen(false)}
           projectId={projectId}
-          userId={userId}
+          userId={user?.id ?? ''} // <-- nunca undefined
           onSolicitudProcesada={recargarSolicitudesPendientes}
         />
         {/* Modal para publicar proyecto con comentario */}

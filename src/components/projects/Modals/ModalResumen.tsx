@@ -46,7 +46,7 @@ interface ModalResumenProps {
   categoriaId?: number;
   numMeses?: number;
   setObjetivosEsp: (value: SpecificObjective[]) => void;
-  setActividades: (value: string[]) => void; // Puedes ignorar este prop
+  setActividades: (value: string[]) => void;
   projectId?: number;
   coverImageKey?: string;
   tipoProyecto?: string;
@@ -69,6 +69,9 @@ interface ModalResumenProps {
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
   onAnterior?: () => void; // <-- Nueva prop opcional para volver atrás
+  setPlanteamiento?: (value: string) => void; // <-- Nuevo prop
+  setJustificacion?: (value: string) => void; // <-- Nuevo prop
+  setObjetivoGen?: (value: string) => void; // <-- Nuevo prop
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -84,14 +87,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   tipoProyecto: _tipoProyectoProp,
   tipoVisualizacion: tipoVisualizacionProp,
   tiempoEstimadoProyecto: _tiempoEstimadoProyectoProp,
-  setObjetivosEsp: _setObjetivosEsp, // unused
+  setObjetivosEsp: setObjetivosEspProp,
   setActividades: _setActividades, // unused
   projectId,
   coverImageKey: _coverImageKeyProp, // unused
   onUpdateProject: _onUpdateProject, // unused
   fechaInicio: fechaInicioProp,
   fechaFin: fechaFinProp,
-  actividades: actividadesProp = [],
+  actividades: _actividadesProp = [],
   responsablesPorActividad: responsablesPorActividadProp = {},
   horasPorActividad: horasPorActividadProp = {},
   setHorasPorActividad,
@@ -99,6 +102,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setHorasPorDiaProyecto,
   setTiempoEstimadoProyecto,
   onAnterior, // <-- Recibe la prop
+  setPlanteamiento,
+  setJustificacion,
+  setObjetivoGen,
 }) => {
   // Solo mantener un estado local para horas por actividad
   const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<
@@ -132,7 +138,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // >({});
 
   // Estado para responsables
-  const [responsablesPorActividadLocal, setResponsablesPorActividadLocal] =
+  const [responsablesPorActividadLocal, _setResponsablesPorActividadLocal] =
     useState<Record<string, string>>(responsablesPorActividadProp);
 
   // Estado para tipo de visualización
@@ -141,6 +147,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   >(
     typeof tipoVisualizacionProp === 'string' ? tipoVisualizacionProp : 'meses'
   );
+
+  // --- NUEVO: Cambiar visualización por defecto según duración ---
+  useEffect(() => {
+    if (!isOpen) return;
+    if (duracionDias < 28 && tipoVisualizacion !== 'dias') {
+      setTipoVisualizacion('dias');
+    } else if (duracionDias >= 28 && tipoVisualizacion !== 'meses') {
+      setTipoVisualizacion('meses');
+    }
+    // Solo cambia si la duración y visualización no coinciden
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duracionDias, isOpen]);
 
   // Add missing state for isUpdating, previewImagen, setImagenProyecto, tipoProyecto, setTipoProyecto
   const [isUpdating, _setIsUpdating] = useState(false);
@@ -407,7 +425,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       : horasPorDiaProyectoState;
   const handleHorasPorDiaChange = (val: number) => {
     if (setHorasPorDiaProyecto) {
-      setHorasPorDiaProyecto(val);
+      setHorasPorDiaProyecto(val); // <-- Propaga cambio global
     } else {
       setHorasPorDiaProyectoState(val);
     }
@@ -601,65 +619,40 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       setPlanteamientoEditado(planteamiento);
       setJustificacionEditada(justificacion);
       setObjetivoGenEditado(objetivoGen);
+      setObjetivosEspEditado(objetivosEsp);
     }
-  }, [isOpen, titulo, planteamiento, justificacion, objetivoGen]);
+  }, [isOpen, titulo, planteamiento, justificacion, objetivoGen, objetivosEsp]);
 
-  // Sincronizar fecha y cronograma al abrir el modal
-  /*
+  // Cuando se edite planteamiento, justificación, objetivo general u objetivos específicos, propaga el cambio al estado global
   useEffect(() => {
-    if (isOpen) {
-      setFechaInicio(fechaInicioProp ?? '');
-      setFechaFin(fechaFinProp ?? '');
-      setCronograma(cronograma);
-    }
-  }, [isOpen, fechaInicioProp, fechaFinProp, cronograma]);
-  */
+    if (setPlanteamiento) setPlanteamiento(planteamientoEditado);
+  }, [planteamientoEditado, setPlanteamiento]);
 
-  // Sincronizar responsables y horas de actividades en modo edición
   useEffect(() => {
-    if (isEditMode && isOpen && Array.isArray(actividadesProp)) {
-      const nuevosResponsables: Record<string, string> = {};
-      const nuevasHoras: Record<string, number> = {};
+    if (setJustificacion) setJustificacion(justificacionEditada);
+  }, [justificacionEditada, setJustificacion]);
 
-      actividadesProp.forEach((act, idx) => {
-        if (act.objetivoId) {
-          const objIdx = objetivosEsp.findIndex(
-            (obj) => obj.id === act.objetivoId
-          );
-          if (objIdx !== -1) {
-            const actIdx = objetivosEsp[objIdx].activities.findIndex(
-              (a) => a.trim() === act.descripcion.trim()
-            );
-            const actividadKey = `${act.objetivoId}_${actIdx !== -1 ? actIdx : idx}`;
-            if (act.responsibleUserId) {
-              nuevosResponsables[actividadKey] = act.responsibleUserId;
-            }
-            if (typeof act.hoursPerDay === 'number') {
-              nuevasHoras[actividadKey] = act.hoursPerDay;
-            }
-          }
-        }
-      });
+  useEffect(() => {
+    if (setObjetivoGen) setObjetivoGen(objetivoGenEditado);
+  }, [objetivoGenEditado, setObjetivoGen]);
 
-      setResponsablesPorActividadLocal(nuevosResponsables);
+  useEffect(() => {
+    if (setObjetivosEspProp) setObjetivosEspProp(objetivosEspEditado);
+  }, [objetivosEspEditado, setObjetivosEspProp]);
 
-      // Actualizar horas usando la función correcta
-      if (typeof setHorasPorActividad === 'function') {
-        setHorasPorActividad(nuevasHoras);
-      } else {
-        setHorasPorActividadLocal(nuevasHoras);
-      }
+  // Calcular duración en días y establecer estado inicial
+  useEffect(() => {
+    if (fechaInicio && fechaFin) {
+      const inicio = new Date(fechaInicio);
+      const fin = new Date(fechaFin);
+      const diff =
+        Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) +
+        1;
+      setDuracionDias(diff > 0 ? diff : 0);
+    } else {
+      setDuracionDias(0);
     }
-  }, [isEditMode, isOpen, actividadesProp, objetivosEsp, setHorasPorActividad]);
-
-  // Elimina el siguiente useEffect para quitar la lógica de asignar automáticamente la fecha de inicio
-  // useEffect(() => {
-  //   // Solo establecer la fecha de inicio automáticamente si está vacío
-  //   if (!isEditMode && isOpen && !fechaInicio) {
-  //     const fechaActual = toLocalDateString(new Date());
-  //     setFechaInicio(fechaActual);
-  //   }
-  // }, [isEditMode, isOpen, fechaInicio]);
+  }, [fechaInicio, fechaFin]);
 
   // --- MES RENDER LOGIC ---
   // El problema es que el cronograma solo muestra columnas para las fechas existentes en el rango,
@@ -668,33 +661,44 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // al menos tantos días como el máximo índice asignado en diasPorActividad + 1.
 
   // Justo antes del render del cronograma, fuerza el tamaño de 'meses' si es necesario:
-  const maxDiaAsignado = useMemo(() => {
-    if (tipoVisualizacion !== undefined && tipoVisualizacion !== 'dias')
-      return 0;
-    let max = 0;
-    Object.values(diasPorActividad ?? {}).forEach((arr) => {
-      if (Array.isArray(arr)) {
-        arr.forEach((idx: number) => {
-          if (idx > max) max = idx;
-        });
-      }
-    });
-    return max;
-  }, [diasPorActividad, tipoVisualizacion]);
+  // Eliminar maxDiaAsignado porque ya no se usa y causa warning de eslint
+  // const maxDiaAsignado = useMemo(() => {
+  //   if (tipoVisualizacion !== undefined && tipoVisualizacion !== 'dias')
+  //     return 0;
+  //   let max = 0;
+  //   Object.values(diasPorActividad ?? {}).forEach((arr) => {
+  //     if (Array.isArray(arr)) {
+  //       arr.forEach((idx: number) => {
+  //         if (idx > max) max = idx;
+  //       });
+  //     }
+  //   });
+  //   return max;
+  // }, [diasPorActividad, tipoVisualizacion]);
 
   const meses: string[] = useMemo(() => {
     if (fechaInicio && fechaFin) {
       if (tipoVisualizacion === 'dias') {
-        const fechaInicioDate = new Date(fechaInicio);
-        const fechaFinDate = new Date(fechaFin);
+        // Mostrar todos los días laborales (lunes a sábado)
+        const fechaInicioDate = new Date(fechaInicio + 'T00:00:00');
+        const fechaFinDate = new Date(fechaFin + 'T00:00:00');
         const dias: string[] = [];
         const fechaActual = new Date(fechaInicioDate);
-        while (fechaActual <= fechaFinDate) {
+        while (fechaActual.getTime() <= fechaFinDate.getTime()) {
           const day = fechaActual.getDay();
-          if (day !== 0 && day !== 6) {
-            dias.push(fechaActual.toLocaleDateString('es-ES'));
+          if (day !== 0) {
+            // 0 = domingo, incluye lunes a sábado
+            dias.push(
+              `${fechaActual.getFullYear()}-${String(
+                fechaActual.getMonth() + 1
+              ).padStart(
+                2,
+                '0'
+              )}-${String(fechaActual.getDate()).padStart(2, '0')}`
+            );
           }
           fechaActual.setDate(fechaActual.getDate() + 1);
+          fechaActual.setHours(0, 0, 0, 0);
         }
         return dias;
       } else {
@@ -717,27 +721,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }, [fechaInicio, fechaFin, tipoVisualizacion]);
 
   const mesesRender: string[] = useMemo(() => {
+    // Para visualización por días, solo mostrar hasta la fecha de fin (no extender artificialmente)
     if (tipoVisualizacion !== undefined && tipoVisualizacion !== 'dias')
       return meses;
-    if (meses.length <= maxDiaAsignado) {
-      const extendidos = [...meses];
-      let lastDate: Date;
-      if (meses.length > 0) {
-        const [d, m, y] = meses[meses.length - 1].split('/');
-        lastDate = new Date(Number(y), Number(m) - 1, Number(d));
-      } else {
-        lastDate = new Date();
-      }
-      for (let i = meses.length; i <= maxDiaAsignado; i++) {
-        lastDate.setDate(lastDate.getDate() + 1);
-        extendidos.push(lastDate.toLocaleDateString('es-ES'));
-      }
-      return extendidos;
-    }
     return meses;
-  }, [meses, maxDiaAsignado, tipoVisualizacion]);
-
-  // --- END MES RENDER LOGIC ---
+  }, [meses, tipoVisualizacion]);
 
   // Fix: imagenExistente definition (move above render)
   const imagenExistente = useMemo(() => {
@@ -755,16 +743,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       title: nuevoObjetivo.trim(),
       activities: [],
     };
-    setObjetivosEspEditado((prev) => [...prev, nuevoObj]);
+    setObjetivosEspEditado((prev) => {
+      const nuevos = [...prev, nuevoObj];
+      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      return nuevos;
+    });
     setNuevoObjetivo('');
   };
 
   // Eliminar objetivo
   const handleEliminarObjetivo = (index: number) => {
     setObjetivosEspEditado((prev) => {
-      const nuevosObjetivos = [...prev];
-      nuevosObjetivos.splice(index, 1);
-      return nuevosObjetivos;
+      const nuevos = [...prev];
+      nuevos.splice(index, 1);
+      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      return nuevos;
     });
   };
 
@@ -772,8 +765,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const handleAgregarActividad = (objetivoId: string) => {
     const descripcion = nuevaActividadPorObjetivo[objetivoId]?.trim();
     if (!descripcion) return;
-    setObjetivosEspEditado((prev) =>
-      prev.map((obj) => {
+    setObjetivosEspEditado((prev) => {
+      const nuevos = prev.map((obj) => {
         if (obj.id === objetivoId) {
           return {
             ...obj,
@@ -781,8 +774,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           };
         }
         return obj;
-      })
-    );
+      });
+      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      return nuevos;
+    });
     setNuevaActividadPorObjetivo((prev) => ({ ...prev, [objetivoId]: '' }));
   };
 
@@ -791,8 +786,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     objetivoId: string,
     actividadIndex: number
   ) => {
-    setObjetivosEspEditado((prev) =>
-      prev.map((obj) => {
+    setObjetivosEspEditado((prev) => {
+      const nuevos = prev.map((obj) => {
         if (obj.id === objetivoId) {
           const nuevasActividades = [...obj.activities];
           nuevasActividades.splice(actividadIndex, 1);
@@ -802,8 +797,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           };
         }
         return obj;
-      })
-    );
+      });
+      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      return nuevos;
+    });
   };
 
   // Formatear duración
@@ -869,11 +866,98 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     duracionDias,
   ]);
 
-  // Función vacía temporal para evitar error si no está definida
-  const handleGuardarProyecto = () => {
-    // Implementa la lógica de guardado aquí si es necesario
-    // Por ahora solo muestra un alert para evitar error de compilación
-    alert('Funcionalidad de guardar proyecto no implementada.');
+  // Función para guardar el proyecto en la BD
+  const handleGuardarProyecto = async () => {
+    try {
+      // Validar campos requeridos
+      if (
+        !tituloState ||
+        !planteamientoEditado ||
+        !justificacionEditada ||
+        !objetivoGenEditado ||
+        !tipoProyecto ||
+        !categoria
+      ) {
+        alert('Por favor, completa todos los campos requeridos.');
+        return;
+      }
+
+      // Mapear objetivos_especificos y actividades
+      const objetivos_especificos = objetivosEspEditado.map((obj) => ({
+        id: obj?.id,
+        title: obj.title,
+      }));
+
+      // Mapear actividades
+      const actividades: {
+        descripcion: string;
+        meses: number[];
+        objetivoId?: string;
+        responsibleUserId?: string;
+        hoursPerDay?: number;
+      }[] = [];
+      objetivosEspEditado.forEach((obj) => {
+        obj.activities.forEach((act, actIdx) => {
+          const actividadKey = `${obj?.id}_${actIdx}`;
+          actividades.push({
+            descripcion: act,
+            meses: [], // Puedes mapear el cronograma si lo necesitas
+            objetivoId: obj?.id,
+            responsibleUserId: responsablesPorActividadLocal[actividadKey],
+            hoursPerDay: horasPorActividadFinal[actividadKey] || 1,
+          });
+        });
+      });
+
+      // Construir el body para el backend
+      const body = {
+        name: tituloState,
+        planteamiento: planteamientoEditado,
+        justificacion: justificacionEditada,
+        objetivo_general: objetivoGenEditado,
+        objetivos_especificos,
+        actividades,
+        type_project: tipoProyecto,
+        categoryId: Number(categoria),
+        coverImageKey: undefined, // Puedes manejar la imagen si lo necesitas
+        fechaInicio,
+        fechaFin,
+        tipoVisualizacion,
+        isPublic: false,
+      };
+
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert('Proyecto guardado correctamente.');
+        onClose();
+        // Redirigir a la vista de detalle del proyecto recién creado
+        if (typeof data === 'object' && data !== null && 'id' in data) {
+          window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
+        } else {
+          window.location.reload();
+        }
+      } else {
+        // Corrige acceso inseguro a .error
+        alert(
+          typeof data === 'object' &&
+            data &&
+            'error' in data &&
+            typeof (data as { error?: unknown }).error === 'string'
+            ? (data as { error: string }).error
+            : 'Error al guardar el proyecto.'
+        );
+      }
+    } catch (_error) {
+      alert('Error al guardar el proyecto.');
+    }
   };
 
   // Utilidad para obtener la fecha actual en formato YYYY-MM-DD, ajustando si es domingo
@@ -1115,6 +1199,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setPlanteamientoEditado(e.target.value);
                   handleTextAreaChange(e);
+                  if (setPlanteamiento) setPlanteamiento(e.target.value); // <-- Propaga cambio
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1131,6 +1216,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setJustificacionEditada(e.target.value);
                   handleTextAreaChange(e);
+                  if (setJustificacion) setJustificacion(e.target.value); // <-- Propaga cambio
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1147,6 +1233,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setObjetivoGenEditado(e.target.value);
                   handleTextAreaChange(e);
+                  if (setObjetivoGen) setObjetivoGen(e.target.value); // <-- Propaga cambio
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1782,7 +1869,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               tipoVisualizacion === 'dias' ? '80px' : '120px',
                           }}
                         >
-                          {periodo}
+                          {tipoVisualizacion === 'dias'
+                            ? (() => {
+                                // periodo es yyyy-mm-dd, mostrar como dd/MM/yyyy con ceros a la izquierda
+                                const [yyyy, mm, dd] = periodo.split('-');
+                                if (yyyy && mm && dd) {
+                                  return `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}/${yyyy}`;
+                                }
+                                return periodo;
+                              })()
+                            : periodo}
                         </th>
                       ))}
                     </tr>

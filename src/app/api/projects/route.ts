@@ -109,23 +109,56 @@ export async function POST(req: Request) {
       );
     }
 
-    // Procesar actividades asegurando que responsibleUserId se pase correctamente
-    if (body.actividades && Array.isArray(body.actividades)) {
-      body.actividades = body.actividades
-        .map((actividad) => ({
-          descripcion: actividad.descripcion || '',
-          meses: Array.isArray(actividad.meses) ? actividad.meses : [],
-          objetivoId: actividad.objetivoId,
-          responsibleUserId: actividad.responsibleUserId ?? undefined,
-          hoursPerDay:
-            typeof actividad.hoursPerDay === 'number'
-              ? actividad.hoursPerDay
-              : 1,
-        }))
-        .filter((actividad) => actividad.descripcion.trim() !== '');
+    // Procesar objetivos_especificos y actividades de forma segura
+    interface SafeSpecificObjective {
+      id: string;
+      title: string;
+      activities?: string[];
+    }
+    const objetivos_especificos_db: { id: string; title: string }[] = [];
+    let actividades_db: {
+      descripcion: string;
+      meses: number[];
+      objetivoId?: string;
+      responsibleUserId?: string;
+      hoursPerDay?: number;
+    }[] = [];
+
+    if (Array.isArray(body.objetivos_especificos)) {
+      for (const obj of body.objetivos_especificos as SafeSpecificObjective[]) {
+        if (
+          obj &&
+          typeof obj.title === 'string' &&
+          typeof obj.id === 'string'
+        ) {
+          objetivos_especificos_db.push({ id: obj.id, title: obj.title });
+          if (Array.isArray(obj.activities)) {
+            obj.activities.forEach((act) => {
+              if (typeof act === 'string' && act.trim() !== '') {
+                actividades_db.push({
+                  descripcion: act,
+                  meses: [],
+                  objetivoId: obj.id,
+                });
+              }
+            });
+          }
+        }
+      }
     }
 
-    // Preparar datos del proyecto - mantener fechas como están funcionando
+    // Si body.actividades viene con responsibleUserId/hoursPerDay, mapea esos datos
+    if (Array.isArray(body.actividades)) {
+      actividades_db = body.actividades.map((a) => ({
+        descripcion: a.descripcion,
+        meses: Array.isArray(a.meses) ? a.meses : [],
+        objetivoId: a.objetivoId,
+        responsibleUserId: a.responsibleUserId,
+        hoursPerDay: typeof a.hoursPerDay === 'number' ? a.hoursPerDay : 1,
+      }));
+    }
+
+    // Preparar datos del proyecto
     const projectData: ProjectData = {
       name: body.name,
       planteamiento: body.planteamiento,
@@ -134,9 +167,8 @@ export async function POST(req: Request) {
       type_project: body.type_project,
       categoryId: body.categoryId,
       userId,
-      objetivos_especificos:
-        (body.objetivos_especificos as { id: string; title: string }[]) || [], // <-- Asegura el tipo correcto
-      actividades: body.actividades ?? [],
+      objetivos_especificos: objetivos_especificos_db,
+      actividades: actividades_db,
       integrantes: body.integrantes ?? [],
       coverImageKey: coverImageKey ?? undefined,
       fechaInicio:
