@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 
 import DatePicker from 'react-datepicker';
-import { FaArrowLeft, FaRegCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaRegCalendarAlt, FaRegClock } from 'react-icons/fa';
 
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
@@ -430,7 +430,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   // Corrige el error de variable no definida y prefer-const en el cálculo de la fecha de fin automática:
   useEffect(() => {
-    // Corrige el cálculo de la fecha de fin: solo calcula automáticamente si el usuario NO la ha editado manualmente Y existen actividades
+    // Corrige el cálculo de la fecha de fin: solo calcula automáticamente si la fecha de fin NO ha sido editada manualmente Y existen actividades
     // Verifica si hay al menos una actividad en los objetivos específicos
     const hayActividades =
       Array.isArray(objetivosEspEditado) &&
@@ -438,12 +438,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         (obj) => Array.isArray(obj.activities) && obj.activities.length > 0
       );
 
-    // Solo calcular si hay fecha de inicio, horas estimadas, el usuario NO ha editado la fecha fin manualmente y existen actividades
     if (
       !fechaInicio ||
       !totalHorasActividadesCalculado ||
       !horasPorDiaValue ||
-      fechaFinEditadaManualmente ||
+      fechaFinEditadaManualmente || // Solo no calcular si la fecha de fin fue editada manualmente
       !hayActividades
     )
       return;
@@ -455,7 +454,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     // Calcula la fecha de fin sumando días laborables (lunes a sábado)
     let diasAgregados = 0;
-    const fecha = new Date(fechaInicio);
+    // Usar la fecha seleccionada por el usuario como punto de partida
+    const [yyyy, mm, dd] = fechaInicio.split('-');
+    const fecha = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
 
     // Si la fecha de inicio es domingo, avanza al lunes siguiente
     if (fecha.getDay() === 0) {
@@ -481,10 +482,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       fecha.setDate(fecha.getDate() + 1);
     }
     // Formatea la fecha a YYYY-MM-DD
-    const yyyy = fecha.getFullYear();
-    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-    const dd = String(fecha.getDate()).padStart(2, '0');
-    const nuevaFechaFin = `${yyyy}-${mm}-${dd}`;
+    const yyyyFin = fecha.getFullYear();
+    const mmFin = String(fecha.getMonth() + 1).padStart(2, '0');
+    const ddFin = String(fecha.getDate()).padStart(2, '0');
+    const nuevaFechaFin = `${yyyyFin}-${mmFin}-${ddFin}`;
 
     // Solo actualiza si es diferente para evitar loops infinitos
     if (fechaFin !== nuevaFechaFin) {
@@ -954,6 +955,75 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     );
   }
 
+  // Agrega este estado después de la declaración de totalHorasActividadesCalculado
+  const [totalHorasInput, setTotalHorasInput] = useState<number>(
+    totalHorasActividadesCalculado
+  );
+  // Nuevo estado para detectar edición manual
+  const [totalHorasEditadoManualmente, setTotalHorasEditadoManualmente] =
+    useState(false);
+
+  // Agrega este estado después de la declaración de totalHorasEditadoManualmente
+  const [horasOriginalesBackup, setHorasOriginalesBackup] = useState<Record<
+    string,
+    number
+  > | null>(null);
+
+  // Cuando el usuario edita manualmente el total, guarda el backup si aún no existe
+  useEffect(() => {
+    if (totalHorasEditadoManualmente && horasOriginalesBackup === null) {
+      // Guarda el estado actual de horas por actividad antes de la edición manual
+      setHorasOriginalesBackup({ ...horasPorActividadFinal });
+    }
+    // Si se desactiva la edición manual, limpia el backup
+    if (!totalHorasEditadoManualmente && horasOriginalesBackup !== null) {
+      setHorasOriginalesBackup(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalHorasEditadoManualmente]);
+
+  // Sincroniza el valor inicial cuando cambian las horas calculadas
+  useEffect(() => {
+    if (!totalHorasEditadoManualmente) {
+      setTotalHorasInput(totalHorasActividadesCalculado);
+    }
+  }, [totalHorasActividadesCalculado, totalHorasEditadoManualmente]);
+
+  // --- Distribuir horas proporcionalmente cuando se edita manualmente el total ---
+  useEffect(() => {
+    if (!totalHorasEditadoManualmente) return;
+    // Solo distribuir si hay actividades
+    const actividadKeys: string[] = [];
+    objetivosEspEditado.forEach((obj) => {
+      obj.activities.forEach((_, actIdx) => {
+        actividadKeys.push(`${obj.id}_${actIdx}`);
+      });
+    });
+    if (actividadKeys.length === 0) return;
+
+    // Distribución equitativa: todas las actividades reciben la misma cantidad, el resto se reparte de a 1
+    const totalTarget = Math.max(
+      actividadKeys.length,
+      Math.round(totalHorasInput)
+    );
+    const base = Math.floor(totalTarget / actividadKeys.length);
+    let resto = totalTarget - base * actividadKeys.length;
+
+    const nuevasHoras: Record<string, number> = {};
+    actividadKeys.forEach((k, _idx) => {
+      nuevasHoras[k] = base + (resto > 0 ? 1 : 0);
+      if (resto > 0) resto--;
+    });
+
+    // Actualizar el estado de horas por actividad
+    if (typeof setHorasPorActividad === 'function') {
+      setHorasPorActividad(nuevasHoras);
+    } else {
+      setHorasPorActividadLocal(nuevasHoras);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalHorasInput, totalHorasEditadoManualmente]);
+
   if (!isOpen) return null;
 
   return (
@@ -1105,6 +1175,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 }}
                 className="rounded bg-gray-400 p-1 text-black"
               />
+              <FaRegClock className="inline-block text-cyan-300" />
             </div>
             {/* Izquierda: Horas totales del proyecto*/}
             <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -1129,9 +1200,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   fontWeight: 'bold',
                 }}
               />
-              <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
+              {/* <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
                 horas
-              </span>
+              </span> */}
+
+              <FaRegClock className="inline-block text-cyan-300" />
             </div>
             {/* Fechas responsive */}
             <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -1158,6 +1231,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       ymd !== getTodayDateString()
                     );
                     setFechaInicioDomingoError(false);
+                    // Si la fecha de fin NO ha sido editada manualmente, recalcula la fecha de fin automáticamente
+                    if (!fechaFinEditadaManualmente) {
+                      // El cálculo automático ya se realiza en el useEffect anterior, así que no es necesario duplicar aquí
+                    }
                   }
                 }}
                 filterDate={(date: Date) => date.getDay() !== 0}
@@ -1246,6 +1323,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     ? (parseYMDToDate(fechaInicio) ?? undefined)
                     : undefined
                 }
+                filterDate={(date: Date) => date.getDay() !== 0} // <-- Deshabilita domingos
                 className="w-full rounded bg-gray-400 p-2 text-black"
                 placeholderText="DD / MM / YYYY"
                 required
@@ -1293,10 +1371,52 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Horas por día responsive con información adicional */}
             {fechaInicio && fechaFin && (
               <>
-                <div className="col-span-1 flex items-center">
-                  <span className="text-sm font-semibold text-cyan-200 sm:text-base">
-                    Total de horas: {totalHorasActividadesCalculado}
+                <div className="col-span-1 flex items-center gap-2">
+                  <span className="ml-2 text-sm font-semibold text-cyan-200 sm:text-base">
+                    Total de horas:
                   </span>
+                  {/* Cambia el span por un input editable */}
+                  <input
+                    type="number"
+                    min={0}
+                    value={totalHorasInput}
+                    onChange={(e) => {
+                      setTotalHorasInput(Number(e.target.value));
+                      setTotalHorasEditadoManualmente(true);
+                    }}
+                    className="rounded bg-gray-400 p-1 text-sm font-semibold text-black sm:text-base"
+                    style={{
+                      width: `${String(totalHorasInput).length + 3}ch`,
+                      minWidth: '4ch',
+                      textAlign: 'center',
+                    }}
+                  />
+                  <FaRegClock className="inline-block text-cyan-200" />
+                  {totalHorasEditadoManualmente && (
+                    <>
+                      <span className="ml-2 text-xs text-orange-300">
+                        (Editado manualmente)
+                      </span>
+                      <button
+                        type="button"
+                        className="ml-2 rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+                        onClick={() => {
+                          // Restaurar las horas originales y desactivar edición manual
+                          if (horasOriginalesBackup) {
+                            if (typeof setHorasPorActividad === 'function') {
+                              setHorasPorActividad(horasOriginalesBackup);
+                            } else {
+                              setHorasPorActividadLocal(horasOriginalesBackup);
+                            }
+                          }
+                          setTotalHorasEditadoManualmente(false);
+                        }}
+                        title="Restaurar horas originales"
+                      >
+                        Restaurar
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="col-span-1 flex items-center">
                   <span className="text-sm font-semibold text-green-300 sm:text-base">
@@ -1400,7 +1520,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               Actividades ({obj.activities.length}):
                             </div>
                           )}
-                          {obj.activities.map((act, actIdx) => {
+                          {obj.activities.map((act, _idx) => {
+                            const actIdx = _idx; // Use _idx to avoid eslint unused var warning
                             const actividadKey = `${obj.id}_${actIdx}`;
                             const responsableId =
                               responsablesPorActividadLocal[actividadKey] || '';
@@ -1411,7 +1532,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             // Obtener horas de forma simple
                             const horasActividad =
                               horasPorActividadFinal[actividadKey] || 1;
-
                             return (
                               <div
                                 key={actIdx}
@@ -1773,5 +1893,4 @@ const CustomDateInput = React.forwardRef<
     />
   </div>
 ));
-
 export default ModalResumen;
