@@ -1,4 +1,5 @@
 import eslintPluginNext from '@next/eslint-plugin-next';
+
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import drizzlePlugin from 'eslint-plugin-drizzle';
@@ -135,20 +136,52 @@ export default [
         },
       ],
 
-      // ===== NEXT.JS 15 SPECIFIC RULES =====
+      // ===== NEXT.JS CORE RULES (TODAS LAS OFICIALES) =====
+      // Font optimization rules
       '@next/next/google-font-display': 'error',
+      '@next/next/google-font-preconnect': 'error',
+      '@next/next/no-page-custom-font': 'error',
+      
+      // Script optimization rules
+      '@next/next/inline-script-id': 'error',
+      '@next/next/next-script-for-ga': 'error',
+      '@next/next/no-before-interactive-script-outside-document': 'error',
+      '@next/next/no-script-component-in-head': 'error',
+      '@next/next/no-sync-scripts': 'error',
+      
+      // Image optimization rules
       '@next/next/no-img-element': 'error',
-      '@next/next/no-html-link-for-pages': 'error',
+      
+      // Document/Head management rules
+      '@next/next/no-css-tags': 'error',
+      '@next/next/no-document-import-in-page': 'error',
+      '@next/next/no-duplicate-head': 'error',
       '@next/next/no-head-element': 'error',
-      '@next/next/no-page-custom-font': 'warn',
+      '@next/next/no-head-import-in-document': 'error',
+      '@next/next/no-styled-jsx-in-document': 'error',
+      '@next/next/no-title-in-document-head': 'error',
+      
+      // Navigation rules
+      '@next/next/no-html-link-for-pages': 'error',
+      
+      // Module and code quality rules
+      '@next/next/no-assign-module-variable': 'error',
+      '@next/next/no-async-client-component': 'error',
+      '@next/next/no-typos': 'error',
+      
+      // Performance rules
       '@next/next/no-unwanted-polyfillio': 'error',
-
-      // ===== GENERAL RULES =====
-      'no-unused-expressions': 'error',
-      'no-duplicate-imports': 'error',
-      'no-console': 'off',
-      'prefer-const': 'warn',
+      
       'no-var': 'error',
+
+      // ===== WEB VITALS OPTIMIZATION RULES =====
+      // Las reglas de Next.js ya cubren Core Web Vitals:
+      // LCP: @next/next/no-img-element, google-font-display
+      // FID/INP: @next/next/no-sync-scripts 
+      // CLS: @next/next/google-font-preconnect
+      
+      // Performance adicionales para Web Vitals
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
 
       // ===== IMPORT SORTING RULES =====
       'simple-import-sort/imports': [
@@ -227,6 +260,20 @@ export default [
     rules: {
       '@typescript-eslint/no-var-requires': 'off',
       'import/no-anonymous-default-export': 'off',
+      'no-console': 'off', // Permite console en archivos de configuración
+    },
+  },
+
+  // Core Web Vitals strict configuration para production
+  {
+    files: ['src/app/**/*.{js,jsx,ts,tsx}', 'pages/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      // Reglas más estrictas para páginas que afectan Web Vitals
+      '@next/next/no-img-element': 'error',
+      '@next/next/google-font-display': 'error',
+      '@next/next/google-font-preconnect': 'error',
+      '@next/next/no-sync-scripts': 'error',
+      'react-hooks/exhaustive-deps': 'error', // Más estricto en páginas
     },
   },
 
