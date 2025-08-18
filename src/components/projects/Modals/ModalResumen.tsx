@@ -856,16 +856,87 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // --- Calculate diasPorActividad for "dias" visualization ---
   useEffect(() => {
     if (tipoVisualizacion === 'dias' && fechaInicio && fechaFin) {
+      // NUEVO: Distribuir actividades por responsable, ocupando huecos de horas sobrantes
       const dias: Record<string, number[]> = {};
+      // Map: responsableId -> array de horas ocupadas por día (índice de día)
+      const horasPorDiaPorResponsable: Record<string, number[]> = {};
+
+      // Construir lista de actividades con responsable
+      const actividadesList: {
+        actividadKey: string;
+        horas: number;
+        responsableId: string;
+      }[] = [];
       objetivosEspEditado.forEach((obj) => {
         obj.activities.forEach((_, actIdx) => {
           const actividadKey = `${obj.id}_${actIdx}`;
-          dias[actividadKey] = [];
-          for (let i = 0; i < duracionDias; i++) {
-            dias[actividadKey].push(i);
-          }
+          const horasActividad =
+            typeof horasPorActividadFinal[actividadKey] === 'number' &&
+            horasPorActividadFinal[actividadKey] > 0
+              ? horasPorActividadFinal[actividadKey]
+              : 1;
+          const responsableId =
+            responsablesPorActividadProp[actividadKey] ||
+            responsablesPorActividadLocal[actividadKey] ||
+            'default';
+          actividadesList.push({
+            actividadKey,
+            horas: horasActividad,
+            responsableId,
+          });
         });
       });
+
+      // LOG: Mostrar actividades y responsables
+      console.log('--- Asignación de actividades a responsables ---');
+      actividadesList.forEach(({ actividadKey, horas, responsableId }) => {
+        console.log(
+          `Actividad: ${actividadKey}, Horas: ${horas}, Responsable: ${responsableId}`
+        );
+      });
+
+      // Para cada responsable, distribuir sus actividades en los días
+      // Inicializar matriz de horas ocupadas por día para cada responsable
+      actividadesList.forEach(({ actividadKey, horas, responsableId }) => {
+        if (!horasPorDiaPorResponsable[responsableId]) {
+          horasPorDiaPorResponsable[responsableId] =
+            Array(duracionDias).fill(0);
+        }
+        // Buscar el primer día con hueco suficiente, si no, usar el siguiente día disponible
+        let horasRestantes = horas;
+        let dia = 0;
+        dias[actividadKey] = [];
+        while (horasRestantes > 0 && dia < duracionDias) {
+          const horasOcupadas = horasPorDiaPorResponsable[responsableId][dia];
+          const horasDisponibles = horasPorDiaValue - horasOcupadas;
+          if (horasDisponibles > 0) {
+            const horasAsignar = Math.min(horasDisponibles, horasRestantes);
+            // Marcar este día para la actividad
+            dias[actividadKey].push(dia);
+            // Sumar horas ocupadas
+            horasPorDiaPorResponsable[responsableId][dia] += horasAsignar;
+            horasRestantes -= horasAsignar;
+            // LOG: Mostrar asignación de horas por día
+            console.log(
+              `Asignando ${horasAsignar}h de ${actividadKey} a responsable ${responsableId} en día ${dia} (ocupado: ${horasPorDiaPorResponsable[responsableId][dia]}/${horasPorDiaValue})`
+            );
+          }
+          // Si no se llenó la actividad, pasar al siguiente día
+          if (horasRestantes > 0) {
+            dia++;
+          }
+        }
+      });
+
+      // LOG: Mostrar resumen de ocupación por responsable
+      Object.entries(horasPorDiaPorResponsable).forEach(
+        ([responsableId, horasArray]) => {
+          console.log(
+            `Responsable ${responsableId} - Horas ocupadas por día: [${horasArray.join(', ')}]`
+          );
+        }
+      );
+
       setDiasPorActividad(dias);
     } else {
       setDiasPorActividad({});
@@ -876,6 +947,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     fechaFin,
     objetivosEspEditado,
     duracionDias,
+    horasPorActividadFinal,
+    horasPorDiaValue,
+    responsablesPorActividadProp,
+    responsablesPorActividadLocal,
   ]);
 
   // Función para guardar el proyecto en la BD
