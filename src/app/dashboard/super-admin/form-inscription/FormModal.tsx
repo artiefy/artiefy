@@ -103,6 +103,7 @@ type Fields = typeof defaultFields;
 interface InscriptionConfig {
   dates?: { startDate: string }[];
   comercials?: { contact: string }[];
+  horarios?: { schedule: string }[]; // 👈 nuevo
 }
 
 interface ProgramsResponse {
@@ -128,6 +129,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
     if (isFn(onClose)) onClose(); // ejecuta si realmente es función
   };
   const [fields, setFields] = useState<Fields>({ ...defaultFields });
+  const [horarioOptions, setHorarioOptions] = useState<string[]>([]);
 
   // Opciones dinámicas
   const [dateOptions, setDateOptions] = useState<string[]>([]);
@@ -143,10 +145,36 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>(
     {}
   );
+  const [docIdentidad, setDocIdentidad] = useState<File | null>(null);
+  const [reciboServicio, setReciboServicio] = useState<File | null>(null);
+  const [actaGrado, setActaGrado] = useState<File | null>(null);
+  const [pagare, setPagare] = useState<File | null>(null);
+  function FieldFile({
+    label,
+    onChange,
+    required = false,
+  }: {
+    label: string;
+    onChange: (f: File | null) => void;
+    required?: boolean;
+  }) {
+    return (
+      <label className="flex flex-col text-white">
+        <span className="mb-1">
+          {label} {required && <span className="text-red-400">*</span>}
+        </span>
+        <input
+          type="file"
+          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+          className="rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+        />
+      </label>
+    );
+  }
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
-
+  void isRecord; // <- para evitar warning de unused
   // Cargar fechas y comerciales
   useEffect(() => {
     const load = async () => {
@@ -155,9 +183,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
         const data: InscriptionConfig = await res.json();
         setDateOptions((data.dates ?? []).map((d) => d.startDate));
         setCommercialOptions((data.comercials ?? []).map((c) => c.contact));
+        setHorarioOptions((data.horarios ?? []).map((h) => h.schedule)); // 👈 nuevo
       } catch {
         setDateOptions([]);
         setCommercialOptions([]);
+        setHorarioOptions([]); // 👈 nuevo
       }
     };
     if (isOpen) load();
@@ -280,7 +310,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
     setSubmittedOK(null);
     setSubmitMessage('');
 
-    // Validación cliente
+    // Validación previa de tus campos de texto
     const v = validate(fields);
     if (Object.keys(v).length > 0) {
       setErrors(v);
@@ -291,20 +321,32 @@ export default function FormModal({ isOpen, onClose }: Props) {
     }
 
     try {
-      // POST al endpoint que crea en Clerk + BD + matrícula
-      const res = await fetch('/api/super-admin/form-inscription', {
+      const fd = new FormData();
+      // Campos “core” (los que ya mapeas a users y los extra)
+      Object.entries(fields).forEach(([k, val]) =>
+        fd.append(k, String(val ?? ''))
+      );
+
+      // Archivos (si están)
+      if (docIdentidad) fd.append('docIdentidad', docIdentidad);
+      if (reciboServicio) fd.append('reciboServicio', reciboServicio);
+      if (actaGrado) fd.append('actaGrado', actaGrado);
+      if (pagare) fd.append('pagare', pagare);
+
+      const res = await fetch('/api/super-admin/form-inscription/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields }),
+        body: fd, // ¡sin Content-Type manual!
       });
 
       if (!res.ok) {
         const j = (await res.json().catch(() => null)) as unknown;
-        const msg =
+
+        const message =
           isRecord(j) && typeof j.error === 'string'
             ? j.error
-            : `Error al enviar inscripción (HTTP ${res.status})`;
-        throw new Error(msg);
+            : `Error HTTP ${res.status}`;
+
+        throw new Error(message);
       }
 
       setSubmittedOK(true);
@@ -312,15 +354,23 @@ export default function FormModal({ isOpen, onClose }: Props) {
       setTimeout(() => {
         setFields({ ...defaultFields });
         setErrors({});
-        onClose = { handleClose };
+        setDocIdentidad(null);
+        setReciboServicio(null);
+        setActaGrado(null);
+        setPagare(null);
+        handleClose();
       }, 1500);
     } catch (err: unknown) {
       setSubmittedOK(false);
-      const message =
+
+      const msg =
         err instanceof Error
           ? err.message
-          : 'No se pudo enviar la inscripción.';
-      setSubmitMessage(message);
+          : typeof err === 'string'
+            ? err
+            : 'No se pudo enviar la inscripción.';
+
+      setSubmitMessage(msg);
     } finally {
       setSubmitting(false);
       setTimeout(() => setSubmittedOK(null), 4000);
@@ -555,10 +605,17 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 options={[...SEDES_OPTS]}
                 error={errors.sede}
               />
-              <FieldInput
+              <FieldSelect
                 label="Horario*"
                 value={fields.horario}
                 onChange={(v) => handleChange('horario', v)}
+                placeholder={
+                  horarioOptions.length
+                    ? 'Selecciona un horario'
+                    : 'No hay horarios'
+                }
+                options={horarioOptions}
+                disabled={horarioOptions.length === 0}
                 error={errors.horario}
               />
 
@@ -594,6 +651,25 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 onChange={(v) => handleChange('numeroCuotas', v)}
                 error={errors.numeroCuotas}
               />
+            </div>
+          </Section>
+
+          <Section title="Documentos requeridos">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FieldFile
+                label="Subir Documento de Identidad"
+                required
+                onChange={setDocIdentidad}
+              />
+              <FieldFile
+                label="Subir Acta de Grado (Bachiller o Noveno)"
+                onChange={setActaGrado}
+              />
+              <FieldFile
+                label="Subir Recibo Servicio Público"
+                onChange={setReciboServicio}
+              />
+              <FieldFile label="Subir Pagaré" required onChange={setPagare} />
             </div>
           </Section>
 

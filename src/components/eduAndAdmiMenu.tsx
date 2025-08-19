@@ -85,6 +85,18 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'formulario-comerciales',
       link: '/dashboard/super-admin/form-inscription/comercials',
     },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Horarios registrados',
+      id: 'formulario-horarios',
+      link: '/dashboard/super-admin/form-inscription/horario',
+    },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Sedes',
+      id: 'formulario-sedes',
+      link: '/dashboard/super-admin/form-inscription/horario',
+    },
   ];
 
   const navItemsEducator = [
@@ -192,13 +204,13 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   return (
     <div className="bg-background min-h-screen">
       {/* Navbar */}
-      <nav className="bg-background shadow-xs fixed top-0 z-40 w-full border-b border-gray-200">
+      <nav className="bg-background fixed top-0 z-40 w-full border-b border-gray-200 shadow-xs">
         <div className="p-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
                 onClick={() => isMobile && setIsOpen(!isOpen)}
-                className="focus:outline-hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 md:hidden"
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 focus:outline-hidden md:hidden"
                 aria-controls="sidebar"
                 aria-expanded={isOpen}
               >
@@ -234,7 +246,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-background fixed left-0 top-0 z-30 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
+          'bg-background fixed top-0 left-0 z-30 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
           !isOpen && '-translate-x-full'
         )}
         aria-label="Sidebar"
@@ -287,7 +299,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
                   {/* Submenú de Cursos */}
                   {isCoursesOpen && (
-                    <ul className="ml-6 mt-2 space-y-2">
+                    <ul className="mt-2 ml-6 space-y-2">
                       <li>
                         <Link
                           href="/dashboard/super-admin/cursos"
@@ -355,7 +367,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
                   {/* Submenú de Programas */}
                   {isProgramsOpen && (
-                    <ul className="ml-6 mt-2 space-y-2">
+                    <ul className="mt-2 ml-6 space-y-2">
                       <li>
                         <Link
                           href="/dashboard/super-admin/programs"
