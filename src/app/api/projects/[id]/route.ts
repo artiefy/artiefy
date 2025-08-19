@@ -166,6 +166,7 @@ export async function PUT(
           'objetivos_especificos',
           'actividades',
           'coverImageKey',
+          'coverVideoKey',
           'type_project',
           'categoryId',
           'isPublic',

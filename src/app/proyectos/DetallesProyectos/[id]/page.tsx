@@ -1170,7 +1170,30 @@ export default function ProjectDetails() {
             <Card className="border-slate-700 bg-slate-800/50">
               <CardContent className="p-6">
                 <div className="mb-4 flex w-full items-center justify-center rounded-lg bg-slate-700/50">
-                  {project.coverImageKey && !imageError ? (
+                  {/* Mostrar video si existe, si no mostrar imagen, si no el ícono */}
+                  {project.coverVideoKey ? (
+                    <video
+                      controls
+                      width={400}
+                      height={400}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '0.5rem',
+                      }}
+                      poster={
+                        project.coverImageKey
+                          ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                          : undefined
+                      }
+                    >
+                      <source
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                        type="video/mp4"
+                      />
+                      Tu navegador no soporta la reproducción de video.
+                    </video>
+                  ) : project.coverImageKey && !imageError ? (
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
                       alt={project.name}

@@ -73,9 +73,6 @@ interface ModalResumenProps {
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
   onAnterior?: () => void; // <-- Nueva prop opcional para volver atrás
-  setPlanteamiento?: (value: string) => void; // <-- Nuevo prop
-  setJustificacion?: (value: string) => void; // <-- Nuevo prop
-  setObjetivoGen?: (value: string) => void; // <-- Nuevo prop
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -91,7 +88,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   tipoProyecto: _tipoProyectoProp,
   tipoVisualizacion: tipoVisualizacionProp,
   tiempoEstimadoProyecto: _tiempoEstimadoProyectoProp,
-  setObjetivosEsp: setObjetivosEspProp,
+  setObjetivosEsp: _setObjetivosEspProp,
   setActividades: _setActividades, // unused
   projectId,
   coverImageKey: _coverImageKeyProp, // unused
@@ -107,9 +104,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setHorasPorDiaProyecto,
   setTiempoEstimadoProyecto,
   onAnterior, // <-- Recibe la prop
-  setPlanteamiento,
-  setJustificacion,
-  setObjetivoGen,
 }) => {
   const { user } = useUser(); // Obtén el usuario logueado
 
@@ -682,34 +676,27 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isOpen, titulo, planteamiento, justificacion, objetivoGen, objetivosEsp]);
 
-  // Cuando se edite planteamiento, justificación, objetivo general u objetivos específicos, propaga el cambio al estado global
-  useEffect(() => {
-    // Solo llama al setter si existe y el valor realmente cambió
-    if (typeof setPlanteamiento === 'function') {
-      setPlanteamiento(planteamientoEditado);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planteamientoEditado]);
-
-  useEffect(() => {
-    if (typeof setJustificacion === 'function') {
-      setJustificacion(justificacionEditada);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [justificacionEditada]);
-
-  useEffect(() => {
-    if (typeof setObjetivoGen === 'function') {
-      setObjetivoGen(objetivoGenEditado);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objetivoGenEditado]);
-
-  useEffect(() => {
-    if (typeof setObjetivosEspProp === 'function') {
-      setObjetivosEspProp(objetivosEspEditado);
-    }
-  }, [objetivosEspEditado, setObjetivosEspProp]);
+  // Elimina estos useEffect para evitar ciclos infinitos:
+  // useEffect(() => {
+  //   if (typeof setPlanteamiento === 'function') {
+  //     setPlanteamiento(planteamientoEditado);
+  //   }
+  // }, [planteamientoEditado]);
+  // useEffect(() => {
+  //   if (typeof setJustificacion === 'function') {
+  //     setJustificacion(justificacionEditada);
+  //   }
+  // }, [justificacionEditada]);
+  // useEffect(() => {
+  //   if (typeof setObjetivoGen === 'function') {
+  //     setObjetivoGen(objetivoGenEditado);
+  //   }
+  // }, [objetivoGenEditado]);
+  // useEffect(() => {
+  //   if (typeof setObjetivosEspProp === 'function') {
+  //     setObjetivosEspProp(objetivosEspEditado);
+  //   }
+  // }, [objetivosEspEditado, setObjetivosEspProp]);
 
   // Calcular duración en días y establecer estado inicial
   useEffect(() => {
@@ -808,7 +795,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     };
     setObjetivosEspEditado((prev) => {
       const nuevos = [...prev, nuevoObj];
-      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      // NO PROPAGAR AL PADRE AQUÍ
       return nuevos;
     });
     setNuevoObjetivo('');
@@ -819,7 +806,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     setObjetivosEspEditado((prev) => {
       const nuevos = [...prev];
       nuevos.splice(index, 1);
-      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      // NO PROPAGAR AL PADRE AQUÍ
       return nuevos;
     });
   };
@@ -838,7 +825,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
         return obj;
       });
-      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      // NO PROPAGAR AL PADRE AQUÍ
       return nuevos;
     });
     // Asigna responsable logueado si no existe
@@ -870,7 +857,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
         return obj;
       });
-      if (setObjetivosEspProp) setObjetivosEspProp(nuevos);
+      // NO PROPAGAR AL PADRE AQUÍ
       return nuevos;
     });
   };
@@ -1103,7 +1090,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     mesesRender,
   ]);
 
-  // Función para guardar el proyecto en la BD
+  // Función para guardar o actualizar el proyecto en la BD
   const handleGuardarProyecto = async () => {
     try {
       // Validar campos requeridos
@@ -1119,13 +1106,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         return;
       }
 
-      // Mapear objetivos_especificos y actividades
-      const objetivos_especificos = objetivosEspEditado.map((obj) => ({
-        id: obj?.id,
-        title: obj.title,
-      }));
+      // Mapear objetivos_especificos como array de strings (solo titles)
+      const objetivos_especificos: string[] = objetivosEspEditado.map(
+        (obj) => obj.title
+      );
 
-      // Mapear actividades
+      // Mapear actividades correctamente con objetivoId
       const actividades: {
         descripcion: string;
         meses: number[];
@@ -1135,16 +1121,89 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       }[] = [];
       objetivosEspEditado.forEach((obj) => {
         obj.activities.forEach((act, actIdx) => {
-          const actividadKey = `${obj?.id}_${actIdx}`;
+          const actividadKey = `${obj.id}_${actIdx}`;
           actividades.push({
             descripcion: act,
             meses: [], // Puedes mapear el cronograma si lo necesitas
-            objetivoId: obj?.id,
+            objetivoId: obj.id, // <-- importante para edición
             responsibleUserId: responsablesPorActividadLocal[actividadKey],
             hoursPerDay: horasPorActividadFinal[actividadKey] || 1,
           });
         });
       });
+
+      // --- NUEVO: Subir imagen/video a S3 si hay archivo seleccionado ---
+      let uploadedCoverImageKey: string | undefined = _coverImageKeyProp;
+      let uploadedCoverVideoKey: string | undefined = _coverVideoKeyProp;
+
+      if (selectedFile) {
+        // 1. Solicita un presigned POST o PUT
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: selectedFile.type,
+            fileSize: selectedFile.size,
+            fileName: selectedFile.name,
+          }),
+        });
+        // Usa interface en vez de type para UploadData
+        interface UploadData {
+          url: string;
+          fields?: Record<string, string>;
+          key: string;
+          fileName: string;
+          uploadType: 'simple' | 'put';
+          contentType: string;
+          coverImageKey?: string;
+          error?: string;
+        }
+        const uploadData = (await uploadRes.json()) as Partial<UploadData>;
+        if (!uploadRes.ok) {
+          alert(uploadData.error ?? 'Error al preparar la carga');
+          return;
+        }
+
+        // 2. Sube el archivo a S3 usando el presigned POST/PUT
+        if (
+          uploadData.uploadType === 'simple' &&
+          uploadData.url &&
+          uploadData.fields
+        ) {
+          // FormData para POST
+          const formData = new FormData();
+          Object.entries(uploadData.fields).forEach(([k, v]) =>
+            formData.append(k, v)
+          );
+          formData.append('file', selectedFile);
+          const s3Res = await fetch(uploadData.url, {
+            method: 'POST',
+            body: formData,
+          });
+          if (!s3Res.ok) {
+            alert('Error al subir el archivo a S3');
+            return;
+          }
+        } else if (uploadData.uploadType === 'put' && uploadData.url) {
+          // PUT directo
+          const s3Res = await fetch(uploadData.url, {
+            method: 'PUT',
+            headers: { 'Content-Type': selectedFile.type },
+            body: selectedFile,
+          });
+          if (!s3Res.ok) {
+            alert('Error al subir el archivo a S3');
+            return;
+          }
+        }
+
+        // 3. Usa la key devuelta para el proyecto
+        if (selectedFile.type.startsWith('image/')) {
+          uploadedCoverImageKey = uploadData.key;
+        } else if (selectedFile.type.startsWith('video/')) {
+          uploadedCoverVideoKey = uploadData.key;
+        }
+      }
 
       // Construir el body para el backend
       const body = {
@@ -1152,49 +1211,80 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         planteamiento: planteamientoEditado,
         justificacion: justificacionEditada,
         objetivo_general: objetivoGenEditado,
-        objetivos_especificos,
+        objetivos_especificos, // <-- ahora es array de strings
         actividades,
         type_project: tipoProyecto,
         categoryId: Number(categoria),
-        coverImageKey: undefined, // Puedes manejar la imagen si lo necesitas
-        coverVideoKey: undefined, // Maneja el video si es necesario
+        coverImageKey: uploadedCoverImageKey,
+        coverVideoKey: uploadedCoverVideoKey,
         fechaInicio,
         fechaFin,
         tipoVisualizacion,
         isPublic: false,
       };
 
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert('Proyecto guardado correctamente.');
-        onClose();
-        // Redirigir a la vista de detalle del proyecto recién creado
-        if (typeof data === 'object' && data !== null && 'id' in data) {
-          window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
+      let res, data;
+      if (isEditMode && projectId) {
+        // --- MODO EDICIÓN: actualizar proyecto existente ---
+        res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        data = await res.json();
+        if (res.ok) {
+          alert('Proyecto actualizado correctamente.');
+          onClose();
+          // Redirigir a la vista de detalle del proyecto actualizado
+          window.location.href = `/proyectos/DetallesProyectos/${projectId}`;
         } else {
-          window.location.reload();
+          alert(
+            typeof data === 'object' &&
+              data &&
+              'error' in data &&
+              typeof (data as { error?: unknown }).error === 'string'
+              ? (data as { error: string }).error
+              : 'Error al actualizar el proyecto.'
+          );
         }
       } else {
-        // Corrige acceso inseguro a .error
-        alert(
-          typeof data === 'object' &&
-            data &&
-            'error' in data &&
-            typeof (data as { error?: unknown }).error === 'string'
-            ? (data as { error: string }).error
-            : 'Error al guardar el proyecto.'
-        );
+        // --- MODO CREACIÓN: crear nuevo proyecto ---
+        res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        data = await res.json();
+        if (res.ok) {
+          alert('Proyecto guardado correctamente.');
+          onClose();
+          // Redirigir a la vista de detalle del proyecto recién creado
+          if (typeof data === 'object' && data !== null && 'id' in data) {
+            window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
+          } else {
+            window.location.reload();
+          }
+        } else {
+          alert(
+            typeof data === 'object' &&
+              data &&
+              'error' in data &&
+              typeof (data as { error?: unknown }).error === 'string'
+              ? (data as { error: string }).error
+              : 'Error al guardar el proyecto.'
+          );
+        }
       }
     } catch (_error) {
-      alert('Error al guardar el proyecto.');
+      alert(
+        isEditMode
+          ? 'Error al actualizar el proyecto.'
+          : 'Error al guardar el proyecto.'
+      );
     }
   };
 

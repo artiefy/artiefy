@@ -249,6 +249,7 @@ export default function ProyectosPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const [videoErrors, setVideoErrors] = useState<Set<number>>(new Set());
 
   // Estado para los contadores de inscritos por proyecto
   const [inscritosMap, setInscritosMap] = useState<Record<number, number>>({});
@@ -1063,299 +1064,368 @@ export default function ProyectosPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredProjects.length > 0 ? (
-                filteredProjects.map((project) => (
-                  <Card
-                    key={`${project.projectType}-${project.id}`}
-                    className="relative flex min-w-0 flex-col border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
-                  >
-                    {/* Burbuja roja de solicitudes pendientes - SOLO para proyectos propios */}
-                    {project.projectType === 'own' &&
-                      project.userId === userId &&
-                      solicitudesPendientesMap[project.id] > 0 && (
-                        <div
-                          className="absolute -top-2 -right-2 z-10 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg"
-                          title={`${solicitudesPendientesMap[project.id]} solicitudes pendientes`}
-                        >
-                          {solicitudesPendientesMap[project.id]}
-                        </div>
-                      )}
-
-                    <CardHeader className="pb-4">
-                      {/* Imagen del proyecto */}
-                      <div className="relative mb-4 h-48 overflow-hidden rounded-lg">
-                        {project.coverImageKey &&
-                        !imageErrors.has(project.id) ? (
-                          <Image
-                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
-                            alt={project.title ?? 'Proyecto'}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                            onError={() => {
-                              console.error(
-                                'Error cargando imagen del proyecto:',
-                                project.title,
-                                'ID:',
-                                project.id
-                              );
-                              handleImageError(project.id);
-                            }}
-                          />
-                        ) : project.coverVideoKey ? (
-                          <video
-                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
-                            controls
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-slate-700">
-                            <div className="text-center text-slate-400">
-                              <ImageIcon className="mx-auto mb-2 h-12 w-12" />
-                              <p className="text-sm">
-                                {imageErrors.has(project.id) &&
-                                project.coverImageKey
-                                  ? 'Error al cargar imagen'
-                                  : 'Sin imagen'}
-                              </p>
-                            </div>
+                filteredProjects.map((project) => {
+                  // Log específico para el proyecto 73
+                  if (project.id === 73) {
+                    console.log(
+                      '[DEBUG][PROYECTO 73] coverVideoKey:',
+                      project.coverVideoKey
+                    );
+                    if (project.coverVideoKey) {
+                      console.log(
+                        '[DEBUG][PROYECTO 73] VIDEO URL:',
+                        `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`
+                      );
+                    }
+                  }
+                  return (
+                    <Card
+                      key={`${project.projectType}-${project.id}`}
+                      className="relative flex min-w-0 flex-col border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+                    >
+                      {/* Burbuja roja de solicitudes pendientes - SOLO para proyectos propios */}
+                      {project.projectType === 'own' &&
+                        project.userId === userId &&
+                        solicitudesPendientesMap[project.id] > 0 && (
+                          <div
+                            className="absolute -top-2 -right-2 z-10 flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg"
+                            title={`${solicitudesPendientesMap[project.id]} solicitudes pendientes`}
+                          >
+                            {solicitudesPendientesMap[project.id]}
                           </div>
                         )}
-                      </div>
 
-                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                        <CardTitle className="mb-2 line-clamp-2 min-w-0 text-lg break-words text-white sm:text-xl md:text-2xl">
-                          {project.title}
-                        </CardTitle>
-                        {/* Mostrar botones solo si el proyecto es propio */}
-                        {project.projectType === 'own' &&
-                          project.userId === userId && (
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-cyan-400 hover:bg-slate-700/50 hover:text-cyan-300"
-                                onClick={() => handleEditProject(project.id)}
+                      <CardHeader className="pb-4">
+                        {/* Imagen del proyecto */}
+                        <div className="relative mb-4 h-48 w-full overflow-hidden rounded-lg">
+                          {/* Mostrar video si existe coverVideoKey y no hay error */}
+                          {project.coverVideoKey &&
+                          !videoErrors.has(project.id) &&
+                          project.coverVideoKey.trim() !== '' ? (
+                            <>
+                              {/* Debug info solo para el proyecto 73, puedes quitarlo si no lo necesitas */}
+                              {project.id === 73 && (
+                                <div
+                                  style={{
+                                    color: 'yellow',
+                                    fontSize: 12,
+                                    wordBreak: 'break-all',
+                                    background: '#222',
+                                    padding: 4,
+                                    marginBottom: 4,
+                                  }}
+                                >
+                                  VIDEO KEY: {String(project.coverVideoKey)}
+                                  <br />
+                                  VIDEO URL:{' '}
+                                  {`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                                </div>
+                              )}
+                              <video
+                                controls
+                                width={400}
+                                height={400}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  borderRadius: '0.5rem',
+                                  objectFit: 'cover',
+                                  background: '#222',
+                                }}
+                                poster={
+                                  project.coverImageKey
+                                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                                    : undefined
+                                }
+                                onError={() => {
+                                  // Puedes usar alert solo para debug, pero normalmente solo marca el error
+                                  setVideoErrors((prev) =>
+                                    new Set(prev).add(project.id)
+                                  );
+                                }}
                               >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-red-400 hover:bg-slate-700/50 hover:text-red-300"
-                                onClick={() => setDeletingProjectId(project.id)}
-                              >
-                                Eliminar
-                              </Button>
+                                <source
+                                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                                />
+                                Tu navegador no soporta la reproducción de
+                                video.
+                              </video>
+                            </>
+                          ) : project.coverImageKey &&
+                            !imageErrors.has(project.id) ? (
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                              alt={project.title ?? 'Proyecto'}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                              onError={() => {
+                                console.error(
+                                  'Error cargando imagen del proyecto:',
+                                  project.title,
+                                  'ID:',
+                                  project.id
+                                );
+                                handleImageError(project.id);
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-slate-700">
+                              <div className="text-center text-slate-400">
+                                <ImageIcon className="mx-auto mb-2 h-12 w-12" />
+                                <p className="text-sm">
+                                  {imageErrors.has(project.id) &&
+                                  project.coverImageKey
+                                    ? 'Error al cargar imagen'
+                                    : 'Sin imagen'}
+                                </p>
+                              </div>
                             </div>
                           )}
-                      </div>
-                      <p className="line-clamp-3 text-xs text-slate-400 sm:text-sm md:text-base">
-                        {project.description}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="flex min-w-0 flex-1 flex-col space-y-4">
-                      {/* Status Badges */}
-                      <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant="secondary"
-                          className={
-                            (project.projectType === 'own'
-                              ? 'border-cyan-400/30 bg-slate-700 text-cyan-400'
-                              : 'border-purple-400/30 bg-slate-700 text-purple-400') +
-                            ' text-xs sm:text-sm'
-                          }
-                        >
-                          {project.projectType === 'own' ? 'Propio' : 'Tomado'}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className={
-                            (project.isPublic
-                              ? 'border-green-400/30 bg-slate-700 text-green-400'
-                              : 'border-orange-400/30 bg-slate-700 text-orange-400') +
-                            ' text-xs sm:text-sm'
-                          }
-                        >
-                          {project.isPublic ? 'Publico' : 'Privado'}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="border-blue-400/30 bg-slate-700 text-xs text-blue-400 sm:text-sm"
-                        >
-                          {project.status}
-                        </Badge>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-slate-400">Progreso</span>
-                          <span className="text-cyan-400">
-                            {Math.floor(Math.random() * 100)}%
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-slate-700">
-                          <div
-                            className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-300"
-                            style={{
-                              width: `${Math.floor(Math.random() * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Project Details */}
-                      <div className="space-y-3 pt-2">
-                        <div className="flex min-w-0 flex-col flex-wrap items-start justify-between gap-2 text-xs sm:flex-row sm:items-center sm:text-sm">
-                          <div className="flex min-w-0 flex-1 items-center text-slate-400">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setIntegrantesModalOpen(project.id)
-                              }
-                              className="flex items-center gap-1 truncate rounded bg-[#1F3246] px-2 py-1 text-[10px] text-purple-300 hover:scale-105 sm:text-xs"
-                              style={{ maxWidth: '100%' }}
-                            >
-                              {inscritosMap[project.id] ?? 0}{' '}
-                              <Users className="inline h-4 w-4 text-purple-300" />{' '}
-                              <span className="truncate">Integrantes</span>
-                            </button>
-                            {/* Modal para ver integrantes */}
-                            {integrantesModalOpen === project.id && (
-                              <ModalIntegrantesProyectoInfo
-                                isOpen={true}
-                                onClose={() => setIntegrantesModalOpen(null)}
-                                proyecto={{
-                                  id: project.id,
-                                  titulo:
-                                    typeof project.name === 'string'
-                                      ? project.name
-                                      : '',
-                                  rama:
-                                    categoriasMap[project.categoryId] ??
-                                    (typeof project.category === 'string'
-                                      ? project.category
-                                      : '') ??
-                                    'Sin categoría',
-                                  especialidades: Array.isArray(
-                                    integrantesMap[project.id]
-                                  )
-                                    ? integrantesMap[project.id].length
-                                    : 0,
-                                  participacion: project.isPublic
-                                    ? 'Público'
-                                    : 'Privado',
-                                }}
-                              />
-                            )}
-                          </div>
-                          <div className="mt-1 flex min-w-0 items-center text-slate-400 sm:mt-0">
-                            <Calendar className="mr-2 h-4 w-4 flex-shrink-0" />
-                            <span className="block truncate">
-                              {project.date
-                                ? new Date(project.date).toLocaleDateString(
-                                    'es-ES'
-                                  )
-                                : ''}
-                            </span>
-                          </div>
                         </div>
 
-                        <div className="border-t border-slate-700 pt-3">
-                          <div className="text-xs sm:text-sm">
-                            <span className="text-slate-400">Tipo: </span>
-                            <span className="font-medium text-cyan-400">
-                              {project.type_project}
-                            </span>
-                          </div>
-                          <div className="text-xs sm:text-sm">
-                            <span className="text-slate-400">Categoría: </span>
-                            <span className="font-medium text-cyan-400">
-                              {project.category}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex w-full flex-col gap-2 pt-2 sm:flex-row">
-                        <Button
-                          className="min-w-0 flex-1 overflow-hidden bg-cyan-500 text-white hover:bg-cyan-600"
-                          onClick={() =>
-                            (window.location.href = `/proyectos/DetallesProyectos/${project.id}`)
-                          }
-                        >
-                          <Eye className="mr-2 h-4 w-4 flex-shrink-0" />
-                          <span className="block truncate text-ellipsis">
-                            {'Ver Proyecto'}
-                          </span>
-                        </Button>
-                        {/* Mostrar botón de renunciar solo si es tomado */}
-                        {project.projectType === 'taken' && (
-                          <Button
-                            variant="outline"
-                            className="min-w-0 flex-1 overflow-hidden border-orange-500 bg-transparent text-orange-400 hover:bg-orange-500/10"
-                            onClick={async () => {
-                              const mensaje = prompt(
-                                'Motivo de la renuncia (opcional):'
-                              );
-
-                              if (mensaje === null) {
-                                return; // Usuario canceló
-                              }
-
-                              try {
-                                const res = await fetch(
-                                  '/api/projects/participation-requests',
-                                  {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      userId,
-                                      projectId: project.id,
-                                      requestType: 'resignation',
-                                      requestMessage: mensaje ?? null,
-                                    }),
+                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                          <CardTitle className="mb-2 line-clamp-2 min-w-0 text-lg break-words text-white sm:text-xl md:text-2xl">
+                            {project.title}
+                          </CardTitle>
+                          {/* Mostrar botones solo si el proyecto es propio */}
+                          {project.projectType === 'own' &&
+                            project.userId === userId && (
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-cyan-400 hover:bg-slate-700/50 hover:text-cyan-300"
+                                  onClick={() => handleEditProject(project.id)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-400 hover:bg-slate-700/50 hover:text-red-300"
+                                  onClick={() =>
+                                    setDeletingProjectId(project.id)
                                   }
-                                );
-
-                                // Corrige acceso inseguro a .error en fetch de renuncia
-                                if (res.ok) {
-                                  alert(
-                                    'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
-                                  );
-                                  // Opcional: actualizar el estado del proyecto para mostrar "Renuncia Pendiente"
-                                } else {
-                                  const errorData = await res.json();
-                                  alert(
-                                    typeof errorData === 'object' &&
-                                      errorData &&
-                                      'error' in errorData &&
-                                      typeof (errorData as { error?: unknown })
-                                        .error === 'string'
-                                      ? (errorData as { error: string }).error
-                                      : 'No se pudo enviar la solicitud de renuncia'
-                                  );
-                                }
-                              } catch (error) {
-                                console.error('Error:', error);
-                                alert(
-                                  'No se pudo enviar la solicitud de renuncia'
-                                );
-                              }
-                            }}
+                                >
+                                  Eliminar
+                                </Button>
+                              </div>
+                            )}
+                        </div>
+                        <p className="line-clamp-3 text-xs text-slate-400 sm:text-sm md:text-base">
+                          {project.description}
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex min-w-0 flex-1 flex-col space-y-4">
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge
+                            variant="secondary"
+                            className={
+                              (project.projectType === 'own'
+                                ? 'border-cyan-400/30 bg-slate-700 text-cyan-400'
+                                : 'border-purple-400/30 bg-slate-700 text-purple-400') +
+                              ' text-xs sm:text-sm'
+                            }
                           >
+                            {project.projectType === 'own'
+                              ? 'Propio'
+                              : 'Tomado'}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className={
+                              (project.isPublic
+                                ? 'border-green-400/30 bg-slate-700 text-green-400'
+                                : 'border-orange-400/30 bg-slate-700 text-orange-400') +
+                              ' text-xs sm:text-sm'
+                            }
+                          >
+                            {project.isPublic ? 'Publico' : 'Privado'}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="border-blue-400/30 bg-slate-700 text-xs text-blue-400 sm:text-sm"
+                          >
+                            {project.status}
+                          </Badge>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs sm:text-sm">
+                            <span className="text-slate-400">Progreso</span>
+                            <span className="text-cyan-400">
+                              {Math.floor(Math.random() * 100)}%
+                            </span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-slate-700">
+                            <div
+                              className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-300"
+                              style={{
+                                width: `${Math.floor(Math.random() * 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Project Details */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex min-w-0 flex-col flex-wrap items-start justify-between gap-2 text-xs sm:flex-row sm:items-center sm:text-sm">
+                            <div className="flex min-w-0 flex-1 items-center text-slate-400">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setIntegrantesModalOpen(project.id)
+                                }
+                                className="flex items-center gap-1 truncate rounded bg-[#1F3246] px-2 py-1 text-[10px] text-purple-300 hover:scale-105 sm:text-xs"
+                                style={{ maxWidth: '100%' }}
+                              >
+                                {inscritosMap[project.id] ?? 0}{' '}
+                                <Users className="inline h-4 w-4 text-purple-300" />{' '}
+                                <span className="truncate">Integrantes</span>
+                              </button>
+                              {/* Modal para ver integrantes */}
+                              {integrantesModalOpen === project.id && (
+                                <ModalIntegrantesProyectoInfo
+                                  isOpen={true}
+                                  onClose={() => setIntegrantesModalOpen(null)}
+                                  proyecto={{
+                                    id: project.id,
+                                    titulo:
+                                      typeof project.name === 'string'
+                                        ? project.name
+                                        : '',
+                                    rama:
+                                      categoriasMap[project.categoryId] ??
+                                      (typeof project.category === 'string'
+                                        ? project.category
+                                        : '') ??
+                                      'Sin categoría',
+                                    especialidades: Array.isArray(
+                                      integrantesMap[project.id]
+                                    )
+                                      ? integrantesMap[project.id].length
+                                      : 0,
+                                    participacion: project.isPublic
+                                      ? 'Público'
+                                      : 'Privado',
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <div className="mt-1 flex min-w-0 items-center text-slate-400 sm:mt-0">
+                              <Calendar className="mr-2 h-4 w-4 flex-shrink-0" />
+                              <span className="block truncate">
+                                {project.date
+                                  ? new Date(project.date).toLocaleDateString(
+                                      'es-ES'
+                                    )
+                                  : ''}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-700 pt-3">
+                            <div className="text-xs sm:text-sm">
+                              <span className="text-slate-400">Tipo: </span>
+                              <span className="font-medium text-cyan-400">
+                                {project.type_project}
+                              </span>
+                            </div>
+                            <div className="text-xs sm:text-sm">
+                              <span className="text-slate-400">
+                                Categoría:{' '}
+                              </span>
+                              <span className="font-medium text-cyan-400">
+                                {project.category}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex w-full flex-col gap-2 pt-2 sm:flex-row">
+                          <Button
+                            className="min-w-0 flex-1 overflow-hidden bg-cyan-500 text-white hover:bg-cyan-600"
+                            onClick={() =>
+                              (window.location.href = `/proyectos/DetallesProyectos/${project.id}`)
+                            }
+                          >
+                            <Eye className="mr-2 h-4 w-4 flex-shrink-0" />
                             <span className="block truncate text-ellipsis">
-                              {'Solicitar Renuncia'}
+                              {'Ver Proyecto'}
                             </span>
                           </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                          {/* Mostrar botón de renunciar solo si es tomado */}
+                          {project.projectType === 'taken' && (
+                            <Button
+                              variant="outline"
+                              className="min-w-0 flex-1 overflow-hidden border-orange-500 bg-transparent text-orange-400 hover:bg-orange-500/10"
+                              onClick={async () => {
+                                const mensaje = prompt(
+                                  'Motivo de la renuncia (opcional):'
+                                );
+
+                                if (mensaje === null) {
+                                  return; // Usuario canceló
+                                }
+
+                                try {
+                                  const res = await fetch(
+                                    '/api/projects/participation-requests',
+                                    {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        userId,
+                                        projectId: project.id,
+                                        requestType: 'resignation',
+                                        requestMessage: mensaje ?? null,
+                                      }),
+                                    }
+                                  );
+
+                                  // Corrige acceso inseguro a .error en fetch de renuncia
+                                  if (res.ok) {
+                                    alert(
+                                      'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
+                                    );
+                                    // Opcional: actualizar el estado del proyecto para mostrar "Renuncia Pendiente"
+                                  } else {
+                                    const errorData = await res.json();
+                                    alert(
+                                      typeof errorData === 'object' &&
+                                        errorData &&
+                                        'error' in errorData &&
+                                        typeof (
+                                          errorData as { error?: unknown }
+                                        ).error === 'string'
+                                        ? (errorData as { error: string }).error
+                                        : 'No se pudo enviar la solicitud de renuncia'
+                                    );
+                                  }
+                                } catch (error) {
+                                  console.error('Error:', error);
+                                  alert(
+                                    'No se pudo enviar la solicitud de renuncia'
+                                  );
+                                }
+                              }}
+                            >
+                              <span className="block truncate text-ellipsis">
+                                {'Solicitar Renuncia'}
+                              </span>
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 // Empty State
                 <div className="col-span-full py-16 text-center">
@@ -1448,9 +1518,6 @@ export default function ProyectosPage() {
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
             tipoProyecto={tipoProyectoResumen}
             fechaInicio={fechaInicioProyecto}
-            setPlanteamiento={setPlanteamientoTexto} // <-- Añade este setter
-            setJustificacion={setJustificacionTexto} // <-- Añade este setter
-            setObjetivoGen={setObjetivoGenTexto} // <-- Añade este setter
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}

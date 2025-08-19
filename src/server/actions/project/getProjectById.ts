@@ -18,6 +18,7 @@ export interface ProjectDetail {
   justificacion: string;
   objetivo_general: string;
   coverImageKey?: string | null;
+  coverVideoKey?: string | null;
   type_project: string;
   userId: string;
   categoryId: number;
@@ -110,6 +111,7 @@ export async function getProjectById(
     justificacion: project.justificacion,
     objetivo_general: project.objetivo_general,
     coverImageKey: project.coverImageKey ?? null,
+    coverVideoKey: project.coverVideoKey ?? null,
     type_project: project.type_project,
     userId: project.userId,
     categoryId: project.categoryId,

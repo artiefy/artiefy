@@ -31,7 +31,7 @@ export async function GET() {
 
     // Formatear proyectos propios
     const formattedOwnProjects = ownProjects.map((project) => ({
-      ...project,
+      ...project, // Esto ya incluye coverVideoKey tal cual está en la BD
       category: project.category?.name ?? 'Sin categoría',
       tags: ['proyecto', 'propio'],
       author: 'Mi proyecto',
@@ -47,7 +47,7 @@ export async function GET() {
     const formattedTakenProjects = takenProjects
       .filter((taken) => taken.project?.id)
       .map((taken) => ({
-        ...taken.project!,
+        ...taken.project!, // Esto ya incluye coverVideoKey tal cual está en la BD
         category: taken.project!.category?.name ?? 'Sin categoría',
         tags: ['proyecto', 'tomado'],
         author: 'Otro usuario',
