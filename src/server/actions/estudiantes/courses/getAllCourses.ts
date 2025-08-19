@@ -5,6 +5,7 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
   categories,
+  classMeetings,
   courseCourseTypes,
   courses,
   courseTypes,
@@ -13,7 +14,12 @@ import {
   users,
 } from '~/server/db/schema';
 
-import type { Course, CourseType, SubscriptionLevel } from '~/types';
+import type {
+  ClassMeeting,
+  Course,
+  CourseType,
+  SubscriptionLevel,
+} from '~/types';
 
 // Consulta base separada
 const baseCoursesQuery = {
@@ -96,6 +102,43 @@ export async function getAllCourses(): Promise<Course[]> {
       });
     }
 
+    // --- NUEVO: Obtener classMeetings para todos los cursos ---
+    let classMeetingsMap: Record<number, ClassMeeting[]> = {};
+    if (allCourseIds.length > 0) {
+      const allMeetings = await db
+        .select()
+        .from(classMeetings)
+        .where(inArray(classMeetings.courseId, allCourseIds));
+
+      // Agrupar por courseId
+      classMeetingsMap = {};
+      for (const meeting of allMeetings) {
+        const courseId = meeting.courseId;
+        if (!classMeetingsMap[courseId]) {
+          classMeetingsMap[courseId] = [];
+        }
+        classMeetingsMap[courseId].push({
+          id: meeting.id,
+          courseId: meeting.courseId,
+          title: meeting.title,
+          startDateTime: meeting.startDateTime
+            ? new Date(meeting.startDateTime).toISOString()
+            : '',
+          endDateTime: meeting.endDateTime
+            ? new Date(meeting.endDateTime).toISOString()
+            : '',
+          joinUrl: meeting.joinUrl ?? null,
+          weekNumber: meeting.weekNumber ?? null,
+          createdAt: meeting.createdAt
+            ? new Date(meeting.createdAt).toISOString()
+            : null,
+          meetingId: meeting.meetingId,
+          video_key: meeting.video_key ?? null,
+          progress: meeting.progress ?? null,
+        });
+      }
+    }
+
     // Transform course data synchronously now that we have all needed data
     const transformedCourses: Course[] = coursesData.map((course) => ({
       id: course.id,
@@ -141,11 +184,16 @@ export async function getAllCourses(): Promise<Course[]> {
       requiresProgram: Boolean(course.requiresProgram),
       is_featured: course.is_featured ?? false,
       is_top: course.is_top ?? false,
+      // Añadir classMeetings para que esté disponible en el front
+      classMeetings: classMeetingsMap[course.id] ?? [],
     }));
 
     return transformedCourses;
   } catch (err) {
-    console.error('Error al obtener todos los cursos:', err);
+    console.error(
+      'Error al obtener todos los cursos:',
+      err instanceof Error ? err.message : err
+    );
     throw new Error(
       `Error al obtener todos los cursos: ${err instanceof Error ? err.message : 'Error desconocido'}`
     );

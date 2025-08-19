@@ -686,12 +686,21 @@ export function CourseContent({
                         <span className="block text-xs sm:hidden">
                           La primera clase en vivo del curso es el
                         </span>
-                        <span className="mt-1 block text-xs font-extrabold text-yellow-600 sm:hidden">
+                        <span
+                          className="mt-1 block text-xs font-extrabold sm:hidden"
+                          style={{
+                            color: '#218c5a' /* más oscuro que #2ecc71 */,
+                          }}
+                        >
                           {formatSpanishDate(upcomingMeetings[0].startDateTime)}
                         </span>
                         {upcomingMeetings[0].startDateTime && (
                           <span className="mt-1 block sm:hidden">
-                            <span className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold text-cyan-800">
+                            <span
+                              className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold"
+                              // color de hora igual que en desktop (no verde)
+                              style={{ color: '#0891b2' }}
+                            >
                               {new Date(
                                 upcomingMeetings[0].startDateTime
                               ).toLocaleTimeString('es-CO', {
@@ -713,7 +722,10 @@ export function CourseContent({
                         {/* Desktop: frase y fecha como antes, en una sola línea */}
                         <span className="hidden sm:inline">
                           La primera clase en vivo del curso es el{' '}
-                          <span className="font-extrabold text-yellow-600">
+                          <span
+                            className="font-extrabold"
+                            style={{ color: '#218c5a' }}
+                          >
                             {formatSpanishDate(
                               upcomingMeetings[0].startDateTime
                             )}
@@ -721,7 +733,10 @@ export function CourseContent({
                           {upcomingMeetings[0].startDateTime && (
                             <>
                               {' '}
-                              <span className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold text-cyan-800">
+                              <span
+                                className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold"
+                                style={{ color: '#0891b2' }}
+                              >
                                 {new Date(
                                   upcomingMeetings[0].startDateTime
                                 ).toLocaleTimeString('es-CO', {
@@ -756,16 +771,19 @@ export function CourseContent({
                   >
                     {!isSignedIn ? (
                       <>
-                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 sm:text-base">
-                          {/* Cambia a Link para iniciar sesión */}
-                          <Link
-                            href="/sign-in"
-                            className="inline-flex items-center gap-1 text-yellow-700 hover:underline"
-                          >
-                            <FaLock className="mr-1 inline-block" />
-                            Inicia sesión
-                          </Link>
-                        </span>
+                        <Link
+                          href="/sign-in"
+                          className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold underline hover:bg-green-100 hover:[text-decoration-line:underline] sm:text-base"
+                          style={{
+                            backgroundColor: '#2ecc71',
+                            borderColor: '#218c5a',
+                            color: '#16603f', // más oscuro que #218c5a
+                            textDecorationLine: 'none',
+                          }}
+                        >
+                          <FaLock className="mr-1 inline-block" />
+                          Inicia sesión
+                        </Link>
                         <br />
                         <span style={{ color: '#fff' }}>
                           para ver todas las clases disponibles

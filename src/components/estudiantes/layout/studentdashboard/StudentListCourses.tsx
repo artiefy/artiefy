@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
 import {
   ArrowRightCircleIcon,
   CheckCircleIcon,
@@ -28,7 +27,7 @@ import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCou
 
 import StudentPagination from './StudentPagination';
 
-import type { Course } from '~/types';
+import type { Course, ClassMeeting } from '~/types';
 
 interface CourseListStudentProps {
   courses: Course[];
@@ -52,22 +51,37 @@ export default async function StudentListCourses({
   const user = await currentUser();
   const userId = user?.id;
 
-  if (!courses || courses.length === 0) {
-    return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
-        <BookOpenIcon className="text-primary h-16 w-16 animate-pulse" />
-        <div className="space-y-2">
-          <h3 className="text-primary text-2xl font-bold">
-            No hay cursos disponibles
-          </h3>
-          <p className="text-gray-500">
-            No se encontraron cursos que coincidan con tu búsqueda.
-            {searchTerm ? ' Intenta con otros términos de búsqueda.' : ''}
-            {category ? ' Prueba con otra categoría.' : ''}
-          </p>
-        </div>
-      </div>
-    );
+  // Helper para formatear la fecha en español (con hora)
+  function formatSpanishDate(dateString: string) {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    };
+    return date.toLocaleDateString('es-ES', options);
+  }
+
+  // Obtener la próxima clase en vivo directamente de course.classMeetings si existe
+  function getNextLiveClassDateFromMeetings(course: Course): string | null {
+    const meetings =
+      (course as Course & { classMeetings?: ClassMeeting[] }).classMeetings ??
+      [];
+    if (!Array.isArray(meetings)) return null;
+    const now = new Date();
+    const nextMeeting = meetings
+      .filter(
+        (m) =>
+          m.startDateTime && !m.video_key && new Date(m.startDateTime) > now
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime!).getTime() -
+          new Date(b.startDateTime!).getTime()
+      )[0];
+    return nextMeeting?.startDateTime ?? null;
   }
 
   // Process all courses data in parallel before rendering
@@ -97,7 +111,45 @@ export default async function StudentListCourses({
         console.error('Error checking enrollment status:', error);
       }
 
-      return { course, imageUrl, blurDataURL, isEnrolled };
+      // Obtener próxima clase en vivo desde classMeetings si ya viene del back
+      let nextLiveClassDate: string | null = null;
+      if (
+        (course as Course & { classMeetings?: ClassMeeting[] }).classMeetings &&
+        Array.isArray(
+          (course as Course & { classMeetings?: ClassMeeting[] }).classMeetings
+        )
+      ) {
+        nextLiveClassDate = getNextLiveClassDateFromMeetings(course);
+      } else {
+        // fallback: fetch from API (solo si no viene del back)
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/estudiantes/classMeetings/by-course?courseId=${course.id}`,
+            { next: { revalidate: 300 } }
+          );
+          if (res.ok) {
+            const meetings = (await res.json()) as ClassMeeting[];
+            const now = new Date();
+            const nextMeeting = meetings
+              .filter(
+                (m) =>
+                  m.startDateTime &&
+                  !m.video_key &&
+                  new Date(m.startDateTime) > now
+              )
+              .sort(
+                (a, b) =>
+                  new Date(a.startDateTime!).getTime() -
+                  new Date(b.startDateTime!).getTime()
+              )[0];
+            nextLiveClassDate = nextMeeting?.startDateTime ?? null;
+          }
+        } catch {
+          nextLiveClassDate = null;
+        }
+      }
+
+      return { course, imageUrl, blurDataURL, isEnrolled, nextLiveClassDate };
     })
   );
 
@@ -502,7 +554,13 @@ export default async function StudentListCourses({
       </div>
       <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
         {processedCourses.map(
-          ({ course, imageUrl, blurDataURL, isEnrolled }) => (
+          ({
+            course,
+            imageUrl,
+            blurDataURL,
+            isEnrolled,
+            nextLiveClassDate,
+          }) => (
             <div key={course.id} className="group relative">
               <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
               <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
@@ -585,6 +643,21 @@ export default async function StudentListCourses({
                       </span>
                     </div>
                   </div>
+                  {/* Mostrar solo si el curso tiene próxima clase en vivo */}
+                  {nextLiveClassDate && (
+                    <div className="mt-1 mb-1 flex items-center">
+                      <span
+                        className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_2px_#22c55e]"
+                        aria-label="Clase en vivo pronto"
+                      />
+                      <span className="text-[13px] font-bold text-green-400 sm:text-sm">
+                        Próxima clase en vivo:{' '}
+                        <span className="underline decoration-green-400 underline-offset-2">
+                          {formatSpanishDate(nextLiveClassDate)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                   <Button
                     asChild
                     disabled={!course.isActive}
@@ -594,15 +667,13 @@ export default async function StudentListCourses({
                       href={`/estudiantes/cursos/${course.id}`}
                       className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 ${
                         !course.isActive
-                          ? 'pointer-events-none bg-gray-600 text-white' /* Changed from text-gray-400 to text-white */
+                          ? 'pointer-events-none bg-gray-600 text-white'
                           : 'bg-background text-primary active:scale-95'
                       }`}
                     >
                       <span className="font-bold">
                         {!course.isActive ? (
                           <span className="flex items-center justify-center text-white">
-                            {' '}
-                            {/* Added text-white here */}
                             <MdOutlineLockClock className="mr-1.5 size-5" />
                             Muy pronto
                           </span>

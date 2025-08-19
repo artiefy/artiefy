@@ -7,6 +7,8 @@ import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import Loading from '~/app/loading';
+import { ForumBreadcrumbs } from '~/components/estudiantes/layout/forum/ForumBreadcrumbs';
+import { Header } from '~/components/estudiantes/layout/Header';
 
 interface Foro {
   id: number;
@@ -159,97 +161,118 @@ export default function StudentForumPage() {
   if (!forum) return <Loading />;
 
   return (
-    <div className="mx-auto max-w-3xl py-8">
-      <h1 className="mb-2 text-2xl font-bold">{forum.title}</h1>
-      <p className="mb-6 text-gray-300">{forum.description}</p>
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <div key={post.id} className="mb-2 rounded bg-gray-800 p-4">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="font-semibold text-cyan-300">
-                {post.userId.name}
-              </span>
-              <span className="text-xs text-gray-400">
-                {new Date(post.createdAt).toLocaleString()}
-              </span>
-            </div>
-            <div className="text-white">{post.content}</div>
-            {/* --- Mostrar replies de este post --- */}
-            <div className="mt-3 space-y-2">
-              {postReplies
-                .filter((r) => r.postId === post.id)
-                .map((reply) => (
-                  <div key={reply.id} className="ml-4 rounded bg-gray-900 p-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-green-300">
-                        {reply.userId.name}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(reply.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-white">{reply.content}</div>
-                  </div>
-                ))}
-            </div>
-            {/* --- Botón para responder a este post --- */}
-            <div className="mt-3">
-              {replyingToPostId === post.id ? (
-                <div>
-                  <textarea
-                    className="mb-2 w-full rounded bg-gray-900 p-3 text-white"
-                    rows={2}
-                    placeholder="Escribe tu respuesta..."
-                    value={replyMessage[post.id] || ''}
-                    onChange={(e) =>
-                      setReplyMessage((prev) => ({
-                        ...prev,
-                        [post.id]: e.target.value,
-                      }))
-                    }
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
-                      onClick={() => handleReplySend(post.id)}
-                    >
-                      Responder
-                    </button>
-                    <button
-                      className="rounded bg-gray-600 px-4 py-2 font-bold text-white hover:bg-gray-700"
-                      onClick={() => setReplyingToPostId(null)}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  className="mt-2 text-sm text-blue-400 hover:underline"
-                  onClick={() => setReplyingToPostId(post.id)}
-                >
-                  Responder a este post
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-6">
-        <textarea
-          className="mb-2 w-full rounded bg-gray-900 p-3 text-white"
-          rows={3}
-          placeholder="Escribe tu respuesta..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
+    <>
+      <Header />
+      {forum && (
+        <ForumBreadcrumbs
+          courseId={forum.courseId.id}
+          courseTitle={forum.courseId.title}
+          forumTitle={forum.title}
         />
-        <button
-          className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
-          onClick={handleSend}
-        >
-          Responder
-        </button>
+      )}
+      <div className="mx-auto max-w-3xl py-8">
+        {/* Mostrar nombre del curso en vez del id */}
+        <h1 className="mb-2 text-2xl font-bold">
+          {`Discusiones del curso - ${forum.courseId.title}`}
+        </h1>
+        {/* Quitar el subtítulo de foro general */}
+        {/* <p className="mb-6 text-gray-300">
+          {forum.description
+            ? forum.description
+            : `Foro general para estudiantes del curso ${forum.courseId.title}`}
+        </p> */}
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <div key={post.id} className="mb-2 rounded bg-gray-800 p-4">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="font-semibold text-cyan-300">
+                  {post.userId.name}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(post.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <div className="text-white">{post.content}</div>
+              {/* --- Mostrar replies de este post --- */}
+              <div className="mt-3 space-y-2">
+                {postReplies
+                  .filter((r) => r.postId === post.id)
+                  .map((reply) => (
+                    <div
+                      key={reply.id}
+                      className="ml-4 rounded bg-gray-900 p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-green-300">
+                          {reply.userId.name}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(reply.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-white">{reply.content}</div>
+                    </div>
+                  ))}
+              </div>
+              {/* --- Botón para responder a este post --- */}
+              <div className="mt-3">
+                {replyingToPostId === post.id ? (
+                  <div>
+                    <textarea
+                      className="mb-2 w-full rounded bg-gray-900 p-3 text-white"
+                      rows={2}
+                      placeholder="Escribe tu respuesta..."
+                      value={replyMessage[post.id] || ''}
+                      onChange={(e) =>
+                        setReplyMessage((prev) => ({
+                          ...prev,
+                          [post.id]: e.target.value,
+                        }))
+                      }
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
+                        onClick={() => handleReplySend(post.id)}
+                      >
+                        Responder
+                      </button>
+                      <button
+                        className="rounded bg-gray-600 px-4 py-2 font-bold text-white hover:bg-gray-700"
+                        onClick={() => setReplyingToPostId(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="mt-2 text-sm text-blue-400 hover:underline"
+                    onClick={() => setReplyingToPostId(post.id)}
+                  >
+                    Responder a este post
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6">
+          <textarea
+            className="mb-2 w-full rounded bg-gray-900 p-3 text-white"
+            rows={3}
+            placeholder="Escribe tu respuesta..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <button
+            className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
+            onClick={handleSend}
+          >
+            Responder
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
