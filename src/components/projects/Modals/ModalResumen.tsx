@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs'; // Añade este import
+import { Image as ImageIcon, UploadCloud, Video } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { FaArrowLeft, FaRegCalendarAlt, FaRegClock } from 'react-icons/fa';
 
@@ -23,6 +24,7 @@ interface UpdatedProjectData {
   type_project?: string;
   categoryId?: number;
   coverImageKey?: string;
+  coverVideoKey?: string; // <-- Nuevo campo
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias' | 'horas'; // <-- Agrega 'horas' aquí
@@ -50,6 +52,7 @@ interface ModalResumenProps {
   setActividades: (value: string[]) => void;
   projectId?: number;
   coverImageKey?: string;
+  coverVideoKey?: string; // <-- Nuevo prop
   tipoProyecto?: string;
   onUpdateProject?: (updatedProject: UpdatedProjectData) => void;
   fechaInicio?: string;
@@ -92,6 +95,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setActividades: _setActividades, // unused
   projectId,
   coverImageKey: _coverImageKeyProp, // unused
+  coverVideoKey: _coverVideoKeyProp, // unused
   onUpdateProject: _onUpdateProject, // unused
   fechaInicio: fechaInicioProp,
   fechaFin: fechaFinProp,
@@ -166,21 +170,75 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Add missing state for isUpdating, previewImagen, setImagenProyecto, tipoProyecto, setTipoProyecto
   const [isUpdating, _setIsUpdating] = useState(false);
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
-  const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
+  const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [tipoProyecto, setTipoProyecto] = useState<string>(
     _tipoProyectoProp ?? ''
   );
 
-  // Sync previewImagen when imagenProyecto changes
+  // Estado para drag & drop y archivos seleccionados (imagen/video)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Actualiza previewImagen y previewVideo según selectedFile
   useEffect(() => {
-    if (imagenProyecto) {
+    if (!selectedFile) {
+      setPreviewImagen(null);
+      setPreviewVideo(null);
+      return;
+    }
+    if (selectedFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => setPreviewImagen(reader.result as string);
-      reader.readAsDataURL(imagenProyecto);
+      reader.readAsDataURL(selectedFile);
+      setPreviewVideo(null);
+    } else if (selectedFile.type.startsWith('video/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewVideo(reader.result as string);
+      reader.readAsDataURL(selectedFile);
+      setPreviewImagen(null);
     } else {
       setPreviewImagen(null);
+      setPreviewVideo(null);
     }
-  }, [imagenProyecto]);
+  }, [selectedFile]);
+
+  // Añade helpers para obtener la URL de preview de imagen/video cargados
+  const coverImageUrl =
+    _coverImageKeyProp && !_coverImageKeyProp.startsWith('blob:')
+      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverImageKeyProp}`
+      : undefined;
+  const coverVideoUrl =
+    _coverVideoKeyProp && !_coverVideoKeyProp.startsWith('blob:')
+      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverVideoKeyProp}`
+      : undefined;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files?.[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+  function removeFile() {
+    setSelectedFile(null);
+  }
 
   // Función de cambio SIMPLIFICADA
   const handleHorasCambio = (actividadKey: string, value: number) => {
@@ -254,28 +312,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [totalHorasActividadesCalculado, setTiempoEstimadoProyecto]);
 
-  // Sincronización cuando se abre el modal
+  // Sincronización cuando se abre el modal (tanto para modo edición como creación)
   useEffect(() => {
     if (isOpen) {
-      console.log('=== MODAL RESUMEN ABIERTO ===');
-      console.log('Objetivos recibidos:', objetivosEsp);
-      console.log('Horas props:', horasPorActividadProp);
-
-      // Sincronizar objetivos
-      if (objetivosEsp && objetivosEsp.length > 0) {
-        setObjetivosEspEditado(objetivosEsp);
-      }
+      setTitulo(titulo);
+      setPlanteamientoEditado(planteamiento);
+      setJustificacionEditada(justificacion);
+      setObjetivoGenEditado(objetivoGen);
+      setObjetivosEspEditado(objetivosEsp);
 
       // Forzar sincronización de horas si hay datos
       if (
         horasPorActividadProp &&
         Object.keys(horasPorActividadProp).length > 0
       ) {
-        console.log('Forzando sincronización de horas al abrir modal');
         setHorasPorActividadLocal(horasPorActividadProp);
       }
     }
-  }, [isOpen, objetivosEsp, horasPorActividadProp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   const [nuevoObjetivo, setNuevoObjetivo] = useState('');
   const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<
     Record<string, string>
@@ -603,7 +659,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Sincronizar objetivos y horas al abrir el modal en modo edición
   useEffect(() => {
     if (isEditMode && isOpen) {
-      if (objetivosEsp && objetivosEsp.length > 0) {
+      if (objetivosEsp?.length > 0) {
         setObjetivosEspEditado(objetivosEsp);
       }
       if (
@@ -628,19 +684,31 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   // Cuando se edite planteamiento, justificación, objetivo general u objetivos específicos, propaga el cambio al estado global
   useEffect(() => {
-    if (setPlanteamiento) setPlanteamiento(planteamientoEditado);
-  }, [planteamientoEditado, setPlanteamiento]);
+    // Solo llama al setter si existe y el valor realmente cambió
+    if (typeof setPlanteamiento === 'function') {
+      setPlanteamiento(planteamientoEditado);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planteamientoEditado]);
 
   useEffect(() => {
-    if (setJustificacion) setJustificacion(justificacionEditada);
-  }, [justificacionEditada, setJustificacion]);
+    if (typeof setJustificacion === 'function') {
+      setJustificacion(justificacionEditada);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [justificacionEditada]);
 
   useEffect(() => {
-    if (setObjetivoGen) setObjetivoGen(objetivoGenEditado);
-  }, [objetivoGenEditado, setObjetivoGen]);
+    if (typeof setObjetivoGen === 'function') {
+      setObjetivoGen(objetivoGenEditado);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objetivoGenEditado]);
 
   useEffect(() => {
-    if (setObjetivosEspProp) setObjetivosEspProp(objetivosEspEditado);
+    if (typeof setObjetivosEspProp === 'function') {
+      setObjetivosEspProp(objetivosEspEditado);
+    }
   }, [objetivosEspEditado, setObjetivosEspProp]);
 
   // Calcular duración en días y establecer estado inicial
@@ -729,14 +797,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       return meses;
     return meses;
   }, [meses, tipoVisualizacion]);
-
-  // Fix: imagenExistente definition (move above render)
-  const imagenExistente = useMemo(() => {
-    if (!projectId || !_coverImageKeyProp) return null;
-    const s3Url = process.env.NEXT_PUBLIC_AWS_S3_URL;
-    if (!s3Url) return null;
-    return `${s3Url}/${_coverImageKeyProp}`;
-  }, [projectId, _coverImageKeyProp]);
 
   // Agregar objetivo
   const handleAgregarObjetivo = () => {
@@ -937,7 +997,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
       );
 
-      setDiasPorActividad(dias);
+      // Solo actualiza el estado si el valor realmente cambió para evitar loops infinitos
+      setDiasPorActividad((prev) => {
+        const prevKeys = Object.keys(prev);
+        const newKeys = Object.keys(dias);
+        if (
+          prevKeys.length === newKeys.length &&
+          prevKeys.every(
+            (k) =>
+              Array.isArray(prev[k]) &&
+              Array.isArray(dias[k]) &&
+              prev[k].length === dias[k].length &&
+              prev[k].every((v, i) => v === dias[k][i])
+          )
+        ) {
+          return prev;
+        }
+        return dias;
+      });
     } else {
       setDiasPorActividad({});
     }
@@ -951,6 +1028,79 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     horasPorDiaValue,
     responsablesPorActividadProp,
     responsablesPorActividadLocal,
+  ]);
+
+  // --- Calcular meses por actividad para visualización por meses ---
+  const mesesPorActividad = useMemo(() => {
+    if (
+      tipoVisualizacion !== 'meses' ||
+      !fechaInicio ||
+      !fechaFin ||
+      !objetivosEspEditado.length
+    )
+      return {};
+
+    // Generar array de objetos {inicio, fin} para cada mes visible
+    const mesesArr: { inicio: Date; fin: Date }[] = [];
+    if (mesesRender.length > 0) {
+      const fechaActual = new Date(fechaInicio);
+      for (const _ of mesesRender) {
+        const inicioMes = new Date(
+          fechaActual.getFullYear(),
+          fechaActual.getMonth(),
+          1
+        );
+        const finMes = new Date(
+          fechaActual.getFullYear(),
+          fechaActual.getMonth() + 1,
+          0
+        );
+        mesesArr.push({ inicio: inicioMes, fin: finMes });
+        fechaActual.setMonth(fechaActual.getMonth() + 1);
+      }
+    }
+
+    // Para cada actividad, calcular los días laborales desde la fecha de inicio del proyecto
+    const res: Record<string, number[]> = {};
+    objetivosEspEditado.forEach((obj) => {
+      obj.activities.forEach((_, actIdx) => {
+        const actividadKey = `${obj.id}_${actIdx}`;
+        const horas = horasPorActividadFinal[actividadKey] || 1;
+        const horasPorDia = horasPorDiaValue || 1;
+        const diasNecesarios = Math.ceil(horas / horasPorDia);
+
+        // Calcular días laborales para esta actividad desde la fecha de inicio del proyecto
+        const diasLaborales: Date[] = [];
+        let diasAgregados = 0;
+        const fechaDia = new Date(fechaInicio);
+        while (diasAgregados < diasNecesarios) {
+          if (fechaDia.getDay() !== 0) {
+            diasLaborales.push(new Date(fechaDia));
+            diasAgregados++;
+          }
+          fechaDia.setDate(fechaDia.getDate() + 1);
+        }
+
+        // Guardar meses en los que la actividad está presente
+        const mesesActividad: number[] = [];
+        mesesArr.forEach((mes, idx) => {
+          if (diasLaborales.some((d) => d >= mes.inicio && d <= mes.fin)) {
+            mesesActividad.push(idx);
+          }
+        });
+        res[actividadKey] = mesesActividad;
+      });
+    });
+
+    return res;
+  }, [
+    tipoVisualizacion,
+    fechaInicio,
+    fechaFin,
+    objetivosEspEditado,
+    horasPorActividadFinal,
+    horasPorDiaValue,
+    mesesRender,
   ]);
 
   // Función para guardar el proyecto en la BD
@@ -1007,6 +1157,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         type_project: tipoProyecto,
         categoryId: Number(categoria),
         coverImageKey: undefined, // Puedes manejar la imagen si lo necesitas
+        coverVideoKey: undefined, // Maneja el video si es necesario
         fechaInicio,
         fechaFin,
         tipoVisualizacion,
@@ -1223,46 +1374,132 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
           {/* Espacio para la imagen del proyecto */}
           <div className="mb-4 flex flex-col items-center sm:mb-6">
-            <div className="mb-2 flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-gray-200 sm:h-40 sm:w-40">
-              {previewImagen ? (
-                <Image
-                  src={previewImagen}
-                  alt="Imagen del proyecto"
-                  width={160}
-                  height={160}
-                  className="h-full w-full object-cover"
-                  style={{ objectFit: 'cover' }}
+            {/* Solo muestra el área de carga si NO hay archivo seleccionado ni archivo ya cargado */}
+            {!(selectedFile ?? coverImageUrl ?? coverVideoUrl) && (
+              <div
+                className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
+                  isDragOver
+                    ? 'scale-105 border-teal-400 bg-teal-900/30'
+                    : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <UploadCloud className="mb-3 h-8 w-8 text-teal-400" />
+                  <p className="mb-2 text-center text-sm text-gray-300">
+                    {isDragOver ? (
+                      <span className="font-semibold text-teal-300">
+                        Suelta el archivo aquí
+                      </span>
+                    ) : (
+                      <span className="font-semibold">
+                        Sube una imagen <b>o</b> un video del proyecto
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-center text-xs text-gray-400">
+                    Solo se permite 1 archivo (imagen o video)
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
-              ) : imagenExistente ? (
-                <Image
-                  src={imagenExistente}
-                  alt="Imagen del proyecto"
-                  width={160}
-                  height={160}
-                  className="h-full w-full object-cover"
-                  style={{ objectFit: 'cover' }}
-                  unoptimized
-                />
-              ) : (
-                <span className="text-gray-500">Sin imagen</span>
-              )}
-            </div>
-            <label className="cursor-pointer rounded bg-cyan-700 px-3 py-1 text-sm text-white hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-base">
-              {isEditMode ? 'Cambiar imagen' : 'Seleccionar imagen'}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setImagenProyecto(file);
-                  }
-                }}
-              />
-            </label>
+              </div>
+            )}
+            {/* Previsualización de archivo seleccionado o archivo ya cargado */}
+            {selectedFile ? (
+              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
+                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                  {selectedFile.type.startsWith('image/') && (
+                    <ImageIcon className="h-4 w-4 text-green-400" />
+                  )}
+                  {selectedFile.type.startsWith('video/') && (
+                    <Video className="h-4 w-4 text-purple-400" />
+                  )}
+                  <span
+                    className="truncate text-sm text-gray-300"
+                    title={selectedFile.name}
+                  >
+                    {selectedFile.name}
+                  </span>
+                  <span className="flex-shrink-0 text-xs text-gray-400">
+                    ({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)
+                  </span>
+                  <button
+                    type="button"
+                    className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                    onClick={removeFile}
+                  >
+                    Quitar
+                  </button>
+                </div>
+                {/* Previsualización visual */}
+                {previewImagen && (
+                  <div className="flex items-center justify-center">
+                    <Image
+                      src={previewImagen}
+                      alt="Previsualización imagen"
+                      width={320}
+                      height={320}
+                      className="h-80 w-80 rounded object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                {previewVideo && (
+                  <div className="flex items-center justify-center">
+                    <video
+                      src={previewVideo}
+                      controls
+                      className="h-80 w-400 rounded object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : coverImageUrl ? (
+              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
+                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                  <ImageIcon className="h-4 w-4 text-green-400" />
+                  <span className="truncate text-sm text-gray-300">
+                    Imagen cargada
+                  </span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <Image
+                    src={coverImageUrl}
+                    alt="Imagen del proyecto"
+                    width={320}
+                    height={320}
+                    className="h-80 w-80 rounded object-cover"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            ) : coverVideoUrl ? (
+              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
+                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                  <Video className="h-4 w-4 text-purple-400" />
+                  <span className="truncate text-sm text-gray-300">
+                    Video cargado
+                  </span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <video
+                    src={coverVideoUrl}
+                    controls
+                    className="h-80 w-[350px] rounded object-cover"
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
-
           <br />
           <br />
           <textarea
@@ -1286,7 +1523,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setPlanteamientoEditado(e.target.value);
                   handleTextAreaChange(e);
-                  if (setPlanteamiento) setPlanteamiento(e.target.value); // <-- Propaga cambio
+                  // Quitar: if (setPlanteamiento) setPlanteamiento(e.target.value);
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1303,7 +1540,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setJustificacionEditada(e.target.value);
                   handleTextAreaChange(e);
-                  if (setJustificacion) setJustificacion(e.target.value); // <-- Propaga cambio
+                  // Quitar: if (setJustificacion) setJustificacion(e.target.value);
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1320,7 +1557,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 onChange={(e) => {
                   setObjetivoGenEditado(e.target.value);
                   handleTextAreaChange(e);
-                  if (setObjetivoGen) setObjetivoGen(e.target.value); // <-- Propaga cambio
+                  // Quitar: if (setObjetivoGen) setObjetivoGen(e.target.value);
                 }}
                 rows={1}
                 className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
@@ -1999,19 +2236,28 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                   tipoVisualizacion === 'dias' &&
                                   diasPorActividad[actividadKey]?.includes(i)
                                     ? 'bg-cyan-300 font-bold text-white'
-                                    : cronogramaState[act]?.includes(i)
+                                    : tipoVisualizacion === 'meses' &&
+                                        mesesPorActividad[
+                                          actividadKey
+                                        ]?.includes(i)
                                       ? 'bg-cyan-300 font-bold text-white'
-                                      : 'bg-white'
+                                      : cronogramaState[act]?.includes(i)
+                                        ? 'bg-cyan-300 font-bold text-white'
+                                        : 'bg-white'
                                 }`}
                               >
                                 {tipoVisualizacion === 'dias' &&
                                 diasPorActividad[actividadKey]?.includes(i)
                                   ? '✔️'
-                                  : ''}
-                                {tipoVisualizacion !== 'dias' &&
-                                cronogramaState[act]?.includes(i)
-                                  ? '✔️'
-                                  : ''}
+                                  : tipoVisualizacion === 'meses' &&
+                                      mesesPorActividad[actividadKey]?.includes(
+                                        i
+                                      )
+                                    ? '✔️'
+                                    : tipoVisualizacion !== 'dias' &&
+                                        cronogramaState[act]?.includes(i)
+                                      ? '✔️'
+                                      : ''}
                               </td>
                             ))}
                           </tr>

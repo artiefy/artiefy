@@ -12,6 +12,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
   }
 
+  // Si el userId es numérico, devolver un nombre genérico (no buscar en la tabla Clerk)
+  if (!isNaN(Number(userId))) {
+    return NextResponse.json({ name: 'No disponible' });
+  }
+
+  // Buscar solo si es un userId tipo string (Clerk)
   const result = await db
     .select()
     .from(users)

@@ -24,6 +24,7 @@ interface ProjectData {
   }[];
   integrantes?: number[];
   coverImageKey?: string;
+  coverVideoKey?: string; // <-- Nuevo campo
   type_project: string;
   categoryId: number;
   isPublic?: boolean;
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
 
     let body: Partial<ProjectData> = {};
     let coverImageKey: string | null = null;
+    let coverVideoKey: string | null = null;
 
     const contentType = req.headers.get('content-type') ?? '';
     if (contentType.includes('multipart/form-data')) {
@@ -87,10 +89,25 @@ export async function POST(req: Request) {
         await writeFile(filePath, buffer);
         coverImageKey = `/uploads/${fileName}`;
       }
+
+      // Nuevo: manejo de video
+      const videoFile = formData.get('video') as File | null;
+      if (videoFile && videoFile.size > 0) {
+        const buffer = Buffer.from(await videoFile.arrayBuffer());
+        const fileName = `proyecto_${Date.now()}_${videoFile.name}`;
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+        await mkdir(uploadsDir, { recursive: true });
+        const filePath = path.join(uploadsDir, fileName);
+        await writeFile(filePath, buffer);
+        coverVideoKey = `/uploads/${fileName}`;
+      }
     } else {
       body = (await req.json()) as Partial<ProjectData>;
       if (body.coverImageKey) {
         coverImageKey = body.coverImageKey;
+      }
+      if (body.coverVideoKey) {
+        coverVideoKey = body.coverVideoKey;
       }
     }
 
@@ -171,6 +188,7 @@ export async function POST(req: Request) {
       actividades: actividades_db,
       integrantes: body.integrantes ?? [],
       coverImageKey: coverImageKey ?? undefined,
+      coverVideoKey: coverVideoKey ?? undefined, // <-- Nuevo
       fechaInicio:
         body.fechaInicio && !isNaN(Date.parse(body.fechaInicio))
           ? new Date(body.fechaInicio).toISOString().split('T')[0]

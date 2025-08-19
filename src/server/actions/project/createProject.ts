@@ -27,6 +27,7 @@ interface ProjectData {
   }[];
   integrantes?: number[]; // Aún no usados
   coverImageKey?: string; // ya está incluido
+  coverVideoKey?: string; // <-- Nuevo campo
   type_project: string;
   categoryId: number;
   isPublic?: boolean;
@@ -98,6 +99,7 @@ export async function createProject(
       justificacion: projectData.justificacion,
       objetivo_general: projectData.objetivo_general,
       coverImageKey: projectData.coverImageKey ?? null,
+      coverVideoKey: projectData.coverVideoKey ?? null, // <-- Nuevo
       type_project: projectData.type_project,
       userId: UserId,
       categoryId: projectData.categoryId,

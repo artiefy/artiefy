@@ -203,6 +203,7 @@ export const projects = pgTable('projects', {
   justificacion: text('justificacion').notNull(),
   objetivo_general: text('objetivo_general').notNull(),
   coverImageKey: text('cover_image_key'),
+  coverVideoKey: text('cover_video_key'), // <-- Nuevo campo para video
   type_project: varchar('type_project', { length: 255 }).notNull(),
   userId: text('user_id')
     .references(() => users.id)

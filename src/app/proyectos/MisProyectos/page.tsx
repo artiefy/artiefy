@@ -51,6 +51,7 @@ interface Project {
   justificacion: string;
   objetivo_general: string;
   coverImageKey?: string;
+  coverVideoKey?: string; // <-- Nuevo campo
   type_project: string;
   userId: string;
   categoryId: number;
@@ -81,6 +82,7 @@ interface ProjectDetails {
   type_project: string;
   categoryId: number;
   coverImageKey?: string;
+  coverVideoKey?: string; // <-- Nuevo campo
   isPublic: boolean;
   userId: string;
   createdAt: string;
@@ -630,6 +632,10 @@ export default function ProyectosPage() {
                   typeof p.coverImageKey === 'string'
                     ? p.coverImageKey
                     : undefined,
+                coverVideoKey:
+                  typeof p.coverVideoKey === 'string'
+                    ? p.coverVideoKey
+                    : undefined,
                 type_project:
                   typeof p.type_project === 'string' ? p.type_project : '',
                 userId: typeof p.userId === 'string' ? p.userId : '',
@@ -1095,6 +1101,12 @@ export default function ProyectosPage() {
                               handleImageError(project.id);
                             }}
                           />
+                        ) : project.coverVideoKey ? (
+                          <video
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                            controls
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-slate-700">
                             <div className="text-center text-slate-400">
@@ -1526,16 +1538,39 @@ export default function ProyectosPage() {
                   : []
               }
               cronograma={
-                Array.isArray(proyectoGenerado?.tasks)
-                  ? proyectoGenerado.tasks.reduce<Record<string, number[]>>(
-                      (acc, t, idx) => {
+                Array.isArray(proyectoGenerado?.tasks) &&
+                proyectoGenerado?.fechaInicio
+                  ? (() => {
+                      const cronograma: Record<string, number[]> = {};
+                      const fechaInicio = new Date(
+                        proyectoGenerado.fechaInicio!
+                      );
+                      let horasAcumuladas = 0;
+                      // Usar horasPorActividad para obtener las horas de cada tarea
+                      const horasPorActividadArr = proyectoGenerado.tasks.map(
+                        (t) =>
+                          t &&
+                          typeof t.task_name === 'string' &&
+                          typeof horasPorActividad[t.task_name] === 'number'
+                            ? horasPorActividad[t.task_name]
+                            : 6 // default 6 horas si no hay info
+                      );
+                      proyectoGenerado.tasks.forEach((t, idx) => {
                         if (t && typeof t.task_name === 'string') {
-                          acc[t.task_name] = [idx];
+                          const diasAcumulados = Math.floor(
+                            horasAcumuladas / 6
+                          );
+                          const fechaActividad = new Date(fechaInicio);
+                          fechaActividad.setDate(
+                            fechaActividad.getDate() + diasAcumulados
+                          );
+                          const mes = fechaActividad.getMonth() + 1; // 1-indexed
+                          cronograma[t.task_name] = [mes];
+                          horasAcumuladas += horasPorActividadArr[idx] || 6;
                         }
-                        return acc;
-                      },
-                      {}
-                    )
+                      });
+                      return cronograma;
+                    })()
                   : {}
               }
               categoriaId={proyectoGenerado?.categoryId}
