@@ -50,6 +50,7 @@ export const revalidate = 3600;
 interface ExtendedCourse extends Course {
   progress?: number;
   finalGrade?: number;
+  forumId?: number; // Asegúrate de que Course tenga forumId opcional
 }
 
 interface CourseHeaderProps {
@@ -1293,6 +1294,27 @@ export function CourseHeader({
     );
   };
 
+  // --- NUEVO: Estado para forumId ---
+  const [forumId, setForumId] = useState<number | null>(null);
+
+  // --- NUEVO: Obtener forumId por curso ---
+  useEffect(() => {
+    const fetchForum = async () => {
+      try {
+        const res = await fetch(
+          `/api/estudiantes/forums/by-course?courseId=${course.id}`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { id?: number } | null;
+          if (data && typeof data.id === 'number') setForumId(data.id);
+        }
+      } catch {
+        // No hacer nada si no hay foro
+      }
+    };
+    fetchForum();
+  }, [course.id]);
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {/* Cambia el CardHeader para reducir el espacio en móviles */}
@@ -1544,7 +1566,6 @@ export function CourseHeader({
               {/* Ocultar en pantallas pequeñas si no está logueado */}
               {isSignedIn ?? (
                 <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
-                  {/* ...existing code...*/}
                   <div className="flex items-center">
                     <FaCalendar className="mr-2 text-white" />
                     <span className="text-xs text-white sm:text-sm">
@@ -1610,29 +1631,73 @@ export function CourseHeader({
         <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
             <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
-              <div>
-                <h3 className="text-base font-extrabold text-white sm:text-lg">
-                  {/* Cambiado a blanco */}
-                  {course.instructorName ?? 'Instructor no encontrado'}
-                </h3>
-                <em className="text-sm font-bold text-cyan-300 sm:text-base">
-                  {/* Color brillante para "Educador" */}
-                  Educador
-                </em>
-              </div>
-              {/* Modalidad badge a la derecha en mobile, abajo en desktop */}
-              <div className="mt-4 ml-2 block sm:hidden">
-                <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
-                  {course.modalidad?.name}
-                </Badge>
+              <div className="flex w-full items-center">
+                <div>
+                  <h3 className="text-base font-extrabold text-white sm:text-lg">
+                    {course.instructorName ?? 'Instructor no encontrado'}
+                  </h3>
+                  <em className="text-sm font-bold text-cyan-300 sm:text-base">
+                    Educador
+                  </em>
+                </div>
               </div>
             </div>
+            {/* Botón foro debajo de "Educador" en todas las vistas */}
+            {isEnrolled ? (
+              course.forumId ? (
+                <div className="mt-2 flex justify-end">
+                  <Link href={`/estudiantes/foro/${course.forumId}`}>
+                    <button
+                      className="w-full max-w-xs rounded bg-blue-600 px-6 py-2 text-base font-bold whitespace-nowrap text-white transition hover:bg-blue-700 sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                      style={{ minWidth: 240 }}
+                    >
+                      Ir al foro del curso
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-2 flex justify-end">
+                  <button
+                    className="w-full max-w-xs cursor-not-allowed rounded bg-gray-500 px-6 py-2 text-base font-bold whitespace-nowrap text-white sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                    style={{ minWidth: 240 }}
+                    disabled
+                  >
+                    No hay foro disponible
+                  </button>
+                </div>
+              )
+            ) : null}
           </div>
           {/* Modalidad badge solo visible en desktop */}
           <div className="hidden flex-col items-end gap-4 sm:flex">
             <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
               {course.modalidad?.name}
             </Badge>
+            {/* --- NUEVO: Botón Ir al foro debajo del badge de modalidad --- */}
+            {isEnrolled ? (
+              forumId ? (
+                <div className="mt-2 flex w-full justify-end">
+                  <Link href={`/estudiantes/foro/${forumId}`}>
+                    <button
+                      className="w-full max-w-xs rounded bg-blue-600 px-6 py-2 text-base font-bold whitespace-nowrap text-white transition hover:bg-blue-700 sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                      style={{ minWidth: 240 }}
+                    >
+                      Ir al foro del curso
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-2 flex w-full justify-end">
+                  <button
+                    className="w-full max-w-xs cursor-not-allowed rounded bg-gray-500 px-6 py-2 text-base font-bold whitespace-nowrap text-white sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                    style={{ minWidth: 240 }}
+                    disabled
+                  >
+                    No hay foro disponible
+                  </button>
+                </div>
+              )
+            ) : null}
           </div>
         </div>
         {/* New buttons container */}

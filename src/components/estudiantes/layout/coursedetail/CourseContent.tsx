@@ -666,25 +666,32 @@ export function CourseContent({
             >
               <div className="pattenrs" style={{ zIndex: 0 }} />
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <div className="flex flex-col items-center gap-2 px-8 pt-8 pb-4">
-                  <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-sm font-semibold text-cyan-800 shadow-sm">
+                <div className="flex flex-col items-center gap-2 px-8 pt-8 pb-4 sm:px-8 sm:pt-8 sm:pb-4">
+                  <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-xs font-semibold text-cyan-800 shadow-sm sm:text-sm">
                     <FaVideo className="mr-2 inline-block text-cyan-600" />
                     Clase en Vivo
                   </span>
+                  {/* Responsive: frase y fecha en líneas separadas solo en móvil, en desktop como antes */}
                   <h3
-                    className="relative mb-2 text-2xl font-extrabold drop-shadow-sm"
-                    style={{ color: '#fff', zIndex: 2 }}
+                    className="relative mb-2 text-xs leading-tight font-extrabold drop-shadow-sm sm:text-2xl"
+                    style={{
+                      color: '#fff',
+                      zIndex: 2,
+                      wordBreak: 'break-word',
+                    }}
                   >
                     {upcomingMeetings.length > 0 ? (
                       <>
-                        La primera clase en vivo del programa es el{' '}
-                        <span className="font-extrabold text-yellow-600">
+                        {/* Móvil: frase y fecha en líneas separadas, letra pequeña */}
+                        <span className="block text-xs sm:hidden">
+                          La primera clase en vivo del curso es el
+                        </span>
+                        <span className="mt-1 block text-xs font-extrabold text-yellow-600 sm:hidden">
                           {formatSpanishDate(upcomingMeetings[0].startDateTime)}
                         </span>
                         {upcomingMeetings[0].startDateTime && (
-                          <>
-                            {' '}
-                            <span className="ml-2 inline-block rounded border border-cyan-300 bg-cyan-200 px-2 py-0.5 text-base font-bold text-cyan-800">
+                          <span className="mt-1 block sm:hidden">
+                            <span className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold text-cyan-800">
                               {new Date(
                                 upcomingMeetings[0].startDateTime
                               ).toLocaleTimeString('es-CO', {
@@ -701,21 +708,63 @@ export function CourseContent({
                                   })
                                 : ''}
                             </span>
-                          </>
+                          </span>
                         )}
+                        {/* Desktop: frase y fecha como antes, en una sola línea */}
+                        <span className="hidden sm:inline">
+                          La primera clase en vivo del curso es el{' '}
+                          <span className="font-extrabold text-yellow-600">
+                            {formatSpanishDate(
+                              upcomingMeetings[0].startDateTime
+                            )}
+                          </span>
+                          {upcomingMeetings[0].startDateTime && (
+                            <>
+                              {' '}
+                              <span className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold text-cyan-800">
+                                {new Date(
+                                  upcomingMeetings[0].startDateTime
+                                ).toLocaleTimeString('es-CO', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}{' '}
+                                -{' '}
+                                {upcomingMeetings[0].endDateTime
+                                  ? new Date(
+                                      upcomingMeetings[0].endDateTime
+                                    ).toLocaleTimeString('es-CO', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })
+                                  : ''}
+                              </span>
+                            </>
+                          )}
+                        </span>
                       </>
                     ) : (
-                      'Próximamente clases en vivo'
+                      <span className="block text-xs sm:text-base">
+                        Próximamente clases en vivo
+                      </span>
                     )}
                   </h3>
                 </div>
-                <div className="flex flex-col items-center gap-2 px-8 pb-8">
-                  <p className="text-lg font-medium" style={{ color: '#fff' }}>
+                <div className="flex flex-col items-center gap-2 px-4 pb-6 sm:px-8 sm:pb-8">
+                  <p
+                    className="text-xs font-medium sm:text-lg"
+                    style={{ color: '#fff' }}
+                  >
                     {!isSignedIn ? (
                       <>
-                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
-                          <FaLock className="mr-1 inline-block" />
-                          Inicia sesión
+                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 sm:text-base">
+                          {/* Cambia a Link para iniciar sesión */}
+                          <Link
+                            href="/sign-in"
+                            className="inline-flex items-center gap-1 text-yellow-700 hover:underline"
+                          >
+                            <FaLock className="mr-1 inline-block" />
+                            Inicia sesión
+                          </Link>
                         </span>
                         <br />
                         <span style={{ color: '#fff' }}>
@@ -724,7 +773,7 @@ export function CourseContent({
                       </>
                     ) : (
                       <>
-                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-3 py-1 font-semibold text-yellow-700">
+                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 sm:text-base">
                           <FaLock className="mr-1 inline-block" />
                           Inscríbete al curso
                         </span>
