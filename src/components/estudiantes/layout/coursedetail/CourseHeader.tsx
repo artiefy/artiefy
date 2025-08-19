@@ -44,6 +44,7 @@ import type { ClassMeeting, Course, CourseMateria } from '~/types';
 import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
+import '~/styles/buttonforum.css'; // <-- NUEVO: importar el CSS del botón foro
 
 export const revalidate = 3600;
 
@@ -1642,62 +1643,39 @@ export function CourseHeader({
                 </div>
               </div>
             </div>
-            {/* Botón foro debajo de "Educador" en todas las vistas */}
-            {isEnrolled ? (
-              course.forumId ? (
-                <div className="mt-2 flex justify-end">
-                  <Link href={`/estudiantes/foro/${course.forumId}`}>
-                    <button
-                      className="w-full max-w-xs rounded bg-blue-600 px-6 py-2 text-base font-bold whitespace-nowrap text-white transition hover:bg-blue-700 sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-                      style={{ minWidth: 240 }}
-                    >
-                      Ir al foro del curso
-                    </button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="mt-2 flex justify-end">
+            {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
+            {isEnrolled && (forumId ?? course.forumId) && (
+              <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">
+                <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
                   <button
-                    className="w-full max-w-xs cursor-not-allowed rounded bg-gray-500 px-6 py-2 text-base font-bold whitespace-nowrap text-white sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                    className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
                     style={{ minWidth: 240 }}
-                    disabled
                   >
-                    No hay foro disponible
+                    Ir al Foro Del Curso
                   </button>
-                </div>
-              )
-            ) : null}
+                </Link>
+              </div>
+            )}
           </div>
           {/* Modalidad badge solo visible en desktop */}
           <div className="hidden flex-col items-end gap-4 sm:flex">
             <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
               {course.modalidad?.name}
             </Badge>
-            {/* --- NUEVO: Botón Ir al foro debajo del badge de modalidad --- */}
-            {isEnrolled ? (
-              forumId ? (
+            {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
+            {isEnrolled &&
+              (forumId || course.forumId ? (
                 <div className="mt-2 flex w-full justify-end">
-                  <Link href={`/estudiantes/foro/${forumId}`}>
+                  <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
                     <button
-                      className="w-full max-w-xs rounded bg-blue-600 px-6 py-2 text-base font-bold whitespace-nowrap text-white transition hover:bg-blue-700 sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                      className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
                       style={{ minWidth: 240 }}
                     >
-                      Ir al foro del curso
+                      Ir al Foro Del Curso
                     </button>
                   </Link>
                 </div>
-              ) : (
-                <div className="mt-2 flex w-full justify-end">
-                  <button
-                    className="w-full max-w-xs cursor-not-allowed rounded bg-gray-500 px-6 py-2 text-base font-bold whitespace-nowrap text-white sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-                    style={{ minWidth: 240 }}
-                    disabled
-                  >
-                    No hay foro disponible
-                  </button>
-                </div>
-              )
-            ) : null}
+              ) : null)}
           </div>
         </div>
         {/* New buttons container */}
