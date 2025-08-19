@@ -596,6 +596,35 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [handleBotResponse, onSearchComplete, courseId, user?.id]);
 
   useEffect(() => {
+    const handleEnrollmentMessage = (event: Event) => {
+      const customEvent = event as CustomEvent<{ message: string; courseTitle?: string }>;
+      setIsOpen(true);
+      setMessages([
+        {
+          id: Date.now(),
+          text: customEvent.detail.message,
+          sender: 'bot',
+        },
+      ]);
+      setInputText('');
+      // Forzar chatMode para mostrar ChatMessages
+      setChatMode((prev) => ({
+        ...prev,
+        idChat: Date.now(), // id temporal para ChatMessages
+        status: true,
+        curso_title: customEvent.detail.courseTitle ?? '',
+      }));
+      setShowChatList(false); // Oculta el chatlist si estaba abierto
+    };
+
+    window.addEventListener('open-chatbot-with-enrollment-message', handleEnrollmentMessage);
+
+    return () => {
+      window.removeEventListener('open-chatbot-with-enrollment-message', handleEnrollmentMessage);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }

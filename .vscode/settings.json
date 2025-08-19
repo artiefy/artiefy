@@ -126,8 +126,8 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
-  "workbench.colorTheme": "GitHub Dark Default",
-    "[ignore]": {
+  "workbench.colorTheme": "Beautiful Dracula Normal - No Highlight",
+  "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
 }

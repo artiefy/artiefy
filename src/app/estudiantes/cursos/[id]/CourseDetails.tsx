@@ -130,7 +130,19 @@ export default function CourseDetails({
       if (result.success) {
         setTotalStudents((prev) => prev + 1);
         setIsEnrolled(true);
-        toast.success('¡Te has inscrito exitosamente!');
+        toast.success('¡Te has inscrito exitosamente!, Ahora vamos a hablar un poco acerca el curso 🤖');
+
+        // Abrir chatbot con mensaje personalizado después de la inscripción
+        setTimeout(() => {
+          const enrollmentMessage = `¡Felicidades por inscribirte al curso "${course.title}"! 🎉\n\nEstoy aquí para ayudarte en tu proceso de aprendizaje. Puedo responder preguntas sobre:\n\n• Contenido del curso y lecciones\n• Proyectos y ejercicios prácticos\n• Conceptos que no entiendas\n• Recursos adicionales\n\n¿Hay algo específico del curso sobre lo que te gustaría saber más? 😊`;
+          
+          window.dispatchEvent(new CustomEvent('open-chatbot-with-enrollment-message', {
+            detail: { 
+              message: enrollmentMessage,
+              courseTitle: course.title 
+            }
+          }));
+        }, 1000);
 
         // Actualizar curso y progreso desde la BD
         const updatedCourse = await getCourseById(course.id, userId);
