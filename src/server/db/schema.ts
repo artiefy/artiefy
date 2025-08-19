@@ -997,3 +997,43 @@ export const dates = pgTable('dates', {
   id: serial('id').primaryKey(),
   startDate: date('start_date').notNull(),
 });
+
+// 🆕 Datos de inscripción no presentes en `users` + llaves de S3
+export const userInscriptionDetails = pgTable('user_inscription_details', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+
+  // Campos “extra” (no duplicados en users)
+  identificacionTipo: text('identificacion_tipo').notNull(),
+  identificacionNumero: text('identificacion_numero').notNull(),
+  nivelEducacion: text('nivel_educacion').notNull(),
+  tieneAcudiente: text('tiene_acudiente'), // 'Sí' | 'No'
+  acudienteNombre: text('acudiente_nombre'),
+  acudienteContacto: text('acudiente_contacto'),
+  acudienteEmail: text('acudiente_email'),
+  programa: text('programa').notNull(),
+  fechaInicio: text('fecha_inicio').notNull(),
+  comercial: text('comercial'),
+  sede: text('sede').notNull(),
+  horario: text('horario').notNull(),
+  pagoInscripcion: text('pago_inscripcion').notNull(), // 'Sí' | 'No'
+  pagoCuota1: text('pago_cuota1').notNull(), // 'Sí' | 'No'
+  modalidad: text('modalidad').notNull(), // 'Virtual' | 'Presencial'
+  numeroCuotas: text('numero_cuotas').notNull(),
+
+  // 🗂️ Claves S3 de los documentos
+  idDocKey: text('id_doc_key'), // Documento de identidad
+  utilityBillKey: text('utility_bill_key'), // Recibo servicio público
+  diplomaKey: text('diploma_key'), // Acta/Bachiller o Noveno
+  pagareKey: text('pagare_key'), // Pagaré
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const horario = pgTable('horario', {
+  id: serial('id').primaryKey(),
+  schedule: text('contact').notNull(),
+});

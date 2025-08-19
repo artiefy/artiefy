@@ -22,13 +22,15 @@ const studentSchema = z.object({
   subscriptionEndDate: z.string().nullable(),
   role: z.string().optional(),
   planType: z.string().nullable().optional(),
-  programTitle: z.string().optional(),
+  // 👇 Acepta null o undefined
+  programTitle: z.string().nullish(),
   programTitles: z.array(z.string()).optional(),
-  courseTitle: z.string().optional(),
+  courseTitle: z.string().nullish(),
   courseTitles: z.array(z.string()).optional(),
   nivelNombre: z.string().nullable().optional(),
   purchaseDate: z.string().nullable().optional(),
   customFields: z.record(z.string(), z.string()).optional(),
+  // reemplaza estas dos líneas:
 });
 
 const courseSchema = z.object({
@@ -36,9 +38,10 @@ const courseSchema = z.object({
   title: z.string(),
 });
 
+// después
 const enrolledUserSchema = z.object({
   id: z.string(),
-  programTitle: z.string(),
+  programTitle: z.string().nullish(), // acepta null o undefined
 });
 
 const errorResponseSchema = z.object({
@@ -457,15 +460,20 @@ export default function EnrolledUsersPage() {
       const json: unknown = await res.json();
       const data = apiResponseSchema.parse(json);
 
-      const enrolledMap = new Map(
-        data.enrolledUsers.map((u) => [u.id, u.programTitle])
+      // ⚠️ programTitle puede venir null: sácalos del Map
+      const enrolledMap = new Map<string, string>(
+        data.enrolledUsers
+          .filter((u) => !!u.programTitle)
+          .map((u) => [u.id, u.programTitle!])
       );
 
+      // cuando normalices estudiantes, pon fallback:
       const studentsFilteredByRole = data.students
         .filter((s) => s.role === 'estudiante')
         .map((s) => ({
           ...s,
           programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
+          courseTitle: s.courseTitle ?? 'Sin curso',
           nivelNombre: s.nivelNombre ?? 'No definido',
           planType: s.planType ?? undefined,
           customFields: s.customFields

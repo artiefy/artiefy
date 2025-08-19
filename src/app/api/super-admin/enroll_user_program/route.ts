@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, or,sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -124,30 +124,41 @@ export async function GET(req: Request) {
         planType: users.planType,
         role: users.role,
         purchaseDate: users.purchaseDate,
+
+        // Ahora pueden venir en null si no tiene programa/curso
         programTitle: programas.title,
         courseTitle: courses.title,
+
         enrolledAt: latestEnrollments.enrolledAt,
         nivelNombre: sql<string>`(SELECT n.name FROM nivel n
-			JOIN courses c ON c.nivelid = n.id
-			JOIN enrollments e ON e.course_id = c.id
-			WHERE e.user_id = ${users.id}
-			LIMIT 1)`.as('nivelNombre'),
+      JOIN courses c ON c.nivelid = n.id
+      JOIN enrollments e ON e.course_id = c.id
+      WHERE e.user_id = ${users.id}
+      LIMIT 1)`.as('nivelNombre'),
       })
       .from(users)
-      .innerJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
-      .innerJoin(programas, eq(latestEnrollments.programaId, programas.id))
-      .innerJoin(
+
+      // 👇 LEFT JOIN en vez de INNER JOIN
+      .leftJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
+      .leftJoin(programas, eq(latestEnrollments.programaId, programas.id))
+      .leftJoin(
         latestCourseEnrollments,
         eq(users.id, latestCourseEnrollments.userId)
       )
-      .innerJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
+      .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
+
+      // 👇 OR: debe tener o bien programa o bien curso
       .where(
-        programId
-          ? and(
-              eq(users.role, 'estudiante'),
-              eq(programas.id, Number(programId))
-            )
-          : eq(users.role, 'estudiante')
+        and(
+          eq(users.role, 'estudiante'),
+          // Si pasas programId, filtra por ese programa en el lado de programa.
+          // Si no quieres que el programId filtre, cambia esta línea por sql`true`
+          programId ? eq(programas.id, Number(programId)) : sql`true`,
+          or(
+            sql`${latestEnrollments.userId} IS NOT NULL`,
+            sql`${latestCourseEnrollments.userId} IS NOT NULL`
+          )
+        )
       );
 
     // Agregar los campos dinámicos a cada estudiante
