@@ -22,7 +22,6 @@ const studentSchema = z.object({
   subscriptionEndDate: z.string().nullable(),
   role: z.string().optional(),
   planType: z.string().nullable().optional(),
-  // 👇 Acepta null o undefined
   programTitle: z.string().nullish(),
   programTitles: z.array(z.string()).optional(),
   courseTitle: z.string().nullish(),
@@ -30,7 +29,11 @@ const studentSchema = z.object({
   nivelNombre: z.string().nullable().optional(),
   purchaseDate: z.string().nullable().optional(),
   customFields: z.record(z.string(), z.string()).optional(),
-  // reemplaza estas dos líneas:
+
+  // ➕ NUEVOS CAMPOS DEL BACKEND
+  isNew: z.boolean().optional(),
+  isSubOnly: z.boolean().optional(),
+  enrolledInCourse: z.boolean().optional(),
 });
 
 const courseSchema = z.object({
@@ -72,6 +75,14 @@ interface Student {
   nivelNombre?: string | null;
   purchaseDate?: string | null;
   customFields?: Record<string, string>;
+
+  // ➕ nuevos
+  isNew?: boolean;
+  isSubOnly?: boolean;
+  enrolledInCourse?: boolean;
+
+  // 👉 usaremos este derivado para la columna visible
+  enrolledInCourseLabel?: 'Sí' | 'No';
 }
 
 interface CreateUserResponse {
@@ -181,6 +192,22 @@ const allColumns: Column[] = [
     defaultVisible: false,
     type: 'select', // ✅ CAMBIA a 'select'
     options: ['none', 'Pro', 'Premium', 'Enterprise'], // ✅ AÑADE opciones
+  },
+
+  // ➕ NUEVA COLUMNA
+  {
+    id: 'enrolledInCourseLabel',
+    label: '¿En curso?',
+    defaultVisible: true,
+    type: 'select',
+    options: ['Sí', 'No'],
+  },
+
+  {
+    id: 'nivelNombre',
+    label: 'Nivel de educación',
+    defaultVisible: false,
+    type: 'text',
   },
 ];
 
@@ -327,12 +354,18 @@ export default function EnrolledUsersPage() {
   }, []);
 
   const columnsWithOptions = useMemo<Column[]>(() => {
+    const programOptions = ['No inscrito', ...programs.map((p) => p.title)];
+    const courseOptions = [
+      'Sin curso',
+      ...availableCourses.map((c) => c.title),
+    ];
+
     return allColumns.map((col) => {
       if (col.id === 'programTitle') {
-        return { ...col, options: programs.map((p) => p.title) };
+        return { ...col, options: programOptions };
       }
       if (col.id === 'courseTitle') {
-        return { ...col, options: availableCourses.map((c) => c.title) };
+        return { ...col, options: courseOptions };
       }
       return col;
     });
@@ -467,21 +500,37 @@ export default function EnrolledUsersPage() {
           .map((u) => [u.id, u.programTitle!])
       );
 
-      // cuando normalices estudiantes, pon fallback:
       const studentsFilteredByRole = data.students
         .filter((s) => s.role === 'estudiante')
-        .map((s) => ({
-          ...s,
-          programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
-          courseTitle: s.courseTitle ?? 'Sin curso',
-          nivelNombre: s.nivelNombre ?? 'No definido',
-          planType: s.planType ?? undefined,
-          customFields: s.customFields
-            ? Object.fromEntries(
-                Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
-              )
-            : undefined,
-        }));
+        .map((s) => {
+          // 1) ¿Tiene suscripción activa pero sin ninguna matrícula? => NOW
+          const showNOW = !!s.isSubOnly;
+
+          // 2) ¿Está en algún curso? (para la nueva columna)
+          const enrolledInCourseLabel: 'Sí' | 'No' = s.enrolledInCourse
+            ? 'Sí'
+            : 'No';
+
+          // 3) Etiqueta NEW en el nombre (si aplica)
+          const displayName = s.isNew ? `${s.name} (NEW)` : s.name;
+
+          return {
+            ...s,
+            name: displayName,
+            programTitle: showNOW
+              ? 'NOW'
+              : (enrolledMap.get(s.id) ?? 'No inscrito'),
+            courseTitle: showNOW ? 'NOW' : (s.courseTitle ?? 'Sin curso'),
+            enrolledInCourseLabel,
+            nivelNombre: s.nivelNombre ?? 'No definido',
+            planType: s.planType ?? undefined,
+            customFields: s.customFields
+              ? Object.fromEntries(
+                  Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
+                )
+              : undefined,
+          };
+        });
 
       setStudents(studentsFilteredByRole);
       setAvailableCourses(data.courses);

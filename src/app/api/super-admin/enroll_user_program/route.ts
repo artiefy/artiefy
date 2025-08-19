@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, inArray, or,sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -125,7 +125,7 @@ export async function GET(req: Request) {
         role: users.role,
         purchaseDate: users.purchaseDate,
 
-        // Ahora pueden venir en null si no tiene programa/curso
+        // pueden venir en null si no tiene programa/curso
         programTitle: programas.title,
         courseTitle: courses.title,
 
@@ -135,10 +135,27 @@ export async function GET(req: Request) {
       JOIN enrollments e ON e.course_id = c.id
       WHERE e.user_id = ${users.id}
       LIMIT 1)`.as('nivelNombre'),
+
+        // ➕ NUEVOS CAMPOS CALCULADOS
+        // NEW = comprado/creado recientemente (7 días) — si no tienes created_at usa purchaseDate
+        isNew: sql<boolean>`CASE
+      WHEN ${users.purchaseDate} IS NOT NULL
+        AND ${users.purchaseDate} >= NOW() - INTERVAL '7 days'
+      THEN TRUE ELSE FALSE END`,
+
+        // ¿Tiene suscripción activa pero sin ninguna matrícula?
+        isSubOnly: sql<boolean>`CASE
+      WHEN ${users.subscriptionStatus} = 'active'
+        AND ${latestEnrollments.userId} IS NULL
+        AND ${latestCourseEnrollments.userId} IS NULL
+      THEN TRUE ELSE FALSE END`,
+
+        // ¿Está matriculado en al menos un curso?
+        enrolledInCourse: sql<boolean>`CASE
+      WHEN ${latestCourseEnrollments.userId} IS NOT NULL THEN TRUE
+      ELSE FALSE END`,
       })
       .from(users)
-
-      // 👇 LEFT JOIN en vez de INNER JOIN
       .leftJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
       .leftJoin(programas, eq(latestEnrollments.programaId, programas.id))
       .leftJoin(
@@ -146,18 +163,12 @@ export async function GET(req: Request) {
         eq(users.id, latestCourseEnrollments.userId)
       )
       .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
-
-      // 👇 OR: debe tener o bien programa o bien curso
       .where(
         and(
           eq(users.role, 'estudiante'),
-          // Si pasas programId, filtra por ese programa en el lado de programa.
-          // Si no quieres que el programId filtre, cambia esta línea por sql`true`
-          programId ? eq(programas.id, Number(programId)) : sql`true`,
-          or(
-            sql`${latestEnrollments.userId} IS NOT NULL`,
-            sql`${latestCourseEnrollments.userId} IS NOT NULL`
-          )
+          // si hay programId, filtra por ese programa; si no, no filtra
+          programId ? eq(programas.id, Number(programId)) : sql`true`
+          // ❌ eliminamos el OR que exigía estar inscrito en programa/curso
         )
       );
 
