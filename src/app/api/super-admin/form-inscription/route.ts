@@ -1,9 +1,10 @@
-// src/app/api/super-admin/form-inscription/submit/route.ts
 import { NextResponse } from 'next/server';
 
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
@@ -11,13 +12,29 @@ import {
   comercials,
   dates,
   enrollmentPrograms,
+  horario,
   programas,
   userCredentials,
-  userCustomFields,
+  userInscriptionDetails,
   users,
 } from '~/server/db/schema';
-// 👉 Debe devolver: { user: { id, username? }, generatedPassword?: string }
 import { createUser } from '~/server/queries/queries';
+
+export const runtime = 'nodejs'; // asegurar Node runtime (Buffer/S3)
+
+const REGION = process.env.AWS_REGION ?? 'us-east-2';
+const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? ''; // 👈 acepta ambas
+
+if (!BUCKET) {
+  throw new Error(
+    'Falta AWS_S3_BUCKET o AWS_BUCKET_NAME en variables de entorno'
+  );
+}
+
+// Base pública para construir URLs
+const PUBLIC_BASE_URL =
+  process.env.NEXT_PUBLIC_AWS_S3_URL ??
+  `https://s3.us-east-2.amazonaws.com/${BUCKET}`;
 
 /* =========================
    Email
@@ -72,6 +89,46 @@ Ingresa a https://artiefy.com/ y cambia tu contraseña.
   await transporter.sendMail(mailOptions);
 }
 
+// ---------- S3 ----------
+const s3 = new S3Client({
+  region: REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+async function uploadToS3(file: File | null, prefix: string) {
+  if (!file) return { key: null as string | null, url: null as string | null };
+
+  const arrayBuf = await file.arrayBuffer();
+  const Body = Buffer.from(arrayBuf);
+
+  const ext = file.type?.includes('pdf')
+    ? '.pdf'
+    : file.type?.includes('png')
+      ? '.png'
+      : file.type?.includes('jpeg')
+        ? '.jpg'
+        : '';
+
+  // 👇 guardamos TODO bajo "documents/"
+  const key = `documents/${prefix}/${uuidv4()}${ext}`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: BUCKET, // <- usa constante unificada
+      Key: key,
+      Body,
+      ContentType: file.type || 'application/octet-stream',
+      // ACL: 'public-read', // opcional: solo si tu bucket NO tiene política pública ya
+    })
+  );
+
+  const url = `${PUBLIC_BASE_URL}/${key}`;
+  return { key, url };
+}
+
 /* =========================
    Validación (Zod)
    ========================= */
@@ -103,11 +160,6 @@ const fieldsSchema = z.object({
   numeroCuotas: z.string().min(1),
 });
 
-const bodySchema = z.object({
-  fields: fieldsSchema,
-});
-
-type Fields = z.infer<typeof fieldsSchema>;
 
 /* =========================
    POST: crea en Clerk, guarda en BD y matrícula al programa
@@ -115,11 +167,24 @@ type Fields = z.infer<typeof fieldsSchema>;
 export async function POST(req: Request) {
   console.log('==== [FORM SUBMIT] INICIO ====');
   try {
-    const raw = await req.json();
-    console.log('[REQ BODY RAW]:', JSON.stringify(raw));
+    console.log('==== [FORM SUBMIT] INICIO ====');
+    // multipart/form-data
+    const form = await req.formData();
 
-    const { fields } = bodySchema.parse(raw);
+    // Campos de texto
+    const text: Record<string, string> = {};
+    form.forEach((v, k) => {
+      if (typeof v === 'string') text[k] = v;
+    });
+
+    const fields = fieldsSchema.parse(text);
     console.log('[FIELDS PARSED]:', JSON.stringify(fields));
+
+    // Archivos
+    const docIdentidad = form.get('docIdentidad') as File | null;
+    const reciboServicio = form.get('reciboServicio') as File | null;
+    const actaGrado = form.get('actaGrado') as File | null;
+    const pagare = form.get('pagare') as File | null;
 
     const fullName = `${fields.nombres} ${fields.apellidos}`.trim();
     const role = 'estudiante' as const;
@@ -236,27 +301,48 @@ export async function POST(req: Request) {
       console.log('[CRED] No se generó password (posible reutilización).');
     }
 
-    // 4) Custom fields: upsert por (user_id, field_key)
-    const entries = Object.entries(fields) as [keyof Fields, string][];
-    if (entries.length > 0) {
-      console.log('[CUSTOM FIELDS] Upserting', entries.length, 'campos');
-      await db
-        .insert(userCustomFields)
-        .values(
-          entries.map(([key, value]) => ({
-            userId,
-            fieldKey: String(key),
-            fieldValue: String(value ?? ''),
-          }))
-        )
-        .onConflictDoUpdate({
-          target: [userCustomFields.userId, userCustomFields.fieldKey],
-          set: {
-            fieldValue: sql`excluded.field_value`,
-            updatedAt: new Date(),
-          },
-        });
-    }
+    // 3) Subir archivos a S3 (quedarán en documents/<tipo>/...)
+    const { key: idDocKey, url: idDocUrl } = await uploadToS3(
+      docIdentidad,
+      'identidad'
+    );
+    const { key: utilityBillKey, url: utilityBillUrl } = await uploadToS3(
+      reciboServicio,
+      'servicio'
+    );
+    const { key: diplomaKey, url: diplomaUrl } = await uploadToS3(
+      actaGrado,
+      'diploma'
+    );
+    const { key: pagareKey, url: pagareUrl } = await uploadToS3(
+      pagare,
+      'pagare'
+    );
+
+    // 4) Guardar los campos EXTRA en userInscriptionDetails (no duplicar lo que ya está en `users`)
+    await db.insert(userInscriptionDetails).values({
+      userId,
+      identificacionTipo: fields.identificacionTipo,
+      identificacionNumero: fields.identificacionNumero,
+      nivelEducacion: fields.nivelEducacion,
+      tieneAcudiente: fields.tieneAcudiente,
+      acudienteNombre: fields.acudienteNombre,
+      acudienteContacto: fields.acudienteContacto,
+      acudienteEmail: fields.acudienteEmail,
+      programa: fields.programa,
+      fechaInicio: fields.fechaInicio,
+      comercial: fields.comercial,
+      sede: fields.sede,
+      horario: fields.horario,
+      pagoInscripcion: fields.pagoInscripcion,
+      pagoCuota1: fields.pagoCuota1,
+      modalidad: fields.modalidad,
+      numeroCuotas: fields.numeroCuotas,
+      idDocKey,
+      utilityBillKey,
+      diplomaKey,
+      pagareKey,
+    });
 
     // 6) Matricular SOLO al programa
     const programRow = await db.query.programas.findFirst({
@@ -310,6 +396,18 @@ export async function POST(req: Request) {
       userId,
       program: { id: programRow.id, title: programRow.title },
       emailSent: Boolean(generatedPassword),
+      s3: {
+        idDocKey,
+        utilityBillKey,
+        diplomaKey,
+        pagareKey,
+        idDocUrl,
+        utilityBillUrl,
+        diplomaUrl,
+        pagareUrl,
+      },
+      // ejemplo que pediste (puedes construir “videoUrl” con cualquier key)
+      exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`, // ilustrativo
     });
   } catch (err) {
     console.error('==== [FORM SUBMIT] FIN ERROR ====');
@@ -325,12 +423,13 @@ export async function POST(req: Request) {
    GET: para poblar selects
    ========================= */
 export async function GET() {
-  const all = await db.select().from(userCustomFields);
   const allDates = await db.select().from(dates);
   const allComercials = await db.select().from(comercials);
+  const allHorarios = await db.select().from(horario);
+
   return NextResponse.json({
-    fields: all,
     dates: allDates,
     comercials: allComercials,
+    horarios: allHorarios,
   });
 }
