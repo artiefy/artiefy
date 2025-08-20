@@ -69,7 +69,7 @@ export function ForumBreadcrumbs({
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className="flex-shrink-0 pt-1 pl-0 md:pl-4">
+      <div className="-mb-7 flex-shrink-0 pt-1 pl-0 sm:-mb-0 md:pl-4">
         <Link
           href={`/estudiantes/cursos/${courseId}`}
           className="Btn-Container"
@@ -96,7 +96,7 @@ export function ForumBreadcrumbs({
               <circle cx="5.73583" cy="17.3868" r="1.5" fill="black" />
             </svg>
           </span>
-          <span className="text">Volver al curso</span>
+          <span className="text">Volver al Curso</span>
         </Link>
       </div>
     </div>

@@ -673,29 +673,8 @@ export default async function StudentListCourses({
                               'drop-shadow(0 0 2px #00BDD8) drop-shadow(0 0 4px #3AF4EF)',
                           }}
                         >
-                          Clase en vivo:
-                        </span>{' '}
-                        {formatSpanishDate(nextLiveClassDate) ===
-                        '20 de agosto de 2025, 08:30 a.m.' ? (
-                          <span
-                            className="font-bold"
-                            style={{
-                              color: '#000',
-                              textShadow: '0 0 4px #00BDD8, 0 0 8px #3AF4EF',
-                              background: 'none',
-                              WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: 'black',
-                              filter:
-                                'drop-shadow(0 0 2px #00BDD8) drop-shadow(0 0 4px #3AF4EF)',
-                            }}
-                          >
-                            {formatSpanishDate(nextLiveClassDate)}
-                          </span>
-                        ) : (
-                          <span className="font-bold text-white">
-                            {formatSpanishDate(nextLiveClassDate)}
-                          </span>
-                        )}
+                          Clase en vivo: {formatSpanishDate(nextLiveClassDate)}
+                        </span>
                       </span>
                     </div>
                   )}
