@@ -247,7 +247,7 @@ export default function StudentForumPage() {
                   </div>
                 ) : (
                   <button
-                    className="mt-2 text-sm text-blue-400 hover:underline"
+                    className="text-secondary mt-2 text-sm hover:underline"
                     onClick={() => setReplyingToPostId(post.id)}
                   >
                     Responder a este post
@@ -259,7 +259,7 @@ export default function StudentForumPage() {
         </div>
         <div className="mt-6">
           <textarea
-            className="mb-2 w-full rounded bg-gray-900 p-3 text-white"
+            className="mb-2 w-full rounded bg-black p-3 text-white"
             rows={3}
             placeholder="Escribe tu respuesta..."
             value={message}

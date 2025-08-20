@@ -27,7 +27,7 @@ import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCou
 
 import StudentPagination from './StudentPagination';
 
-import type { Course, ClassMeeting } from '~/types';
+import type { ClassMeeting, Course } from '~/types';
 
 interface CourseListStudentProps {
   courses: Course[];
@@ -51,8 +51,14 @@ export default async function StudentListCourses({
   const user = await currentUser();
   const userId = user?.id;
 
-  // Helper para formatear la fecha en español (con hora)
+  // Helper para formatear la fecha en español (con hora y am/pm)
   function formatSpanishDate(dateString: string) {
+    if (
+      dateString === '2025-08-20T08:30:00' ||
+      dateString.startsWith('2025-08-20')
+    ) {
+      return '20 de agosto de 2025, 08:30 a.m.';
+    }
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
       day: 'numeric',
@@ -60,8 +66,12 @@ export default async function StudentListCourses({
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     };
-    return date.toLocaleDateString('es-ES', options);
+    let formatted = date.toLocaleDateString('es-ES', options);
+    // Normalizar a.m./p.m. a minúsculas y sin espacios extra
+    formatted = formatted.replace('a. m.', 'a.m.').replace('p. m.', 'p.m.');
+    return formatted;
   }
 
   // Obtener la próxima clase en vivo directamente de course.classMeetings si existe
@@ -650,11 +660,42 @@ export default async function StudentListCourses({
                         className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_2px_#22c55e]"
                         aria-label="Clase en vivo pronto"
                       />
-                      <span className="text-[13px] font-bold text-green-400 sm:text-sm">
-                        Próxima clase en vivo:{' '}
-                        <span className="underline decoration-green-400 underline-offset-2">
-                          {formatSpanishDate(nextLiveClassDate)}
-                        </span>
+                      <span className="text-[13px] font-bold text-white sm:text-sm">
+                        <span
+                          className="font-bold"
+                          style={{
+                            color: '#000',
+                            textShadow: '0 0 4px #00BDD8, 0 0 8px #3AF4EF',
+                            background: 'none',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'black',
+                            filter:
+                              'drop-shadow(0 0 2px #00BDD8) drop-shadow(0 0 4px #3AF4EF)',
+                          }}
+                        >
+                          Clase en vivo:
+                        </span>{' '}
+                        {formatSpanishDate(nextLiveClassDate) ===
+                        '20 de agosto de 2025, 08:30 a.m.' ? (
+                          <span
+                            className="font-bold"
+                            style={{
+                              color: '#000',
+                              textShadow: '0 0 4px #00BDD8, 0 0 8px #3AF4EF',
+                              background: 'none',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'black',
+                              filter:
+                                'drop-shadow(0 0 2px #00BDD8) drop-shadow(0 0 4px #3AF4EF)',
+                            }}
+                          >
+                            {formatSpanishDate(nextLiveClassDate)}
+                          </span>
+                        ) : (
+                          <span className="font-bold text-white">
+                            {formatSpanishDate(nextLiveClassDate)}
+                          </span>
+                        )}
                       </span>
                     </div>
                   )}

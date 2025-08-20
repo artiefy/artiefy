@@ -687,9 +687,9 @@ export function CourseContent({
                           La primera clase en vivo del curso es el
                         </span>
                         <span
-                          className="mt-1 block text-xs font-extrabold sm:hidden"
+                          className="mt-1 block text-xs font-extrabold underline underline-offset-2 sm:hidden"
                           style={{
-                            color: '#218c5a' /* más oscuro que #2ecc71 */,
+                            color: '#00BDD8', // secondary
                           }}
                         >
                           {formatSpanishDate(upcomingMeetings[0].startDateTime)}
@@ -698,14 +698,17 @@ export function CourseContent({
                           <span className="mt-1 block sm:hidden">
                             <span
                               className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold"
-                              // color de hora igual que en desktop (no verde)
-                              style={{ color: '#0891b2' }}
+                              style={{
+                                color: '#006b7a', // secondary más oscuro
+                                textDecoration: 'none',
+                              }}
                             >
                               {new Date(
                                 upcomingMeetings[0].startDateTime
                               ).toLocaleTimeString('es-CO', {
                                 hour: '2-digit',
                                 minute: '2-digit',
+                                hour12: true,
                               })}{' '}
                               -{' '}
                               {upcomingMeetings[0].endDateTime
@@ -714,6 +717,7 @@ export function CourseContent({
                                   ).toLocaleTimeString('es-CO', {
                                     hour: '2-digit',
                                     minute: '2-digit',
+                                    hour12: true,
                                   })
                                 : ''}
                             </span>
@@ -723,8 +727,8 @@ export function CourseContent({
                         <span className="hidden sm:inline">
                           La primera clase en vivo del curso es el{' '}
                           <span
-                            className="font-extrabold"
-                            style={{ color: '#218c5a' }}
+                            className="font-extrabold underline underline-offset-2"
+                            style={{ color: '#00BDD8' }}
                           >
                             {formatSpanishDate(
                               upcomingMeetings[0].startDateTime
@@ -735,13 +739,17 @@ export function CourseContent({
                               {' '}
                               <span
                                 className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold"
-                                style={{ color: '#0891b2' }}
+                                style={{
+                                  color: '#006b7a', // secondary más oscuro
+                                  textDecoration: 'none',
+                                }}
                               >
                                 {new Date(
                                   upcomingMeetings[0].startDateTime
                                 ).toLocaleTimeString('es-CO', {
                                   hour: '2-digit',
                                   minute: '2-digit',
+                                  hour12: true,
                                 })}{' '}
                                 -{' '}
                                 {upcomingMeetings[0].endDateTime
@@ -750,6 +758,7 @@ export function CourseContent({
                                     ).toLocaleTimeString('es-CO', {
                                       hour: '2-digit',
                                       minute: '2-digit',
+                                      hour12: true,
                                     })
                                   : ''}
                               </span>
@@ -773,15 +782,21 @@ export function CourseContent({
                       <>
                         <Link
                           href="/sign-in"
-                          className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold underline hover:bg-green-100 hover:[text-decoration-line:underline] sm:text-base"
+                          className="mb-1 inline-block rounded border border-yellow-300 bg-[#00BDD8] px-2 py-1 text-xs font-semibold underline underline-offset-2 hover:bg-[#0097a7] hover:[text-decoration-line:underline] sm:text-base"
                           style={{
-                            backgroundColor: '#2ecc71',
-                            borderColor: '#218c5a',
-                            color: '#16603f', // más oscuro que #218c5a
+                            backgroundColor: '#00BDD8',
+                            borderColor: '#0097a7',
+                            color: '#006b7a', // secondary más oscuro
                             textDecorationLine: 'none',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
                           }}
                         >
-                          <FaLock className="mr-1 inline-block" />
+                          <FaLock
+                            className="mr-1 inline-block"
+                            style={{ color: '#006b7a' }}
+                          />
                           Inicia sesión
                         </Link>
                         <br />
