@@ -135,9 +135,8 @@ Tutorial UPDATE DEPENDENCIES:
 7. `npm install nombre-del-paquete@latest` // Instala la última versión de un paquete específico
 
 8. `npm outdated --include=dev` // Muestra las dependencias de desarrollo que están desactualizadas
-9. `npm outdated -g --depth=0` // Muestra las dependencias globales que están desactualizadas
-10. `npm install -g [nombre-del-paquete]@latest` // Instala la última versión de un paquete global específico
-
+9. `npm list -g --depth=0` // Muestra las dependencias globales que están desactualizadas
+10. `npm outdated -g --depth=0` // Instala la última versión de los paquetes globales
 11. `npm install tailwindcss @tailwindcss/postcss postcss` // Instala las últimas versiones de TailwindCSS 4.0
 12. `npm install tailwindcss@latest @tailwindcss/cli@latest` // Actualizar TailwindCss 4
 13. `npx @clerk/upgrade --from=core-1` // Instala la última versión de Clerk para Next.js 1
