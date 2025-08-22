@@ -18,6 +18,7 @@ export async function getUserProjects(userId: string) {
         justificacion: projects.justificacion,
         objetivo_general: projects.objetivo_general,
         coverImageKey: projects.coverImageKey,
+        coverVideoKey: projects.coverVideoKey,
         type_project: projects.type_project,
         userId: projects.userId,
         categoryId: projects.categoryId,

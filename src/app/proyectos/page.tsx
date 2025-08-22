@@ -13,6 +13,7 @@ import {
   Filter,
   Folder,
   ImageIcon,
+  Maximize, // agrega este import
   Menu,
   MoreHorizontal,
   Search,
@@ -59,7 +60,9 @@ interface PublicProject {
   objetivosEsp: string[];
   actividades: unknown[];
   image?: string;
+  video?: string;
   coverImageKey?: string; // <-- Agrega esta línea
+  coverVideoKey?: string; // <-- Nuevo campo para video de portada
 }
 
 async function fetchPublicProjects(): Promise<PublicProject[]> {
@@ -78,9 +81,12 @@ async function fetchPublicProjects(): Promise<PublicProject[]> {
       id: project.id,
       name: project.name,
       coverImageKey: project.coverImageKey,
+      coverVideoKey: project.coverVideoKey,
       image: project.image,
+      video: project.video,
       hasImage: !!project.image,
       hasCoverImageKey: !!project.coverImageKey,
+      hasCoverVideoKey: !!project.coverVideoKey,
     });
 
     const processedProject = {
@@ -88,6 +94,12 @@ async function fetchPublicProjects(): Promise<PublicProject[]> {
       image: project.coverImageKey
         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
         : (project.image ?? undefined),
+      video:
+        project.coverVideoKey &&
+        typeof project.coverVideoKey === 'string' &&
+        project.coverVideoKey.length > 0
+          ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`
+          : undefined,
     };
 
     // Debug: Ver cómo queda después de procesar
@@ -95,6 +107,7 @@ async function fetchPublicProjects(): Promise<PublicProject[]> {
       id: processedProject.id,
       name: processedProject.name,
       finalImage: processedProject.image,
+      finalCoverVideoUrl: processedProject.video,
       awsUrl: process.env.NEXT_PUBLIC_AWS_S3_URL,
     });
 
@@ -121,6 +134,7 @@ export default function Component() {
   const [projects, setProjects] = useState<PublicProject[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<PublicProject[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const [videoErrors, setVideoErrors] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -131,6 +145,47 @@ export default function Component() {
     null
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Estado para controlar el ciclo imagen/video por proyecto
+  const [showImageMap, setShowImageMap] = useState<Record<number, boolean>>({});
+  const videoRefs = React.useRef<Record<number, HTMLVideoElement | null>>({});
+  const imageRefs = React.useRef<Record<number, HTMLImageElement | null>>({});
+
+  // Función para iniciar el ciclo imagen/video para un proyecto
+  const _startImageVideoCycle = (projectId: number) => {
+    setShowImageMap((prev) => ({ ...prev, [projectId]: true }));
+  };
+
+  // Efecto para manejar el ciclo imagen/video por proyecto
+  useEffect(() => {
+    const timers: Record<number, NodeJS.Timeout> = {};
+
+    filteredProjects.forEach((project) => {
+      if (project.image && project.video) {
+        // Si no hay estado para este proyecto, inicialízalo
+        if (typeof showImageMap[project.id] === 'undefined') {
+          setShowImageMap((prev) => ({ ...prev, [project.id]: true }));
+        } else if (showImageMap[project.id]) {
+          // Si está mostrando imagen, programa cambio a video en 20s
+          timers[project.id] = setTimeout(() => {
+            setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
+          }, 10000);
+        }
+      }
+    });
+
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, [filteredProjects, showImageMap]);
+
+  // Handler cuando termina el video: volver a imagen y reiniciar video
+  const handleVideoEnded = (projectId: number) => {
+    setShowImageMap((prev) => ({ ...prev, [projectId]: true }));
+    // Reiniciar video para la próxima vez
+    const ref = videoRefs.current[projectId];
+    if (ref) ref.currentTime = 0;
+  };
+
   // Clerk:
   const { user } = useUser();
   const userId = user?.id;
@@ -373,6 +428,10 @@ export default function Component() {
     setImageErrors((prev) => new Set(prev).add(projectId));
   };
 
+  const handleVideoError = (projectId: number) => {
+    setVideoErrors((prev) => new Set(prev).add(projectId));
+  };
+
   // Función para limpiar solo filtros
   const clearFilters = () => {
     setSelectedCategory('all');
@@ -389,6 +448,57 @@ export default function Component() {
 
   // Close sidebar when clicking outside on mobile
   const closeSidebar = () => setSidebarOpen(false);
+
+  // Función para poner el video en pantalla completa
+  const handleFullscreen = (projectId: number, isImage: boolean) => {
+    if (isImage) {
+      const img = imageRefs.current[projectId];
+      if (img) {
+        if (typeof img.requestFullscreen === 'function') {
+          img.requestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    } else {
+      const video = videoRefs.current[projectId];
+      if (video) {
+        if (typeof video.requestFullscreen === 'function') {
+          video.requestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
@@ -915,33 +1025,95 @@ export default function Component() {
                             </p>
                           </div>
 
-                          <div className="relative overflow-hidden rounded-lg">
-                            {project.image && !imageErrors.has(project.id) ? (
+                          <div className="media-container relative overflow-hidden rounded-lg">
+                            {/* Elimina el mensaje amarillo, solo muestra imagen si no hay video */}
+                            {project.image && project.video ? (
+                              showImageMap[project.id] !== false ? (
+                                <Image
+                                  ref={(el) => {
+                                    imageRefs.current[project.id] = el;
+                                  }}
+                                  src={project.image}
+                                  alt={project.name}
+                                  width={500}
+                                  height={300}
+                                  className="media-fit"
+                                  unoptimized
+                                  onError={() => handleImageError(project.id)}
+                                  onLoad={() => {
+                                    if (
+                                      typeof showImageMap[project.id] ===
+                                      'undefined'
+                                    ) {
+                                      setShowImageMap((prev) => ({
+                                        ...prev,
+                                        [project.id]: true,
+                                      }));
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <video
+                                  ref={(el) => {
+                                    videoRefs.current[project.id] = el;
+                                  }}
+                                  autoPlay
+                                  controls
+                                  muted
+                                  className="media-fit"
+                                  poster={project.image}
+                                  onEnded={() => handleVideoEnded(project.id)}
+                                  onError={() => handleVideoError(project.id)}
+                                >
+                                  <source
+                                    src={project.video}
+                                    type="video/mp4"
+                                  />
+                                  Tu navegador no soporta la reproducción de
+                                  video.
+                                </video>
+                              )
+                            ) : project.video &&
+                              !videoErrors.has(project.id) ? (
+                              <video
+                                controls
+                                className="media-fit"
+                                poster={project.image ?? ''}
+                                onError={() => handleVideoError(project.id)}
+                                ref={(el) => {
+                                  videoRefs.current[project.id] = el;
+                                }}
+                              >
+                                <source
+                                  src={project.video ?? ''}
+                                  type="video/mp4"
+                                />
+                                Tu navegador no soporta la reproducción de
+                                video.
+                              </video>
+                            ) : project.image &&
+                              !imageErrors.has(project.id) ? (
                               <Image
+                                ref={(el) => {
+                                  imageRefs.current[project.id] = el;
+                                }}
                                 src={project.image}
                                 alt={project.name}
                                 width={500}
                                 height={300}
-                                className="h-48 w-full object-cover md:h-64"
+                                className="media-fit"
                                 unoptimized
-                                onError={() => {
-                                  console.error(
-                                    'Error cargando imagen del proyecto:',
-                                    project.name,
-                                    'ID:',
-                                    project.id,
-                                    'URL que falló:',
-                                    project.image
-                                  );
-                                  handleImageError(project.id);
-                                }}
+                                onError={() => handleImageError(project.id)}
                                 onLoad={() => {
-                                  console.log(
-                                    'Imagen cargada exitosamente para el proyecto:',
-                                    project.name,
-                                    'URL:',
-                                    project.image
-                                  );
+                                  if (
+                                    typeof showImageMap[project.id] ===
+                                    'undefined'
+                                  ) {
+                                    setShowImageMap((prev) => ({
+                                      ...prev,
+                                      [project.id]: true,
+                                    }));
+                                  }
                                 }}
                               />
                             ) : (
@@ -949,22 +1121,37 @@ export default function Component() {
                                 <div className="text-center text-slate-400">
                                   <ImageIcon className="mx-auto mb-2 h-8 w-8 md:h-12 md:w-12" />
                                   <p className="text-xs md:text-sm">
-                                    {imageErrors.has(project.id)
-                                      ? 'Error al cargar imagen'
-                                      : 'Sin imagen'}
+                                    {imageErrors.has(project.id) ||
+                                    videoErrors.has(project.id)
+                                      ? 'Error al cargar portada'
+                                      : 'Sin imagen/video'}
                                   </p>
                                 </div>
                               </div>
                             )}
-                            <div className="absolute top-3 right-3">
-                              <Button
-                                variant="secondary"
-                                size="icon"
-                                className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
-                              >
-                                <ImageIcon className="h-3 w-3 md:h-4 md:w-4" />
-                              </Button>
-                            </div>
+                            {/* Botón pantalla completa: solo mostrar si NO se está reproduciendo video */}
+                            {showImageMap[project.id] !== false && (
+                              <div className="absolute top-3 right-3">
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                                  onClick={() => {
+                                    // Si hay video y está en modo imagen, fullscreen imagen; si no, fullscreen video
+                                    const isImage = Boolean(
+                                      (project.image &&
+                                        project.video &&
+                                        showImageMap[project.id] !== false) ??
+                                        (project.image && !project.video)
+                                    );
+                                    handleFullscreen(project.id, isImage);
+                                  }}
+                                  title="Ver en pantalla completa"
+                                >
+                                  <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap gap-2">
@@ -1075,6 +1262,25 @@ export default function Component() {
             -webkit-box-orient: unset;
             overflow: visible;
           }
+        }
+
+        .media-container {
+          position: relative;
+          width: 100%;
+          height: 12rem; /* igual a h-48 */
+        }
+        @media (min-width: 768px) {
+          .media-container {
+            height: 16rem; /* igual a md:h-64 */
+          }
+        }
+        .media-fit {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          display: block;
+          border-radius: 0.5rem;
+          background: #1e293b;
         }
       `}</style>
     </div>

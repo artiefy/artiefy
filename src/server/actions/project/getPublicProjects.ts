@@ -26,6 +26,7 @@ export default async function getPublicProjects() {
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       coverImageKey: project.coverImageKey,
+      coverVideoKey: project.coverVideoKey,
       user: project.user
         ? {
             id: project.user.id,

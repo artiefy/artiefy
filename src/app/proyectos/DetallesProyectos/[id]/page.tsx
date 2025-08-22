@@ -11,11 +11,13 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  Edit,
+  EyeOff,
+  Globe,
   Trash2,
   Users,
 } from 'lucide-react';
 
+import Loading from '~/app/loading';
 import { Header } from '~/components/estudiantes/layout/Header';
 import ModalEntregaActividad from '~/components/projects/Modals/ModalEntregaActividad';
 import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
@@ -547,8 +549,29 @@ export default function ProjectDetails() {
     // Implementa aquí la lógica de entrega real si es necesario
   }
 
-  function handleConfirmarPublicarProyecto() {
-    // Implementa aquí la lógica de publicación real si es necesario
+  // Cambia esta función para que publique el proyecto correctamente
+  async function handleConfirmarPublicarProyecto() {
+    if (!projectId) return;
+    try {
+      _setPublicandoProyecto(true);
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPublic: true,
+          publicComment: comentarioPublicar,
+        }),
+      });
+      if (res.ok) {
+        setModalPublicarOpen(false);
+        setComentarioPublicar('');
+        await reloadProject();
+      }
+    } catch (_e) {
+      // Manejo de error opcional
+    } finally {
+      _setPublicandoProyecto(false);
+    }
   }
 
   // --- COMPONENTE PARA ARCHIVOS DE ENTREGA ---
@@ -1115,14 +1138,40 @@ export default function ProjectDetails() {
     fetchEntregas();
   }, [projectId, actividadesProyecto, isLoaded, user?.id, project]);
 
+  // --- NUEVO: Estado y lógica para ciclo imagen/video ---
+  const [showImage, setShowImage] = useState(true);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (project?.coverImageKey && project?.coverVideoKey) {
+      if (showImage) {
+        // Mostrar imagen por 20 segundos, luego mostrar video
+        timer = setTimeout(() => {
+          setShowImage(false);
+        }, 20000);
+      }
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showImage, project?.coverImageKey, project?.coverVideoKey]);
+
+  // Cuando el video termina, volver a mostrar la imagen
+  const handleVideoEnded = () => {
+    setShowImage(true);
+    // Reiniciar el video para la próxima vez
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  };
+
   // --- RENDER ---
   // Mostrar loading mientras Clerk carga
   if (!isLoaded || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-teal-900 to-slate-800 text-white">
-        Cargando...
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!project) {
@@ -1170,16 +1219,68 @@ export default function ProjectDetails() {
             <Card className="border-slate-700 bg-slate-800/50">
               <CardContent className="p-6">
                 <div className="mb-4 flex w-full items-center justify-center rounded-lg bg-slate-700/50">
-                  {/* Mostrar video si existe, si no mostrar imagen, si no el ícono */}
-                  {project.coverVideoKey ? (
+                  {/* Mostrar imagen 20s, luego video autoplay, repetir ciclo */}
+                  {project.coverImageKey && project.coverVideoKey ? (
+                    showImage ? (
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                        alt={project.name}
+                        width={500}
+                        height={500}
+                        style={{
+                          width: '600px',
+                          height: 'auto',
+                          borderRadius: '0.5rem',
+                          maxWidth: '100%',
+                          display: 'block',
+                          margin: '0 auto',
+                        }}
+                        layout="responsive"
+                        className="h-auto w-full max-w-[500px] rounded-lg object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        controls={true}
+                        muted={true}
+                        width={250}
+                        height={250}
+                        style={{
+                          width: '300px',
+                          height: 'auto',
+                          borderRadius: '0.5rem',
+                          maxWidth: '100%',
+                          display: 'block',
+                          margin: '0 auto',
+                        }}
+                        poster={
+                          project.coverImageKey
+                            ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                            : undefined
+                        }
+                        onEnded={handleVideoEnded}
+                      >
+                        <source
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                          type="video/mp4"
+                        />
+                        Tu navegador no soporta la reproducción de video.
+                      </video>
+                    )
+                  ) : project.coverVideoKey ? (
                     <video
                       controls
-                      width={400}
-                      height={400}
+                      width={250}
+                      height={250}
                       style={{
-                        width: '100%',
+                        width: '250px',
                         height: 'auto',
                         borderRadius: '0.5rem',
+                        maxWidth: '100%',
+                        display: 'block',
+                        margin: '0 auto',
                       }}
                       poster={
                         project.coverImageKey
@@ -1197,10 +1298,10 @@ export default function ProjectDetails() {
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
                       alt={project.name}
-                      width={400}
-                      height={400}
+                      width={250}
+                      height={250}
                       layout="responsive"
-                      className="h-auto w-full rounded-lg object-cover"
+                      className="h-auto w-full max-w-[250px] rounded-lg object-cover"
                       onError={() => setImageError(true)}
                     />
                   ) : (
@@ -1315,7 +1416,6 @@ export default function ProjectDetails() {
                     >
                       <Users className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
                       <span className="truncate sm:inline">Solicitudes</span>
-
                       {solicitudesPendientes > 0 && (
                         <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white sm:h-5 sm:w-5">
                           {solicitudesPendientes}
@@ -1324,6 +1424,50 @@ export default function ProjectDetails() {
                     </Button>
                   )}
 
+                  {/* Botón Publicar/Despublicar */}
+                  {puedeEditarProyecto() &&
+                    (project.isPublic ? (
+                      <Button
+                        className="flex items-center gap-1 truncate bg-yellow-600 text-xs hover:bg-yellow-700 sm:text-sm"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(
+                              `/api/projects/${projectId}`,
+                              {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  isPublic: false,
+                                  publicComment: '',
+                                }),
+                              }
+                            );
+                            if (res.ok) {
+                              await reloadProject();
+                            }
+                          } catch (_e) {
+                            // Manejo de error opcional
+                          }
+                        }}
+                        title="Despublicar proyecto"
+                      >
+                        <EyeOff className="h-4 w-4" />
+                        <span className="truncate">Despublicar</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        className="flex items-center gap-1 truncate bg-green-600 text-xs hover:bg-green-700 sm:text-sm"
+                        size="sm"
+                        onClick={() => setModalPublicarOpen(true)}
+                        title="Publicar proyecto"
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span className="truncate">Publicar</span>
+                      </Button>
+                    ))}
+
+                  {/* Botones originales: Editar y Eliminar */}
                   {puedeEditarProyecto() && (
                     <>
                       <Button
@@ -1331,7 +1475,18 @@ export default function ProjectDetails() {
                         size="sm"
                         onClick={() => setIsEditModalOpen(true)}
                       >
-                        <Edit className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+                        <svg
+                          className="mr-1 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                        </svg>
                         <span className="hidden truncate sm:inline">
                           Editar Proyecto
                         </span>

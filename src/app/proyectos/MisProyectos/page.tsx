@@ -42,6 +42,7 @@ import ModalObjetivoGen from '../../../components/projects/Modals/ModalObjetivoG
 import ModalObjetivosEsp from '../../../components/projects/Modals/ModalObjetivosEsp';
 import ModalPlanteamiento from '../../../components/projects/Modals/ModalPlanteamiento';
 import ModalResumen from '../../../components/projects/Modals/ModalResumen';
+import Loading from '~/app/loading';
 
 // Actualizar la interfaz para incluir el tipo de proyecto
 interface Project {
@@ -240,7 +241,24 @@ export default function ProyectosPage() {
     setResumenOpen(true);
   };
 
-  const handleAnteriorResumen = () => {
+  // Cambia handleAnteriorResumen para pasar los datos actuales al volver atrás
+  const handleAnteriorResumen = (data?: {
+    planteamiento?: string;
+    justificacion?: string;
+    objetivoGen?: string;
+    objetivosEsp?: SpecificObjective[];
+  }) => {
+    // Si se reciben datos, actualiza los estados correspondientes
+    if (data) {
+      if (typeof data.planteamiento === 'string')
+        setPlanteamientoTexto(data.planteamiento);
+      if (typeof data.justificacion === 'string')
+        setJustificacionTexto(data.justificacion);
+      if (typeof data.objetivoGen === 'string')
+        setObjetivoGenTexto(data.objetivoGen);
+      if (Array.isArray(data.objetivosEsp))
+        setObjetivosEspTexto(data.objetivosEsp);
+    }
     setResumenOpen(false);
     setObjetivosEspOpen(true);
   };
@@ -857,13 +875,10 @@ export default function ProyectosPage() {
   }, [editingProjectDetails]);
 
   // Mostrar loading mientras se autentica
-  if (!isLoaded || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-900">
-        <div className="text-xl text-white">Cargando...</div>
-      </div>
-    );
-  }
+  // Mostrar loading mientras Clerk carga
+    if (!isLoaded || loading) {
+      return <Loading />;
+    }
 
   // Función para limpiar todos los campos del flujo de creación
   function limpiarFlujoCreacion() {
@@ -1499,7 +1514,7 @@ export default function ProyectosPage() {
           <ModalResumen
             isOpen={ResumenOpen}
             onClose={() => setResumenOpen(false)}
-            onAnterior={handleAnteriorResumen}
+            onAnterior={(data) => handleAnteriorResumen(data)}
             planteamiento={planteamientoTexto}
             justificacion={justificacionTexto}
             objetivoGen={objetivoGenTexto}
@@ -1518,6 +1533,11 @@ export default function ProyectosPage() {
             setTiempoEstimadoProyecto={setTiempoEstimadoProyecto}
             tipoProyecto={tipoProyectoResumen}
             fechaInicio={fechaInicioProyecto}
+            // NUEVO: pasa los setters para sincronizar cambios al volver atrás
+            setPlanteamiento={setPlanteamientoTexto}
+            setJustificacion={setJustificacionTexto}
+            setObjetivoGen={setObjetivoGenTexto}
+            setObjetivosEspProp={setObjetivosEspTexto}
           />
           <ModalGenerarProyecto
             isOpen={modalGenerarOpen}

@@ -72,7 +72,17 @@ interface ModalResumenProps {
   setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
   tiempoEstimadoProyecto?: number; // <-- Nuevo prop
   setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
-  onAnterior?: () => void; // <-- Nueva prop opcional para volver atrás
+  onAnterior?: (data?: {
+    planteamiento?: string;
+    justificacion?: string;
+    objetivoGen?: string;
+    objetivosEsp?: SpecificObjective[];
+  }) => void; // <-- Cambia la firma para aceptar datos
+  // NUEVO: setters para sincronizar cambios al volver atrás
+  setPlanteamiento?: (value: string) => void;
+  setJustificacion?: (value: string) => void;
+  setObjetivoGen?: (value: string) => void;
+  setObjetivosEspProp?: (value: SpecificObjective[]) => void;
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -104,6 +114,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setHorasPorDiaProyecto,
   setTiempoEstimadoProyecto,
   onAnterior, // <-- Recibe la prop
+  setPlanteamiento,
+  setJustificacion,
+  setObjetivoGen,
+  setObjetivosEspProp,
 }) => {
   const { user } = useUser(); // Obtén el usuario logueado
 
@@ -162,42 +176,45 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }, [duracionDias, isOpen]);
 
   // Add missing state for isUpdating, previewImagen, setImagenProyecto, tipoProyecto, setTipoProyecto
-  const [isUpdating, _setIsUpdating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false); // Cambia _setIsUpdating a setIsUpdating
   const [previewImagen, setPreviewImagen] = useState<string | null>(null);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [tipoProyecto, setTipoProyecto] = useState<string>(
     _tipoProyectoProp ?? ''
   );
+  const [progress, setProgress] = useState(0); // Nuevo estado para progreso
+  // Estado para saber si está creando o actualizando
+  const [statusText, setStatusText] = useState<string>('');
 
   // Estado para drag & drop y archivos seleccionados (imagen/video)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [isDragOverImage, setIsDragOverImage] = useState(false);
+  const [isDragOverVideo, setIsDragOverVideo] = useState(false);
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
+  const videoInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Actualiza previewImagen y previewVideo según selectedFile
+  // Actualiza previewImagen y previewVideo según selectedImage/selectedVideo
   useEffect(() => {
-    if (!selectedFile) {
-      setPreviewImagen(null);
-      setPreviewVideo(null);
-      return;
-    }
-    if (selectedFile.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImagen(reader.result as string);
-      reader.readAsDataURL(selectedFile);
-      setPreviewVideo(null);
-    } else if (selectedFile.type.startsWith('video/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewVideo(reader.result as string);
-      reader.readAsDataURL(selectedFile);
+    if (!selectedImage) {
       setPreviewImagen(null);
     } else {
-      setPreviewImagen(null);
-      setPreviewVideo(null);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewImagen(reader.result as string);
+      reader.readAsDataURL(selectedImage);
     }
-  }, [selectedFile]);
+  }, [selectedImage]);
+  useEffect(() => {
+    if (!selectedVideo) {
+      setPreviewVideo(null);
+    } else {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewVideo(reader.result as string);
+      reader.readAsDataURL(selectedVideo);
+    }
+  }, [selectedVideo]);
 
-  // Añade helpers para obtener la URL de preview de imagen/video cargados
+  // Helpers para obtener la URL de preview de imagen/video cargados
   const coverImageUrl =
     _coverImageKeyProp && !_coverImageKeyProp.startsWith('blob:')
       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverImageKeyProp}`
@@ -207,31 +224,68 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverVideoKeyProp}`
       : undefined;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Permitir solo un archivo de cada tipo
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (file.type.startsWith('image/')) {
+        setSelectedImage(file);
+      }
     }
   };
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      if (file.type.startsWith('video/')) {
+        setSelectedVideo(file);
+      }
+    }
   };
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragOverImage = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    setIsDragOverImage(true);
   };
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDragLeaveImage = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    setIsDragOverImage(false);
+  };
+  const handleDropImage = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverImage(false);
     if (e.dataTransfer.files?.[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        setSelectedImage(file);
+      }
     }
   };
-  function removeFile() {
-    setSelectedFile(null);
+  const handleDragOverVideo = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverVideo(true);
+  };
+  const handleDragLeaveVideo = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverVideo(false);
+  };
+  const handleDropVideo = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverVideo(false);
+    if (e.dataTransfer.files?.[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('video/')) {
+        setSelectedVideo(file);
+      }
+    }
+  };
+  function removeFile(type: 'image' | 'video') {
+    if (type === 'image') setSelectedImage(null);
+    if (type === 'video') setSelectedVideo(null);
   }
 
   // Función de cambio SIMPLIFICADA
@@ -255,14 +309,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
-  const [tituloState, setTitulo] = useState(titulo);
-  const [planteamientoEditado, setPlanteamientoEditado] =
-    useState(planteamiento);
-  const [justificacionEditada, setJustificacionEditada] =
-    useState(justificacion);
-  const [objetivoGenEditado, setObjetivoGenEditado] = useState(objetivoGen);
-  const [objetivosEspEditado, setObjetivosEspEditado] =
-    useState<SpecificObjective[]>(objetivosEsp);
+  const [tituloState, setTitulo] = useState(() => titulo);
+  const [planteamientoEditado, setPlanteamientoEditado] = useState(
+    () => planteamiento
+  );
+  const [justificacionEditada, setJustificacionEditada] = useState(
+    () => justificacion
+  );
+  const [objetivoGenEditado, setObjetivoGenEditado] = useState(
+    () => objetivoGen
+  );
+  const [objetivosEspEditado, setObjetivosEspEditado] = useState<
+    SpecificObjective[]
+  >(() => objetivosEsp);
   // Estado para controlar si la fecha inicial ha sido editada manualmente
   const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
     useState<boolean>(false);
@@ -562,20 +621,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     if (fechaFin !== nuevaFechaFin) {
       setFechaFin(nuevaFechaFin);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     fechaInicio,
     totalHorasActividadesCalculado,
     horasPorDiaValue,
     fechaFinEditadaManualmente,
     objetivosEspEditado, // para detectar cambios en actividades
+    fechaFin, // <-- Añadido para cumplir con react-hooks/exhaustive-deps
   ]);
-
-  // Elimina la función no usada para evitar el warning de ESLint
-  // function handleFechaFinChange(nuevaFecha: string) {
-  //   setFechaFin(nuevaFecha);
-  //   setFechaFinEditadaManualmente(true);
-  // }
 
   // Si la fecha de inicio es mayor a la de fin, intercambiarlas
   useEffect(() => {
@@ -640,7 +693,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     void fetchCategorias();
   }, []);
 
-  // Fix: remove setTiempoEstimadoProyectoState usage
   useEffect(() => {
     if (
       totalHorasActividadesCalculado > 0 &&
@@ -676,28 +728,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [isOpen, titulo, planteamiento, justificacion, objetivoGen, objetivosEsp]);
 
-  // Elimina estos useEffect para evitar ciclos infinitos:
-  // useEffect(() => {
-  //   if (typeof setPlanteamiento === 'function') {
-  //     setPlanteamiento(planteamientoEditado);
-  //   }
-  // }, [planteamientoEditado]);
-  // useEffect(() => {
-  //   if (typeof setJustificacion === 'function') {
-  //     setJustificacion(justificacionEditada);
-  //   }
-  // }, [justificacionEditada]);
-  // useEffect(() => {
-  //   if (typeof setObjetivoGen === 'function') {
-  //     setObjetivoGen(objetivoGenEditado);
-  //   }
-  // }, [objetivoGenEditado]);
-  // useEffect(() => {
-  //   if (typeof setObjetivosEspProp === 'function') {
-  //     setObjetivosEspProp(objetivosEspEditado);
-  //   }
-  // }, [objetivosEspEditado, setObjetivosEspProp]);
-
   // Calcular duración en días y establecer estado inicial
   useEffect(() => {
     if (fechaInicio && fechaFin) {
@@ -711,28 +741,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       setDuracionDias(0);
     }
   }, [fechaInicio, fechaFin]);
-
-  // --- MES RENDER LOGIC ---
-  // El problema es que el cronograma solo muestra columnas para las fechas existentes en el rango,
-  // pero si solo hay dos fechas, el segundo día no se muestra hasta que hay una tercera.
-  // Solución: Asegúrate de que el array 'meses' (que representa los días laborables) siempre tenga
-  // al menos tantos días como el máximo índice asignado en diasPorActividad + 1.
-
-  // Justo antes del render del cronograma, fuerza el tamaño de 'meses' si es necesario:
-  // Eliminar maxDiaAsignado porque ya no se usa y causa warning de eslint
-  // const maxDiaAsignado = useMemo(() => {
-  //   if (tipoVisualizacion !== undefined && tipoVisualizacion !== 'dias')
-  //     return 0;
-  //   let max = 0;
-  //   Object.values(diasPorActividad ?? {}).forEach((arr) => {
-  //     if (Array.isArray(arr)) {
-  //       arr.forEach((idx: number) => {
-  //         if (idx > max) max = idx;
-  //       });
-  //     }
-  //   });
-  //   return max;
-  // }, [diasPorActividad, tipoVisualizacion]);
 
   const meses: string[] = useMemo(() => {
     if (fechaInicio && fechaFin) {
@@ -794,8 +802,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       activities: [],
     };
     setObjetivosEspEditado((prev) => {
-      const nuevos = [...prev, nuevoObj];
-      // NO PROPAGAR AL PADRE AQUÍ
+      const nuevos = Array.isArray(prev) ? [...prev, nuevoObj] : [nuevoObj];
+      // Si hay un setter externo (modo edición), propaga el cambio
+      if (typeof _setObjetivosEspProp === 'function') {
+        _setObjetivosEspProp(nuevos);
+      }
       return nuevos;
     });
     setNuevoObjetivo('');
@@ -806,7 +817,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     setObjetivosEspEditado((prev) => {
       const nuevos = [...prev];
       nuevos.splice(index, 1);
-      // NO PROPAGAR AL PADRE AQUÍ
+      // Si hay un setter externo (modo edición), propaga el cambio
+      if (typeof _setObjetivosEspProp === 'function') {
+        _setObjetivosEspProp(nuevos);
+      }
       return nuevos;
     });
   };
@@ -816,16 +830,23 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const descripcion = nuevaActividadPorObjetivo[objetivoId]?.trim();
     if (!descripcion) return;
     setObjetivosEspEditado((prev) => {
+      // Busca el objetivo y agrega la actividad solo si existe
       const nuevos = prev.map((obj) => {
         if (obj.id === objetivoId) {
-          return {
-            ...obj,
-            activities: [...obj.activities, descripcion],
-          };
+          // Solo agrega si no existe ya la actividad (evita duplicados vacíos)
+          if (!obj.activities.includes(descripcion)) {
+            return {
+              ...obj,
+              activities: [...obj.activities, descripcion],
+            };
+          }
         }
         return obj;
       });
-      // NO PROPAGAR AL PADRE AQUÍ
+      // Si hay un setter externo (modo edición), propaga el cambio
+      if (typeof _setObjetivosEspProp === 'function') {
+        _setObjetivosEspProp(nuevos);
+      }
       return nuevos;
     });
     // Asigna responsable logueado si no existe
@@ -857,7 +878,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
         return obj;
       });
-      // NO PROPAGAR AL PADRE AQUÍ
+      // Si hay un setter externo (modo edición), propaga el cambio
+      if (typeof _setObjetivosEspProp === 'function') {
+        _setObjetivosEspProp(nuevos);
+      }
       return nuevos;
     });
   };
@@ -1093,6 +1117,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   // Función para guardar o actualizar el proyecto en la BD
   const handleGuardarProyecto = async () => {
     try {
+      setIsUpdating(true);
+      setProgress(0);
+      setStatusText(
+        isEditMode ? 'Actualizando proyecto...' : 'Creando proyecto...'
+      );
+
       // Validar campos requeridos
       if (
         !tituloState ||
@@ -1103,6 +1133,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         !categoria
       ) {
         alert('Por favor, completa todos los campos requeridos.');
+        setIsUpdating(false);
+        setProgress(0);
         return;
       }
 
@@ -1136,18 +1168,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       let uploadedCoverImageKey: string | undefined = _coverImageKeyProp;
       let uploadedCoverVideoKey: string | undefined = _coverVideoKeyProp;
 
-      if (selectedFile) {
-        // 1. Solicita un presigned POST o PUT
+      // Subida de imagen con progreso
+      if (selectedImage) {
+        setStatusText(
+          isEditMode ? 'Actualizando imagen...' : 'Subiendo imagen...'
+        );
+        setProgress(10);
         const uploadRes = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contentType: selectedFile.type,
-            fileSize: selectedFile.size,
-            fileName: selectedFile.name,
+            contentType: selectedImage.type,
+            fileSize: selectedImage.size,
+            fileName: selectedImage.name,
           }),
         });
-        // Usa interface en vez de type para UploadData
         interface UploadData {
           url: string;
           fields?: Record<string, string>;
@@ -1163,47 +1198,183 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           alert(uploadData.error ?? 'Error al preparar la carga');
           return;
         }
-
-        // 2. Sube el archivo a S3 usando el presigned POST/PUT
         if (
           uploadData.uploadType === 'simple' &&
           uploadData.url &&
           uploadData.fields
         ) {
-          // FormData para POST
           const formData = new FormData();
           Object.entries(uploadData.fields).forEach(([k, v]) =>
             formData.append(k, v)
           );
-          formData.append('file', selectedFile);
-          const s3Res = await fetch(uploadData.url, {
-            method: 'POST',
-            body: formData,
-          });
-          if (!s3Res.ok) {
-            alert('Error al subir el archivo a S3');
-            return;
-          }
-        } else if (uploadData.uploadType === 'put' && uploadData.url) {
-          // PUT directo
-          const s3Res = await fetch(uploadData.url, {
-            method: 'PUT',
-            headers: { 'Content-Type': selectedFile.type },
-            body: selectedFile,
-          });
-          if (!s3Res.ok) {
-            alert('Error al subir el archivo a S3');
-            return;
-          }
-        }
+          formData.append('file', selectedImage);
 
-        // 3. Usa la key devuelta para el proyecto
-        if (selectedFile.type.startsWith('image/')) {
-          uploadedCoverImageKey = uploadData.key;
-        } else if (selectedFile.type.startsWith('video/')) {
-          uploadedCoverVideoKey = uploadData.key;
+          // Usar XMLHttpRequest para progreso
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', uploadData.url!);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                setProgress(10 + Math.round((e.loaded / e.total) * 30));
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(40);
+                resolve();
+              } else {
+                alert('Error al subir el archivo a S3');
+                setIsUpdating(false);
+                setProgress(0);
+                reject(new Error('Error al subir el archivo a S3'));
+              }
+            };
+            xhr.onerror = () => {
+              alert('Error al subir el archivo a S3');
+              setIsUpdating(false);
+              setProgress(0);
+              reject(new Error('Error al subir el archivo a S3'));
+            };
+            xhr.send(formData);
+          });
+        } else if (uploadData.uploadType === 'put' && uploadData.url) {
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadData.url!);
+            xhr.setRequestHeader('Content-Type', selectedImage.type);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                setProgress(10 + Math.round((e.loaded / e.total) * 30));
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(40);
+                resolve();
+              } else {
+                alert('Error al subir el archivo a S3');
+                setIsUpdating(false);
+                setProgress(0);
+                reject(new Error('Error al subir el archivo a S3'));
+              }
+            };
+            xhr.onerror = () => {
+              alert('Error al subir el archivo a S3');
+              setIsUpdating(false);
+              setProgress(0);
+              reject(new Error('Error al subir el archivo a S3'));
+            };
+            xhr.send(selectedImage);
+          });
         }
+        uploadedCoverImageKey = uploadData.key;
       }
+
+      // Subida de video con progreso
+      if (selectedVideo) {
+        setStatusText(
+          isEditMode ? 'Actualizando video...' : 'Subiendo video...'
+        );
+        setProgress(45);
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: selectedVideo.type,
+            fileSize: selectedVideo.size,
+            fileName: selectedVideo.name,
+          }),
+        });
+        interface UploadData {
+          url: string;
+          fields?: Record<string, string>;
+          key: string;
+          fileName: string;
+          uploadType: 'simple' | 'put';
+          contentType: string;
+          coverVideoKey?: string;
+          error?: string;
+        }
+        const uploadData = (await uploadRes.json()) as Partial<UploadData>;
+        if (!uploadRes.ok) {
+          alert(uploadData.error ?? 'Error al preparar la carga');
+          return;
+        }
+        if (
+          uploadData.uploadType === 'simple' &&
+          uploadData.url &&
+          uploadData.fields
+        ) {
+          const formData = new FormData();
+          Object.entries(uploadData.fields).forEach(([k, v]) =>
+            formData.append(k, v)
+          );
+          formData.append('file', selectedVideo);
+
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', uploadData.url!);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                setProgress(45 + Math.round((e.loaded / e.total) * 30));
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(75);
+                resolve();
+              } else {
+                alert('Error al subir el archivo a S3');
+                setIsUpdating(false);
+                setProgress(0);
+                reject(new Error('Error al subir el archivo a S3'));
+              }
+            };
+            xhr.onerror = () => {
+              alert('Error al subir el archivo a S3');
+              setIsUpdating(false);
+              setProgress(0);
+              reject(new Error('Error al subir el archivo a S3'));
+            };
+            xhr.send(formData);
+          });
+        } else if (uploadData.uploadType === 'put' && uploadData.url) {
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadData.url!);
+            xhr.setRequestHeader('Content-Type', selectedVideo.type);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                setProgress(45 + Math.round((e.loaded / e.total) * 30));
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(75);
+                resolve();
+              } else {
+                alert('Error al subir el archivo a S3');
+                setIsUpdating(false);
+                setProgress(0);
+                reject(new Error('Error al subir el archivo a S3'));
+              }
+            };
+            xhr.onerror = () => {
+              alert('Error al subir el archivo a S3');
+              setIsUpdating(false);
+              setProgress(0);
+              reject(new Error('Error al subir el archivo a S3'));
+            };
+            xhr.send(selectedVideo);
+          });
+        }
+        uploadedCoverVideoKey = uploadData.key;
+      }
+
+      setProgress(80);
+      setStatusText(
+        isEditMode ? 'Actualizando proyecto...' : 'Creando proyecto...'
+      );
 
       // Construir el body para el backend
       const body = {
@@ -1223,9 +1394,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         isPublic: false,
       };
 
-      let res, data;
+      // Define un tipo para la respuesta de la API
+      type ApiResponse =
+        | { id: string | number }
+        | { error: string }
+        | Record<string, unknown>;
+
+      let res: Response, data: ApiResponse;
       if (isEditMode && projectId) {
         // --- MODO EDICIÓN: actualizar proyecto existente ---
+        setStatusText('Actualizando proyecto...');
         res = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: {
@@ -1233,13 +1411,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           },
           body: JSON.stringify(body),
         });
+        setProgress(95);
         data = await res.json();
         if (res.ok) {
-          alert('Proyecto actualizado correctamente.');
-          onClose();
-          // Redirigir a la vista de detalle del proyecto actualizado
-          window.location.href = `/proyectos/DetallesProyectos/${projectId}`;
+          setProgress(100);
+          setStatusText('Proyecto actualizado correctamente.');
+          setTimeout(() => {
+            alert('Proyecto actualizado correctamente.');
+            setIsUpdating(false);
+            setProgress(0);
+            onClose();
+            window.location.href = `/proyectos/DetallesProyectos/${projectId}`;
+          }, 500);
         } else {
+          setIsUpdating(false);
+          setProgress(0);
           alert(
             typeof data === 'object' &&
               data &&
@@ -1251,6 +1437,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
       } else {
         // --- MODO CREACIÓN: crear nuevo proyecto ---
+        setStatusText('Creando proyecto...');
         res = await fetch('/api/projects', {
           method: 'POST',
           headers: {
@@ -1258,17 +1445,25 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           },
           body: JSON.stringify(body),
         });
+        setProgress(95);
         data = await res.json();
         if (res.ok) {
-          alert('Proyecto guardado correctamente.');
-          onClose();
-          // Redirigir a la vista de detalle del proyecto recién creado
-          if (typeof data === 'object' && data !== null && 'id' in data) {
-            window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
-          } else {
-            window.location.reload();
-          }
+          setProgress(100);
+          setStatusText('Proyecto creado correctamente.');
+          setTimeout(() => {
+            alert('Proyecto guardado correctamente.');
+            setIsUpdating(false);
+            setProgress(0);
+            onClose();
+            if (typeof data === 'object' && data !== null && 'id' in data) {
+              window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
+            } else {
+              window.location.reload();
+            }
+          }, 500);
         } else {
+          setIsUpdating(false);
+          setProgress(0);
           alert(
             typeof data === 'object' &&
               data &&
@@ -1280,6 +1475,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
       }
     } catch (_error) {
+      setIsUpdating(false);
+      setProgress(0);
+      setStatusText('');
       alert(
         isEditMode
           ? 'Error al actualizar el proyecto.'
@@ -1391,8 +1589,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     if (!totalHorasEditadoManualmente && horasOriginalesBackup !== null) {
       setHorasOriginalesBackup(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalHorasEditadoManualmente]);
+  }, [
+    totalHorasEditadoManualmente,
+    horasOriginalesBackup,
+    horasPorActividadFinal,
+  ]); // <-- Añadidos
 
   // Sincroniza el valor inicial cuando cambian las horas calculadas
   useEffect(() => {
@@ -1433,8 +1634,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     } else {
       setHorasPorActividadLocal(nuevasHoras);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalHorasInput, totalHorasEditadoManualmente]);
+  }, [
+    totalHorasInput,
+    totalHorasEditadoManualmente,
+    objetivosEspEditado,
+    setHorasPorActividad,
+  ]); // <-- Añadidos
 
   if (!isOpen) return null;
 
@@ -1450,9 +1655,35 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           }
         `}
       </style>
+      {/* Barra de progreso de carga */}
+      {isUpdating && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-white p-6 shadow-lg">
+            <div className="mb-4 w-full">
+              <div className="h-6 w-full rounded-full bg-gray-200">
+                <div
+                  className="h-6 rounded-full bg-green-500 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="mt-2 text-center font-semibold text-gray-700">
+                {statusText
+                  ? statusText
+                  : progress < 100
+                    ? `Procesando... (${progress}%)`
+                    : '¡Completado!'}
+              </div>
+            </div>
+            <div className="text-sm text-gray-500">
+              Por favor, espera a que termine el proceso.
+            </div>
+          </div>
+        </div>
+      )}
       <div
         onClick={(e) => e.target === e.currentTarget && onClose()}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 ${isUpdating ? 'pointer-events-none opacity-60 select-none' : ''}`}
+        aria-disabled={isUpdating}
       >
         <div className="relative h-full max-h-[95vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-[#0F2940] p-3 text-white shadow-lg sm:p-6">
           <button
@@ -1463,132 +1694,195 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           </button>
 
           {/* Espacio para la imagen del proyecto */}
-          <div className="mb-4 flex flex-col items-center sm:mb-6">
-            {/* Solo muestra el área de carga si NO hay archivo seleccionado ni archivo ya cargado */}
-            {!(selectedFile ?? coverImageUrl ?? coverVideoUrl) && (
-              <div
-                className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
-                  isDragOver
-                    ? 'scale-105 border-teal-400 bg-teal-900/30'
-                    : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <UploadCloud className="mb-3 h-8 w-8 text-teal-400" />
-                  <p className="mb-2 text-center text-sm text-gray-300">
-                    {isDragOver ? (
-                      <span className="font-semibold text-teal-300">
-                        Suelta el archivo aquí
-                      </span>
-                    ) : (
-                      <span className="font-semibold">
-                        Sube una imagen <b>o</b> un video del proyecto
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-center text-xs text-gray-400">
-                    Solo se permite 1 archivo (imagen o video)
-                  </p>
+          <div className="mb-4 flex w-full flex-row items-start justify-center gap-4 sm:mb-6">
+            {/* Área de carga de imagen */}
+            <div className="flex w-1/2 flex-col items-center">
+              {!(selectedImage ?? coverImageUrl) && (
+                <div
+                  className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
+                    isDragOverImage
+                      ? 'scale-105 border-teal-400 bg-teal-900/30'
+                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
+                  }`}
+                  onDragOver={handleDragOverImage}
+                  onDragLeave={handleDragLeaveImage}
+                  onDrop={handleDropImage}
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <UploadCloud className="mb-3 h-8 w-8 text-teal-400" />
+                    <p className="mb-2 text-center text-sm text-gray-300">
+                      {isDragOverImage ? (
+                        <span className="font-semibold text-teal-300">
+                          Suelta el archivo aquí
+                        </span>
+                      ) : (
+                        <span className="font-semibold">
+                          Sube una imagen del proyecto
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-center text-xs text-gray-400">
+                      Solo se permite 1 imagen
+                    </p>
+                  </div>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileChange}
+                    className="hidden"
+                    disabled={!!selectedImage || !!coverImageUrl}
+                  />
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </div>
-            )}
-            {/* Previsualización de archivo seleccionado o archivo ya cargado */}
-            {selectedFile ? (
-              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
-                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                  {selectedFile.type.startsWith('image/') && (
+              )}
+              {/* Previsualización de imagen seleccionada o cargada */}
+              {selectedImage ? (
+                <div className="mt-2 flex w-full flex-col gap-2">
+                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
                     <ImageIcon className="h-4 w-4 text-green-400" />
+                    <span
+                      className="truncate text-sm text-gray-300"
+                      title={selectedImage.name}
+                    >
+                      {selectedImage.name}
+                    </span>
+                    <span className="flex-shrink-0 text-xs text-gray-400">
+                      ({(selectedImage.size / 1024 / 1024).toFixed(1)} MB)
+                    </span>
+                    <button
+                      type="button"
+                      className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                      onClick={() => removeFile('image')}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  {previewImagen && (
+                    <div className="flex w-full items-center justify-center">
+                      <Image
+                        src={previewImagen}
+                        alt="Previsualización imagen"
+                        width={320}
+                        height={320}
+                        className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
+                        unoptimized
+                      />
+                    </div>
                   )}
-                  {selectedFile.type.startsWith('video/') && (
-                    <Video className="h-4 w-4 text-purple-400" />
-                  )}
-                  <span
-                    className="truncate text-sm text-gray-300"
-                    title={selectedFile.name}
-                  >
-                    {selectedFile.name}
-                  </span>
-                  <span className="flex-shrink-0 text-xs text-gray-400">
-                    ({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)
-                  </span>
-                  <button
-                    type="button"
-                    className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
-                    onClick={removeFile}
-                  >
-                    Quitar
-                  </button>
                 </div>
-                {/* Previsualización visual */}
-                {previewImagen && (
-                  <div className="flex items-center justify-center">
+              ) : coverImageUrl ? (
+                <div className="mt-2 flex w-full flex-col gap-2">
+                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                    <ImageIcon className="h-4 w-4 text-green-400" />
+                    <span className="truncate text-sm text-gray-300">
+                      Imagen cargada
+                    </span>
+                  </div>
+                  <div className="flex w-full items-center justify-center">
                     <Image
-                      src={previewImagen}
-                      alt="Previsualización imagen"
+                      src={coverImageUrl}
+                      alt="Imagen del proyecto"
                       width={320}
                       height={320}
-                      className="h-80 w-80 rounded object-cover"
+                      className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
                       unoptimized
                     />
                   </div>
-                )}
-                {previewVideo && (
-                  <div className="flex items-center justify-center">
+                </div>
+              ) : null}
+            </div>
+            {/* Área de carga de video */}
+            <div className="flex w-1/2 flex-col items-center">
+              {!(selectedVideo ?? coverVideoUrl) && (
+                <div
+                  className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
+                    isDragOverVideo
+                      ? 'scale-105 border-purple-400 bg-purple-900/30'
+                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
+                  }`}
+                  onDragOver={handleDragOverVideo}
+                  onDragLeave={handleDragLeaveVideo}
+                  onDrop={handleDropVideo}
+                  onClick={() => videoInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <UploadCloud className="mb-3 h-8 w-8 text-purple-400" />
+                    <p className="mb-2 text-center text-sm text-gray-300">
+                      {isDragOverVideo ? (
+                        <span className="font-semibold text-purple-300">
+                          Suelta el archivo aquí
+                        </span>
+                      ) : (
+                        <span className="font-semibold">
+                          Sube un video del proyecto
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-center text-xs text-gray-400">
+                      Solo se permite 1 video
+                    </p>
+                  </div>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoFileChange}
+                    className="hidden"
+                    disabled={!!selectedVideo || !!coverVideoUrl}
+                  />
+                </div>
+              )}
+              {/* Previsualización de video seleccionado o cargado */}
+              {selectedVideo ? (
+                <div className="mt-2 flex w-full flex-col gap-2">
+                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                    <Video className="h-4 w-4 text-purple-400" />
+                    <span
+                      className="truncate text-sm text-gray-300"
+                      title={selectedVideo.name}
+                    >
+                      {selectedVideo.name}
+                    </span>
+                    <span className="flex-shrink-0 text-xs text-gray-400">
+                      ({(selectedVideo.size / 1024 / 1024).toFixed(1)} MB)
+                    </span>
+                    <button
+                      type="button"
+                      className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                      onClick={() => removeFile('video')}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  {previewVideo && (
+                    <div className="flex w-full items-center justify-center">
+                      <video
+                        src={previewVideo}
+                        controls
+                        className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : coverVideoUrl ? (
+                <div className="mt-2 flex w-full flex-col gap-2">
+                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
+                    <Video className="h-4 w-4 text-purple-400" />
+                    <span className="truncate text-sm text-gray-300">
+                      Video cargado
+                    </span>
+                  </div>
+                  <div className="flex w-full items-center justify-center">
                     <video
-                      src={previewVideo}
+                      src={coverVideoUrl}
                       controls
-                      className="h-80 w-400 rounded object-cover"
+                      className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
                     />
                   </div>
-                )}
-              </div>
-            ) : coverImageUrl ? (
-              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
-                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                  <ImageIcon className="h-4 w-4 text-green-400" />
-                  <span className="truncate text-sm text-gray-300">
-                    Imagen cargada
-                  </span>
                 </div>
-                <div className="flex items-center justify-center">
-                  <Image
-                    src={coverImageUrl}
-                    alt="Imagen del proyecto"
-                    width={320}
-                    height={320}
-                    className="h-80 w-80 rounded object-cover"
-                    unoptimized
-                  />
-                </div>
-              </div>
-            ) : coverVideoUrl ? (
-              <div className="mt-2 flex w-full max-w-md flex-col gap-2">
-                <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                  <Video className="h-4 w-4 text-purple-400" />
-                  <span className="truncate text-sm text-gray-300">
-                    Video cargado
-                  </span>
-                </div>
-                <div className="flex items-center justify-center">
-                  <video
-                    src={coverVideoUrl}
-                    controls
-                    className="h-80 w-[350px] rounded object-cover"
-                  />
-                </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
           <br />
           <br />
@@ -1701,9 +1995,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   fontWeight: 'bold',
                 }}
               />
-              {/* <span className="text-xs font-semibold text-cyan-300 sm:text-sm">
-                horas
-              </span> */}
 
               <FaRegClock className="inline-block text-cyan-300" />
             </div>
@@ -1745,7 +2036,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 placeholderText="Selecciona la fecha de inicio"
                 required
                 customInput={
-                  // Cambia aquí: fuerza el input personalizado a w-full
                   <CustomDateInput
                     className={`w-full rounded bg-gray-400 p-2 pr-10 text-black ${fechaInicioDomingoError ? 'border-2 border-red-500' : ''}`}
                   />
@@ -1829,7 +2119,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 placeholderText="DD / MM / YYYY"
                 required
                 customInput={
-                  // Cambia aquí: fuerza el input personalizado a w-full
                   <CustomDateInput className="w-full rounded bg-gray-400 p-2 pr-10 text-black" />
                 }
                 dayClassName={(date) => {
@@ -2366,7 +2655,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {onAnterior && (
               <button
                 type="button"
-                onClick={onAnterior}
+                onClick={() => {
+                  // Al volver atrás, propaga los valores actuales editados
+                  if (setPlanteamiento) setPlanteamiento(planteamientoEditado);
+                  if (setJustificacion) setJustificacion(justificacionEditada);
+                  if (setObjetivoGen) setObjetivoGen(objetivoGenEditado);
+                  if (setObjetivosEspProp)
+                    setObjetivosEspProp(objetivosEspEditado);
+                  // También pasa los datos por el callback si lo acepta
+                  onAnterior({
+                    planteamiento: planteamientoEditado,
+                    justificacion: justificacionEditada,
+                    objetivoGen: objetivoGenEditado,
+                    objetivosEsp: objetivosEspEditado,
+                  });
+                }}
                 className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
               >
                 {/* Ícono de flecha izquierda */}
