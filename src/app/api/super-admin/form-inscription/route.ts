@@ -39,6 +39,8 @@ const PUBLIC_BASE_URL =
 /* =========================
    Email
    ========================= */
+const ACADEMIC_MAIL = 'secretariaacademica@ciadet.co';
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -60,7 +62,7 @@ async function sendWelcomeEmail(
   const mailOptions = {
     from: `"Artiefy" <${process.env.EMAIL_USER}>`,
     to,
-    subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
+    subject: 'Bienvenido a Artiefy - Tus Credenciales de Acceso',
     replyTo: 'direcciongeneral@artiefy.com',
     html: `
       <h2>¡Bienvenido a Artiefy, ${username}!</h2>
@@ -87,6 +89,154 @@ Ingresa a https://artiefy.com/ y cambia tu contraseña.
   };
 
   await transporter.sendMail(mailOptions);
+}
+
+type AcademicNotifyPayload = {
+  studentName: string;
+  studentEmail: string;
+  identificacionTipo: string;
+  identificacionNumero: string;
+  telefono: string;
+  pais: string;
+  ciudad: string;
+  direccion: string;
+  nivelEducacion: string;
+
+  programa: string;
+  fechaInicio: string;
+  sede: string;
+  horario: string;
+  modalidad: string;
+  numeroCuotas: string;
+  pagoInscripcion: string;
+  pagoCuota1: string;
+  comercial?: string;
+
+  // Links opcionales a S3 (si existen)
+  idDocUrl?: string | null;
+  utilityBillUrl?: string | null;
+  diplomaUrl?: string | null;
+  pagareUrl?: string | null;
+  comprobanteInscripcionUrl?: string | null;
+};
+
+function row(label: string, value?: string | null) {
+  const v = (value ?? '').trim();
+  return `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#555;"><strong>${label}</strong></td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#111;">${v || '-'}</td>
+    </tr>
+  `;
+}
+
+function linkRow(label: string, url?: string | null) {
+  const has = !!url;
+  return row(
+    label,
+    has
+      ? `<a href="${url}" target="_blank" rel="noopener noreferrer">Ver documento</a>`
+      : ''
+  );
+}
+
+async function sendAcademicNotification(to: string, p: AcademicNotifyPayload) {
+  const subject = `Nueva matrícula/compra – ${p.studentName} – ${p.programa}`;
+
+  const html = `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f9fc;padding:0;margin:0;">
+    <tr><td>
+      <div style="max-width:680px;margin:32px auto;background:#ffffff;border:1px solid #eaeaea;border-radius:10px;overflow:hidden;">
+        <div style="background:#0B132B;color:#fff;padding:20px 24px;">
+          <h1 style="margin:0;font-size:20px;line-height:1.2;">Artiefy · Secretaría Académica</h1>
+          <p style="margin:6px 0 0;font-size:14px;color:#cfe8ff;">Notificación de matrícula / compra</p>
+        </div>
+        <div style="padding:20px 24px;">
+          <p style="margin:0 0 12px;color:#111;">Hola equipo de Secretaría Académica,</p>
+          <p style="margin:0 0 18px;color:#333;">Se ha registrado una nueva matrícula/compra. A continuación el resumen:</p>
+
+          <h3 style="margin:0 0 8px;color:#0B132B;">Datos del estudiante</h3>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+            ${row('Nombre completo', p.studentName)}
+            ${row('Email', p.studentEmail)}
+            ${row('Identificación', `${p.identificacionTipo} · ${p.identificacionNumero}`)}
+            ${row('Teléfono', p.telefono)}
+            ${row('Dirección', `${p.direccion}`)}
+            ${row('Ciudad / País', `${p.ciudad} / ${p.pais}`)}
+            ${row('Nivel de educación', p.nivelEducacion)}
+          </table>
+
+          <h3 style="margin:0 0 8px;color:#0B132B;">Detalle de matrícula / compra</h3>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+            ${row('Programa / Curso', p.programa)}
+            ${row('Fecha de inicio', p.fechaInicio)}
+            ${row('Sede', p.sede)}
+            ${row('Horario', p.horario)}
+            ${row('Modalidad', p.modalidad)}
+            ${row('Número de cuotas', p.numeroCuotas)}
+            ${row('Pago inscripción', p.pagoInscripcion)}
+            ${row('Asesor comercial', p.comercial ?? '')}
+          </table>
+
+          <h3 style="margin:0 0 8px;color:#0B132B;">Documentos adjuntos (enlaces)</h3>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+            ${linkRow('Documento de identidad', p.idDocUrl)}
+            ${linkRow('Recibo de servicio', p.utilityBillUrl)}
+            ${linkRow('Acta / Diploma', p.diplomaUrl)}
+            ${linkRow('Pagaré', p.pagareUrl)}
+            ${linkRow('Comprobante de inscripción', p.comprobanteInscripcionUrl)}
+          </table>
+
+          <p style="margin:12px 0 0;color:#666;font-size:12px;">
+            *Este correo es informativo y fue generado automáticamente por Artiefy.
+          </p>
+        </div>
+      </div>
+    </td></tr>
+  </table>
+  `;
+
+  const text = `
+Artiefy · Secretaría Académica – Notificación de matrícula/compra
+
+[Datos del estudiante]
+- Nombre completo: ${p.studentName}
+- Email: ${p.studentEmail}
+- Identificación: ${p.identificacionTipo} · ${p.identificacionNumero}
+- Teléfono: ${p.telefono}
+- Dirección: ${p.direccion}
+- Ciudad / País: ${p.ciudad} / ${p.pais}
+- Nivel de educación: ${p.nivelEducacion}
+
+[Detalle de matrícula / compra]
+- Programa / Curso: ${p.programa}
+- Fecha de inicio: ${p.fechaInicio}
+- Sede: ${p.sede}
+- Horario: ${p.horario}
+- Modalidad: ${p.modalidad}
+- Número de cuotas: ${p.numeroCuotas}
+- Pago inscripción: ${p.pagoInscripcion}
+- Pago primera cuota: ${p.pagoCuota1}
+- Asesor comercial: ${p.comercial ?? ''}
+
+[Documentos]
+- Documento de identidad: ${p.idDocUrl ?? '-'}
+- Recibo de servicio: ${p.utilityBillUrl ?? '-'}
+- Acta / Diploma: ${p.diplomaUrl ?? '-'}
+- Pagaré: ${p.pagareUrl ?? '-'}
+- Comprobante de inscripción: ${p.comprobanteInscripcionUrl ?? '-'}
+
+Este correo fue generado automáticamente por Artiefy.
+  `;
+
+  await transporter.sendMail({
+    from: `"Artiefy – Notificaciones" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
+    text,
+    replyTo: 'direcciongeneral@artiefy.com',
+  });
 }
 
 // ---------- S3 ----------
@@ -160,7 +310,6 @@ const fieldsSchema = z.object({
   numeroCuotas: z.string().min(1),
 });
 
-
 /* =========================
    POST: crea en Clerk, guarda en BD y matrícula al programa
    ========================= */
@@ -185,6 +334,9 @@ export async function POST(req: Request) {
     const reciboServicio = form.get('reciboServicio') as File | null;
     const actaGrado = form.get('actaGrado') as File | null;
     const pagare = form.get('pagare') as File | null;
+    const comprobanteInscripcion = form.get(
+      'comprobanteInscripcion'
+    ) as File | null;
 
     const fullName = `${fields.nombres} ${fields.apellidos}`.trim();
     const role = 'estudiante' as const;
@@ -318,6 +470,8 @@ export async function POST(req: Request) {
       pagare,
       'pagare'
     );
+    const { key: comprobanteInscripcionKey, url: comprobanteInscripcionUrl } =
+      await uploadToS3(comprobanteInscripcion, 'comprobante-inscripcion');
 
     // 4) Guardar los campos EXTRA en userInscriptionDetails (no duplicar lo que ya está en `users`)
     await db.insert(userInscriptionDetails).values({
@@ -390,6 +544,43 @@ export async function POST(req: Request) {
       console.log('[EMAIL] No se envía (no hay contraseña generada).');
     }
 
+    // 7) Notificar a Secretaría Académica
+    try {
+      await sendAcademicNotification(ACADEMIC_MAIL, {
+        studentName: fullName,
+        studentEmail: fields.email,
+        identificacionTipo: fields.identificacionTipo,
+        identificacionNumero: fields.identificacionNumero,
+        telefono: fields.telefono,
+        pais: fields.pais,
+        ciudad: fields.ciudad,
+        direccion: fields.direccion,
+        nivelEducacion: fields.nivelEducacion,
+
+        programa: programRow.title,
+        fechaInicio: fields.fechaInicio,
+        sede: fields.sede,
+        horario: fields.horario,
+        modalidad: fields.modalidad,
+        numeroCuotas: fields.numeroCuotas,
+        pagoInscripcion: fields.pagoInscripcion,
+        pagoCuota1: fields.pagoCuota1,
+        comercial: fields.comercial,
+
+        idDocUrl,
+        utilityBillUrl,
+        diplomaUrl,
+        pagareUrl,
+        comprobanteInscripcionUrl,
+      });
+      console.log('[EMAIL] Notificación enviada a Secretaría Académica');
+    } catch (notifyErr) {
+      console.error(
+        '❌ [EMAIL] Error enviando notificación académica:',
+        notifyErr
+      );
+    }
+
     console.log('==== [FORM SUBMIT] FIN OK ====');
     return NextResponse.json({
       ok: true,
@@ -405,6 +596,8 @@ export async function POST(req: Request) {
         utilityBillUrl,
         diplomaUrl,
         pagareUrl,
+        comprobanteInscripcionKey,
+        comprobanteInscripcionUrl,
       },
       // ejemplo que pediste (puedes construir “videoUrl” con cualquier key)
       exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`, // ilustrativo
