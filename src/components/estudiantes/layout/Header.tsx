@@ -36,6 +36,10 @@ export function Header({
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
+  // MODAL DISPONIBLE MUY PRONTO
+  const [showProyectosModal, setShowProyectosModal] = useState(false);
+  const [showEspaciosModal, setShowEspaciosModal] = useState(false);
+
   const { isLoaded: isAuthLoaded } = useAuth();
   const navItems = [
     { href: '/', label: 'Inicio' },
@@ -160,278 +164,388 @@ export function Header({
     );
   };
 
+  // Funciones para interceptar clicks y mostrar el modal
+  const handleProyectosClick = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setShowProyectosModal(true);
+    onProyectosClickAction?.();
+  };
+  const handleEspaciosClick = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setShowEspaciosModal(true);
+    onEspaciosClickAction?.();
+  };
+
   return (
-    <header
-      className={`sticky top-0 z-10 w-full transition-all duration-300 ${
-        isScrolled
-          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
-          : 'md:py-3'
-      } div-header-nav`}
-    >
-      <div className="container mx-auto max-w-7xl px-4">
-        <div className="hidden w-full items-center md:flex md:justify-between">
-          {!isScrolled ? (
-            <div className="flex w-full items-center justify-between">
-              <div className="shrink-0">
-                <Link href="/estudiantes">
-                  <div className="relative size-[150px]">
-                    <Image
-                      src="/artiefy-logo.svg"
-                      alt="Logo Artiefy"
-                      fill
-                      unoptimized // Solo necesitamos unoptimized para SVGs
-                      className="object-contain"
-                      sizes="150px"
-                    />
-                  </div>
-                </Link>
-              </div>
-              <div className="div-header-nav flex gap-24">
-                {navItems.map((item) => {
-                  const extraClass = `div-header-${item.label.toLowerCase()}`;
-                  // Interceptar click en "Proyectos"
-                  if (item.label === 'Proyectos' && onProyectosClickAction) {
+    <>
+      {/* Modal "Disponible muy pronto" para Proyectos */}
+      <Dialog
+        open={showProyectosModal}
+        onClose={() => setShowProyectosModal(false)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
+          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+              />
+            </svg>
+          </span>
+          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+            ¡Disponible muy pronto!
+          </h2>
+          <p className="mb-4 text-center text-gray-600">
+            La sección de{' '}
+            <span className="text-secondary font-semibold">Proyectos</span>{' '}
+            estará habilitada próximamente.
+            <br />
+            ¡Gracias por tu interés!
+          </p>
+          <button
+            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={() => setShowProyectosModal(false)}
+          >
+            Cerrar
+          </button>
+        </DialogPanel>
+      </Dialog>
+      {/* Modal "Disponible muy pronto" para Espacios */}
+      <Dialog
+        open={showEspaciosModal}
+        onClose={() => setShowEspaciosModal(false)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
+          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+              />
+            </svg>
+          </span>
+          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+            ¡Disponible muy pronto!
+          </h2>
+          <p className="mb-4 text-center text-gray-600">
+            La sección de{' '}
+            <span className="text-secondary font-semibold">Espacios</span>{' '}
+            estará habilitada próximamente.
+            <br />
+            ¡Gracias por tu interés!
+          </p>
+          <button
+            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={() => setShowEspaciosModal(false)}
+          >
+            Cerrar
+          </button>
+        </DialogPanel>
+      </Dialog>
+      <header
+        className={`sticky top-0 z-10 w-full transition-all duration-300 ${
+          isScrolled
+            ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
+            : 'md:py-3'
+        } div-header-nav`}
+      >
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="hidden w-full items-center md:flex md:justify-between">
+            {!isScrolled ? (
+              <div className="flex w-full items-center justify-between">
+                <div className="shrink-0">
+                  <Link href="/estudiantes">
+                    <div className="relative size-[150px]">
+                      <Image
+                        src="/artiefy-logo.svg"
+                        alt="Logo Artiefy"
+                        fill
+                        unoptimized // Solo necesitamos unoptimized para SVGs
+                        className="object-contain"
+                        sizes="150px"
+                      />
+                    </div>
+                  </Link>
+                </div>
+                <div className="div-header-nav flex gap-24">
+                  {navItems.map((item) => {
+                    const extraClass = `div-header-${item.label.toLowerCase()}`;
+                    // Interceptar click en "Proyectos"
+                    if (item.label === 'Proyectos') {
+                      return (
+                        <button
+                          key={item.href}
+                          type="button"
+                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
+                          onClick={handleProyectosClick}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    }
+                    // Interceptar click en "Espacios"
+                    if (item.label === 'Espacios') {
+                      return (
+                        <button
+                          key={item.href}
+                          type="button"
+                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
+                          onClick={handleEspaciosClick}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    }
                     return (
-                      <button
-                        key={item.href}
-                        type="button"
-                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onProyectosClickAction();
-                        }}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  }
-                  // Interceptar click en "Espacios"
-                  if (item.label === 'Espacios' && onEspaciosClickAction) {
-                    return (
-                      <button
-                        key={item.href}
-                        type="button"
-                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onEspaciosClickAction();
-                        }}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  }
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-              <div className="flex justify-end">{renderAuthButton()}</div>
-            </div>
-          ) : (
-            <div className="flex w-full items-center">
-              <div className="shrink-0">
-                <Link href="/estudiantes">
-                  <div className="relative size-[150px]">
-                    <Image
-                      src="/artiefy-logo.svg"
-                      alt="Logo Artiefy"
-                      fill
-                      unoptimized // Solo necesitamos unoptimized para SVGs
-                      className="object-contain"
-                      sizes="150px"
-                    />
-                  </div>
-                </Link>
-              </div>
-              <div className="flex flex-1 justify-center gap-6">
-                <form onSubmit={handleSearch} className="w-[700px]">
-                  <div className="header-search-container">
-                    <input
-                      type="search"
-                      placeholder="Buscar..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="header-input border-primary"
-                    />
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="header-search__icon"
-                      onClick={handleSearch}
-                    >
-                      <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-                    </svg>
-                  </div>
-                </form>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="header-menu">
-                  <button
-                    className="menu-selected"
-                    onClick={toggleDropdown}
-                    type="button"
-                  >
-                    Menú
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 512 512"
-                      className={`menu-arrow ${isDropdownOpen ? 'rotate' : ''}`}
-                    >
-                      <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-                    </svg>
-                  </button>
-                  <div
-                    className={`menu-options ${isDropdownOpen ? 'show' : ''}`}
-                  >
-                    {navItems.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="menu-option hover:text-orange-500"
-                        onClick={toggleDropdown}
+                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
                       >
                         {item.label}
                       </Link>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
                 <div className="flex justify-end">{renderAuthButton()}</div>
               </div>
-            </div>
-          )}
-        </div>
-        <div className="flex w-full items-center justify-between md:hidden">
-          <div className="shrink-0">
-            <Link href="/estudiantes">
-              <div className="relative size-[100px] md:size-[150px]">
-                <Image
-                  src="/artiefy-logo.png"
-                  alt="Logo Artiefy"
-                  fill
-                  priority
-                  className="ml-2 object-contain md:ml-6"
-                  sizes="(max-width: 768px) 100px, 150px"
-                />
+            ) : (
+              <div className="flex w-full items-center">
+                <div className="shrink-0">
+                  <Link href="/estudiantes">
+                    <div className="relative size-[150px]">
+                      <Image
+                        src="/artiefy-logo.svg"
+                        alt="Logo Artiefy"
+                        fill
+                        unoptimized // Solo necesitamos unoptimized para SVGs
+                        className="object-contain"
+                        sizes="150px"
+                      />
+                    </div>
+                  </Link>
+                </div>
+                <div className="flex flex-1 justify-center gap-6">
+                  <form onSubmit={handleSearch} className="w-[700px]">
+                    <div className="header-search-container">
+                      <input
+                        type="search"
+                        placeholder="Buscar..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="header-input border-primary"
+                      />
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="header-search__icon"
+                        onClick={handleSearch}
+                      >
+                        <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                      </svg>
+                    </div>
+                  </form>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="header-menu">
+                    <button
+                      className="menu-selected"
+                      onClick={toggleDropdown}
+                      type="button"
+                    >
+                      Menú
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 512 512"
+                        className={`menu-arrow ${isDropdownOpen ? 'rotate' : ''}`}
+                      >
+                        <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+                      </svg>
+                    </button>
+                    <div
+                      className={`menu-options ${isDropdownOpen ? 'show' : ''}`}
+                    >
+                      {navItems.map((item) => {
+                        if (item.label === 'Proyectos') {
+                          return (
+                            <button
+                              key={item.href}
+                              type="button"
+                              className="menu-option hover:text-orange-500"
+                              onClick={handleProyectosClick}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        }
+                        if (item.label === 'Espacios') {
+                          return (
+                            <button
+                              key={item.href}
+                              type="button"
+                              className="menu-option hover:text-orange-500"
+                              onClick={handleEspaciosClick}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="menu-option hover:text-orange-500"
+                            onClick={toggleDropdown}
+                          >
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex justify-end">{renderAuthButton()}</div>
+                </div>
               </div>
-            </Link>
+            )}
           </div>
-          <label className="hamburger mr-2 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-            <input
-              type="checkbox"
-              checked={mobileMenuOpen}
-              onChange={(e) => setMobileMenuOpen(e.target.checked)}
-            />
-            <svg viewBox="0 0 32 32">
-              <path
-                className="line line-top-bottom"
-                d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
-              />
-              <path className="line" d="M7 16 27 16" />
-            </svg>
-          </label>
-        </div>
-      </div>
-      <Dialog
-        as="div"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        className="fixed inset-0 z-50 md:hidden"
-      >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
-          <div className="mt-9 flex items-center justify-between">
-            <div className="relative size-[150px]">
+          <div className="flex w-full items-center justify-between md:hidden">
+            <div className="shrink-0">
               <Link href="/estudiantes">
-                <div className="relative size-[150px]">
+                <div className="relative size-[100px] md:size-[150px]">
                   <Image
-                    src="/artiefy-logo2.svg"
-                    alt="Logo Artiefy Mobile"
+                    src="/artiefy-logo.png"
+                    alt="Logo Artiefy"
                     fill
-                    unoptimized
-                    className="object-contain"
-                    sizes="150px"
+                    priority
+                    className="ml-2 object-contain md:ml-6"
+                    sizes="(max-width: 768px) 100px, 150px"
                   />
                 </div>
               </Link>
             </div>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="ml-5 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
-              aria-label="Close menu"
-            >
-              <XMarkIconSolid className="size-8" />
-            </button>
+            <label className="hamburger mr-2 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
+              <input
+                type="checkbox"
+                checked={mobileMenuOpen}
+                onChange={(e) => setMobileMenuOpen(e.target.checked)}
+              />
+              <svg viewBox="0 0 32 32">
+                <path
+                  className="line line-top-bottom"
+                  d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
+                />
+                <path className="line" d="M7 16 27 16" />
+              </svg>
+            </label>
           </div>
-          <nav className="pb-7">
-            <ul className="space-y-12">
-              {navItems.map((item) => {
-                // Interceptar click en "Proyectos" en móvil
-                if (item.label === 'Proyectos' && onProyectosClickAction) {
+        </div>
+        <Dialog
+          as="div"
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 md:hidden"
+        >
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
+            <div className="mt-9 flex items-center justify-between">
+              <div className="relative size-[150px]">
+                <Link href="/estudiantes">
+                  <div className="relative size-[150px]">
+                    <Image
+                      src="/artiefy-logo2.svg"
+                      alt="Logo Artiefy Mobile"
+                      fill
+                      unoptimized
+                      className="object-contain"
+                      sizes="150px"
+                    />
+                  </div>
+                </Link>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="ml-5 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
+                aria-label="Close menu"
+              >
+                <XMarkIconSolid className="size-8" />
+              </button>
+            </div>
+            <nav className="pb-7">
+              <ul className="space-y-12">
+                {navItems.map((item) => {
+                  // Interceptar click en "Proyectos" en móvil
+                  if (item.label === 'Proyectos') {
+                    return (
+                      <li key={item.href}>
+                        <button
+                          type="button"
+                          className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                          onClick={handleProyectosClick}
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  }
+                  // Interceptar click en "Espacios" en móvil
+                  if (item.label === 'Espacios') {
+                    return (
+                      <li key={item.href}>
+                        <button
+                          type="button"
+                          className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                          onClick={handleEspaciosClick}
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  }
                   return (
                     <li key={item.href}>
-                      <button
-                        type="button"
-                        className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onProyectosClickAction();
-                        }}
+                      <Link
+                        href={item.href}
+                        className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         {item.label}
-                      </button>
+                      </Link>
                     </li>
                   );
+                })}
+              </ul>
+            </nav>
+            <div className="div-auth mt-6 flex items-center justify-center">
+              <Suspense
+                fallback={
+                  <div className="flex min-w-[180px] items-center justify-start">
+                    <Icons.spinner className="text-background h-5 w-5" />
+                  </div>
                 }
-                // Interceptar click en "Espacios" en móvil
-                if (item.label === 'Espacios' && onEspaciosClickAction) {
-                  return (
-                    <li key={item.href}>
-                      <button
-                        type="button"
-                        className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onEspaciosClickAction();
-                        }}
-                      >
-                        {item.label}
-                      </button>
-                    </li>
-                  );
-                }
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-          <div className="div-auth mt-6 flex items-center justify-center">
-            <Suspense
-              fallback={
-                <div className="flex min-w-[180px] items-center justify-start">
-                  <Icons.spinner className="text-background h-5 w-5" />
-                </div>
-              }
-            >
-              {renderAuthButton()}
-            </Suspense>
-          </div>
-        </DialogPanel>
-      </Dialog>
-    </header>
+              >
+                {renderAuthButton()}
+              </Suspense>
+            </div>
+          </DialogPanel>
+        </Dialog>
+      </header>
+    </>
   );
 }
