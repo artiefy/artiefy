@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import Loading from '~/app/loading';
 import { Header } from '~/components/estudiantes/layout/Header';
 import ModalGenerarProyecto from '~/components/projects/Modals/ModalGenerarProyecto';
 import { Badge } from '~/components/projects/ui/badge';
@@ -42,7 +43,6 @@ import ModalObjetivoGen from '../../../components/projects/Modals/ModalObjetivoG
 import ModalObjetivosEsp from '../../../components/projects/Modals/ModalObjetivosEsp';
 import ModalPlanteamiento from '../../../components/projects/Modals/ModalPlanteamiento';
 import ModalResumen from '../../../components/projects/Modals/ModalResumen';
-import Loading from '~/app/loading';
 
 // Actualizar la interfaz para incluir el tipo de proyecto
 interface Project {
