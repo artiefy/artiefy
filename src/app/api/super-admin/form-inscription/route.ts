@@ -160,7 +160,6 @@ const fieldsSchema = z.object({
   numeroCuotas: z.string().min(1),
 });
 
-
 /* =========================
    POST: crea en Clerk, guarda en BD y matrícula al programa
    ========================= */
@@ -185,6 +184,9 @@ export async function POST(req: Request) {
     const reciboServicio = form.get('reciboServicio') as File | null;
     const actaGrado = form.get('actaGrado') as File | null;
     const pagare = form.get('pagare') as File | null;
+    const comprobanteInscripcion = form.get(
+      'comprobanteInscripcion'
+    ) as File | null;
 
     const fullName = `${fields.nombres} ${fields.apellidos}`.trim();
     const role = 'estudiante' as const;
@@ -318,6 +320,8 @@ export async function POST(req: Request) {
       pagare,
       'pagare'
     );
+    const { key: comprobanteInscripcionKey, url: comprobanteInscripcionUrl } =
+      await uploadToS3(comprobanteInscripcion, 'comprobante-inscripcion');
 
     // 4) Guardar los campos EXTRA en userInscriptionDetails (no duplicar lo que ya está en `users`)
     await db.insert(userInscriptionDetails).values({
@@ -405,6 +409,8 @@ export async function POST(req: Request) {
         utilityBillUrl,
         diplomaUrl,
         pagareUrl,
+        comprobanteInscripcionKey,
+        comprobanteInscripcionUrl,
       },
       // ejemplo que pediste (puedes construir “videoUrl” con cualquier key)
       exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`, // ilustrativo

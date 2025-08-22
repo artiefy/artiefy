@@ -67,6 +67,24 @@ const SEDES_OPTS = [
   'Planeta Rica',
 ] as const;
 
+const ID_TYPES = [
+  'CC (Cédula de ciudadanía)',
+  'TI (Tarjeta de identidad)',
+  'Número de Identificación Tributaria',
+  'ID',
+  'Código NES',
+  'Número Único de Identificación Personal',
+  'Pasaporte',
+  'Permiso Especial de Permanencia',
+  'Registro Civil de Nacimiento',
+  'Salvoconducto de Permanencia',
+  'Social Security Number',
+  'Permiso de Protección Temporal',
+  'Registro único de migrantes venezolanos',
+  'NIT Extranjeros',
+  'Otro',
+] as const;
+
 /* =======================
    Tipos y defaults
    ======================= */
@@ -149,6 +167,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [reciboServicio, setReciboServicio] = useState<File | null>(null);
   const [actaGrado, setActaGrado] = useState<File | null>(null);
   const [pagare, setPagare] = useState<File | null>(null);
+  const CUOTAS_OPTS = ['1', '2', '3', '4', '8', '10', '12'] as const;
+
+  const [comprobanteInscripcion, setComprobanteInscripcion] =
+    useState<File | null>(null);
+
   function FieldFile({
     label,
     onChange,
@@ -303,6 +326,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
     return e;
   };
+  // Validación previa de tus campos de texto
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -310,8 +334,24 @@ export default function FormModal({ isOpen, onClose }: Props) {
     setSubmittedOK(null);
     setSubmitMessage('');
 
-    // Validación previa de tus campos de texto
+    // ✅ Validación aquí, no en render
     const v = validate(fields);
+    if (Object.keys(v).length > 0) {
+      setErrors(v);
+      setSubmitting(false);
+      setSubmittedOK(false);
+      setSubmitMessage('Por favor corrige los campos marcados.');
+      return;
+    }
+
+    // ✅ Validación condicional del comprobante aquí
+    if (fields.pagoInscripcion === 'Sí' && !comprobanteInscripcion) {
+      setSubmitting(false);
+      setSubmittedOK(false);
+      setSubmitMessage('Debes adjuntar el comprobante de pago de inscripción.');
+      return;
+    }
+
     if (Object.keys(v).length > 0) {
       setErrors(v);
       setSubmitting(false);
@@ -326,6 +366,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
       Object.entries(fields).forEach(([k, val]) =>
         fd.append(k, String(val ?? ''))
       );
+      if (comprobanteInscripcion)
+        fd.append('comprobanteInscripcion', comprobanteInscripcion);
 
       // Archivos (si están)
       if (docIdentidad) fd.append('docIdentidad', docIdentidad);
@@ -356,6 +398,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
         setErrors({});
         setDocIdentidad(null);
         setReciboServicio(null);
+        setComprobanteInscripcion(null);
         setActaGrado(null);
         setPagare(null);
         handleClose();
@@ -431,12 +474,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 value={fields.identificacionTipo}
                 onChange={(v) => handleChange('identificacionTipo', v)}
                 placeholder="Selecciona un tipo de identificación"
-                options={[
-                  'Cédula de Ciudadanía',
-                  'Cédula de Extranjería',
-                  'Pasaporte',
-                  'Tarjeta de Identidad',
-                ]}
+                options={[...ID_TYPES]}
                 error={errors.identificacionTipo}
               />
               <FieldInput
@@ -627,28 +665,21 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 options={['Sí', 'No']}
                 error={errors.pagoInscripcion}
               />
-              <FieldSelect
-                label="Pago de Primera Cuota*"
-                value={fields.pagoCuota1}
-                onChange={(v) => handleChange('pagoCuota1', v)}
-                placeholder="Selecciona una opción"
-                options={['Sí', 'No']}
-                error={errors.pagoCuota1}
-              />
+
+              {fields.pagoInscripcion === 'Sí' && (
+                <FieldFile
+                  label="Subir comprobante de pago de inscripción (PDF/imagen)"
+                  required
+                  onChange={setComprobanteInscripcion}
+                />
+              )}
 
               <FieldSelect
-                label="Modalidad del Estudiante*"
-                value={fields.modalidad}
-                onChange={(v) => handleChange('modalidad', v)}
-                placeholder="Selecciona una modalidad"
-                options={['Virtual', 'Presencial']}
-                error={errors.modalidad}
-              />
-              <FieldInput
                 label="Número de Cuotas*"
-                type="number"
                 value={fields.numeroCuotas}
                 onChange={(v) => handleChange('numeroCuotas', v)}
+                placeholder="Elige"
+                options={[...CUOTAS_OPTS]}
                 error={errors.numeroCuotas}
               />
             </div>
