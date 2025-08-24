@@ -35,6 +35,8 @@ interface ProjectData {
   horasPorDia?: number; // NUEVO
   totalHoras?: number; // NUEVO
   tiempoEstimado?: number; // NUEVO
+  diasEstimados?: number; // NUEVO
+  diasNecesarios?: number; // NUEVO
 }
 
 const respondWithError = (message: string, status: number) =>
@@ -205,6 +207,8 @@ export async function POST(req: Request) {
       horasPorDia: body.horasPorDia ?? undefined, // NUEVO
       totalHoras: body.totalHoras ?? undefined, // NUEVO
       tiempoEstimado: body.tiempoEstimado ?? undefined, // NUEVO
+      diasEstimados: body.diasEstimados ?? undefined, // NUEVO
+      diasNecesarios: body.diasNecesarios ?? undefined, // NUEVO
     };
 
     console.log(

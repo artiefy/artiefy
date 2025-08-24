@@ -1415,17 +1415,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         isEditMode ? 'Actualizando proyecto...' : 'Creando proyecto...'
       );
 
-      // Construir el body para el backend
-      const tiempoEstimadoHoras = totalHorasEditadoManualmente
-        ? horasOriginalesBackup
-          ? Object.values(horasOriginalesBackup).reduce(
-              (acc, val) =>
-                acc + (typeof val === 'number' && val > 0 ? val : 1),
-              0
-            )
-          : totalHorasInput
-        : totalHorasActividadesCalculado;
-
       const body = {
         name: tituloState,
         planteamiento: planteamientoEditado,
@@ -1440,11 +1429,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         fechaInicio,
         fechaFin,
         tipoVisualizacion,
-        horasPorDia: horasPorDiaValue, // NUEVO
-        totalHoras: totalHorasInput, // NUEVO
-        tiempoEstimado: Math.ceil(
-          tiempoEstimadoHoras / (horasPorDiaValue || 1)
-        ), // NUEVO: días estimados
+        horasPorDia: horasPorDiaValue,
+        totalHoras: totalHorasInput,
+        tiempoEstimado: totalHorasActividadesCalculado, // sigue siendo el estimado por cálculo automático
+        diasEstimados, // NUEVO: estimado automático
+        diasNecesarios, // NUEVO: por edición manual
         isPublic: false,
       };
 
@@ -1680,6 +1669,40 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     objetivosEspEditado,
     setHorasPorActividad,
   ]); // <-- Añadidos
+
+  const [diasEstimados, setDiasEstimados] = useState<number>(0);
+  const [diasNecesarios, setDiasNecesarios] = useState<number>(0);
+
+  // Calcular y guardar dos variables: diasEstimados (usando horasOriginalesBackup si está editado manualmente) y diasNecesarios (usando totalHorasInput)
+  useEffect(() => {
+    let horasParaEstimados = totalHorasActividadesCalculado;
+    if (totalHorasEditadoManualmente && horasOriginalesBackup) {
+      horasParaEstimados = Object.values(horasOriginalesBackup).reduce(
+        (acc, val) => acc + (typeof val === 'number' && val > 0 ? val : 1),
+        0
+      );
+    }
+    setDiasEstimados(
+      Math.ceil(
+        horasParaEstimados > 0 && horasPorDiaValue > 0
+          ? horasParaEstimados / horasPorDiaValue
+          : 0
+      )
+    );
+    setDiasNecesarios(
+      Math.ceil(
+        totalHorasInput > 0 && horasPorDiaValue > 0
+          ? totalHorasInput / horasPorDiaValue
+          : 0
+      )
+    );
+  }, [
+    totalHorasActividadesCalculado,
+    totalHorasInput,
+    horasPorDiaValue,
+    totalHorasEditadoManualmente,
+    horasOriginalesBackup,
+  ]);
 
   if (!isOpen) return null;
 
@@ -2251,22 +2274,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 <div className="col-span-1 flex flex-col items-start">
                   {!totalHorasEditadoManualmente ? (
                     <span className="text-sm font-semibold text-green-300 sm:text-base">
-                      Días laborables necesarios:{' '}
-                      {Math.ceil(
-                        totalHorasActividadesCalculado / horasPorDiaValue
-                      )}
+                      Días laborables necesarios: {diasEstimados}
                     </span>
                   ) : (
                     <>
                       <span className="text-sm font-semibold text-orange-300 sm:text-base">
-                        Estimados de días laborables necesarios:{' '}
-                        {Math.ceil(
-                          totalHorasActividadesCalculado / horasPorDiaValue
-                        )}
+                        Estimados de días laborables necesarios: {diasEstimados}
                       </span>
                       <span className="text-sm font-semibold text-green-300 sm:text-base">
-                        Días laborables necesarios:{' '}
-                        {Math.ceil(totalHorasInput / horasPorDiaValue)}
+                        Días laborables necesarios: {diasNecesarios}
                       </span>
                     </>
                   )}

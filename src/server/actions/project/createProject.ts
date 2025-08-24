@@ -37,6 +37,8 @@ interface ProjectData {
   horasPorDia?: number; // NUEVO
   totalHoras?: number; // NUEVO
   tiempoEstimado?: number; // NUEVO
+  diasEstimados?: number; // NUEVO
+  diasNecesarios?: number; // NUEVO
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
@@ -118,6 +120,8 @@ export async function createProject(
       horas_por_dia: projectData.horasPorDia ?? null, // NUEVO
       total_horas: projectData.totalHoras ?? null, // NUEVO
       tiempo_estimado: projectData.tiempoEstimado ?? null, // NUEVO
+      dias_estimados: projectData.diasEstimados ?? null, // NUEVO
+      dias_necesarios: projectData.diasNecesarios ?? null, // NUEVO
       createdAt: new Date(),
       updatedAt: new Date(),
     })

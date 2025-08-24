@@ -224,6 +224,8 @@ export const projects = pgTable('projects', {
   horas_por_dia: integer('horas_por_dia'), // NUEVO: Horas por día de trabajo
   total_horas: integer('total_horas'), // NUEVO: Total de horas del proyecto
   tiempo_estimado: integer('tiempo_estimado'), // NUEVO: Tiempo estimado (en días o similar)
+  dias_estimados: integer('dias_estimados'), // NUEVO: Días estimados por cálculo automático
+  dias_necesarios: integer('dias_necesarios'), // NUEVO: Días necesarios por edición manual
 });
 
 // Tabla de objetivos especificos proyectos
