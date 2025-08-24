@@ -329,9 +329,33 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [fechaFinEditadaManualmente, setFechaFinEditadaManualmente] =
     useState<boolean>(false);
   const [fechaInicioDomingoError, setFechaInicioDomingoError] = useState(false);
+  // Agrega este estado después de la declaración de totalHorasActividadesCalculado
+  const [totalHorasInput, setTotalHorasInput] = useState<number>(
+    0 // Inicializa en 0, se sincroniza abajo
+  );
+  // Nuevo estado para detectar edición manual
+  const [totalHorasEditadoManualmente, setTotalHorasEditadoManualmente] =
+    useState(false);
 
-  // Calcular el total de horas dinámicamente
-  const totalHorasActividadesCalculado = useMemo(() => {
+  // Agrega este estado después de la declaración de totalHorasEditadoManualmente
+  const [horasOriginalesBackup, setHorasOriginalesBackup] = useState<Record<
+    string,
+    number
+  > | null>(null);
+
+  // Calcula el total de horas dinámicamente SOLO si no está editado manualmente
+  const totalHorasActividadesCalculado = React.useMemo(() => {
+    if (totalHorasEditadoManualmente) {
+      // Si está editado manualmente, devuelve la suma de horasOriginalesBackup si existe
+      if (horasOriginalesBackup) {
+        return Object.values(horasOriginalesBackup).reduce(
+          (acc, val) => acc + (typeof val === 'number' && val > 0 ? val : 1),
+          0
+        );
+      }
+      // Si no hay backup, devuelve el input actual
+      return totalHorasInput;
+    }
     if (!objetivosEspEditado || objetivosEspEditado.length === 0) {
       // No mostrar logs ni calcular si no hay objetivos
       return 0;
@@ -353,7 +377,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     console.log('Total calculado:', total);
     return total;
-  }, [objetivosEspEditado, horasPorActividadFinal]);
+  }, [
+    objetivosEspEditado,
+    horasPorActividadFinal,
+    totalHorasEditadoManualmente,
+    totalHorasInput,
+    horasOriginalesBackup,
+  ]);
 
   // Actualizar tiempo estimado automáticamente
   useEffect(() => {
@@ -1138,10 +1168,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         return;
       }
 
-      // Mapear objetivos_especificos como array de strings (solo titles)
-      const objetivos_especificos: string[] = objetivosEspEditado.map(
-        (obj) => obj.title
-      );
+      // Mapear objetivos_especificos como array de objetos {id, title}
+      const objetivos_especificos = objetivosEspEditado.map((obj, idx) => ({
+        id:
+          obj.id ||
+          `obj_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`,
+        title: obj.title,
+      }));
 
       // Mapear actividades correctamente con objetivoId
       const actividades: {
@@ -1382,7 +1415,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         planteamiento: planteamientoEditado,
         justificacion: justificacionEditada,
         objetivo_general: objetivoGenEditado,
-        objetivos_especificos, // <-- ahora es array de strings
+        objetivos_especificos, // <-- ahora es array de objetos {id, title}
         actividades,
         type_project: tipoProyecto,
         categoryId: Number(categoria),
@@ -1391,6 +1424,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         fechaInicio,
         fechaFin,
         tipoVisualizacion,
+        horasPorDia: horasPorDiaValue, // NUEVO
+        totalHoras: totalHorasInput, // NUEVO
+        tiempoEstimado: Math.ceil(totalHorasInput / (horasPorDiaValue || 1)), // NUEVO: días estimados
         isPublic: false,
       };
 
@@ -1564,20 +1600,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       a.getDate() === b.getDate()
     );
   }
-
-  // Agrega este estado después de la declaración de totalHorasActividadesCalculado
-  const [totalHorasInput, setTotalHorasInput] = useState<number>(
-    totalHorasActividadesCalculado
-  );
-  // Nuevo estado para detectar edición manual
-  const [totalHorasEditadoManualmente, setTotalHorasEditadoManualmente] =
-    useState(false);
-
-  // Agrega este estado después de la declaración de totalHorasEditadoManualmente
-  const [horasOriginalesBackup, setHorasOriginalesBackup] = useState<Record<
-    string,
-    number
-  > | null>(null);
 
   // Cuando el usuario edita manualmente el total, guarda el backup si aún no existe
   useEffect(() => {
@@ -2662,12 +2684,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   if (setObjetivoGen) setObjetivoGen(objetivoGenEditado);
                   if (setObjetivosEspProp)
                     setObjetivosEspProp(objetivosEspEditado);
+                  setTotalHorasEditadoManualmente(false);
                   // También pasa los datos por el callback si lo acepta
                   onAnterior({
                     planteamiento: planteamientoEditado,
                     justificacion: justificacionEditada,
                     objetivoGen: objetivoGenEditado,
                     objetivosEsp: objetivosEspEditado,
+
                   });
                 }}
                 className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"

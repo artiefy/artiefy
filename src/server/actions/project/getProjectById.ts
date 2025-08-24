@@ -79,7 +79,6 @@ export async function getProjectById(
     })
   );
 
-  // Relaciona actividades con objetivos específicos usando objectiveId
   const objetivos_especificos = objetivos.map((o) => {
     const actividadesRelacionadas = actividadesConMeses
       .filter((a) => a.objectiveId === o.id)
@@ -124,15 +123,11 @@ export async function getProjectById(
       : '',
     objetivos_especificos,
     actividades: actividadesSimple,
-    // Devuelve fechas en formato YYYY-MM-DD para inputs tipo date y lógica de días
-    fecha_inicio: project.fecha_inicio
-      ? new Date(project.fecha_inicio).toISOString().split('T')[0]
-      : undefined,
-    fecha_fin: project.fecha_fin
-      ? new Date(project.fecha_fin).toISOString().split('T')[0]
-      : undefined,
+    // Usa directamente las fechas de la BD (projects)
+    fecha_inicio: project.fecha_inicio ?? undefined,
+    fecha_fin: project.fecha_fin ?? undefined,
     tipo_visualizacion: project.tipo_visualizacion ?? undefined,
-    publicComment: false
+    publicComment: false,
   };
 
   console.info(`[getProjectById] Returning project:`, projectDetail);

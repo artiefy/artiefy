@@ -332,6 +332,11 @@ export default function ProjectDetails() {
       const fechaInicio = new Date(fechaInicioStr);
       const fechaFin = new Date(fechaFinStr);
 
+      // Si la fecha de inicio es domingo, avanzar al lunes siguiente
+      if (fechaInicio.getDay() === 0) {
+        fechaInicio.setDate(fechaInicio.getDate() + 1);
+      }
+
       let i = 0;
       const fechaActual = new Date(fechaInicio);
       while (fechaActual <= fechaFin) {
@@ -1182,6 +1187,18 @@ export default function ProjectDetails() {
     );
   }
 
+  // Añade esta función utilitaria antes del return principal:
+  function formatFechaDDMMYYYY(fecha?: string) {
+    if (!fecha) return '';
+    // Si viene en formato ISO (yyyy-mm-ddTHH:MM:SS...), toma solo la parte de la fecha
+    const datePart = fecha.includes('T') ? fecha.split('T')[0] : fecha;
+    const [yyyy, mm, dd] = datePart.split('-');
+    if (yyyy && mm && dd) {
+      return `${dd} - ${mm} - ${yyyy}`;
+    }
+    return fecha;
+  }
+
   return (
     <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
       {/* Header */}
@@ -1330,15 +1347,17 @@ export default function ProjectDetails() {
                       </Badge>
                       <Badge className="bg-green-600 text-xs hover:bg-green-700">
                         Creado{' '}
-                        {project.createdAt
-                          ? new Date(project.createdAt).toLocaleDateString()
-                          : ''}
+                        {formatFechaDDMMYYYY(project.createdAt)
+                          // ? new Date(project.createdAt).toLocaleDateString()
+                          // : ''
+                          }
                       </Badge>
                       <Badge className="bg-teal-600 text-xs hover:bg-teal-700">
                         Actualizado{' '}
-                        {project.updatedAt
-                          ? new Date(project.updatedAt).toLocaleDateString()
-                          : ''}
+                        {formatFechaDDMMYYYY(project.updatedAt)
+                          // ? new Date(project.updatedAt).toLocaleDateString()
+                          // : ''
+                          }
                       </Badge>
                       <Badge
                         className="transition-colores flex cursor-pointer items-center gap-1 bg-purple-600 text-xs hover:bg-purple-700"
@@ -1355,22 +1374,13 @@ export default function ProjectDetails() {
                       <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span className="min-w-0 break-words">
                         Fecha de inicio:{' '}
-                        {project.fecha_inicio
-                          ? new Date(project.fecha_inicio).toLocaleDateString(
-                              'es-ES'
-                            )
-                          : ''}
+                        {formatFechaDDMMYYYY(project.fecha_inicio)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-300">
                       <Clock className="h-4 w-4 flex-shrink-0" />
                       <span className="min-w-0 break-words">
-                        Fecha de fin:{' '}
-                        {project.fecha_fin
-                          ? new Date(project.fecha_fin).toLocaleDateString(
-                              'es-ES'
-                            )
-                          : ''}
+                        Fecha de fin: {formatFechaDDMMYYYY(project.fecha_fin)}
                       </span>
                     </div>
                   </div>
@@ -2155,7 +2165,7 @@ export default function ProjectDetails() {
               >
                 <option value="horas">Horas</option>
                 <option value="dias">Días</option>
-                <option value="meses">Meses</option>
+                <option value="meses"> Meses</option>
               </select>
             </div>
           </CardHeader>

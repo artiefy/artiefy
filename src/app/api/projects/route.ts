@@ -32,6 +32,9 @@ interface ProjectData {
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
+  horasPorDia?: number; // NUEVO
+  totalHoras?: number; // NUEVO
+  tiempoEstimado?: number; // NUEVO
 }
 
 const respondWithError = (message: string, status: number) =>
@@ -199,6 +202,9 @@ export async function POST(req: Request) {
           : undefined,
       tipoVisualizacion: body.tipoVisualizacion ?? 'meses',
       isPublic: body.isPublic ?? false,
+      horasPorDia: body.horasPorDia ?? undefined, // NUEVO
+      totalHoras: body.totalHoras ?? undefined, // NUEVO
+      tiempoEstimado: body.tiempoEstimado ?? undefined, // NUEVO
     };
 
     console.log(

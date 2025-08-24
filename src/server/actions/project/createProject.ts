@@ -34,6 +34,9 @@ interface ProjectData {
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
+  horasPorDia?: number; // NUEVO
+  totalHoras?: number; // NUEVO
+  tiempoEstimado?: number; // NUEVO
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
@@ -104,9 +107,17 @@ export async function createProject(
       userId: UserId,
       categoryId: projectData.categoryId,
       isPublic: projectData.isPublic ?? false,
-      fecha_inicio: projectData.fechaInicio ?? null, // NO fechaInicio
-      fecha_fin: projectData.fechaFin ?? null, // NO fechaFin
-      tipo_visualizacion: projectData.tipoVisualizacion ?? 'meses', // NO tipoVisualizacion
+      // Cambia aquí: convierte a ISO si existe, solo la parte de fecha (YYYY-MM-DD)
+      fecha_inicio: projectData.fechaInicio
+        ? new Date(projectData.fechaInicio).toISOString().split('T')[0]
+        : null,
+      fecha_fin: projectData.fechaFin
+        ? new Date(projectData.fechaFin).toISOString().split('T')[0]
+        : null,
+      tipo_visualizacion: projectData.tipoVisualizacion ?? 'meses',
+      horas_por_dia: projectData.horasPorDia ?? null, // NUEVO
+      total_horas: projectData.totalHoras ?? null, // NUEVO
+      tiempo_estimado: projectData.tiempoEstimado ?? null, // NUEVO
       createdAt: new Date(),
       updatedAt: new Date(),
     })
@@ -123,8 +134,24 @@ export async function createProject(
     projectData.objetivos_especificos &&
     projectData.objetivos_especificos.length > 0
   ) {
-    // Ahora los objetivos vienen como array de objetos {id, title}
-    const objetivosData = projectData.objetivos_especificos.map((obj) => ({
+    // Permitir tanto array de strings como array de objetos {id, title}
+    let objetivosArray: { id: string; title: string }[];
+    if (typeof projectData.objetivos_especificos[0] === 'string') {
+      // Si es array de strings, conviértelo a objetos con id único
+      objetivosArray = (
+        projectData.objetivos_especificos as unknown as string[]
+      ).map((title, idx) => ({
+        id: `obj_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`,
+        title,
+      }));
+    } else {
+      objetivosArray = projectData.objetivos_especificos as {
+        id: string;
+        title: string;
+      }[];
+    }
+
+    const objetivosData = objetivosArray.map((obj) => ({
       projectId,
       description: obj.title,
       createdAt: new Date(),
@@ -135,10 +162,7 @@ export async function createProject(
       .returning({ id: specificObjectives.id });
     // Mapea id temporal a id real
     objetivosIdMap = Object.fromEntries(
-      projectData.objetivos_especificos.map((obj, idx) => [
-        obj.id,
-        inserted[idx].id,
-      ])
+      objetivosArray.map((obj, idx) => [obj.id, inserted[idx].id])
     );
   }
 
