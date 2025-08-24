@@ -600,17 +600,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     if (
       !fechaInicio ||
-      !totalHorasActividadesCalculado ||
       !horasPorDiaValue ||
       fechaFinEditadaManualmente || // Solo no calcular si la fecha de fin fue editada manualmente
       !hayActividades
     )
       return;
 
+    // Usa el total de horas manual si está editado manualmente, si no el calculado
+    const totalHorasParaCalculo = totalHorasEditadoManualmente
+      ? totalHorasInput
+      : totalHorasActividadesCalculado;
+
+    if (!totalHorasParaCalculo) return;
+
     // Calcula la cantidad de días necesarios (redondea hacia arriba)
-    const diasNecesarios = Math.ceil(
-      totalHorasActividadesCalculado / horasPorDiaValue
-    );
+    const diasNecesarios = Math.ceil(totalHorasParaCalculo / horasPorDiaValue);
 
     // Calcula la fecha de fin sumando días laborables (lunes a sábado)
     let diasAgregados = 0;
@@ -658,6 +662,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     fechaFinEditadaManualmente,
     objetivosEspEditado, // para detectar cambios en actividades
     fechaFin, // <-- Añadido para cumplir con react-hooks/exhaustive-deps
+    totalHorasEditadoManualmente,
+    totalHorasInput,
   ]);
 
   // Si la fecha de inicio es mayor a la de fin, intercambiarlas
@@ -1410,6 +1416,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       );
 
       // Construir el body para el backend
+      const tiempoEstimadoHoras = totalHorasEditadoManualmente
+        ? horasOriginalesBackup
+          ? Object.values(horasOriginalesBackup).reduce(
+              (acc, val) =>
+                acc + (typeof val === 'number' && val > 0 ? val : 1),
+              0
+            )
+          : totalHorasInput
+        : totalHorasActividadesCalculado;
+
       const body = {
         name: tituloState,
         planteamiento: planteamientoEditado,
@@ -1426,7 +1442,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         tipoVisualizacion,
         horasPorDia: horasPorDiaValue, // NUEVO
         totalHoras: totalHorasInput, // NUEVO
-        tiempoEstimado: Math.ceil(totalHorasInput / (horasPorDiaValue || 1)), // NUEVO: días estimados
+        tiempoEstimado: Math.ceil(
+          tiempoEstimadoHoras / (horasPorDiaValue || 1)
+        ), // NUEVO: días estimados
         isPublic: false,
       };
 
@@ -2230,13 +2248,28 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     </>
                   )}
                 </div>
-                <div className="col-span-1 flex items-center">
-                  <span className="text-sm font-semibold text-green-300 sm:text-base">
-                    Días laborables necesarios:{' '}
-                    {Math.ceil(
-                      totalHorasActividadesCalculado / horasPorDiaValue
-                    )}
-                  </span>
+                <div className="col-span-1 flex flex-col items-start">
+                  {!totalHorasEditadoManualmente ? (
+                    <span className="text-sm font-semibold text-green-300 sm:text-base">
+                      Días laborables necesarios:{' '}
+                      {Math.ceil(
+                        totalHorasActividadesCalculado / horasPorDiaValue
+                      )}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-sm font-semibold text-orange-300 sm:text-base">
+                        Estimados de días laborables necesarios:{' '}
+                        {Math.ceil(
+                          totalHorasActividadesCalculado / horasPorDiaValue
+                        )}
+                      </span>
+                      <span className="text-sm font-semibold text-green-300 sm:text-base">
+                        Días laborables necesarios:{' '}
+                        {Math.ceil(totalHorasInput / horasPorDiaValue)}
+                      </span>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -2691,7 +2724,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     justificacion: justificacionEditada,
                     objetivoGen: objetivoGenEditado,
                     objetivosEsp: objetivosEspEditado,
-
                   });
                 }}
                 className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
