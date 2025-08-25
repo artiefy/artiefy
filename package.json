@@ -143,6 +143,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/react": "^19.1.11",
     "@types/react-beautiful-dnd": "^13.1.8",
+    "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^19.1.7",
     "@types/react-modal": "^3.16.3",
     "@types/react-resizable": "^3.0.8",
