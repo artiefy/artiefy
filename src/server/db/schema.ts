@@ -201,27 +201,113 @@ export const coursesTaken = pgTable('courses_taken', {
 export const projects = pgTable('projects', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
-  description: text('description'),
+  planteamiento: text('planteamiento').notNull(),
+  justificacion: text('justificacion').notNull(),
+  objetivo_general: text('objetivo_general').notNull(),
   coverImageKey: text('cover_image_key'),
-  coverVideoKey: text('cover_video_key'),
+  coverVideoKey: text('cover_video_key'), // <-- Nuevo campo para video
   type_project: varchar('type_project', { length: 255 }).notNull(),
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-  categoryid: integer('categoryid')
+  categoryId: integer('category_id')
     .references(() => categories.id)
     .notNull(),
+  isPublic: boolean('is_public').default(false).notNull(),
+  publicComment: text('public_comment'), // <-- Nuevo campo para comentario público
+  // Cambia estos campos a snake_case para que Drizzle los mapee correctamente
+  fecha_inicio: date('fecha_inicio'),
+  fecha_fin: date('fecha_fin'),
+  tipo_visualizacion: text('tipo_visualizacion', {
+    enum: ['meses', 'dias'],
+  }).default('meses'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  horas_por_dia: integer('horas_por_dia'), // NUEVO: Horas por día de trabajo
+  total_horas: integer('total_horas'), // NUEVO: Total de horas del proyecto
+  tiempo_estimado: integer('tiempo_estimado'), // NUEVO: Tiempo estimado (en días o similar)
+  dias_estimados: integer('dias_estimados'), // NUEVO: Días estimados por cálculo automático
+  dias_necesarios: integer('dias_necesarios'), // NUEVO: Días necesarios por edición manual
 });
+
+// Tabla de objetivos especificos proyectos
+export const specificObjectives = pgTable('specific_objectives', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+  description: text('description').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const specificObjectivesRelations = relations(
+  specificObjectives,
+  ({ one }) => ({
+    project: one(projects, {
+      fields: [specificObjectives.projectId],
+      references: [projects.id],
+    }),
+  })
+);
+// Tabla de actividades proyectos
+export const projectActivities = pgTable('project_activities', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+  objectiveId: integer('objective_id') // <-- NUEVO: relación con specific_objectives
+    .references(() => specificObjectives.id, { onDelete: 'cascade' }),
+  description: text('description').notNull(),
+  // IMPORTANTE: El nombre en la BD es 'responsible_user_id', en el frontend mapea como 'responsibleUserId'
+  responsibleUserId: text('responsible_user_id').references(() => users.id), // Usuario responsable (puede ser null)
+  hoursPerDay: integer('hours_per_day'), // Horas al día dedicadas a la actividad
+});
+
+//Tabla de cronograma
+export const projectSchedule = pgTable('project_schedule', {
+  id: serial('id').primaryKey(),
+  activityId: integer('activity_id')
+    .references(() => projectActivities.id, { onDelete: 'cascade' })
+    .notNull(),
+  month: integer('month').notNull(), // 0 = enero, 11 = diciembre
+});
+//Relacion actividades Proyecto
+export const projectActivitiesRelations = relations(
+  projectActivities,
+  ({ one, many }) => ({
+    project: one(projects, {
+      fields: [projectActivities.projectId],
+      references: [projects.id],
+    }),
+    objective: one(specificObjectives, {
+      // <-- NUEVO: relación con objetivos específicos
+      fields: [projectActivities.objectiveId],
+      references: [specificObjectives.id],
+    }),
+    schedule: many(projectSchedule),
+  })
+);
+//Relacion cronograma Actividades
+export const projectScheduleRelations = relations(
+  projectSchedule,
+  ({ one }) => ({
+    activity: one(projectActivities, {
+      fields: [projectSchedule.activityId],
+      references: [projectActivities.id],
+    }),
+  })
+);
 
 // Tabla de proyectos tomados
 export const projectsTaken = pgTable('projects_taken', {
-  id: serial('id').primaryKey(),
+  id: serial('id').primaryKey(), // ID autoincremental
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
   projectId: integer('project_id')
     .references(() => projects.id)
     .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Tabla de progreso de lecciones por usuario
@@ -665,10 +751,11 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [users.id],
   }),
   category: one(categories, {
-    fields: [projects.categoryid],
+    fields: [projects.categoryId],
     references: [categories.id],
   }),
   projectsTaken: many(projectsTaken),
+  specificObjectives: many(specificObjectives),
 }));
 
 export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
@@ -933,6 +1020,59 @@ export const notifications = pgTable('notifications', {
   metadata: jsonb('metadata'),
 });
 
+// Tabla de entregas de actividades de proyecto
+export const projectActivityDeliveries = pgTable(
+  'project_activity_deliveries',
+  {
+    id: serial('id').primaryKey(),
+    activityId: integer('activity_id')
+      .references(() => projectActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    entregado: boolean('entregado').default(false).notNull(),
+    aprobado: boolean('aprobado').default(false).notNull(),
+    entregaUrl: text('entrega_url'), // opcional: link a archivo o evidencia (mantener por compatibilidad)
+
+    // Nuevos campos para diferentes tipos de archivos
+    documentKey: text('document_key'), // Para documentos (PDF, Word, Excel, etc.)
+    documentName: text('document_name'), // Nombre original del documento
+    imageKey: text('image_key'), // Para imágenes (JPG, PNG, etc.)
+    imageName: text('image_name'), // Nombre original de la imagen
+    videoKey: text('video_key'), // Para videos (MP4, AVI, etc.)
+    videoName: text('video_name'), // Nombre original del video
+    compressedFileKey: text('compressed_file_key'), // Para archivos comprimidos (RAR, ZIP, 7z, etc.)
+    compressedFileName: text('compressed_file_name'), // Nombre original del archivo comprimido
+
+    // Metadatos adicionales
+    fileTypes: text('file_types'), // JSON string con los tipos de archivos subidos
+    totalFiles: integer('total_files').default(0), // Contador total de archivos
+
+    comentario: text('comentario'), // opcional: comentario del usuario
+    feedback: text('feedback'), // opcional: comentario del responsable
+    entregadoAt: timestamp('entregado_at').defaultNow(),
+    aprobadoAt: timestamp('aprobado_at'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [unique('unique_activity_user').on(table.activityId, table.userId)]
+);
+
+// Relaciones para projectActivityDeliveries
+export const projectActivityDeliveriesRelations = relations(
+  projectActivityDeliveries,
+  ({ one }) => ({
+    activity: one(projectActivities, {
+      fields: [projectActivityDeliveries.activityId],
+      references: [projectActivities.id],
+    }),
+    user: one(users, {
+      fields: [projectActivityDeliveries.userId],
+      references: [users.id],
+    }),
+  })
+);
+
 export const courseCourseTypes = pgTable(
   'course_course_types',
   {
@@ -960,6 +1100,54 @@ export const courseCourseTypesRelations = relations(
   })
 );
 
+// Tabla de solicitudes de participación en proyectos
+export const projectParticipationRequests = pgTable(
+  'project_participation_requests',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    projectId: integer('project_id')
+      .references(() => projects.id)
+      .notNull(),
+    requestType: text('request_type', {
+      enum: ['participation', 'resignation'],
+    })
+      .default('participation')
+      .notNull(), // Nuevo campo para el tipo de solicitud
+    status: text('status', {
+      enum: ['pending', 'approved', 'rejected'],
+    })
+      .default('pending')
+      .notNull(),
+    requestMessage: text('request_message'), // Mensaje opcional del solicitante
+    responseMessage: text('response_message'), // Mensaje opcional del responsable del proyecto
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    respondedAt: timestamp('responded_at'),
+    respondedBy: text('responded_by').references(() => users.id), // Quien respondió la solicitud
+  }
+);
+
+// Relaciones para projectParticipationRequests
+export const projectParticipationRequestsRelations = relations(
+  projectParticipationRequests,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [projectParticipationRequests.userId],
+      references: [users.id],
+    }),
+    project: one(projects, {
+      fields: [projectParticipationRequests.projectId],
+      references: [projects.id],
+    }),
+    responder: one(users, {
+      fields: [projectParticipationRequests.respondedBy],
+      references: [users.id],
+    }),
+  })
+);
 // Añadir esta nueva relación cerca de las demás relaciones
 export const certificatesRelations = relations(certificates, ({ one }) => ({
   user: one(users, {

@@ -273,21 +273,27 @@ export interface Enrollment {
 export interface Project {
   id: number;
   name: string;
-  description: string | null;
+  planteamiento: string;
+  justificacion: string;
+  objetivo_general: string;
   coverImageKey: string | null;
-  coverVideoKey: string | null;
   type_project: string;
   userId: string;
-  categoryid: number;
-  category?: Category;
-  user?: User;
+  categoryId: number;
+  isPublic: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  category?: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface ProjectTaken {
   id: number;
   userId: string;
   projectId: number;
-  user?: User;
+  createdAt: Date;
   project?: Project;
 }
 

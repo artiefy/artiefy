@@ -81,7 +81,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/51128_1754672226968/node",
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/34420_1756117550544/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -126,8 +126,7 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
-  "workbench.colorTheme": "GitHub Dark Default",
-    "[ignore]": {
+  "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
 }
