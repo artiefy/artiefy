@@ -1721,7 +1721,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       {/* Barra de progreso de carga */}
       {isUpdating && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-white p-6 shadow-lg">
+          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
@@ -1729,7 +1729,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <div className="mt-2 text-center font-semibold text-gray-700">
+              <div className="mt-2 text-center font-semibold text-gray-500">
                 {statusText
                   ? statusText
                   : progress < 100
@@ -1737,7 +1737,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     : '¡Completado!'}
               </div>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-300">
               Por favor, espera a que termine el proceso.
             </div>
           </div>

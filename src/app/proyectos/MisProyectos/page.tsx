@@ -10,10 +10,12 @@ import {
   Calendar,
   Edit,
   Eye,
-  ImageIcon,
+  ImageOff,
+  Maximize, // agrega este import
   Plus,
   Search,
   Users,
+  VideoOff,
 } from 'lucide-react';
 
 import Loading from '~/app/loading';
@@ -767,8 +769,94 @@ export default function ProyectosPage() {
     return matchesCategory && matchesSearch && matchesType;
   });
 
+  // --- Estado y lógica para ciclo imagen/video por proyecto ---
+  // Mapa de projectId a estado de showImage
+  const [showImageMap, setShowImageMap] = useState<Record<number, boolean>>({});
+  // Mapa de projectId a referencia de video
+  const videoRefs = React.useRef<Record<number, HTMLVideoElement | null>>({});
+  // NUEVO: refs para imágenes
+  const imageRefs = React.useRef<Record<number, HTMLImageElement | null>>({});
+
+  // Efecto para manejar el ciclo imagen/video por cada proyecto
+  useEffect(() => {
+    const timers: Record<number, NodeJS.Timeout> = {};
+    filteredProjects.forEach((project) => {
+      if (project.coverImageKey && project.coverVideoKey) {
+        if (!(project.id in showImageMap)) {
+          setShowImageMap((prev) => ({ ...prev, [project.id]: true }));
+        }
+        if (showImageMap[project.id]) {
+          timers[project.id] = setTimeout(() => {
+            setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
+          }, 10000);
+        }
+      }
+    });
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, [filteredProjects, showImageMap]);
+
+  // Handler para cuando termina el video: vuelve a mostrar la imagen
+  const handleVideoEnded = (projectId: number) => {
+    setShowImageMap((prev) => ({ ...prev, [projectId]: true }));
+    const ref = videoRefs.current[projectId];
+    if (ref) ref.currentTime = 0;
+  };
+
   const handleImageError = (projectId: number) => {
     setImageErrors((prev) => new Set(prev).add(projectId));
+  };
+
+  // NUEVO: función para pantalla completa (sin 'any', usando type guards)
+  const handleFullscreen = (projectId: number, isImage: boolean) => {
+    if (isImage) {
+      const img = imageRefs.current[projectId];
+      if (img) {
+        if (typeof img.requestFullscreen === 'function') {
+          img.requestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    } else {
+      const video = videoRefs.current[projectId];
+      if (video) {
+        if (typeof video.requestFullscreen === 'function') {
+          video.requestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    }
   };
 
   // Función para cargar los detalles completos del proyecto usando el endpoint existente
@@ -876,9 +964,9 @@ export default function ProyectosPage() {
 
   // Mostrar loading mientras se autentica
   // Mostrar loading mientras Clerk carga
-    if (!isLoaded || loading) {
-      return <Loading />;
-    }
+  if (!isLoaded || loading) {
+    return <Loading />;
+  }
 
   // Función para limpiar todos los campos del flujo de creación
   function limpiarFlujoCreacion() {
@@ -1096,7 +1184,7 @@ export default function ProyectosPage() {
                   return (
                     <Card
                       key={`${project.projectType}-${project.id}`}
-                      className="relative flex min-w-0 flex-col border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
+                      className="relative flex h-full min-w-0 flex-col border-slate-700 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50"
                     >
                       {/* Burbuja roja de solicitudes pendientes - SOLO para proyectos propios */}
                       {project.projectType === 'own' &&
@@ -1111,52 +1199,94 @@ export default function ProyectosPage() {
                         )}
 
                       <CardHeader className="pb-4">
-                        {/* Imagen del proyecto */}
-                        <div className="relative mb-4 h-48 w-full overflow-hidden rounded-lg">
-                          {/* Mostrar video si existe coverVideoKey y no hay error */}
-                          {project.coverVideoKey &&
-                          !videoErrors.has(project.id) &&
-                          project.coverVideoKey.trim() !== '' ? (
-                            <>
-                              {/* Debug info solo para el proyecto 73, puedes quitarlo si no lo necesitas */}
-                              {project.id === 73 && (
-                                <div
-                                  style={{
-                                    color: 'yellow',
-                                    fontSize: 12,
-                                    wordBreak: 'break-all',
-                                    background: '#222',
-                                    padding: 4,
-                                    marginBottom: 4,
+                        {/* Imagen/video del proyecto con ciclo */}
+                        <div className="relative mb-4 flex h-48 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-900">
+                          {project.coverImageKey && project.coverVideoKey ? (
+                            showImageMap[project.id] !== false ? (
+                              <>
+                                <Image
+                                  ref={(el) => {
+                                    imageRefs.current[project.id] = el;
+                                  }}
+                                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                                  alt={project.title ?? 'Proyecto'}
+                                  fill
+                                  className="rounded-lg bg-[#222] object-cover"
+                                  unoptimized
+                                  onError={() => {
+                                    console.error(
+                                      'Error cargando imagen del proyecto:',
+                                      project.title,
+                                      'ID:',
+                                      project.id
+                                    );
+                                    handleImageError(project.id);
+                                  }}
+                                />
+                                {/* Botón pantalla completa solo para imagen */}
+                                <div className="absolute top-3 right-3">
+                                  <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                                    onClick={() =>
+                                      handleFullscreen(project.id, true)
+                                    }
+                                    title="Ver en pantalla completa"
+                                  >
+                                    <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <video
+                                  ref={(el) => {
+                                    videoRefs.current[project.id] = el;
+                                  }}
+                                  autoPlay
+                                  controls={true}
+                                  muted={true}
+                                  className="h-full w-full rounded-lg bg-[#222] object-cover"
+                                  poster={
+                                    project.coverImageKey
+                                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                                      : undefined
+                                  }
+                                  onEnded={() => handleVideoEnded(project.id)}
+                                  onError={() => {
+                                    setVideoErrors((prev) =>
+                                      new Set(prev).add(project.id)
+                                    );
                                   }}
                                 >
-                                  VIDEO KEY: {String(project.coverVideoKey)}
-                                  <br />
-                                  VIDEO URL:{' '}
-                                  {`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
-                                </div>
-                              )}
+                                  <source
+                                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                                  />
+                                  Tu navegador no soporta la reproducción de
+                                  video.
+                                </video>
+                              </>
+                            )
+                          ) : project.coverVideoKey &&
+                            !videoErrors.has(project.id) &&
+                            project.coverVideoKey.trim() !== '' ? (
+                            <>
                               <video
                                 controls
-                                width={400}
-                                height={400}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  borderRadius: '0.5rem',
-                                  objectFit: 'cover',
-                                  background: '#222',
-                                }}
+                                className="h-full w-full rounded-lg bg-[#222] object-cover"
                                 poster={
                                   project.coverImageKey
                                     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
                                     : undefined
                                 }
                                 onError={() => {
-                                  // Puedes usar alert solo para debug, pero normalmente solo marca el error
                                   setVideoErrors((prev) =>
                                     new Set(prev).add(project.id)
                                   );
+                                }}
+                                ref={(el) => {
+                                  videoRefs.current[project.id] = el;
                                 }}
                               >
                                 <source
@@ -1165,35 +1295,80 @@ export default function ProyectosPage() {
                                 Tu navegador no soporta la reproducción de
                                 video.
                               </video>
+                              <div className="absolute top-3 right-3">
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                                  onClick={() =>
+                                    handleFullscreen(project.id, false)
+                                  }
+                                  title="Ver en pantalla completa"
+                                >
+                                  <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                                </Button>
+                              </div>
                             </>
                           ) : project.coverImageKey &&
                             !imageErrors.has(project.id) ? (
-                            <Image
-                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
-                              alt={project.title ?? 'Proyecto'}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                              onError={() => {
-                                console.error(
-                                  'Error cargando imagen del proyecto:',
-                                  project.title,
-                                  'ID:',
-                                  project.id
-                                );
-                                handleImageError(project.id);
-                              }}
-                            />
+                            <>
+                              <Image
+                                ref={(el) => {
+                                  imageRefs.current[project.id] = el;
+                                }}
+                                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                                alt={project.title ?? 'Proyecto'}
+                                fill
+                                className="rounded-lg bg-[#222] object-cover"
+                                unoptimized
+                                onError={() => {
+                                  console.error(
+                                    'Error cargando imagen del proyecto:',
+                                    project.title,
+                                    'ID:',
+                                    project.id
+                                  );
+                                  handleImageError(project.id);
+                                }}
+                              />
+                              <div className="absolute top-3 right-3">
+                                <Button
+                                  variant="secondary"
+                                  size="icon"
+                                  className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                                  onClick={() =>
+                                    handleFullscreen(project.id, true)
+                                  }
+                                  title="Ver en pantalla completa"
+                                >
+                                  <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                                </Button>
+                              </div>
+                            </>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-slate-700">
-                              <div className="text-center text-slate-400">
-                                <ImageIcon className="mx-auto mb-2 h-12 w-12" />
-                                <p className="text-sm">
-                                  {imageErrors.has(project.id) &&
-                                  project.coverImageKey
-                                    ? 'Error al cargar imagen'
-                                    : 'Sin imagen'}
-                                </p>
+                              <div
+                                className="flex w-full flex-col items-center justify-center"
+                                style={{
+                                  minHeight: 250,
+                                  height: 250,
+                                  maxHeight: 300,
+                                }}
+                              >
+                                <ImageOff
+                                  className="text-slate-500"
+                                  size={40}
+                                />
+                                <span className="mt-2 text-base text-slate-500">
+                                  Sin imagen
+                                </span>
+                                <VideoOff
+                                  className="text-slate-500"
+                                  size={40}
+                                />
+                                <span className="mt-2 text-base text-slate-500">
+                                  Sin video
+                                </span>
                               </div>
                             </div>
                           )}
@@ -1360,8 +1535,8 @@ export default function ProyectosPage() {
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex w-full flex-col gap-2 pt-2 sm:flex-row">
+                        {/* Footer fijo: Botones de acción */}
+                        <div className="mt-auto flex w-full flex-col gap-2 pt-2 sm:flex-row">
                           <Button
                             className="min-w-0 flex-1 overflow-hidden bg-cyan-500 text-white hover:bg-cyan-600"
                             onClick={() =>

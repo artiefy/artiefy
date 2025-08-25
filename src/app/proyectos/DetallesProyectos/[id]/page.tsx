@@ -13,12 +13,16 @@ import {
   Clock,
   EyeOff,
   Globe,
+  ImageOff, // agrega este import
+  Maximize, // agrega este import
   Trash2,
   Users,
+  VideoOff,
 } from 'lucide-react';
 
 import Loading from '~/app/loading';
 import { Header } from '~/components/estudiantes/layout/Header';
+import ModalDespublicarProyecto from '~/components/projects/Modals/ModalDespublicarProyecto';
 import ModalEntregaActividad from '~/components/projects/Modals/ModalEntregaActividad';
 import ModalPublicarProyecto from '~/components/projects/Modals/ModalPublicarProyecto';
 import { Badge } from '~/components/projects/ui/badge';
@@ -132,8 +136,10 @@ export default function ProjectDetails() {
   const [modalPublicarOpen, setModalPublicarOpen] = useState(false);
   const [comentarioPublicar, setComentarioPublicar] = useState('');
   // Nuevo estado para loading del botón de publicar
-
   const [publicandoProyecto, _setPublicandoProyecto] = useState(false);
+  // NUEVO: Estado para barra de progreso y texto de estado al publicar
+  const [publicarProgress, setPublicarProgress] = useState(0);
+  const [publicarStatusText, setPublicarStatusText] = useState('');
 
   // Estado para el modal de entrega de actividad
   const [modalEntregaOpen, setModalEntregaOpen] = useState(false);
@@ -155,6 +161,12 @@ export default function ProjectDetails() {
     archivos: [],
     comentario: '',
   });
+
+  // Estado para el modal de despublicar y barra de progreso
+  const [modalDespublicarOpen, setModalDespublicarOpen] = useState(false);
+  const [despublicandoProyecto, setDespublicandoProyecto] = useState(false);
+  const [despublicarProgress, setDespublicarProgress] = useState(0);
+  const [despublicarStatusText, setDespublicarStatusText] = useState('');
 
   // Función para recargar el contador de solicitudes pendientes
   const recargarSolicitudesPendientes = async () => {
@@ -559,6 +571,10 @@ export default function ProjectDetails() {
     if (!projectId) return;
     try {
       _setPublicandoProyecto(true);
+      setPublicarProgress(10);
+      setPublicarStatusText('Iniciando publicación...');
+      // Simula progreso
+      setTimeout(() => setPublicarProgress(30), 100);
       const res = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -567,15 +583,69 @@ export default function ProjectDetails() {
           publicComment: comentarioPublicar,
         }),
       });
+      setPublicarProgress(70);
+      setPublicarStatusText('Guardando cambios...');
       if (res.ok) {
-        setModalPublicarOpen(false);
-        setComentarioPublicar('');
-        await reloadProject();
+        setPublicarProgress(100);
+        setPublicarStatusText('Proyecto publicado correctamente.');
+        setTimeout(async () => {
+          setModalPublicarOpen(false);
+          setComentarioPublicar('');
+          setPublicarProgress(0);
+          setPublicarStatusText('');
+          await reloadProject();
+          _setPublicandoProyecto(false);
+        }, 600);
+      } else {
+        setPublicarProgress(0);
+        setPublicarStatusText('');
+        _setPublicandoProyecto(false);
       }
     } catch (_e) {
-      // Manejo de error opcional
-    } finally {
+      setPublicarProgress(0);
+      setPublicarStatusText('');
       _setPublicandoProyecto(false);
+      // Manejo de error opcional
+    }
+  }
+
+  // Lógica para despublicar proyecto con barra de progreso y comentario en null
+  async function handleConfirmarDespublicarProyecto() {
+    if (!projectId) return;
+    try {
+      setDespublicandoProyecto(true);
+      setDespublicarProgress(10);
+      setDespublicarStatusText('Iniciando despublicación...');
+      setTimeout(() => setDespublicarProgress(30), 100);
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPublic: false,
+          publicComment: null,
+        }),
+      });
+      setDespublicarProgress(70);
+      setDespublicarStatusText('Guardando cambios...');
+      if (res.ok) {
+        setDespublicarProgress(100);
+        setDespublicarStatusText('Proyecto despublicado correctamente.');
+        setTimeout(async () => {
+          setModalDespublicarOpen(false);
+          setDespublicarProgress(0);
+          setDespublicarStatusText('');
+          await reloadProject();
+          setDespublicandoProyecto(false);
+        }, 600);
+      } else {
+        setDespublicarProgress(0);
+        setDespublicarStatusText('');
+        setDespublicandoProyecto(false);
+      }
+    } catch {
+      setDespublicarProgress(0);
+      setDespublicarStatusText('');
+      setDespublicandoProyecto(false);
     }
   }
 
@@ -1155,7 +1225,7 @@ export default function ProjectDetails() {
         // Mostrar imagen por 20 segundos, luego mostrar video
         timer = setTimeout(() => {
           setShowImage(false);
-        }, 20000);
+        }, 10000);
       }
     }
 
@@ -1170,6 +1240,60 @@ export default function ProjectDetails() {
     // Reiniciar el video para la próxima vez
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
+    }
+  };
+
+  // NUEVO: ref para imagen (debe ir antes de cualquier return)
+  const imageRef = React.useRef<HTMLImageElement | null>(null);
+
+  // NUEVO: función para pantalla completa (sin 'any', usando type guards)
+  const handleFullscreen = (isImage: boolean) => {
+    if (isImage) {
+      const img = imageRef.current;
+      if (img) {
+        if (typeof img.requestFullscreen === 'function') {
+          img.requestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    } else {
+      const video = videoRef.current;
+      if (video) {
+        if (typeof video.requestFullscreen === 'function') {
+          video.requestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
     }
   };
 
@@ -1235,94 +1359,178 @@ export default function ProjectDetails() {
           <div className="xl:col-span-1">
             <Card className="border-slate-700 bg-slate-800/50">
               <CardContent className="p-6">
-                <div className="mb-4 flex w-full items-center justify-center rounded-lg bg-slate-700/50">
+                <div
+                  className="mb-4 flex w-full items-center justify-center rounded-lg bg-slate-700/50"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    display: 'flex',
+                  }}
+                >
                   {/* Mostrar imagen 20s, luego video autoplay, repetir ciclo */}
                   {project.coverImageKey && project.coverVideoKey ? (
                     showImage ? (
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
-                        alt={project.name}
-                        width={500}
-                        height={500}
-                        style={{
-                          width: '600px',
-                          height: 'auto',
-                          borderRadius: '0.5rem',
-                          maxWidth: '100%',
-                          display: 'block',
-                          margin: '0 auto',
-                        }}
-                        layout="responsive"
-                        className="h-auto w-full max-w-[500px] rounded-lg object-cover"
-                        onError={() => setImageError(true)}
-                      />
-                    ) : (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        controls={true}
-                        muted={true}
-                        width={250}
-                        height={250}
-                        style={{
-                          width: '300px',
-                          height: 'auto',
-                          borderRadius: '0.5rem',
-                          maxWidth: '100%',
-                          display: 'block',
-                          margin: '0 auto',
-                        }}
-                        poster={
-                          project.coverImageKey
-                            ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
-                            : undefined
-                        }
-                        onEnded={handleVideoEnded}
-                      >
-                        <source
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
-                          type="video/mp4"
+                      <>
+                        <Image
+                          ref={imageRef}
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                          alt={project.name}
+                          width={500}
+                          height={500}
+                          style={{
+                            width: '600px',
+                            height: 'auto',
+                            borderRadius: '0.5rem',
+                            maxWidth: '100%',
+                            display: 'block',
+                            margin: '0 auto',
+                          }}
+                          layout="responsive"
+                          className="h-auto w-full max-w-[500px] rounded-lg object-cover"
+                          onError={() => setImageError(true)}
                         />
-                        Tu navegador no soporta la reproducción de video.
-                      </video>
+                        {/* Botón pantalla completa para imagen */}
+                        <div className="absolute top-3 right-3">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                            onClick={() => handleFullscreen(true)}
+                            title="Ver en pantalla completa"
+                          >
+                            <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          style={{
+                            display: 'inline-block',
+                            width: 'auto',
+                            maxWidth: '100%',
+                          }}
+                        >
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            controls={true}
+                            muted={true}
+                            style={{
+                              width: '100%',
+                              height: 'auto',
+                              borderRadius: '0.5rem',
+                              maxWidth: '600px',
+                              display: 'block',
+                              margin: '0 auto',
+                            }}
+                            poster={
+                              project.coverImageKey
+                                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                                : undefined
+                            }
+                            onEnded={handleVideoEnded}
+                          >
+                            <source
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                              type="video/mp4"
+                            />
+                            Tu navegador no soporta la reproducción de video.
+                          </video>
+                        </div>
+                      </>
                     )
                   ) : project.coverVideoKey ? (
-                    <video
-                      controls
-                      width={250}
-                      height={250}
-                      style={{
-                        width: '250px',
-                        height: 'auto',
-                        borderRadius: '0.5rem',
-                        maxWidth: '100%',
-                        display: 'block',
-                        margin: '0 auto',
-                      }}
-                      poster={
-                        project.coverImageKey
-                          ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
-                          : undefined
-                      }
-                    >
-                      <source
-                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
-                        type="video/mp4"
-                      />
-                      Tu navegador no soporta la reproducción de video.
-                    </video>
+                    <>
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          width: 'auto',
+                          maxWidth: '100%',
+                        }}
+                      >
+                        <video
+                          controls
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            borderRadius: '0.5rem',
+                            maxWidth: '600px',
+                            display: 'block',
+                            margin: '0 auto',
+                          }}
+                          poster={
+                            project.coverImageKey
+                              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                              : undefined
+                          }
+                          ref={videoRef}
+                        >
+                          <source
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                            type="video/mp4"
+                          />
+                          Tu navegador no soporta la reproducción de video.
+                        </video>
+                      </div>
+                      <div className="absolute top-3 right-3">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                          onClick={() => handleFullscreen(false)}
+                          title="Ver en pantalla completa"
+                        >
+                          <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                        </Button>
+                      </div>
+                    </>
                   ) : project.coverImageKey && !imageError ? (
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
-                      alt={project.name}
-                      width={250}
-                      height={250}
-                      layout="responsive"
-                      className="h-auto w-full max-w-[250px] rounded-lg object-cover"
-                      onError={() => setImageError(true)}
-                    />
+                    <>
+                      <Image
+                        ref={imageRef}
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                        alt={project.name}
+                        width={250}
+                        height={250}
+                        layout="responsive"
+                        className="h-auto w-full max-w-[250px] rounded-lg object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                      <div className="absolute top-3 right-3">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                          onClick={() => handleFullscreen(true)}
+                          title="Ver en pantalla completa"
+                        >
+                          <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                        </Button>
+                      </div>
+                    </>
                   ) : (
-                    <div className="text-6xl text-slate-500">📊</div>
+                    // Cambia aquí: altura fija y nuevo icono
+                    <div
+                      className="flex w-full flex-col items-center justify-center"
+                      style={{
+                        minHeight: 250,
+                        height: 250,
+                        maxHeight: 300,
+                      }}
+                    >
+                      <ImageOff className="text-slate-500" size={64} />
+                      <span className="mt-2 text-base text-slate-500">
+                        Sin imagen
+                      </span>
+                      <VideoOff className="text-slate-500" size={64} />
+                      <span className="mt-2 text-base text-slate-500">
+                        Sin video
+                      </span>
+                    </div>
                   )}
                 </div>
 
@@ -1347,17 +1555,19 @@ export default function ProjectDetails() {
                       </Badge>
                       <Badge className="bg-green-600 text-xs hover:bg-green-700">
                         Creado{' '}
-                        {formatFechaDDMMYYYY(project.createdAt)
+                        {
+                          formatFechaDDMMYYYY(project.createdAt)
                           // ? new Date(project.createdAt).toLocaleDateString()
                           // : ''
-                          }
+                        }
                       </Badge>
                       <Badge className="bg-teal-600 text-xs hover:bg-teal-700">
                         Actualizado{' '}
-                        {formatFechaDDMMYYYY(project.updatedAt)
+                        {
+                          formatFechaDDMMYYYY(project.updatedAt)
                           // ? new Date(project.updatedAt).toLocaleDateString()
                           // : ''
-                          }
+                        }
                       </Badge>
                       <Badge
                         className="transition-colores flex cursor-pointer items-center gap-1 bg-purple-600 text-xs hover:bg-purple-700"
@@ -1440,26 +1650,7 @@ export default function ProjectDetails() {
                       <Button
                         className="flex items-center gap-1 truncate bg-yellow-600 text-xs hover:bg-yellow-700 sm:text-sm"
                         size="sm"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(
-                              `/api/projects/${projectId}`,
-                              {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  isPublic: false,
-                                  publicComment: '',
-                                }),
-                              }
-                            );
-                            if (res.ok) {
-                              await reloadProject();
-                            }
-                          } catch (_e) {
-                            // Manejo de error opcional
-                          }
-                        }}
+                        onClick={() => setModalDespublicarOpen(true)}
                         title="Despublicar proyecto"
                       >
                         <EyeOff className="h-4 w-4" />
@@ -2417,12 +2608,29 @@ export default function ProjectDetails() {
           isOpen={modalPublicarOpen}
           onClose={async () => {
             setModalPublicarOpen(false);
+            setPublicarProgress(0); // Reset progress
+            setPublicarStatusText('');
             await reloadProject();
           }}
           comentario={comentarioPublicar}
           setComentario={setComentarioPublicar}
           onConfirm={handleConfirmarPublicarProyecto}
           loading={publicandoProyecto}
+          progress={publicarProgress}
+          statusText={publicarStatusText}
+        />
+        {/* Modal para despublicar proyecto */}
+        <ModalDespublicarProyecto
+          isOpen={modalDespublicarOpen}
+          onClose={() => {
+            setModalDespublicarOpen(false);
+            setDespublicarProgress(0);
+            setDespublicarStatusText('');
+          }}
+          onConfirm={handleConfirmarDespublicarProyecto}
+          loading={despublicandoProyecto}
+          progress={despublicarProgress}
+          statusText={despublicarStatusText}
         />
       </div>
       {/* Scrollbar color personalizado */}

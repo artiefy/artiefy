@@ -12,13 +12,14 @@ import {
   ArrowRight,
   Filter,
   Folder,
-  ImageIcon,
+  ImageOff,
   Maximize, // agrega este import
   Menu,
   MoreHorizontal,
   Search,
   TrendingUp,
   Users,
+  VideoOff,
   X,
 } from 'lucide-react';
 import { FaFolderOpen } from 'react-icons/fa';
@@ -1118,14 +1119,28 @@ export default function Component() {
                               />
                             ) : (
                               <div className="flex h-48 w-full items-center justify-center bg-slate-700 md:h-64">
-                                <div className="text-center text-slate-400">
-                                  <ImageIcon className="mx-auto mb-2 h-8 w-8 md:h-12 md:w-12" />
-                                  <p className="text-xs md:text-sm">
-                                    {imageErrors.has(project.id) ||
-                                    videoErrors.has(project.id)
-                                      ? 'Error al cargar portada'
-                                      : 'Sin imagen/video'}
-                                  </p>
+                                <div
+                                  className="flex w-full flex-col items-center justify-center"
+                                  style={{
+                                    minHeight: 250,
+                                    height: 250,
+                                    maxHeight: 300,
+                                  }}
+                                >
+                                  <ImageOff
+                                    className="text-slate-500"
+                                    size={50}
+                                  />
+                                  <span className="mt-2 text-base text-slate-500">
+                                    Sin imagen
+                                  </span>
+                                  <VideoOff
+                                    className="text-slate-500"
+                                    size={50}
+                                  />
+                                  <span className="mt-2 text-base text-slate-500">
+                                    Sin video
+                                  </span>
                                 </div>
                               </div>
                             )}
