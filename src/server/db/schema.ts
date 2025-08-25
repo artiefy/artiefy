@@ -1225,3 +1225,19 @@ export const horario = pgTable('horario', {
   id: serial('id').primaryKey(),
   schedule: text('contact').notNull(),
 });
+
+// Gestión de cartera por usuario (estado y comprobante opcional)
+export const userCartera = pgTable('user_cartera', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  status: text('status', { enum: ['activo', 'inactivo'] })
+    .notNull()
+    .default('inactivo'),
+  receiptKey: text('receipt_key'),
+  receiptName: text('receipt_name'),
+  // opcional: guarda URL directa si la necesitas (puedes reconstruirla con el BUCKET público)
+  receiptUrl: text('receipt_url'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
