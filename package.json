@@ -179,7 +179,7 @@
     "esbuild": "^0.25.6"
   },
   "ct3aMetadata": {
-    "initVersion": "7.38.1"
+    "initVersion": "7.39.3"
   },
   "engines": {
     "node": ">=18 <23",
