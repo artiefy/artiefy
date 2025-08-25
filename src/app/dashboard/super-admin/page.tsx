@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -112,6 +112,16 @@ interface EmailResponse {
   results: EmailResult[];
 }
 
+interface WhatsAppTemplate {
+  name: string;
+  label: string;
+  language: 'es' | 'en';
+  body: string;
+  example?: string[];
+  status?: string; // 👈 simple y sin warning
+  langCode?: string;
+}
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   // 🔍 Estados de búsqueda y filtros
@@ -157,6 +167,7 @@ export default function AdminDashboard() {
   if (typeof anuncios === 'string' && anuncios) {
     // Variable utilizada para evitar warnings, no afecta la lógica
   }
+  const WA_TEXT_ONLY = '__TEXT_ONLY__';
 
   const [showAnuncioModal, setShowAnuncioModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false); // ✅ Nuevo estado para mostrar el modal de correos
@@ -169,6 +180,9 @@ export default function AdminDashboard() {
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [numerosLocales, setNumerosLocales] = useState('');
   const [codigoPais, setCodigoPais] = useState('+57');
+  const [waSelectedTemplate, setWaSelectedTemplate] =
+    useState<string>(WA_TEXT_ONLY);
+  const [waVariables, setWaVariables] = useState<string[]>([]);
 
   const [previewAttachments, setPreviewAttachments] = useState<string[]>([]);
   const [usersPerPage, setUsersPerPage] = useState<number>(10);
@@ -197,6 +211,10 @@ export default function AdminDashboard() {
 
   const [creatingUser, setCreatingUser] = useState(false);
   const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
+  const [waTemplates, setWaTemplates] = useState<WhatsAppTemplate[]>([]);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waError, setWaError] = useState<string | null>(null);
+
   const [showPassword, setShowPassword] = useState(false);
   if (typeof showPassword === 'string' && showPassword) {
     // Variable utilizada para evitar warnings, no afecta la lógica
@@ -287,6 +305,45 @@ export default function AdminDashboard() {
   }, []);
 
   const [allCourses, setAllCourses] = useState<Course[]>([]);
+
+  // Cargar plantillas al abrir el modal de Email (no sólo cuando marcas el check)
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        if (!showEmailModal) return;
+        setWaLoading(true);
+        setWaError(null);
+
+        interface WaGetOk { templates?: WhatsAppTemplate[] }
+        interface WaGetErr { error?: string; details?: unknown }
+
+        const res = await fetch('/api/super-admin/whatsapp', { method: 'GET' });
+        const raw: unknown = await res.json();
+
+        if (!res.ok) {
+          const msg =
+            (raw as WaGetErr)?.error ?? 'No se pudieron cargar las plantillas';
+          setWaTemplates([]);
+          setWaError(msg); // 👈 ahora es string, sin “unsafe argument”
+          return;
+        }
+
+        const templates = (raw as WaGetOk)?.templates ?? [];
+        setWaTemplates(templates); // 👈 ahora es WhatsAppTemplate[], sin “unsafe argument”
+      } catch {
+        setWaTemplates([]);
+        setWaError('Error de red cargando plantillas'); // 👈 sin usar la var del catch
+      } finally {
+        setWaLoading(false);
+      }
+    };
+    void loadTemplates();
+  }, [showEmailModal]);
+
+  const selectedWaTemplate = useMemo(
+    () => waTemplates.find((t) => t.name === waSelectedTemplate) ?? null,
+    [waSelectedTemplate, waTemplates]
+  );
 
   useEffect(() => {
     const fetchMaterias = async () => {
@@ -550,17 +607,75 @@ export default function AdminDashboard() {
       });
 
       if (sendWhatsapp) {
-        for (const number of whatsappNumbers) {
-          console.log('📲 Enviando WhatsApp a:', number);
+        // función helper para limpiar HTML del mensaje
+        const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '').trim();
 
-          await fetch('/api/super-admin/whatsapp', {
+        for (const number of whatsappNumbers) {
+          const to = number.replace('+', '');
+          const textOnly = waSelectedTemplate === WA_TEXT_ONLY;
+          const useTemplate = Boolean(waSelectedTemplate) && !textOnly;
+
+          const textMessage = `${subject}\n\n${stripHtml(message)}`;
+
+          // LOGS: qué se enviará
+          console.log('📲 [WA][FRONT] Preparando envío', {
+            to,
+            mode: useTemplate
+              ? 'template'
+              : textOnly
+                ? 'text_only'
+                : 'text_with_session',
+            chosenTemplate: useTemplate ? waSelectedTemplate : null,
+            languageCode: selectedWaTemplate?.langCode ?? 'en_US',
+
+            variables: useTemplate ? waVariables : [],
+            textPreview: textMessage,
+            ensureSession: !useTemplate && !textOnly, // solo si es "texto + abrir sesión"
+            sessionTemplate: 'hello_world',
+            sessionLanguage: 'en_US',
+          });
+
+          const body = useTemplate
+            ? {
+                // ➜ SOLO PLANTILLA
+                to,
+                forceTemplate: true,
+                templateName: waSelectedTemplate,
+                languageCode:
+                  selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+                variables: waVariables,
+              }
+            : textOnly
+              ? {
+                  // ➜ SOLO TEXTO (ya existe sesión abierta de 24h)
+                  to,
+                  text: textMessage,
+                }
+              : {
+                  // ➜ TEXTO + abrir sesión con plantilla de sesión (hello_world)
+                  to,
+                  text: textMessage,
+                  ensureSession: true,
+                  sessionTemplate: 'hello_world',
+                  sessionLanguage: 'en_US',
+                };
+
+          const resp = await fetch('/api/super-admin/whatsapp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: number,
-              message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
-            }),
+            body: JSON.stringify(body),
           });
+
+          const json = await resp.json().catch(() => ({}));
+          console.log('📗 [WA][FRONT] Respuesta backend:', {
+            status: resp.status,
+            ok: resp.ok,
+            json,
+          });
+
+          if (!resp.ok) {
+            console.error('❌ [WA][FRONT] Error enviando WhatsApp:', json);
+          }
         }
       }
 
@@ -906,7 +1021,6 @@ export default function AdminDashboard() {
       }));
 
       setUsers(data);
-      console.log('✅ Usuarios cargados con permisos:', data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
       console.error('Error fetching users:', err);
@@ -2558,11 +2672,151 @@ export default function AdminDashboard() {
                 onChange={(e) => setSendWhatsapp(e.target.checked)}
                 className="form-checkbox h-5 w-5 text-green-500"
               />
-              <label className="text-white">Enviar también por WhatsApp</label>
+              <label className="text-white">Enviar mensaje por WhatsApp</label>
             </div>
 
             {sendWhatsapp && (
               <>
+                {/* ⬇️ Plantillas de WhatsApp */}
+                {/* ⬇️ Plantillas de WhatsApp */}
+                <div className="mb-3">
+                  <label className="mb-1 block text-sm">
+                    Plantilla de WhatsApp
+                  </label>
+
+                  {waLoading ? (
+                    <div className="text-sm text-gray-400">
+                      Cargando plantillas…
+                    </div>
+                  ) : waError ? (
+                    <div className="text-sm text-red-400">{waError}</div>
+                  ) : waTemplates.length === 0 ? (
+                    <div className="text-sm text-gray-400">
+                      No hay plantillas (revisa si están en PENDING/REJECTED o
+                      el token/ID de WABA).
+                    </div>
+                  ) : (
+                    <select
+                      value={waSelectedTemplate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setWaSelectedTemplate(value);
+
+                        // Si no es plantilla real, limpiar variables
+                        if (value === '' || value === WA_TEXT_ONLY) {
+                          setWaVariables([]);
+                          return;
+                        }
+
+                        // Si es plantilla, preparar variables
+                        const tmpl = waTemplates.find((t) => t.name === value);
+                        if (tmpl) {
+                          const placeholders =
+                            tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
+                          setWaVariables(
+                            tmpl.example?.slice(0, placeholders.length) ??
+                              Array.from(
+                                { length: placeholders.length },
+                                () => ''
+                              )
+                          );
+                        } else {
+                          setWaVariables([]);
+                        }
+                      }}
+                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                    >
+                      {/* TEXTO + abrir sesión (solo si lo eliges) */}
+                      <option value="">
+                        Texto + abrir sesión (automático)
+                      </option>
+
+                      {/* SOLO MENSAJE (sin plantilla) – DEFAULT */}
+                      <option value={WA_TEXT_ONLY}>
+                        Solo mensaje (sin plantilla)
+                      </option>
+
+                      {/* PLANTILLAS REALES */}
+                      {waTemplates.map((t) => (
+                        <option key={t.name} value={t.name}>
+                          {t.label} {t.status ? `(${t.status})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {waSelectedTemplate &&
+                  waSelectedTemplate !== WA_TEXT_ONLY &&
+                  waVariables.length > 0 && (
+                    <div className="mb-3 space-y-2">
+                      {waVariables.map((v, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          className="w-full rounded-lg border bg-gray-800 p-2 text-white"
+                          placeholder={`Valor para {{${idx + 1}}}`}
+                          value={v}
+                          onChange={(e) =>
+                            setWaVariables((prev) =>
+                              prev.map((val, i) =>
+                                i === idx ? e.target.value : val
+                              )
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                {waSelectedTemplate &&
+                  waSelectedTemplate !== WA_TEXT_ONLY &&
+                  selectedWaTemplate && (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-gray-700">
+                      {/* Header estilo WhatsApp */}
+                      <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                          WA
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-white">
+                            Contacto
+                          </div>
+                          <div className="text-xs text-gray-300">en línea</div>
+                        </div>
+                        <div className="text-xl text-gray-300">⋮</div>
+                      </div>
+
+                      {/* Área de chat */}
+                      <div className="bg-[#0B141A] p-3">
+                        {/* Burbuja de mensaje (emisor) */}
+                        <div
+                          className="ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2 text-[14px] text-white shadow"
+                          style={{ borderTopRightRadius: 4 }}
+                        >
+                          <div className="break-words whitespace-pre-wrap">
+                            {selectedWaTemplate.body.replace(
+                              /\{\{(\d+)\}\}/g,
+                              (_match: string, n: string) => {
+                                const i = Number(n) - 1;
+                                return waVariables[i] ?? `{{${n}}}`;
+                              }
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
+                            <span>
+                              {new Date().toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                            <span>✓✓</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 <div className="mb-3">
                   <label className="mb-1 block text-sm">
                     Código de país para WhatsApp
