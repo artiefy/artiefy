@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const backendResponse = await fetch('http://3.142.77.31:5000/root_courses', {
+    const backendResponse = await fetch('http://agentes-alb-900454314.us-east-2.elb.amazonaws.com/root_courses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt }),

@@ -393,7 +393,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
         if (
           Array.isArray(data.result) &&
-          fetchConfig.url.includes('/api/chat/courses')
+          fetchConfig.url === '/api/chat/courses'
         ) {
           console.log('Ingreso a mapear cursos');
           const cursos: Curso[] = data.result;
@@ -527,56 +527,41 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       setIsOpen(true);
       initialSearchDone.current = false;
       setProcessingQuery(false);
-      // onSearchComplete?.(); // Comentado para evitar cierre automático
 
-      console.log('💬 Chatbot abierto, enviando búsqueda:', query);
+      // Elimina el fetch manual aquí:
+      // setIsLoading(true);
+      // fetch('/api/chat/courses', { ... }) ...etc
 
-      // Forzar apertura del chatbot desde StudentDetails
+      // Solo crear el chat real en la base de datos (esto sí se mantiene)
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-      }, 50);
+        // Parseo fe fecha para el título del chat
 
-      // Después de abrir el chatbot, enviar la búsqueda
-      setTimeout(() => {
-        // Agregar mensaje del usuario
-        const newUserMessage = {
-          id: Date.now(),
-          text: query,
-          sender: 'user' as const,
-        };
-        setMessages((prev) => [...prev, newUserMessage]);
-
-        // Procesar respuesta del bot
-        handleBotResponse(query);
-
-        // Crear el chat real en la base de datos
         const timestamp = Date.now();
         const fecha = new Date(timestamp);
+
         const dia = String(fecha.getDate()).padStart(2, '0');
-        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // ¡Ojo! Los meses van de 0 a 11
         const anio = fecha.getFullYear();
+
         const hora = String(fecha.getHours()).padStart(2, '0');
         const minuto = String(fecha.getMinutes()).padStart(2, '0');
+
         const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
 
-        if (user?.id) {
-          getOrCreateConversation({
-            senderId: user.id,
-            cursoId: courseId ?? +Math.round(Math.random() * 100 + 1),
-            title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
+        // Función para crear el nuevo chat en la base de datos
+
+        getOrCreateConversation({
+          senderId: user?.id ?? '',
+          cursoId: courseId ?? +Math.round(Math.random() * 100 + 1), // Genera un ID único si no hay cursoId
+          title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
+        })
+          .then((response) => {
+            console.log('Nuevo chat creado con ID:', response.id);
+            setChatMode({ idChat: response.id, status: true, curso_title: '' });
           })
-            .then((response) => {
-              console.log('✅ Chat creado en DB con ID:', response.id);
-              setChatMode({
-                idChat: response.id,
-                status: true,
-                curso_title: '',
-              });
-            })
-            .catch((error) => {
-              console.error('❌ Error creando chat:', error);
-            });
-        }
+          .catch((error) => {
+            console.error('Error creando nuevo chat:', error);
+          });
       }, 200);
     };
 
@@ -640,7 +625,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         !initialSearchQuery?.trim() ||
         !isSignedIn ||
         !showChat ||
-        processingQuery || // This is used in the dependency check
+        processingQuery ||
         searchRequestInProgress.current ||
         initialSearchDone.current
       )
@@ -649,7 +634,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       initialSearchDone.current = true;
       setIsOpen(true);
 
-      // Add user message first
+      // Agrega el mensaje del usuario primero
       setMessages((prev) => [
         ...prev,
         {
@@ -659,8 +644,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         },
       ]);
 
-      // Then process the bot response
-      await handleBotResponse(initialSearchQuery.trim());
+      // Espera 200ms para asegurar el render antes de la respuesta del bot
+      setTimeout(() => {
+        void handleBotResponse(initialSearchQuery.trim());
+      }, 200);
     };
 
     void handleInitialSearch();

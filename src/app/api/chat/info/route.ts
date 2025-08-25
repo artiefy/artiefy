@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Petición al backend externo
-    const response = await fetch('http://3.142.77.31:5000/get_classes', {
+    const response = await fetch('http://agentes-alb-900454314.us-east-2.elb.amazonaws.com/get_classes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
