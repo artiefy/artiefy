@@ -31,10 +31,29 @@ export interface BaseCourse {
   category?: Category;
   modalidad?: Modalidad;
   isActive: boolean | null; // Changed from optional boolean to nullable boolean
+  is_featured: boolean | null; // Add this new field
+  is_top: boolean | null; // Add this new field
 }
 
 // Add this type
 export type SubscriptionLevel = 'none' | 'pro' | 'premium';
+
+// Add this interface for course-course type relationship
+export interface CourseCourseType {
+  courseId: number;
+  courseTypeId: number;
+  courseType?: CourseType;
+}
+
+// Add this interface to represent a CourseType
+export interface CourseType {
+  id?: number;
+  name: string;
+  description?: string | null;
+  requiredSubscriptionLevel: SubscriptionLevel;
+  isPurchasableIndividually: boolean | null;
+  price?: number | null;
+}
 
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
@@ -48,13 +67,9 @@ export interface Course extends BaseCourse {
   materias?: CourseMateria[];
   isFree?: boolean;
   requiresSubscription?: boolean;
-  courseTypeId: number; // Add this field
-  courseType?: {
-    name: string; // <-- Agregado para permitir acceso a course.courseType.name
-    requiredSubscriptionLevel: SubscriptionLevel;
-    isPurchasableIndividually: boolean | null; // Updated to allow null
-    price?: number | null; // Add price property
-  };
+  courseTypeId: number | null; // Changed to nullable
+  courseType?: CourseType; // Updated to match CourseType interface
+  courseTypes?: CourseType[]; // Add this to support multiple course types
   individualPrice: number | null; // Change from optional to required but nullable
   requiresProgram: boolean;
   isActive: boolean;
@@ -448,7 +463,8 @@ export type NotificationType =
   | 'TICKET_ASSIGNED'
   | 'NEW_COURSE_ADDED'
   | 'ACTIVITY_COMPLETED'
-  | 'COURSE_UNENROLLMENT'; // <-- Agregado
+  | 'COURSE_UNENROLLMENT'
+  | 'CERTIFICATE_CREATED';
 
 export interface NotificationMetadata {
   programId?: number;
@@ -457,7 +473,9 @@ export interface NotificationMetadata {
   planId?: string;
   ticketId?: number;
   creatorId?: string;
-  activityId?: number; // Add this line
+  activityId?: number;
+  certificateId?: number;
+  openModal?: boolean; // <-- agrega esta línea para permitir el flag openModal
 }
 
 export interface Notification {
@@ -467,6 +485,33 @@ export interface Notification {
   title: string;
   message: string;
   isRead: boolean;
+  isMarked?: boolean; // <-- nuevo campo
   createdAt: Date;
   metadata?: NotificationMetadata;
+}
+
+export interface Certificate {
+  id: number;
+  userId: string;
+  courseId: number;
+  grade: number;
+  createdAt: Date;
+  publicCode?: string | null;
+  studentName?: string | null;
+  user?: User;
+  course?: Course;
+}
+
+export interface ClassMeeting {
+  id: number;
+  courseId: number;
+  title: string;
+  startDateTime: string; // ISO string
+  endDateTime: string; // ISO string
+  joinUrl?: string | null;
+  weekNumber?: number | null;
+  createdAt?: string | null;
+  meetingId: string;
+  video_key?: string | null;
+  progress?: number | null;
 }

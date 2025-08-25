@@ -8,10 +8,6 @@
   "public": true,
   "trailingSlash": false,
   "functions": {
-    "app/error.tsx": {
-      "memory": 1024,
-      "maxDuration": 10
-    },
     "app/api/iahome/**/*.ts": {
       "memory": 3009,
       "maxDuration": 60
@@ -35,6 +31,14 @@
     "app/dashboard/super-admin/programs/**/*.ts": {
       "memory": 3009,
       "maxDuration": 60
+    },
+    "app/estudiantes/programas/[id]/opengraph-image.tsx": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "app/estudiantes/cursos/[id]/opengraph-image.tsx": {
+      "memory": 1024,
+      "maxDuration": 10
     }
   },
   "crons": [

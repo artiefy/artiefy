@@ -119,19 +119,18 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         </p>
         <span>&#128071;&#128071;&#128071;</span>
         <div className="mt-3">
-         <Button
-  style={{ backgroundColor: '#000000' }} // Color de fondo fijo
-  className="cursor-pointer border-transparent bg-black text-white font-semibold"
-  onClick={() => {
-    console.log('Botón Crear nueva clase clickeado');
-    setIsModalOpenLessons(true);
-    console.log('isModalOpenLessons:', isModalOpenLessons);
-  }}
->
-  <ArrowUpFromLine />
-  Crear nueva clase
-</Button>
-
+          <Button
+            style={{ backgroundColor: '#000000' }} // Color de fondo fijo
+            className="cursor-pointer border-transparent bg-black font-semibold text-white"
+            onClick={() => {
+              console.log('Botón Crear nueva clase clickeado');
+              setIsModalOpenLessons(true);
+              console.log('isModalOpenLessons:', isModalOpenLessons);
+            }}
+          >
+            <ArrowUpFromLine />
+            Crear nueva clase
+          </Button>
         </div>
         <ModalFormLessons
           isOpen={isModalOpenLessons}

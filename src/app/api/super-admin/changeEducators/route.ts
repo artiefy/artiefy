@@ -25,7 +25,7 @@ export async function GET() {
     }
 
     return NextResponse.json(formattedEducators);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener educadores' },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function PUT(req: Request) {
       message: 'Instructor actualizado exitosamente',
       course: result[0],
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Error al actualizar el instructor' },
       { status: 500 }

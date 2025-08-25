@@ -1,100 +1,100 @@
 .artiefy-check-container {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 1rem;
-	gap: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
 .artiefy-static-checkmark {
-	position: relative;
-	height: 1.5em;
-	width: 1.5em;
-	border-radius: 5px;
-	background-image: linear-gradient(
-		45deg,
-		rgb(100, 61, 219) 0%,
-		rgb(217, 21, 239) 100%
-	);
-	box-shadow: 3px 3px 0px rgb(183, 183, 183);
+  position: relative;
+  height: 1.5em;
+  width: 1.5em;
+  border-radius: 5px;
+  background-image: linear-gradient(
+    45deg,
+    rgb(100, 61, 219) 0%,
+    rgb(217, 21, 239) 100%
+  );
+  box-shadow: 3px 3px 0px rgb(183, 183, 183);
 }
 
 .artiefy-static-checkmark:after {
-	content: '';
-	position: absolute;
-	left: 50%;
-	top: 45%;
-	width: 0.3em;
-	height: 0.6em;
-	border: solid white;
-	border-width: 0 0.15em 0.15em 0;
-	transform: translate(-50%, -50%) rotate(45deg);
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 0.3em;
+  height: 0.6em;
+  border: solid white;
+  border-width: 0 0.15em 0.15em 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .artiefy-checkbox-wrapper input {
-	position: absolute;
-	opacity: 0;
-	cursor: pointer;
-	height: 0;
-	width: 0;
-	border-radius: 5px;
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+  border-radius: 5px;
 }
 
 .artiefy-checkbox-wrapper {
-	display: block;
-	position: relative;
-	cursor: pointer;
-	font-size: 20px;
-	user-select: none;
-	border-radius: 5px;
-	box-shadow: 2px 2px 0px rgb(183, 183, 183);
+  display: block;
+  position: relative;
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  border-radius: 5px;
+  box-shadow: 2px 2px 0px rgb(183, 183, 183);
 }
 
 .artiefy-checkbox-mark {
-	position: relative;
-	top: 0;
-	left: 0;
-	height: 1.3em;
-	width: 1.3em;
-	background-color: #ccc;
-	border-radius: 5px;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 1.3em;
+  width: 1.3em;
+  background-color: #ccc;
+  border-radius: 5px;
 }
 
 .artiefy-checkbox-wrapper input:checked ~ .artiefy-checkbox-mark {
-	box-shadow: 3px 3px 0px rgb(183, 183, 183);
-	transition: all 0.2s;
-	opacity: 1;
-	background-image: linear-gradient(
-		45deg,
-		rgb(100, 61, 219) 0%,
-		rgb(217, 21, 239) 100%
-	);
+  box-shadow: 3px 3px 0px rgb(183, 183, 183);
+  transition: all 0.2s;
+  opacity: 1;
+  background-image: linear-gradient(
+    45deg,
+    rgb(100, 61, 219) 0%,
+    rgb(217, 21, 239) 100%
+  );
 }
 
 .artiefy-checkbox-wrapper input ~ .artiefy-checkbox-mark {
-	transition: all 0.2s;
-	opacity: 1;
-	box-shadow: 1px 1px 0px rgb(183, 183, 183);
+  transition: all 0.2s;
+  opacity: 1;
+  box-shadow: 1px 1px 0px rgb(183, 183, 183);
 }
 
 .artiefy-checkbox-mark:after {
-	content: '';
-	position: absolute;
-	opacity: 0;
-	transition: all 0.2s;
+  content: '';
+  position: absolute;
+  opacity: 0;
+  transition: all 0.2s;
 }
 
 .artiefy-checkbox-wrapper input:checked ~ .artiefy-checkbox-mark:after {
-	opacity: 1;
-	transition: all 0.2s;
+  opacity: 1;
+  transition: all 0.2s;
 }
 
 .artiefy-checkbox-wrapper .artiefy-checkbox-mark:after {
-	left: 50%;
-	top: 45%;
-	width: 0.25em;
-	height: 0.5em;
-	border: solid white;
-	border-width: 0 0.15em 0.15em 0;
-	transform: translate(-50%, -50%) rotate(45deg);
+  left: 50%;
+  top: 45%;
+  width: 0.25em;
+  height: 0.5em;
+  border: solid white;
+  border-width: 0 0.15em 0.15em 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }

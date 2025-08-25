@@ -1,118 +1,137 @@
 'use server';
 
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	enrollments,
-	lessons,
-	userActivitiesProgress,
-	userLessonsProgress,
+  courseCourseTypes,
+  enrollments,
+  lessons,
+  userActivitiesProgress,
+  userLessonsProgress,
 } from '~/server/db/schema';
 
-import type { Activity, Course,Lesson } from '~/types';
+import type { Activity, Course, Lesson } from '~/types';
 
 export async function getLessonById(
-	lessonId: number,
-	userId: string
+  lessonId: number,
+  userId: string
 ): Promise<Lesson | null> {
-	try {
-		const lesson = await db.query.lessons.findFirst({
-			where: eq(lessons.id, lessonId),
-			with: {
-				activities: true,
-				course: {
-					with: {
-						enrollments: true,
-						lessons: true,
-						courseType: true, // Add this to include courseType
-					},
-				},
-			},
-		});
+  try {
+    const lesson = await db.query.lessons.findFirst({
+      where: eq(lessons.id, lessonId),
+      with: {
+        activities: true,
+        course: {
+          with: {
+            enrollments: true,
+            lessons: true,
+            courseType: true,
+          },
+        },
+      },
+    });
 
-		if (!lesson) return null;
+    if (!lesson) return null;
 
-		// Get enrollments count for the course
-		const courseEnrollments = await db.query.enrollments.findMany({
-			where: eq(enrollments.courseId, lesson.course.id),
-		});
+    // Fetch all course types for this course
+    const courseTypeRelations = await db.query.courseCourseTypes.findMany({
+      where: eq(courseCourseTypes.courseId, lesson.course.id),
+      with: {
+        courseType: true,
+      },
+    });
 
-		// Get progress for all lessons in the course
-		const lessonsProgress = await db.query.userLessonsProgress.findMany({
-			where: eq(userLessonsProgress.userId, userId),
-		});
+    // Get enrollments count for the course
+    const courseEnrollments = await db.query.enrollments.findMany({
+      where: eq(enrollments.courseId, lesson.course.id),
+    });
 
-		// Transform course lessons with progress data
-		const transformedLessons: Lesson[] = lesson.course.lessons.map((l) => ({
-			...l,
-			porcentajecompletado:
-				lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
-			userProgress:
-				lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
-			isCompleted:
-				lessonsProgress.find((p) => p.lessonId === l.id)?.isCompleted ?? false,
-			isLocked:
-				lessonsProgress.find((p) => p.lessonId === l.id)?.isLocked ?? true,
-			isNew: lessonsProgress.find((p) => p.lessonId === l.id)?.isNew ?? true,
-			resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
-		}));
+    // Get progress for all lessons in the course
+    const lessonsProgress = await db.query.userLessonsProgress.findMany({
+      where: eq(userLessonsProgress.userId, userId),
+    });
 
-		// Transform raw course data to match Course interface
-		const transformedCourse: Course = {
-			...lesson.course,
-			totalStudents: courseEnrollments.length,
-			lessons: transformedLessons,
-			enrollments: courseEnrollments,
-			isActive: lesson.course.isActive ?? false,
-			requiresProgram: false,
-			isFree: lesson.course.courseType?.requiredSubscriptionLevel === 'none',
-			courseType: lesson.course.courseType ?? {
-				requiredSubscriptionLevel: 'none',
-				isPurchasableIndividually: false,
-			},
-		};
+    // Transform course lessons with progress data
+    const transformedLessons: Lesson[] = lesson.course.lessons.map((l) => ({
+      ...l,
+      porcentajecompletado:
+        lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
+      userProgress:
+        lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
+      isCompleted:
+        lessonsProgress.find((p) => p.lessonId === l.id)?.isCompleted ?? false,
+      isLocked:
+        lessonsProgress.find((p) => p.lessonId === l.id)?.isLocked ?? true,
+      isNew: lessonsProgress.find((p) => p.lessonId === l.id)?.isNew ?? true,
+      resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
+    }));
 
-		const lessonProgress = await db.query.userLessonsProgress.findFirst({
-			where: and(
-				eq(userLessonsProgress.userId, userId),
-				eq(userLessonsProgress.lessonId, lessonId)
-			),
-		});
+    // Transform raw course data to match Course interface
+    const transformedCourse: Course = {
+      ...lesson.course,
+      courseTypeId: lesson.course.courseTypeId ?? 0,
+      totalStudents: courseEnrollments.length,
+      lessons: transformedLessons,
+      enrollments: courseEnrollments,
+      isActive: lesson.course.isActive ?? false,
+      requiresProgram: false,
+      isFree: courseTypeRelations.some(
+        (ct) => ct.courseType?.requiredSubscriptionLevel === 'none'
+      ),
+      courseType:
+        lesson.course.courseType !== null
+          ? {
+              name: lesson.course.courseType.name,
+              requiredSubscriptionLevel:
+                lesson.course.courseType.requiredSubscriptionLevel,
+              isPurchasableIndividually:
+                lesson.course.courseType.isPurchasableIndividually ?? false,
+              price: lesson.course.courseType.price ?? null,
+            }
+          : undefined,
+    };
 
-		const userActivitiesProgressData =
-			await db.query.userActivitiesProgress.findMany({
-				where: eq(userActivitiesProgress.userId, userId),
-			});
+    const lessonProgress = await db.query.userLessonsProgress.findFirst({
+      where: and(
+        eq(userLessonsProgress.userId, userId),
+        eq(userLessonsProgress.lessonId, lessonId)
+      ),
+    });
 
-		const transformedLesson: Lesson = {
-			...lesson,
-			porcentajecompletado: lessonProgress?.progress ?? 0,
-			isLocked: lessonProgress?.isLocked ?? true,
-			userProgress: lessonProgress?.progress ?? 0,
-			isCompleted: lessonProgress?.isCompleted ?? false,
-			isNew: lessonProgress?.isNew ?? true,
-			resourceNames: lesson.resourceNames
-				? lesson.resourceNames.split(',').filter(Boolean)
-				: [],
-			resourceKey: lesson.resourceKey || '',
-			activities:
-				(lesson.activities as Activity[] | undefined)?.map((activity) => {
-					const activityProgress = userActivitiesProgressData.find(
-						(progress) => progress.activityId === activity.id
-					);
-					return {
-						...activity,
-						isCompleted: activityProgress?.isCompleted ?? false,
-						userProgress: activityProgress?.progress ?? 0,
-					};
-				}) ?? [],
-			course: transformedCourse,
-		};
+    const userActivitiesProgressData =
+      await db.query.userActivitiesProgress.findMany({
+        where: eq(userActivitiesProgress.userId, userId),
+      });
 
-		return transformedLesson;
-	} catch (error) {
-		console.error('Error al obtener la lección por ID:', error);
-		throw new Error('Error al obtener la lección por ID');
-	}
+    const transformedLesson: Lesson = {
+      ...lesson,
+      porcentajecompletado: lessonProgress?.progress ?? 0,
+      isLocked: lessonProgress?.isLocked ?? true,
+      userProgress: lessonProgress?.progress ?? 0,
+      isCompleted: lessonProgress?.isCompleted ?? false,
+      isNew: lessonProgress?.isNew ?? true,
+      resourceNames: lesson.resourceNames
+        ? lesson.resourceNames.split(',').filter(Boolean)
+        : [],
+      resourceKey: lesson.resourceKey || '',
+      activities:
+        (lesson.activities as Activity[] | undefined)?.map((activity) => {
+          const activityProgress = userActivitiesProgressData.find(
+            (progress) => progress.activityId === activity.id
+          );
+          return {
+            ...activity,
+            isCompleted: activityProgress?.isCompleted ?? false,
+            userProgress: activityProgress?.progress ?? 0,
+          };
+        }) ?? [],
+      course: transformedCourse,
+    };
+
+    return transformedLesson;
+  } catch (error) {
+    console.error('Error al obtener la lección por ID:', error);
+    throw new Error('Error al obtener la lección por ID');
+  }
 }

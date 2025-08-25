@@ -15,7 +15,7 @@ type UpdateRequest = z.infer<typeof updateSchema>;
 
 export async function PUT(req: Request) {
   try {
-    const body = await req.json() as UpdateRequest;
+    const body = (await req.json()) as UpdateRequest;
     const { courseId, newValue } = updateSchema.parse({
       courseId: Number(body.courseId),
       newValue: Number(body.newValue),
@@ -27,13 +27,18 @@ export async function PUT(req: Request) {
       .where(eq(courses.id, courseId))
       .execute();
 
-    return NextResponse.json({ message: 'Modalidad actualizada con éxito' }, { status: 200 });
+    return NextResponse.json(
+      { message: 'Modalidad actualizada con éxito' },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('❌ Error al actualizar la modalidad:', error);
-    return NextResponse.json({ error: 'Error al actualizar la modalidad' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Error al actualizar la modalidad' },
+      { status: 400 }
+    );
   }
 }
-
 
 export async function GET() {
   try {
@@ -42,7 +47,9 @@ export async function GET() {
     return NextResponse.json(modalidadesList, { status: 200 });
   } catch (error) {
     console.error('❌ Error al obtener modalidades:', error);
-    return NextResponse.json({ error: 'Error al obtener modalidades' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error al obtener modalidades' },
+      { status: 500 }
+    );
   }
 }
-

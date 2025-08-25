@@ -29,7 +29,7 @@ Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 per
 ```html
 <!-- Aplicar flex solo entre md y xl -->
 <div class="md:max-xl:flex">
-<!-- ... -->
+  <!-- ... -->
 </div>
 ```
 
@@ -113,8 +113,8 @@ Colores del manual de marca:
 #01142B -background //variable de tailwindcss
 #3AF4EF -primary //variable de tailwindcss
 #00BDD8 -secondary //variable de tailwindcss
-
-## #00A5C0 //color parecido mas oscuro de -secondary para el hover
+#1e2939 //color de fondo de las tarjetas de cursos
+#00A5C0 //color parecido mas oscuro de -secondary para el hover
 ```
 
 Lik Del Modo Blur:
@@ -135,9 +135,8 @@ Tutorial UPDATE DEPENDENCIES:
 7. `npm install nombre-del-paquete@latest` // Instala la última versión de un paquete específico
 
 8. `npm outdated --include=dev` // Muestra las dependencias de desarrollo que están desactualizadas
-9. `npm outdated -g --depth=0` // Muestra las dependencias globales que están desactualizadas
-10. `npm install -g [nombre-del-paquete]@latest` // Instala la última versión de un paquete global específico
-
+9. `npm list -g --depth=0` // Muestra las dependencias globales que están desactualizadas
+10. `npm outdated -g --depth=0` // Instala la última versión de los paquetes globales
 11. `npm install tailwindcss @tailwindcss/postcss postcss` // Instala las últimas versiones de TailwindCSS 4.0
 12. `npm install tailwindcss@latest @tailwindcss/cli@latest` // Actualizar TailwindCss 4
 13. `npx @clerk/upgrade --from=core-1` // Instala la última versión de Clerk para Next.js 1
@@ -195,6 +194,8 @@ Instalar dependencias globales en una sola :
 
 `npm install -g npm-check-updates@latest npm@latest eslint@latest typescript@latest`
 
+`npm list -g --depth=0` /Chekear las versiones de tus paquetes globales
+
 ---
 
 Pasos en Vim:
@@ -202,3 +203,116 @@ Pasos en Vim:
 Presiona `:wq` y luego Enter para guardar y salir.
 
 ---
+
+Configurar localmente tu cuenta de github en tu proyecto
+
+```bash
+git config user.name "artiefy"
+git config user.email "artiefy4@gmail.com"
+```
+
+---
+
+## Precommit config
+
+- pip install pre-commit
+- pre-commit install
+- pre-commit --version
+- pre-commit autoupdate
+- pre-commit run --all-files
+- pre-commit install -t commit-msg
+- git-conventional-commits.yaml
+- npx git-conventional-commits - changelog para generar el changelog automáticamente.
+- npx git-conventional-commits - version para determinar la versión según los commits.
+
+## generar automáticamente el changelog y calcular la versión del proyecto usando comandos como
+
+- npx git-conventional-commits changelog
+
+- npx git-conventional-commits version
+
+---
+
+## .releaserc
+
+- branches: ["main"]: Indica que solo se publicarán versiones desde la rama main.
+- "plugins": Lista de plugins que definen el flujo de publicación:
+- @semantic-release/npm: Publica el paquete en npm (en tu caso, con "npmPublish": false, solo actualiza la versión en package.json, no publica).
+- @semantic-release/release-notes-generator: Genera notas de la versión automáticamente.
+- @semantic-release/github: Crea un release en GitHub.
+- @semantic-release/commit-analyzer: Analiza los commits para decidir el tipo de versión.
+- @semantic-release/git: Hace commits automáticos de los archivos generados (como el changelog).
+- @semantic-release/changelog: Actualiza el archivo CHANGELOG.md con los cambios.
+
+### Plugins a instalar
+
+- "@semantic-release/commit-analyzer",
+- "@semantic-release/release-notes-generator",
+- "@semantic-release/changelog",
+- "@semantic-release/npm",
+- "@semantic-release/git"
+- "@semantic-release/github"
+
+En resumen:
+Este archivo automatiza y estandariza el proceso de lanzar nuevas versiones de tu proyecto, generando changelogs y releases en GitHub de forma automática según tus commits.
+
+---
+
+## Ts Reset
+
+¿Para qué sirve y qué ventajas tiene usar ts-reset?
+
+Función:
+
+ts-reset mejora los tipos de TypeScript en tu proyecto, corrigiendo comportamientos inseguros o poco precisos en funciones comunes como JSON.parse, .filter(Boolean), .includes, etc.
+
+Ventajas:
+
+Evita el uso de any en operaciones críticas, haciendo tu código más seguro.
+Mejora la experiencia de desarrollo, mostrando errores antes de que ocurran en tiempo de ejecución.
+
+Hace que el tipado de TypeScript sea más estricto y confiable en todo el proyecto.
+Reduce bugs y facilita el mantenimiento del código.
+
+---
+
+## renovate.json
+
+¿Para qué sirve y qué ventajas tiene usar renovate.json?
+Función:
+
+renovate.json configura Renovate Bot, una herramienta que revisa y actualiza automáticamente las dependencias de tu proyecto.
+Ventajas:
+
+Mantiene tus dependencias siempre actualizadas y seguras.
+
+Automatiza la creación de Pull Requests para actualizar paquetes.
+
+Te avisa de vulnerabilidades en tus dependencias.
+
+Reduce el trabajo manual y el riesgo de tener dependencias obsoletas o inseguras.
+
+Facilita el mantenimiento y la calidad del proyecto a largo plazo.
+
+---
+
+## Tailwind 4
+
+- @layer base {
+  input::placeholder,
+  textarea::placeholder {
+  color: var(--color-gray-400);
+  }
+  }
+
+- @layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+  cursor: pointer;
+  }
+  }
+
+- @theme inline {
+  --font-display: var(--font-delius);
+  --font-table-text: var(--font-lexend);
+  }

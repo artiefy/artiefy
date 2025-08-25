@@ -9,12 +9,12 @@ import type { Preference } from '~/types';
 
 // Obtener preferencias del usuario
 export async function getUserPreferences(
-	userId: string
+  userId: string
 ): Promise<Preference[]> {
-	return db.query.preferences.findMany({
-		where: eq(preferences.userId, userId),
-		with: {
-			category: true,
-		},
-	});
+  return db.query.preferences.findMany({
+    where: eq(preferences.userId, userId),
+    with: {
+      category: true,
+    },
+  });
 }

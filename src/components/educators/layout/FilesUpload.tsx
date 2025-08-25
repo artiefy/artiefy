@@ -17,8 +17,7 @@ interface FileUploadProps {
   onFileChange: (file: File | File[] | null | undefined) => void;
   tipo: string;
   file?: File; // Agregar la propiedad file
-    files?: File[];
-
+  files?: File[];
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({

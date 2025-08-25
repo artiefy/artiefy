@@ -14,8 +14,16 @@ export async function createCategory(name: string, description: string) {
 }
 
 // Actualizar una categoría
-export async function updateCategory(id: number, name: string, description: string) {
-  return await db.update(categories).set({ name, description }).where(eq(categories.id, id)).returning();
+export async function updateCategory(
+  id: number,
+  name: string,
+  description: string
+) {
+  return await db
+    .update(categories)
+    .set({ name, description })
+    .where(eq(categories.id, id))
+    .returning();
 }
 
 // Eliminar una categoría

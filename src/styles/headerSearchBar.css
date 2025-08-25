@@ -1,49 +1,49 @@
 .header-search-container {
-	position: relative;
-	width: 100%;
-	max-width: 700px;
-	margin: 0 auto;
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .header-input-container {
-	--input-border: #3af4ef;
-	--input-focus-h: 245;
-	--input-focus-s: 100%;
-	--input-focus-l: 42%;
+  --input-border: #3af4ef;
+  --input-focus-h: 245;
+  --input-focus-s: 100%;
+  --input-focus-l: 42%;
 }
 
 .header-search-container input {
-	font-size: 1rem;
-	font-weight: 500;
-	color: #fff;
-	padding: 0.8rem 3rem 0.8rem 1.5rem;
-	border-radius: 20px;
-	border: 2px solid #3af4ef;
-	background: #01142b;
-	transition: border-radius 0.3s ease;
-	width: 100%;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  padding: 0.8rem 3rem 0.8rem 1.5rem;
+  border-radius: 20px;
+  border: 2px solid #3af4ef;
+  background: #01142b;
+  transition: border-radius 0.3s ease;
+  width: 100%;
 }
 
 .header-search-container input:focus {
-	outline: none;
-	border-color: #3af4ef;
-	border-radius: 20px;
-	box-shadow: 0 0 0 2px rgba(58, 244, 239, 0.2);
+  outline: none;
+  border-color: #3af4ef;
+  border-radius: 20px;
+  box-shadow: 0 0 0 2px rgba(58, 244, 239, 0.2);
 }
 
 .header-search__icon {
-	width: 20px;
-	height: 20px;
-	position: absolute;
-	right: 1rem;
-	top: 50%;
-	transform: translateY(-50%);
-	cursor: pointer;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
 }
 
 .header-search__icon path {
-	fill: #3af4ef;
-	transition: fill 0.2s ease;
+  fill: #3af4ef;
+  transition: fill 0.2s ease;
 }
 
 /* Add these media queries at the bottom of the file */

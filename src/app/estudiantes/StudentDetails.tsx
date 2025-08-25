@@ -54,26 +54,49 @@ export default function StudentDetails({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
+  const [_text, setText] = useState(''); // índice del mensaje
+  const [index, setIndex] = useState(0); // índice del mensaje
+  const [subIndex, setSubIndex] = useState(0); // índice de la letra
+  const [reverse, setReverse] = useState(false); // si está borrando
+  const [delay, _setDelay] = useState(40); // velocidad de escritura
+  const placeHolderText = useMemo(
+    () => [
+      '¿Que Deseas Crear? Escribe Tu Idea...',
+      '¿Qué quieres crear?',
+      'Desarrollemos esa idea que tienes en mente...',
+      'Estoy para ayudarte, Artiefy impulsa tus sueños',
+      '¿Tienes una idea? ¡Vamos a hacerla realidad!',
+    ],
+    []
+  );
 
   // Memoized values to prevent re-renders
-  const sortedCourses = useMemo(() => {
-    return [...courses].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+  // Puedes eliminar _sortedCourses si no lo usas en el JSX
+  // const _sortedCourses = useMemo(() => {
+  //   return [...courses].sort(
+  //     (a, b) =>
+  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //   );
+  // }, [courses]);
+
+  // Get ONLY featured courses (is_featured = true), no fallbacks
+  const featuredCourses = useMemo(() => {
+    return courses.filter((course) => course.is_featured === true).slice(0, 5);
   }, [courses]);
 
-  const latestFiveCourses = useMemo(
-    () => sortedCourses.slice(0, 5),
-    [sortedCourses]
-  );
-  const latestTenCourses = useMemo(
-    () => sortedCourses.slice(0, 10),
-    [sortedCourses]
-  );
+  // Get ONLY top courses (is_top = true), no fallbacks
+  const topCourses = useMemo(() => {
+    return courses.filter((course) => course.is_top === true).slice(0, 10);
+  }, [courses]);
+
+  // Replace previous memoized arrays with our new filtered arrays
+  const latestFiveCourses = useMemo(() => featuredCourses, [featuredCourses]);
+  const latestTenCourses = useMemo(() => topCourses, [topCourses]);
 
   const handleSearchComplete = useCallback(() => {
-    setShowChatbot(false);
+    // No cerrar el chatbot automáticamente - dejar que el usuario lo controle
+    console.log('🔚 Búsqueda completada - manteniendo chatbot abierto');
+    // setShowChatbot(false); // Comentado para evitar cierre automático
   }, []);
 
   const handleSearch = useCallback(
@@ -82,6 +105,8 @@ export default function StudentDetails({
 
       if (!searchQuery.trim() || searchInProgress) return;
 
+      console.log('🔍 Iniciando búsqueda:', searchQuery.trim());
+
       setSearchInProgress(true);
       setSearchBarDisabled(true);
 
@@ -89,6 +114,7 @@ export default function StudentDetails({
       const searchEvent = new CustomEvent('artiefy-search', {
         detail: { query: searchQuery.trim() },
       });
+      console.log('📤 Disparando evento artiefy-search');
       window.dispatchEvent(searchEvent);
 
       // Clear the search input
@@ -105,9 +131,23 @@ export default function StudentDetails({
       const query = event.detail.query;
       if (!query) return;
 
+      console.log('📥 Evento artiefy-search recibido:', query);
+
       setLastSearchQuery(query);
-      setShowChatbot(true);
+      setShowChatbot(true); // Asegurar que esté abierto
       setChatbotKey((prev) => prev + 1);
+
+      console.log('🚀 Disparando evento create-new-chat-with-search');
+      // Disparar evento para crear nuevo chat con la búsqueda
+      setTimeout(() => {
+        // Asegurar nuevamente que esté abierto
+        setShowChatbot(true);
+        window.dispatchEvent(
+          new CustomEvent('create-new-chat-with-search', {
+            detail: { query },
+          })
+        );
+      }, 100);
     };
 
     window.addEventListener(
@@ -115,11 +155,20 @@ export default function StudentDetails({
       handleGlobalSearch as EventListener
     );
 
+    // Listener para forzar apertura del chatbot
+    const handleForceOpenChatbot = () => {
+      console.log('🔓 Forzando apertura del chatbot');
+      setShowChatbot(true);
+    };
+
+    window.addEventListener('force-open-chatbot', handleForceOpenChatbot);
+
     return () => {
       window.removeEventListener(
         'artiefy-search',
         handleGlobalSearch as EventListener
       );
+      window.removeEventListener('force-open-chatbot', handleForceOpenChatbot);
     };
   }, []);
 
@@ -132,7 +181,6 @@ export default function StudentDetails({
           const nextSlide = (prevSlide + 1) % latestFiveCourses.length;
           return nextSlide;
         });
-
         // Reset transitioning state after animation completes
         setTimeout(() => {
           setIsTransitioning(false);
@@ -142,6 +190,35 @@ export default function StudentDetails({
 
     return () => clearInterval(interval);
   }, [latestFiveCourses.length, isTransitioning]);
+
+  useEffect(() => {
+    if (index >= placeHolderText.length) return;
+
+    const current = placeHolderText[index];
+
+    setText(current.substring(0, subIndex));
+
+    if (!reverse && subIndex === current.length) {
+      // Espera antes de borrar
+      setTimeout(() => setReverse(true), 1500);
+      return;
+    }
+
+    if (reverse && subIndex === 0) {
+      setReverse(false);
+      setIndex((prev) => (prev + 1) % placeHolderText.length);
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => {
+        setSubIndex((prev) => prev + (reverse ? -1 : 1));
+      },
+      reverse ? 40 : delay
+    );
+
+    return () => clearTimeout(timeout);
+  }, [subIndex, index, reverse, delay, placeHolderText]);
 
   const truncateDescription = (description: string, maxLength: number) => {
     if (description.length <= maxLength) return description;
@@ -155,6 +232,8 @@ export default function StudentDetails({
     const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${imageKey}`;
     return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
   };
+
+  // Rename to _getCourseTypeIcon to mark as unused
 
   return (
     <div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
@@ -189,9 +268,7 @@ export default function StudentDetails({
                     }`}
                     name="search"
                     placeholder={
-                      searchBarDisabled
-                        ? 'Procesando consulta...'
-                        : 'Que Deseas Crear? Escribe Tu Idea...'
+                      searchBarDisabled ? 'Procesando consulta...' : _text
                     }
                     type="search"
                     value={searchQuery}
@@ -215,52 +292,104 @@ export default function StudentDetails({
               </form>
             </div>
 
-            <div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
-              {latestFiveCourses.map((course, index) => (
-                <div
-                  key={course.id}
-                  className={`absolute inset-0 transform transition-all duration-500 ${
-                    index === currentSlide
-                      ? 'translate-x-0 opacity-100'
-                      : 'translate-x-full opacity-0'
-                  }`}
-                >
-                  <div className="relative size-full">
-                    <Image
-                      src={getImageUrl(course.coverImageKey)}
-                      alt={course.title}
-                      fill
-                      className="object-cover"
-                      priority={index === currentSlide}
-                      sizes="100vw"
-                      quality={75}
-                    />
-                  </div>
-                  <div className="text-primary absolute inset-0 flex items-center justify-start p-4">
-                    <div
-                      className="ml-2 w-[350px] max-w-[90%] rounded-xl bg-white/10 p-4 backdrop-blur-md sm:ml-8 sm:w-[400px] sm:p-6"
-                      style={{
-                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
-                      }}
-                    >
-                      {/* Mobile view (sm:hidden) */}
-                      <div className="flex flex-col space-y-2 sm:hidden">
-                        <h2 className="line-clamp-2 text-xl font-semibold">
-                          {course.title}
-                        </h2>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <StarIcon className="size-4 text-yellow-500" />
-                            <span className="ml-1 text-sm text-yellow-500">
+            <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+              {latestFiveCourses.length > 0 ? (
+                latestFiveCourses.map((course, index) => (
+                  <div
+                    key={course.id}
+                    className={`absolute inset-0 transform transition-all duration-500 ${
+                      index === currentSlide
+                        ? 'translate-x-0 opacity-100'
+                        : 'translate-x-full opacity-0'
+                    }`}
+                  >
+                    <div className="relative size-full">
+                      <Image
+                        src={getImageUrl(course.coverImageKey)}
+                        alt={course.title}
+                        fill
+                        className="object-cover"
+                        priority={index === currentSlide}
+                        sizes="100vw"
+                        quality={100}
+                      />
+                    </div>
+                    <div className="text-primary absolute inset-0 flex items-center justify-start p-4">
+                      <div
+                        className="ml-2 w-[350px] max-w-[90%] rounded-xl bg-white/10 p-4 backdrop-blur-md sm:ml-8 sm:w-[400px] sm:p-6"
+                        style={{
+                          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                          border: '1px solid rgba(255, 255, 255, 0.18)',
+                        }}
+                      >
+                        {/* Mobile view (sm:hidden) */}
+                        <div className="flex flex-col space-y-2 sm:hidden">
+                          <h2 className="line-clamp-2 text-xl font-semibold">
+                            {course.title}
+                          </h2>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <StarIcon className="size-4 text-yellow-500" />
+                              <span className="ml-1 text-sm text-yellow-500">
+                                {(course.rating ?? 0).toFixed(1)}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-red-500">
+                              {course.modalidad?.name}
+                            </span>
+                          </div>
+                          <div className="flex justify-center pt-2">
+                            <Link href={`/estudiantes/cursos/${course.id}`}>
+                              <button className="uiverse">
+                                <div className="wrapper">
+                                  <span className="text-white">
+                                    Ir al Curso
+                                  </span>
+                                  <div className="circle circle-12" />
+                                  <div className="circle circle-11" />
+                                  <div className="circle circle-10" />
+                                  <div className="circle circle-9" />
+                                  <div className="circle circle-8" />
+                                  <div className="circle circle-7" />
+                                  <div className="circle circle-6" />
+                                  <div className="circle circle-5" />
+                                  <div className="circle circle-4" />
+                                  <div className="circle circle-3" />
+                                  <div className="circle circle-2" />
+                                  <div className="circle circle-1" />
+                                </div>
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Desktop view (hidden sm:block) */}
+                        <div className="hidden sm:block">
+                          <h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
+                            {course.title}
+                          </h2>
+                          <Badge
+                            variant="outline"
+                            className="border-primary text-primary mb-2"
+                          >
+                            {course.category?.name ?? 'Sin categoría'}
+                          </Badge>
+                          <p className="mb-2 line-clamp-2 text-sm sm:text-base">
+                            {truncateDescription(course.description ?? '', 150)}
+                          </p>
+                          <p className="mb-1 text-sm font-bold sm:text-base">
+                            Educador: {course.instructorName}
+                          </p>
+                          <p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
+                            {course.modalidad?.name ??
+                              'Modalidad no especificada'}
+                          </p>
+                          <div className="mb-4 flex items-center">
+                            <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                            <span className="ml-1 text-sm text-yellow-500 sm:text-base">
                               {(course.rating ?? 0).toFixed(1)}
                             </span>
                           </div>
-                          <span className="text-xs font-bold text-red-500">
-                            {course.modalidad?.name}
-                          </span>
-                        </div>
-                        <div className="flex justify-center pt-2">
                           <Link href={`/estudiantes/cursos/${course.id}`}>
                             <button className="uiverse">
                               <div className="wrapper">
@@ -282,58 +411,16 @@ export default function StudentDetails({
                           </Link>
                         </div>
                       </div>
-
-                      {/* Desktop view (hidden sm:block) */}
-                      <div className="hidden sm:block">
-                        <h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
-                          {course.title}
-                        </h2>
-                        <Badge
-                          variant="outline"
-                          className="border-primary text-primary mb-2"
-                        >
-                          {course.category?.name ?? 'Sin categoría'}
-                        </Badge>
-                        <p className="mb-2 line-clamp-2 text-sm sm:text-base">
-                          {truncateDescription(course.description ?? '', 150)}
-                        </p>
-                        <p className="mb-1 text-sm font-bold sm:text-base">
-                          Educador: {course.instructorName}
-                        </p>
-                        <p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
-                          {course.modalidad?.name ??
-                            'Modalidad no especificada'}
-                        </p>
-                        <div className="mb-4 flex items-center">
-                          <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                          <span className="ml-1 text-sm text-yellow-500 sm:text-base">
-                            {(course.rating ?? 0).toFixed(1)}
-                          </span>
-                        </div>
-                        <Link href={`/estudiantes/cursos/${course.id}`}>
-                          <button className="uiverse">
-                            <div className="wrapper">
-                              <span className="text-white">Ir al Curso</span>
-                              <div className="circle circle-12" />
-                              <div className="circle circle-11" />
-                              <div className="circle circle-10" />
-                              <div className="circle circle-9" />
-                              <div className="circle circle-8" />
-                              <div className="circle circle-7" />
-                              <div className="circle circle-6" />
-                              <div className="circle circle-5" />
-                              <div className="circle circle-4" />
-                              <div className="circle circle-3" />
-                              <div className="circle circle-2" />
-                              <div className="circle circle-1" />
-                            </div>
-                          </button>
-                        </Link>
-                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <p className="text-lg text-gray-500">
+                    No hay cursos destacados disponibles
+                  </p>
                 </div>
-              ))}
+              )}
               <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
                 {latestFiveCourses.map((_, index) => (
                   <button
@@ -356,63 +443,76 @@ export default function StudentDetails({
               </div>
               <div>
                 <Carousel className="w-full">
-                  <CarouselContent className="">
-                    {latestTenCourses.map((course) => (
-                      <CarouselItem
-                        key={course.id}
-                        className="basis-full sm:basis-1/2 lg:basis-1/3"
-                      >
-                        <div className="relative aspect-[4/3] w-full">
-                          <Image
-                            src={
-                              course.coverImageKey &&
-                              course.coverImageKey !== 'NULL'
-                                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                                : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                            }
-                            alt={course.title}
-                            fill
-                            className="rounded-lg object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            quality={85}
-                            placeholder="blur"
-                            blurDataURL={blurDataURL}
-                          />
-                          <div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
-                            <Link href={`/estudiantes/cursos/${course.id}`}>
-                              <h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
-                                {course.title}
-                              </h3>
-                            </Link>
-                            <div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
-                              <Badge
-                                variant="outline"
-                                className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
-                              >
-                                {course.category?.name}
-                              </Badge>
-                              <span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
-                                {course.modalidad?.name}
-                              </span>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <p className="text-primary text-xs font-semibold italic sm:text-base">
-                                Educador: <span>{course.instructorName}</span>
-                              </p>
-                              <div className="flex items-center">
-                                <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                                <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-                                  {(course.rating ?? 0).toFixed(1)}
+                  {/* Agrega gap-x-4 para más espacio entre los cursos */}
+                  <CarouselContent className="gap-x-4">
+                    {latestTenCourses.length > 0 ? (
+                      latestTenCourses.map((course) => (
+                        <CarouselItem
+                          key={course.id}
+                          className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-1/3"
+                        >
+                          <div className="relative aspect-[4/3] w-full">
+                            <Image
+                              src={
+                                course.coverImageKey &&
+                                course.coverImageKey !== 'NULL'
+                                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                              }
+                              alt={course.title}
+                              fill
+                              className="rounded-lg object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              quality={85}
+                              placeholder="blur"
+                              blurDataURL={blurDataURL}
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
+                              <Link href={`/estudiantes/cursos/${course.id}`}>
+                                <h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
+                                  {course.title}
+                                </h3>
+                              </Link>
+                              <div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
+                                <Badge
+                                  variant="outline"
+                                  className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
+                                >
+                                  {course.category?.name}
+                                </Badge>
+                                <span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
+                                  {course.modalidad?.name}
                                 </span>
+                              </div>
+                              <div className="mt-2 flex items-center justify-between">
+                                <p className="text-primary text-xs font-semibold italic sm:text-base">
+                                  Educador: <span>{course.instructorName}</span>
+                                </p>
+                                <div className="flex items-center">
+                                  <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                                  <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
+                                    {(course.rating ?? 0).toFixed(1)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem className="flex h-40 items-center justify-center">
+                        <p className="text-lg text-gray-500">
+                          No hay cursos top disponibles
+                        </p>
                       </CarouselItem>
-                    ))}
+                    )}
                   </CarouselContent>
-                  <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
-                  <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
+                  {latestTenCourses.length > 0 && (
+                    <>
+                      <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
+                      <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
+                    </>
+                  )}
                 </Carousel>
               </div>
             </div>
@@ -426,11 +526,11 @@ export default function StudentDetails({
               </div>
               <div>
                 <Carousel className="w-full">
-                  <CarouselContent className="my-6 pl-4 sm:pl-4">
+                  <CarouselContent className="my-6">
                     {sortedPrograms.map((program) => (
                       <CarouselItem
                         key={program.id}
-                        className="basis-[95%] sm:basis-2/3 lg:basis-1/3"
+                        className="basis-full sm:basis-1/2 lg:basis-1/3"
                       >
                         <StudentProgram program={program} />
                       </CarouselItem>

@@ -186,6 +186,7 @@ export async function POST(request: Request) {
       creatorId: userId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      title: body.description?.slice(0, 50) || 'Ticket de Soporte', // Ajusta esto según tu lógica de títulos
     };
     console.log('🧾 Datos que se van a guardar:', ticketData);
 

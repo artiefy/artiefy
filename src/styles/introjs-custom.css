@@ -1,0 +1,78 @@
+.introjs-tooltip {
+  background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+  color: #e0eaff;
+  border-radius: 18px;
+  font-size: 1.13rem;
+  box-shadow:
+    0 8px 32px 0 rgba(0, 189, 216, 0.25),
+    0 1.5px 8px 0 #00a5c0;
+  border: 2px solid #00eaff;
+  padding: 22px 28px 18px 28px;
+  text-shadow: 0 1px 8px #00eaff33;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+}
+
+.introjs-tooltip-title {
+  color: #00eaff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 8px #00eaff55;
+}
+
+.introjs-button {
+  background: linear-gradient(90deg, #00eaff 0%, #00a5c0 100%);
+  color: #0f2027;
+  border-radius: 10px;
+  font-weight: bold;
+  border: none;
+  padding: 8px 22px;
+  margin: 0 6px;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px #00eaff33;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+  text-shadow: none;
+}
+
+.introjs-button:hover {
+  background: linear-gradient(90deg, #00a5c0 0%, #00eaff 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px #00eaff55;
+}
+
+.introjs-helperLayer {
+  background: rgba(0, 189, 216, 0.13);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 5px #00eaff,
+    0 0 24px 2px #00eaff55;
+  transition: box-shadow 0.3s;
+}
+
+.introjs-arrow {
+  border-top-color: #2c5364 !important;
+}
+
+.introjs-progressbar {
+  background: linear-gradient(90deg, #00eaff 0%, #00a5c0 100%);
+  height: 5px;
+  border-radius: 3px;
+}
+
+.introjs-tooltiptext {
+  font-family: 'Orbitron', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.introjs-skipbutton {
+  color: #00eaff;
+  background: transparent;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  text-shadow: 0 1px 8px #00eaff33;
+}

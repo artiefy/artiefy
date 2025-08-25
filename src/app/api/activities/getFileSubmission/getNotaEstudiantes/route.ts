@@ -1,17 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { activities,userActivitiesProgress } from '~/server/db/schema';
+import { activities, userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-
 
 export async function GET(request: NextRequest) {
   try {

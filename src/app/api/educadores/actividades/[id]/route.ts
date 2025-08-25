@@ -7,7 +7,6 @@ import {
   updateActivity,
 } from '~/models/educatorsModels/activitiesModels';
 
-
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -70,7 +69,11 @@ export async function PUT(
       );
     }
 
-const { name, description, typeid }: { name?: string; description?: string; typeid?: number } = parsed.data;
+    const {
+      name,
+      description,
+      typeid,
+    }: { name?: string; description?: string; typeid?: number } = parsed.data;
 
     if (
       (name && typeof name !== 'string') ||
@@ -83,11 +86,11 @@ const { name, description, typeid }: { name?: string; description?: string; type
       );
     }
 
-await updateActivity(id, {
-  ...(name !== undefined && { name }),
-  ...(description !== undefined && { description }),
-  ...(typeid !== undefined && { typeid }),
-});
+    await updateActivity(id, {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
+      ...(typeid !== undefined && { typeid }),
+    });
 
     return NextResponse.json({
       message: 'Actividad actualizada correctamente',

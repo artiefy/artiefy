@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
@@ -12,9 +13,24 @@ import {
   updateCourse,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
-import { materias } from '~/server/db/schema';
+import {
+  classMeetings,
+  courseCourseTypes,
+  courses,
+  courseTypes,
+  materias,
+} from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
+
+interface VideoData {
+  videos: {
+    meetingId: string;
+    videoUrl: string;
+    videoKey?: string | null;
+  }[];
+}
+
 interface PutRequestBody {
   title?: string;
   description?: string;
@@ -25,10 +41,205 @@ interface PutRequestBody {
   nivelid?: number;
   instructorId?: string; // Changed from instructor to instructorId
   rating?: number;
-  courseTypeId?: number | null;
+  courseTypeId?: number | number[] | null; // <- admite number o number[]
+  instructor?: string; // <- para evitar any en el punto 3
   isActive?: boolean;
   subjects?: { id: number }[];
   individualPrice?: number | null;
+}
+
+// Extrae el meetingId de un joinUrl de Teams
+function extractMeetingIdFromUrl(joinUrl?: string | null) {
+  if (!joinUrl) return null;
+  try {
+    const decoded = decodeURIComponent(joinUrl);
+    // Formatos típicos: 19:meeting_...@thread.v2
+    const m = /19:meeting_[A-Za-z0-9-_]+@thread\.v2/.exec(decoded);
+    return m ? m[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+// arriba del updateData (mismo archivo)
+function parseCourseTypeIds(input: unknown): number[] | undefined {
+  if (Array.isArray(input)) return input.map(Number).filter(Number.isFinite);
+  if (typeof input === 'number') return [input];
+  // si es null/undefined, no tocar relaciones
+  return undefined;
+}
+
+export async function getCourseByIdWithTypes(courseId: number) {
+  console.log('📘 Buscando curso con ID:', courseId);
+
+  const course = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .then((res) => res[0]);
+
+  console.log('✅ Curso obtenido:', course);
+
+  const meetings = await db
+    .select()
+    .from(classMeetings)
+    .where(eq(classMeetings.courseId, courseId));
+
+  console.log('📅 Reuniones encontradas:', meetings.length);
+
+  // 🧹 Normaliza y persiste meetingId a partir de joinUrl si está vacío
+  const meetingsFixed = await Promise.all(
+    meetings.map(async (m) => {
+      if (!m.meetingId && m.joinUrl) {
+        const extracted = extractMeetingIdFromUrl(m.joinUrl);
+        if (extracted) {
+          try {
+            await db
+              .update(classMeetings)
+              .set({ meetingId: extracted })
+              .where(eq(classMeetings.id, m.id));
+            console.log(
+              `🛠️ meetingId seteado en BD para ${m.id}: ${extracted}`
+            );
+            return { ...m, meetingId: extracted };
+          } catch (e) {
+            console.warn(`⚠️ No pude actualizar meetingId para ${m.id}`, e);
+          }
+        } else {
+          console.warn(
+            `⚠️ No pude extraer meetingId desde joinUrl para ${m.id}`
+          );
+        }
+      }
+      return m;
+    })
+  );
+
+  // 🔗 Consultar videos desde el endpoint que acabamos de crear (robusto)
+  console.log('🎥 Haciendo fetch de videos...');
+  let videos: VideoData['videos'] = [];
+
+  try {
+    // construye URL segura: absoluta si hay BASE_URL, si no, relativa
+    const base = (process.env.NEXT_PUBLIC_BASE_URL ?? '').replace(/\/+$/, '');
+    const userId = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
+    const url = `${base ? base : ''}/api/super-admin/teams/video?userId=${encodeURIComponent(userId)}`;
+
+    // evita cache y forzamos a golpear el endpoint cada vez
+    const videoRes = await fetch(url, {
+      cache: 'no-store',
+      next: { revalidate: 0 },
+    });
+    console.log('🛰️ /teams/video status:', videoRes.status, 'url usada:', url);
+
+    if (!videoRes.ok) {
+      const rawErr = await videoRes.text().catch(() => '');
+      console.error('❌ /teams/video no OK:', videoRes.status, rawErr);
+    } else {
+      const raw = await videoRes.text(); // puede venir vacío
+      if (raw?.trim()) {
+        try {
+          const videoData = JSON.parse(raw) as VideoData;
+          console.log('📦 Datos de video recibidos:', videoData);
+          videos = videoData?.videos ?? [];
+        } catch (e) {
+          console.error(
+            '❌ JSON inválido desde /teams/video:',
+            e,
+            'raw:',
+            raw.slice(0, 500)
+          );
+        }
+      } else {
+        console.warn('⚠️ /teams/video respondió cuerpo vacío.');
+      }
+    }
+  } catch (e) {
+    console.error('💥 Error haciendo fetch a /teams/video:', e);
+  }
+
+  console.log('🎬 Lista de videos extraída:', videos);
+
+  // 🔁 De-dup por meetingId (el endpoint a veces repite el mismo ID)
+  const videosById = new Map<
+    string,
+    { meetingId: string; videoUrl: string; videoKey?: string | null }
+  >();
+  for (const v of videos) {
+    if (v.meetingId && v.videoUrl) {
+      videosById.set(v.meetingId, v);
+    }
+  }
+
+  const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
+
+  const meetingsWithVideo = meetingsFixed.map((meeting) => {
+    let match = meeting.meetingId
+      ? videosById.get(meeting.meetingId)
+      : undefined;
+
+    if (!match && meeting.joinUrl) {
+      const decodedJoin = decodeURIComponent(meeting.joinUrl ?? '');
+      for (const [vidId, v] of videosById.entries()) {
+        if (decodedJoin.includes(vidId)) {
+          match = v;
+          break;
+        }
+      }
+    }
+
+    // lo que ya tiene la BD
+    // Tipado seguro para incluir video_key opcional
+    type ClassMeetingRow =
+      (typeof classMeetings)['_']['columns'] extends infer _Cols
+        ? typeof classMeetings.$inferSelect & { video_key?: string | null }
+        : typeof classMeetings.$inferSelect & { video_key?: string | null };
+
+    // lo que ya tiene la BD
+    const existingKey = (meeting as ClassMeetingRow).video_key ?? null;
+
+    // preferimos el video_key del match, si no, lo derivamos del videoUrl del match
+    const matchedKey =
+      match?.videoKey ??
+      (match?.videoUrl ? (match.videoUrl.split('/').pop() ?? null) : null);
+
+    // prioriza: match.videoUrl -> BD video_key -> nada
+    const finalVideoUrl =
+      match?.videoUrl ??
+      (existingKey ? `${aws}/video_clase/${existingKey}` : null);
+
+    const finalVideoKey = matchedKey ?? existingKey ?? null;
+
+    console.log(`🔍 Video para reunión ${meeting.id}:`, {
+      meetingId: meeting.meetingId,
+      found: Boolean(match),
+      video_key: finalVideoKey,
+      videoUrl: finalVideoUrl,
+    });
+
+    return {
+      ...meeting,
+      videoUrl: finalVideoUrl,
+      video_key: finalVideoKey,
+    };
+  });
+
+  const courseTypesList = await db
+    .select({
+      typeId: courseTypes.id,
+      typeName: courseTypes.name,
+    })
+    .from(courseCourseTypes)
+    .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
+    .where(eq(courseCourseTypes.courseId, courseId));
+
+  console.log('🏷️ Tipos de curso:', courseTypesList);
+
+  return {
+    ...course,
+    courseTypes: courseTypesList,
+    meetings: meetingsWithVideo,
+  };
 }
 
 export async function GET(
@@ -45,7 +256,7 @@ export async function GET(
       );
     }
 
-    const course = await getCourseById(courseId);
+    const course = await getCourseByIdWithTypes(courseId);
     if (!course) {
       return NextResponse.json(
         { error: 'Curso no encontrado' },
@@ -53,7 +264,6 @@ export async function GET(
       );
     }
 
-    // Return course directly without modifying the instructor name
     return NextResponse.json(course);
   } catch (error) {
     console.error('Error al obtener el curso:', error);
@@ -91,7 +301,10 @@ export async function PUT(
     }
 
     const data = (await request.json()) as PutRequestBody;
-    console.log('📦 Datos recibidos en el request PUT:');
+    const parsedCourseTypeIds = parseCourseTypeIds(
+      data.courseTypeId as unknown
+    );
+
     console.log(JSON.stringify(data, null, 2));
     // Create update data object with type checking
     const updateData = {
@@ -105,9 +318,17 @@ export async function PUT(
         ? Number(data.modalidadesid)
         : undefined,
       nivelid: data.nivelid ? Number(data.nivelid) : undefined,
-      instructor: data.instructorId, // Changed to match schema's instructor field
+
+      // ✅ acepta instructorId o instructor (por compatibilidad)
+      instructor: data.instructorId ?? data.instructor,
+
       rating: data.rating ? Number(data.rating) : undefined,
-      courseTypeId: data.courseTypeId !== null ? data.courseTypeId : undefined,
+
+      // ✅ asegura que siempre sea array
+
+      // dentro de updateData
+      courseTypeId: parsedCourseTypeIds, // number[] | undefined
+
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
     };
 

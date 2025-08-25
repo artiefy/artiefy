@@ -1,8 +1,8 @@
 'use client';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useParams,useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
+import { useParams, useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
 
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -542,7 +542,7 @@ const Page: React.FC = () => {
       });
 
       router.push(
-        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
+        `/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
       );
     } catch (error) {
       console.error('Error detallado:', error);
@@ -581,7 +581,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/super-admin"
+              href="/dashboard/educadores"
             >
               Inicio
             </BreadcrumbLink>
@@ -590,7 +590,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/super-admin/cursos"
+              href="/dashboard/educadores/cursos"
             >
               Lista de cursos
             </BreadcrumbLink>
@@ -599,7 +599,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+              href={`/dashboard/educadores/cursos/${courseIdNumber}`}
             >
               Detalles curso
             </BreadcrumbLink>

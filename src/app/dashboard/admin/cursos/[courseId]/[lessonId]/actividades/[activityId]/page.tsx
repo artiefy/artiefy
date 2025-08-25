@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect,useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -57,22 +57,22 @@ interface ActivityDetails {
   description: string;
   typeid: number;
   type: {
-	id: number;
-	name: string;
-	description: string;
+    id: number;
+    name: string;
+    description: string;
   };
   nota: number;
   revisada: boolean;
   parametros: string;
   pesoNota: number;
   lesson: {
-	id: number;
-	title: string;
-	coverImageKey: string;
-	courseId: number;
-	courseTitle: string;
-	courseDescription: string;
-	courseInstructor: string;
+    id: number;
+    title: string;
+    coverImageKey: string;
+    courseId: number;
+    courseTitle: string;
+    courseDescription: string;
+    courseInstructor: string;
   };
   fechaMaximaEntrega: string | null;
 }
@@ -82,9 +82,9 @@ interface PorcentajeResponse {
   usado: number;
   disponible: number;
   resumen: {
-	opcionMultiple: number;
-	verdaderoFalso: number;
-	completar: number;
+    opcionMultiple: number;
+    verdaderoFalso: number;
+    completar: number;
   };
 }
 
@@ -115,24 +115,24 @@ const Page: React.FC = () => {
   type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
 
   type EditableQuestion = (
-	| Question
-	| VerdaderoOFlaso
-	| Completado
-	| QuestionFilesSubida
+    | Question
+    | VerdaderoOFlaso
+    | Completado
+    | QuestionFilesSubida
   ) & {
-	tipo: TipoPregunta;
+    tipo: TipoPregunta;
   };
 
   const [editingQuestion, setEditingQuestion] =
-	useState<EditableQuestion | null>(null);
+    useState<EditableQuestion | null>(null);
 
   // Convertir los parametros de la URL a numeros
   const actividadIdString = Array.isArray(actividadIdUrl)
-	? actividadIdUrl[0]
-	: actividadIdUrl; // Obtener el id de la actividad
+    ? actividadIdUrl[0]
+    : actividadIdUrl; // Obtener el id de la actividad
   const actividadIdNumber = actividadIdString
-	? parseInt(actividadIdString)
-	: null; // Convertir el id de la actividad a numero
+    ? parseInt(actividadIdString)
+    : null; // Convertir el id de la actividad a numero
   const lessonIdString = Array.isArray(lessonsId) ? lessonsId[0] : lessonsId; // Obtener el id de la leccion
   const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null; // Convertir el id de la leccion a numero
   const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId; // Obtener el id del curso
@@ -142,585 +142,586 @@ const Page: React.FC = () => {
   const [porcentajeDisponible, setPorcentajeDisponible] = useState(100);
 
   const [resumenPorTipo, setResumenPorTipo] = useState({
-	opcionMultiple: 0,
-	verdaderoFalso: 0,
-	completar: 0,
+    opcionMultiple: 0,
+    verdaderoFalso: 0,
+    completar: 0,
   });
 
   // Funcion para cargar la actividad
   const fetchActividad = useCallback(async () => {
-	if (actividadIdNumber !== null) {
-	  try {
-		setLoading(true);
-		setError(null);
-		const response = await fetch(
-		  `/api/educadores/actividades/${actividadIdNumber}`
-		);
+    if (actividadIdNumber !== null) {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(
+          `/api/educadores/actividades/${actividadIdNumber}`
+        );
 
-		if (response.ok) {
-		  const data = (await response.json()) as ActivityDetails;
-		  setActividad(data);
-		} else {
-		  const errorData = (await response.json()) as { error?: string };
-		  const errorMessage = errorData.error ?? response.statusText;
-		  setError(`Error al cargar la actividad: ${errorMessage}`);
-		  toast('Error', {
-			description: `No se pudo cargar la actividad: ${errorMessage}`,
-		  });
-		}
-	  } catch (error: unknown) {
-		const errorMessage =
-		  error instanceof Error ? error.message : 'Error desconocido';
-		setError(`Error al cargar la actividad: ${errorMessage}`);
-		toast('Error', {
-		  description: `No se pudo cargar la actividad: ${errorMessage}`,
-		});
-	  } finally {
-		setLoading(false);
-	  }
-	}
+        if (response.ok) {
+          const data = (await response.json()) as ActivityDetails;
+          setActividad(data);
+        } else {
+          const errorData = (await response.json()) as { error?: string };
+          const errorMessage = errorData.error ?? response.statusText;
+          setError(`Error al cargar la actividad: ${errorMessage}`);
+          toast('Error', {
+            description: `No se pudo cargar la actividad: ${errorMessage}`,
+          });
+        }
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Error desconocido';
+        setError(`Error al cargar la actividad: ${errorMessage}`);
+        toast('Error', {
+          description: `No se pudo cargar la actividad: ${errorMessage}`,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
   }, [actividadIdNumber]);
 
   // Cargar la actividad
   useEffect(() => {
-	fetchActividad().catch((error) =>
-	  console.error('Error fetching activity:', error)
-	);
+    fetchActividad().catch((error) =>
+      console.error('Error fetching activity:', error)
+    );
   }, [fetchActividad]);
 
   const fetchPorcentajes = useCallback(() => {
-	if (actividadIdNumber !== null) {
-	  fetch(
-		`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
-	  )
-		.then((res) => res.json() as Promise<PorcentajeResponse>)
-		.then((data) => {
-		  setPorcentajeUsado(Number(data.usado));
-		  setPorcentajeDisponible(Number(data.disponible));
-		  if (
-			typeof data.resumen === 'object' &&
-			data.resumen !== null &&
-			'opcionMultiple' in data.resumen &&
-			'verdaderoFalso' in data.resumen &&
-			'completar' in data.resumen
-		  ) {
-			setResumenPorTipo({
-			  opcionMultiple: Number(data.resumen.opcionMultiple),
-			  verdaderoFalso: Number(data.resumen.verdaderoFalso),
-			  completar: Number(data.resumen.completar),
-			});
-		  }
-		})
-		.catch((err) => {
-		  console.error('Error obteniendo porcentajes por tipo:', err);
-		});
-	}
+    if (actividadIdNumber !== null) {
+      fetch(
+        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+      )
+        .then((res) => res.json() as Promise<PorcentajeResponse>)
+        .then((data) => {
+          setPorcentajeUsado(Number(data.usado));
+          setPorcentajeDisponible(Number(data.disponible));
+          if (
+            typeof data.resumen === 'object' &&
+            data.resumen !== null &&
+            'opcionMultiple' in data.resumen &&
+            'verdaderoFalso' in data.resumen &&
+            'completar' in data.resumen
+          ) {
+            setResumenPorTipo({
+              opcionMultiple: Number(data.resumen.opcionMultiple),
+              verdaderoFalso: Number(data.resumen.verdaderoFalso),
+              completar: Number(data.resumen.completar),
+            });
+          }
+        })
+        .catch((err) => {
+          console.error('Error obteniendo porcentajes por tipo:', err);
+        });
+    }
   }, [actividadIdNumber]);
 
   // Guardar el color seleccionado en el localStorage
   useEffect(() => {
-	const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
-	if (savedColor) {
-	  setColor(savedColor);
-	}
+    const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
+    if (savedColor) {
+      setColor(savedColor);
+    }
   }, [courseIdNumber]);
 
   useEffect(() => {
-	if (actividad?.type.id === 1) {
-	  setQuestions(['ARCHIVO']);
-	}
+    if (actividad?.type.id === 1) {
+      setQuestions(['ARCHIVO']);
+    }
   }, [actividad]);
 
   useEffect(() => {
-	if (actividadIdNumber !== null) {
-	  fetch(
-		`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
-	  )
-		.then((res) => res.json() as Promise<PorcentajeResponse>)
-		.then((data) => {
-		  setPorcentajeUsado(Number(data.usado));
-		  setPorcentajeDisponible(Number(data.disponible));
-		  setResumenPorTipo({
-			opcionMultiple: Number(data.resumen.opcionMultiple),
-			verdaderoFalso: Number(data.resumen.verdaderoFalso),
-			completar: Number(data.resumen.completar),
-		  });
-		})
-		.catch((err) => {
-		  console.error('Error obteniendo porcentajes por tipo:', err);
-		});
-	}
+    if (actividadIdNumber !== null) {
+      fetch(
+        `/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+      )
+        .then((res) => res.json() as Promise<PorcentajeResponse>)
+        .then((data) => {
+          setPorcentajeUsado(Number(data.usado));
+          setPorcentajeDisponible(Number(data.disponible));
+          setResumenPorTipo({
+            opcionMultiple: Number(data.resumen.opcionMultiple),
+            verdaderoFalso: Number(data.resumen.verdaderoFalso),
+            completar: Number(data.resumen.completar),
+          });
+        })
+        .catch((err) => {
+          console.error('Error obteniendo porcentajes por tipo:', err);
+        });
+    }
   }, [actividadIdNumber]);
 
   useEffect(() => {
-	fetchPorcentajes();
+    fetchPorcentajes();
   }, [shouldRefresh, fetchPorcentajes]);
 
   // Funcion para eliminar la actividad
   const handleDeleteAct = async () => {
-	if (actividadIdNumber) {
-	  try {
-		const response = await fetch(
-		  `/api/educadores/actividades?id=${actividadIdNumber}`,
-		  {
-			method: 'DELETE',
-		  }
-		);
+    if (actividadIdNumber) {
+      try {
+        const response = await fetch(
+          `/api/educadores/actividades?id=${actividadIdNumber}`,
+          {
+            method: 'DELETE',
+          }
+        );
 
-		if (response.ok) {
-		  toast('Actividad eliminada', {
-			description:
-			  'La actividad y todos sus archivos asociados se eliminaron con éxito.',
-		  });
-		  window.history.back();
-		} else {
-		  const errorData = (await response.json()) as { error?: string };
-		  toast('Error', {
-			description: errorData.error ?? 'Error al eliminar la actividad.',
-		  });
-		}
-	  } catch (error: unknown) {
-		if ((error as Error).name === 'AbortError') {
-		  console.log('Delete cancelled');
-		  return;
-		} else {
-		  const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		  toast('Error', {
-			description: `Error al eliminar la actividad: ${errorMessage}`,
-		  });
-		}
-	  }
-	}
+        if (response.ok) {
+          toast('Actividad eliminada', {
+            description:
+              'La actividad y todos sus archivos asociados se eliminaron con éxito.',
+          });
+          window.history.back();
+        } else {
+          const errorData = (await response.json()) as { error?: string };
+          toast('Error', {
+            description: errorData.error ?? 'Error al eliminar la actividad.',
+          });
+        }
+      } catch (error: unknown) {
+        if ((error as Error).name === 'AbortError') {
+          console.log('Delete cancelled');
+          return;
+        } else {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Error desconocido';
+          toast('Error', {
+            description: `Error al eliminar la actividad: ${errorMessage}`,
+          });
+        }
+      }
+    }
   };
 
   // Funcion del boton para agregar una pregunta a la actividad
   const handleAddQuestion = () => {
-	if (selectedActivityType) {
-	  setQuestions([selectedActivityType]); // Solo mantener el nuevo formulario
-	  setSelectedActivityType('');
-	}
+    if (selectedActivityType) {
+      setQuestions([selectedActivityType]); // Solo mantener el nuevo formulario
+      setSelectedActivityType('');
+    }
   };
 
   // Funcion para manejar el envio del formulario
   const handleFormSubmit = () => {
-	setEditingQuestion(null);
-	setQuestions([]);
-	setShouldRefresh((prev) => !prev);
+    setEditingQuestion(null);
+    setQuestions([]);
+    setShouldRefresh((prev) => !prev);
   };
 
   // Funcion para cancelar la edicion de la pregunta
   const handleCancel = () => {
-	setEditingQuestion(null);
-	setQuestions([]); // Limpiar las preguntas para dejar de renderizar el formulario
+    setEditingQuestion(null);
+    setQuestions([]); // Limpiar las preguntas para dejar de renderizar el formulario
   };
 
   // Spinner de carga
   if (loading) {
-	return (
-	  <main className="flex h-screen flex-col items-center justify-center">
-		<div className="border-primary size-32 animate-spin rounded-full border-y-2">
-		  <span className="sr-only" />
-		</div>
-		<span className="text-primary">Cargando...</span>
-	  </main>
-	);
+    return (
+      <main className="flex h-screen flex-col items-center justify-center">
+        <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+          <span className="sr-only" />
+        </div>
+        <span className="text-primary">Cargando...</span>
+      </main>
+    );
   }
 
   // Mostrar el error con boton para volver a cargar
   if (error) {
-	return (
-	  <main className="flex h-screen items-center justify-center">
-		<div className="text-center">
-		  <p className="text-lg font-semibold text-red-500">
-			Error tipo: {error}
-		  </p>
-		  <button
-			onClick={fetchActividad}
-			className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
-		  >
-			Reintentar
-		  </button>
-		</div>
-	  </main>
-	);
+    return (
+      <main className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-red-500">
+            Error tipo: {error}
+          </p>
+          <button
+            onClick={fetchActividad}
+            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+          >
+            Reintentar
+          </button>
+        </div>
+      </main>
+    );
   }
 
   // Mostrar mensaje si no se encuentra la actividad
   if (!actividad)
-	return (
-	  <div className="text-center text-xl">No se encontró la actividad.</div>
-	);
+    return (
+      <div className="text-center text-xl">No se encontró la actividad.</div>
+    );
 
   return (
-	<>
-	  <Breadcrumb>
-		<BreadcrumbList>
-		  <BreadcrumbItem>
-			<BreadcrumbLink
-			  className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-			  href="/dashboard/super-admin"
-			>
-			  Cursos
-			</BreadcrumbLink>
-		  </BreadcrumbItem>
-		  <BreadcrumbSeparator />
-		  <BreadcrumbItem>
-			<BreadcrumbLink
-			  className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-			  href="/dashboard/super-admin/cursos"
-			>
-			  Lista de cursos
-			</BreadcrumbLink>
-		  </BreadcrumbItem>
-		  <BreadcrumbSeparator />
-		  <BreadcrumbItem>
-			<BreadcrumbLink
-			  className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-			  href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
-			>
-			  Detalles curso
-			</BreadcrumbLink>
-		  </BreadcrumbItem>
-		  <BreadcrumbSeparator />
-		  <BreadcrumbItem>
-			<BreadcrumbLink
-			  href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
-			  className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-			>
-			  Lección
-			</BreadcrumbLink>
-		  </BreadcrumbItem>
-		  <BreadcrumbSeparator />
-		  <BreadcrumbItem>
-			<BreadcrumbLink
-			  href="#"
-			  onClick={() => window.history.back()}
-			  className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-			>
-			  Creación de actividad
-			</BreadcrumbLink>
-		  </BreadcrumbItem>
-		</BreadcrumbList>
-	  </Breadcrumb>
-	  <div className="group relative h-auto w-full">
-		<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-		<div
-		  className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
-		  style={{ backgroundColor: color, color: getContrastYIQ(color) }}
-		>
-		  <div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
-			<h2 className="text-primary flex flex-col text-4xl font-extrabold">
-			  Actividad: <b>{actividad.name}</b>
-			</h2>
-			<h3 className="text-primary text-xl md:mr-8 lg:mr-24">
-			  Perteneciente a la clase: {actividad.lesson?.title}
-			</h3>
-		  </div>
-		  <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
-			<div className="space-y-5 text-lg">
-			  <p className="font-semibold">
-				Del docente:{' '}
-				<Badge
-				  variant="outline"
-				  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-				>
-				  {actividad.lesson.courseInstructor}
-				</Badge>
-			  </p>
-			  <p className="font-semibold">
-				Tipo de actividad:{' '}
-				<b className="text-primary">{actividad.type?.name}</b>
-			  </p>
-			  <p className="font-semibold">
-				Permite: <b>{actividad.type?.description}</b>
-			  </p>
-			  <p className="w-11/12 font-semibold">
-				Descripción de la actividad:{' '}
-				<b className="w-11/12">{actividad.description}.</b>
-			  </p>
-			  <p className="font-semibold">
-				¿La actividad es calificable?:{' '}
-				<Badge
-				  variant="outline"
-				  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-				>
-				  {actividad.revisada ? 'Si' : 'No'}.
-				</Badge>
-			  </p>
-			  <p className="font-semibold">
-				Fecha máxima de entrega:{' '}
-				<Badge
-				  variant="outline"
-				  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-				>
-				  {actividad.fechaMaximaEntrega
-					? new Date(actividad.fechaMaximaEntrega).toLocaleString()
-					: 'No tiene fecha máxima de entrega'}
-				  .
-				</Badge>
-			  </p>
-			</div>
-			<div className="flex items-center justify-center">
-			  <div className="text-center">
-				<Image
-				  src={
-					actividad.lesson.coverImageKey
-					  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
-					  : `/favicon.ico`
-				  }
-				  alt="Imagen de la lección"
-				  width={250}
-				  height={250}
-				  className="rounded-lg shadow-md"
-				/>
-			  </div>
-			</div>
-		  </div>
-		  <div className="mx-auto flex flex-wrap justify-center gap-4 sm:justify-evenly md:gap-6">
-  <Link
-    href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-    className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 transition-colors duration-200"
-  >
-    Realizar Actividad
-  </Link>
-
-  <Link
-    href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-    className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 transition-colors duration-200"
-  >
-    Editar Actividad
-  </Link>
-
-  <AlertDialog>
-    <AlertDialogTrigger asChild>
-      <Button className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-white hover:text-red-600">
-        Eliminar
-      </Button>
-    </AlertDialogTrigger>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-        <AlertDialogDescription>
-          Esta acción no se puede deshacer. Se eliminará permanentemente la actividad
-          <span className="font-bold">
-            {' '}
-            {actividad?.name}, del tipo: {actividad?.type?.name}
-          </span>{' '}
-          y todos los datos asociados a este.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-        <AlertDialogAction
-          onClick={handleDeleteAct}
-          className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-transparent hover:text-red-700 hover:border-red-700"
+    <>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              href="/dashboard/super-admin"
+            >
+              Cursos
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              href="/dashboard/super-admin/cursos"
+            >
+              Lista de cursos
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+            >
+              Detalles curso
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
+              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+            >
+              Lección
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              href="#"
+              onClick={() => window.history.back()}
+              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+            >
+              Creación de actividad
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      <div className="group relative h-auto w-full">
+        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+        <div
+          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
+          style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
-          Eliminar
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-</div>
+          <div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
+            <h2 className="text-primary flex flex-col text-4xl font-extrabold">
+              Actividad: <b>{actividad.name}</b>
+            </h2>
+            <h3 className="text-primary text-xl md:mr-8 lg:mr-24">
+              Perteneciente a la clase: {actividad.lesson?.title}
+            </h3>
+          </div>
+          <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
+            <div className="space-y-5 text-lg">
+              <p className="font-semibold">
+                Del docente:{' '}
+                <Badge
+                  variant="outline"
+                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                >
+                  {actividad.lesson.courseInstructor}
+                </Badge>
+              </p>
+              <p className="font-semibold">
+                Tipo de actividad:{' '}
+                <b className="text-primary">{actividad.type?.name}</b>
+              </p>
+              <p className="font-semibold">
+                Permite: <b>{actividad.type?.description}</b>
+              </p>
+              <p className="w-11/12 font-semibold">
+                Descripción de la actividad:{' '}
+                <b className="w-11/12">{actividad.description}.</b>
+              </p>
+              <p className="font-semibold">
+                ¿La actividad es calificable?:{' '}
+                <Badge
+                  variant="outline"
+                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                >
+                  {actividad.revisada ? 'Si' : 'No'}.
+                </Badge>
+              </p>
+              <p className="font-semibold">
+                Fecha máxima de entrega:{' '}
+                <Badge
+                  variant="outline"
+                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                >
+                  {actividad.fechaMaximaEntrega
+                    ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
+                    : 'No tiene fecha máxima de entrega'}
+                  .
+                </Badge>
+              </p>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <Image
+                  src={
+                    actividad.lesson.coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
+                      : `/favicon.ico`
+                  }
+                  alt="Imagen de la lección"
+                  width={250}
+                  height={250}
+                  className="rounded-lg shadow-md"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mx-auto flex flex-wrap justify-center gap-4 sm:justify-evenly md:gap-6">
+            <Link
+              href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
+            >
+              Realizar Actividad
+            </Link>
 
-		  {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
-		  {actividad?.type.id === 1 ? (
-			<div className="mt-8 space-y-6">
-			  <div className="rounded-lg bg-white p-6 shadow-md">
-				<div className="space-y-4">
-				  {actividadIdNumber !== null && (
-					<>
-					  <div className="rounded-lg border border-gray-200 bg-white">
-						<div className="rounded-lg bg-blue-50 p-4">
-						  <h2 className="text-center text-2xl font-bold text-gray-800">
-							Gestión de Archivos y Calificaciones
-						  </h2>
-						  <p className="text-center text-sm text-black">
-							En esta sección puedes gestionar los archivos
-							subidos por los estudiantes y asignar
-							calificaciones.
-						  </p>
-						</div>
-						<VerRespuestasArchivos
-						  activityId={actividadIdNumber.toString()}
-						/>
-					  </div>
-					  {questions.includes('ARCHIVO') && (
-						<FormActCompletado
-						  activityId={actividadIdNumber}
-						  onSubmit={handleFormSubmit}
-						  onCancel={handleCancel}
-						/>
-					  )}
+            <Link
+              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
+            >
+              Editar Actividad
+            </Link>
 
-					  {editingQuestion?.tipo === 'ARCHIVO' &&
-						'parametros' in editingQuestion && (
-						  <FormActCompletado
-							activityId={actividadIdNumber}
-							editingQuestion={editingQuestion}
-							onSubmit={handleFormSubmit}
-							onCancel={handleCancel}
-						  />
-						)}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-white hover:text-red-600">
+                  Eliminar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente la actividad
+                    <span className="font-bold">
+                      {' '}
+                      {actividad?.name}, del tipo: {actividad?.type?.name}
+                    </span>{' '}
+                    y todos los datos asociados a este.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAct}
+                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
 
-					  <div className="rounded-lg border border-gray-200 bg-white p-6">
-						<QuestionSubidaList
-						  key={`subida-${shouldRefresh}`}
-						  activityId={actividadIdNumber}
-						  onEdit={(q) => {
-							if ('parametros' in q) {
-							  console.log(
-								'[onEdit] Editando pregunta con parámetros:',
-								q
-							  );
-							  setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
-							} else {
-							  console.warn(
-								'[onEdit] La pregunta no tiene "parametros":',
-								q
-							  );
-							}
-						  }}
-						/>
-					  </div>
-					</>
-				  )}
-				</div>
-			  </div>
-			</div>
-		  ) : actividad?.type.id === 2 ? (
-			<>
-			  <SeleccionActi
-				selectedColor={color}
-				onSelectChange={setSelectedActivityType}
-			  />
-			  <div
-				className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-			  >
-				<p>
-				  <strong>Porcentaje usado por tipo de pregunta:</strong>
-				</p>
-				<p>
-				  🟡 Opción Múltiple: {resumenPorTipo.opcionMultiple}%, 🔵
-				  Verdadero/Falso: {resumenPorTipo.verdaderoFalso}%, 🟢
-				  Completar: {resumenPorTipo.completar}%
-				</p>
-				<hr className="my-2" />
-				<p>
-				  Total usado: <strong>{porcentajeUsado}%</strong>
-				</p>
-				<p>
-				  Porcentaje disponible:{' '}
-				  <strong>{porcentajeDisponible}%</strong>
-				</p>
-			  </div>
+          {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
+          {actividad?.type.id === 1 ? (
+            <div className="mt-8 space-y-6">
+              <div className="rounded-lg bg-white p-6 shadow-md">
+                <div className="space-y-4">
+                  {actividadIdNumber !== null && (
+                    <>
+                      <div className="rounded-lg border border-gray-200 bg-white">
+                        <div className="rounded-lg bg-blue-50 p-4">
+                          <h2 className="text-center text-2xl font-bold text-gray-800">
+                            Gestión de Archivos y Calificaciones
+                          </h2>
+                          <p className="text-center text-sm text-black">
+                            En esta sección puedes gestionar los archivos
+                            subidos por los estudiantes y asignar
+                            calificaciones.
+                          </p>
+                        </div>
+                        <VerRespuestasArchivos
+                          activityId={actividadIdNumber.toString()}
+                        />
+                      </div>
+                      {questions.includes('ARCHIVO') && (
+                        <FormActCompletado
+                          activityId={actividadIdNumber}
+                          onSubmit={handleFormSubmit}
+                          onCancel={handleCancel}
+                        />
+                      )}
 
-			  {selectedActivityType && (
-				<Button
-				  className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-				  onClick={handleAddQuestion}
-				>
-				  Agregar Pregunta
-				</Button>
-			  )}
-			  {/* Para agregar nuevas preguntas */}
-			  {questions.map((questionType, index) => (
-				<div key={index}>
-				  {questionType === 'OM' && actividadIdNumber !== null && (
-					<QuestionForm
-					  activityId={actividadIdNumber}
-					  onSubmit={handleFormSubmit}
-					  onCancel={handleCancel}
-					  isUploading={false}
-					  editingQuestion={undefined} // <- ✅ Tipo correcto
-					/>
-				  )}
-				  {questionType === 'FOV' && actividadIdNumber !== null && (
-					<QuestionVOFForm
-					  activityId={actividadIdNumber}
-					  onSubmit={handleFormSubmit}
-					  onCancel={handleCancel}
-					  isUploading={false}
-					  editingQuestion={undefined} // <- ✅ Tipo correcto
-					/>
-				  )}
-				  {questionType === 'COMPLETADO' &&
-					actividadIdNumber !== null && (
-					  <PreguntasAbiertas
-						activityId={actividadIdNumber}
-						onSubmit={handleFormSubmit}
-						onCancel={handleCancel}
-						isUploading={false}
-					  />
-					)}
-				</div>
-			  ))}
+                      {editingQuestion?.tipo === 'ARCHIVO' &&
+                        'parametros' in editingQuestion && (
+                          <FormActCompletado
+                            activityId={actividadIdNumber}
+                            editingQuestion={editingQuestion}
+                            onSubmit={handleFormSubmit}
+                            onCancel={handleCancel}
+                          />
+                        )}
 
-			  {/* Para editar una pregunta existente */}
-			  {editingQuestion && (
-				<div className="mt-4">
-				  {editingQuestion.tipo === 'OM' &&
-					actividadIdNumber !== null && (
-					  <QuestionForm
-						activityId={actividadIdNumber}
-						onSubmit={handleFormSubmit}
-						onCancel={handleCancel}
-						isUploading={false}
-						editingQuestion={editingQuestion as Question}
-					  />
-					)}
-				  {editingQuestion.tipo === 'FOV' &&
-					actividadIdNumber !== null && (
-					  <QuestionVOFForm
-						activityId={actividadIdNumber}
-						onSubmit={handleFormSubmit}
-						onCancel={handleCancel}
-						isUploading={false}
-						editingQuestion={editingQuestion as VerdaderoOFlaso}
-					  />
-					)}
-				</div>
-			  )}
+                      <div className="rounded-lg border border-gray-200 bg-white p-6">
+                        <QuestionSubidaList
+                          key={`subida-${shouldRefresh}`}
+                          activityId={actividadIdNumber}
+                          onEdit={(q) => {
+                            if ('parametros' in q) {
+                              console.log(
+                                '[onEdit] Editando pregunta con parámetros:',
+                                q
+                              );
+                              setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
+                            } else {
+                              console.warn(
+                                '[onEdit] La pregunta no tiene "parametros":',
+                                q
+                              );
+                            }
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : actividad?.type.id === 2 ? (
+            <>
+              <SeleccionActi
+                selectedColor={color}
+                onSelectChange={setSelectedActivityType}
+              />
+              <div
+                className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+              >
+                <p>
+                  <strong>Porcentaje usado por tipo de pregunta:</strong>
+                </p>
+                <p>
+                  🟡 Opción Múltiple: {resumenPorTipo.opcionMultiple}%, 🔵
+                  Verdadero/Falso: {resumenPorTipo.verdaderoFalso}%, 🟢
+                  Completar: {resumenPorTipo.completar}%
+                </p>
+                <hr className="my-2" />
+                <p>
+                  Total usado: <strong>{porcentajeUsado}%</strong>
+                </p>
+                <p>
+                  Porcentaje disponible:{' '}
+                  <strong>{porcentajeDisponible}%</strong>
+                </p>
+              </div>
 
-			  {actividadIdNumber !== null && (
-				<>
-				  <QuestionVOFList
-					key={`vof-${shouldRefresh}`}
-					activityId={actividadIdNumber}
-					onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
-					shouldRefresh={shouldRefresh}
-				  />
+              {selectedActivityType && (
+                <Button
+                  className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  onClick={handleAddQuestion}
+                >
+                  Agregar Pregunta
+                </Button>
+              )}
+              {/* Para agregar nuevas preguntas */}
+              {questions.map((questionType, index) => (
+                <div key={index}>
+                  {questionType === 'OM' && actividadIdNumber !== null && (
+                    <QuestionForm
+                      activityId={actividadIdNumber}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleCancel}
+                      isUploading={false}
+                      editingQuestion={undefined} // <- ✅ Tipo correcto
+                    />
+                  )}
+                  {questionType === 'FOV' && actividadIdNumber !== null && (
+                    <QuestionVOFForm
+                      activityId={actividadIdNumber}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleCancel}
+                      isUploading={false}
+                      editingQuestion={undefined} // <- ✅ Tipo correcto
+                    />
+                  )}
+                  {questionType === 'COMPLETADO' &&
+                    actividadIdNumber !== null && (
+                      <PreguntasAbiertas
+                        activityId={actividadIdNumber}
+                        onSubmit={handleFormSubmit}
+                        onCancel={handleCancel}
+                        isUploading={false}
+                      />
+                    )}
+                </div>
+              ))}
 
-				  <QuestionList
-					key={`om-${shouldRefresh}`}
-					activityId={actividadIdNumber}
-					onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
-				  />
-				  <ListPreguntaAbierta
-					key={`abierta-${shouldRefresh}`}
-					activityId={actividadIdNumber}
-					shouldRefresh={shouldRefresh}
-				  />
-				</>
-			  )}
-			</>
-		  ) : (
-			actividad.type.id === 4 &&
-			actividadIdNumber !== null && (
-			  <>
-				<CalificarPreguntas activityId={actividadIdNumber} />
-				<PreguntasAbiertas2
-				  activityId={actividadIdNumber}
-				  onSubmit={handleFormSubmit}
-				  isUploading={false}
-				/>
-				<ListPreguntaAbierta2 activityId={actividadIdNumber} />
-			  </>
-			)
-		  )}
-		</div>
-	  </div>
-	</>
+              {/* Para editar una pregunta existente */}
+              {editingQuestion && (
+                <div className="mt-4">
+                  {editingQuestion.tipo === 'OM' &&
+                    actividadIdNumber !== null && (
+                      <QuestionForm
+                        activityId={actividadIdNumber}
+                        onSubmit={handleFormSubmit}
+                        onCancel={handleCancel}
+                        isUploading={false}
+                        editingQuestion={editingQuestion as Question}
+                      />
+                    )}
+                  {editingQuestion.tipo === 'FOV' &&
+                    actividadIdNumber !== null && (
+                      <QuestionVOFForm
+                        activityId={actividadIdNumber}
+                        onSubmit={handleFormSubmit}
+                        onCancel={handleCancel}
+                        isUploading={false}
+                        editingQuestion={editingQuestion as VerdaderoOFlaso}
+                      />
+                    )}
+                </div>
+              )}
+
+              {actividadIdNumber !== null && (
+                <>
+                  <QuestionVOFList
+                    key={`vof-${shouldRefresh}`}
+                    activityId={actividadIdNumber}
+                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+                    shouldRefresh={shouldRefresh}
+                  />
+
+                  <QuestionList
+                    key={`om-${shouldRefresh}`}
+                    activityId={actividadIdNumber}
+                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
+                  />
+                  <ListPreguntaAbierta
+                    key={`abierta-${shouldRefresh}`}
+                    activityId={actividadIdNumber}
+                    shouldRefresh={shouldRefresh}
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            actividad.type.id === 4 &&
+            actividadIdNumber !== null && (
+              <>
+                <CalificarPreguntas activityId={actividadIdNumber} />
+                <PreguntasAbiertas2
+                  activityId={actividadIdNumber}
+                  onSubmit={handleFormSubmit}
+                  isUploading={false}
+                />
+                <ListPreguntaAbierta2 activityId={actividadIdNumber} />
+              </>
+            )
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 

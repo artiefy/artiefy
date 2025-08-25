@@ -8,52 +8,52 @@ export const dynamic = 'force-dynamic';
 
 // Define strict types for query results
 interface DBRow {
-	[key: string]: unknown;
-	name: string;
-	weight: number;
-	grade: number | null;
-	activities: string | null;
-	final_grade: number | null;
+  [key: string]: unknown;
+  name: string;
+  weight: number;
+  grade: number | null;
+  activities: string | null;
+  final_grade: number | null;
 }
 
 interface DBQueryResult extends Record<string, unknown> {
-	rows: DBRow[];
+  rows: DBRow[];
 }
 
 interface ActivityResult {
-	id: number;
-	name: string;
-	grade: number;
-	weight: number;
+  id: number;
+  name: string;
+  grade: number;
+  weight: number;
 }
 
 interface GradeParameter {
-	name: string;
-	grade: number;
-	weight: number;
-	activities: ActivityResult[];
+  name: string;
+  grade: number;
+  weight: number;
+  activities: ActivityResult[];
 }
 
 interface GradeResponse {
-	finalGrade: number;
-	parameters: GradeParameter[];
-	isCompleted: boolean;
+  finalGrade: number;
+  parameters: GradeParameter[];
+  isCompleted: boolean;
 }
 
 export async function GET(request: NextRequest) {
-	try {
-		const { searchParams } = new URL(request.url);
-		const courseId = searchParams.get('courseId');
-		const userId = searchParams.get('userId');
+  try {
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get('courseId');
+    const userId = searchParams.get('userId');
 
-		if (!courseId || !userId) {
-			return NextResponse.json(
-				{ error: 'Missing parameters' },
-				{ status: 400 }
-			);
-		}
+    if (!courseId || !userId) {
+      return NextResponse.json(
+        { error: 'Missing parameters' },
+        { status: 400 }
+      );
+    }
 
-		const queryResult = (await db.execute(sql`
+    const queryResult = (await db.execute(sql`
       WITH parameter_activities AS (
         -- First get all activities and their grades for each parameter
         SELECT 
@@ -107,47 +107,47 @@ export async function GET(request: NextRequest) {
       ORDER BY parameter_id;
     `)) as unknown as DBQueryResult;
 
-		// Debug logs for grade calculation
-		console.log('Grade Calculation Debug:');
-		console.log('Raw Query Result:', queryResult);
+    // Debug logs for grade calculation
+    console.log('Grade Calculation Debug:');
+    console.log('Raw Query Result:', queryResult);
 
-		// Single declaration of rows
-		const dbRows = queryResult?.rows ?? [];
-		console.log(
-			'Parameter Rows:',
-			dbRows.map((row) => ({
-				name: row.name,
-				weight: row.weight,
-				grade: row.grade,
-				contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
-			}))
-		);
+    // Single declaration of rows
+    const dbRows = queryResult?.rows ?? [];
+    console.log(
+      'Parameter Rows:',
+      dbRows.map((row) => ({
+        name: row.name,
+        weight: row.weight,
+        grade: row.grade,
+        contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
+      }))
+    );
 
-		// Transform results with proper type safety
-		const parameters: GradeParameter[] = dbRows.map((row) => {
-			const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
+    // Transform results with proper type safety
+    const parameters: GradeParameter[] = dbRows.map((row) => {
+      const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
 
-			return {
-				name: String(row.name),
-				grade: Number(row.grade ?? 0),
-				weight: Number(row.weight),
-				activities: activities.map((act) => ({
-					id: Number(act.id),
-					name: String(act.name),
-					grade: Number(act.grade),
-					weight: Number(act.weight),
-				})),
-			};
-		});
+      return {
+        name: String(row.name),
+        grade: Number(row.grade ?? 0),
+        weight: Number(row.weight),
+        activities: activities.map((act) => ({
+          id: Number(act.id),
+          name: String(act.name),
+          grade: Number(act.grade),
+          weight: Number(act.weight),
+        })),
+      };
+    });
 
-		// Get final grade with proper type casting
-		const finalGrade = Number(dbRows[0]?.final_grade ?? 0);
+    // Get final grade with proper type casting
+    const finalGrade = Number(dbRows[0]?.final_grade ?? 0);
 
-		// Update materias grades with the correct final grade
-		if (finalGrade > 0) {
-			console.log('Updating materia grades with final grade:', finalGrade);
+    // Update materias grades with the correct final grade
+    if (finalGrade > 0) {
+      console.log('Updating materia grades with final grade:', finalGrade);
 
-			await db.execute(sql`
+      await db.execute(sql`
 			  WITH course_materias AS (
 				SELECT m.id as materia_id
 				FROM materias m
@@ -166,28 +166,28 @@ export async function GET(request: NextRequest) {
 				updated_at = EXCLUDED.updated_at
 			`);
 
-			// Verify the update
-			const updatedGrades = await db.execute(sql`
+      // Verify the update
+      const updatedGrades = await db.execute(sql`
 			  SELECT m.title, mg.grade
 			  FROM materia_grades mg
 			  JOIN materias m ON m.id = mg.materia_id
 			  WHERE m.courseid = ${courseId} AND mg.user_id = ${userId}
 			`);
-			console.log('Updated materia grades:', updatedGrades);
-		}
+      console.log('Updated materia grades:', updatedGrades);
+    }
 
-		const response: GradeResponse = {
-			finalGrade,
-			parameters,
-			isCompleted: true,
-		};
+    const response: GradeResponse = {
+      finalGrade,
+      parameters,
+      isCompleted: true,
+    };
 
-		return NextResponse.json(response);
-	} catch (error) {
-		console.error('Error calculating grades:', error);
-		return NextResponse.json(
-			{ error: 'Failed to calculate grades' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error('Error calculating grades:', error);
+    return NextResponse.json(
+      { error: 'Failed to calculate grades' },
+      { status: 500 }
+    );
+  }
 }

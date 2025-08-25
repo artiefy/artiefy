@@ -1,11 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "app/**/*.ts",
-    "app/**/*.tsx"
-  ],
+  "include": ["**/*", ".*/**/*", "./**/.*"],
   "exclude": [
     "node_modules",
     ".next",

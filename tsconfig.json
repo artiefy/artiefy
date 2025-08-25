@@ -38,12 +38,13 @@
     "**/*",
     ".*/**/*",
     "./**/.*",
+    "drizzle.config.ts",
     "next-env.d.ts",
     "next-video.config.js",
-    "video.d.ts",
-    ".next/types/**/*.ts",
+    "src/types/**/*.d.ts",
     "src/types/**/*.ts",
-    "src/types/**/*.d.ts"
+    "video.d.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

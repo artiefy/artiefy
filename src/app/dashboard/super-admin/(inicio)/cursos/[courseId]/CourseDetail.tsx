@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
 import { toast } from 'sonner';
 
@@ -27,7 +28,12 @@ import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
+import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
+import {
+  ModalScheduleMeeting,
+  ScheduledMeeting,
+} from '~/components/super-admin/modals/ModalScheduleMeeting';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -56,6 +62,8 @@ interface Course {
   instructorName: string;
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
+  courseTypes?: { id: number; name: string }[]; // <== añades esto
+  meetings?: ScheduledMeeting[];
 }
 interface Materia {
   id: number;
@@ -75,6 +83,16 @@ export interface Parametros {
   porcentaje: number;
   courseId: number;
 }
+
+type UIMeeting = ScheduledMeeting & {
+  id: number;
+  meetingId: string;
+  // Usa undefined (no null) para alinear con ModalScheduleMeeting.tsx
+  joinUrl?: string;
+  recordingContentUrl?: string;
+  videoUrl?: string;
+  video_key?: string;
+};
 
 // Add these interfaces after the existing interfaces
 interface Educator {
@@ -155,6 +173,60 @@ const FullscreenLoader = () => {
   );
 };
 
+// --- Helpers de tipado seguros ---
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Tipo auxiliar con las props que necesitamos leer de forma segura
+type MaybeMeeting = Partial<
+  Pick<
+    UIMeeting,
+    | 'id'
+    | 'meetingId'
+    | 'joinUrl'
+    | 'recordingContentUrl'
+    | 'video_key'
+    | 'videoUrl'
+  >
+> &
+  Record<string, unknown>;
+
+function toUIMeeting(m: ScheduledMeeting): UIMeeting {
+  const obj: MaybeMeeting = isRecord(m)
+    ? (m as MaybeMeeting)
+    : ({} as MaybeMeeting);
+
+  const id = typeof obj.id === 'number' ? obj.id : 0;
+  const meetingId = typeof obj.meetingId === 'string' ? obj.meetingId : '';
+
+  // Todas como string | undefined (NO null)
+  const joinUrl = typeof obj.joinUrl === 'string' ? obj.joinUrl : undefined;
+  const recordingContentUrl =
+    typeof obj.recordingContentUrl === 'string'
+      ? obj.recordingContentUrl
+      : undefined;
+  const video_key =
+    typeof obj.video_key === 'string' ? obj.video_key : undefined;
+  const videoUrlRaw =
+    typeof obj.videoUrl === 'string' ? obj.videoUrl : undefined;
+
+  const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
+  const fromKey = video_key ? `${aws}/video_clase/${video_key}` : undefined;
+  const finalVideoUrl =
+    videoUrlRaw ?? recordingContentUrl ?? fromKey ?? undefined;
+
+  return {
+    ...(m as ScheduledMeeting),
+    id,
+    meetingId,
+    joinUrl,
+    recordingContentUrl,
+    video_key,
+    videoUrl: finalVideoUrl,
+  };
+}
+
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const router = useRouter(); // Obtener el router
   const params = useParams(); // Obtener los parámetros
@@ -173,7 +245,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
   const [materias, setMaterias] = useState<Materia[]>([]);
-  const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+  const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
     string | null
   >(null);
@@ -222,6 +294,54 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [scheduledMeetings, setScheduledMeetings] = useState<
+    ScheduledMeeting[]
+  >([]);
+
+  const { user } = useUser(); // Ya está dentro del componente
+
+  const handleEnrollAndRedirect = async () => {
+    if (!user?.id || !courseIdNumber) {
+      toast.error('Usuario no autenticado o curso inválido');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/enrollments/educatorsEnroll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: String(courseIdNumber),
+          userIds: [user.id], // 🔁 Aquí sí tienes acceso
+          planType: 'Premium',
+        }),
+      });
+
+      if (!res.ok) {
+        const responseData: unknown = await res.json();
+
+        const errorMessage =
+          typeof responseData === 'object' &&
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
+            ? (responseData as { error: string }).error
+            : 'Error al matricular';
+
+        toast.error(errorMessage);
+      } else {
+        toast.success('Matriculado correctamente');
+        router.push(`/estudiantes/cursos/${courseIdNumber}`);
+      }
+    } catch (error) {
+      console.error('Error al matricular:', error);
+      toast.error('Error al matricular al curso');
+    }
+  };
+
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
     if (courseIdNumber !== null) {
@@ -252,7 +372,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         if (response.ok && responseParametros.ok) {
           const data = (await response.json()) as Course;
           setCourse(data);
-          setCourseTypeId(data.courseTypeId ?? null);
+          setCourseTypeId(
+            Array.isArray(data.courseTypes)
+              ? data.courseTypes.map((type) => type.id)
+              : data.courseTypeId !== null && data.courseTypeId !== undefined
+                ? [data.courseTypeId]
+                : []
+          );
           setIndividualPrice(data.individualPrice ?? null);
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
@@ -262,8 +388,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             (await responseParametros.json()) as Parametros[]; // Obtener los parámetros
           setParametros(dataParametros); // Inicializar los parámetros
         } else {
-          const errorData = (await response.json()) as { error?: string };
-          const errorMessage = errorData.error ?? response.statusText;
+          let errorMessage = response.statusText;
+
+          // Intentamos parsear el cuerpo de la respuesta como JSON
+          const errorResponseRaw: unknown = await response
+            .json()
+            .catch(() => null);
+
+          if (
+            errorResponseRaw &&
+            typeof errorResponseRaw === 'object' &&
+            'error' in errorResponseRaw &&
+            typeof (errorResponseRaw as { error: unknown }).error === 'string'
+          ) {
+            errorMessage = (errorResponseRaw as { error: string }).error;
+          }
+
+          // Guardar en estado y mostrar toast con mensaje claro
           setError(`Error al cargar el curso: ${errorMessage}`);
           toast('Error', {
             description: `No se pudo cargar el curso: ${errorMessage}`,
@@ -320,6 +461,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setSelectedColor(savedColor);
     }
   }, [courseIdNumber]);
+  useEffect(() => {
+    if (course?.meetings) {
+      setScheduledMeetings(course.meetings);
+    }
+  }, [course?.meetings]);
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -334,7 +480,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     addParametros: boolean,
     coverImageKey: string,
     fileName: string,
-    courseTypeId: number | null,
+    courseTypeId: number[],
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
@@ -539,7 +685,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }))
     );
     setEditRating(course.rating);
-    setCourseTypeId(course.courseTypeId ?? null);
+    setCourseTypeId(
+      Array.isArray(course.courseTypes)
+        ? course.courseTypes.map((type) => type.id)
+        : course.courseTypeId !== null && course.courseTypeId !== undefined
+          ? [course.courseTypeId]
+          : []
+    );
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
@@ -767,10 +919,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 />
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                <Button className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto">
-                  <Link href={`./${course.id}/ver/${course.id}`}>
-                    Visualizar curso
-                  </Link>
+                <Button
+                  onClick={handleEnrollAndRedirect}
+                  className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto"
+                >
+                  Visualizar curso
                 </Button>
                 <Button
                   onClick={handleEditCourse}
@@ -960,14 +1113,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
-                    Tipo de curso:
+                    Tipos de curso:
                   </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
-                    {course.courseTypeName ?? 'No especificado'}
-                  </Badge>
+                  {course.courseTypes && course.courseTypes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {course.courseTypes.map((type) => (
+                        <Badge
+                          key={type.id}
+                          variant="outline"
+                          className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                        >
+                          {type.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    >
+                      No especificado
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1022,6 +1189,40 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       ) : (
         courseIdNumber !== null && (
           <>
+            {/* NUEVO BLOQUE PARA SIMULAR CLASES EN TEAMS */}
+            <div className="mt-12 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-primary text-xl font-bold">
+                  Clases agendadas
+                </h2>
+                <Button
+                  onClick={() => setIsMeetingModalOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  + Agendar clase en Teams
+                </Button>
+              </div>
+              <ScheduledMeetingsList
+                meetings={(scheduledMeetings.length
+                  ? scheduledMeetings
+                  : (course.meetings ?? [])
+                ).map((m) => {
+                  const ui = toUIMeeting(m);
+
+                  console.log('🎯 Meeting video resolve:', {
+                    id: ui.id,
+                    meetingId: ui.meetingId,
+                    video_key: ui.video_key,
+                    videoUrl: ui.videoUrl,
+                    recordingContentUrl: ui.recordingContentUrl,
+                    finalVideoUrl: ui.videoUrl,
+                  });
+
+                  return ui;
+                })}
+                color={selectedColor}
+              />
+            </div>
             <LessonsListEducator
               courseId={courseIdNumber}
               selectedColor={selectedColor}
@@ -1029,6 +1230,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </>
         )
       )}
+
+      <ModalScheduleMeeting
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        onMeetingsCreated={() => {
+          setIsMeetingModalOpen(false);
+          fetchCourse(); // 🔄 vuelve a traer el curso con los meetings desde backend
+        }}
+        courseId={courseIdNumber} // <-- aquí lo pasas
+      />
+
       <DashboardEstudiantes
         courseId={courseIdNumber}
         selectedColor={selectedColor}

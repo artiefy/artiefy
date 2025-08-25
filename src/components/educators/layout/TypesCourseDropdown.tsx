@@ -1,85 +1,91 @@
 import { useEffect, useState } from 'react';
 
+import Select from 'react-select';
+
 // Interfaz para los tipos de curso
 interface CourseType {
-	id: number;
-	name: string;
-	description: string;
+  id: number;
+  name: string;
+  description: string;
 }
 
 // Props que recibe el componente
 interface TypesCourseDropdownProps {
-	courseTypeId: number | null;
-	setCourseTypeId: (typeId: number | null) => void;
-	errors?: {
-		type?: boolean;
-	};
+  courseTypeId: number[]; // Now expects an array of numbers
+  setCourseTypeId: (typeIds: number[]) => void; // Now expects an array of numbers
+  errors?: {
+    type?: boolean;
+  };
 }
 
 const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
-	courseTypeId,
-	setCourseTypeId,
-	errors,
+  courseTypeId,
+  setCourseTypeId,
 }) => {
-	const [types, setTypes] = useState<CourseType[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+  const [types, setTypes] = useState<CourseType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		const fetchTypes = async () => {
-			setIsLoading(true);
-			try {
-				const response = await fetch('/api/educadores/typesCourse', {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				});
+  useEffect(() => {
+    const fetchTypes = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/educadores/typesCourse', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-				if (!response.ok) {
-					const errorData = await response.text();
-					throw new Error(`Error al obtener tipos de curso: ${errorData}`);
-				}
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Error al obtener tipos de curso: ${errorData}`);
+        }
 
-				const data = (await response.json()) as CourseType[];
-				setTypes(data);
-			} catch (error) {
-				console.error('Error al obtener tipos de curso:', error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
+        const data = (await response.json()) as CourseType[];
+        setTypes(data);
+      } catch (error) {
+        console.error('Error al obtener tipos de curso:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-		fetchTypes().catch((error) =>
-			console.error('Error fetching course types:', error)
-		);
-	}, []);
+    fetchTypes().catch((error) =>
+      console.error('Error fetching course types:', error)
+    );
+  }, []);
 
-	return (
-		<div className="flex flex-col gap-2">
-			{isLoading ? (
-				<p className="text-primary">Cargando tipos de curso...</p>
-			) : (
-				<select
-					id="type-course-select"
-					value={courseTypeId ?? ''}
-					onChange={(e) => {
-						const value = e.target.value;
-						setCourseTypeId(value === '' ? null : Number(value));
-					  }}
-					className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-						errors?.type ? 'border-red-500' : 'border-primary'
-					}`}
-				>
-					<option value="">Selecciona un tipo de curso</option>
-					{types.map((type) => (
-						<option key={type.id} value={type.id}>
-							{type.name}
-						</option>
-					))}
-				</select>
-			)}
-		</div>
-	);
+  return (
+    <div className="flex flex-col gap-2">
+      {isLoading ? (
+        <p className="text-primary">Cargando tipos de curso...</p>
+      ) : (
+        <Select
+          isMulti
+          options={types.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))}
+          value={courseTypeId
+            .map((id) => {
+              const found = types.find((t) => t.id === id);
+              return found ? { value: found.id, label: found.name } : null;
+            })
+            .filter(Boolean)}
+          onChange={(selectedOptions) => {
+            const selectedIds = (
+              selectedOptions as { value: number; label: string }[]
+            )
+              .filter((option) => option !== null)
+              .map((option) => option.value);
+            setCourseTypeId(selectedIds);
+          }}
+          classNamePrefix="react-select"
+          className="mt-2 w-full"
+        />
+      )}
+    </div>
+  );
 };
 
 export default TypesCourseDropdown;

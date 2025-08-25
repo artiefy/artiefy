@@ -75,7 +75,9 @@ export async function checkSubscriptionStatus(
       }
     }
   } else {
-    endDate = toDate(subscriptionData.subscriptionEndDate, { timeZone: TIMEZONE });
+    endDate = toDate(subscriptionData.subscriptionEndDate, {
+      timeZone: TIMEZONE,
+    });
   }
 
   const diffDays = Math.ceil(

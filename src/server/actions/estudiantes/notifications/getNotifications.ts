@@ -18,20 +18,23 @@ interface DbNotification {
   title: string;
   message: string;
   isRead: boolean | null;
+  isMarked: boolean | null; // <-- nuevo campo
   createdAt: Date | null;
   metadata: unknown;
 }
 
 export async function getNotifications(
-  userId: string
+  userId: string,
+  options?: { limit?: number }
 ): Promise<Notification[]> {
   try {
+    const limit = options?.limit ?? 1000; // Por defecto trae 1000
     const results = (await db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt))
-      .limit(10)) as DbNotification[];
+      .limit(limit)) as DbNotification[];
 
     return results.map(
       (result): Notification => ({
@@ -41,6 +44,7 @@ export async function getNotifications(
         title: result.title,
         message: result.message,
         isRead: result.isRead ?? false,
+        isMarked: result.isMarked ?? false, // <-- nuevo campo
         createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
         metadata: result.metadata as NotificationMetadata | undefined,
       })

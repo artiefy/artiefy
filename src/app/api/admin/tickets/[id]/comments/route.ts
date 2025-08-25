@@ -42,7 +42,10 @@ export async function GET(
     return NextResponse.json(comments);
   } catch (error) {
     console.error('❌ Error fetching comments:', error);
-    return NextResponse.json({ error: 'Error fetching comments' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error fetching comments' },
+      { status: 500 }
+    );
   }
 }
 
@@ -89,6 +92,9 @@ export async function POST(
     return NextResponse.json(newComment[0]);
   } catch (error) {
     console.error('❌ Error creating comment:', error);
-    return NextResponse.json({ error: 'Error creating comment' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error creating comment' },
+      { status: 500 }
+    );
   }
 }

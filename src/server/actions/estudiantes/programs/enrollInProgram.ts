@@ -1,11 +1,11 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { enrollmentPrograms, programas,users } from '~/server/db/schema';
+import { enrollmentPrograms, programas, users } from '~/server/db/schema';
 
 export async function enrollInProgram(
   programId: number

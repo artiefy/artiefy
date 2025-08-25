@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import axios, { isAxiosError } from 'axios';
 
@@ -12,12 +11,6 @@ const redis = new Redis({
 });
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    console.log('[VIDEO_REGISTER] ❌ Usuario no autorizado');
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
   try {
     const { key, lessonId } = (await req.json()) as {
       key: string;
@@ -77,7 +70,7 @@ export async function POST(req: Request) {
           '[TRANSCRIPCIÓN] ⏳ Iniciando solicitud al servidor de transcripción...'
         );
         const res = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://3.135.198.149:8000/video2text',
           { url: s3Url },
           {
             headers: {
@@ -99,9 +92,7 @@ export async function POST(req: Request) {
 
         const redisKey = `transcription:lesson:${lessonId}`;
         await redis.set(redisKey, res.data);
-       
       } catch (err) {
-        
         if (isAxiosError(err)) {
           console.error('Axios Error:', err.message);
           console.error('Response data:', err.response?.data);

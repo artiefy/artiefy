@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   courses,
   enrollmentPrograms,
   enrollments,
+  lessons,
   programas,
   userCustomFields,
+  userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -121,30 +124,52 @@ export async function GET(req: Request) {
         planType: users.planType,
         role: users.role,
         purchaseDate: users.purchaseDate,
+
+        // pueden venir en null si no tiene programa/curso
         programTitle: programas.title,
         courseTitle: courses.title,
+
         enrolledAt: latestEnrollments.enrolledAt,
         nivelNombre: sql<string>`(SELECT n.name FROM nivel n
-			JOIN courses c ON c.nivelid = n.id
-			JOIN enrollments e ON e.course_id = c.id
-			WHERE e.user_id = ${users.id}
-			LIMIT 1)`.as('nivelNombre'),
+      JOIN courses c ON c.nivelid = n.id
+      JOIN enrollments e ON e.course_id = c.id
+      WHERE e.user_id = ${users.id}
+      LIMIT 1)`.as('nivelNombre'),
+
+        // ➕ NUEVOS CAMPOS CALCULADOS
+        // NEW = comprado/creado recientemente (7 días) — si no tienes created_at usa purchaseDate
+        isNew: sql<boolean>`CASE
+      WHEN ${users.purchaseDate} IS NOT NULL
+        AND ${users.purchaseDate} >= NOW() - INTERVAL '7 days'
+      THEN TRUE ELSE FALSE END`,
+
+        // ¿Tiene suscripción activa pero sin ninguna matrícula?
+        isSubOnly: sql<boolean>`CASE
+      WHEN ${users.subscriptionStatus} = 'active'
+        AND ${latestEnrollments.userId} IS NULL
+        AND ${latestCourseEnrollments.userId} IS NULL
+      THEN TRUE ELSE FALSE END`,
+
+        // ¿Está matriculado en al menos un curso?
+        enrolledInCourse: sql<boolean>`CASE
+      WHEN ${latestCourseEnrollments.userId} IS NOT NULL THEN TRUE
+      ELSE FALSE END`,
       })
       .from(users)
-      .innerJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
-      .innerJoin(programas, eq(latestEnrollments.programaId, programas.id))
-      .innerJoin(
+      .leftJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
+      .leftJoin(programas, eq(latestEnrollments.programaId, programas.id))
+      .leftJoin(
         latestCourseEnrollments,
         eq(users.id, latestCourseEnrollments.userId)
       )
-      .innerJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
+      .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
       .where(
-        programId
-          ? and(
-              eq(users.role, 'estudiante'),
-              eq(programas.id, Number(programId))
-            )
-          : eq(users.role, 'estudiante')
+        and(
+          eq(users.role, 'estudiante'),
+          // si hay programId, filtra por ese programa; si no, no filtra
+          programId ? eq(programas.id, Number(programId)) : sql`true`
+          // ❌ eliminamos el OR que exigía estar inscrito en programa/curso
+        )
       );
 
     // Agregar los campos dinámicos a cada estudiante
@@ -233,6 +258,54 @@ export async function POST(req: Request) {
 
     if (insertData.length > 0) {
       await db.insert(enrollments).values(insertData);
+
+      // Crear progreso de lecciones por cada (userId, courseId) insertado
+      for (const { userId, courseId } of insertData) {
+        const courseLessons = await db.query.lessons.findMany({
+          where: eq(lessons.courseId, courseId),
+        });
+
+        const sortedLessons = sortLessons(courseLessons);
+
+        const lessonIds: number[] = sortedLessons.map((lesson) =>
+          Number(lesson.id)
+        );
+
+        // Verificación defensiva
+        if (lessonIds.length === 0) {
+          continue;
+        }
+
+        const existingProgress = await db.query.userLessonsProgress.findMany({
+          where: and(
+            eq(userLessonsProgress.userId, userId),
+            inArray(userLessonsProgress.lessonId, lessonIds)
+          ),
+        });
+
+        const existingProgressSet = new Set(
+          existingProgress.map((progress) => progress.lessonId)
+        );
+
+        for (const [index, lesson] of sortedLessons.entries()) {
+          if (!existingProgressSet.has(lesson.id)) {
+            const isFirstOrWelcome =
+              index === 0 ||
+              lesson.title.toLowerCase().includes('bienvenida') ||
+              lesson.title.toLowerCase().includes('clase 1');
+
+            await db.insert(userLessonsProgress).values({
+              userId,
+              lessonId: lesson.id,
+              progress: 0,
+              isCompleted: false,
+              isLocked: !isFirstOrWelcome,
+              isNew: true,
+              lastUpdated: new Date(),
+            });
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true });
