@@ -620,7 +620,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [messages]);
 
   useEffect(() => {
-    const handleInitialSearch = async () => {
+    const handleInitialSearch = () => {
       if (
         !initialSearchQuery?.trim() ||
         !isSignedIn ||
@@ -644,7 +644,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         },
       ]);
 
-      // Espera 200ms para asegurar el render antes de la respuesta del bot
       setTimeout(() => {
         void handleBotResponse(initialSearchQuery.trim());
       }, 200);
@@ -1237,3 +1236,4 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 };
 
 export default StudentChatbot;
+

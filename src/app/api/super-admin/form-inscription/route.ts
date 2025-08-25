@@ -91,7 +91,7 @@ Ingresa a https://artiefy.com/ y cambia tu contraseña.
   await transporter.sendMail(mailOptions);
 }
 
-type AcademicNotifyPayload = {
+interface AcademicNotifyPayload {
   studentName: string;
   studentEmail: string;
   identificacionTipo: string;
@@ -118,7 +118,7 @@ type AcademicNotifyPayload = {
   diplomaUrl?: string | null;
   pagareUrl?: string | null;
   comprobanteInscripcionUrl?: string | null;
-};
+}
 
 function row(label: string, value?: string | null) {
   const v = (value ?? '').trim();
