@@ -7,6 +7,15 @@ import { notifications } from '~/server/db/schema';
 
 import type { NotificationMetadata, NotificationType } from '~/types';
 
+// Extiende NotificationType para permitir 'participation-request'
+type ParticipationNotificationType = NotificationType | 'participation-request';
+
+// Extiende NotificationMetadata para permitir projectId y requestType
+type ParticipationNotificationMetadata = NotificationMetadata & {
+  projectId?: number;
+  requestType?: 'participation' | 'resignation';
+};
+
 export async function createNotification({
   userId,
   type,
@@ -15,16 +24,18 @@ export async function createNotification({
   metadata,
 }: {
   userId: string;
-  type: NotificationType;
+  type: ParticipationNotificationType;
   title: string;
   message: string;
-  metadata?: NotificationMetadata;
+  metadata?: ParticipationNotificationMetadata;
 }): Promise<boolean> {
   try {
-    // Verifica si ya existe una notificación igual (por tipo, usuario y metadata relevante)
+    // Solo evitar duplicados para tipos distintos de 'participation-request'
+    const skipDuplicateCheck = type === 'participation-request';
+
     let whereClause = and(
       eq(notifications.userId, userId),
-      eq(notifications.type, type)
+      eq(notifications.type, type as NotificationType)
     );
 
     // Si hay activityId y lessonId, compara ambos en metadata
@@ -46,18 +57,20 @@ export async function createNotification({
       );
     }
 
-    const existing = await db.query.notifications.findFirst({
-      where: whereClause,
-    });
+    if (!skipDuplicateCheck) {
+      const existing = await db.query.notifications.findFirst({
+        where: whereClause,
+      });
 
-    if (existing) {
-      // Ya existe una notificación igual, no crear otra
-      return false;
+      if (existing) {
+        // Ya existe una notificación igual, no crear otra
+        return false;
+      }
     }
 
     await db.insert(notifications).values({
       userId,
-      type,
+      type: type as NotificationType,
       title,
       message,
       metadata,

@@ -984,9 +984,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               ? horasPorActividadFinal[actividadKey]
               : 1;
           // Forzar responsableId a string (nunca undefined)
-          const responsableId = (responsablesPorActividadProp[actividadKey] ||
+          const responsableId = ((responsablesPorActividadProp[actividadKey] ||
             responsablesPorActividadLocal[actividadKey] ||
-            user?.id ??
+            user?.id) ??
             '') as string;
           actividadesList.push({
             actividadKey,

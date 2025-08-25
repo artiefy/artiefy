@@ -69,6 +69,37 @@ export default function ModalSolicitudesParticipacion({
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [eliminandoTodas, setEliminandoTodas] = useState(false);
+  const [eliminandoProgress, setEliminandoProgress] = useState(0);
+  const [eliminandoStatusText, setEliminandoStatusText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState('');
+  const [processingAction, setProcessingAction] = useState<
+    'approved' | 'rejected' | null
+  >(null);
+
+  // Nuevo estado para el título del proyecto
+  const [projectTitle, setProjectTitle] = useState<string | null>(null);
+
+  // Efecto para cargar el título del proyecto
+  useEffect(() => {
+    if (!projectId) {
+      setProjectTitle(null);
+      return;
+    }
+    // Puedes ajustar la URL según tu API real
+    fetch(`/api/projects/${projectId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        // Asegura el acceso seguro usando type assertion
+        if (data && typeof (data as { name?: unknown }).name === 'string') {
+          setProjectTitle((data as { name: string }).name);
+        } else {
+          setProjectTitle(null);
+        }
+      })
+      .catch(() => setProjectTitle(null));
+  }, [projectId]);
 
   // MEJORADA: Función única para cargar solicitudes con mejor manejo de errores
   const fetchSolicitudes = React.useCallback(async () => {
@@ -181,7 +212,19 @@ export default function ModalSolicitudesParticipacion({
     console.log('✅ Validaciones básicas pasadas');
 
     setProcessingId(solicitudId);
+    setIsProcessing(true);
+    setProcessingAction(accion);
+    setProgress(10);
+    setStatusText(
+      accion === 'approved'
+        ? 'Aprobando solicitud...'
+        : 'Rechazando solicitud...'
+    );
     try {
+      setProgress(30);
+      setStatusText(
+        accion === 'approved' ? 'Enviando aprobación...' : 'Enviando rechazo...'
+      );
       const url = `/api/projects/participation-requests/${solicitudId}`;
 
       // MEJORADO: Payload más completo y específico
@@ -205,11 +248,14 @@ export default function ModalSolicitudesParticipacion({
         body: JSON.stringify(payload),
       });
 
-      console.log('📡 === RESPUESTA DEL SERVIDOR ===');
-      console.log('Status Code:', response.status);
-      console.log('Status Text:', response.statusText);
-      console.log('Headers:', Object.fromEntries(response.headers.entries()));
-      console.log('URL solicitada:', response.url);
+      // Simula progreso
+      await new Promise((res) => setTimeout(res, 300));
+      setProgress(60);
+      setStatusText(
+        accion === 'approved'
+          ? 'Guardando cambios de aprobación...'
+          : 'Guardando cambios de rechazo...'
+      );
 
       // MEJORADO: Manejo de respuesta más robusto
       let responseData;
@@ -300,6 +346,8 @@ export default function ModalSolicitudesParticipacion({
       console.log('🎉 Proceso completado:', mensajeExito);
       alert(mensajeExito);
     } catch (error) {
+      setStatusText('Ocurrió un error');
+      setProgress(0);
       console.error('❌ === ERROR GENERAL ===');
       console.error('Tipo de error:', typeof error);
       console.error('Error completo:', error);
@@ -319,8 +367,13 @@ export default function ModalSolicitudesParticipacion({
       console.error('❌ Mensaje final de error:', errorMessage);
       alert(`❌ Error al procesar la solicitud: ${errorMessage}`);
     } finally {
-      console.log('🏁 Finalizando handleResponderSolicitud');
+      setIsProcessing(false);
       setProcessingId(null);
+      setTimeout(() => {
+        setProgress(0);
+        setStatusText('');
+        setProcessingAction(null);
+      }, 500);
     }
   };
 
@@ -395,8 +448,8 @@ export default function ModalSolicitudesParticipacion({
           return;
         }
       }
-    } catch (error) {
-      console.warn('⚠️ Error verificando estado actual:', error);
+    } catch (_error) {
+      console.warn('⚠️ Error verificando estado actual:', _error);
       // Continuar con la aprobación pero alertar al usuario
     }
 
@@ -545,409 +598,473 @@ export default function ModalSolicitudesParticipacion({
     }
 
     setEliminandoTodas(true);
+    setEliminandoProgress(10);
+    setEliminandoStatusText('Iniciando eliminación...');
 
     try {
-      console.log(
-        '🗑️ Eliminando todas las solicitudes del proyecto:',
-        projectId
-      );
-
-      const response = await fetch(
+      setEliminandoProgress(30);
+      setEliminandoStatusText('Eliminando solicitudes...');
+      // Simula progreso
+      await new Promise((res) => setTimeout(res, 300));
+      setEliminandoProgress(60);
+      setEliminandoStatusText('Procesando...');
+      // Llamada real
+      const res = await fetch(
         `/api/projects/participation-requests?projectId=${projectId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        { method: 'DELETE' }
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          getErrorString(errorData) ?? 'Error al eliminar solicitudes'
-        );
+      setEliminandoProgress(90);
+      setEliminandoStatusText('Finalizando...');
+      await new Promise((res) => setTimeout(res, 300));
+      if (res.ok) {
+        setEliminandoProgress(100);
+        setEliminandoStatusText('¡Solicitudes eliminadas!');
+        await new Promise((res) => setTimeout(res, 400));
+        fetchSolicitudes();
+        if (onSolicitudProcesada) onSolicitudProcesada();
+      } else {
+        setEliminandoStatusText('Error al eliminar solicitudes');
+        setEliminandoProgress(0);
       }
-
-      const resultado = await response.json();
-      console.log('✅ Solicitudes eliminadas:', resultado);
-
-      // Actualizar la lista local
-      setSolicitudes([]);
-
-      // Notificar al componente padre
-      if (onSolicitudProcesada) {
-        onSolicitudProcesada();
-      }
-
-      alert(
-        `✅ ${(resultado as { deletedCount?: number }).deletedCount ?? 0} solicitudes eliminadas exitosamente`
-      );
-    } catch (error) {
-      console.error('❌ Error eliminando solicitudes:', error);
-      alert(
-        `❌ Error al eliminar solicitudes: ${
-          error instanceof Error ? error.message : 'Error desconocido'
-        }`
-      );
+    } catch (_error) {
+      setEliminandoStatusText('Error al eliminar solicitudes');
+      setEliminandoProgress(0);
     } finally {
-      setEliminandoTodas(false);
+      setTimeout(() => {
+        setEliminandoTodas(false);
+        setEliminandoProgress(0);
+        setEliminandoStatusText('');
+      }, 600);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative max-h-[95vh] w-full max-w-xs overflow-hidden overflow-y-auto rounded-lg bg-slate-800 p-3 sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl sm:p-4 md:max-w-2xl lg:max-w-4xl lg:rounded-2xl lg:p-6 xl:max-w-5xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botón de cerrar */}
-        <div className="sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 text-slate-400 hover:bg-slate-700 hover:text-white sm:h-10 sm:w-10"
-            onClick={onClose}
-          >
-            <span className="sr-only">Cerrar</span>
-            <svg
-              width={20}
-              height={20}
-              viewBox="0 0 16 16"
-              className="text-white sm:h-6 sm:w-6"
-            >
-              <path
-                d="M4 4l8 8M12 4l-8 8"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-              />
-            </svg>
-          </Button>
-        </div>
-
-        <div className="space-y-4 sm:space-y-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-xl font-bold break-words text-white sm:text-2xl">
-              Gestión de Solicitudes
-            </h2>
-
-            {/* Botón para eliminar todas las solicitudes */}
-            {solicitudes.length > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleEliminarTodasLasSolicitudes}
-                disabled={eliminandoTodas || loading}
-                className="w-full shrink-0 bg-red-600 text-xs hover:bg-red-700 sm:w-auto sm:text-sm"
+    <>
+      {/* Barra de progreso de procesamiento de aprobación/rechazo */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+            <div className="mb-4 w-full">
+              <div className="h-6 w-full rounded-full bg-gray-200">
+                <div
+                  className={`h-6 rounded-full transition-all duration-300 ${
+                    processingAction === 'rejected'
+                      ? 'bg-orange-500'
+                      : 'bg-green-500'
+                  }`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div
+                className={`mt-2 text-center font-semibold ${
+                  processingAction === 'rejected'
+                    ? 'text-orange-500'
+                    : 'text-green-500'
+                }`}
               >
-                <Trash2 className="mr-1 h-3 w-3 shrink-0 sm:mr-2 sm:h-4 sm:w-4" />
-                <span className="break-words">
-                  {eliminandoTodas
-                    ? 'Eliminando...'
-                    : `Eliminar Todas (${solicitudes.length})`}
-                </span>
-              </Button>
-            )}
+                {statusText
+                  ? statusText
+                  : progress < 100
+                    ? processingAction === 'approved'
+                      ? `Aprobando... (${progress}%)`
+                      : `Rechazando... (${progress}%)`
+                    : processingAction === 'approved'
+                      ? '¡Aprobada!'
+                      : '¡Rechazada!'}
+              </div>
+            </div>
+            <div className="text-sm text-gray-300">
+              Por favor, espera a que termine el proceso.
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Barra de progreso de eliminación masiva */}
+      {eliminandoTodas && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+            <div className="mb-4 w-full">
+              <div className="h-6 w-full rounded-full bg-gray-200">
+                <div
+                  className="h-6 rounded-full bg-red-500 transition-all duration-300"
+                  style={{ width: `${eliminandoProgress}%` }}
+                />
+              </div>
+              <div className="mt-2 text-center font-semibold text-red-500">
+                {eliminandoStatusText
+                  ? eliminandoStatusText
+                  : eliminandoProgress < 100
+                    ? `Eliminando... (${eliminandoProgress}%)`
+                    : '¡Completado!'}
+              </div>
+            </div>
+            <div className="text-sm text-gray-300">
+              Por favor, espera a que termine el proceso.
+            </div>
+          </div>
+        </div>
+      )}
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
+        onClick={onClose}
+      >
+        <div
+          className="relative max-h-[95vh] w-full max-w-xs overflow-hidden overflow-y-auto rounded-lg bg-slate-800 p-3 sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl sm:p-4 md:max-w-2xl lg:max-w-4xl lg:rounded-2xl lg:p-6 xl:max-w-5xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Botón de cerrar */}
+          <div className="sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 text-slate-400 hover:bg-slate-700 hover:text-white sm:h-10 sm:w-10"
+              onClick={onClose}
+            >
+              <span className="sr-only">Cerrar</span>
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 16 16"
+                className="text-white sm:h-6 sm:w-6"
+              >
+                <path
+                  d="M4 4l8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                />
+              </svg>
+            </Button>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-6 sm:py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-cyan-400 sm:h-8 sm:w-8" />
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-xl font-bold break-words text-white sm:text-2xl">
+                Gestión de Solicitudes
+              </h2>
+
+              {/* Botón para eliminar todas las solicitudes */}
+              {solicitudes.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleEliminarTodasLasSolicitudes}
+                  disabled={eliminandoTodas || loading}
+                  className="w-full shrink-0 bg-red-600 text-xs hover:bg-red-700 sm:w-auto sm:text-sm"
+                >
+                  <Trash2 className="mr-1 h-3 w-3 shrink-0 sm:mr-2 sm:h-4 sm:w-4" />
+                  <span className="break-words">
+                    {eliminandoTodas
+                      ? 'Eliminando...'
+                      : `Eliminar Todas (${solicitudes.length})`}
+                  </span>
+                </Button>
+              )}
             </div>
-          ) : (
-            <div className="space-y-4 sm:space-y-6">
-              {/* Solicitudes de Participación Pendientes */}
-              <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                    <Clock className="h-4 w-4 shrink-0 text-yellow-400 sm:h-5 sm:w-5" />
-                    <span className="min-w-0 break-words">
-                      Solicitudes de Participación
-                    </span>
-                    <span className="shrink-0 text-sm sm:text-base">
-                      ({solicitudesParticipacionPendientes.length})
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {solicitudesParticipacionPendientes.length === 0 ? (
-                    <p className="text-sm text-slate-400 italic sm:text-base">
-                      No hay solicitudes de participación pendientes
-                    </p>
-                  ) : (
-                    <div className="space-y-3 sm:space-y-4">
-                      {solicitudesParticipacionPendientes.map((solicitud) => (
-                        <div
-                          key={solicitud.id}
-                          className="flex flex-col gap-3 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
-                        >
-                          <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                            <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-                              <AvatarFallback className="bg-green-600 text-xs text-white sm:text-sm">
-                                {(solicitud.userName ?? 'AN')
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <h4 className="text-sm font-semibold break-words text-white sm:text-base">
-                                {solicitud.userName ?? 'Usuario desconocido'}
-                              </h4>
-                              <p className="text-xs break-all text-slate-400 sm:text-sm">
-                                {solicitud.userEmail}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                Solicitado el{' '}
-                                {new Date(
-                                  solicitud.createdAt
-                                ).toLocaleDateString('es-ES')}
-                              </p>
-                              <Badge className="mt-1 bg-green-600 text-xs text-white">
-                                Participación
-                              </Badge>
-                              {solicitud.requestMessage && (
-                                <div className="mt-2 rounded bg-slate-600/50 p-2">
-                                  <div className="mb-1 flex items-center gap-1 text-xs text-slate-400">
-                                    <MessageSquare className="h-3 w-3 flex-shrink-0" />
-                                    <span className="shrink-0">Mensaje:</span>
-                                  </div>
-                                  <p className="text-xs break-words whitespace-pre-wrap text-slate-300 sm:text-sm">
-                                    {solicitud.requestMessage}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
-                            <Button
-                              size="sm"
-                              className="min-w-0 flex-1 bg-green-600 text-xs hover:bg-green-700 sm:flex-none sm:text-sm"
-                              onClick={() => handleAprobar(solicitud)}
-                              disabled={processingId === solicitud.id}
-                            >
-                              <Check className="mr-1 h-3 w-3 shrink-0" />
-                              <span className="break-words">
-                                {processingId === solicitud.id
-                                  ? 'Procesando...'
-                                  : 'Aprobar'}
-                              </span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="min-w-0 flex-1 text-xs sm:flex-none sm:text-sm"
-                              onClick={() => handleRechazar(solicitud)}
-                              disabled={processingId === solicitud.id}
-                            >
-                              <X className="mr-1 h-3 w-3 shrink-0" />
-                              <span className="break-words">
-                                {processingId === solicitud.id
-                                  ? 'Procesando...'
-                                  : 'Rechazar'}
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
 
-              {/* Solicitudes de Renuncia Pendientes */}
-              <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                    <Clock className="h-4 w-4 shrink-0 text-orange-400 sm:h-5 sm:w-5" />
-                    <span className="min-w-0 break-words">
-                      Solicitudes de Renuncia
-                    </span>
-                    <span className="shrink-0 text-sm sm:text-base">
-                      ({solicitudesRenunciaPendientes.length})
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {solicitudesRenunciaPendientes.length === 0 ? (
-                    <p className="text-sm text-slate-400 italic sm:text-base">
-                      No hay solicitudes de renuncia pendientes
-                    </p>
-                  ) : (
-                    <div className="space-y-3 sm:space-y-4">
-                      {solicitudesRenunciaPendientes.map((solicitud) => (
-                        <div
-                          key={solicitud.id}
-                          className="flex flex-col gap-3 overflow-hidden rounded-lg border border-orange-600 bg-orange-900/20 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
-                        >
-                          <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                            <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-                              <AvatarFallback className="bg-orange-600 text-xs text-white sm:text-sm">
-                                {(solicitud.userName ?? 'AN')
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <h4 className="text-sm font-semibold break-words text-white sm:text-base">
-                                {solicitud.userName ?? 'Usuario desconocido'}
-                              </h4>
-                              <p className="text-xs break-all text-slate-400 sm:text-sm">
-                                {solicitud.userEmail}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                Solicitado el{' '}
-                                {new Date(
-                                  solicitud.createdAt
-                                ).toLocaleDateString('es-ES')}
-                              </p>
-                              <Badge className="mt-1 bg-orange-600 text-xs text-white">
-                                Renuncia
-                              </Badge>
-                              {solicitud.requestMessage && (
-                                <div className="mt-2 rounded bg-orange-600/20 p-2">
-                                  <div className="mb-1 flex items-center gap-1 text-xs text-orange-300">
-                                    <MessageSquare className="h-3 w-3 flex-shrink-0" />
-                                    <span className="shrink-0">Motivo:</span>
-                                  </div>
-                                  <p className="text-xs break-words whitespace-pre-wrap text-orange-200 sm:text-sm">
-                                    {solicitud.requestMessage}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
-                            <Button
-                              size="sm"
-                              className="min-w-0 flex-1 bg-orange-600 text-xs hover:bg-orange-700 sm:flex-none sm:text-sm"
-                              onClick={() => handleAprobar(solicitud)}
-                              disabled={processingId === solicitud.id}
-                            >
-                              <Check className="mr-1 h-3 w-3 shrink-0" />
-                              <span className="break-words">
-                                {processingId === solicitud.id
-                                  ? 'Procesando...'
-                                  : 'Aprobar Renuncia'}
-                              </span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="min-w-0 flex-1 border-slate-400 text-xs text-slate-300 hover:bg-slate-700 sm:flex-none sm:text-sm"
-                              onClick={() => handleRechazar(solicitud)}
-                              disabled={processingId === solicitud.id}
-                            >
-                              <X className="mr-1 h-3 w-3 shrink-0" />
-                              <span className="break-words">
-                                {processingId === solicitud.id
-                                  ? 'Procesando...'
-                                  : 'Rechazar'}
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {/* Título del proyecto debajo del encabezado, con indentación */}
+            {projectTitle && (
+              <div className="mt-1 pl-9 text-base font-semibold break-words text-cyan-300 sm:text-lg">
+                {projectTitle}
+              </div>
+            )}
 
-              {/* Historial de Solicitudes Procesadas */}
-              {solicitudesProcesadas.length > 0 && (
+            {loading ? (
+              <div className="flex justify-center py-6 sm:py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-cyan-400 sm:h-8 sm:w-8" />
+              </div>
+            ) : (
+              <div className="space-y-4 sm:space-y-6">
+                {/* Solicitudes de Participación Pendientes */}
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader className="pb-3 sm:pb-4">
-                    <CardTitle className="text-base break-words text-white sm:text-lg">
-                      Historial de Solicitudes ({solicitudesProcesadas.length})
+                    <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
+                      <Clock className="h-4 w-4 shrink-0 text-yellow-400 sm:h-5 sm:w-5" />
+                      <span className="min-w-0 break-words">
+                        Solicitudes de Participación
+                      </span>
+                      <span className="shrink-0 text-sm sm:text-base">
+                        ({solicitudesParticipacionPendientes.length})
+                      </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="space-y-2 sm:space-y-3">
-                      {solicitudesProcesadas.map((solicitud) => (
-                        <div
-                          key={solicitud.id}
-                          className="flex flex-col gap-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/30 p-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:p-3"
-                        >
-                          <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                            <Avatar className="h-6 w-6 flex-shrink-0 sm:h-8 sm:w-8">
-                              <AvatarFallback
-                                className={`${
-                                  solicitud.requestType === 'participation'
-                                    ? 'bg-green-600'
-                                    : 'bg-orange-600'
-                                } text-xs text-white`}
-                              >
-                                {(solicitud.userName ?? 'AN')
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <h5 className="text-xs font-medium break-words text-white sm:text-sm">
-                                {solicitud.userName ?? 'Usuario desconocido'}
-                              </h5>
-                              <p className="text-xs text-slate-400">
-                                Procesado el{' '}
-                                {solicitud.respondedAt
-                                  ? new Date(
-                                      solicitud.respondedAt
-                                    ).toLocaleDateString('es-ES')
-                                  : 'Fecha desconocida'}
-                              </p>
-                              <div className="mt-1 flex flex-wrap gap-1">
-                                <Badge
-                                  className={`text-xs ${
-                                    solicitud.requestType === 'participation'
-                                      ? 'bg-green-700 text-white'
-                                      : 'bg-orange-700 text-white'
-                                  }`}
-                                >
-                                  {solicitud.requestType === 'participation'
-                                    ? 'Participación'
-                                    : 'Renuncia'}
-                                </Badge>
-                              </div>
-                              {solicitud.responseMessage && (
-                                <p className="mt-1 text-xs break-words whitespace-pre-wrap text-slate-300">
-                                  &quot;{solicitud.responseMessage}&quot;
+                    {solicitudesParticipacionPendientes.length === 0 ? (
+                      <p className="text-sm text-slate-400 italic sm:text-base">
+                        No hay solicitudes de participación pendientes
+                      </p>
+                    ) : (
+                      <div className="space-y-3 sm:space-y-4">
+                        {solicitudesParticipacionPendientes.map((solicitud) => (
+                          <div
+                            key={solicitud.id}
+                            className="flex flex-col gap-3 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
+                          >
+                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
+                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+                                <AvatarFallback className="bg-green-600 text-xs text-white sm:text-sm">
+                                  {(solicitud.userName ?? 'AN')
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-sm font-semibold break-words text-white sm:text-base">
+                                  {solicitud.userName ?? 'Usuario desconocido'}
+                                </h4>
+                                <p className="text-xs break-all text-slate-400 sm:text-sm">
+                                  {solicitud.userEmail}
                                 </p>
-                              )}
+                                <p className="text-xs text-slate-500">
+                                  Solicitado el{' '}
+                                  {new Date(
+                                    solicitud.createdAt
+                                  ).toLocaleDateString('es-ES')}
+                                </p>
+                                <Badge className="mt-1 bg-green-600 text-xs text-white">
+                                  Participación
+                                </Badge>
+                                {solicitud.requestMessage && (
+                                  <div className="mt-2 rounded bg-slate-600/50 p-2">
+                                    <div className="mb-1 flex items-center gap-1 text-xs text-slate-400">
+                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                      <span className="shrink-0">Mensaje:</span>
+                                    </div>
+                                    <p className="text-xs break-words whitespace-pre-wrap text-slate-300 sm:text-sm">
+                                      {solicitud.requestMessage}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
+                              <Button
+                                size="sm"
+                                className="min-w-0 flex-1 bg-green-600 text-xs hover:bg-green-700 sm:flex-none sm:text-sm"
+                                onClick={() => handleAprobar(solicitud)}
+                                disabled={processingId === solicitud.id}
+                              >
+                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="break-words">
+                                  {processingId === solicitud.id
+                                    ? 'Procesando...'
+                                    : 'Aprobar'}
+                                </span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="min-w-0 flex-1 text-xs sm:flex-none sm:text-sm"
+                                onClick={() => handleRechazar(solicitud)}
+                                disabled={processingId === solicitud.id}
+                              >
+                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="break-words">
+                                  {processingId === solicitud.id
+                                    ? 'Procesando...'
+                                    : 'Rechazar'}
+                                </span>
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex justify-end sm:flex-shrink-0">
-                            <Badge
-                              className={`text-xs ${
-                                solicitud.status === 'approved'
-                                  ? 'bg-green-600 text-white'
-                                  : 'bg-red-600 text-white'
-                              }`}
-                            >
-                              {solicitud.status === 'approved'
-                                ? 'Aprobada'
-                                : 'Rechazada'}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              )}
-            </div>
-          )}
+
+                {/* Solicitudes de Renuncia Pendientes */}
+                <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
+                  <CardHeader className="pb-3 sm:pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
+                      <Clock className="h-4 w-4 shrink-0 text-orange-400 sm:h-5 sm:w-5" />
+                      <span className="min-w-0 break-words">
+                        Solicitudes de Renuncia
+                      </span>
+                      <span className="shrink-0 text-sm sm:text-base">
+                        ({solicitudesRenunciaPendientes.length})
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {solicitudesRenunciaPendientes.length === 0 ? (
+                      <p className="text-sm text-slate-400 italic sm:text-base">
+                        No hay solicitudes de renuncia pendientes
+                      </p>
+                    ) : (
+                      <div className="space-y-3 sm:space-y-4">
+                        {solicitudesRenunciaPendientes.map((solicitud) => (
+                          <div
+                            key={solicitud.id}
+                            className="flex flex-col gap-3 overflow-hidden rounded-lg border border-orange-600 bg-orange-900/20 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
+                          >
+                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
+                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+                                <AvatarFallback className="bg-orange-600 text-xs text-white sm:text-sm">
+                                  {(solicitud.userName ?? 'AN')
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-sm font-semibold break-words text-white sm:text-base">
+                                  {solicitud.userName ?? 'Usuario desconocido'}
+                                </h4>
+                                <p className="text-xs break-all text-slate-400 sm:text-sm">
+                                  {solicitud.userEmail}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Solicitado el{' '}
+                                  {new Date(
+                                    solicitud.createdAt
+                                  ).toLocaleDateString('es-ES')}
+                                </p>
+                                <Badge className="mt-1 bg-orange-600 text-xs text-white">
+                                  Renuncia
+                                </Badge>
+                                {solicitud.requestMessage && (
+                                  <div className="mt-2 rounded bg-orange-600/20 p-2">
+                                    <div className="mb-1 flex items-center gap-1 text-xs text-orange-300">
+                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                      <span className="shrink-0">Motivo:</span>
+                                    </div>
+                                    <p className="text-xs break-words whitespace-pre-wrap text-orange-200 sm:text-sm">
+                                      {solicitud.requestMessage}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
+                              <Button
+                                size="sm"
+                                className="min-w-0 flex-1 bg-orange-600 text-xs hover:bg-orange-700 sm:flex-none sm:text-sm"
+                                onClick={() => handleAprobar(solicitud)}
+                                disabled={processingId === solicitud.id}
+                              >
+                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="break-words">
+                                  {processingId === solicitud.id
+                                    ? 'Procesando...'
+                                    : 'Aprobar Renuncia'}
+                                </span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="min-w-0 flex-1 border-slate-400 text-xs text-slate-300 hover:bg-slate-700 sm:flex-none sm:text-sm"
+                                onClick={() => handleRechazar(solicitud)}
+                                disabled={processingId === solicitud.id}
+                              >
+                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="break-words">
+                                  {processingId === solicitud.id
+                                    ? 'Procesando...'
+                                    : 'Rechazar'}
+                                </span>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Historial de Solicitudes Procesadas */}
+                {solicitudesProcesadas.length > 0 && (
+                  <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
+                    <CardHeader className="pb-3 sm:pb-4">
+                      <CardTitle className="text-base break-words text-white sm:text-lg">
+                        Historial de Solicitudes ({solicitudesProcesadas.length}
+                        )
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2 sm:space-y-3">
+                        {solicitudesProcesadas.map((solicitud) => (
+                          <div
+                            key={solicitud.id}
+                            className="flex flex-col gap-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/30 p-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:p-3"
+                          >
+                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
+                              <Avatar className="h-6 w-6 flex-shrink-0 sm:h-8 sm:w-8">
+                                <AvatarFallback
+                                  className={`${
+                                    solicitud.requestType === 'participation'
+                                      ? 'bg-green-600'
+                                      : 'bg-orange-600'
+                                  } text-xs text-white`}
+                                >
+                                  {(solicitud.userName ?? 'AN')
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <h5 className="text-xs font-medium break-words text-white sm:text-sm">
+                                  {solicitud.userName ?? 'Usuario desconocido'}
+                                </h5>
+                                <p className="text-xs text-slate-400">
+                                  Procesado el{' '}
+                                  {solicitud.respondedAt
+                                    ? new Date(
+                                        solicitud.respondedAt
+                                      ).toLocaleDateString('es-ES')
+                                    : 'Fecha desconocida'}
+                                </p>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  <Badge
+                                    className={`text-xs ${
+                                      solicitud.requestType === 'participation'
+                                        ? 'bg-green-700 text-white'
+                                        : 'bg-orange-700 text-white'
+                                    }`}
+                                  >
+                                    {solicitud.requestType === 'participation'
+                                      ? 'Participación'
+                                      : 'Renuncia'}
+                                  </Badge>
+                                </div>
+                                {solicitud.responseMessage && (
+                                  <p className="mt-1 text-xs break-words whitespace-pre-wrap text-slate-300">
+                                    &quot;{solicitud.responseMessage}&quot;
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex justify-end sm:flex-shrink-0">
+                              <Badge
+                                className={`text-xs ${
+                                  solicitud.status === 'approved'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-red-600 text-white'
+                                }`}
+                              >
+                                {solicitud.status === 'approved'
+                                  ? 'Aprobada'
+                                  : 'Rechazada'}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
