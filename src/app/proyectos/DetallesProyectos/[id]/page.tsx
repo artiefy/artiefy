@@ -331,6 +331,199 @@ export default function ProjectDetails() {
     return map;
   }, [project?.actividades]);
 
+  // --- NUEVO: Calcular días laborales por actividad para el cronograma de días (igual que resumen) ---
+  const diasPorActividad = React.useMemo(() => {
+    if (
+      cronogramaTipo !== 'dias' ||
+      !project?.fecha_inicio ||
+      !project?.fecha_fin ||
+      !Array.isArray(project?.actividades) ||
+      project.actividades.length === 0
+    ) {
+      return {};
+    }
+
+    // Determinar horas por día global (igual que en resumen, por defecto 6)
+    const horasPorDiaGlobal =
+      typeof project.dias_necesarios === 'number' && project.dias_necesarios > 0
+        ? Math.ceil(
+            (project.actividades.reduce(
+              (acc, act) =>
+                acc +
+                (typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+                  ? act.hoursPerDay
+                  : 1),
+              0
+            ) || 1) / project.dias_necesarios
+          )
+        : 6;
+
+    // Generar lista de fechas laborales (lunes a sábado) entre inicio y fin
+    const [y1, m1, d1] = project.fecha_inicio
+      .split('T')[0]
+      .split('-')
+      .map(Number);
+    const [y2, m2, d2] = project.fecha_fin.split('T')[0].split('-').map(Number);
+    const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+    const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
+
+    // Array de fechas laborales (lunes a sábado)
+    const fechasLaborales: Date[] = [];
+    const fechaActual = new Date(fechaInicio);
+    while (fechaActual.getTime() <= fechaFin.getTime()) {
+      const dayOfWeek = fechaActual.getDay();
+      if (dayOfWeek !== 0) {
+        fechasLaborales.push(new Date(fechaActual));
+      }
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    // Distribuir actividades en días laborales, ocupando huecos, sin solapamientos (igual que resumen)
+    // Creamos un array con la cantidad de horas ocupadas por día
+    const horasOcupadasPorDia = Array(fechasLaborales.length).fill(0);
+    const res: Record<number, number[]> = {};
+
+    project.actividades.forEach((act) => {
+      const horasActividad =
+        typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+          ? act.hoursPerDay
+          : 1;
+      let horasRestantes = horasActividad;
+      res[act.id] = [];
+      for (let i = 0; i < fechasLaborales.length && horasRestantes > 0; i++) {
+        const horasDisponibles = horasPorDiaGlobal - horasOcupadasPorDia[i];
+        if (horasDisponibles > 0) {
+          const horasAsignar = Math.min(horasDisponibles, horasRestantes);
+          horasOcupadasPorDia[i] += horasAsignar;
+          horasRestantes -= horasAsignar;
+          res[act.id].push(i);
+        }
+      }
+    });
+
+    return res;
+  }, [
+    cronogramaTipo,
+    project?.fecha_inicio,
+    project?.fecha_fin,
+    project?.actividades,
+    project?.dias_necesarios,
+  ]);
+
+  // --- NUEVO: Calcular meses marcados por actividad para el cronograma de meses (igual que resumen) ---
+  const mesesPorActividad = React.useMemo(() => {
+    if (
+      cronogramaTipo !== 'meses' ||
+      !project?.fecha_inicio ||
+      !project?.fecha_fin ||
+      !Array.isArray(project?.actividades) ||
+      project.actividades.length === 0
+    ) {
+      return {};
+    }
+
+    // Generar lista de fechas laborales (lunes a sábado) entre inicio y fin
+    const [y1, m1, d1] = project.fecha_inicio
+      .split('T')[0]
+      .split('-')
+      .map(Number);
+    const [y2, m2, d2] = project.fecha_fin.split('T')[0].split('-').map(Number);
+    const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+    const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
+
+    // Array de fechas laborales (lunes a sábado)
+    const fechasLaborales: Date[] = [];
+    const fechaActual = new Date(fechaInicio);
+    while (fechaActual.getTime() <= fechaFin.getTime()) {
+      const dayOfWeek = fechaActual.getDay();
+      if (dayOfWeek !== 0) {
+        fechasLaborales.push(new Date(fechaActual));
+      }
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    // Generar array de meses visibles en el cronograma
+    const mesesArr: { inicio: Date; fin: Date }[] = [];
+    {
+      const fechaMes = new Date(fechaInicio);
+      while (fechaMes <= fechaFin) {
+        const inicioMes = new Date(
+          fechaMes.getFullYear(),
+          fechaMes.getMonth(),
+          1
+        );
+        const finMes = new Date(
+          fechaMes.getFullYear(),
+          fechaMes.getMonth() + 1,
+          0
+        );
+        mesesArr.push({ inicio: inicioMes, fin: finMes });
+        fechaMes.setMonth(fechaMes.getMonth() + 1);
+      }
+    }
+
+    // Determinar horas por día global (igual que en resumen, por defecto 6)
+    const horasPorDiaGlobal =
+      typeof project.dias_necesarios === 'number' && project.dias_necesarios > 0
+        ? Math.ceil(
+            (project.actividades.reduce(
+              (acc, act) =>
+                acc +
+                (typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+                  ? act.hoursPerDay
+                  : 1),
+              0
+            ) || 1) / project.dias_necesarios
+          )
+        : 6;
+
+    // Distribuir actividades en días laborales, ocupando huecos, sin solapamientos (igual que resumen)
+    const horasOcupadasPorDia = Array(fechasLaborales.length).fill(0);
+    const diasAsignadosPorActividad: Record<number, number[]> = {};
+    project.actividades.forEach((act) => {
+      const horasActividad =
+        typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+          ? act.hoursPerDay
+          : 1;
+      let horasRestantes = horasActividad;
+      diasAsignadosPorActividad[act.id] = [];
+      for (let i = 0; i < fechasLaborales.length && horasRestantes > 0; i++) {
+        const horasDisponibles = horasPorDiaGlobal - horasOcupadasPorDia[i];
+        if (horasDisponibles > 0) {
+          const horasAsignar = Math.min(horasDisponibles, horasRestantes);
+          horasOcupadasPorDia[i] += horasAsignar;
+          horasRestantes -= horasAsignar;
+          diasAsignadosPorActividad[act.id].push(i);
+        }
+      }
+    });
+
+    // Para cada actividad, marcar los meses en los que tiene al menos un día asignado
+    const res: Record<number, number[]> = {};
+    Object.entries(diasAsignadosPorActividad).forEach(([actId, diasIdxs]) => {
+      const mesesMarcados: number[] = [];
+      mesesArr.forEach((mes, mesIdx) => {
+        if (
+          diasIdxs.some((diaIdx) => {
+            const fecha = fechasLaborales[diaIdx];
+            return fecha >= mes.inicio && fecha <= mes.fin;
+          })
+        ) {
+          mesesMarcados.push(mesIdx);
+        }
+      });
+      res[Number(actId)] = mesesMarcados;
+    });
+
+    return res;
+  }, [
+    cronogramaTipo,
+    project?.fecha_inicio,
+    project?.fecha_fin,
+    project?.actividades,
+    project?.dias_necesarios,
+  ]);
+
   const unidadesHeader = React.useMemo(() => {
     const unidades = [];
     if (
@@ -338,29 +531,36 @@ export default function ProjectDetails() {
       project?.fecha_inicio &&
       project?.fecha_fin
     ) {
-      // Asegura que el rango sea desde fecha_inicio hasta fecha_fin inclusive
-      const fechaInicioStr = project.fecha_inicio.split('T')[0];
-      const fechaFinStr = project.fecha_fin.split('T')[0];
-      const fechaInicio = new Date(fechaInicioStr);
-      const fechaFin = new Date(fechaFinStr);
+      // Extrae año, mes y día para evitar problemas de zona horaria
+      const [y1, m1, d1] = project.fecha_inicio
+        .split('T')[0]
+        .split('-')
+        .map(Number);
+      const [y2, m2, d2] = project.fecha_fin
+        .split('T')[0]
+        .split('-')
+        .map(Number);
 
-      // Normaliza la hora para evitar problemas de zona horaria
-      fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(0, 0, 0, 0);
+      // Construye fechas en local correctamente
+      const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+      const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
 
       let i = 0;
       const fechaActual = new Date(fechaInicio);
       while (fechaActual.getTime() <= fechaFin.getTime()) {
-        unidades.push({
-          indice: i,
-          etiqueta: `Día ${i + 1}`,
-          fecha: fechaActual.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          }),
-        });
-        // Suma un día para el siguiente
+        const dayOfWeek = fechaActual.getDay(); // 0: domingo, 1: lunes, ..., 6: sábado
+        if (dayOfWeek !== 0) {
+          // Excluye domingos
+          unidades.push({
+            indice: i,
+            etiqueta: `Día ${unidades.length + 1}`,
+            fecha: fechaActual.toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            }),
+          });
+        }
         fechaActual.setDate(fechaActual.getDate() + 1);
         i++;
       }
@@ -673,7 +873,7 @@ export default function ProjectDetails() {
         act &&
         typeof act === 'object' &&
         act !== null &&
-        'responsibleUserId' in act &&
+        'responsableUserId' in act &&
         typeof (act as { responsibleUserId?: string | number })
           .responsibleUserId !== 'undefined'
       ) {
@@ -693,7 +893,7 @@ export default function ProjectDetails() {
         act &&
         typeof act === 'object' &&
         act !== null &&
-        'responsibleUserId' in act &&
+        'responsableUserId' in act &&
         typeof (act as { responsibleUserId?: string | number })
           .responsibleUserId !== 'undefined'
       ) {
@@ -1592,6 +1792,30 @@ export default function ProjectDetails() {
                         Fecha de fin: {formatFechaDDMMYYYY(project.fecha_fin)}
                       </span>
                     </div>
+                    {/* Mostrar días necesarios debajo de fecha fin */}
+                    {typeof project.dias_necesarios === 'number' && (
+                      <div className="mt-1 flex items-center gap-2 text-sm text-gray-300">
+                        <span className="min-w-0 break-words">
+                          Días necesarios:{' '}
+                          <span className="font-semibold text-teal-300">
+                            {project.dias_necesarios}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {/* Mostrar días estimados solo si es diferente a días necesarios */}
+                    {typeof project.dias_estimados === 'number' &&
+                      typeof project.dias_necesarios === 'number' &&
+                      project.dias_estimados !== project.dias_necesarios && (
+                        <div className="flex items-center gap-2 text-sm text-gray-300">
+                          <span className="min-w-0 break-words">
+                            Días estimados:{' '}
+                            <span className="font-semibold text-yellow-300">
+                              {project.dias_estimados}
+                            </span>
+                          </span>
+                        </div>
+                      )}
                   </div>
 
                   {/* Mostrar comentario público si el proyecto es público y existe */}
@@ -1942,23 +2166,11 @@ export default function ProjectDetails() {
                                       );
 
                                     // Obtener el id de usuario responsable de la actividad
-                                    const responsableUserId =
+                                    const responsibleUserId =
                                       actividadCompleta &&
                                       'responsibleUserId' in actividadCompleta
                                         ? actividadCompleta.responsibleUserId
                                         : undefined;
-
-                                    // Usar el id de usuario para la consulta de usuario
-                                    // (No se hace fetch aquí, solo se muestra el id o nombre si está disponible)
-                                    const responsable =
-                                      typeof responsableUserId === 'string' ||
-                                      typeof responsableUserId === 'number'
-                                        ? (integrantes.find(
-                                            (i) =>
-                                              String(i.id) ===
-                                              String(responsableUserId)
-                                          )?.nombre ?? responsableUserId)
-                                        : '-';
 
                                     const actividadId =
                                       actividadCompleta?.id ?? actObj.id;
@@ -2020,15 +2232,115 @@ export default function ProjectDetails() {
                                           })()}
                                         </TableCell>
                                         <TableCell className="max-w-[120px] text-xs text-gray-300 md:text-sm">
+                                          {/* Mostrar el nombre del responsable */}
                                           <div
                                             className="truncate break-words"
-                                            title={
-                                              typeof responsable === 'string'
-                                                ? responsable
-                                                : String(responsable ?? '')
-                                            }
+                                            title={(() => {
+                                              if (
+                                                typeof responsibleUserId ===
+                                                  'string' ||
+                                                typeof responsibleUserId ===
+                                                  'number'
+                                              ) {
+                                                // Buscar por id en integrantes y mostrar el nombre si existe
+                                                const integrante =
+                                                  integrantes.find(
+                                                    (i) =>
+                                                      String(i.id) ===
+                                                      String(responsibleUserId)
+                                                  );
+                                                if (integrante?.nombre) {
+                                                  return integrante.nombre;
+                                                }
+                                                if (integrante?.email) {
+                                                  return integrante.email;
+                                                }
+                                                if (integrante) {
+                                                  return String(integrante.id);
+                                                }
+                                              }
+                                              // Type guard para objeto con campo responsable:string
+                                              function hasResponsableField(
+                                                obj: unknown
+                                              ): obj is {
+                                                responsable: string;
+                                              } {
+                                                return (
+                                                  typeof obj === 'object' &&
+                                                  obj !== null &&
+                                                  'responsable' in obj &&
+                                                  typeof (
+                                                    obj as {
+                                                      responsable?: unknown;
+                                                    }
+                                                  ).responsable === 'string'
+                                                );
+                                              }
+                                              if (
+                                                hasResponsableField(
+                                                  actividadCompleta
+                                                )
+                                              ) {
+                                                return actividadCompleta.responsable;
+                                              }
+                                              // Como fallback, mostrar el id
+                                              return responsibleUserId
+                                                ? String(responsibleUserId)
+                                                : '-';
+                                            })()}
                                           >
-                                            {responsable}
+                                            {/* Mostrar el nombre del responsable */}
+                                            {(() => {
+                                              if (
+                                                typeof responsibleUserId ===
+                                                  'string' ||
+                                                typeof responsibleUserId ===
+                                                  'number'
+                                              ) {
+                                                // Buscar por id en integrantes y mostrar el nombre si existe
+                                                const integrante =
+                                                  integrantes.find(
+                                                    (i) =>
+                                                      String(i.id) ===
+                                                      String(responsibleUserId)
+                                                  );
+                                                if (integrante?.nombre) {
+                                                  return integrante.nombre;
+                                                }
+                                                if (integrante?.email) {
+                                                  return integrante.email;
+                                                }
+                                                if (integrante) {
+                                                  return String(integrante.id);
+                                                }
+                                              }
+                                              function hasResponsableField(
+                                                obj: unknown
+                                              ): obj is {
+                                                responsable: string;
+                                              } {
+                                                return (
+                                                  typeof obj === 'object' &&
+                                                  obj !== null &&
+                                                  'responsable' in obj &&
+                                                  typeof (
+                                                    obj as {
+                                                      responsable?: unknown;
+                                                    }
+                                                  ).responsable === 'string'
+                                                );
+                                              }
+                                              if (
+                                                hasResponsableField(
+                                                  actividadCompleta
+                                                )
+                                              ) {
+                                                return actividadCompleta.responsable;
+                                              }
+                                              return responsibleUserId
+                                                ? String(responsibleUserId)
+                                                : '-';
+                                            })()}
                                           </div>
                                         </TableCell>
                                         <TableCell>
@@ -2427,13 +2739,31 @@ export default function ProjectDetails() {
                           ) : (
                             <TableCell className="p-0" style={{ width: '60%' }}>
                               <div className="flex">
-                                {unidadesHeader.map((unidad) => (
+                                {unidadesHeader.map((unidad, i) => (
                                   <div
                                     key={unidad.indice}
                                     className="min-w-[60px] flex-1 border-l border-slate-600 p-2 text-center align-middle"
                                   >
-                                    {Array.isArray(act.meses) &&
-                                    act.meses.includes(unidad.indice) ? (
+                                    {cronogramaTipo === 'dias' &&
+                                    Array.isArray(diasPorActividad[act.id]) &&
+                                    diasPorActividad[act.id].includes(i) ? (
+                                      <div className="mx-auto flex h-4 w-4 items-center justify-center rounded bg-cyan-300">
+                                        <span className="text-lg font-bold text-purple-500">
+                                          ✔
+                                        </span>
+                                      </div>
+                                    ) : cronogramaTipo === 'meses' &&
+                                      Array.isArray(
+                                        mesesPorActividad[act.id]
+                                      ) &&
+                                      mesesPorActividad[act.id].includes(i) ? (
+                                      <div className="mx-auto flex h-4 w-4 items-center justify-center rounded bg-cyan-300">
+                                        <span className="text-lg font-bold text-purple-500">
+                                          ✔
+                                        </span>
+                                      </div>
+                                    ) : Array.isArray(act.meses) &&
+                                      act.meses.includes(unidad.indice) ? (
                                       <div className="mx-auto h-4 w-4 rounded bg-green-600 md:h-5 md:w-5" />
                                     ) : (
                                       <div className="mx-auto h-4 w-4 rounded bg-slate-600 md:h-5 md:w-5" />
@@ -2461,7 +2791,7 @@ export default function ProjectDetails() {
         />
         <ModalIntegrantesProyectoInfo
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setModalSolicitudesOpen(false)}
           proyecto={{
             ...project,
             titulo: project.name ?? '',

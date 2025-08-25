@@ -174,14 +174,14 @@ export async function createProject(
       if (actividad.objetivoId && objetivosIdMap[actividad.objetivoId]) {
         realObjectiveId = objetivosIdMap[actividad.objetivoId];
       }
-      // Insertar actividad con objectiveId
+      // Insertar actividad con objectiveId y responsable
       const [insertedActividad] = await db
         .insert(projectActivities)
         .values({
           projectId,
           objectiveId: realObjectiveId,
           description: actividad.descripcion,
-          responsibleUserId: actividad.responsibleUserId ?? null,
+          responsibleUserId: actividad.responsibleUserId ?? null, // <-- Asegura que se guarda
           hoursPerDay: actividad.hoursPerDay ?? 1,
         })
         .returning({ id: projectActivities.id });

@@ -175,7 +175,7 @@ export async function POST(req: Request) {
         descripcion: a.descripcion,
         meses: Array.isArray(a.meses) ? a.meses : [],
         objetivoId: a.objetivoId,
-        responsibleUserId: a.responsibleUserId,
+        responsibleUserId: a.responsibleUserId ?? undefined, // <-- Asegura que se propaga
         hoursPerDay: typeof a.hoursPerDay === 'number' ? a.hoursPerDay : 1,
       }));
     }

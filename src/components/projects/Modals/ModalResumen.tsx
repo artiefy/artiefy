@@ -983,10 +983,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             horasPorActividadFinal[actividadKey] > 0
               ? horasPorActividadFinal[actividadKey]
               : 1;
-          const responsableId =
-            responsablesPorActividadProp[actividadKey] ||
+          // Forzar responsableId a string (nunca undefined)
+          const responsableId = (responsablesPorActividadProp[actividadKey] ||
             responsablesPorActividadLocal[actividadKey] ||
-            'default';
+            user?.id ??
+            '') as string;
           actividadesList.push({
             actividadKey,
             horas: horasActividad,
@@ -1063,8 +1064,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }
         return dias;
       });
-    } else {
-      setDiasPorActividad({});
+    } else if (tipoVisualizacion !== 'dias') {
+      // Solo limpiar si realmente hay algo que limpiar, para evitar bucles infinitos
+      setDiasPorActividad((prev) => (Object.keys(prev).length > 0 ? {} : prev));
     }
   }, [
     tipoVisualizacion,
@@ -1076,6 +1078,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     horasPorDiaValue,
     responsablesPorActividadProp,
     responsablesPorActividadLocal,
+    user?.id,
   ]);
 
   // --- Calcular meses por actividad para visualización por meses ---
@@ -1183,7 +1186,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         title: obj.title,
       }));
 
-      // Mapear actividades correctamente con objetivoId
+      // Mapear actividades correctamente con objetivoId y responsable
       const actividades: {
         descripcion: string;
         meses: number[];
@@ -1198,7 +1201,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             descripcion: act,
             meses: [], // Puedes mapear el cronograma si lo necesitas
             objetivoId: obj.id, // <-- importante para edición
-            responsibleUserId: responsablesPorActividadLocal[actividadKey],
+            responsibleUserId:
+              (responsablesPorActividadProp[actividadKey] ||
+                responsablesPorActividadLocal[actividadKey] ||
+                user?.id) ?? // <-- add parentheses to fix precedence
+              '', // <-- Asegura que siempre se asigna un responsable
             hoursPerDay: horasPorActividadFinal[actividadKey] || 1,
           });
         });
