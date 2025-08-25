@@ -22,10 +22,10 @@ import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
 
 export function Header({
-  onProyectosClickAction,
+  // Eliminado: onProyectosClickAction
   onEspaciosClickAction,
 }: {
-  onProyectosClickAction?: () => void;
+  // Eliminado: onProyectosClickAction?: () => void;
   onEspaciosClickAction?: () => void;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,7 +37,7 @@ export function Header({
   const [mounted, setMounted] = useState(false);
 
   // MODAL DISPONIBLE MUY PRONTO
-  const [showProyectosModal, setShowProyectosModal] = useState(false);
+  // Solo para Espacios
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
@@ -165,11 +165,12 @@ export function Header({
   };
 
   // Funciones para interceptar clicks y mostrar el modal
-  const handleProyectosClick = (e?: React.MouseEvent) => {
-    e?.preventDefault();
-    setShowProyectosModal(true);
-    onProyectosClickAction?.();
-  };
+  // Proyectos: acceso directo, sin modal
+  // const handleProyectosClick = (e?: React.MouseEvent) => {
+  //   e?.preventDefault();
+  //   setShowProyectosModal(true);
+  //   onProyectosClickAction?.();
+  // };
   const handleEspaciosClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
     setShowEspaciosModal(true);
@@ -178,48 +179,7 @@ export function Header({
 
   return (
     <>
-      {/* Modal "Disponible muy pronto" para Proyectos */}
-      <Dialog
-        open={showProyectosModal}
-        onClose={() => setShowProyectosModal(false)}
-        className="fixed inset-0 z-[100] flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
-          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
-            <svg
-              className="h-10 w-10 text-white"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
-              />
-            </svg>
-          </span>
-          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
-            ¡Disponible muy pronto!
-          </h2>
-          <p className="mb-4 text-center text-gray-600">
-            La sección de{' '}
-            <span className="text-secondary font-semibold">Proyectos</span>{' '}
-            estará habilitada próximamente.
-            <br />
-            ¡Gracias por tu interés!
-          </p>
-          <button
-            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
-            onClick={() => setShowProyectosModal(false)}
-          >
-            Cerrar
-          </button>
-        </DialogPanel>
-      </Dialog>
-      {/* Modal "Disponible muy pronto" para Espacios */}
+      {/* Modal "Disponible muy pronto" solo para Espacios */}
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}
@@ -288,20 +248,19 @@ export function Header({
                 <div className="div-header-nav flex gap-24">
                   {navItems.map((item) => {
                     const extraClass = `div-header-${item.label.toLowerCase()}`;
-                    // Interceptar click en "Proyectos"
+                    // Proyectos: acceso directo
                     if (item.label === 'Proyectos') {
                       return (
-                        <button
+                        <Link
                           key={item.href}
-                          type="button"
-                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
-                          onClick={handleProyectosClick}
+                          href={item.href}
+                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
                         >
                           {item.label}
-                        </button>
+                        </Link>
                       );
                     }
-                    // Interceptar click en "Espacios"
+                    // Espacios: mostrar modal
                     if (item.label === 'Espacios') {
                       return (
                         <button
@@ -383,18 +342,20 @@ export function Header({
                       className={`menu-options ${isDropdownOpen ? 'show' : ''}`}
                     >
                       {navItems.map((item) => {
+                        // Proyectos: acceso directo
                         if (item.label === 'Proyectos') {
                           return (
-                            <button
+                            <Link
                               key={item.href}
-                              type="button"
+                              href={item.href}
                               className="menu-option hover:text-orange-500"
-                              onClick={handleProyectosClick}
+                              onClick={toggleDropdown}
                             >
                               {item.label}
-                            </button>
+                            </Link>
                           );
                         }
+                        // Espacios: mostrar modal
                         if (item.label === 'Espacios') {
                           return (
                             <button
@@ -490,21 +451,21 @@ export function Header({
             <nav className="pb-7">
               <ul className="space-y-12">
                 {navItems.map((item) => {
-                  // Interceptar click en "Proyectos" en móvil
+                  // Proyectos: acceso directo
                   if (item.label === 'Proyectos') {
                     return (
                       <li key={item.href}>
-                        <button
-                          type="button"
-                          className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
-                          onClick={handleProyectosClick}
+                        <Link
+                          href={item.href}
+                          className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                          onClick={() => setMobileMenuOpen(false)}
                         >
                           {item.label}
-                        </button>
+                        </Link>
                       </li>
                     );
                   }
-                  // Interceptar click en "Espacios" en móvil
+                  // Espacios: mostrar modal
                   if (item.label === 'Espacios') {
                     return (
                       <li key={item.href}>
