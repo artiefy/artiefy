@@ -385,7 +385,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     horasOriginalesBackup,
   ]);
 
-  // Actualizar tiempo estimado automáticamente
+  // Actualizar tiempo estimado automáticamente SOLO en un useEffect (no en render)
   useEffect(() => {
     if (
       totalHorasActividadesCalculado > 0 &&
@@ -729,6 +729,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     void fetchCategorias();
   }, []);
 
+  // Actualizar tiempo estimado automáticamente
   useEffect(() => {
     if (
       totalHorasActividadesCalculado > 0 &&

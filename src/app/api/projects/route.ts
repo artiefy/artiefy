@@ -194,14 +194,9 @@ export async function POST(req: Request) {
       integrantes: body.integrantes ?? [],
       coverImageKey: coverImageKey ?? undefined,
       coverVideoKey: coverVideoKey ?? undefined, // <-- Nuevo
-      fechaInicio:
-        body.fechaInicio && !isNaN(Date.parse(body.fechaInicio))
-          ? new Date(body.fechaInicio).toISOString().split('T')[0]
-          : undefined,
-      fechaFin:
-        body.fechaFin && !isNaN(Date.parse(body.fechaFin))
-          ? new Date(body.fechaFin).toISOString().split('T')[0]
-          : undefined,
+      // Usa exactamente las fechas seleccionadas por el usuario, sin sobrescribirlas
+      fechaInicio: body.fechaInicio ?? undefined,
+      fechaFin: body.fechaFin ?? undefined,
       tipoVisualizacion: body.tipoVisualizacion ?? 'meses',
       isPublic: body.isPublic ?? false,
       horasPorDia: body.horasPorDia ?? undefined, // NUEVO

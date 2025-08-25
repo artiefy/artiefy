@@ -109,20 +109,16 @@ export async function createProject(
       userId: UserId,
       categoryId: projectData.categoryId,
       isPublic: projectData.isPublic ?? false,
-      // Cambia aquí: convierte a ISO si existe, solo la parte de fecha (YYYY-MM-DD)
-      fecha_inicio: projectData.fechaInicio
-        ? new Date(projectData.fechaInicio).toISOString().split('T')[0]
-        : null,
-      fecha_fin: projectData.fechaFin
-        ? new Date(projectData.fechaFin).toISOString().split('T')[0]
-        : null,
+      // Usa exactamente las fechas seleccionadas por el usuario para inicio y fin
+      fecha_inicio: projectData.fechaInicio ?? null,
+      fecha_fin: projectData.fechaFin ?? null,
       tipo_visualizacion: projectData.tipoVisualizacion ?? 'meses',
       horas_por_dia: projectData.horasPorDia ?? null, // NUEVO
       total_horas: projectData.totalHoras ?? null, // NUEVO
       tiempo_estimado: projectData.tiempoEstimado ?? null, // NUEVO
       dias_estimados: projectData.diasEstimados ?? null, // NUEVO
       dias_necesarios: projectData.diasNecesarios ?? null, // NUEVO
-      createdAt: new Date(),
+      createdAt: new Date(), // <-- Fecha real de creación
       updatedAt: new Date(),
     })
     .returning({ id: projects.id });

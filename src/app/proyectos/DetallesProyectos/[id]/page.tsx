@@ -344,14 +344,13 @@ export default function ProjectDetails() {
       const fechaInicio = new Date(fechaInicioStr);
       const fechaFin = new Date(fechaFinStr);
 
-      // Si la fecha de inicio es domingo, avanzar al lunes siguiente
-      if (fechaInicio.getDay() === 0) {
-        fechaInicio.setDate(fechaInicio.getDate() + 1);
-      }
+      // Normaliza la hora para evitar problemas de zona horaria
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(0, 0, 0, 0);
 
       let i = 0;
       const fechaActual = new Date(fechaInicio);
-      while (fechaActual <= fechaFin) {
+      while (fechaActual.getTime() <= fechaFin.getTime()) {
         unidades.push({
           indice: i,
           etiqueta: `Día ${i + 1}`,

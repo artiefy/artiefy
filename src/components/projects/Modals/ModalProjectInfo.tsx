@@ -5,7 +5,14 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import { Calendar, Eye, Users } from 'lucide-react';
+import {
+  Calendar,
+  Eye,
+  ImageOff,
+  Maximize,
+  Users,
+  VideoOff,
+} from 'lucide-react';
 
 import { Badge } from '~/components/projects/ui/badge';
 import { Button } from '~/components/projects/ui/button';
@@ -40,6 +47,7 @@ interface PublicProject {
   actividades: unknown[];
   image?: string;
   coverImageKey?: string;
+  video?: string; // <-- Agregado para evitar error TS
 }
 
 interface ProjectInfoModalProps {
@@ -483,6 +491,81 @@ export default function ProjectInfoModal({
     };
   }, [open]);
 
+  // Ciclo imagen/video
+  const [showImage, setShowImage] = React.useState(true);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const imageRef = React.useRef<HTMLImageElement | null>(null);
+  const [imageError, setImageError] = React.useState(false);
+  const [videoError, setVideoError] = React.useState(false);
+
+  // Ciclo automático entre imagen y video
+  React.useEffect(() => {
+    if (!open) return;
+    if (project?.image && project?.video) {
+      if (showImage) {
+        const timer = setTimeout(() => setShowImage(false), 10000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showImage, project?.image, project?.video, open]);
+
+  // Cuando termina el video, volver a mostrar la imagen
+  const handleVideoEnded = () => {
+    setShowImage(true);
+    if (videoRef.current) videoRef.current.currentTime = 0;
+  };
+
+  // Pantalla completa para imagen/video
+  const handleFullscreen = (isImage: boolean) => {
+    if (isImage) {
+      const img = imageRef.current;
+      if (img) {
+        if (typeof img.requestFullscreen === 'function') {
+          img.requestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            img as HTMLImageElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            img as HTMLImageElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    } else {
+      const video = videoRef.current;
+      if (video) {
+        if (typeof video.requestFullscreen === 'function') {
+          video.requestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { webkitRequestFullscreen?: () => void }
+          ).webkitRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
+        } else if (
+          typeof (
+            video as HTMLVideoElement & { msRequestFullscreen?: () => void }
+          ).msRequestFullscreen === 'function'
+        ) {
+          (
+            video as HTMLVideoElement & { msRequestFullscreen: () => void }
+          ).msRequestFullscreen();
+        }
+      }
+    }
+  };
+
   if (!open || !project) return null;
 
   // Progreso simulado (puedes calcularlo si tienes datos)
@@ -540,35 +623,114 @@ export default function ProjectInfoModal({
               </svg>
             </Button>
           </div>
-          {/* Imagen del proyecto */}
-          <div className="mb-4 w-full">
-            <div className="relative w-full">
-              <Image
-                src={
-                  typeof project.image === 'string' && project.image
-                    ? project.image
-                    : typeof project.coverImageKey === 'string' &&
-                        project.coverImageKey
-                      ? project.coverImageKey
-                      : ''
-                }
-                alt="Imagen del proyecto"
-                width={1200}
-                height={320}
-                className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
-                style={{ background: '#222' }}
-                priority
-              />
-              {/* Overlay para desvanecer abajo */}
-              <div
-                className="pointer-events-none absolute inset-0 rounded-2xl"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, rgba(30,41,59,0.15) 60%, rgba(30,41,59,0.85) 100%)',
-                }}
-              />
+          {/* Imagen/video del proyecto con ciclo y fullscreen */}
+          <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm mb-6">
+            <div
+              className="relative flex w-full items-center justify-center"
+              style={{ minHeight: 180 }}
+            >
+              {project.image && project.video ? (
+                showImage ? (
+                  <>
+                    <Image
+                      ref={imageRef}
+                      src={project.image}
+                      alt="Imagen del proyecto"
+                      width={1200}
+                      height={320}
+                      className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                      style={{ background: '#222' }}
+                      priority
+                      onError={() => setImageError(true)}
+                    />
+                    <div className="absolute top-3 right-3">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                        onClick={() => handleFullscreen(true)}
+                        title="Ver en pantalla completa"
+                      >
+                        <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      controls
+                      muted
+                      className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                      poster={project.image}
+                      onEnded={handleVideoEnded}
+                      onError={() => setVideoError(true)}
+                    >
+                      <source src={project.video} type="video/mp4" />
+                      Tu navegador no soporta la reproducción de video.
+                    </video>
+                  </>
+                )
+              ) : project.video && !videoError ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    controls
+                    className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                    poster={project.image ?? ''}
+                    onError={() => setVideoError(true)}
+                  >
+                    <source src={project.video ?? ''} type="video/mp4" />
+                    Tu navegador no soporta la reproducción de video.
+                  </video>
+                </>
+              ) : project.image && !imageError ? (
+                <>
+                  <Image
+                    ref={imageRef}
+                    src={project.image}
+                    alt="Imagen del proyecto"
+                    width={1200}
+                    height={320}
+                    className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                    style={{ background: '#222' }}
+                    priority
+                    onError={() => setImageError(true)}
+                  />
+                  <div className="absolute top-3 right-3">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                      onClick={() => handleFullscreen(true)}
+                      title="Ver en pantalla completa"
+                    >
+                      <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div
+                  className="flex w-full flex-col items-center justify-center"
+                  style={{
+                    minHeight: 180,
+                    height: 180,
+                    maxHeight: 300,
+                  }}
+                >
+                  <ImageOff className="text-slate-500" size={64} />
+                  <span className="mt-2 text-base text-slate-500">
+                    Sin imagen
+                  </span>
+                  <VideoOff className="text-slate-500" size={64} />
+                  <span className="mt-2 text-base text-slate-500">
+                    Sin video
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
+            </Card>
           <div className="w-full space-y-6">
             {/* Header del Proyecto */}
             <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm">
