@@ -231,6 +231,31 @@ const ModalIntegrantesProyectoInfo: React.FC<
                   </CardContent>
                 </Card>
               ))}
+              {/* Botón para invitar nuevo integrante */}
+              <Card
+                className="group flex cursor-pointer flex-col items-center justify-center border-2 border-dashed border-teal-400/40 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:bg-white/10"
+                onClick={() => {
+                  // Aquí puedes abrir un modal o lanzar la acción de invitar
+                  alert('Funcionalidad de invitar integrante');
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label="Invitar nuevo integrante"
+              >
+                <CardContent className="flex h-full flex-col items-center justify-center p-6">
+                  <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-4xl font-bold text-slate-900">
+                    +
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-lg font-semibold text-teal-300">
+                      Invitar Integrante
+                    </span>
+                    <span className="mt-1 block text-sm text-gray-400">
+                      Añadir nuevo miembro al equipo
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
