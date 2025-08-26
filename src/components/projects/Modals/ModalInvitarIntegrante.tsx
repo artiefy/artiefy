@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import { useUser } from '@clerk/nextjs'; // O tu método de autenticación
 import { Loader2, RefreshCw, UserPlus, X } from 'lucide-react';
 
 import { Button } from '~/components/projects/ui/button';
@@ -32,6 +33,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [pendingInvitations, setPendingInvitations] = useState<
+    Record<string, string>
+  >({});
+  const { user } = useUser(); // Ajusta según tu sistema de auth
 
   const fetchUsers = () => {
     setLoading(true);
@@ -44,12 +49,37 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
       .finally(() => setLoading(false));
   };
 
+  // Nueva función para obtener invitaciones pendientes del proyecto
+  const fetchPendingInvitations = async () => {
+    try {
+      const res = await fetch(
+        `/api/projects/invitaciones?projectId=${proyectoId}`
+      );
+      if (res.ok) {
+        const data: {
+          invitations: { invitedUserId: string; status: string }[];
+        } = await res.json();
+        const pending: Record<string, string> = {};
+        data.invitations.forEach((inv) => {
+          if (inv.status === 'pending') {
+            pending[inv.invitedUserId] = inv.status;
+          }
+        });
+        setPendingInvitations(pending);
+      }
+    } catch (_err) {
+      // Opcional: manejar error
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
       setSearch('');
+      fetchPendingInvitations();
     }
-  }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, proyectoId]);
 
   useEffect(() => {
     if (!search) {
@@ -91,10 +121,53 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
 
   if (!isOpen) return null;
 
-  const handleInvite = (userId: string) => {
-    // Aquí deberías llamar a tu endpoint de invitación
-    // fetch('/api/projects/invite', { method: 'POST', body: JSON.stringify({ userId, proyectoId }) })
-    alert(`Invitar a usuario ${userId} al proyecto ${proyectoId}`);
+  const handleInvite = async (userId: string) => {
+    if (!user?.id) {
+      alert('No se pudo identificar al usuario actual');
+      return;
+    }
+    const payload = {
+      invitedUserId: userId,
+      projectId: proyectoId,
+      invitedByUserId: user.id,
+      // invitationMessage: 'Te invito a mi proyecto', // Opcional
+    };
+    console.log('User actual:', user);
+    console.log('Proyecto actual:', proyectoId);
+    console.log('Payload a enviar:', payload);
+
+    const start = performance.now();
+    try {
+      console.log('Iniciando fetch a /api/projects/invitaciones...');
+      const fetchStart = performance.now();
+      const res = await fetch('/api/projects/invitaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const fetchEnd = performance.now();
+      console.log(`Tiempo de fetch: ${(fetchEnd - fetchStart).toFixed(2)}ms`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Respuesta JSON exitosa:', data);
+        alert('Invitación enviada correctamente');
+        // Opcional: actualiza el estado local si lo deseas
+      } else {
+        const data: { error?: string } = await res.json();
+        console.error('Error al invitar. Respuesta completa:', data);
+        alert(
+          'Error al invitar: ' +
+            (typeof data.error === 'string'
+              ? data.error
+              : JSON.stringify(data) || 'Error desconocido')
+        );
+      }
+    } catch (_err) {
+      console.error('Error de red al invitar:', _err);
+      alert('Error de red al invitar');
+    }
+    const end = performance.now();
+    console.log(`Tiempo total handleInvite: ${(end - start).toFixed(2)}ms`);
   };
 
   const handleClear = () => setSearch('');
@@ -103,7 +176,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="relative mx-auto max-h-[95vh] min-h-[60vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0 shadow-2xl">
         {/* Header sticky y barra de búsqueda sticky, ocupando todo el ancho */}
-        <div className="sticky top-0 p-2 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900 backdrop-blur-md">
+        <div className="sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900 p-2 backdrop-blur-md">
           <div className="px-6 pt-6">
             {/* Header del Modal */}
             <div className="flex items-center justify-between">
@@ -219,6 +292,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 }
 
                 const yaEnProyecto = projectMembers.includes(user.id);
+                const invitacionPendiente = !!pendingInvitations[user.id];
 
                 return (
                   <Card
@@ -226,7 +300,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                     className="group border-white/20 bg-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/15"
                   >
                     <CardContent className="p-6">
-                      <div className="flex flex-col items-center space-y-4 text-center">
+                      <div className="flex h-full min-h-[260px] flex-col items-center space-y-4 text-center">
                         {/* Avatar con iniciales */}
                         <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-lg font-semibold text-slate-900">
                           {avatarText}
@@ -239,13 +313,18 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                             {user.email}
                           </p>
                         </div>
+                        <div className="flex-grow" />
                         <Button
                           variant="outline"
-                          className="mt-2 border-teal-400/40 bg-white/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
+                          className="mt-auto w-full border-teal-400/40 bg-white/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
                           onClick={() => handleInvite(user.id)}
-                          disabled={yaEnProyecto}
+                          disabled={yaEnProyecto || invitacionPendiente}
                         >
-                          {yaEnProyecto ? 'Ya está en el proyecto' : 'Invitar'}
+                          {yaEnProyecto
+                            ? 'Ya está en el proyecto'
+                            : invitacionPendiente
+                              ? 'Invitado'
+                              : 'Invitar'}
                         </Button>
                       </div>
                     </CardContent>

@@ -1434,12 +1434,6 @@ export default function ProyectosPage() {
                           >
                             {project.isPublic ? 'Publico' : 'Privado'}
                           </Badge>
-                          <Badge
-                            variant="secondary"
-                            className="border-blue-400/30 bg-slate-700 text-xs text-blue-400 sm:text-sm"
-                          >
-                            {project.status}
-                          </Badge>
                         </div>
 
                         {/* Progress Bar */}
