@@ -34,6 +34,8 @@ const studentSchema = z.object({
   isNew: z.boolean().optional(),
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
+  inscripcionOrigen: z.enum(['formulario', 'artiefy']).optional(),
+  carteraStatus: z.enum(['activo', 'inactivo']).optional(),
 });
 
 const courseSchema = z.object({
@@ -83,6 +85,8 @@ interface Student {
 
   // 👉 usaremos este derivado para la columna visible
   enrolledInCourseLabel?: 'Sí' | 'No';
+  inscripcionOrigen?: 'formulario' | 'artiefy';
+  carteraStatus?: 'activo' | 'inactivo'; // 👈
 }
 
 interface CreateUserResponse {
@@ -155,11 +159,26 @@ const allColumns: Column[] = [
     defaultVisible: true,
     type: 'date',
   },
+
   {
     id: 'subscriptionEndDate',
     label: 'Fin Suscripción',
     defaultVisible: true,
     type: 'date',
+  },
+  {
+    id: 'carteraStatus',
+    label: 'Cartera',
+    defaultVisible: true,
+    type: 'select',
+    options: ['activo', 'inactivo'], // solo para filtrar
+  },
+  {
+    id: 'inscripcionOrigen',
+    label: 'Origen',
+    defaultVisible: true,
+    type: 'select',
+    options: ['formulario', 'artiefy'],
   },
   {
     id: 'programTitle',
@@ -218,6 +237,16 @@ function safeToString(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean')
     return value.toString();
   return JSON.stringify(value);
+}
+
+// comprueba si un objeto tiene { error: string }
+function isErrorResponse(x: unknown): x is { error: string } {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    'error' in x &&
+    typeof (x as Record<string, unknown>).error === 'string'
+  );
 }
 
 export default function EnrolledUsersPage() {
@@ -477,6 +506,83 @@ export default function EnrolledUsersPage() {
   const filteredColumns = totalColumns.filter((col) =>
     col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
   );
+  const [showCarteraModal, setShowCarteraModal] = useState(false);
+  const [carteraUserId, setCarteraUserId] = useState<string | null>(null);
+  const [carteraReceipt, setCarteraReceipt] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const openCarteraModal = async (userId: string) => {
+    setCurrentUserId(userId); // ya lo usas para “currentUser”
+    await Promise.all([fetchUserPrograms(userId), fetchUserCourses(userId)]);
+    setCarteraUserId(userId);
+    setShowCarteraModal(true);
+  };
+  const markCarteraActivo = async () => {
+    if (!carteraUserId) return;
+    const res = await fetch('/api/super-admin/enroll_user_program', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'updateCartera',
+        userId: carteraUserId,
+        status: 'activo',
+      }),
+    });
+    if (res.ok) {
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === carteraUserId ? { ...s, carteraStatus: 'activo' } : s
+        )
+      );
+      setShowCarteraModal(false);
+    } else {
+      alert('No se pudo actualizar el estado.');
+    }
+  };
+
+  const uploadCarteraReceipt = async () => {
+    if (!carteraUserId || !carteraReceipt) return;
+
+    try {
+      const fd = new FormData();
+      fd.append('action', 'uploadCarteraReceipt');
+      fd.append('userId', carteraUserId);
+      // 👇 añade el nombre para evitar que llegue sin filename
+      fd.append('receipt', carteraReceipt, carteraReceipt.name);
+
+      const res = await fetch('/api/super-admin/enroll_user_program', {
+        method: 'POST',
+        body: fd,
+      });
+
+      const data: unknown = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        console.error('Upload error:', data);
+        const msg = isErrorResponse(data)
+          ? data.error
+          : 'Error subiendo comprobante.';
+        alert(msg);
+        return;
+      }
+
+      // éxito: pónlo en ACTIVO y cierra modal
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === carteraUserId ? { ...s, carteraStatus: 'activo' } : s
+        )
+      );
+      setCarteraReceipt(null);
+      setShowCarteraModal(false);
+      alert('Comprobante subido y estado marcado como ACTIVO.');
+      // dentro de uploadCarteraReceipt()
+    } catch (e: unknown) {
+      console.error('Network/JS error:', e);
+      const msg =
+        e instanceof Error ? e.message : 'Error de red al subir comprobante';
+      alert(msg);
+    }
+  };
 
   // Save visible columns to localStorage
   useEffect(() => {
@@ -513,6 +619,11 @@ export default function EnrolledUsersPage() {
 
           // 3) Etiqueta NEW en el nombre (si aplica)
           const displayName = s.isNew ? `${s.name} (NEW)` : s.name;
+          const computedByDate =
+            s.subscriptionEndDate &&
+            new Date(s.subscriptionEndDate) >= new Date()
+              ? 'activo' // al día
+              : 'inactivo'; // en cartera
 
           return {
             ...s,
@@ -529,6 +640,8 @@ export default function EnrolledUsersPage() {
                   Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
                 )
               : undefined,
+            inscripcionOrigen: s.inscripcionOrigen ?? 'artiefy',
+            carteraStatus: s.carteraStatus ?? computedByDate, // 👈 añade esto
           };
         });
 
@@ -1329,6 +1442,33 @@ export default function EnrolledUsersPage() {
                           );
                         }
 
+                        if (col.id === 'carteraStatus') {
+                          const esAlDia = raw === 'activo'; // 'activo' = al día
+                          const etiqueta = esAlDia ? 'Al día' : 'En cartera';
+
+                          return (
+                            <td
+                              key={col.id}
+                              className="px-4 py-2 align-top whitespace-nowrap"
+                            >
+                              <span
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  esAlDia ? 'bg-green-600' : 'bg-red-600'
+                                }`}
+                                title={etiqueta}
+                              >
+                                {etiqueta}
+                              </span>
+                              <button
+                                onClick={() => openCarteraModal(student.id)}
+                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium hover:bg-indigo-700"
+                              >
+                                Ver más
+                              </button>
+                            </td>
+                          );
+                        }
+
                         // 2) columna Último curso
                         if (col.id === 'courseTitle') {
                           return (
@@ -2035,6 +2175,131 @@ export default function EnrolledUsersPage() {
                   Guardar Cambios
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {showCarteraModal && currentUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="w-full max-w-md rounded-lg bg-white p-6 text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+              <h3 className="mb-2 text-lg font-semibold">Gestión de Cartera</h3>
+              <p className="mb-4 text-sm text-gray-500 dark:text-gray-300">
+                {currentUser.name} — Estado{' '}
+                <strong
+                  className={
+                    currentUser.carteraStatus === 'activo'
+                      ? 'text-green-500'
+                      : 'text-red-500'
+                  }
+                >
+                  {currentUser.carteraStatus === 'activo'
+                    ? 'Al día'
+                    : 'En cartera'}
+                </strong>
+              </p>
+
+              <div className="mb-4 space-y-1 text-sm">
+                <div>
+                  <strong>Última fecha de pago:</strong>{' '}
+                  {currentUser.purchaseDate
+                    ? new Date(currentUser.purchaseDate)
+                        .toISOString()
+                        .split('T')[0]
+                    : '-'}
+                </div>
+                <div>
+                  <strong>Fin de suscripción:</strong>{' '}
+                  {currentUser.subscriptionEndDate
+                    ? new Date(currentUser.subscriptionEndDate)
+                        .toISOString()
+                        .split('T')[0]
+                    : '-'}
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <h4 className="font-semibold">Programas</h4>
+                <ul className="list-inside list-disc text-sm">
+                  {userPrograms.length === 0 ? (
+                    <li className="text-gray-500">No inscrito</li>
+                  ) : (
+                    userPrograms.map((p) => <li key={p.id}>{p.title}</li>)
+                  )}
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <h4 className="font-semibold">Cursos</h4>
+                <ul className="list-inside list-disc text-sm">
+                  {userCourses.length === 0 ? (
+                    <li className="text-gray-500">No inscrito</li>
+                  ) : (
+                    userCourses.map((c) => <li key={c.id}>{c.title}</li>)
+                  )}
+                </ul>
+              </div>
+
+              {currentUser.carteraStatus !== 'activo' ? (
+                <div className="mb-4 space-y-3">
+                  <button
+                    onClick={markCarteraActivo}
+                    className="w-full rounded bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+                  >
+                    Marcar AL DÍA
+                  </button>
+
+                  <div className="rounded border border-gray-300 p-3 dark:border-gray-700">
+                    <label className="mb-2 block text-sm font-medium">
+                      Subir comprobante de pago
+                    </label>
+
+                    {/* input oculto: se abre desde el botón */}
+                    <input
+                      ref={fileInputRef}
+                      id="carteraReceipt"
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg"
+                      className="hidden"
+                      onChange={(e) =>
+                        setCarteraReceipt(e.target.files?.[0] ?? null)
+                      }
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
+                      >
+                        Elegir archivo
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!carteraReceipt}
+                        onClick={uploadCarteraReceipt}
+                        className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        Subir comprobante
+                      </button>
+                    </div>
+
+                    {/* Nombre del archivo seleccionado */}
+                    {carteraReceipt && (
+                      <p className="mt-2 text-xs text-gray-500">
+                        Archivo seleccionado:{' '}
+                        <strong>{carteraReceipt.name}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              <button
+                onClick={() => setShowCarteraModal(false)}
+                className="w-full rounded bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         )}
