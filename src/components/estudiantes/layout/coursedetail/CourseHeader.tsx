@@ -891,6 +891,11 @@ export function CourseHeader({
     const hasProType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
+    const hasFreeType = course.courseTypes?.some(
+      (type) =>
+        type.requiredSubscriptionLevel === 'none' &&
+        !type.isPurchasableIndividually
+    );
 
     // Usar ?? en vez de ||
     const userCanAccessWithSubscription =
@@ -915,14 +920,7 @@ export function CourseHeader({
       if (course.courseTypes && course.courseTypes.length > 0) {
         if (hasPremiumType) return 'Inscribirse al Curso Premium';
         if (hasProType) return 'Inscribirse al Curso Pro';
-        if (
-          course.courseTypes.some(
-            (type) =>
-              type.requiredSubscriptionLevel === 'none' &&
-              !type.isPurchasableIndividually
-          )
-        )
-          return 'Inscribirse Gratis';
+        if (hasFreeType) return 'Inscribirse al Curso Gratis';
       }
       if (course.courseType) {
         if (course.courseType.requiredSubscriptionLevel === 'premium')
@@ -930,18 +928,24 @@ export function CourseHeader({
         if (course.courseType.requiredSubscriptionLevel === 'pro')
           return 'Inscribirse al Curso Pro';
         if (course.courseType.requiredSubscriptionLevel === 'none')
-          return 'Inscribirse Gratis';
+          return 'Inscribirse al Curso Gratis';
       }
       return 'Iniciar Sesión';
     }
 
     // Si el curso es gratuito
-    if (course.courseType?.requiredSubscriptionLevel === 'none') {
-      return 'Inscribirse Gratis';
+    if (
+      course.courseType?.requiredSubscriptionLevel === 'none' ||
+      hasFreeType
+    ) {
+      return 'Inscribirse al Curso Gratis';
     }
 
     // Si el usuario tiene suscripción activa y acceso
     if (isSignedIn && isSubscriptionActive && userCanAccessWithSubscription) {
+      // Si el curso tiene ambos tipos, priorizar Premium
+      if (hasPremiumType) return 'Inscribirse al Curso Premium';
+      if (hasProType) return 'Inscribirse al Curso Pro';
       return 'Inscribirse al Curso';
     }
 
@@ -952,6 +956,17 @@ export function CourseHeader({
     }
 
     // Fallback
+    // Si solo hay un tipo de curso y es pro o premium, mostrarlo explícitamente
+    if (course.courseTypes && course.courseTypes.length > 0) {
+      if (hasPremiumType && !hasProType) return 'Inscribirse al Curso Premium';
+      if (hasProType && !hasPremiumType) return 'Inscribirse al Curso Pro';
+    }
+    if (course.courseType) {
+      if (course.courseType.requiredSubscriptionLevel === 'premium')
+        return 'Inscribirse al Curso Premium';
+      if (course.courseType.requiredSubscriptionLevel === 'pro')
+        return 'Inscribirse al Curso Pro';
+    }
     return 'Inscribirse al Curso';
   };
 
