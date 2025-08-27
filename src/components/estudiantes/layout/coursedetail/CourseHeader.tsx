@@ -40,7 +40,7 @@ import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
 
-import type { ClassMeeting, Course, CourseMateria } from '~/types';
+import type { ClassMeeting, Course, CourseMateria, Enrollment } from '~/types';
 
 import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
@@ -912,12 +912,25 @@ export function CourseHeader({
       (userPlanType === 'Premium' && hasPremiumType) ??
       ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
+    // --- NUEVO: Detectar si la inscripción es permanente (compra individual) ---
+    // Busca en enrollments si hay isPermanent === true
+    const isPermanentEnrollment =
+      Array.isArray(course.enrollments) &&
+      (course.enrollments as Enrollment[]).some(
+        (enr) => enr.userId === user?.id && enr.isPermanent
+      );
+
+    // Si el usuario está inscrito y la inscripción es permanente (compra individual), mostrar siempre individual
+    if (isEnrolled && isPermanentEnrollment) {
+      return 'Inscrito al Curso Individual';
+    }
+
     // Si el usuario está inscrito, mantener el texto según el tipo de inscripción original
     if (isEnrolled) {
       if (hasPremiumType && userPlanType === 'Premium')
         return 'Inscrito al Curso Premium';
       if (hasProType && userPlanType === 'Pro') return 'Inscrito al Curso Pro';
-      if (hasFreeType) return 'Inscrito al Curso Gratis';
+      if (hasFreeType) return 'Inscribto al Curso Gratis';
       if (isPurchasableIndividually) return 'Inscrito al Curso Individual';
       return 'Inscrito al Curso';
     }
