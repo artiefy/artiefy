@@ -6,12 +6,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { useUser } from '@clerk/nextjs';
+import { SignInButton, useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
   FaCheck,
-  FaClock, // <-- Add missing import
+  FaClock,
   FaCrown,
   FaExpand,
   FaStar,
@@ -23,6 +23,7 @@ import { IoGiftOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import PaymentForm from '~/components/estudiantes/layout/PaymentForm'; // Agrega este import
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -44,14 +45,14 @@ import type { ClassMeeting, Course, CourseMateria } from '~/types';
 import '~/styles/certificadobutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
-import '~/styles/buttonforum.css'; // <-- NUEVO: importar el CSS del botón foro
+import '~/styles/buttonforum.css';
 
 export const revalidate = 3600;
 
 interface ExtendedCourse extends Course {
   progress?: number;
   finalGrade?: number;
-  forumId?: number; // Asegúrate de que Course tenga forumId opcional
+  forumId?: number;
 }
 
 interface CourseHeaderProps {
@@ -744,69 +745,43 @@ export function CourseHeader({
     );
   };
 
+  // Modifica handleEnrollClick para solo usuarios autenticados
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
-      // Store purchase intent in localStorage before redirecting for ALL purchasable courses
-      if (
-        course.courseTypeId === 4 ||
-        course.courseTypes?.some((type) => type.isPurchasableIndividually)
-      ) {
-        console.log('Storing pending purchase before login redirect');
-        const pendingPurchase: PendingPurchase = {
-          courseId: course.id,
-          type: 'individual',
-        };
-        localStorage.setItem(
-          'pendingPurchase',
-          JSON.stringify(pendingPurchase)
-        );
-      }
-
-      // Show toast first
-      toast.error('Inicio de sesión requerido', {
-        description: 'Debes iniciar sesión para inscribirte en este curso',
-        duration: 3000,
-      });
-
-      // Wait for toast to be visible
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const currentPath = `/estudiantes/cursos/${course.id}`;
-      const returnUrl = encodeURIComponent(currentPath);
-
-      // Use window.location for a hard redirect instead of router.push
-      window.location.href = `/sign-in?redirect_url=${returnUrl}`;
       return;
     }
-
-    // *** DEBUGGING - Log what's happening at this point ***
-    console.log('Button clicked, course details:', {
-      courseTypeId: course.courseTypeId,
-      individualPrice: course.individualPrice,
-      hasPurchasableType: course.courseTypes?.some(
-        (type) => type.isPurchasableIndividually
-      ),
-      isPurchasable:
-        course.courseTypeId === 4 ||
-        course.courseTypes?.some((type) => type.isPurchasableIndividually),
-    });
 
     setIsEnrollClicked(true);
 
     try {
-      // FIRST, CHECK IF USER CAN ACCESS VIA SUBSCRIPTION
       const userPlanType = user?.publicMetadata?.planType as string;
-
-      // Check if the user's subscription level gives them access
       const hasPremiumType = course.courseTypes?.some(
         (type) => type.requiredSubscriptionLevel === 'premium'
       );
       const hasProType = course.courseTypes?.some(
         (type) => type.requiredSubscriptionLevel === 'pro'
       );
+      const isPurchasable =
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually);
 
+      // Si el curso es individual y el usuario no tiene suscripción activa, abrir el modal de pago
+      if (
+        isPurchasable &&
+        (!isSubscriptionActive ||
+          !(
+            (userPlanType === 'Premium' && hasPremiumType) ||
+            ((userPlanType === 'Pro' || userPlanType === 'Premium') &&
+              hasProType)
+          ))
+      ) {
+        setShowPaymentModal(true);
+        setIsEnrollClicked(false);
+        return;
+      }
+
+      // FIRST, CHECK IF USER CAN ACCESS VIA SUBSCRIPTION
       const userCanAccessWithSubscription =
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         (userPlanType === 'Premium' && hasPremiumType) ||
         ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
@@ -871,10 +846,6 @@ export function CourseHeader({
 
       // If user doesn't have subscription access, continue with individual purchase logic
       // HANDLE INDIVIDUAL PURCHASE
-      const isPurchasable =
-        course.courseTypeId === 4 ||
-        course.courseTypes?.some((type) => type.isPurchasableIndividually);
-
       if (isPurchasable) {
         console.log('Course is purchasable - showing payment modal');
 
@@ -926,166 +897,8 @@ export function CourseHeader({
     }
   };
 
-  // Create product object for individual course
-  const courseProduct = useMemo(() => {
-    // Handle traditional Type 4 courses
-    if (course.courseTypeId === 4 && course.individualPrice) {
-      return createProductFromCourse(course);
-    }
-
-    // Also handle courses with purchasable types in the new system
-    const purchasableType = course.courseTypes?.find(
-      (type) => type.isPurchasableIndividually
-    );
-    if (purchasableType && (course.individualPrice || purchasableType.price)) {
-      const price = course.individualPrice ?? purchasableType.price;
-      if (price) {
-        return createProductFromCourse({
-          ...course,
-          individualPrice: price,
-        });
-      }
-    }
-
-    return null;
-  }, [course]);
-
-  // Add this interface near the top of the file with other interfaces
-  interface PendingPurchase {
-    courseId: number;
-    type: 'individual';
-  }
-
-  // Update the useEffect that checks for pending purchase to log more details
-  useEffect(() => {
-    // Check for pending purchase after login
-    const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
-    if (pendingPurchaseStr && isSignedIn) {
-      try {
-        const pendingPurchase = JSON.parse(
-          pendingPurchaseStr
-        ) as PendingPurchase;
-
-        console.log('Found pending purchase after login:', {
-          pendingPurchase,
-          currentCourseId: course.id,
-          hasCourseProduct: !!courseProduct,
-          coursePrice: course.individualPrice,
-          isPurchasable:
-            course.courseTypeId === 4 ||
-            course.courseTypes?.some((t) => t.isPurchasableIndividually),
-        });
-
-        if (
-          pendingPurchase.courseId === course.id &&
-          pendingPurchase.type === 'individual'
-        ) {
-          // Clear the pending purchase
-          localStorage.removeItem('pendingPurchase');
-          console.log('Removed pending purchase, opening payment modal');
-
-          // Generate product if needed and show the modal
-          if (courseProduct) {
-            console.log('Using course product from useMemo');
-            // setSelectedProduct(courseProduct);
-            // setShowPaymentModal(true);
-          } else {
-            // Fallback to create product directly as fallback
-            console.log('Creating product directly as fallback');
-          }
-        }
-      } catch (error) {
-        console.error('Error processing pending purchase:', error);
-      }
-    }
-  }, [isSignedIn, course.id, courseProduct, course]);
-
-  // Añade aquí la obtención de las keys
-  const coverImageKey = course.coverImageKey;
-  const coverVideoCourseKey =
-    typeof course === 'object' && 'coverVideoCourseKey' in course
-      ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
-      : undefined;
-
-  // Estado para el volumen y mute
-  const [videoVolume, setVideoVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(true);
-
-  // Efecto para reproducir automáticamente el video al cargar la portada
-  useEffect(() => {
-    if (coverVideoCourseKey && videoRef.current) {
-      const video = videoRef.current;
-      video.muted = isMuted;
-      video.volume = videoVolume;
-      // Quitar video.load() para evitar reinicio del video
-      // video.preload = 'auto';
-      // video.load();
-      const tryPlay = () => {
-        video.play().catch(() => {
-          const onUserGesture = () => {
-            if (videoRef.current) {
-              videoRef.current.play().catch(() => {
-                // intentionally empty: autoplay fallback
-              });
-            }
-            window.removeEventListener('pointerdown', onUserGesture);
-            window.removeEventListener('keydown', onUserGesture);
-          };
-          window.addEventListener('pointerdown', onUserGesture, { once: true });
-          window.addEventListener('keydown', onUserGesture, { once: true });
-        });
-      };
-      if (video.readyState >= 2) {
-        tryPlay();
-      } else {
-        video.addEventListener('canplay', tryPlay, { once: true });
-      }
-      return () => {
-        video.removeEventListener('canplay', tryPlay);
-      };
-    }
-  }, [coverVideoCourseKey, videoVolume, isMuted]);
-
-  // Handler para cambiar el volumen y mute
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-    setVideoVolume(value);
-    if (videoRef.current) {
-      videoRef.current.volume = value;
-      if (value === 0) {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-      } else {
-        setIsMuted(false);
-        videoRef.current.muted = false;
-      }
-    }
-  };
-
-  // Handler para alternar mute con el icono
-  const handleToggleMute = () => {
-    if (videoRef.current) {
-      if (isMuted) {
-        setIsMuted(false);
-        videoRef.current.muted = false;
-        if (videoRef.current.volume === 0) {
-          setVideoVolume(1);
-          videoRef.current.volume = 1;
-        }
-        // Si el video está pausado, intenta reproducirlo
-        if (videoRef.current.paused) {
-          videoRef.current.play().catch(() => {
-            // fallback: no hacer nada si falla
-          });
-        }
-      } else {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-      }
-    }
-  };
-
-  // Update the getEnrollButtonText function to show appropriate text based on subscription status
+  // Cambia el nombre de la función a getEnrollButtonText
+  // Actualiza la lógica para mostrar el texto correcto según el estado de suscripción
   const getEnrollButtonText = (): string => {
     const userPlanType = user?.publicMetadata?.planType as string;
     const userHasActiveSubscription =
@@ -1093,12 +906,10 @@ export function CourseHeader({
       isSubscriptionActive &&
       (userPlanType === 'Pro' || userPlanType === 'Premium');
 
-    // For individually purchasable courses
     const isPurchasableIndividually =
       course.courseTypeId === 4 ||
       course.courseTypes?.some((type) => type.isPurchasableIndividually);
 
-    // Check if the user's subscription covers this course
     const hasPremiumType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'premium'
     );
@@ -1106,14 +917,21 @@ export function CourseHeader({
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
 
+    // Usar ?? en vez de ternario para prefer-nullish-coalescing
     const userCanAccessWithSubscription =
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      (userPlanType === 'Premium' && hasPremiumType) ||
+      (userPlanType === 'Premium' && hasPremiumType) ??
       ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
-    // Always show "Comprar Curso" for individual courses without active subscription
     if (isPurchasableIndividually && !userCanAccessWithSubscription) {
-      return 'Comprar Curso';
+      const price =
+        course.individualPrice ??
+        course.courseTypes?.find((type) => type.isPurchasableIndividually)
+          ?.price ??
+        0;
+      return `Comprar Curso $${price.toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`;
     }
 
     // For logged-in users with subscription that covers this course
@@ -1128,8 +946,8 @@ export function CourseHeader({
     // For users without a session, show appropriate text based on course type
     if (!isSignedIn) {
       if (course.courseTypes && course.courseTypes.length > 0) {
-        if (hasPremiumType) return 'Plan Premium';
-        if (hasProType) return 'Plan Pro';
+        if (hasPremiumType) return 'Inscribirse Al Curso Premium';
+        if (hasProType) return 'Inscribirse Al Curso Pro';
         if (
           course.courseTypes.some(
             (type) =>
@@ -1159,69 +977,29 @@ export function CourseHeader({
     }
 
     if (!isSubscriptionActive) {
+      // Si el curso es individual, mostrar "Comprar Curso $xx.xxx"
+      if (isPurchasableIndividually) {
+        const price =
+          course.individualPrice ??
+          course.courseTypes?.find((type) => type.isPurchasableIndividually)
+            ?.price ??
+          0;
+        return `Comprar Curso $${price.toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`;
+      }
       return 'Obtener Suscripción';
     }
 
     return 'Inscribirse al Curso';
   };
 
-  // Get price display function - update to respect subscription status
   const getButtonPrice = (): string | null => {
-    const buttonUserPlanType = user?.publicMetadata?.planType as string;
-    const buttonUserHasActiveSubscription =
-      isSignedIn &&
-      isSubscriptionActive &&
-      (buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium');
-
-    // Check if the user's subscription covers this course
-    const buttonHasPremiumType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
-    );
-    const buttonHasProType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
-    );
-
-    const userCanAccessWithSubscription =
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ||
-      ((buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium') &&
-        buttonHasProType);
-
-    // Don't show price if user has subscription access
-    if (buttonUserHasActiveSubscription && userCanAccessWithSubscription) {
-      return null;
-    }
-
-    // Show price for purchase type courses
-    if (course.courseTypeId === 4 && course.individualPrice) {
-      return (
-        '$ ' +
-        course.individualPrice.toLocaleString('es-CO', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })
-      );
-    }
-
-    // For individually purchasable courses via courseTypes
-    const purchasableType = course.courseTypes?.find(
-      (type) => type.isPurchasableIndividually
-    );
-    if (purchasableType?.price || course.individualPrice) {
-      const price = course.individualPrice ?? purchasableType?.price ?? 0;
-      return (
-        '$ ' +
-        price.toLocaleString('es-CO', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })
-      );
-    }
-
+    // No mostrar el precio por separado, solo en el texto del botón
     return null;
   };
 
-  // Add a function to handle plan badge click
   const handlePlanBadgeClick = () => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
   };
@@ -1237,14 +1015,7 @@ export function CourseHeader({
     if (localIsEnrolled) {
       return (
         <div className="mb-0 flex justify-center pt-0 pb-2 sm:mb-0 sm:justify-center sm:pt-0">
-          {/* Mobile: vertical, Desktop: horizontal y centrado */}
-          <div className="flex w-full flex-col items-center space-y-4 sm:w-auto sm:flex-row sm:items-center sm:justify-center sm:space-y-0 sm:space-x-4">
-            <Button
-              className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-              disabled
-            >
-              <FaCheck className="mr-2" /> Suscrito Al Curso
-            </Button>
+          <div className="flex w-full flex-col items-center sm:w-auto sm:items-center sm:justify-center">
             <Button
               className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
               onClick={onUnenrollAction}
@@ -1267,29 +1038,47 @@ export function CourseHeader({
     return (
       <div className="mb-2 flex justify-center pt-0 sm:mb-2 sm:justify-center sm:pt-0">
         <div className="flex w-full items-center justify-center sm:w-auto sm:justify-center">
-          <button
-            className="btn"
-            onClick={handleEnrollClick}
-            disabled={isEnrolling || isEnrollClicked}
-          >
-            <strong>
-              {isEnrolling || isEnrollClicked ? (
-                <Icons.spinner className="h-6 w-6" />
-              ) : (
-                <>
-                  {getButtonPrice() && <span>{getButtonPrice()}</span>}
+          {!isSignedIn ? (
+            <SignInButton mode="modal">
+              <button className="btn">
+                <strong>
+                  {/* Elimina el precio aquí */}
                   <span>{getEnrollButtonText()}</span>
-                </>
-              )}
-            </strong>
-            <div id="container-stars">
-              <div id="stars" />
-            </div>
-            <div id="glow">
-              <div className="circle" />
-              <div className="circle" />
-            </div>
-          </button>
+                </strong>
+                <div id="container-stars">
+                  <div id="stars" />
+                </div>
+                <div id="glow">
+                  <div className="circle" />
+                  <div className="circle" />
+                </div>
+              </button>
+            </SignInButton>
+          ) : (
+            <button
+              className="btn"
+              onClick={handleEnrollClick}
+              disabled={isEnrolling || isEnrollClicked}
+            >
+              <strong>
+                {isEnrolling || isEnrollClicked ? (
+                  <Icons.spinner className="h-6 w-6" />
+                ) : (
+                  <>
+                    {/* Elimina el precio aquí */}
+                    <span>{getEnrollButtonText()}</span>
+                  </>
+                )}
+              </strong>
+              <div id="container-stars">
+                <div id="stars" />
+              </div>
+              <div id="glow">
+                <div className="circle" />
+                <div className="circle" />
+              </div>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1316,356 +1105,438 @@ export function CourseHeader({
     fetchForum();
   }, [course.id]);
 
+  // Estado para mostrar el modal de pago
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // --- Fix: define coverImageKey and coverVideoCourseKey at the top ---
+  const coverImageKey = course.coverImageKey;
+  const coverVideoCourseKey =
+    typeof course === 'object' && 'coverVideoCourseKey' in course
+      ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
+      : undefined;
+
+  // --- Fix: define videoVolume and isMuted state ---
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // --- Fix: define courseProduct for modal ---
+  const courseProduct = useMemo(() => {
+    if (course.courseTypeId === 4 && course.individualPrice != null) {
+      return createProductFromCourse(course);
+    }
+    const purchasableType = course.courseTypes?.find(
+      (type) => type.isPurchasableIndividually
+    );
+    // Usar ?? en vez de ternario para prefer-nullish-coalescing
+    const price = course.individualPrice ?? purchasableType?.price ?? null;
+    if (purchasableType && price != null) {
+      return createProductFromCourse({
+        ...course,
+        individualPrice: price,
+      });
+    }
+    return null;
+  }, [course]);
+
+  // --- Fix: define handleVolumeChange and handleToggleMute ---
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setVideoVolume(value);
+    if (videoRef.current) {
+      videoRef.current.volume = value;
+      if (value === 0) {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+      } else {
+        setIsMuted(false);
+        videoRef.current.muted = false;
+      }
+    }
+  };
+
+  const handleToggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        setIsMuted(false);
+        videoRef.current.muted = false;
+        if (videoRef.current.volume === 0) {
+          setVideoVolume(1);
+          videoRef.current.volume = 1;
+        }
+        if (videoRef.current.paused) {
+          videoRef.current.play().catch(() => {
+            // purposely empty: autoplay fallback
+          });
+        }
+      } else {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+      }
+    }
+  };
+
+  // Debug logs
+  useEffect(() => {
+    console.log('CourseHeader Debug:', {
+      courseId: course.id,
+      userId: user?.id,
+      isEnrolled,
+      isSubscriptionActive,
+      subscriptionEndDate,
+      currentFinalGrade,
+      gradesData,
+      gradesError: gradesError?.message,
+      localIsEnrolled,
+      programToastShown,
+    });
+  }, [
+    course.id,
+    user?.id,
+    isEnrolled,
+    isSubscriptionActive,
+    subscriptionEndDate,
+    currentFinalGrade,
+    gradesData,
+    gradesError,
+    localIsEnrolled,
+    programToastShown,
+  ]);
+
   return (
-    <Card className="overflow-hidden bg-gray-800 p-0 text-white">
-      {/* Cambia el CardHeader para reducir el espacio en móviles */}
-      <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
-        <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">
-          <AspectRatio
-            ratio={16 / 9}
-            className="mt-0 w-full pt-0 sm:mt-0 sm:pt-0"
-          >
-            {/* Nueva lógica de portada/video */}
-            {coverVideoCourseKey ? (
-              <div className="relative h-full w-full">
-                <video
-                  ref={videoRef}
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                  className="h-full w-full cursor-pointer object-cover"
-                  autoPlay
-                  loop
-                  playsInline
-                  controls={false}
-                  muted={isMuted}
-                  preload="auto"
-                  poster={
-                    coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                  }
-                  onClick={handleVideoClick}
-                  // Forzar el navegador a usar el tamaño y renderizado óptimo
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
-                  }}
-                />
-                {/* Botón de volumen y pantalla completa */}
-                <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
-                  {/* Botón mute/unmute */}
-                  <button
-                    type="button"
-                    aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
-                    onClick={handleToggleMute}
-                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
-                  >
-                    {isMuted ? (
-                      <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                    ) : (
-                      <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                    )}
-                  </button>
-                  {/* Volumen */}
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={videoVolume}
-                    onChange={handleVolumeChange}
-                    className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
-                    title="Volumen"
-                  />
-                  {/* Botón pantalla completa */}
-                  <button
-                    type="button"
-                    aria-label="Pantalla completa"
-                    onClick={handleFullscreenClick}
-                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
-                  >
-                    <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                  </button>
-                </div>
-              </div>
-            ) : coverImageKey ? (
-              <Image
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
-                alt={course.title}
-                fill
-                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
-                priority
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={blurDataURL}
-              />
-            ) : (
-              <Image
-                src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
-                alt={course.title}
-                fill
-                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
-                priority
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={blurDataURL}
-              />
-            )}
-          </AspectRatio>
-        </div>
-        {/* Removed mobile metadata section from here */}
-      </CardHeader>
-      <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
-        {' '}
-        {/* <-- Ensure no top margin/padding */}
-        {/* Course titles - desktop and mobile */}
-        <div className="w-full">
-          {/* Título en móviles */}
-          <h1 className="-mt-7 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
-            {course.title}
-          </h1>
-
-          {/* Título en desktop - adjusted top margin */}
-          <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-6 sm:block md:text-2xl lg:text-3xl">
-            {course.title}
-          </h1>
-        </div>
-        {/* MOVED: Mobile metadata section - now below title in mobile view */}
-        <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
-          <div className="flex items-center justify-between gap-2">
-            {/* Categoría alineada a la izquierda */}
-            <Badge
-              variant="outline"
-              className="border-primary bg-background text-primary w-fit flex-shrink-0 hover:bg-black/70"
+    <>
+      <Card className="overflow-hidden bg-gray-800 p-0 text-white">
+        {/* Cambia el CardHeader para reducir el espacio en móviles */}
+        <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
+          <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">
+            <AspectRatio
+              ratio={16 / 9}
+              className="mt-0 w-full pt-0 sm:mt-0 sm:pt-0"
             >
-              {course.category?.name}
-            </Badge>
+              {/* Nueva lógica de portada/video */}
+              {coverVideoCourseKey ? (
+                <div className="relative h-full w-full">
+                  <video
+                    ref={videoRef}
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+                    className="h-full w-full cursor-pointer object-cover"
+                    autoPlay
+                    loop
+                    playsInline
+                    controls={false}
+                    muted={isMuted}
+                    preload="auto"
+                    poster={
+                      coverImageKey
+                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                    }
+                    onClick={handleVideoClick}
+                    // Forzar el navegador a usar el tamaño y renderizado óptimo
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
+                    }}
+                  />
+                  {/* Botón de volumen y pantalla completa */}
+                  <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
+                    {/* Botón mute/unmute */}
+                    <button
+                      type="button"
+                      aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                      onClick={handleToggleMute}
+                      className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                    >
+                      {isMuted ? (
+                        <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                      ) : (
+                        <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                      )}
+                    </button>
+                    {/* Volumen */}
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={videoVolume}
+                      onChange={handleVolumeChange}
+                      className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
+                      title="Volumen"
+                    />
+                    {/* Botón pantalla completa */}
+                    <button
+                      type="button"
+                      aria-label="Pantalla completa"
+                      onClick={handleFullscreenClick}
+                      className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                    >
+                      <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : coverImageKey ? (
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
+                  alt={course.title}
+                  fill
+                  className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                  priority
+                  sizes="100vw"
+                  placeholder="blur"
+                  blurDataURL={blurDataURL}
+                />
+              ) : (
+                <Image
+                  src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                  alt={course.title}
+                  fill
+                  className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                  priority
+                  sizes="100vw"
+                  placeholder="blur"
+                  blurDataURL={blurDataURL}
+                />
+              )}
+            </AspectRatio>
+          </div>
+          {/* Removed mobile metadata section from here */}
+        </CardHeader>
+        <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
+          {' '}
+          {/* <-- Ensure no top margin/padding */}
+          {/* Course titles - desktop and mobile */}
+          <div className="w-full">
+            {/* Título en móviles */}
+            <h1 className="-mt-7 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
+              {course.title}
+            </h1>
 
-            {/* Tipo principal + incluidos alineados a la derecha */}
-            <div className="ml-auto flex items-center gap-1 text-xs">
-              {(() => {
-                // Lógica para mostrar el tipo principal y los incluidos
-                if (course.courseTypes && course.courseTypes.length > 0) {
-                  // Determinar el tipo predominante
-                  const hasPremium = course.courseTypes.some(
-                    (type) => type.requiredSubscriptionLevel === 'premium'
-                  );
-                  const hasPro = course.courseTypes.some(
-                    (type) => type.requiredSubscriptionLevel === 'pro'
-                  );
-                  const hasFree = course.courseTypes.some(
-                    (type) =>
-                      type.requiredSubscriptionLevel === 'none' &&
-                      !type.isPurchasableIndividually
-                  );
-                  const hasPurchasable = course.courseTypes.some(
-                    (type) => type.isPurchasableIndividually
-                  );
+            {/* Título en desktop - adjusted top margin */}
+            <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-6 sm:block md:text-2xl lg:text-3xl">
+              {course.title}
+            </h1>
+          </div>
+          {/* MOVED: Mobile metadata section - now below title in mobile view */}
+          <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
+            <div className="flex items-center justify-between gap-2">
+              {/* Categoría alineada a la izquierda */}
+              <Badge
+                variant="outline"
+                className="border-primary bg-background text-primary w-fit flex-shrink-0 hover:bg-black/70"
+              >
+                {course.category?.name}
+              </Badge>
 
-                  // Determinar tipo principal
-                  let mainType = '';
-                  let mainIcon = null;
-                  let mainColor = '';
-
-                  if (hasPurchasable) {
-                    const purchasableType = course.courseTypes.find(
+              {/* Tipo principal + incluidos alineados a la derecha */}
+              <div className="ml-auto flex items-center gap-1 text-xs">
+                {(() => {
+                  // Lógica para mostrar el tipo principal y los incluidos
+                  if (course.courseTypes && course.courseTypes.length > 0) {
+                    // Determinar el tipo predominante
+                    const hasPremium = course.courseTypes.some(
+                      (type) => type.requiredSubscriptionLevel === 'premium'
+                    );
+                    const hasPro = course.courseTypes.some(
+                      (type) => type.requiredSubscriptionLevel === 'pro'
+                    );
+                    const hasFree = course.courseTypes.some(
+                      (type) =>
+                        type.requiredSubscriptionLevel === 'none' &&
+                        !type.isPurchasableIndividually
+                    );
+                    const hasPurchasable = course.courseTypes.some(
                       (type) => type.isPurchasableIndividually
                     );
-                    const price =
-                      course.individualPrice ?? purchasableType?.price ?? 0;
-                    mainType = `$${price.toLocaleString('es-CO')}`;
-                    mainIcon = <FaStar className="text-xs text-blue-500" />;
-                    mainColor = 'text-blue-500';
-                  } else if (hasPremium) {
-                    mainType = 'PREMIUM';
-                    mainIcon = <FaCrown className="text-xs text-purple-500" />;
-                    mainColor = 'text-purple-500';
-                  } else if (hasPro) {
-                    mainType = 'PRO';
-                    mainIcon = <FaCrown className="text-xs text-orange-500" />;
-                    mainColor = 'text-orange-500';
-                  } else if (hasFree) {
-                    mainType = 'GRATUITO';
-                    mainIcon = (
-                      <IoGiftOutline className="text-xs text-green-500" />
+
+                    // Determinar tipo principal
+                    let mainType = '';
+                    let mainIcon = null;
+                    let mainColor = '';
+
+                    if (hasPurchasable) {
+                      const purchasableType = course.courseTypes.find(
+                        (type) => type.isPurchasableIndividually
+                      );
+                      const price =
+                        course.individualPrice ?? purchasableType?.price ?? 0;
+                      mainType = `$${price.toLocaleString('es-CO')}`;
+                      mainIcon = <FaStar className="text-xs text-blue-500" />;
+                      mainColor = 'text-blue-500';
+                    } else if (hasPremium) {
+                      mainType = 'PREMIUM';
+                      mainIcon = (
+                        <FaCrown className="text-xs text-purple-500" />
+                      );
+                      mainColor = 'text-purple-500';
+                    } else if (hasPro) {
+                      mainType = 'PRO';
+                      mainIcon = (
+                        <FaCrown className="text-xs text-orange-500" />
+                      );
+                      mainColor = 'text-orange-500';
+                    } else if (hasFree) {
+                      mainType = 'GRATUITO';
+                      mainIcon = (
+                        <IoGiftOutline className="text-xs text-green-500" />
+                      );
+                      mainColor = 'text-green-500';
+                    }
+
+                    // Crear lista de tipos incluidos (excluyendo el principal)
+                    const includedTypes = [];
+                    if (hasPremium && mainType !== 'PREMIUM')
+                      includedTypes.push('PREMIUM');
+                    if (hasPro && mainType !== 'PRO') includedTypes.push('PRO');
+                    if (hasFree && mainType !== 'GRATUITO')
+                      includedTypes.push('GRATUITO');
+
+                    return (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {/* Tipo principal */}
+                        <div
+                          className={`flex items-center gap-0.5 ${mainColor} font-bold`}
+                        >
+                          {mainIcon}
+                          <span className="text-xs whitespace-nowrap">
+                            {mainType}
+                          </span>
+                        </div>
+
+                        {/* Badge con "Incluido en:" similar al desktop */}
+                        {includedTypes.length > 0 && (
+                          <div className="ml-1">
+                            <Badge
+                              className="cursor-pointer bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500"
+                              onClick={handlePlanBadgeClick}
+                            >
+                              Incluido en:{' '}
+                              <span className="font-bold">
+                                {includedTypes.join(', ')}
+                              </span>
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     );
-                    mainColor = 'text-green-500';
                   }
 
-                  // Crear lista de tipos incluidos (excluyendo el principal)
-                  const includedTypes = [];
-                  if (hasPremium && mainType !== 'PREMIUM')
-                    includedTypes.push('PREMIUM');
-                  if (hasPro && mainType !== 'PRO') includedTypes.push('PRO');
-                  if (hasFree && mainType !== 'GRATUITO')
-                    includedTypes.push('GRATUITO');
-
-                  return (
-                    <div className="flex flex-wrap items-center gap-1">
-                      {/* Tipo principal */}
-                      <div
-                        className={`flex items-center gap-0.5 ${mainColor} font-bold`}
-                      >
-                        {mainIcon}
-                        <span className="text-xs whitespace-nowrap">
-                          {mainType}
+                  // Fallback para cursos con courseType tradicional
+                  if (course.courseTypeId === 4 && course.individualPrice) {
+                    return (
+                      <div className="flex items-center gap-0.5 font-bold text-blue-500">
+                        <FaStar className="text-xs" />
+                        <span className="text-xs">
+                          ${course.individualPrice.toLocaleString('es-CO')}
                         </span>
                       </div>
+                    );
+                  }
 
-                      {/* Badge con "Incluido en:" similar al desktop */}
-                      {includedTypes.length > 0 && (
-                        <div className="ml-1">
-                          <Badge
-                            className="cursor-pointer bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500"
-                            onClick={handlePlanBadgeClick}
-                          >
-                            Incluido en:{' '}
-                            <span className="font-bold">
-                              {includedTypes.join(', ')}
-                            </span>
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                // Fallback para cursos con courseType tradicional
-                if (course.courseTypeId === 4 && course.individualPrice) {
-                  return (
-                    <div className="flex items-center gap-0.5 font-bold text-blue-500">
-                      <FaStar className="text-xs" />
-                      <span className="text-xs">
-                        ${course.individualPrice.toLocaleString('es-CO')}
+                  return null;
+                })()}
+              </div>
+            </div>
+          </div>
+          {/* Course metadata */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2">
+                <div className="hidden flex-wrap items-center gap-2 sm:flex">
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.category?.name}
+                  </Badge>
+                  {getCourseTypeLabel()}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                {/* Ocultar en pantallas pequeñas si no está logueado */}
+                {isSignedIn ?? (
+                  <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
+                    <div className="flex items-center">
+                      <FaCalendar className="mr-2 text-white" />
+                      <span className="text-xs text-white sm:text-sm">
+                        Creado: {formatDateString(course.createdAt)}
                       </span>
                     </div>
-                  );
-                }
-
-                return null;
-              })()}
-            </div>
-          </div>
-        </div>
-        {/* Course metadata */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-              <div className="hidden flex-wrap items-center gap-2 sm:flex">
-                <Badge
-                  variant="outline"
-                  className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                >
-                  {course.category?.name}
-                </Badge>
-                {getCourseTypeLabel()}
+                    <div className="flex items-center">
+                      <FaClock className="mr-2 text-white" />
+                      <span className="text-xs text-white sm:text-sm">
+                        Actualizado: {formatDateString(course.updatedAt)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {/* Mostrar en desktop siempre */}
+                {isSignedIn && (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="flex items-center">
+                      <FaCalendar className="mr-2 text-white" />
+                      <span className="text-xs text-white sm:text-sm">
+                        Creado: {formatDateString(course.createdAt)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <FaClock className="mr-2 text-white" />
+                      <span className="text-xs text-white sm:text-sm">
+                        Actualizado: {formatDateString(course.updatedAt)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              {/* Ocultar en pantallas pequeñas si no está logueado */}
-              {isSignedIn ?? (
-                <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
-                  <div className="flex items-center">
-                    <FaCalendar className="mr-2 text-white" />
-                    <span className="text-xs text-white sm:text-sm">
-                      Creado: {formatDateString(course.createdAt)}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaClock className="mr-2 text-white" />
-                    <span className="text-xs text-white sm:text-sm">
-                      Actualizado: {formatDateString(course.updatedAt)}
-                    </span>
-                  </div>
+            {/* Ocultar número de estudiantes en mobile si no está logueado */}
+            {(isSignedIn ?? window.innerWidth >= 640) && (
+              <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
+                <div className="flex items-center sm:-mt-1">
+                  <FaUserGraduate className="mr-2 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-600 sm:text-base">
+                    {Math.max(0, totalStudents)}{' '}
+                    {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
+                  </span>
                 </div>
-              )}
-              {/* Mostrar en desktop siempre */}
-              {isSignedIn && (
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex items-center">
-                    <FaCalendar className="mr-2 text-white" />
-                    <span className="text-xs text-white sm:text-sm">
-                      Creado: {formatDateString(course.createdAt)}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaClock className="mr-2 text-white" />
-                    <span className="text-xs text-white sm:text-sm">
-                      Actualizado: {formatDateString(course.updatedAt)}
-                    </span>
-                  </div>
+                <div className="flex items-center sm:-mt-1">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <StarIcon
+                      key={index}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                        index < Math.floor(course.rating ?? 0)
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                  <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+                    {course.rating?.toFixed(1)}
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-          {/* Ocultar número de estudiantes en mobile si no está logueado */}
-          {(isSignedIn ?? window.innerWidth >= 640) && (
-            <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-              <div className="flex items-center sm:-mt-1">
-                <FaUserGraduate className="mr-2 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-600 sm:text-base">
-                  {Math.max(0, totalStudents)}{' '}
-                  {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
-                </span>
-              </div>
-              <div className="flex items-center sm:-mt-1">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <StarIcon
-                    key={index}
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                      index < Math.floor(course.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-                <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-                  {course.rating?.toFixed(1)}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-        {/* Course type and instructor info */}
-        <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
-          <div className="w-full space-y-4">
-            <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
-              <div className="flex w-full items-center">
-                <div>
-                  <h3 className="text-base font-extrabold text-white sm:text-lg">
-                    {course.instructorName ?? 'Instructor no encontrado'}
-                  </h3>
-                  <em className="text-sm font-bold text-cyan-300 sm:text-base">
-                    Educador
-                  </em>
-                </div>
-              </div>
-            </div>
-            {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
-            {isEnrolled && (forumId ?? course.forumId) && (
-              <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">
-                <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
-                  <button
-                    className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-                    style={{ minWidth: 240 }}
-                  >
-                    Ir al Foro Del Curso
-                  </button>
-                </Link>
               </div>
             )}
           </div>
-          {/* Modalidad badge solo visible en desktop */}
-          <div className="hidden flex-col items-end gap-4 sm:flex">
-            <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
-              {course.modalidad?.name}
-            </Badge>
-            {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
-            {isEnrolled &&
-              (forumId || course.forumId ? (
-                <div className="mt-2 flex w-full justify-end">
+          {/* Course type and instructor info */}
+          <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
+            <div className="w-full space-y-4">
+              <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
+                <div className="flex w-full items-center">
+                  <div>
+                    <h3 className="text-base font-extrabold text-white sm:text-lg">
+                      {course.instructorName ?? 'Instructor no encontrado'}
+                    </h3>
+                    <em className="text-sm font-bold text-cyan-300 sm:text-base">
+                      Educador
+                    </em>
+                  </div>
+                </div>
+              </div>
+              {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
+              {isEnrolled && (forumId ?? course.forumId) && (
+                <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">
                   <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
                     <button
                       className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
@@ -1675,62 +1546,233 @@ export function CourseHeader({
                     </button>
                   </Link>
                 </div>
-              ) : null)}
-          </div>
-        </div>
-        {/* New buttons container */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Grade button */}
-          {/* Ocultar botón en mobile si no está logueado */}
-          {/* 
-          {(isSignedIn ?? window.innerWidth >= 640) && (
-            <Button
-              onClick={() => setIsGradeModalOpen(true)}
-              disabled={!canAccessGrades}
-              className={cn(
-                'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
-                canAccessGrades
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-400 text-white'
               )}
-              aria-label={
-                !isEnrolled
-                  ? 'Debes inscribirte al curso'
-                  : 'Completa todas las clases para ver tus calificaciones'
-              }
-            >
-              <FaTrophy
+            </div>
+            {/* Modalidad badge solo visible en desktop */}
+            <div className="hidden flex-col items-end gap-4 sm:flex">
+              <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+                {course.modalidad?.name}
+              </Badge>
+              {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
+              {isEnrolled &&
+                (forumId || course.forumId ? (
+                  <div className="mt-2 flex w-full justify-end">
+                    <Link
+                      href={`/estudiantes/foro/${forumId ?? course.forumId}`}
+                    >
+                      <button
+                        className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                        style={{ minWidth: 240 }}
+                      >
+                        Ir al Foro Del Curso
+                      </button>
+                    </Link>
+                  </div>
+                ) : null)}
+            </div>
+          </div>
+          {/* New buttons container */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Grade button */}
+            {/* Ocultar botón en mobile si no está logueado */}
+            {/* 
+            {(isSignedIn ?? window.innerWidth >= 640) && (
+              <Button
+                onClick={() => setIsGradeModalOpen(true)}
+                disabled={!canAccessGrades}
                 className={cn(
-                  'mr-2 h-4 w-4',
-                  !canAccessGrades ? 'text-black' : ''
+                  'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
+                  canAccessGrades
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-400 text-white'
                 )}
-              />
-              <span
-                className={cn(
-                  'text-sm font-bold',
-                  !canAccessGrades ? 'text-black' : ''
-                )}
+                aria-label={
+                  !isEnrolled
+                    ? 'Debes inscribirte al curso'
+                    : 'Completa todas las clases para ver tus calificaciones'
+                }
               >
-                Mis Calificaciones
-              </span>
-            </Button>
+                <FaTrophy
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    !canAccessGrades ? 'text-black' : ''
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-sm font-bold',
+                    !canAccessGrades ? 'text-black' : ''
+                  )}
+                >
+                  Mis Calificaciones
+                </span>
+              </Button>
+            )}
+            */}
+            {/* Price button with space theme */}
+            {course.courseTypeId === 4 &&
+              course.individualPrice &&
+              !isEnrolled && (
+                <div className="flex flex-col items-center gap-4">
+                  {!isSignedIn ? (
+                    <SignInButton mode="modal">
+                      <button className="btn">
+                        <strong>
+                          {/* Solo mostrar el texto con precio */}
+                          <span>
+                            {`Comprar Curso $${course.individualPrice.toLocaleString(
+                              'es-CO',
+                              {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0,
+                              }
+                            )}`}
+                          </span>
+                        </strong>
+                        <div id="container-stars">
+                          <div id="stars" />
+                        </div>
+                        <div id="glow">
+                          <div className="circle" />
+                          <div className="circle" />
+                        </div>
+                      </button>
+                    </SignInButton>
+                  ) : (
+                    <button onClick={handleEnrollClick} className="btn">
+                      <strong>
+                        <span>
+                          {`Comprar Curso $${course.individualPrice.toLocaleString(
+                            'es-CO',
+                            {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }
+                          )}`}
+                        </span>
+                      </strong>
+                      <div id="container-stars">
+                        <div id="stars" />
+                      </div>
+                      <div id="glow">
+                        <div className="circle" />
+                        <div className="circle" />
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+          </div>
+          {renderTopEnrollmentButton()}
+          {/* Course description y botones responsivos */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="prose flex-1">
+              <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-white sm:text-base">
+                {/* Cambiado a blanco */}
+                {course.description ?? 'No hay descripción disponible.'}
+              </p>
+            </div>
+            {/* Eliminar el botón de compra de aquí */}
+          </div>
+          {/* Botón de certificado con texto descriptivo */}
+          {canAccessCertificate && (
+            <div className="mt-6 space-y-4">
+              <div className="relative mx-auto size-40">
+                <Image
+                  src="/diploma-certificate.svg"
+                  alt="Certificado"
+                  fill
+                  className="transition-all duration-300 hover:scale-110"
+                />
+              </div>
+              <p className="text-center font-serif text-lg text-yellow-500 italic">
+                ¡Felicitaciones! Has completado exitosamente el curso con una
+                calificación sobresaliente. Tu certificado está listo para ser
+                visualizado y compartido.
+              </p>
+              <div className="flex justify-center">
+                <Link href={`/estudiantes/certificados/${course.id}`}>
+                  <button className="certificacion relative mx-auto text-base font-bold">
+                    <span className="relative z-10">Ver Tu Certificado</span>
+                  </button>
+                </Link>
+              </div>
+            </div>
           )}
-          */}
-          {/* Price button with space theme */}
-          {course.courseTypeId === 4 &&
-            course.individualPrice &&
-            !isEnrolled && (
-              <div className="flex flex-col items-center gap-4">
-                <button onClick={handleEnrollClick} className="btn">
+          {/* Add Materias section below description */}
+          {course.materias && course.materias.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-cyan-300">
+                Materias asociadas:
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {/* Filter to only show unique materia titles */}
+                {Array.from(
+                  new Map(
+                    course.materias.map((materia) => [materia.title, materia])
+                  ).values()
+                ).map((materia: CourseMateria, index: number) => (
+                  <Badge
+                    key={materia.id}
+                    variant="secondary"
+                    className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
+                  >
+                    {materia.title}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Course lessons */}
+          <CourseContent
+            course={course}
+            isEnrolled={isEnrolled}
+            isSubscriptionActive={isSubscriptionActive}
+            subscriptionEndDate={subscriptionEndDate}
+            isSignedIn={!!isSignedIn}
+            classMeetings={classMeetings} // <-- Pasa classMeetings aquí
+          />
+          {/* --- Botón de inscripción/cancelación abajo como antes --- */}
+          <div className="flex justify-center pt-4">
+            <div className="relative h-32">
+              {localIsEnrolled ? (
+                <div className="flex flex-col space-y-4">
+                  <Button
+                    className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                    disabled
+                  >
+                    <FaCheck className="mr-2" /> Suscrito Al Curso
+                  </Button>
+                  <Button
+                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                    onClick={onUnenrollAction}
+                    disabled={isUnenrolling}
+                  >
+                    {isUnenrolling ? (
+                      <Icons.spinner
+                        className="text-white"
+                        style={{ width: '35px', height: '35px' }}
+                      />
+                    ) : (
+                      'Cancelar Suscripción'
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  className="btn"
+                  onClick={handleEnrollClick}
+                  disabled={isEnrolling || isEnrollClicked}
+                >
                   <strong>
-                    <span>
-                      ${' '}
-                      {course.individualPrice.toLocaleString('es-CO', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })}
-                    </span>
-                    <span>Comprar Curso</span>
+                    {isEnrolling || isEnrollClicked ? (
+                      <Icons.spinner className="h-6 w-6" />
+                    ) : (
+                      <>
+                        {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                        <span>{getEnrollButtonText()}</span>
+                      </>
+                    )}
                   </strong>
                   <div id="container-stars">
                     <div id="stars" />
@@ -1740,134 +1782,39 @@ export function CourseHeader({
                     <div className="circle" />
                   </div>
                 </button>
-              </div>
-            )}
-        </div>
-        {/* --- Botón de inscripción/cancelación arriba de la descripción --- */}
-        {/* Reubica el bloque de inscripción aquí, elimina los duplicados */}
-        {renderTopEnrollmentButton()}
-        {/* Course description y botones responsivos */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="prose flex-1">
-            <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-white sm:text-base">
-              {/* Cambiado a blanco */}
-              {course.description ?? 'No hay descripción disponible.'}
-            </p>
+              )}
+            </div>
           </div>
-          {/* Eliminar el botón de compra de aquí */}
-        </div>
-        {/* Botón de certificado con texto descriptivo */}
-        {canAccessCertificate && (
-          <div className="mt-6 space-y-4">
-            <div className="relative mx-auto size-40">
-              <Image
-                src="/diploma-certificate.svg"
-                alt="Certificado"
-                fill
-                className="transition-all duration-300 hover:scale-110"
+        </CardContent>
+      </Card>
+      {/* --- MODAL DE PAGO PARA CURSO INDIVIDUAL --- */}
+      {showPaymentModal && courseProduct && (
+        <div className="pointer-events-auto fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+          <div className="relative w-full max-w-lg rounded-lg bg-white p-4">
+            <div className="relative mb-4 flex items-center justify-between">
+              <h3 className="w-full text-center text-xl font-semibold text-gray-900">
+                Llena este formulario
+                <br />
+                <span className="font-bold">{courseProduct.name}</span>
+              </h3>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <div>
+              <PaymentForm
+                selectedProduct={courseProduct}
+                requireAuthOnSubmit={!isSignedIn}
+                redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
               />
             </div>
-            <p className="text-center font-serif text-lg text-yellow-500 italic">
-              ¡Felicitaciones! Has completado exitosamente el curso con una
-              calificación sobresaliente. Tu certificado está listo para ser
-              visualizado y compartido.
-            </p>
-            <div className="flex justify-center">
-              <Link href={`/estudiantes/certificados/${course.id}`}>
-                <button className="certificacion relative mx-auto text-base font-bold">
-                  <span className="relative z-10">Ver Tu Certificado</span>
-                </button>
-              </Link>
-            </div>
-          </div>
-        )}
-        {/* Add Materias section below description */}
-        {course.materias && course.materias.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-cyan-300">
-              Materias asociadas:
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {/* Filter to only show unique materia titles */}
-              {Array.from(
-                new Map(
-                  course.materias.map((materia) => [materia.title, materia])
-                ).values()
-              ).map((materia: CourseMateria, index: number) => (
-                <Badge
-                  key={materia.id}
-                  variant="secondary"
-                  className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
-                >
-                  {materia.title}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* Course lessons */}
-        <CourseContent
-          course={course}
-          isEnrolled={isEnrolled}
-          isSubscriptionActive={isSubscriptionActive}
-          subscriptionEndDate={subscriptionEndDate}
-          isSignedIn={!!isSignedIn}
-          classMeetings={classMeetings} // <-- Pasa classMeetings aquí
-        />
-        {/* --- Botón de inscripción/cancelación abajo como antes --- */}
-        <div className="flex justify-center pt-4">
-          <div className="relative h-32">
-            {localIsEnrolled ? (
-              <div className="flex flex-col space-y-4">
-                <Button
-                  className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-                  disabled
-                >
-                  <FaCheck className="mr-2" /> Suscrito Al Curso
-                </Button>
-                <Button
-                  className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-                  onClick={onUnenrollAction}
-                  disabled={isUnenrolling}
-                >
-                  {isUnenrolling ? (
-                    <Icons.spinner
-                      className="text-white"
-                      style={{ width: '35px', height: '35px' }}
-                    />
-                  ) : (
-                    'Cancelar Suscripción'
-                  )}
-                </Button>
-              </div>
-            ) : (
-              <button
-                className="btn"
-                onClick={handleEnrollClick}
-                disabled={isEnrolling || isEnrollClicked}
-              >
-                <strong>
-                  {isEnrolling || isEnrollClicked ? (
-                    <Icons.spinner className="h-6 w-6" />
-                  ) : (
-                    <>
-                      {getButtonPrice() && <span>{getButtonPrice()}</span>}
-                      <span>{getEnrollButtonText()}</span>
-                    </>
-                  )}
-                </strong>
-                <div id="container-stars">
-                  <div id="stars" />
-                </div>
-                <div id="glow">
-                  <div className="circle" />
-                  <div className="circle" />
-                </div>
-              </button>
-            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 }
