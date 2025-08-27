@@ -615,6 +615,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   }, [isOpen, initialSearchQuery]);
 
+  // Nuevo efecto para móviles: al enfocar el input, hacer scroll al inicio
+  useEffect(() => {
+    if (!isDesktop && isOpen && inputRef.current) {
+      const handleFocus = () => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = 0;
+        }
+      };
+      const input = inputRef.current;
+      input.addEventListener('focus', handleFocus);
+      return () => {
+        input.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [isDesktop, isOpen]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
