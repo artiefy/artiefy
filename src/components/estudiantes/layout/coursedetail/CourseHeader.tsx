@@ -897,13 +897,36 @@ export function CourseHeader({
         !type.isPurchasableIndividually
     );
 
+    // Detectar si la suscripción está inactiva o vencida
+    const subscriptionStatus = user?.publicMetadata
+      ?.subscriptionStatus as string;
+    const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+      | string
+      | undefined;
+    const isSubscriptionExpired =
+      subscriptionStatus !== 'active' ||
+      (subscriptionEndDate && new Date(subscriptionEndDate) < new Date());
+
     // Usar ?? en vez de ||
     const userCanAccessWithSubscription =
       (userPlanType === 'Premium' && hasPremiumType) ??
       ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
-    // Si el curso es individual y el usuario no tiene acceso por suscripción
-    if (isPurchasableIndividually && !userCanAccessWithSubscription) {
+    // Si el usuario está inscrito, mantener el texto según el tipo de inscripción original
+    if (isEnrolled) {
+      if (hasPremiumType && userPlanType === 'Premium')
+        return 'Inscrito al Curso Premium';
+      if (hasProType && userPlanType === 'Pro') return 'Inscrito al Curso Pro';
+      if (hasFreeType) return 'Inscrito al Curso Gratis';
+      if (isPurchasableIndividually) return 'Inscrito al Curso Individual';
+      return 'Inscrito al Curso';
+    }
+
+    // Si el curso es individual y el usuario no tiene acceso por suscripción activa, mostrar "Comprar Curso"
+    if (
+      isPurchasableIndividually &&
+      (!userCanAccessWithSubscription || isSubscriptionExpired)
+    ) {
       const price =
         course.individualPrice ??
         course.courseTypes?.find((type) => type.isPurchasableIndividually)
@@ -943,7 +966,6 @@ export function CourseHeader({
 
     // Si el usuario tiene suscripción activa y acceso
     if (isSignedIn && isSubscriptionActive && userCanAccessWithSubscription) {
-      // Si el curso tiene ambos tipos, priorizar Premium
       if (hasPremiumType) return 'Inscribirse al Curso Premium';
       if (hasProType) return 'Inscribirse al Curso Pro';
       return 'Inscribirse al Curso';
@@ -956,7 +978,6 @@ export function CourseHeader({
     }
 
     // Fallback
-    // Si solo hay un tipo de curso y es pro o premium, mostrarlo explícitamente
     if (course.courseTypes && course.courseTypes.length > 0) {
       if (hasPremiumType && !hasProType) return 'Inscribirse al Curso Premium';
       if (hasProType && !hasPremiumType) return 'Inscribirse al Curso Pro';
