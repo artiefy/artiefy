@@ -660,20 +660,21 @@ export default async function StudentListCourses({
                         className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_2px_#22c55e]"
                         aria-label="Clase en vivo pronto"
                       />
-                      <span className="text-[13px] font-bold text-white sm:text-sm">
+                      <span className="text-[13px] font-bold sm:text-sm">
                         <span
-                          className="font-bold"
+                          className="text-primary font-bold"
                           style={{
-                            color: '#000',
-                            textShadow: '0 0 4px #00BDD8, 0 0 8px #3AF4EF',
+                            // Efecto glow azul
+                            textShadow:
+                              '0 0 6px #3AF4EF, 0 0 12px #00BDD8, 0 0 18px #3AF4EF, 0 0 24px #00BDD8',
                             background: 'none',
                             WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'black',
-                            filter:
-                              'drop-shadow(0 0 2px #00BDD8) drop-shadow(0 0 4px #3AF4EF)',
+                            WebkitTextFillColor: 'unset',
+                            filter: 'none',
                           }}
                         >
-                          Clase en vivo: {formatSpanishDate(nextLiveClassDate)}
+                          {/* Cambiado el texto aquí */}
+                          Primera Clase: {formatSpanishDate(nextLiveClassDate)}
                         </span>
                       </span>
                     </div>

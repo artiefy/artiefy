@@ -12,8 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "dev": "next dev --turbopack",
-    "lint": "set NODE_OPTIONS=--max-old-space-size=8192 && next lint",
-    "lint:fix": "set NODE_OPTIONS=--max-old-space-size=8192 && next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
@@ -143,6 +143,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/react": "^19.1.11",
     "@types/react-beautiful-dnd": "^13.1.8",
+    "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^19.1.7",
     "@types/react-modal": "^3.16.3",
     "@types/react-resizable": "^3.0.8",
@@ -178,7 +179,7 @@
     "esbuild": "^0.25.6"
   },
   "ct3aMetadata": {
-    "initVersion": "7.38.1"
+    "initVersion": "7.39.3"
   },
   "engines": {
     "node": ">=18 <23",

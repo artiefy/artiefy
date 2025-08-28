@@ -1,4 +1,5 @@
 import { withNextVideo } from 'next-video/process';
+
 import withPlaiceholder from '@plaiceholder/next';
 import { createJiti } from 'jiti';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ jiti('./src/env.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  typedRoutes: true,
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
