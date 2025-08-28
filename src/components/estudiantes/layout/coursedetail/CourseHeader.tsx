@@ -4,7 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import {
+  usePathname,
+  useRouter as useNextRouter,
+  useSearchParams,
+} from 'next/navigation';
 
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -15,6 +19,7 @@ import {
   FaCrown,
   FaExpand,
   FaStar,
+  FaTimes,
   FaUserGraduate,
   FaVolumeMute,
   FaVolumeUp,
@@ -114,14 +119,15 @@ export function CourseHeader({
   classMeetings = [],
 }: CourseHeaderProps) {
   const { user, isSignedIn } = useUser();
-  const router = useRouter();
+  const router = useNextRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [programToastShown, setProgramToastShown] = useState(false);
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
-
-  // Ref para controlar el video
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Handler para pausar/reproducir con click
   const handleVideoClick = () => {
@@ -748,6 +754,14 @@ export function CourseHeader({
   // Modifica handleEnrollClick para solo usuarios autenticados
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
+      // Guardar flag para autoabrir modal tras login
+      if (
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually)
+      ) {
+        sessionStorage.setItem('openPaymentModalAfterLogin', '1');
+      }
+      // El modal de login se abre automáticamente por <SignInButton>
       return;
     }
 
@@ -775,7 +789,7 @@ export function CourseHeader({
               hasProType)
           ))
       ) {
-        setShowPaymentModal(true);
+        openPaymentModalFlow();
         setIsEnrollClicked(false);
         return;
       }
@@ -1048,10 +1062,12 @@ export function CourseHeader({
       <div className="mb-2 flex justify-center pt-0 sm:mb-2 sm:justify-center sm:pt-0">
         <div className="flex w-full items-center justify-center sm:w-auto sm:justify-center">
           {!isSignedIn ? (
-            <SignInButton mode="modal">
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl={`${pathname}?comprar=1`}
+            >
               <button className="btn">
                 <strong>
-                  {/* Elimina el precio aquí */}
                   <span>{getEnrollButtonText()}</span>
                 </strong>
                 <div id="container-stars">
@@ -1074,7 +1090,6 @@ export function CourseHeader({
                   <Icons.spinner className="h-6 w-6" />
                 ) : (
                   <>
-                    {/* Elimina el precio aquí */}
                     <span>{getEnrollButtonText()}</span>
                   </>
                 )}
@@ -1116,6 +1131,34 @@ export function CourseHeader({
 
   // Estado para mostrar el modal de pago
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [autoPaymentTriggered, setAutoPaymentTriggered] = useState(false);
+
+  // --- NUEVO: función para abrir el modal de pago tras login ---
+  const openPaymentModalFlow = () => {
+    setShowPaymentModal(true);
+  };
+
+  // NUEVO: Abrir modal automáticamente tras login si hay ?comprar=1 en la URL
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      isSignedIn &&
+      !autoPaymentTriggered &&
+      !isEnrolled &&
+      searchParams?.get('comprar') === '1'
+    ) {
+      setAutoPaymentTriggered(true);
+      // Limpiar el query param de la URL para evitar dobles ejecuciones
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.delete('comprar');
+      const newUrl =
+        pathname + (params.toString() ? `?${params.toString()}` : '');
+      router.replace(newUrl);
+      // Ejecuta la función de compra como si el usuario hubiera hecho clic
+      handleEnrollClick();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, isEnrolled, searchParams, pathname]);
 
   // --- Fix: define coverImageKey and coverVideoCourseKey at the top ---
   const coverImageKey = course.coverImageKey;
@@ -1810,8 +1853,9 @@ export function CourseHeader({
                 onClick={() => setShowPaymentModal(false)}
                 className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
                 type="button"
+                aria-label="Cerrar"
               >
-                ×
+                <FaTimes className="h-5 w-5" />
               </button>
             </div>
             <div>
@@ -1819,6 +1863,7 @@ export function CourseHeader({
                 selectedProduct={courseProduct}
                 requireAuthOnSubmit={!isSignedIn}
                 redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
+                // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
               />
             </div>
           </div>
