@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 import { Dialog } from '~/components/estudiantes/ui/dialog';
+import ModalInvitaciones from '~/components/projects/Modals/ModalInvitaciones';
 import ModalSolicitudesParticipacion from '~/components/projects/Modals/ModalSolicitudesParticipacion';
 import {
   getNotifications,
@@ -40,8 +41,11 @@ function formatRelativeTime(date: Date) {
   return 'Hace un momento';
 }
 
-// Extiende NotificationType para permitir 'participation-request'
-type NotificationType = BaseNotificationType | 'participation-request';
+// Extiende NotificationType para permitir 'participation-request' y 'PROJECT_INVITATION'
+type NotificationType =
+  | BaseNotificationType
+  | 'participation-request'
+  | 'PROJECT_INVITATION';
 
 // Extiende NotificationMetadata para permitir projectId y requestType
 type NotificationMetadata = BaseNotificationMetadata & {
@@ -63,6 +67,7 @@ export function NotificationHeader() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalProyectoId, setModalProyectoId] = useState<number | null>(null);
+  const [modalInvitacionesOpen, setModalInvitacionesOpen] = useState(false);
 
   // SWR para notificaciones y contador de no leídas (actualiza cada 10s)
   // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
@@ -124,6 +129,12 @@ export function NotificationHeader() {
       notification.metadata?.projectId !== undefined
     ) {
       setModalProyectoId(notification.metadata.projectId);
+      return;
+    }
+
+    // Si es notificación de invitación a proyecto, abre el modal de invitaciones
+    if (notification.type === 'PROJECT_INVITATION') {
+      setModalInvitacionesOpen(true);
       return;
     }
 
@@ -343,6 +354,14 @@ export function NotificationHeader() {
             </div>
           </div>
         </Dialog>
+      )}
+      {/* NUEVO: Modal de invitaciones a proyectos */}
+      {modalInvitacionesOpen && user?.id && (
+        <ModalInvitaciones
+          isOpen={modalInvitacionesOpen}
+          onClose={() => setModalInvitacionesOpen(false)}
+          userId={user.id}
+        />
       )}
       {/* NUEVO: Modal de solicitudes de participación de proyecto */}
       {modalProyectoId !== null && user?.id && (

@@ -7,13 +7,17 @@ import { notifications } from '~/server/db/schema';
 
 import type { NotificationMetadata, NotificationType } from '~/types';
 
-// Extiende NotificationType para permitir 'participation-request'
-type ParticipationNotificationType = NotificationType | 'participation-request';
+// Extiende NotificationType para permitir 'participation-request' y 'PROJECT_INVITATION'
+type ParticipationNotificationType =
+  | NotificationType
+  | 'participation-request'
+  | 'PROJECT_INVITATION';
 
 // Extiende NotificationMetadata para permitir projectId y requestType
 type ParticipationNotificationMetadata = NotificationMetadata & {
   projectId?: number;
   requestType?: 'participation' | 'resignation';
+  invitedByUserId?: string; // <-- Agregado para permitir invitedByUserId
 };
 
 export async function createNotification({
@@ -30,8 +34,9 @@ export async function createNotification({
   metadata?: ParticipationNotificationMetadata;
 }): Promise<boolean> {
   try {
-    // Solo evitar duplicados para tipos distintos de 'participation-request'
-    const skipDuplicateCheck = type === 'participation-request';
+    // Solo evitar duplicados para tipos distintos de 'participation-request' y 'PROJECT_INVITATION'
+    const skipDuplicateCheck =
+      type === 'participation-request' || type === 'PROJECT_INVITATION';
 
     let whereClause = and(
       eq(notifications.userId, userId),

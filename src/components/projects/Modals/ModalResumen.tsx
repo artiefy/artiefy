@@ -2750,16 +2750,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     objetivosEsp: objetivosEspEditado,
                   });
                 }}
-                className="group flex w-full items-center justify-center gap-2 rounded px-4 py-2 font-semibold text-cyan-300 hover:underline sm:w-auto"
+                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 font-bold text-white shadow transition-all duration-200 hover:bg-cyan-700 hover:underline sm:w-auto"
               >
-                {/* Ícono de flecha izquierda */}
                 <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
                 Objetivos Específicos
               </button>
             )}
             <button
               onClick={handleGuardarProyecto}
-              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg"
+              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg hover:underline"
               disabled={isUpdating}
             >
               {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
@@ -2767,7 +2766,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg"
+              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg hover:underline"
               disabled={isUpdating}
             >
               Cancelar

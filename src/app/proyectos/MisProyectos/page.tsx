@@ -300,6 +300,11 @@ export default function ProyectosPage() {
     Record<number, number>
   >({});
 
+  // Estado para solicitudes de renuncia pendientes por proyecto
+  const [renunciaPendienteMap, setRenunciaPendienteMap] = useState<
+    Record<number, boolean>
+  >({});
+
   // Cargar la cantidad de solicitudes pendientes para todos los proyectos
   useEffect(() => {
     const fetchSolicitudesPendientes = async () => {
@@ -1579,6 +1584,10 @@ export default function ProyectosPage() {
                                       'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
                                     );
                                     // Opcional: actualizar el estado del proyecto para mostrar "Renuncia Pendiente"
+                                    setRenunciaPendienteMap((prev) => ({
+                                      ...prev,
+                                      [project.id]: true,
+                                    }));
                                   } else {
                                     const errorData = await res.json();
                                     alert(
@@ -1599,9 +1608,12 @@ export default function ProyectosPage() {
                                   );
                                 }
                               }}
+                              disabled={!!renunciaPendienteMap[project.id]}
                             >
                               <span className="block truncate text-ellipsis">
-                                {'Solicitar Renuncia'}
+                                {renunciaPendienteMap[project.id]
+                                  ? 'Solicitud Pendiente'
+                                  : 'Solicitar Renuncia'}
                               </span>
                             </Button>
                           )}

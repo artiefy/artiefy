@@ -660,9 +660,8 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         {/* Footer fijo */}
         <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
           <Button
-            variant="ghost"
             onClick={onAnterior}
-            className="group order-1 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-1 sm:px-4"
+            className="group flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 font-bold text-white shadow transition-all duration-200 hover:bg-cyan-700 hover:underline sm:w-auto"
           >
             <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
             <span className="sm:inline">Objetivo General</span>
@@ -670,12 +669,11 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           <Button
             variant="destructive"
             onClick={onClose}
-            className="order-2 rounded px-3 py-2 font-semibold text-white sm:order-2 sm:px-4"
+            className="order-2 rounded px-3 py-2 font-bold text-white sm:order-2 sm:px-4 hover:underline"
           >
             Cancelar
           </Button>
           <Button
-            variant="ghost"
             // Cambia aquí: pasa tipoProyecto en el callback
             onClick={() => {
               // Debug logs para verificar los datos antes de enviar
@@ -708,7 +706,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                 tipoProyecto, // <-- Añade tipoProyecto aquí
               });
             }}
-            className="group order-3 flex items-center justify-center gap-2 rounded px-3 py-2 font-semibold text-cyan-300 hover:underline sm:order-3 sm:px-4"
+            className="group order-3 flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 font-bold text-white shadow transition-all duration-200 hover:bg-cyan-700 hover:underline sm:w-auto"
           >
             Resumen
             <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />

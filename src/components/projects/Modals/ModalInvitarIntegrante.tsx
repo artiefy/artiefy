@@ -36,6 +36,11 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   const [pendingInvitations, setPendingInvitations] = useState<
     Record<string, string>
   >({});
+  const [inviteProgress, setInviteProgress] = useState(0);
+  const [inviteStatusText, setInviteStatusText] = useState('');
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteAlready, setInviteAlready] = useState(false);
   const { user } = useUser(); // Ajusta según tu sistema de auth
 
   const fetchUsers = () => {
@@ -123,9 +128,23 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
 
   const handleInvite = async (userId: string) => {
     if (!user?.id) {
-      alert('No se pudo identificar al usuario actual');
+      setInviteError('No se pudo identificar al usuario actual');
+      setIsInviting(true);
+      setInviteProgress(100);
+      setInviteStatusText('Error: No se pudo identificar al usuario actual');
+      setTimeout(() => {
+        setIsInviting(false);
+        setInviteProgress(0);
+        setInviteStatusText('');
+        setInviteError('');
+      }, 1200);
       return;
     }
+    setIsInviting(true);
+    setInviteProgress(10);
+    setInviteStatusText('Enviando invitación...');
+    setInviteError('');
+    setInviteAlready(false);
     const payload = {
       invitedUserId: userId,
       projectId: proyectoId,
@@ -138,33 +157,67 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
 
     const start = performance.now();
     try {
-      console.log('Iniciando fetch a /api/projects/invitaciones...');
+      setTimeout(() => setInviteProgress(30), 100);
       const fetchStart = performance.now();
       const res = await fetch('/api/projects/invitaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      setInviteProgress(70);
       const fetchEnd = performance.now();
       console.log(`Tiempo de fetch: ${(fetchEnd - fetchStart).toFixed(2)}ms`);
       if (res.ok) {
-        const data = await res.json();
-        console.log('Respuesta JSON exitosa:', data);
-        alert('Invitación enviada correctamente');
-        // Opcional: actualiza el estado local si lo deseas
+        const _data = await res.json();
+        setInviteProgress(100);
+        setInviteStatusText('Invitación enviada correctamente.');
+        setTimeout(() => {
+          setIsInviting(false);
+          setInviteProgress(0);
+          setInviteStatusText('');
+          fetchPendingInvitations();
+        }, 1200);
       } else {
-        const data: { error?: string } = await res.json();
-        console.error('Error al invitar. Respuesta completa:', data);
-        alert(
-          'Error al invitar: ' +
-            (typeof data.error === 'string'
-              ? data.error
-              : JSON.stringify(data) || 'Error desconocido')
-        );
+        const { error } = await res.json();
+        let msg = '';
+        let already = false;
+        if (typeof error === 'string') {
+          if (
+            error.toLowerCase().includes('ya existe') ||
+            error.toLowerCase().includes('ya invitado') ||
+            error.toLowerCase().includes('already invited')
+          ) {
+            msg = 'Este usuario ya fue invitado o ya está en el proyecto.';
+            already = true;
+          } else {
+            msg = error;
+          }
+        } else {
+          msg = 'Error desconocido';
+        }
+        setInviteProgress(100);
+        setInviteStatusText(msg);
+        setInviteError(msg);
+        setInviteAlready(already);
+        setTimeout(() => {
+          setIsInviting(false);
+          setInviteProgress(0);
+          setInviteStatusText('');
+          setInviteError('');
+          setInviteAlready(false);
+          fetchPendingInvitations();
+        }, 1800);
       }
     } catch (_err) {
-      console.error('Error de red al invitar:', _err);
-      alert('Error de red al invitar');
+      setInviteProgress(100);
+      setInviteStatusText('Error de red al invitar');
+      setInviteError('Error de red al invitar');
+      setTimeout(() => {
+        setIsInviting(false);
+        setInviteProgress(0);
+        setInviteStatusText('');
+        setInviteError('');
+      }, 1800);
     }
     const end = performance.now();
     console.log(`Tiempo total handleInvite: ${(end - start).toFixed(2)}ms`);
@@ -174,6 +227,49 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      {/* Barra de progreso de invitación */}
+      {isInviting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+            <div className="mb-4 w-full">
+              <div className="h-6 w-full rounded-full bg-gray-200">
+                <div
+                  className={`h-6 rounded-full transition-all duration-300 ${
+                    inviteError
+                      ? 'bg-red-500'
+                      : inviteAlready
+                        ? 'bg-yellow-400'
+                        : 'bg-teal-500'
+                  }`}
+                  style={{ width: `${inviteProgress}%` }}
+                />
+              </div>
+              <div
+                className={`mt-2 text-center font-semibold ${
+                  inviteError
+                    ? 'text-red-400'
+                    : inviteAlready
+                      ? 'text-yellow-500'
+                      : 'text-gray-500'
+                }`}
+              >
+                {inviteStatusText
+                  ? inviteStatusText
+                  : inviteProgress < 100
+                    ? `Enviando... (${inviteProgress}%)`
+                    : inviteError
+                      ? inviteError
+                      : inviteAlready
+                        ? 'Ya invitado'
+                        : '¡Completado!'}
+              </div>
+            </div>
+            <div className="text-sm text-gray-300">
+              Por favor, espera a que termine el proceso.
+            </div>
+          </div>
+        </div>
+      )}
       <div className="relative mx-auto max-h-[95vh] min-h-[60vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0 shadow-2xl">
         {/* Header sticky y barra de búsqueda sticky, ocupando todo el ancho */}
         <div className="sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900 p-2 backdrop-blur-md">

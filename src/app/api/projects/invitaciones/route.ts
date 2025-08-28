@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { and, eq } from 'drizzle-orm';
 
+// Agrega import para crear notificación
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { projectInvitations } from '~/server/db/schema';
 
@@ -95,6 +97,21 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Crear notificación para el usuario invitado (NO participation-request)
+    await createNotification({
+      userId: invitedUserIdStr,
+      type: 'PROJECT_INVITATION', // Usa un tipo diferente a 'participation-request'
+      title: 'Invitación a un proyecto',
+      message:
+        typeof invitationMessage === 'string'
+          ? invitationMessage
+          : 'Has sido invitado a un proyecto',
+      metadata: {
+        projectId: projectIdNum,
+        invitedByUserId: invitedByUserIdStr,
+      },
+    });
 
     return NextResponse.json(
       { success: true, invitation: result[0] },
