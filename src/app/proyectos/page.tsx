@@ -171,7 +171,7 @@ export default function Component() {
           // Si está mostrando imagen, programa cambio a video en 20s
           timers[project.id] = setTimeout(() => {
             setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
-          }, 10000);
+          }, 5000);
         }
       }
     });

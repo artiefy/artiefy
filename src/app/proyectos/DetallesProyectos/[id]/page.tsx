@@ -1360,7 +1360,7 @@ export default function ProjectDetails() {
         // Mostrar imagen por 20 segundos, luego mostrar video
         timer = setTimeout(() => {
           setShowImage(false);
-        }, 10000);
+        }, 5000);
       }
     }
 

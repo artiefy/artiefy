@@ -793,7 +793,7 @@ export default function ProyectosPage() {
         if (showImageMap[project.id]) {
           timers[project.id] = setTimeout(() => {
             setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
-          }, 10000);
+          }, 5000);
         }
       }
     });
