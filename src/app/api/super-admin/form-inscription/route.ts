@@ -14,6 +14,7 @@ import {
   enrollmentPrograms,
   horario,
   programas,
+  sede,
   userCredentials,
   userInscriptionDetails,
   users,
@@ -615,14 +616,27 @@ export async function POST(req: Request) {
 /* =========================
    GET: para poblar selects
    ========================= */
+/* =========================
+   GET: para poblar selects
+   ========================= */
 export async function GET() {
-  const allDates = await db.select().from(dates);
-  const allComercials = await db.select().from(comercials);
-  const allHorarios = await db.select().from(horario);
+  try {
+    const allDates = await db.select().from(dates);
+    const allComercials = await db.select().from(comercials);
+    const allHorarios = await db.select().from(horario);
+    const allSedes = await db.select().from(sede); // 👈 igual formato que los demás
 
-  return NextResponse.json({
-    dates: allDates,
-    comercials: allComercials,
-    horarios: allHorarios,
-  });
+    return NextResponse.json({
+      dates: allDates,
+      comercials: allComercials,
+      horarios: allHorarios,
+      sedes: allSedes, // 👈 ahora tu front puede mapear s.nombre
+    });
+  } catch (e) {
+    console.error('GET /form-inscription error:', e);
+    return NextResponse.json(
+      { error: 'No se pudieron cargar las configuraciones del formulario' },
+      { status: 500 }
+    );
+  }
 }

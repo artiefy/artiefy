@@ -453,6 +453,7 @@ export const programas = pgTable('programas', {
   categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
+  price: integer('price').notNull().default(0),
 });
 
 // Tabla de materias
@@ -1240,4 +1241,26 @@ export const userCartera = pgTable('user_cartera', {
   // opcional: guarda URL directa si la necesitas (puedes reconstruirla con el BUCKET público)
   receiptUrl: text('receipt_url'),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const sede = pgTable('sede', {
+  id: serial('id').primaryKey(),
+  nombre: text('nombre').notNull(),
+});
+
+// Tabla de pagos
+export const pagos = pgTable('pagos', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  programaId: integer('programa_id')
+    .references(() => programas.id)
+    .notNull(),
+  concepto: varchar('concepto', { length: 100 }).notNull(), // Ej: INSCRIPCIÓN, CUOTA, etc.
+  nroPago: integer('nro_pago').notNull(),
+  fecha: date('fecha').notNull(),
+  metodo: varchar('metodo', { length: 50 }).notNull(),
+  valor: integer('valor').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });

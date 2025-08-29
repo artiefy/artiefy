@@ -36,6 +36,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false); // Estado para manejar el submenú de Cursos
   const [isProgramsOpen, setIsProgramsOpen] = useState(false); // Estado para manejar el submenú de Programas
   const pathname = usePathname();
+  // estados existentes...
+  // 👇 nuevo
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -72,30 +75,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Roles Secundarios',
       id: 'roles-secundarios',
       link: '/dashboard/super-admin/usuariosRoles',
-    },
-    {
-      icon: <FiFileText size={24} />,
-      title: 'Fechas inscritas',
-      id: 'formulario-fechas',
-      link: '/dashboard/super-admin/form-inscription/dates',
-    },
-    {
-      icon: <FiFileText size={24} />,
-      title: 'Comerciales registrados',
-      id: 'formulario-comerciales',
-      link: '/dashboard/super-admin/form-inscription/comercials',
-    },
-    {
-      icon: <FiFileText size={24} />,
-      title: 'Horarios registrados',
-      id: 'formulario-horarios',
-      link: '/dashboard/super-admin/form-inscription/horario',
-    },
-    {
-      icon: <FiFileText size={24} />,
-      title: 'Sedes',
-      id: 'formulario-sedes',
-      link: '/dashboard/super-admin/form-inscription/horario',
     },
   ];
 
@@ -210,7 +189,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <div className="flex items-center">
               <button
                 onClick={() => isMobile && setIsOpen(!isOpen)}
-                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 focus:outline-hidden md:hidden"
+                className="rounded-lg p-2 text-white hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 focus:outline-hidden md:hidden"
                 aria-controls="sidebar"
                 aria-expanded={isOpen}
               >
@@ -281,10 +260,86 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             ))}
             {user?.publicMetadata?.role === 'super-admin' && (
               <>
+                {/* -------- Submenú: Formulario -------- */}
+                <li>
+                  <button
+                    onClick={() => setIsFormOpen(!isFormOpen)}
+                    className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-white transition-all duration-300 hover:text-white"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <FiFileText size={24} />
+                      <span>Formulario</span>
+                    </div>
+                    {isFormOpen ? (
+                      <FiChevronDown size={20} />
+                    ) : (
+                      <FiChevronRight size={20} />
+                    )}
+                  </button>
+
+                  {isFormOpen && (
+                    <ul className="mt-2 ml-6 space-y-2">
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/form-inscription/dates"
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname ===
+                            '/dashboard/super-admin/form-inscription/dates'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
+                        >
+                          Fechas inscritas
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/form-inscription/comercials"
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname ===
+                            '/dashboard/super-admin/form-inscription/comercials'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
+                        >
+                          Comerciales registrados
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/form-inscription/horario"
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname ===
+                            '/dashboard/super-admin/form-inscription/horario'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
+                        >
+                          Horarios registrados
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/form-inscription/sedes"
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname ===
+                            '/dashboard/super-admin/form-inscription/sedes'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
+                        >
+                          Sedes
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+
+                {/* -------- Submenú: Cursos -------- */}
                 <li>
                   <button
                     onClick={() => setIsCoursesOpen(!isCoursesOpen)}
-                    className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white"
+                    className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-white transition-all duration-300 hover:text-white"
                   >
                     <div className="flex items-center space-x-2">
                       <FiBook size={24} />
@@ -297,13 +352,16 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     )}
                   </button>
 
-                  {/* Submenú de Cursos */}
                   {isCoursesOpen && (
                     <ul className="mt-2 ml-6 space-y-2">
                       <li>
                         <Link
                           href="/dashboard/super-admin/cursos"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/cursos'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Todos los Cursos
                         </Link>
@@ -311,7 +369,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/courses/topFeature"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
                             pathname ===
                             '/dashboard/super-admin/courses/topFeature'
                               ? 'bg-primary text-[#01142B]'
@@ -321,11 +379,14 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           Top / Destacados
                         </Link>
                       </li>
-
                       <li>
                         <Link
                           href="/dashboard/super-admin/categories"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/categories'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Categorías
                         </Link>
@@ -333,7 +394,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/modalities"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/modalities'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Modalidades
                         </Link>
@@ -341,7 +406,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/difficulties"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/difficulties'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Niveles
                         </Link>
@@ -349,10 +418,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     </ul>
                   )}
                 </li>
+
+                {/* -------- Submenú: Programas -------- */}
                 <li>
                   <button
                     onClick={() => setIsProgramsOpen(!isProgramsOpen)}
-                    className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white"
+                    className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-white transition-all duration-300 hover:text-white"
                   >
                     <div className="flex items-center space-x-2">
                       <FiBook size={24} />
@@ -365,13 +436,16 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     )}
                   </button>
 
-                  {/* Submenú de Programas */}
                   {isProgramsOpen && (
                     <ul className="mt-2 ml-6 space-y-2">
                       <li>
                         <Link
                           href="/dashboard/super-admin/programs"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/programs'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Todos los programas
                         </Link>
@@ -379,7 +453,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/materias"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
+                            pathname === '/dashboard/super-admin/modalities'
+                              ? 'bg-primary text-[#01142B]'
+                              : ''
+                          }`}
                         >
                           Materias
                         </Link>
@@ -387,7 +465,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <li>
                         <Link
                           href="/dashboard/super-admin/programs/enrolled_users"
-                          className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
+                          className={`hover:bg-secondary block rounded-lg p-2 text-white transition-all duration-300 hover:text-white ${
                             pathname ===
                             '/dashboard/super-admin/programs/enrolled_users'
                               ? 'bg-primary text-[#01142B]'

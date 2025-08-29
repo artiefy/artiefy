@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Image from 'next/image';
+
 import { saveAs } from 'file-saver';
 import { Loader2, Mail, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -82,11 +84,19 @@ interface Student {
   isNew?: boolean;
   isSubOnly?: boolean;
   enrolledInCourse?: boolean;
-
-  // 👉 usaremos este derivado para la columna visible
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
-  carteraStatus?: 'activo' | 'inactivo'; // 👈
+  carteraStatus?: 'activo' | 'inactivo';
+
+  // ➕ CAMPOS PARA CARTERA Y PAGOS
+  document?: string;
+  modalidad?: string;
+  inscripcionValor?: number;
+  paymentMethod?: string;
+  cuota1Fecha?: string;
+  cuota1Metodo?: string;
+  cuota1Valor?: number;
+  valorPrograma?: number;
 }
 
 interface CreateUserResponse {
@@ -277,6 +287,14 @@ export default function EnrolledUsersPage() {
     purchaseDateTo: '',
   });
 
+  function formatCOP(n = 0) {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(n || 0);
+  }
+
   const [limit] = useState(10);
   const [filteredCourseResults, setFilteredCourseResults] = useState<Course[]>(
     []
@@ -333,6 +351,26 @@ export default function EnrolledUsersPage() {
   const [selectedMassiveFields, setSelectedMassiveFields] = useState<string[]>(
     []
   );
+  // Tipos fuertes para pagos/cartera
+  interface Pago {
+    concepto?: string | null;
+    nro_pago?: string | number | null;
+    nroPago?: string | number | null;
+    fecha?: string | number | Date | null;
+    metodo?: string | null;
+    valor?: string | number | null;
+  }
+
+  interface CarteraInfo {
+    programaPrice: number;
+    pagosUsuarioPrograma: Pago[];
+    totalPagado: number;
+    deuda: number;
+    carnetPolizaUniforme?: number; // monto detectado
+    derechosGrado?: number; // monto detectado
+  }
+
+  const [carteraInfo, setCarteraInfo] = useState<CarteraInfo | null>(null);
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
@@ -362,6 +400,46 @@ export default function EnrolledUsersPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
+
+  async function fetchPagosUsuarioPrograma(userId: string, programId: string) {
+    const url = `/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`;
+    console.log('➡️ GET Pagos:', url);
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Error cargando pagos');
+
+    const json: unknown = await res.json();
+    const pagos: Pago[] = Array.isArray((json as { pagos?: unknown }).pagos)
+      ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p) => {
+          const r = p as Record<string, unknown>;
+          return {
+            concepto: typeof r.concepto === 'string' ? r.concepto : null,
+            nro_pago:
+              typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
+                ? r.nro_pago
+                : null,
+            nroPago:
+              typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
+                ? r.nroPago
+                : null,
+            fecha:
+              typeof r.fecha === 'string' ||
+              typeof r.fecha === 'number' ||
+              r.fecha instanceof Date
+                ? (r.fecha as string | number | Date)
+                : null,
+            metodo: typeof r.metodo === 'string' ? r.metodo : null,
+            valor:
+              typeof r.valor === 'string' || typeof r.valor === 'number'
+                ? r.valor
+                : null,
+          } satisfies Pago;
+        })
+      : [];
+
+    console.log('✅ Pagos recibidos:', pagos.length);
+    return pagos;
+  }
 
   useEffect(() => {
     // función asíncrona para cargar programasp
@@ -512,11 +590,101 @@ export default function EnrolledUsersPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openCarteraModal = async (userId: string) => {
-    setCurrentUserId(userId); // ya lo usas para “currentUser”
-    await Promise.all([fetchUserPrograms(userId), fetchUserCourses(userId)]);
-    setCarteraUserId(userId);
-    setShowCarteraModal(true);
+    try {
+      setCurrentUserId(userId);
+
+      // Carga ambos; pero toma los programas del retorno (no del state)
+      const [progs] = await Promise.all([
+        fetchUserPrograms(userId), // 👈 ahora retorna el array
+        fetchUserCourses(userId), // no lo usamos aquí, pero lo mantenemos
+      ]);
+
+      setCarteraUserId(userId);
+
+      // Elige el programa: intenta el que coincide con la fila, sino el primero
+      const preferTitle = students.find((s) => s.id === userId)?.programTitle;
+      const chosen = progs?.find((p) => p.title === preferTitle) ?? progs?.[0];
+
+      const programId = chosen?.id;
+      if (!programId) {
+        // Sin programa: deja el modal con tabla vacía
+        setCarteraInfo({
+          programaPrice: 0,
+          pagosUsuarioPrograma: [],
+          totalPagado: 0,
+          deuda: 0,
+        });
+        setShowCarteraModal(true);
+        return;
+      }
+
+      // 1) Precio del programa (tu endpoint actual)
+      interface ProgramPriceResponse {
+        programaPrice?: number | null;
+      }
+
+      const priceRes = await fetch(
+        `/api/super-admin/enroll_user_program?userId=${userId}&programId=${programId}`
+      );
+      let programaPrice = 0;
+      if (priceRes.ok) {
+        const priceJson = (await priceRes.json()) as ProgramPriceResponse;
+        programaPrice = Number(priceJson.programaPrice ?? 0);
+      }
+
+      // 2) Pagos del usuario en ese programa (nuevo endpoint)
+      const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(
+        userId,
+        programId
+      );
+
+      // Detectar montos por concepto
+      const toNumber = (v: unknown) =>
+        typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0;
+
+      const findMonto = (regex: RegExp) => {
+        const pago = pagosUsuarioPrograma.find((p) =>
+          (p.concepto ?? '').toLowerCase().match(regex)
+        );
+        return toNumber(pago?.valor);
+      };
+
+      // Busca conceptos (ajusta si tus nombres varían)
+      const carnetPolizaUniforme = findMonto(/carnet|p[oó]liza|uniforme/);
+      const derechosGrado = findMonto(/derechos?\s+de\s+grado/);
+
+      // 3) Totales y deuda
+      const totalPagado = pagosUsuarioPrograma.reduce(
+        (sum: number, p: Pago) => {
+          const v =
+            typeof p.valor === 'string'
+              ? Number(p.valor)
+              : typeof p.valor === 'number'
+                ? p.valor
+                : 0;
+          return sum + (Number.isFinite(v) ? v : 0);
+        },
+        0
+      );
+
+      const deuda = Math.max(Number(programaPrice ?? 0) - totalPagado, 0);
+
+      setCarteraInfo({
+        programaPrice,
+        pagosUsuarioPrograma,
+        totalPagado,
+        deuda,
+        carnetPolizaUniforme,
+        derechosGrado,
+      });
+
+      setShowCarteraModal(true);
+    } catch (e) {
+      console.error('openCarteraModal error:', e);
+      alert('No se pudieron cargar los pagos.');
+    }
   };
+
   const markCarteraActivo = async () => {
     if (!carteraUserId) return;
     const res = await fetch('/api/super-admin/enroll_user_program', {
@@ -677,9 +845,10 @@ export default function EnrolledUsersPage() {
       `/api/super-admin/enroll_user_program/programsUser?userId=${userId}`
     );
     if (!res.ok) throw new Error('Error cargando programas');
-    // aquí ya no hay `any`
+
     const data = (await res.json()) as UserProgramsResponse;
-    setUserPrograms(data.programs);
+    setUserPrograms(data.programs); // deja el state como antes
+    return data.programs; // 👈 DEVUELVE el array para usarlo al instante
   }
 
   const handleCreateUser = async () => {
@@ -2180,126 +2349,320 @@ export default function EnrolledUsersPage() {
         )}
         {showCarteraModal && currentUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-md rounded-lg bg-white p-6 text-gray-900 dark:bg-gray-800 dark:text-gray-100">
-              <h3 className="mb-2 text-lg font-semibold">Gestión de Cartera</h3>
-              <p className="mb-4 text-sm text-gray-500 dark:text-gray-300">
-                {currentUser.name} — Estado{' '}
-                <strong
-                  className={
-                    currentUser.carteraStatus === 'activo'
-                      ? 'text-green-500'
-                      : 'text-red-500'
-                  }
-                >
-                  {currentUser.carteraStatus === 'activo'
-                    ? 'Al día'
-                    : 'En cartera'}
-                </strong>
-              </p>
-
-              <div className="mb-4 space-y-1 text-sm">
-                <div>
-                  <strong>Última fecha de pago:</strong>{' '}
-                  {currentUser.purchaseDate
-                    ? new Date(currentUser.purchaseDate)
-                        .toISOString()
-                        .split('T')[0]
-                    : '-'}
-                </div>
-                <div>
-                  <strong>Fin de suscripción:</strong>{' '}
-                  {currentUser.subscriptionEndDate
-                    ? new Date(currentUser.subscriptionEndDate)
-                        .toISOString()
-                        .split('T')[0]
-                    : '-'}
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <h4 className="font-semibold">Programas</h4>
-                <ul className="list-inside list-disc text-sm">
-                  {userPrograms.length === 0 ? (
-                    <li className="text-gray-500">No inscrito</li>
-                  ) : (
-                    userPrograms.map((p) => <li key={p.id}>{p.title}</li>)
-                  )}
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-semibold">Cursos</h4>
-                <ul className="list-inside list-disc text-sm">
-                  {userCourses.length === 0 ? (
-                    <li className="text-gray-500">No inscrito</li>
-                  ) : (
-                    userCourses.map((c) => <li key={c.id}>{c.title}</li>)
-                  )}
-                </ul>
-              </div>
-
-              {currentUser.carteraStatus !== 'activo' ? (
-                <div className="mb-4 space-y-3">
-                  <button
-                    onClick={markCarteraActivo}
-                    className="w-full rounded bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
-                  >
-                    Marcar AL DÍA
-                  </button>
-
-                  <div className="rounded border border-gray-300 p-3 dark:border-gray-700">
-                    <label className="mb-2 block text-sm font-medium">
-                      Subir comprobante de pago
-                    </label>
-
-                    {/* input oculto: se abre desde el botón */}
-                    <input
-                      ref={fileInputRef}
-                      id="carteraReceipt"
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg"
-                      className="hidden"
-                      onChange={(e) =>
-                        setCarteraReceipt(e.target.files?.[0] ?? null)
-                      }
+            <div className="w-full max-w-4xl rounded-lg bg-white text-gray-900 shadow-2xl dark:bg-gray-800 dark:text-gray-100">
+              {/* CABECERA / LOGOS */}
+              <div className="border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
+                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                  {/* Logos: Artiefy primero */}
+                  <div className="flex items-center gap-4">
+                    <Image
+                      src="/artiefy-logo.png"
+                      alt="Artiefy"
+                      width={160}
+                      height={48}
+                      className="h-10 w-auto object-contain sm:h-12"
                     />
+                    <Image
+                      src="/logo-ponao.png"
+                      alt="PONAO"
+                      width={160}
+                      height={48}
+                      className="h-10 w-auto object-contain sm:h-12"
+                    />
+                  </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
-                      >
-                        Elegir archivo
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={!carteraReceipt}
-                        onClick={uploadCarteraReceipt}
-                        className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        Subir comprobante
-                      </button>
-                    </div>
-
-                    {/* Nombre del archivo seleccionado */}
-                    {carteraReceipt && (
-                      <p className="mt-2 text-xs text-gray-500">
-                        Archivo seleccionado:{' '}
-                        <strong>{carteraReceipt.name}</strong>
-                      </p>
-                    )}
+                  <div className="text-center sm:text-right">
+                    <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-300">
+                      POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
+                    </p>
+                    <h3 className="text-lg font-bold">
+                      FACTURA PAGO DE MATRÍCULA
+                    </h3>
                   </div>
                 </div>
-              ) : null}
+              </div>
 
-              <button
-                onClick={() => setShowCarteraModal(false)}
-                className="w-full rounded bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700"
-              >
-                Cerrar
-              </button>
+              {/* INFO INSTITUCIÓN / ESTUDIANTE */}
+              <div className="grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm sm:grid-cols-2 sm:p-6 dark:border-gray-700">
+                <div className="space-y-1">
+                  <p>
+                    <span className="font-semibold">NOMBRE ESTUDIANTE: </span>
+                    {currentUser.name ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">CC: </span>
+                    {currentUser.document ?? currentUser.id ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">CELULAR: </span>
+                    {currentUser.phone ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">PROGRAMA: </span>
+                    {userPrograms?.[0]?.title ?? '—'}
+                    <span className="ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                      {currentUser.modalidad ?? 'virtual'}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">FECHA: </span>
+                    {new Date().toISOString().split('T')[0]}
+                  </p>
+                </div>
+
+                <div className="space-y-1 sm:text-right">
+                  <p>
+                    <span className="font-semibold">DIRECCIÓN: </span>
+                    {currentUser.address ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">CIUDAD: </span>
+                    {currentUser.city ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">EMAIL: </span>
+                    {currentUser.email ?? '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">ESTADO: </span>
+                    <strong
+                      className={
+                        currentUser.carteraStatus === 'activo'
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }
+                    >
+                      {currentUser.carteraStatus === 'activo'
+                        ? 'Al día'
+                        : 'En cartera'}
+                    </strong>
+                  </p>
+                  <p>
+                    <span className="font-semibold">FIN SUSCRIPCIÓN: </span>
+                    {currentUser.subscriptionEndDate
+                      ? new Date(currentUser.subscriptionEndDate)
+                          .toISOString()
+                          .split('T')[0]
+                      : '-'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">
+                      CARNET / PÓLIZA / UNIFORME:{' '}
+                    </span>
+                    {formatCOP(carteraInfo?.carnetPolizaUniforme ?? 0)}
+                  </p>
+                </div>
+              </div>
+
+              {/* TABLA DE PAGOS */}
+              <div className="p-4 sm:p-6">
+                <h4 className="mb-3 text-base font-semibold">
+                  Detalle de pagos
+                </h4>
+                <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                  <table className="min-w-full border-collapse text-sm">
+                    <thead className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                      <tr>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                          PRODUCTO
+                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-center dark:border-gray-600">
+                          N° PAGO
+                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                          FECHA DE PAGO
+                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                          MÉTODO DE PAGO
+                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                          VALOR
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* ➤ 12 cuotas fijas */}
+                      {Array.from({ length: 12 }, (_, idx) => {
+                        const cuotaNum = idx + 1;
+                        const pago = carteraInfo?.pagosUsuarioPrograma?.[idx]; // si tu backend trae en orden, perfecto
+
+                        const fechaISO =
+                          pago?.fecha != null
+                            ? (() => {
+                                const d =
+                                  typeof pago.fecha === 'string' ||
+                                  typeof pago.fecha === 'number'
+                                    ? new Date(pago.fecha)
+                                    : pago.fecha;
+                                return isNaN(d.getTime())
+                                  ? '-'
+                                  : d.toISOString().split('T')[0];
+                              })()
+                            : '-';
+
+                        const valorNum =
+                          typeof pago?.valor === 'string'
+                            ? Number(pago.valor)
+                            : typeof pago?.valor === 'number'
+                              ? pago.valor
+                              : 0;
+
+                        return (
+                          <tr
+                            key={cuotaNum}
+                            className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
+                          >
+                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                              {pago?.concepto ?? `Cuota ${cuotaNum}`}
+                            </td>
+                            <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
+                              {pago?.nro_pago ?? pago?.nroPago ?? `${cuotaNum}`}
+                            </td>
+                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                              {fechaISO}
+                            </td>
+                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                              {pago?.metodo ?? '-'}
+                            </td>
+                            <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
+                              {formatCOP(
+                                Number.isFinite(valorNum) ? valorNum : 0
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* ➤ Fila fija de DERECHOS DE GRADO */}
+                      <tr className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900">
+                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                          DERECHOS DE GRADO
+                        </td>
+                        <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
+                          {/* número de pago si lo tienes, o '-' */}-
+                        </td>
+                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                          {/* fecha si la tienes, o '-' */}-
+                        </td>
+                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                          {/* método si lo tienes, o '-' */}-
+                        </td>
+                        <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
+                          {formatCOP(carteraInfo?.derechosGrado ?? 0)}
+                        </td>
+                      </tr>
+                    </tbody>
+
+                    <tfoot>
+                      <tr className="bg-gray-50 font-semibold dark:bg-gray-900">
+                        <td className="px-3 py-2" colSpan={4}>
+                          VALOR PROGRAMA
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            maximumFractionDigits: 0,
+                          }).format(carteraInfo?.programaPrice ?? 0)}
+                        </td>
+                      </tr>
+                      <tr className="bg-gray-50 dark:bg-gray-900">
+                        <td className="px-3 py-2 font-semibold" colSpan={4}>
+                          VALOR PAGADO
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            maximumFractionDigits: 0,
+                          }).format(carteraInfo?.totalPagado ?? 0)}
+                        </td>
+                      </tr>
+                      <tr className="bg-gray-50 dark:bg-gray-900">
+                        <td className="px-3 py-2 font-semibold" colSpan={4}>
+                          DEUDA RESTANTE
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold text-red-600">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            maximumFractionDigits: 0,
+                          }).format(carteraInfo?.deuda ?? 0)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                {/* Acciones de cartera (cuando NO está al día) */}
+                {currentUser.carteraStatus !== 'activo' && (
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={markCarteraActivo}
+                      className="w-full rounded bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Marcar AL DÍA
+                    </button>
+
+                    <div className="rounded border border-gray-300 p-3 dark:border-gray-700">
+                      <label className="mb-2 block text-sm font-medium">
+                        Subir comprobante de pago
+                      </label>
+
+                      <input
+                        ref={fileInputRef}
+                        id="carteraReceipt"
+                        type="file"
+                        accept="application/pdf,image/png,image/jpeg"
+                        className="hidden"
+                        onChange={(e) =>
+                          setCarteraReceipt(e.target.files?.[0] ?? null)
+                        }
+                      />
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
+                        >
+                          Elegir archivo
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!carteraReceipt}
+                          onClick={uploadCarteraReceipt}
+                          className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          Subir comprobante
+                        </button>
+
+                        {carteraReceipt && (
+                          <p className="mt-2 w-full text-xs text-gray-500">
+                            Archivo seleccionado:{' '}
+                            <strong>{carteraReceipt.name}</strong>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* FOOTER / BOTONES */}
+              <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
+                <button
+                  onClick={() => window.print()}
+                  className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                  Imprimir / Guardar PDF
+                </button>
+                <button
+                  onClick={() => setShowCarteraModal(false)}
+                  className="rounded bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-700"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         )}
