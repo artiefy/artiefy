@@ -300,6 +300,11 @@ export default function ProyectosPage() {
     Record<number, number>
   >({});
 
+  // Estado para solicitudes de renuncia pendientes por proyecto
+  const [renunciaPendienteMap, setRenunciaPendienteMap] = useState<
+    Record<number, boolean>
+  >({});
+
   // Cargar la cantidad de solicitudes pendientes para todos los proyectos
   useEffect(() => {
     const fetchSolicitudesPendientes = async () => {
@@ -788,7 +793,7 @@ export default function ProyectosPage() {
         if (showImageMap[project.id]) {
           timers[project.id] = setTimeout(() => {
             setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
-          }, 10000);
+          }, 5000);
         }
       }
     });
@@ -1434,12 +1439,6 @@ export default function ProyectosPage() {
                           >
                             {project.isPublic ? 'Publico' : 'Privado'}
                           </Badge>
-                          <Badge
-                            variant="secondary"
-                            className="border-blue-400/30 bg-slate-700 text-xs text-blue-400 sm:text-sm"
-                          >
-                            {project.status}
-                          </Badge>
                         </div>
 
                         {/* Progress Bar */}
@@ -1585,6 +1584,10 @@ export default function ProyectosPage() {
                                       'Solicitud de renuncia enviada exitosamente. El responsable del proyecto la revisará.'
                                     );
                                     // Opcional: actualizar el estado del proyecto para mostrar "Renuncia Pendiente"
+                                    setRenunciaPendienteMap((prev) => ({
+                                      ...prev,
+                                      [project.id]: true,
+                                    }));
                                   } else {
                                     const errorData = await res.json();
                                     alert(
@@ -1605,9 +1608,12 @@ export default function ProyectosPage() {
                                   );
                                 }
                               }}
+                              disabled={!!renunciaPendienteMap[project.id]}
                             >
                               <span className="block truncate text-ellipsis">
-                                {'Solicitar Renuncia'}
+                                {renunciaPendienteMap[project.id]
+                                  ? 'Solicitud Pendiente'
+                                  : 'Solicitar Renuncia'}
                               </span>
                             </Button>
                           )}

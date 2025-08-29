@@ -213,6 +213,38 @@ git config user.email "artiefy4@gmail.com"
 
 ---
 
+## Configurar usuario de Git por proyecto
+
+Para que cada proyecto use una cuenta de Git diferente:
+
+1. Abre la carpeta del proyecto (por ejemplo, `gonzaapp`).
+2. Ejecuta:
+
+```bash
+git config user.name "techotaku1"
+git config user.email "correo@trabajo.com"
+```
+
+En otro proyecto (por ejemplo, personal con artiefy):
+
+```bash
+git config user.name "artiefy"
+git config user.email "correo@personal.com"
+```
+
+Esto asegura que cada commit dentro de ese repositorio use la cuenta correcta.
+
+### Ver la configuración local de Git
+
+Dentro de un repositorio, puedes ver la configuración local con:
+
+```bash
+git config --list --local
+git remote -v
+```
+
+---
+
 ## Precommit config
 
 - pip install pre-commit

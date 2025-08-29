@@ -1227,6 +1227,47 @@ export const horario = pgTable('horario', {
   schedule: text('contact').notNull(),
 });
 
+export const projectInvitations = pgTable('project_invitations', {
+  id: serial('id').primaryKey(),
+  invitedUserId: text('invited_user_id')
+    .references(() => users.id)
+    .notNull(),
+  projectId: integer('project_id')
+    .references(() => projects.id)
+    .notNull(),
+  invitedByUserId: text('invited_by_user_id')
+    .references(() => users.id)
+    .notNull(),
+  status: text('status', {
+    enum: ['pending', 'accepted', 'rejected'],
+  })
+    .default('pending')
+    .notNull(),
+  invitationMessage: text('invitation_message'),
+  responseMessage: text('response_message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  respondedAt: timestamp('responded_at'),
+});
+
+// Relaciones para projectInvitations
+export const projectInvitationsRelations = relations(
+  projectInvitations,
+  ({ one }) => ({
+    invitedUser: one(users, {
+      fields: [projectInvitations.invitedUserId],
+      references: [users.id],
+    }),
+    project: one(projects, {
+      fields: [projectInvitations.projectId],
+      references: [projects.id],
+    }),
+    invitedByUser: one(users, {
+      fields: [projectInvitations.invitedByUserId],
+      references: [users.id],
+    }),
+  })
+);
 // Gestión de cartera por usuario (estado y comprobante opcional)
 export const userCartera = pgTable('user_cartera', {
   id: serial('id').primaryKey(),

@@ -40,6 +40,8 @@ export interface ProjectDetail {
   fecha_inicio?: string;
   fecha_fin?: string;
   tipo_visualizacion?: 'meses' | 'dias';
+  dias_necesarios?: number; // <-- Añadido
+  dias_estimados?: number; // <-- Añadido
 }
 
 // Obtener un proyecto específico por ID, incluyendo objetivos y actividades
@@ -123,11 +125,12 @@ export async function getProjectById(
       : '',
     objetivos_especificos,
     actividades: actividadesSimple,
-    // Usa directamente las fechas de la BD (projects)
     fecha_inicio: project.fecha_inicio ?? undefined,
     fecha_fin: project.fecha_fin ?? undefined,
     tipo_visualizacion: project.tipo_visualizacion ?? undefined,
     publicComment: false,
+    dias_necesarios: project.dias_necesarios ?? undefined, // <-- Añadido
+    dias_estimados: project.dias_estimados ?? undefined, // <-- Añadido
   };
 
   console.info(`[getProjectById] Returning project:`, projectDetail);

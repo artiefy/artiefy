@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
 
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import {
   projectParticipationRequests,
   projectsTaken,
   users,
 } from '~/server/db/schema';
+import { projects } from '~/server/db/schema';
 
 // Crear solicitud de participación
 export async function POST(request: Request) {
@@ -119,6 +121,39 @@ export async function POST(request: Request) {
         status: 'pending',
       })
       .returning();
+
+    // --- NUEVO: Crear notificación para el responsable del proyecto ---
+    // Obtener el responsable del proyecto
+    const project = await db
+      .select({ userId: projects.userId, name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    if (project.length && project[0].userId) {
+      const responsableId = project[0].userId;
+      let notifTitle = '';
+      let notifMsg = '';
+      if (requestType === 'participation') {
+        notifTitle = 'Nueva solicitud de participación';
+        notifMsg = `Tienes una nueva solicitud para unirse a tu proyecto "${project[0].name ?? ''}".`;
+      } else {
+        notifTitle = 'Nueva solicitud de renuncia';
+        notifMsg = `Un integrante ha solicitado renunciar al proyecto "${project[0].name ?? ''}".`;
+      }
+      // Crea la notificación (ignora el resultado)
+      await createNotification({
+        userId: responsableId,
+        type: 'participation-request', // <-- ahora permitido por el type extendido
+        title: notifTitle,
+        message: notifMsg,
+        metadata: {
+          projectId,
+          requestType,
+        },
+      });
+    }
+    // --- FIN NUEVO ---
 
     return NextResponse.json(newRequest);
   } catch (error) {

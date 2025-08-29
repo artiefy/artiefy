@@ -90,7 +90,7 @@ export default function ModalGenerarProyecto({
     // Mostrar el cuerpo que se envía
     console.log('Cuerpo enviado a IA:', form);
     try {
-      const res = await fetch('http://3.142.77.31:5000/plan_project', {
+      const res = await fetch('http://agentes-alb-900454314.us-east-2.elb.amazonaws.com/plan_project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
