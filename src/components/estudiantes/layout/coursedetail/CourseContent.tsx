@@ -35,6 +35,7 @@ import type { ClassMeeting, Course } from '~/types';
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
 import '~/styles/pattenrliveclass.css';
+import '~/styles/buttonneon.css';
 
 interface CourseContentProps {
   course: Course;
@@ -657,7 +658,7 @@ export function CourseContent({
 
       {/* --- Clases en Vivo y Grabadas --- */}
       {(upcomingMeetings.length > 0 || recordedMeetings.length > 0) && (
-        <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
+        <div className="bg-background mb-8 rounded-lg border p-6 shadow-sm">
           {/* Fondo animado SOLO para el bloque interno de bienvenida/no inscrito */}
           {!isSignedIn || !isEnrolled ? (
             <div
@@ -825,20 +826,20 @@ export function CourseContent({
                 <div className={cn('mb-6')}>
                   {/* Header with toggle button for live classes */}
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-background text-xl font-bold">
+                    <h2 className="text-xl font-bold text-white">
                       Clases en Vivo
                     </h2>
                     <button
                       onClick={toggleLiveClasses}
                       className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
                     >
-                      <span className="tracking-wide">
+                      <span className="tracking-wide text-white">
                         {showLiveClasses ? 'Ver menos' : 'Ver más'}
                       </span>
                       {showLiveClasses ? (
-                        <FaChevronUp className="text-black transition-transform duration-200" />
+                        <FaChevronUp className="text-white transition-transform duration-200" />
                       ) : (
-                        <FaChevronDown className="text-black transition-transform duration-200" />
+                        <FaChevronDown className="text-white transition-transform duration-200" />
                       )}
                     </button>
                   </div>
@@ -902,12 +903,15 @@ export function CourseContent({
                       let buttonDisabled = false;
                       let buttonText = '';
                       let buttonIcon = null;
+                      let buttonExtraClass = '';
 
                       if (isNext && !isJoinEnabled) {
-                        buttonBg = 'bg-yellow-400 text-gray-900';
+                        // Cambia el color a azul aguamarina y fuerza el texto en una sola línea
+                        buttonBg = 'buttonneon-aqua';
                         buttonDisabled = true;
                         buttonText = 'Próxima Clase';
                         buttonIcon = <FaLock className="size-4" />;
+                        buttonExtraClass = 'buttonneon';
                       } else if (isToday && isJoinEnabled) {
                         buttonBg = 'bg-green-600 text-white hover:bg-green-700';
                         buttonDisabled = false;
@@ -929,13 +933,10 @@ export function CourseContent({
                         <div
                           key={meeting.id}
                           className={cn(
-                            'animate-glow-blue relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
-                            'bg-gray-800'
+                            'relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
+                            'bg-gray-800',
+                            'hover:neon-live-class'
                           )}
-                          style={{
-                            boxShadow:
-                              '0 0 16px 2px #3AF4EF, 0 0 8px 1px #01142B inset',
-                          }}
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <FaVideo
@@ -1002,28 +1003,30 @@ export function CourseContent({
                                 Hoy
                               </Badge>
                             )}
-                            {isNext && (
+                            {/* {isNext && (
                               <Badge
                                 variant="outline"
                                 className="rounded-full border border-yellow-500 bg-yellow-100 px-3 py-1 font-bold text-yellow-700 shadow-sm sm:ml-auto"
                               >
                                 Próxima Clase
                               </Badge>
-                            )}
+                            )} */}
+                            {/* Eliminado el Badge de Próxima Clase */}
                           </div>
                           {/* Botón al fondo, debajo de badges en mobile, a la derecha en desktop */}
                           <div className="mt-3 flex min-w-fit flex-col sm:mt-0 sm:ml-4">
                             {meeting.joinUrl && (
                               <>
-                                {/* Botón para "Próxima Clase" (amarillo, nunca clickable) */}
+                                {/* Botón para "Próxima Clase" (neón, nunca clickable) */}
                                 {isNext && !isJoinEnabled && (
                                   <button
                                     type="button"
-                                    className={`${buttonClass} ${buttonBg}`}
+                                    className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
                                     disabled={buttonDisabled}
                                     style={{
                                       fontFamily:
                                         'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                      whiteSpace: 'nowrap',
                                     }}
                                   >
                                     {buttonIcon}
@@ -1117,20 +1120,20 @@ export function CourseContent({
                 <div className="mb-6">
                   {/* Header with toggle button for recorded classes */}
                   <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-background text-lg font-bold">
+                    <h3 className="text-lg font-bold text-white">
                       Clases Grabadas
                     </h3>
                     <button
                       onClick={toggleRecordedClasses}
                       className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
                     >
-                      <span className="tracking-wide">
+                      <span className="tracking-wide text-white">
                         {showRecordedClasses ? 'Ver menos' : 'Ver más'}
                       </span>
                       {showRecordedClasses ? (
-                        <FaChevronUp className="text-black transition-transform duration-200" />
+                        <FaChevronUp className="text-white transition-transform duration-200" />
                       ) : (
-                        <FaChevronDown className="text-black transition-transform duration-200" />
+                        <FaChevronDown className="text-white transition-transform duration-200" />
                       )}
                     </button>
                   </div>
