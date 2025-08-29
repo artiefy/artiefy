@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from '@clerk/nextjs'; // Importar useUser de Clerk
+import { useUser } from '@clerk/nextjs';
 import {
   AlertCircle,
   Calendar,
@@ -13,8 +13,8 @@ import {
   Clock,
   EyeOff,
   Globe,
-  ImageOff, // agrega este import
-  Maximize, // agrega este import
+  ImageOff,
+  Maximize,
   Trash2,
   Users,
   VideoOff,
@@ -115,6 +115,8 @@ export default function ProjectDetails() {
       email: string;
       github?: string;
       linkedin?: string;
+      firstName?: string;
+      lastName?: string;
     }[]
   >([]);
 
@@ -198,6 +200,8 @@ export default function ProjectDetails() {
     email: string;
     github?: string;
     linkedin?: string;
+    firstName?: string;
+    lastName?: string;
   }
 
   // Cambia la firma de fetchIntegrantes para evitar any
@@ -253,6 +257,8 @@ export default function ProjectDetails() {
                   github?: string;
                   linkedin?: string;
                   especialidad?: string;
+                  firstName?: string;
+                  lastName?: string;
                 } = {};
                 if (id) {
                   try {
@@ -270,7 +276,7 @@ export default function ProjectDetails() {
                 }
 
                 const integranteFinal: Integrante = {
-                  id, // <-- always string | number
+                  id,
                   nombre: (userInfo.name ??
                     obj?.nombre ??
                     obj?.name ??
@@ -284,6 +290,18 @@ export default function ProjectDetails() {
                   linkedin: (userInfo.linkedin ??
                     obj?.linkedin ??
                     '') as string,
+                  firstName:
+                    typeof userInfo.firstName === 'string'
+                      ? userInfo.firstName
+                      : typeof obj?.firstName === 'string'
+                        ? (obj.firstName as string)
+                        : undefined,
+                  lastName:
+                    typeof userInfo.lastName === 'string'
+                      ? userInfo.lastName
+                      : typeof obj?.lastName === 'string'
+                        ? (obj.lastName as string)
+                        : undefined,
                 };
                 // Log del resultado final de cada integrante
                 console.log('Integrante final:', integranteFinal);
@@ -331,6 +349,221 @@ export default function ProjectDetails() {
     return map;
   }, [project?.actividades]);
 
+  // --- Fix: Always call useMemo, never conditionally or after early return ---
+  const integrantesConResponsable = React.useMemo(() => {
+    if (!project?.userId) return integrantes;
+    const responsableId = project.userId;
+    const responsableNombre = responsable || 'Responsable del Proyecto';
+    // Filtra cualquier duplicado del responsable
+    const otrosIntegrantes = integrantes.filter(
+      (i) => String(i.id).trim() !== String(responsableId).trim()
+    );
+    // El responsable siempre primero
+    return [
+      {
+        id: responsableId,
+        nombre: responsableNombre,
+        rol: 'Responsable',
+        especialidad: '',
+        email: '',
+      },
+      ...otrosIntegrantes,
+    ];
+  }, [integrantes, project?.userId, responsable]);
+
+  // --- NUEVO: Calcular días laborales por actividad para el cronograma de días (igual que resumen) ---
+  const diasPorActividad = React.useMemo(() => {
+    if (
+      cronogramaTipo !== 'dias' ||
+      !project?.fecha_inicio ||
+      !project?.fecha_fin ||
+      !Array.isArray(project?.actividades) ||
+      project.actividades.length === 0
+    ) {
+      return {};
+    }
+
+    // Determinar horas por día global (igual que en resumen, por defecto 6)
+    const horasPorDiaGlobal =
+      typeof project.dias_necesarios === 'number' && project.dias_necesarios > 0
+        ? Math.ceil(
+            (project.actividades.reduce(
+              (acc, act) =>
+                acc +
+                (typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+                  ? act.hoursPerDay
+                  : 1),
+              0
+            ) || 1) / project.dias_necesarios
+          )
+        : 6;
+
+    // Generar lista de fechas laborales (lunes a sábado) entre inicio y fin
+    const [y1, m1, d1] = project.fecha_inicio
+      .split('T')[0]
+      .split('-')
+      .map(Number);
+    const [y2, m2, d2] = project.fecha_fin.split('T')[0].split('-').map(Number);
+    const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+    const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
+
+    // Array de fechas laborales (lunes a sábado)
+    const fechasLaborales: Date[] = [];
+    const fechaActual = new Date(fechaInicio);
+    while (fechaActual.getTime() <= fechaFin.getTime()) {
+      const dayOfWeek = fechaActual.getDay();
+      if (dayOfWeek !== 0) {
+        fechasLaborales.push(new Date(fechaActual));
+      }
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    // Distribuir actividades en días laborales, ocupando huecos, sin solapamientos (igual que resumen)
+    // Creamos un array con la cantidad de horas ocupadas por día
+    const horasOcupadasPorDia = Array(fechasLaborales.length).fill(0);
+    const res: Record<number, number[]> = {};
+
+    project.actividades.forEach((act) => {
+      const horasActividad =
+        typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+          ? act.hoursPerDay
+          : 1;
+      let horasRestantes = horasActividad;
+      res[act.id] = [];
+      for (let i = 0; i < fechasLaborales.length && horasRestantes > 0; i++) {
+        const horasDisponibles = horasPorDiaGlobal - horasOcupadasPorDia[i];
+        if (horasDisponibles > 0) {
+          const horasAsignar = Math.min(horasDisponibles, horasRestantes);
+          horasOcupadasPorDia[i] += horasAsignar;
+          horasRestantes -= horasAsignar;
+          res[act.id].push(i);
+        }
+      }
+    });
+
+    return res;
+  }, [
+    cronogramaTipo,
+    project?.fecha_inicio,
+    project?.fecha_fin,
+    project?.actividades,
+    project?.dias_necesarios,
+  ]);
+
+  // --- NUEVO: Calcular meses marcados por actividad para el cronograma de meses (igual que resumen) ---
+  const mesesPorActividad = React.useMemo(() => {
+    if (
+      cronogramaTipo !== 'meses' ||
+      !project?.fecha_inicio ||
+      !project?.fecha_fin ||
+      !Array.isArray(project?.actividades) ||
+      project.actividades.length === 0
+    ) {
+      return {};
+    }
+
+    // Generar lista de fechas laborales (lunes a sábado) entre inicio y fin
+    const [y1, m1, d1] = project.fecha_inicio
+      .split('T')[0]
+      .split('-')
+      .map(Number);
+    const [y2, m2, d2] = project.fecha_fin.split('T')[0].split('-').map(Number);
+    const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+    const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
+
+    // Array de fechas laborales (lunes a sábado)
+    const fechasLaborales: Date[] = [];
+    const fechaActual = new Date(fechaInicio);
+    while (fechaActual.getTime() <= fechaFin.getTime()) {
+      const dayOfWeek = fechaActual.getDay();
+      if (dayOfWeek !== 0) {
+        fechasLaborales.push(new Date(fechaActual));
+      }
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    // Generar array de meses visibles en el cronograma
+    const mesesArr: { inicio: Date; fin: Date }[] = [];
+    {
+      const fechaMes = new Date(fechaInicio);
+      while (fechaMes <= fechaFin) {
+        const inicioMes = new Date(
+          fechaMes.getFullYear(),
+          fechaMes.getMonth(),
+          1
+        );
+        const finMes = new Date(
+          fechaMes.getFullYear(),
+          fechaMes.getMonth() + 1,
+          0
+        );
+        mesesArr.push({ inicio: inicioMes, fin: finMes });
+        fechaMes.setMonth(fechaMes.getMonth() + 1);
+      }
+    }
+
+    // Determinar horas por día global (igual que en resumen, por defecto 6)
+    const horasPorDiaGlobal =
+      typeof project.dias_necesarios === 'number' && project.dias_necesarios > 0
+        ? Math.ceil(
+            (project.actividades.reduce(
+              (acc, act) =>
+                acc +
+                (typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+                  ? act.hoursPerDay
+                  : 1),
+              0
+            ) || 1) / project.dias_necesarios
+          )
+        : 6;
+
+    // Distribuir actividades en días laborales, ocupando huecos, sin solapamientos (igual que resumen)
+    const horasOcupadasPorDia = Array(fechasLaborales.length).fill(0);
+    const diasAsignadosPorActividad: Record<number, number[]> = {};
+    project.actividades.forEach((act) => {
+      const horasActividad =
+        typeof act.hoursPerDay === 'number' && act.hoursPerDay > 0
+          ? act.hoursPerDay
+          : 1;
+      let horasRestantes = horasActividad;
+      diasAsignadosPorActividad[act.id] = [];
+      for (let i = 0; i < fechasLaborales.length && horasRestantes > 0; i++) {
+        const horasDisponibles = horasPorDiaGlobal - horasOcupadasPorDia[i];
+        if (horasDisponibles > 0) {
+          const horasAsignar = Math.min(horasDisponibles, horasRestantes);
+          horasOcupadasPorDia[i] += horasAsignar;
+          horasRestantes -= horasAsignar;
+          diasAsignadosPorActividad[act.id].push(i);
+        }
+      }
+    });
+
+    // Para cada actividad, marcar los meses en los que tiene al menos un día asignado
+    const res: Record<number, number[]> = {};
+    Object.entries(diasAsignadosPorActividad).forEach(([actId, diasIdxs]) => {
+      const mesesMarcados: number[] = [];
+      mesesArr.forEach((mes, mesIdx) => {
+        if (
+          diasIdxs.some((diaIdx) => {
+            const fecha = fechasLaborales[diaIdx];
+            return fecha >= mes.inicio && fecha <= mes.fin;
+          })
+        ) {
+          mesesMarcados.push(mesIdx);
+        }
+      });
+      res[Number(actId)] = mesesMarcados;
+    });
+
+    return res;
+  }, [
+    cronogramaTipo,
+    project?.fecha_inicio,
+    project?.fecha_fin,
+    project?.actividades,
+    project?.dias_necesarios,
+  ]);
+
   const unidadesHeader = React.useMemo(() => {
     const unidades = [];
     if (
@@ -338,29 +571,36 @@ export default function ProjectDetails() {
       project?.fecha_inicio &&
       project?.fecha_fin
     ) {
-      // Asegura que el rango sea desde fecha_inicio hasta fecha_fin inclusive
-      const fechaInicioStr = project.fecha_inicio.split('T')[0];
-      const fechaFinStr = project.fecha_fin.split('T')[0];
-      const fechaInicio = new Date(fechaInicioStr);
-      const fechaFin = new Date(fechaFinStr);
+      // Extrae año, mes y día para evitar problemas de zona horaria
+      const [y1, m1, d1] = project.fecha_inicio
+        .split('T')[0]
+        .split('-')
+        .map(Number);
+      const [y2, m2, d2] = project.fecha_fin
+        .split('T')[0]
+        .split('-')
+        .map(Number);
 
-      // Normaliza la hora para evitar problemas de zona horaria
-      fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(0, 0, 0, 0);
+      // Construye fechas en local correctamente
+      const fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0, 0);
+      const fechaFin = new Date(y2, m2 - 1, d2, 0, 0, 0, 0);
 
       let i = 0;
       const fechaActual = new Date(fechaInicio);
       while (fechaActual.getTime() <= fechaFin.getTime()) {
-        unidades.push({
-          indice: i,
-          etiqueta: `Día ${i + 1}`,
-          fecha: fechaActual.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          }),
-        });
-        // Suma un día para el siguiente
+        const dayOfWeek = fechaActual.getDay(); // 0: domingo, 1: lunes, ..., 6: sábado
+        if (dayOfWeek !== 0) {
+          // Excluye domingos
+          unidades.push({
+            indice: i,
+            etiqueta: `Día ${unidades.length + 1}`,
+            fecha: fechaActual.toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            }),
+          });
+        }
         fechaActual.setDate(fechaActual.getDate() + 1);
         i++;
       }
@@ -650,15 +890,32 @@ export default function ProjectDetails() {
 
   // --- COMPONENTE PARA ARCHIVOS DE ENTREGA ---
   const ArchivosEntrega = ({
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    actividadId,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _actividadId,
     entrega,
   }: {
-    actividadId: number;
+    _actividadId: number;
     entrega: ProjectActivityDelivery | null | undefined;
   }) => {
-    return null;
+    // Verifica si hay algún archivo entregado
+    const archivos = [];
+    if (entrega?.documentKey) archivos.push(entrega.documentKey);
+    if (entrega?.imageKey) archivos.push(entrega.imageKey);
+    if (entrega?.videoKey) archivos.push(entrega.videoKey);
+    if (entrega?.compressedFileKey) archivos.push(entrega.compressedFileKey);
+
+    if (archivos.length === 0) {
+      return (
+        <span className="truncate text-xs text-gray-500 italic">
+          Sin archivos
+        </span>
+      );
+    }
+    // ...aquí podrías renderizar los archivos si lo deseas...
+    return (
+      <span className="truncate text-xs text-gray-300">
+        {archivos.length} archivo{archivos.length > 1 ? 's' : ''}
+      </span>
+    );
   };
 
   // --- HELPERS ---
@@ -704,163 +961,42 @@ export default function ProjectDetails() {
     return '-';
   }
 
-  // Calcular la duración de cada actividad (por ejemplo, cantidad de meses/días)
-
-  const _duracionesActividad: Record<string, number> = React.useMemo(() => {
-    const map: Record<string, number> = {};
-    if (project && Array.isArray(project.objetivos_especificos)) {
-      project.objetivos_especificos.forEach((obj) => {
-        if (Array.isArray(obj.actividades)) {
-          obj.actividades.forEach(
-            (
-              act: { meses?: number[]; id?: number | string },
-              actIdx: number
-            ) => {
-              if (act && Array.isArray(act.meses)) {
-                map[String(act.id ?? actIdx)] = act.meses.length;
-              }
-            }
-          );
-        }
-      });
-    }
-    return map;
-  }, [project]);
-
-  // Helper para obtener el índice del objetivo y actividad
-  function getOrdenActividad(act: unknown) {
-    if (!project?.objetivos_especificos)
-      return { objetivo: 9999, actividad: 9999 };
-    for (let i = 0; i < project.objetivos_especificos.length; i++) {
-      const obj = project.objetivos_especificos[i];
-      if (Array.isArray(obj.actividades)) {
-        for (let j = 0; j < obj.actividades.length; j++) {
-          const a = obj.actividades[j];
-          if (
-            typeof a === 'object' &&
-            a !== null &&
-            typeof act === 'object' &&
-            act !== null &&
-            'id' in a &&
-            'id' in (act as object) &&
-            a.id !== undefined &&
-            (act as { id?: unknown }).id !== undefined &&
-            (typeof a.id === 'string' || typeof a.id === 'number') &&
-            (typeof (act as { id?: unknown }).id === 'string' ||
-              typeof (act as { id?: unknown }).id === 'number') &&
-            String(a.id) === String((act as { id?: unknown }).id)
-          ) {
-            return { objetivo: i, actividad: j };
-          }
-          if (
-            typeof a === 'object' &&
-            a !== null &&
-            typeof act === 'object' &&
-            act !== null &&
-            'descripcion' in a &&
-            'descripcion' in (act as object) &&
-            (a as { descripcion?: unknown }).descripcion ===
-              (act as { descripcion?: unknown }).descripcion
-          ) {
-            return { objetivo: i, actividad: j };
-          }
-        }
+  // Corrige getDisplayNameById para buscar en integrantesConResponsable primero
+  function getDisplayNameById(userId: string | number | undefined) {
+    if (userId === undefined || userId === null) return '';
+    // Buscar primero en integrantesConResponsable
+    const integrante =
+      integrantesConResponsable.find(
+        (i) => String(i.id).trim() === String(userId).trim()
+      ) ??
+      integrantes.find((i) => String(i.id).trim() === String(userId).trim());
+    if (!integrante) return '';
+    if (
+      typeof integrante.nombre === 'string' &&
+      integrante.nombre.trim() !== ''
+    )
+      return integrante.nombre.trim();
+    if (
+      typeof integrante.firstName === 'string' &&
+      integrante.firstName.trim() !== ''
+    ) {
+      if (
+        typeof integrante.lastName === 'string' &&
+        integrante.lastName.trim() !== ''
+      ) {
+        return `${integrante.firstName.trim()} ${integrante.lastName.trim()}`;
       }
+      return integrante.firstName.trim();
     }
-    return { objetivo: 9999, actividad: 9999 }; // Si no se encuentra, lo manda al final
+    if (
+      typeof integrante.lastName === 'string' &&
+      integrante.lastName.trim() !== ''
+    )
+      return integrante.lastName.trim();
+    if (typeof integrante.email === 'string' && integrante.email.trim() !== '')
+      return integrante.email.trim();
+    return '';
   }
-
-  // Ordena las actividades antes de renderizar el cronograma
-  const actividadesOrdenadas = React.useMemo(() => {
-    if (!project?.actividades) return [];
-    return [...project.actividades].sort((a, b) => {
-      const aId =
-        typeof a.id === 'string' || typeof a.id === 'number' ? a.id : undefined;
-      const bId =
-        typeof b.id === 'string' || typeof b.id === 'number' ? b.id : undefined;
-      const ordenA = getOrdenActividad(
-        aId ? ({ ...a, id: aId } as unknown) : a
-      );
-      const ordenB = getOrdenActividad(
-        bId ? ({ ...b, id: bId } as unknown) : b
-      );
-      if (ordenA.objetivo !== ordenB.objetivo) {
-        return ordenA.objetivo - ordenB.objetivo;
-      }
-      return ordenA.actividad - ordenB.actividad;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.actividades, project?.objetivos_especificos]);
-
-  // --- CALLBACKS Y FUNCIONES ---
-  // Función para recargar el proyecto desde el backend
-  const reloadProject = async () => {
-    if (!projectId) return;
-    setLoading(true);
-    const data = await getProjectById(projectId);
-    setProject(data);
-    setLoading(false);
-  };
-
-  // Detectar el tipo de cronograma usando el campo tipo_visualizacion si existe
-  /* const cronogramaInfo = React.useMemo(() => {
-    if (!project?.actividades?.length)
-      return { tipo: 'sin_datos', maxUnidades: 0 };
-
-    // Prioridad: usar tipo_visualizacion si existe
-    let tipo: 'dias' | 'meses' = 'meses';
-    if (
-      project?.tipo_visualizacion === 'dias' ||
-      project?.tipo_visualizacion === 'meses'
-    ) {
-      tipo = project.tipo_visualizacion;
-    } else {
-      // fallback heurística
-      const allValues = project.actividades.flatMap((a) => a.meses ?? []);
-      if (!allValues.length) return { tipo: 'sin_datos', maxUnidades: 0 };
-      const maxValue = Math.max(...allValues);
-      tipo = maxValue >= 10 ? 'dias' : 'meses';
-    }
-
-    // Calcular maxUnidades según tipo y fechas
-    let maxUnidades = 0;
-    if (
-      (tipo === 'dias' || tipo === 'meses') &&
-      project.fecha_inicio &&
-      project.fecha_fin
-    ) {
-      // Normaliza fechas a solo YYYY-MM-DD si vienen en formato ISO
-      const fechaInicioStr = project.fecha_inicio.split('T')[0];
-      const fechaFinStr = project.fecha_fin.split('T')[0];
-
-      if (tipo === 'dias') {
-        const [y1, m1, d1] = fechaInicioStr.split('-').map(Number);
-        const [y2, m2, d2] = fechaFinStr.split('-').map(Number);
-        const fechaInicio = new Date(Date.UTC(y1, m1 - 1, d1));
-        const fechaFin = new Date(Date.UTC(y2, m2 - 1, d2));
-        maxUnidades =
-          Math.floor(
-            (fechaFin.getTime() - fechaInicio.getTime()) / (1000 * 3600 * 24)
-          ) + 1;
-      } else {
-        const fechaInicio = new Date(fechaInicioStr);
-        const fechaFin = new Date(fechaFinStr);
-        let count = 0;
-        const fechaActual = new Date(fechaInicio);
-        while (fechaActual <= fechaFin) {
-          count++;
-          fechaActual.setMonth(fechaActual.getMonth() + 1);
-        }
-        maxUnidades = count;
-      }
-    } else {
-      // fallback: usar heurística anterior
-      const allValues = project.actividades.flatMap((a) => a.meses ?? []);
-      maxUnidades = allValues.length ? Math.max(...allValues) + 1 : 0;
-    }
-
-    return { tipo, maxUnidades };
-  }, [project]); */
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -1224,7 +1360,7 @@ export default function ProjectDetails() {
         // Mostrar imagen por 20 segundos, luego mostrar video
         timer = setTimeout(() => {
           setShowImage(false);
-        }, 10000);
+        }, 5000);
       }
     }
 
@@ -1296,6 +1432,30 @@ export default function ProjectDetails() {
     }
   };
 
+  // Agrega este handler dentro del componente principal (ProjectDetails)
+  const handleChangeResponsableActividad = async (
+    actividadId: number | undefined,
+    newUserId: string | number
+  ) => {
+    if (!actividadId || !projectId) return;
+    // Aquí deberías hacer el PATCH a tu API para actualizar el responsable de la actividad
+    try {
+      await fetch(
+        `/api/projects/${projectId}/activities/${actividadId}/responsable`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ responsibleUserId: newUserId }),
+        }
+      );
+      // Refresca el proyecto para ver el cambio reflejado
+      await reloadProject();
+    } catch (e) {
+      // Manejo de error opcional
+      console.error('Error actualizando responsable de actividad', e);
+    }
+  };
+
   // --- RENDER ---
   // Mostrar loading mientras Clerk carga
   if (!isLoaded || loading) {
@@ -1321,6 +1481,36 @@ export default function ProjectDetails() {
     }
     return fecha;
   }
+
+  // 1. Agrega reloadProject antes de su uso
+  const reloadProject = async () => {
+    if (!projectId) return;
+    setLoading(true);
+    const data = await getProjectById(projectId);
+    setProject(data);
+    setLoading(false);
+  };
+
+  // --- Define actividadesOrdenadas antes del render principal ---
+  // Asegura que hoursPerDay nunca sea null (solo number o undefined)
+  const actividadesOrdenadas: {
+    id?: number;
+    descripcion?: string;
+    meses?: number[];
+    hoursPerDay?: number;
+    responsibleUserId?: string | number | null;
+  }[] = Array.isArray(project?.actividades)
+    ? project.actividades.map((a) => ({
+        ...a,
+        hoursPerDay:
+          typeof a.hoursPerDay === 'number' ? a.hoursPerDay : undefined,
+        responsibleUserId:
+          typeof a.responsibleUserId === 'string' ||
+          typeof a.responsibleUserId === 'number'
+            ? a.responsibleUserId
+            : undefined,
+      }))
+    : [];
 
   return (
     <div className="min-h-screen bg-[#01142B] bg-gradient-to-br from-slate-900">
@@ -1592,6 +1782,30 @@ export default function ProjectDetails() {
                         Fecha de fin: {formatFechaDDMMYYYY(project.fecha_fin)}
                       </span>
                     </div>
+                    {/* Mostrar días necesarios debajo de fecha fin */}
+                    {typeof project.dias_necesarios === 'number' && (
+                      <div className="mt-1 flex items-center gap-2 text-sm text-gray-300">
+                        <span className="min-w-0 break-words">
+                          Días necesarios:{' '}
+                          <span className="font-semibold text-teal-300">
+                            {project.dias_necesarios}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {/* Mostrar días estimados solo si es diferente a días necesarios */}
+                    {typeof project.dias_estimados === 'number' &&
+                      typeof project.dias_necesarios === 'number' &&
+                      project.dias_estimados !== project.dias_necesarios && (
+                        <div className="flex items-center gap-2 text-sm text-gray-300">
+                          <span className="min-w-0 break-words">
+                            Días estimados:{' '}
+                            <span className="font-semibold text-yellow-300">
+                              {project.dias_estimados}
+                            </span>
+                          </span>
+                        </div>
+                      )}
                   </div>
 
                   {/* Mostrar comentario público si el proyecto es público y existe */}
@@ -1901,11 +2115,8 @@ export default function ProjectDetails() {
                                   <TableHead className="max-w-[120px] min-w-[100px] text-xs text-gray-300 md:text-sm">
                                     RESPONSABLE
                                   </TableHead>
-                                  <TableHead className="max-w-[100px] min-w-[80px] text-xs text-gray-300 md:text-sm">
-                                    ENTREGAS
-                                  </TableHead>
                                   <TableHead className="max-w-[150px] min-w-[120px] text-xs text-gray-300 md:text-sm">
-                                    ARCHIVOS
+                                    ARCHIVOS ENTREGADOS
                                   </TableHead>
                                   <TableHead className="max-w-[120px] min-w-[100px] text-xs text-gray-300 md:text-sm">
                                     MOTIVO
@@ -1942,23 +2153,12 @@ export default function ProjectDetails() {
                                       );
 
                                     // Obtener el id de usuario responsable de la actividad
-                                    const responsableUserId =
+
+                                    const _responsibleUserId =
                                       actividadCompleta &&
                                       'responsibleUserId' in actividadCompleta
                                         ? actividadCompleta.responsibleUserId
                                         : undefined;
-
-                                    // Usar el id de usuario para la consulta de usuario
-                                    // (No se hace fetch aquí, solo se muestra el id o nombre si está disponible)
-                                    const responsable =
-                                      typeof responsableUserId === 'string' ||
-                                      typeof responsableUserId === 'number'
-                                        ? (integrantes.find(
-                                            (i) =>
-                                              String(i.id) ===
-                                              String(responsableUserId)
-                                          )?.nombre ?? responsableUserId)
-                                        : '-';
 
                                     const actividadId =
                                       actividadCompleta?.id ?? actObj.id;
@@ -2020,29 +2220,58 @@ export default function ProjectDetails() {
                                           })()}
                                         </TableCell>
                                         <TableCell className="max-w-[120px] text-xs text-gray-300 md:text-sm">
-                                          <div
-                                            className="truncate break-words"
-                                            title={
-                                              typeof responsable === 'string'
-                                                ? responsable
-                                                : String(responsable ?? '')
+                                          <select
+                                            className="w-full rounded bg-slate-700 px-2 py-1 text-xs text-white"
+                                            value={
+                                              actividadCompleta &&
+                                              'responsibleUserId' in
+                                                actividadCompleta &&
+                                              actividadCompleta.responsibleUserId !==
+                                                undefined &&
+                                              actividadCompleta.responsibleUserId !==
+                                                null
+                                                ? String(
+                                                    actividadCompleta.responsibleUserId
+                                                  )
+                                                : ''
                                             }
+                                            onChange={async (e) => {
+                                              const newUserId = e.target.value;
+                                              await handleChangeResponsableActividad(
+                                                actividadId,
+                                                newUserId
+                                              );
+                                              // El handler ya actualiza en la BD y recarga el proyecto
+                                            }}
+                                            disabled={!puedeEditarProyecto()}
                                           >
-                                            {responsable}
-                                          </div>
-                                        </TableCell>
-                                        <TableCell>
-                                          {/* ...existing entregas logic... */}
+                                            {integrantesConResponsable.map(
+                                              (integrante) => (
+                                                <option
+                                                  key={integrante.id}
+                                                  value={integrante.id}
+                                                >
+                                                  {getDisplayNameById(
+                                                    integrante.id
+                                                  )}
+                                                </option>
+                                              )
+                                            )}
+                                          </select>
                                         </TableCell>
                                         <TableCell className="max-w-[150px]">
                                           {typeof actividadId === 'number' ? (
                                             <ArchivosEntrega
-                                              actividadId={actividadId}
+                                              _actividadId={actividadId}
                                               entrega={
                                                 entregasActividades[actividadId]
                                               }
                                             />
-                                          ) : null}
+                                          ) : (
+                                            <span className="truncate text-xs text-gray-500 italic">
+                                              Sin comentarios
+                                            </span>
+                                          )}
                                         </TableCell>
                                         <TableCell className="max-w-[120px]">
                                           {(() => {
@@ -2427,13 +2656,33 @@ export default function ProjectDetails() {
                           ) : (
                             <TableCell className="p-0" style={{ width: '60%' }}>
                               <div className="flex">
-                                {unidadesHeader.map((unidad) => (
+                                {unidadesHeader.map((unidad, i) => (
                                   <div
                                     key={unidad.indice}
                                     className="min-w-[60px] flex-1 border-l border-slate-600 p-2 text-center align-middle"
                                   >
-                                    {Array.isArray(act.meses) &&
-                                    act.meses.includes(unidad.indice) ? (
+                                    {cronogramaTipo === 'dias' &&
+                                    typeof act.id !== 'undefined' &&
+                                    Array.isArray(diasPorActividad[act.id]) &&
+                                    diasPorActividad[act.id].includes(i) ? (
+                                      <div className="mx-auto flex h-4 w-4 items-center justify-center rounded bg-cyan-300">
+                                        <span className="text-lg font-bold text-purple-500">
+                                          ✔
+                                        </span>
+                                      </div>
+                                    ) : cronogramaTipo === 'meses' &&
+                                      typeof act.id !== 'undefined' &&
+                                      Array.isArray(
+                                        mesesPorActividad[act.id]
+                                      ) &&
+                                      mesesPorActividad[act.id].includes(i) ? (
+                                      <div className="mx-auto flex h-4 w-4 items-center justify-center rounded bg-cyan-300">
+                                        <span className="text-lg font-bold text-purple-500">
+                                          ✔
+                                        </span>
+                                      </div>
+                                    ) : Array.isArray(act.meses) &&
+                                      act.meses.includes(unidad.indice) ? (
                                       <div className="mx-auto h-4 w-4 rounded bg-green-600 md:h-5 md:w-5" />
                                     ) : (
                                       <div className="mx-auto h-4 w-4 rounded bg-slate-600 md:h-5 md:w-5" />

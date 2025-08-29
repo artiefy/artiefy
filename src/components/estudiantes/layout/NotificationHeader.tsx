@@ -10,13 +10,19 @@ import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 import { Dialog } from '~/components/estudiantes/ui/dialog';
+import ModalInvitaciones from '~/components/projects/Modals/ModalInvitaciones';
+import ModalSolicitudesParticipacion from '~/components/projects/Modals/ModalSolicitudesParticipacion';
 import {
   getNotifications,
   getUnreadCount,
 } from '~/server/actions/estudiantes/notifications/getNotifications';
 import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
 
-import type { Notification } from '~/types';
+import type {
+  Notification as BaseNotification,
+  NotificationMetadata as BaseNotificationMetadata,
+  NotificationType as BaseNotificationType,
+} from '~/types';
 
 import '~/styles/menuNotification.css';
 
@@ -35,6 +41,24 @@ function formatRelativeTime(date: Date) {
   return 'Hace un momento';
 }
 
+// Extiende NotificationType para permitir 'participation-request' y 'PROJECT_INVITATION'
+type NotificationType =
+  | BaseNotificationType
+  | 'participation-request'
+  | 'PROJECT_INVITATION';
+
+// Extiende NotificationMetadata para permitir projectId y requestType
+type NotificationMetadata = BaseNotificationMetadata & {
+  projectId?: number;
+  requestType?: 'participation' | 'resignation';
+};
+
+// Extiende Notification para usar los tipos ampliados
+type Notification = Omit<BaseNotification, 'type' | 'metadata'> & {
+  type: NotificationType;
+  metadata?: NotificationMetadata;
+};
+
 export function NotificationHeader() {
   const router = useRouter();
   const { user } = useUser();
@@ -42,6 +66,8 @@ export function NotificationHeader() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [modalProyectoId, setModalProyectoId] = useState<number | null>(null);
+  const [modalInvitacionesOpen, setModalInvitacionesOpen] = useState(false);
 
   // SWR para notificaciones y contador de no leídas (actualiza cada 10s)
   // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
@@ -96,6 +122,21 @@ export function NotificationHeader() {
 
   const handleNotificationClick = (notification: Notification) => {
     setIsOpen(false);
+
+    // Si es notificación de solicitud de participación, abre el modal de solicitudes
+    if (
+      notification.type === 'participation-request' &&
+      notification.metadata?.projectId !== undefined
+    ) {
+      setModalProyectoId(notification.metadata.projectId);
+      return;
+    }
+
+    // Si es notificación de invitación a proyecto, abre el modal de invitaciones
+    if (notification.type === 'PROJECT_INVITATION') {
+      setModalInvitacionesOpen(true);
+      return;
+    }
 
     switch (notification.type) {
       case 'LESSON_UNLOCKED':
@@ -313,6 +354,23 @@ export function NotificationHeader() {
             </div>
           </div>
         </Dialog>
+      )}
+      {/* NUEVO: Modal de invitaciones a proyectos */}
+      {modalInvitacionesOpen && user?.id && (
+        <ModalInvitaciones
+          isOpen={modalInvitacionesOpen}
+          onClose={() => setModalInvitacionesOpen(false)}
+          userId={user.id}
+        />
+      )}
+      {/* NUEVO: Modal de solicitudes de participación de proyecto */}
+      {modalProyectoId !== null && user?.id && (
+        <ModalSolicitudesParticipacion
+          isOpen={true}
+          onClose={() => setModalProyectoId(null)}
+          projectId={modalProyectoId}
+          userId={user.id}
+        />
       )}
     </div>
   );

@@ -26,6 +26,7 @@ import { FaFolderOpen } from 'react-icons/fa';
 
 import { Header } from '~/components/estudiantes/layout/Header';
 import _ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalInvitaciones from '~/components/projects/Modals/ModalInvitaciones';
 import ModalProjectInfo from '~/components/projects/Modals/ModalProjectInfo';
 import {
   Avatar,
@@ -142,6 +143,7 @@ export default function Component() {
   const [selectedTrending, setSelectedTrending] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalInvitacionesOpen, setModalInvitacionesOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<PublicProject | null>(
     null
   );
@@ -169,7 +171,7 @@ export default function Component() {
           // Si está mostrando imagen, programa cambio a video en 20s
           timers[project.id] = setTimeout(() => {
             setShowImageMap((prev) => ({ ...prev, [project.id]: false }));
-          }, 10000);
+          }, 5000);
         }
       }
     });
@@ -570,6 +572,23 @@ export default function Component() {
               </div>
 
               <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-6">
+                {/* Botón Invitaciones */}
+                <div className="relative">
+                  <button
+                    className="w-full rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 p-[3px] transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30"
+                    onClick={() => {
+                      setModalInvitacionesOpen(true);
+                      closeSidebar();
+                    }}
+                  >
+                    <div className="flex items-center justify-center space-x-2 rounded-3xl bg-slate-900 transition-all duration-300 group-hover:bg-slate-800 md:space-x-4 md:px-12">
+                      <span className="text-lg font-semibold tracking-wide text-white">
+                        Invitaciones
+                      </span>
+                    </div>
+                  </button>
+                </div>
+
                 {/* My Projects Button */}
                 <div className="relative">
                   <button
@@ -1233,6 +1252,13 @@ export default function Component() {
           closeSidebar();
         }}
         project={selectedProject}
+        userId={userId}
+      />
+
+      {/* Modal de invitaciones */}
+      <ModalInvitaciones
+        isOpen={modalInvitacionesOpen}
+        onClose={() => setModalInvitacionesOpen(false)}
         userId={userId}
       />
 

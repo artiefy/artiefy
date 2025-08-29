@@ -46,7 +46,7 @@ export async function getNotifications(
         isRead: result.isRead ?? false,
         isMarked: result.isMarked ?? false, // <-- nuevo campo
         createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
-        metadata: result.metadata as NotificationMetadata | undefined,
+        metadata: result.metadata as NotificationMetadata | undefined, // <-- asegúrate de incluir metadata
       })
     );
   } catch (error) {
