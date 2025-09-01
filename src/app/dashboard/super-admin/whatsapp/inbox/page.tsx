@@ -55,6 +55,7 @@ export default function WhatsAppInboxPage() {
           </li>
         ))}
       </ul>
+      
     </div>
   );
 }
