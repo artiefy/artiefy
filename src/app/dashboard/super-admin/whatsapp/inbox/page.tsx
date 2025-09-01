@@ -39,7 +39,7 @@ export default function WhatsAppInboxPage() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 text-xl font-bold">📥 WhatsApp Inbox</h1>
+      <h1 className="mb-4 text-xl font-bold">WhatsApp Inbox</h1>
       <ul className="space-y-2">
         {inbox.map((item) => (
           <li
@@ -55,7 +55,6 @@ export default function WhatsAppInboxPage() {
           </li>
         ))}
       </ul>
-      
     </div>
   );
 }
