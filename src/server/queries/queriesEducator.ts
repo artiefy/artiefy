@@ -12,6 +12,18 @@ import {
   userLessonsProgress,
 } from '~/server/db/schema';
 
+// Convierte a número de forma segura
+function toNum(v: unknown, fallback = 0): number {
+  const n =
+    typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : NaN;
+  return Number.isFinite(n) ? n : fallback;
+}
+
+// Redondea a 2 decimales sin usar toFixed (evita strings)
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export async function getUsersEnrolledInCourse(courseId: number) {
   const client = await clerkClient();
   const usersResponse = await client.users.getUserList({ limit: 500 });
@@ -66,9 +78,9 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           parametroId: parametros.id,
           parametroName: parametros.name,
           parametroPeso: parametros.porcentaje,
-          avgGrade: sql<number>`AVG(${userActivitiesProgress.finalGrade})`.as(
-            'grade'
-          ),
+          avgGrade: sql<number>`
+  COALESCE(AVG(${userActivitiesProgress.finalGrade}), 0)::float
+`.as('avg_grade'),
         })
         .from(userActivitiesProgress)
         .innerJoin(
@@ -89,11 +101,12 @@ export async function getUsersEnrolledInCourse(courseId: number) {
         const found = parametroGrades.find(
           (pg) => pg.parametroId === p.parametroId
         );
+        const avg = toNum(found?.avgGrade, 0);
         return {
           parametroId: p.parametroId,
           parametroName: p.parametroName,
           parametroPeso: p.parametroPeso,
-          grade: found ? parseFloat(found.avgGrade.toFixed(2)) : 0,
+          grade: round2(avg),
         };
       });
 
@@ -159,7 +172,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           parametroName: a.parametroName,
           parametroPeso: a.parametroPeso,
           actividadPeso: a.actividadPeso,
-          grade: a.grade ?? 0,
+          grade: toNum(a.grade, 0),
         })),
       };
     })
