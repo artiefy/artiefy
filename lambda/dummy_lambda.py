@@ -11,7 +11,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         apiPath = event['apiPath']
         httpMethod =  event['httpMethod']
         parameters = event.get('parameters', [])
-        message_version = event.get('messageVersion',1)
+        message_version = event.get('messageVersion', 1)
 
         response_body = {
             'application/json': {
@@ -35,13 +35,36 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     except KeyError as e:
         logger.error('Missing required field: %s', str(e))
+        # Devuelve la estructura Bedrock incluso en error
+        action_response = {
+            'actionGroup': event.get('actionGroup', 'search_courses'),
+            'apiPath': event.get('apiPath', '/api/search-courses'),
+            'httpMethod': event.get('httpMethod', 'POST'),
+            'httpStatusCode': 400,
+            'responseBody': {
+                'application/json': {
+                    'body': f'Error: {str(e)}'
+                }
+            }
+        }
         return {
-            'statusCode': HTTPStatus.BAD_REQUEST,
-            'body': f'Error: {str(e)}'
+            'response': action_response,
+            'messageVersion': event.get('messageVersion', 1)
         }
     except Exception as e:
         logger.error('Unexpected error: %s', str(e))
+        action_response = {
+            'actionGroup': event.get('actionGroup', 'search_courses'),
+            'apiPath': event.get('apiPath', '/api/search-courses'),
+            'httpMethod': event.get('httpMethod', 'POST'),
+            'httpStatusCode': 500,
+            'responseBody': {
+                'application/json': {
+                    'body': 'Internal server error'
+                }
+            }
+        }
         return {
-            'statusCode': HTTPStatus.INTERNAL_SERVER_ERROR,
-            'body': 'Internal server error'
+            'response': action_response,
+            'messageVersion': event.get('messageVersion', 1)
         }
