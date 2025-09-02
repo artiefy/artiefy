@@ -9,24 +9,37 @@ def lambda_handler(event, context):
     # Desanidar listas hasta obtener un dict
     while isinstance(parameters, list) and len(parameters) > 0:
         parameters = parameters[0]
-    if not isinstance(parameters, dict):
-        error_json = {"error": "El parámetro 'parameters' debe ser un objeto."}
-        response_body = {
-            'application/json': {
-                'body': error_json
+    # Si parameters está vacío, intenta obtener desde requestBody
+    if not parameters or not isinstance(parameters, dict):
+        # Intenta obtener desde requestBody si existe
+        request_body = event.get('requestBody', {})
+        if isinstance(request_body, dict):
+            # Puede venir como dict o como lista en 'content'
+            content = request_body.get('content', {})
+            if isinstance(content, list) and len(content) > 0:
+                # Convierte lista de pares name/value en dict
+                parameters = {item.get('name'): item.get('value') for item in content if isinstance(item, dict)}
+            elif isinstance(content, dict):
+                parameters = content
+        # Si sigue sin ser dict, error
+        if not isinstance(parameters, dict):
+            error_json = {"error": "El parámetro 'parameters' debe ser un objeto."}
+            response_body = {
+                'application/json': {
+                    'body': error_json
+                }
             }
-        }
-        action_response = {
-            'actionGroup': event.get('actionGroup', 'search_courses'),
-            'apiPath': event.get('apiPath', '/api/search-courses'),
-            'httpMethod': event.get('httpMethod', 'POST'),
-            'httpStatusCode': 400,
-            'responseBody': response_body
-        }
-        return {
-            'response': action_response,
-            'messageVersion': event.get('messageVersion', 1)
-        }
+            action_response = {
+                'actionGroup': event.get('actionGroup', 'search_courses'),
+                'apiPath': event.get('apiPath', '/api/search-courses'),
+                'httpMethod': event.get('httpMethod', 'POST'),
+                'httpStatusCode': 400,
+                'responseBody': response_body
+            }
+            return {
+                'response': action_response,
+                'messageVersion': event.get('messageVersion', 1)
+            }
     prompt = parameters.get('prompt')
     limit = parameters.get('limit', 5)
 

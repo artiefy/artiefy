@@ -7,25 +7,104 @@ import { categories, courses } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
-    const rawBody = (await req.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >;
-    const prompt =
-      typeof rawBody.prompt === 'string' ? rawBody.prompt.trim() : '';
+    const rawBody = (await req.json().catch(() => ({}))) as unknown;
 
+    let prompt = '';
     let limit = 5;
-    if (typeof rawBody.limit === 'number' && Number.isFinite(rawBody.limit)) {
-      limit = Math.min(Math.max(Math.trunc(rawBody.limit), 1), 5);
-    } else if (
-      typeof rawBody.limit === 'string' &&
-      rawBody.limit.trim() !== ''
+
+    // 1. Si viene en parameters
+    if (
+      rawBody &&
+      typeof rawBody === 'object' &&
+      'parameters' in rawBody &&
+      (rawBody as Record<string, unknown>).parameters !== null
     ) {
-      const parsed = Number.parseInt(rawBody.limit, 10);
-      if (!Number.isNaN(parsed)) {
-        limit = Math.min(Math.max(parsed, 1), 5);
+      const parametersRaw = (rawBody as Record<string, unknown>).parameters;
+      const params =
+        Array.isArray(parametersRaw) && parametersRaw.length > 0
+          ? parametersRaw[0]
+          : parametersRaw;
+      if (
+        params &&
+        typeof params === 'object' &&
+        'prompt' in params &&
+        typeof (params as Record<string, unknown>).prompt === 'string'
+      ) {
+        prompt = ((params as Record<string, unknown>).prompt as string).trim();
+      }
+      if (
+        params &&
+        typeof params === 'object' &&
+        'limit' in params &&
+        (params as Record<string, unknown>).limit !== undefined
+      ) {
+        limit = Number((params as Record<string, unknown>).limit);
       }
     }
+    // 2. Si viene en requestBody.content
+    else if (
+      rawBody &&
+      typeof rawBody === 'object' &&
+      'requestBody' in rawBody &&
+      (rawBody as Record<string, unknown>).requestBody !== null
+    ) {
+      const requestBody = (rawBody as Record<string, unknown>).requestBody;
+      if (
+        requestBody &&
+        typeof requestBody === 'object' &&
+        'content' in requestBody
+      ) {
+        const content = (requestBody as Record<string, unknown>).content;
+        if (Array.isArray(content)) {
+          // Puede venir como lista de pares name/value
+          for (const item of content) {
+            if (
+              item &&
+              typeof item === 'object' &&
+              'name' in item &&
+              'value' in item
+            ) {
+              const name = (item as Record<string, unknown>).name;
+              const value = (item as Record<string, unknown>).value;
+              if (name === 'prompt' && typeof value === 'string') {
+                prompt = value.trim();
+              }
+              if (name === 'limit' && value !== undefined) {
+                limit = Number(value);
+              }
+            }
+          }
+        } else if (content && typeof content === 'object') {
+          if (
+            'prompt' in content &&
+            typeof (content as Record<string, unknown>).prompt === 'string'
+          ) {
+            prompt = (
+              (content as Record<string, unknown>).prompt as string
+            ).trim();
+          }
+          if (
+            'limit' in content &&
+            (content as Record<string, unknown>).limit !== undefined
+          ) {
+            limit = Number((content as Record<string, unknown>).limit);
+          }
+        }
+      }
+    }
+    // 3. Si viene directo en el body raíz
+    else if (rawBody && typeof rawBody === 'object') {
+      const bodyObj = rawBody as Record<string, unknown>;
+      if ('prompt' in bodyObj && typeof bodyObj.prompt === 'string') {
+        prompt = (bodyObj.prompt as string).trim();
+      }
+      if ('limit' in bodyObj && bodyObj.limit !== undefined) {
+        limit = Number(bodyObj.limit);
+      }
+    }
+
+    // Normaliza el límite
+    if (!Number.isFinite(limit) || limit < 1 || limit > 5) limit = 5;
 
     let results: {
       id: number;
