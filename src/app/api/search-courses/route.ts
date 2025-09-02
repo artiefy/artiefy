@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
         description: `No hay cursos relacionados con "${prompt}".`,
         count: 0,
         results: [],
+        source:
+          req.headers.get('x-bedrock-agent') === 'true' ? 'bedrock' : 'api',
       });
     }
 
@@ -86,6 +89,7 @@ export async function POST(req: Request) {
         title: course.title,
         description: course.description,
       })),
+      source: req.headers.get('x-bedrock-agent') === 'true' ? 'bedrock' : 'api',
     });
   } catch (error) {
     console.error('search-courses error:', error);
