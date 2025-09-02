@@ -36,6 +36,8 @@ export async function POST(req: Request) {
 
     const pattern = `%${prompt}%`;
 
+    // Query mejorada: filtra por ILIKE y ordena por relevancia (title > description > instructor),
+    // luego por rating y fecha de actualización. Limita a `limit` (máx 5).
     const results = await db
       .select({
         id: courses.id,
@@ -44,10 +46,19 @@ export async function POST(req: Request) {
         instructor: courses.instructor,
         rating: courses.rating,
         coverImageKey: courses.coverImageKey,
+        createdAt: courses.createdAt,
+        updatedAt: courses.updatedAt,
       })
       .from(courses)
       .where(
         sql`${courses.title} ILIKE ${pattern} OR ${courses.description} ILIKE ${pattern} OR ${courses.instructor} ILIKE ${pattern}`
+      )
+      .orderBy(
+        // prioridad por campo que contiene el término
+        sql`(CASE WHEN ${courses.title} ILIKE ${pattern} THEN 3 WHEN ${courses.description} ILIKE ${pattern} THEN 2 WHEN ${courses.instructor} ILIKE ${pattern} THEN 1 ELSE 0 END) DESC`,
+        // luego por rating y actualización
+        sql`${courses.rating} DESC NULLS LAST`,
+        sql`${courses.updatedAt} DESC`
       )
       .limit(limit);
 
