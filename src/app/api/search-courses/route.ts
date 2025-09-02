@@ -7,6 +7,9 @@ import { categories, courses } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
+    // Detecta si la petición viene de Bedrock/Lambda por header personalizado
+    const isBedrock = req.headers.get('x-bedrock-agent') === 'true';
+
     const rawBody = (await req.json().catch(() => ({}))) as Record<
       string,
       unknown
@@ -99,6 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       count: results.length,
       results,
+      source: isBedrock ? 'bedrock' : 'api',
     });
   } catch (error) {
     console.error('search-courses error:', error);

@@ -33,6 +33,7 @@ exports.handler = async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
+        'x-bedrock-agent': 'true', // <-- Añade este header
       },
     };
 
