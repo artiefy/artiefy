@@ -73,10 +73,30 @@ export async function POST(req: Request) {
 
     // Si no hay resultados, NO inventes cursos, solo devuelve vacío
     if (!results || results.length === 0) {
+      // Devuelve los cursos más recientes si no hay coincidencias
+      const fallbackResults = await db
+        .select({
+          id: courses.id,
+          title: courses.title,
+          description: courses.description,
+          category: {
+            id: categories.id,
+            name: categories.name,
+          },
+        })
+        .from(courses)
+        .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
+        .orderBy(sql`${courses.updatedAt} DESC`)
+        .limit(limit);
+
       return NextResponse.json({
-        description: `No hay cursos relacionados con "${prompt}".`,
-        count: 0,
-        results: [],
+        description: `No hay cursos relacionados con "${prompt}". Mostrando los cursos más recientes.`,
+        count: fallbackResults.length,
+        results: fallbackResults.map((course, idx) => ({
+          numero: idx + 1,
+          title: course.title,
+          description: course.description,
+        })),
         source:
           req.headers.get('x-bedrock-agent') === 'true' ? 'bedrock' : 'api',
       });
