@@ -1,6 +1,7 @@
-import https from 'https';
+/* eslint-disable @typescript-eslint/no-require-imports */
+const https = require('https');
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     // Validar httpMethod si está presente (API Gateway proxy integration)
     if (event.httpMethod && event.httpMethod !== 'POST') {

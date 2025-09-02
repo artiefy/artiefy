@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server';
-
 import { sql } from 'drizzle-orm';
-
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { courses, categories } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
-    // Parsear y tipar el body de forma segura para evitar `any`
     const rawBody = (await req.json().catch(() => ({}))) as Record<
       string,
       unknown
     >;
-
-    // Validaciones de tipo explícitas
     const prompt =
       typeof rawBody.prompt === 'string' ? rawBody.prompt.trim() : '';
 
@@ -36,29 +31,29 @@ export async function POST(req: Request) {
 
     const pattern = `%${prompt}%`;
 
-    // Query mejorada: filtra por ILIKE y ordena por relevancia (title > description > instructor),
-    // luego por rating y fecha de actualización. Limita a `limit` (máx 5).
+    // Solo selecciona id, title, description y category (id, name)
     const results = await db
       .select({
         id: courses.id,
         title: courses.title,
         description: courses.description,
-        instructor: courses.instructor,
-        rating: courses.rating,
-        coverImageKey: courses.coverImageKey,
-        createdAt: courses.createdAt,
-        updatedAt: courses.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+        },
       })
       .from(courses)
+      .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
       .where(
-        sql`${courses.title} ILIKE ${pattern} OR ${courses.description} ILIKE ${pattern} OR ${courses.instructor} ILIKE ${pattern}`
+        sql`
+          ${courses.title} ILIKE ${pattern}
+          OR ${courses.description} ILIKE ${pattern}
+          OR ${categories.name} ILIKE ${pattern}
+        `
       )
       .orderBy(
-        // prioridad por campo que contiene el término
-        sql`(CASE WHEN ${courses.title} ILIKE ${pattern} THEN 3 WHEN ${courses.description} ILIKE ${pattern} THEN 2 WHEN ${courses.instructor} ILIKE ${pattern} THEN 1 ELSE 0 END) DESC`,
-        // luego por rating y actualización
-        sql`${courses.rating} DESC NULLS LAST`,
-        sql`${courses.updatedAt} DESC`
+        sql`(CASE WHEN ${courses.title} ILIKE ${pattern} THEN 3 WHEN ${courses.description} ILIKE ${pattern} THEN 2 WHEN ${categories.name} ILIKE ${pattern} THEN 1 ELSE 0 END) DESC`,
+        sql`${courses.id} ASC`
       )
       .limit(limit);
 
