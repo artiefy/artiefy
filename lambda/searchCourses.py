@@ -2,6 +2,9 @@ import requests
 import json
 
 def lambda_handler(event, context):
+    # Soporta eventos enviados como lista o dict
+    if isinstance(event, list) and len(event) > 0:
+        event = event[0]
     prompt = event.get('parameters', {}).get('prompt', '')
     limit = event.get('parameters', {}).get('limit', 5)
     api_url = 'https://artiefy.com/api/search-courses'

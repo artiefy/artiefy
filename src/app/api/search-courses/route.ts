@@ -71,36 +71,19 @@ export async function POST(req: Request) {
       }));
     }
 
-    // Si no hay resultados, devuelve los 5 cursos más recientes de la BD
+    // Si no hay resultados, NO inventes cursos, solo devuelve vacío
     if (!results || results.length === 0) {
-      const fallbackResults = await db
-        .select({
-          id: courses.id,
-          title: courses.title,
-          description: courses.description,
-          category: {
-            id: categories.id,
-            name: categories.name,
-          },
-        })
-        .from(courses)
-        .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
-        .orderBy(sql`${courses.updatedAt} DESC`)
-        .limit(limit);
-
-      results = fallbackResults.map((row) => ({
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        category: row.category?.id != null ? row.category : { id: 0, name: '' },
-      }));
+      return NextResponse.json({
+        description: `No hay cursos relacionados con "${prompt}".`,
+        count: 0,
+        results: [],
+        source:
+          req.headers.get('x-bedrock-agent') === 'true' ? 'bedrock' : 'api',
+      });
     }
 
     return NextResponse.json({
-      description:
-        results.length > 0
-          ? `Se encontraron ${results.length} curso(s) relacionados con "${prompt}".`
-          : `No hay cursos relacionados con "${prompt}".`,
+      description: `Se encontraron ${results.length} curso(s) relacionados con "${prompt}".`,
       count: results.length,
       results: results.map((course, idx) => ({
         numero: idx + 1,
