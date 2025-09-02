@@ -9,6 +9,7 @@ import {
   enrollmentPrograms,
   enrollments,
   lessons,
+  pagos,
   programas,
   userCartera,
   userCustomFields,
@@ -85,7 +86,10 @@ const latestCartera = db
   )
   .as('latest_cartera');
 
-interface EnrollBody { userIds: string[]; courseIds: string[] }
+interface EnrollBody {
+  userIds: string[];
+  courseIds: string[];
+}
 interface UpdateCarteraBody {
   action: 'updateCartera';
   userId: string;
@@ -116,6 +120,7 @@ function isUpdateCarteraBody(v: unknown): v is UpdateCarteraBody {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const programId = url.searchParams.get('programId');
+  const userId = url.searchParams.get('userId');
   // Usuarios con algún detalle de inscripción (deduplicado)
   const inscUsers = db
     .select({
@@ -316,10 +321,52 @@ export async function GET(req: Request) {
       programTitle: s.programTitle,
     }));
 
+    // --- PRECIO DEL PROGRAMA Y PAGOS ---
+    type PagoRow = typeof pagos.$inferSelect;
+
+    let programaPrice: number | null = null;
+    let pagosUsuarioPrograma: PagoRow[] = [];
+    let totalPagado = 0;
+    let deuda: number | null = null;
+
+    if (userId && programId) {
+      // Traer precio del programa
+      const programaRows = await db
+        .select()
+        .from(programas)
+        .where(eq(programas.id, Number(programId)));
+
+      const programa = programaRows[0];
+      programaPrice = programa?.price ?? null;
+
+      // Traer pagos del usuario para ese programa
+      pagosUsuarioPrograma = await db
+        .select()
+        .from(pagos)
+        .where(
+          and(eq(pagos.userId, userId), eq(pagos.programaId, Number(programId)))
+        );
+
+      // Sumar pagos de forma segura
+      totalPagado = pagosUsuarioPrograma.reduce<number>(
+        (acc, p) => acc + (p.valor ?? 0),
+        0
+      );
+
+      deuda =
+        programaPrice !== null
+          ? Math.max(programaPrice - totalPagado, 0)
+          : null;
+    }
+
     return NextResponse.json({
       students: enrichedStudents,
       enrolledUsers,
       courses: coursesList,
+      programaPrice,
+      pagosUsuarioPrograma,
+      totalPagado,
+      deuda,
     });
   } catch (error) {
     console.error('❌ Error:', error);

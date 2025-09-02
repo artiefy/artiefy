@@ -28,7 +28,6 @@ const routeMatchers = {
   ) => boolean,
 };
 
-// Middleware configuration
 const middlewareConfig: ClerkMiddlewareOptions = {
   authorizedParties: [
     'https://artiefy.com',
@@ -40,8 +39,17 @@ const middlewareConfig: ClerkMiddlewareOptions = {
   clockSkewInMs: 60 * 1000, // 60 seconds tolerance
 };
 
+const isWhatsAppWebhook = createRouteMatcher([
+  '/api/super-admin/whatsapp/webhook',
+  '/api/super-admin/whatsapp/health',
+  '/api/super-admin/whatsapp/inbox',
+]) as (req: Request) => boolean;
+
 export default clerkMiddleware(async (auth, req) => {
   try {
+    if (isWhatsAppWebhook(req)) {
+      return NextResponse.next();
+    }
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata?.role;
 

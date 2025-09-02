@@ -60,13 +60,6 @@ const NIVEL_EDUCACION_OPTS = [
   'Doctorado',
 ] as const;
 
-const SEDES_OPTS = [
-  'Principal Cali',
-  'Ponao-Florencia',
-  'Mocoa',
-  'Planeta Rica',
-] as const;
-
 const ID_TYPES = [
   'CC (Cédula de ciudadanía)',
   'TI (Tarjeta de identidad)',
@@ -121,7 +114,8 @@ type Fields = typeof defaultFields;
 interface InscriptionConfig {
   dates?: { startDate: string }[];
   comercials?: { contact: string }[];
-  horarios?: { schedule: string }[]; // 👈 nuevo
+  horarios?: { schedule: string }[];
+  sedes?: { nombre: string }[]; // 👈 añadido
 }
 
 interface ProgramsResponse {
@@ -199,6 +193,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
   }
   void isRecord; // <- para evitar warning de unused
   // Cargar fechas y comerciales
+  const [sedeOptions, setSedeOptions] = useState<string[]>([]);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -207,10 +203,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
         setDateOptions((data.dates ?? []).map((d) => d.startDate));
         setCommercialOptions((data.comercials ?? []).map((c) => c.contact));
         setHorarioOptions((data.horarios ?? []).map((h) => h.schedule)); // 👈 nuevo
+        setSedeOptions((data.sedes ?? []).map((s) => s.nombre)); // 👈 nuevo
       } catch {
         setDateOptions([]);
         setCommercialOptions([]);
         setHorarioOptions([]); // 👈 nuevo
+        setSedeOptions([]); // 👈 nuevo
       }
     };
     if (isOpen) load();
@@ -280,6 +278,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
     // limpiar error al escribir
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
+
+  // estado nuevo
 
   // Validación básica por campo
   const validate = (f: Fields) => {
@@ -639,8 +639,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 label="Sede*"
                 value={fields.sede}
                 onChange={(v) => handleChange('sede', v)}
-                placeholder="Elige"
-                options={[...SEDES_OPTS]}
+                placeholder={
+                  sedeOptions.length ? 'Selecciona una sede' : 'No hay sedes'
+                }
+                options={sedeOptions}
+                disabled={sedeOptions.length === 0}
                 error={errors.sede}
               />
               <FieldSelect
