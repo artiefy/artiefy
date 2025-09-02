@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-
 import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -7,9 +6,6 @@ import { categories, courses } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
-    // Detecta si la petición viene de Bedrock/Lambda por header personalizado
-    const isBedrock = req.headers.get('x-bedrock-agent') === 'true';
-
     const rawBody = (await req.json().catch(() => ({}))) as Record<
       string,
       unknown
@@ -39,8 +35,6 @@ export async function POST(req: Request) {
 
     if (prompt) {
       const pattern = `%${prompt}%`;
-
-      // Busca cursos relacionados por título, descripción o categoría
       const dbResults = await db
         .select({
           id: courses.id,
@@ -76,33 +70,22 @@ export async function POST(req: Request) {
 
     // Si no hay resultados, devuelve los 5 cursos más recientes de la BD
     if (!results || results.length === 0) {
-      const dbResults = await db
-        .select({
-          id: courses.id,
-          title: courses.title,
-          description: courses.description,
-          category: {
-            id: categories.id,
-            name: categories.name,
-          },
-        })
-        .from(courses)
-        .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
-        .orderBy(sql`${courses.updatedAt} DESC`)
-        .limit(limit);
-
-      results = dbResults.map((row) => ({
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        category: row.category?.id != null ? row.category : { id: 0, name: '' },
-      }));
+      return NextResponse.json({
+        description: `No hay cursos relacionados con "${prompt}".`,
+        count: 0,
+        results: [],
+      });
     }
 
+    // Si hay resultados, arma la descripción y enumera los cursos
     return NextResponse.json({
+      description: `Se encontraron ${results.length} curso(s) relacionados con "${prompt}".`,
       count: results.length,
-      results,
-      source: isBedrock ? 'bedrock' : 'api',
+      results: results.map((course, idx) => ({
+        numero: idx + 1,
+        title: course.title,
+        description: course.description,
+      })),
     });
   } catch (error) {
     console.error('search-courses error:', error);
