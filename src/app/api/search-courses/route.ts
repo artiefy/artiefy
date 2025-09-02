@@ -113,6 +113,11 @@ export async function POST(req: Request) {
       category: { id: number; name: string };
     }[] = [];
 
+    const isBedrock = req.headers.get('x-bedrock-agent') === 'true';
+    if (isBedrock) {
+      console.log('[Bedrock Agent] prompt:', prompt, 'limit:', limit);
+    }
+
     if (prompt) {
       const pattern = `%${prompt}%`;
 
@@ -141,6 +146,10 @@ export async function POST(req: Request) {
           sql`${courses.updatedAt} DESC`
         )
         .limit(limit);
+
+      if (isBedrock) {
+        console.log('[Bedrock Agent] dbResults:', dbResults);
+      }
 
       results = dbResults.map((row) => ({
         id: row.id,
