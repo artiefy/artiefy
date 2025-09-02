@@ -69,11 +69,41 @@ export async function POST(req: Request) {
         description: row.description,
         category: row.category?.id != null ? row.category : { id: 0, name: '' },
       }));
-    }
 
-    // Si no hay resultados, NO inventes cursos, solo devuelve vacío
-    if (!results || results.length === 0) {
-      // Devuelve los cursos más recientes si no hay coincidencias
+      // Si no se encuentran suficientes cursos, rellena con los más recientes
+      if (results.length < limit) {
+        const ids = results.map((r) => r.id);
+        const fallbackResults = await db
+          .select({
+            id: courses.id,
+            title: courses.title,
+            description: courses.description,
+            category: {
+              id: categories.id,
+              name: categories.name,
+            },
+          })
+          .from(courses)
+          .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
+          .where(
+            ids.length > 0 ? sql`${courses.id} NOT IN (${ids})` : undefined
+          )
+          .orderBy(sql`${courses.updatedAt} DESC`)
+          .limit(limit - results.length);
+
+        results = [
+          ...results,
+          ...fallbackResults.map((row) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            category:
+              row.category?.id != null ? row.category : { id: 0, name: '' },
+          })),
+        ];
+      }
+    } else {
+      // Si no hay prompt, devuelve los más recientes
       const fallbackResults = await db
         .select({
           id: courses.id,
@@ -89,21 +119,16 @@ export async function POST(req: Request) {
         .orderBy(sql`${courses.updatedAt} DESC`)
         .limit(limit);
 
-      return NextResponse.json({
-        description: `No hay cursos relacionados con "${prompt}". Mostrando los cursos más recientes.`,
-        count: fallbackResults.length,
-        results: fallbackResults.map((course, idx) => ({
-          numero: idx + 1,
-          title: course.title,
-          description: course.description,
-        })),
-        source:
-          req.headers.get('x-bedrock-agent') === 'true' ? 'bedrock' : 'api',
-      });
+      results = fallbackResults.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        category: row.category?.id != null ? row.category : { id: 0, name: '' },
+      }));
     }
 
     return NextResponse.json({
-      description: `Se encontraron ${results.length} curso(s) relacionados con "${prompt}".`,
+      description: `Cursos encontrados:`,
       count: results.length,
       results: results.map((course, idx) => ({
         numero: idx + 1,
