@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
@@ -173,6 +172,38 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
 
+  // ✅ BLOQUE NUEVO — PÉGALO EN EL MISMO LUGAR
+  // Normalización de zona horaria para fechas de salida
+  const TZ_OFFSET = '-05:00'; // Bogotá (sin DST)
+  const FORCE_BOGOTA_FOR_Z = process.env.FORCE_BOGOTA_FOR_Z === 'true';
+  // Si en PROD sabes que hubo horas locales mal marcadas con 'Z', puedes activar este toggle.
+
+  const addOffsetIfMissing = (iso: string | null | undefined) => {
+    if (!iso) return iso;
+    // si ya tiene Z u offset, respétalo
+    if (/Z$|[+-]\d{2}:\d{2}$/.test(iso)) return iso;
+    // sin zona -> asumimos Bogotá
+    return `${iso}${TZ_OFFSET}`;
+  };
+
+  const fixIfZAndShouldForceBogota = (iso: string | null | undefined) => {
+    if (!iso) return iso;
+    if (!iso.endsWith("Z")) return iso;
+    if (!FORCE_BOGOTA_FOR_Z) return iso;
+    // Si venía con Z pero representaba hora local Bogotá,
+    // conviértela a UTC real sumando 5h (parche temporal).
+    const d = new Date(iso);
+    const fixed = new Date(d.getTime() + 5 * 60 * 60 * 1000).toISOString();
+    console.warn(
+      '⚠️ Corrigiendo fecha marcada con Z como si fuera local Bogotá:',
+      {
+        raw: iso,
+        fixedUTC: fixed,
+      }
+    );
+    return fixed;
+  };
+
   const meetingsWithVideo = meetingsFixed.map((meeting) => {
     let match = meeting.meetingId
       ? videosById.get(meeting.meetingId)
@@ -188,37 +219,45 @@ export async function getCourseByIdWithTypes(courseId: number) {
       }
     }
 
-    // lo que ya tiene la BD
     // Tipado seguro para incluir video_key opcional
     type ClassMeetingRow =
       (typeof classMeetings)['_']['columns'] extends infer _Cols
         ? typeof classMeetings.$inferSelect & { video_key?: string | null }
         : typeof classMeetings.$inferSelect & { video_key?: string | null };
 
-    // lo que ya tiene la BD
     const existingKey = (meeting as ClassMeetingRow).video_key ?? null;
 
-    // preferimos el video_key del match, si no, lo derivamos del videoUrl del match
     const matchedKey =
       match?.videoKey ??
       (match?.videoUrl ? (match.videoUrl.split('/').pop() ?? null) : null);
 
-    // prioriza: match.videoUrl -> BD video_key -> nada
     const finalVideoUrl =
       match?.videoUrl ??
       (existingKey ? `${aws}/video_clase/${existingKey}` : null);
 
     const finalVideoKey = matchedKey ?? existingKey ?? null;
 
-    console.log(`🔍 Video para reunión ${meeting.id}:`, {
-      meetingId: meeting.meetingId,
-      found: Boolean(match),
-      video_key: finalVideoKey,
-      videoUrl: finalVideoUrl,
+    // 🔧 Normaliza fechas de salida:
+    // 1) Si no hay zona -> añade -05:00 (Bogotá)
+    let startOut = addOffsetIfMissing(String(meeting.startDateTime));
+    let endOut = addOffsetIfMissing(String(meeting.endDateTime));
+
+    // 2) (Opcional) Si viene con Z y hubo bug histórico, corrige a UTC real
+    startOut = fixIfZAndShouldForceBogota(startOut);
+    endOut = fixIfZAndShouldForceBogota(endOut);
+
+    console.log(`🕒 Normalización meeting ${meeting.id}:`, {
+      rawStart: meeting.startDateTime,
+      rawEnd: meeting.endDateTime,
+      outStart: startOut,
+      outEnd: endOut,
+      forceBogotaForZ: FORCE_BOGOTA_FOR_Z,
     });
 
     return {
       ...meeting,
+      startDateTime: startOut!,
+      endDateTime: endOut!,
       videoUrl: finalVideoUrl,
       video_key: finalVideoKey,
     };
