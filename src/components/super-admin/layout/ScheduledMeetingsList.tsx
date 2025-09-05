@@ -24,23 +24,40 @@ export const ScheduledMeetingsList = ({
 }: ScheduledMeetingsListProps) => {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
+
+  // --- Logs iniciales ---
   console.log('📌 Meetings recibidas en ScheduledMeetingsList:', meetings);
   const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
+  console.log('🔧 AWS base URL normalizada:', aws);
 
   if (!meetings?.length) {
+    console.log('ℹ️ No hay clases agendadas para mostrar.');
     return <p className="text-muted text-sm">No hay clases agendadas.</p>;
   }
 
+  // --- Zona horaria target para mostrar ---
   const tz = 'America/Bogota';
+  console.log('🕰️ Zona horaria fija para UI:', tz);
+
   const formatter = new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'full',
     timeStyle: 'short',
     timeZone: tz,
   });
 
+  // Si el string no trae zona, asumimos Bogotá (-05:00)
   const ensureDate = (isoLike: string) => {
     const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(isoLike);
-    return new Date(hasTZ ? isoLike : `${isoLike}Z`);
+    const finalString = hasTZ ? isoLike : `${isoLike}-05:00`;
+    const d = new Date(finalString);
+    console.log('🧪 ensureDate()', {
+      raw: isoLike,
+      hasTZ,
+      finalString,
+      parsedISO: d.toISOString(),
+      localPreview: d.toString(),
+    });
+    return d;
   };
 
   const groupedByMainTitle = meetings.reduce<Record<string, UIMeeting[]>>(
@@ -55,16 +72,19 @@ export const ScheduledMeetingsList = ({
     {}
   );
 
-  // Extrae días únicos por grupo
+  // Extrae días únicos por grupo (usando ensureDate y tz fija)
   const getDaysOfWeek = (group: ScheduledMeeting[]) => {
     const days = group.map((m) =>
-      new Date(m.startDateTime).toLocaleDateString('es-CO', {
+      ensureDate(m.startDateTime).toLocaleDateString('es-CO', {
         weekday: 'long',
+        timeZone: tz,
       })
     );
     const unique = Array.from(new Set(days));
     return unique.join(', ');
   };
+
+  console.log('🧩 Grupos por título principal:', groupedByMainTitle);
 
   return (
     <div className="mt-6 space-y-6">
@@ -79,6 +99,7 @@ export const ScheduledMeetingsList = ({
         }, {});
 
         const daysText = getDaysOfWeek(groupMeetings);
+        console.log('📚 Subgrupos para', mainTitle, subGroups);
 
         return (
           <div
@@ -125,14 +146,31 @@ export const ScheduledMeetingsList = ({
                           m.videoUrl ??
                           (key ? `${aws}/video_clase/${key}` : null);
 
+                        console.log('🧾 Clase item', {
+                          idx,
+                          title: m.title,
+                          startRaw: m.startDateTime,
+                          endRaw: m.endDateTime,
+                          startISO: start.toISOString(),
+                          endISO: end.toISOString(),
+                          isValidStart,
+                          isValidEnd,
+                          joinUrl: m.joinUrl,
+                          finalVideo,
+                        });
+
+                        const endShort = new Intl.DateTimeFormat('es-CO', {
+                          timeStyle: 'medium',
+                          timeZone: tz,
+                        }).format(end);
+
                         return (
                           <li key={idx} className="text-sm text-gray-300">
                             <p>
                               🕒{' '}
                               {isValidStart && isValidEnd ? (
                                 <>
-                                  {formatter.format(start)} →{' '}
-                                  {end.toLocaleTimeString('es-CO')}
+                                  {formatter.format(start)} → {endShort}
                                 </>
                               ) : (
                                 <span className="text-red-400">
