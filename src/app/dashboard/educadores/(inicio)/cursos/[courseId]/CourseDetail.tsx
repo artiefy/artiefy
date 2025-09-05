@@ -12,17 +12,6 @@ import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
@@ -636,51 +625,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Verificar si hay un error o hay curso
   if (!course) return <div>No se encontró el curso.</div>;
 
-  // Función para manejar la eliminación del curso
-  const handleDelete = async () => {
-    if (!course) return;
-    try {
-      // Primero intentamos eliminar la imagen de S3
-      if (course.coverImageKey) {
-        const responseAws = await fetch('/api/upload', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            key: course.coverImageKey,
-          }),
-        });
-
-        if (!responseAws.ok) {
-          console.error('Error al eliminar la imagen de S3');
-        }
-      }
-
-      // Luego eliminamos el curso
-      const response = await fetch(
-        `/api/educadores/courses?courseId=${course.id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error al eliminar el curso`);
-      }
-
-      toast('Curso eliminado', {
-        description: 'El curso se ha eliminado con éxito.',
-      });
-      router.push('/dashboard/super-admin/cursos');
-    } catch (error) {
-      console.error('Error:', error);
-      toast('Error', {
-        description: 'No se pudo eliminar el curso completamente',
-      });
-    }
-  };
-
+ 
   // Verificar si hay un error
   if (error) {
     return (
@@ -861,31 +806,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Estadisticas
                   </Link>
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Eliminar</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará
-                        permanentemente el curso
-                        <span className="font-bold"> {course.title}</span> y
-                        todos los datos asociados a este.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete()}
-                        className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             </div>
             {/* Right Column - Information */}
