@@ -221,7 +221,7 @@ export function Header({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 z-10 w-full transition-all duration-300 ${
+        className={`sticky top-0 z-[9999] w-full transition-all duration-300 ${
           isScrolled
             ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
             : 'md:py-3'
