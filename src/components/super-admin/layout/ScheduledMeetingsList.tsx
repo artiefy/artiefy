@@ -39,7 +39,7 @@ export const ScheduledMeetingsList = ({
   });
 
   const ensureDate = (isoLike: string) => {
-    const hasTZ = /Z$|[+\-]\d{2}:\d{2}$/.test(isoLike);
+    const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(isoLike);
     return new Date(hasTZ ? isoLike : `${isoLike}Z`);
   };
 
