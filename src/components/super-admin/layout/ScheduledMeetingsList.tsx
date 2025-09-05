@@ -31,10 +31,17 @@ export const ScheduledMeetingsList = ({
     return <p className="text-muted text-sm">No hay clases agendadas.</p>;
   }
 
+  const tz = 'America/Bogota';
   const formatter = new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'full',
     timeStyle: 'short',
+    timeZone: tz,
   });
+
+  const ensureDate = (isoLike: string) => {
+    const hasTZ = /Z$|[+\-]\d{2}:\d{2}$/.test(isoLike);
+    return new Date(hasTZ ? isoLike : `${isoLike}Z`);
+  };
 
   const groupedByMainTitle = meetings.reduce<Record<string, UIMeeting[]>>(
     (acc, meeting) => {
@@ -107,8 +114,9 @@ export const ScheduledMeetingsList = ({
                     </p>
                     <ul className="space-y-2">
                       {classes.map((m, idx) => {
-                        const start = new Date(m.startDateTime);
-                        const end = new Date(m.endDateTime);
+                        const start = ensureDate(m.startDateTime);
+                        const end = ensureDate(m.endDateTime);
+
                         const isValidStart = !isNaN(start.getTime());
                         const isValidEnd = !isNaN(end.getTime());
 
