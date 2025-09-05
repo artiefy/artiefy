@@ -25,16 +25,6 @@ const Footer = () => {
                   Educadores
                 </a>
               </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white">
-                  Centro de Ayuda
-                </a>
-              </li>
             </ul>
           </div>
           <div>
@@ -56,7 +46,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-8 border-t border-gray-700 pt-8 text-center text-gray-400">
-          <p>© 2024 EduLearn. Todos los derechos reservados.</p>
+          <p>© 2025 Ciadet. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

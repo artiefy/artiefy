@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/estudiantes/ui/select';
-import { ClassMeeting,type LessonWithProgress } from '~/types';
+import { ClassMeeting, type LessonWithProgress } from '~/types';
 import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
