@@ -260,14 +260,16 @@ export async function createUser(
   firstName: string,
   lastName: string,
   email: string,
-  role: string
+  role: string,
+  subscriptionStatus = 'active',
+  subscriptionEndDate?: string
 ) {
   try {
     const generatedPassword = generateSecurePassword();
     let baseUsername =
       `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
     if (baseUsername.length < 4) baseUsername += 'user';
-    baseUsername = baseUsername.slice(0, 60); // Leave room for numbers
+    baseUsername = baseUsername.slice(0, 60);
 
     const uniqueUsername = await generateUniqueUsername(baseUsername);
 
@@ -279,12 +281,17 @@ export async function createUser(
         username: uniqueUsername,
         password: generatedPassword,
         emailAddress: [email],
-        publicMetadata: { role, mustChangePassword: true },
+        publicMetadata: {
+          role,
+          mustChangePassword: true,
+          planType: 'Premium', // 👈 siempre Premium
+          subscriptionStatus: subscriptionStatus ?? 'inactive',
+          subscriptionEndDate: subscriptionEndDate ?? null,
+        },
       });
 
       return { user: newUser, generatedPassword };
     } catch (error: unknown) {
-      // Si el error es por email duplicado, retornamos null sin lanzar error
       if (
         (
           error as { errors?: { code: string; meta?: { paramName: string } }[] }
@@ -294,9 +301,9 @@ export async function createUser(
             e.meta?.paramName === 'email_address'
         )
       ) {
+        // usuario ya existe → null
         return null;
       }
-      // Si es otro tipo de error, lo lanzamos
       throw error;
     }
   } catch (error) {

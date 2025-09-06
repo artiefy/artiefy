@@ -241,6 +241,98 @@ export default function AdminDashboard() {
       }
     });
   }, []);
+
+  // 👉 Helper para descargar un archivo desde base64
+  const downloadBase64File = (
+    base64: string,
+    mime: string,
+    filename: string
+  ) => {
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 👉 Handler que usarás cuando tu upload masivo termine y recibas la respuesta JSON del servidor
+  // 👉 Handler que usarás cuando tu upload masivo termine y recibas la respuesta JSON del servidor
+  interface FinishedFiles {
+    jsonBase64?: string;
+    jsonMime?: string;
+    jsonFilename?: string;
+    excelBase64?: string;
+    excelMime?: string;
+    excelFilename?: string;
+  }
+
+  interface FinishedSummary {
+    guardados?: number;
+    yaExiste?: number;
+    errores?: number;
+  }
+
+  interface FinishedPayload {
+    users?: User[];
+    files?: FinishedFiles;
+    summary?: FinishedSummary;
+  }
+
+  const handleUsersMasiveFinished = (res: unknown) => {
+    if (!res || typeof res !== 'object') return;
+    const data = res as FinishedPayload;
+
+    // Si ya tenías algo como handleMassUserUpload(newUsers) úsalo aquí también si viene en data.users
+    if (Array.isArray(data.users) && data.users.length > 0) {
+      // handleMassUserUpload(data.users);
+    }
+
+    // Descarga de archivos si el backend incluyó 'files'
+    const f = data.files;
+    const hasJson =
+      f && typeof f.jsonBase64 === 'string' && f.jsonBase64.length > 0;
+
+    const hasExcel =
+      f && typeof f.excelBase64 === 'string' && f.excelBase64.length > 0;
+
+    if (hasJson) {
+      const jsonMime =
+        typeof f!.jsonMime === 'string' ? f!.jsonMime : 'application/json';
+      const jsonFilename =
+        typeof f!.jsonFilename === 'string'
+          ? f!.jsonFilename
+          : 'resultado.json';
+      downloadBase64File(f!.jsonBase64!, jsonMime, jsonFilename);
+    }
+
+    if (hasExcel) {
+      const excelMime =
+        typeof f!.excelMime === 'string'
+          ? f!.excelMime
+          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const excelFilename =
+        typeof f!.excelFilename === 'string'
+          ? f!.excelFilename
+          : 'resultado.xlsx';
+      downloadBase64File(f!.excelBase64!, excelMime, excelFilename);
+    }
+
+    // Notificación rápida
+    const s = data.summary;
+    if (s && typeof s === 'object') {
+      const guardados = Number(s.guardados ?? 0);
+      const yaExiste = Number(s.yaExiste ?? 0);
+      const errores = Number(s.errores ?? 0);
+      showNotification?.(
+        `Carga masiva: ${guardados} guardados, ${yaExiste} ya existen, ${errores} errores.`,
+        'success'
+      );
+    }
+  };
+
   interface Program {
     id: string;
     title: string;
@@ -314,8 +406,13 @@ export default function AdminDashboard() {
         setWaLoading(true);
         setWaError(null);
 
-        interface WaGetOk { templates?: WhatsAppTemplate[] }
-        interface WaGetErr { error?: string; details?: unknown }
+        interface WaGetOk {
+          templates?: WhatsAppTemplate[];
+        }
+        interface WaGetErr {
+          error?: string;
+          details?: unknown;
+        }
 
         const res = await fetch('/api/super-admin/whatsapp', { method: 'GET' });
         const raw: unknown = await res.json();
@@ -1674,7 +1771,10 @@ export default function AdminDashboard() {
             <Paperclip className="relative z-10 size-3.5 sm:size-4" />
             <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
           </button>
-          <BulkUploadUsers onUsersUploaded={handleMassUserUpload} />
+          <BulkUploadUsers
+            onUsersUploaded={handleMassUserUpload}
+            onFinished={handleUsersMasiveFinished}
+          />
         </div>
 
         <div className="mt-6">

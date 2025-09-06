@@ -289,12 +289,46 @@ export default function EnrolledUsersPage() {
   >(null);
 
   // Normaliza a 12 filas editables
-  const ensure12 = useCallback((pagos: Pago[]) => {
+  // 15 filas: 0..11 cuotas, 12..14 conceptos especiales
+  const ensure15 = useCallback((pagos: Pago[]) => {
     const arr = [...pagos];
-    while (arr.length < 12) arr.push({});
-    return arr.slice(0, 12);
+    while (arr.length < 15) arr.push({});
+    return arr.slice(0, 15);
   }, []);
 
+  // ⬇️ Pega esto dentro del componente, donde hoy declaras ESPECIALES
+  const ESPECIALES = useMemo(
+    () =>
+      [
+        { label: 'PÓLIZA Y CARNET', idxBase: 12, nroPago: 13 },
+        { label: 'UNIFORME', idxBase: 13, nroPago: 14 },
+        { label: 'DERECHOS DE GRADO', idxBase: 14, nroPago: 15 },
+      ] as const,
+    []
+  );
+
+  const isEspecialIndex = (idx: number) => idx >= 12 && idx <= 14;
+  const labelForIndex = (idx: number) =>
+    ESPECIALES.find((e) => e.idxBase === idx)?.label ?? `Especial ${idx - 11}`;
+  const nroPagoForIndex = (idx: number) =>
+    ESPECIALES.find((e) => e.idxBase === idx)?.nroPago ?? idx + 1;
+
+  // ✅ Helpers de lectura segura
+  const asRec = (x: unknown): Record<string, unknown> =>
+    x && typeof x === 'object' ? (x as Record<string, unknown>) : {};
+
+  const getStr = (o: Record<string, unknown>, k: string): string =>
+    typeof o[k] === 'string' ? (o[k] as string) : '';
+
+  const getNum = (o: Record<string, unknown>, k: string): number => {
+    const v = o[k];
+    if (typeof v === 'number') return Number.isFinite(v) ? v : NaN;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    return NaN;
+  };
   const toISODateLike = useCallback(
     (value?: string | number | Date | null): string => {
       if (!value && value !== 0) return '';
@@ -307,6 +341,95 @@ export default function EnrolledUsersPage() {
       return d && !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
     },
     [] // 👈 no depende de nada externo; estable entre renders
+  );
+
+  // ⛳️ CONVIERTE esta función en useCallback para estabilizar referencia (ayuda con el useEffect)
+  const mapPagosToEditable = useCallback(
+    (pagosFromApi: unknown[]): Pago[] => {
+      const slots: Pago[] = Array.from({ length: 15 }, () => ({}));
+
+      for (const raw of pagosFromApi ?? []) {
+        const p = asRec(raw);
+
+        const conceptoUC = getStr(p, 'concepto').toUpperCase().trim();
+
+        // nroPago puede venir con varios nombres
+        const nroPagoNum = (() => {
+          const n1 = getNum(p, 'nroPago');
+          if (Number.isFinite(n1)) return n1;
+          const n2 = getNum(p, 'nro_pago');
+          if (Number.isFinite(n2)) return n2;
+          const n3 = getNum(p, 'numero'); // si tu backend a veces lo llama "numero"
+          return Number.isFinite(n3) ? n3 : NaN;
+        })();
+
+        // ¿especial?
+        const esp = ESPECIALES.find((e) => e.label === conceptoUC);
+        if (esp) {
+          const idx = esp.idxBase; // 12..14
+          slots[idx] = {
+            concepto: getStr(p, 'concepto') || esp.label,
+            nro_pago: Number.isFinite(getNum(p, 'nroPago'))
+              ? getNum(p, 'nroPago')
+              : Number.isFinite(getNum(p, 'nro_pago'))
+                ? getNum(p, 'nro_pago')
+                : esp.nroPago,
+            fecha: ((): string => {
+              const f = p.fecha;
+              return typeof f === 'string' ||
+                typeof f === 'number' ||
+                f instanceof Date
+                ? String(f)
+                : '';
+            })(),
+            metodo: getStr(p, 'metodo') || getStr(p, 'metodoPago'),
+            valor: Number.isFinite(getNum(p, 'valor')) ? getNum(p, 'valor') : 0,
+            receiptUrl: getStr(p, 'receiptUrl') || undefined,
+            receiptName: getStr(p, 'receiptName') || undefined,
+          };
+          continue;
+        }
+
+        // cuotas 1..12
+        if (
+          Number.isFinite(nroPagoNum) &&
+          nroPagoNum >= 1 &&
+          nroPagoNum <= 12
+        ) {
+          const idx = nroPagoNum - 1;
+          slots[idx] = {
+            concepto: getStr(p, 'concepto') || `Cuota ${idx + 1}`,
+            nro_pago: nroPagoNum,
+            fecha: ((): string => {
+              const f = p.fecha;
+              return typeof f === 'string' ||
+                typeof f === 'number' ||
+                f instanceof Date
+                ? String(f)
+                : '';
+            })(),
+            metodo: getStr(p, 'metodo') || getStr(p, 'metodoPago'),
+            valor: Number.isFinite(getNum(p, 'valor')) ? getNum(p, 'valor') : 0,
+            receiptUrl: getStr(p, 'receiptUrl') || undefined,
+            receiptName: getStr(p, 'receiptName') || undefined,
+          };
+        }
+      }
+
+      // normaliza fechas a 'YYYY-MM-DD'
+      const normalized = slots.map((row) => ({
+        ...row,
+        fecha:
+          typeof row?.fecha === 'string'
+            ? toISODateLike(row.fecha)
+            : typeof row?.fecha === 'number' || row?.fecha instanceof Date
+              ? toISODateLike(row.fecha as string | number | Date)
+              : '',
+      }));
+
+      return ensure15(normalized);
+    },
+    [ensure15, toISODateLike, ESPECIALES]
   );
 
   const daysInMonthUTC = useCallback((year: number, month0: number) => {
@@ -399,7 +522,7 @@ export default function EnrolledUsersPage() {
     });
   }
 
-  const normalizePagos = useCallback(
+  const _normalizePagos = useCallback(
     (raw: unknown[] = []): Pago[] => {
       const toNum = (v: unknown): number => {
         if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -412,45 +535,123 @@ export default function EnrolledUsersPage() {
 
       const toStr = (v: unknown): string => (typeof v === 'string' ? v : '');
 
-      const mapOne = (p: unknown): Pago => {
+      // 3 conceptos especiales y sus posiciones/nroPago fijos
+      const SPECIALS = [
+        { label: 'PÓLIZA Y CARNET', idxBase: 12, nroPago: 13 },
+        { label: 'UNIFORME', idxBase: 13, nroPago: 14 },
+        { label: 'DERECHOS DE GRADO', idxBase: 14, nroPago: 15 },
+      ] as const;
+
+      // preparamos 15 slots (0..11 cuotas, 12..14 especiales)
+      const slots: Pago[] = Array.from({ length: 15 }, () => ({}));
+
+      for (const p of raw ?? []) {
         const r = (p ?? {}) as Record<string, unknown>;
 
-        // fecha: aceptar string | number | Date -> normalizar a 'YYYY-MM-DD' o ''
-        let fecha = '';
-        const f = r.fecha;
-        if (
-          typeof f === 'string' ||
-          typeof f === 'number' ||
-          f instanceof Date
-        ) {
-          fecha = toISODateLike(f);
+        const conceptoRaw =
+          toStr(r.concepto) || getStr(r as Record<string, unknown>, 'producto');
+
+        const conceptoUC = conceptoRaw.toUpperCase().trim();
+
+        // extraer nroPago desde varios nombres posibles
+        const nroPago =
+          typeof r.nroPago === 'number'
+            ? r.nroPago
+            : typeof r.nroPago === 'string'
+              ? Number(r.nroPago)
+              : typeof r.nro_pago === 'number'
+                ? r.nro_pago
+                : typeof r.nro_pago === 'string'
+                  ? Number(r.nro_pago)
+                  : Number.isFinite(
+                        getNum(r as Record<string, unknown>, 'numero')
+                      )
+                    ? getNum(r as Record<string, unknown>, 'numero')
+                    : NaN;
+
+        // ¿coincide con un especial por LABEL exacto?
+        const esp = SPECIALS.find((e) => e.label === conceptoUC);
+
+        if (esp) {
+          const idx = esp.idxBase; // 12..14
+          slots[idx] = {
+            concepto: conceptoRaw || esp.label,
+            nro_pago: Number.isFinite(
+              getNum(r as Record<string, unknown>, 'nroPago')
+            )
+              ? getNum(r as Record<string, unknown>, 'nroPago')
+              : Number.isFinite(
+                    getNum(r as Record<string, unknown>, 'nro_pago')
+                  )
+                ? getNum(r as Record<string, unknown>, 'nro_pago')
+                : esp.nroPago,
+            fecha:
+              typeof r.fecha === 'string' ||
+              typeof r.fecha === 'number' ||
+              r.fecha instanceof Date
+                ? r.fecha
+                : '',
+            metodo:
+              toStr(r.metodo) ||
+              getStr(r as Record<string, unknown>, 'metodoPago'),
+            valor: toNum(r.valor),
+            receiptUrl:
+              typeof r.receiptUrl === 'string'
+                ? (r.receiptUrl as string)
+                : undefined,
+            receiptName:
+              typeof r.receiptName === 'string'
+                ? (r.receiptName as string)
+                : undefined,
+          };
+          continue;
         }
 
-        const nro =
-          typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
-            ? (r.nro_pago as string | number)
-            : typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
-              ? (r.nroPago as string | number)
-              : typeof r.numero === 'string' || typeof r.numero === 'number'
-                ? (r.numero as string | number)
-                : null;
+        // si no es especial, solo mapeamos a cuotas por nroPago 1..12
+        if (Number.isFinite(nroPago) && nroPago >= 1 && nroPago <= 12) {
+          const idx = (nroPago as number) - 1;
+          slots[idx] = {
+            concepto: conceptoRaw || `Cuota ${idx + 1}`,
+            nro_pago: nroPago as number,
+            fecha:
+              typeof r.fecha === 'string' ||
+              typeof r.fecha === 'number' ||
+              r.fecha instanceof Date
+                ? r.fecha
+                : '',
+            metodo:
+              toStr(r.metodo) ||
+              getStr(r as Record<string, unknown>, 'metodoPago'),
+            valor: toNum(r.valor),
+            receiptUrl:
+              typeof r.receiptUrl === 'string'
+                ? (r.receiptUrl as string)
+                : undefined,
+            receiptName:
+              typeof r.receiptName === 'string'
+                ? (r.receiptName as string)
+                : undefined,
+          };
+        }
+        // si llega un nroPago 13..15 sin label especial correcto, lo ignoramos para no contaminar cuotas
+      }
 
-        return {
-          concepto: toStr(r.concepto) || toStr(r.producto) || null,
-          nro_pago: nro,
-          fecha,
-          metodo: toStr(r.metodo) || toStr(r.metodoPago) || '',
-          valor: toNum(r.valor),
-          receiptUrl:
-            typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
-          receiptName:
-            typeof r.receiptName === 'string' ? r.receiptName : undefined,
-        };
-      };
+      // normaliza fechas a 'YYYY-MM-DD'
+      const normalized = slots.map((row) => ({
+        ...row,
+        fecha:
+          typeof row?.fecha === 'string'
+            ? toISODateLike(row.fecha)
+            : typeof row?.fecha === 'number' || row?.fecha instanceof Date
+              ? toISODateLike(
+                  row.fecha as string | number | Date | null | undefined
+                )
+              : '',
+      }));
 
-      return ensure12(raw.map(mapOne));
+      return ensure15(normalized);
     },
-    [toISODateLike, ensure12] // 👈 añade ensure12 aquí
+    [toISODateLike, ensure15]
   );
 
   // Al finalizar openCarteraModal, cuando ya tengas pagosUsuarioPrograma:
@@ -462,14 +663,23 @@ export default function EnrolledUsersPage() {
       return;
     }
 
-    const pago = editablePagos[index] ?? {};
-    const fechaStr = toISODateLike(pago.fecha);
+    const row = editablePagos[index] ?? {};
+    const fechaStr = toISODateLike(row.fecha);
 
-    // OBLIGATORIO porque en tu schema fecha es NOT NULL
     if (!fechaStr) {
-      alert('La fecha es obligatoria para guardar la cuota.');
+      alert('La fecha es obligatoria para guardar.');
       return;
     }
+
+    const especial = isEspecialIndex(index);
+    const concepto =
+      (row.concepto && String(row.concepto).trim()) ??
+      (especial ? labelForIndex(index) : `Cuota ${index + 1}`);
+    const nro_pago = Number(
+      row.nro_pago ??
+        row.nroPago ??
+        (especial ? nroPagoForIndex(index) : index + 1)
+    );
 
     try {
       const res = await fetch(
@@ -479,66 +689,36 @@ export default function EnrolledUsersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: carteraUserId,
-            programId: Number(currentProgramId), // 👈 a número
-            index, // 0..11
-            concepto: pago.concepto ?? '',
-            nro_pago: Number(pago.nro_pago ?? pago.nroPago ?? index + 1),
-            fecha: fechaStr, // 'YYYY-MM-DD'
-            metodo: pago.metodo ?? '',
-            valor: Number(pago.valor ?? 0),
+            programId: Number(currentProgramId),
+            index,
+            concepto,
+            nro_pago,
+            fecha: fechaStr,
+            metodo: row.metodo ?? '',
+            valor: Number(
+              typeof row.valor === 'number' ? row.valor : (row.valor ?? 0)
+            ),
           }),
         }
       );
 
       if (!res.ok) {
         const data: unknown = await res.json().catch(() => ({}));
-        console.error('❌ Error al guardar cuota', data);
-        const msg = isErrorResponse(data)
-          ? data.error
-          : 'No se pudo guardar la cuota.';
+        const msg = isErrorResponse(data) ? data.error : 'No se pudo guardar.';
         alert(msg);
+
         return;
       }
 
-      // refresca pagos desde el GET correcto
       const pagosRefrescados = await fetchPagosUsuarioPrograma(
         carteraUserId,
         String(currentProgramId)
       );
-
-      const totalPagado = pagosRefrescados.reduce((s, p) => {
-        const v =
-          typeof p.valor === 'string'
-            ? Number(p.valor)
-            : typeof p.valor === 'number'
-              ? p.valor
-              : 0;
-        return s + (Number.isFinite(v) ? v : 0);
-      }, 0);
-
-      const deuda = Math.max(
-        Number(carteraInfo?.programaPrice ?? 0) - totalPagado,
-        0
-      );
-
-      // Subir comprobante para la fila pendingRowForReceipt
-
-      setCarteraInfo((prev) =>
-        prev
-          ? {
-              ...prev,
-              pagosUsuarioPrograma: pagosRefrescados,
-              totalPagado,
-              deuda,
-            }
-          : prev
-      );
-
-      setEditablePagos(normalizePagos(pagosRefrescados));
-      alert('✅ Cuota guardada');
+      setEditablePagos(mapPagosToEditable(pagosRefrescados));
+      alert('✅ Guardado');
     } catch (e) {
       console.error(e);
-      alert('Error de red al guardar la cuota');
+      alert('Error de red al guardar.');
     }
   }
 
@@ -580,7 +760,7 @@ export default function EnrolledUsersPage() {
         carteraUserId,
         String(currentProgramId)
       );
-      setEditablePagos(normalizePagos(pagosRefrescados));
+      setEditablePagos(mapPagosToEditable(pagosRefrescados));
       alert('✅ Comprobante subido');
     } catch (err) {
       console.error(err);
@@ -935,7 +1115,7 @@ export default function EnrolledUsersPage() {
           deuda: 0,
         };
         setCarteraInfo(vacio);
-        setEditablePagos(ensure12([]));
+        setEditablePagos(ensure15([]));
         setShowCarteraModal(true);
         return;
       }
@@ -995,27 +1175,27 @@ export default function EnrolledUsersPage() {
         carnetPolizaUniforme,
         derechosGrado,
       });
-      setEditablePagos(() => {
-        const norm = normalizePagos(pagosUsuarioPrograma);
 
-        // 1) busca la primera cuota que ya tenga fecha (BD)
+      setEditablePagos(() => {
+        const norm = mapPagosToEditable(pagosUsuarioPrograma);
+
         let baseIndex = norm.findIndex(
           (r) => typeof r?.fecha === 'string' && r.fecha.trim() !== ''
         );
-
-        // 2) usa esa fecha como base; si no hay, usa hoy y arranca en idx 0
         const baseISO =
           baseIndex >= 0
             ? (norm[baseIndex]!.fecha as string)
             : new Date().toISOString().split('T')[0];
         if (baseIndex < 0) baseIndex = 0;
 
-        // 3) completa SOLO las vacías, mes a mes
         const next = norm.map((r, i) => {
           const hasFecha =
             typeof r?.fecha === 'string' && r.fecha.trim() !== '';
           if (hasFecha) return r;
-          return { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
+          // sólo autocompleta cuotas 0..11
+          if (i <= 11)
+            return { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
+          return r; // especiales intactos
         });
 
         return next;
@@ -1097,7 +1277,7 @@ export default function EnrolledUsersPage() {
   };
 
   useEffect(() => {
-    const norm = normalizePagos(carteraInfo?.pagosUsuarioPrograma ?? []);
+    const norm = mapPagosToEditable(carteraInfo?.pagosUsuarioPrograma ?? []);
     const baseIndex = norm.findIndex(
       (r) => typeof r?.fecha === 'string' && r.fecha.trim() !== ''
     );
@@ -1110,17 +1290,19 @@ export default function EnrolledUsersPage() {
     const baseISO = norm[baseIndex]!.fecha as string;
     const filled = norm.map((r, i) => {
       const hasFecha = typeof r.fecha === 'string' && r.fecha.trim() !== '';
-      return hasFecha
-        ? r
-        : { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
+      if (hasFecha) return r;
+      // solo autocompleta cuotas
+      return i <= 11
+        ? { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) }
+        : r;
     });
 
     setEditablePagos(filled);
   }, [
     showCarteraModal,
     carteraInfo?.pagosUsuarioPrograma,
-    normalizePagos,
     addMonthsKeepingDay,
+    mapPagosToEditable,
   ]);
 
   // Save visible columns to localStorage
@@ -2852,13 +3034,18 @@ export default function EnrolledUsersPage() {
                         <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
                           VALOR
                         </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                          ACCIONES
+                        </th>
                       </tr>
                     </thead>
+                    {/* ───────────────────────────────────────────────────────── */}
+                    {/* TABLA: 12 cuotas (ahora con select en Método de pago) */}
+                    {/* ───────────────────────────────────────────────────────── */}
                     <tbody>
                       {Array.from({ length: 12 }, (_, idx) => {
                         const cuotaNum = idx + 1;
                         const row = editablePagos[idx] ?? {};
-                        const _fechaStr = toISODateLike(row.fecha);
                         const rawValor =
                           (typeof row.valor === 'number'
                             ? row.valor
@@ -2866,7 +3053,7 @@ export default function EnrolledUsersPage() {
 
                         return (
                           <tr
-                            key={cuotaNum}
+                            key={`cuota-${cuotaNum}`}
                             className="align-top odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
                           >
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
@@ -2920,9 +3107,9 @@ export default function EnrolledUsersPage() {
                               />
                             </td>
 
+                            {/* SELECT método: Transferencia | Artiefy */}
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                              <input
-                                type="text"
+                              <select
                                 value={row.metodo ?? ''}
                                 onChange={(e) =>
                                   handleCuotaChange(
@@ -2932,7 +3119,13 @@ export default function EnrolledUsersPage() {
                                   )
                                 }
                                 className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-                              />
+                              >
+                                <option value="">—</option>
+                                <option value="Transferencia">
+                                  Transferencia
+                                </option>
+                                <option value="Artiefy">Artiefy</option>
+                              </select>
                             </td>
 
                             <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
@@ -2950,7 +3143,11 @@ export default function EnrolledUsersPage() {
                                   }
                                   className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                 />
+                              </div>
+                            </td>
 
+                            <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
+                              <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
                                 <div className="flex items-center gap-1">
                                   <button
                                     type="button"
@@ -2964,14 +3161,13 @@ export default function EnrolledUsersPage() {
                                     type="button"
                                     onClick={() => {
                                       setPendingRowForReceipt(idx);
-                                      fileInputRef.current?.click(); // dispara el input oculto
+                                      fileInputRef.current?.click();
                                     }}
                                     className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
                                   >
                                     Subir comprobante
                                   </button>
 
-                                  {/* Link "Ver" si ya existe comprobante */}
                                   {editablePagos[idx]?.receiptUrl && (
                                     <a
                                       href={
@@ -2994,25 +3190,6 @@ export default function EnrolledUsersPage() {
                           </tr>
                         );
                       })}
-
-                      {/* Fila fija DERECHOS DE GRADO (no editable) */}
-                      <tr className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900">
-                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                          DERECHOS DE GRADO
-                        </td>
-                        <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
-                          -
-                        </td>
-                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                          -
-                        </td>
-                        <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                          -
-                        </td>
-                        <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
-                          {formatCOP(carteraInfo?.derechosGrado ?? 0)}
-                        </td>
-                      </tr>
                     </tbody>
 
                     <tfoot>
@@ -3054,6 +3231,182 @@ export default function EnrolledUsersPage() {
                       </tr>
                     </tfoot>
                   </table>
+                  {/* ───────────────────────────────────────────────────────── */}
+                  {/* TABLA APARTE: Conceptos especiales (13, 14, 15) */}
+                  {/* ───────────────────────────────────────────────────────── */}
+                  <div className="mt-6">
+                    <h4 className="mb-3 text-base font-semibold">
+                      Conceptos especiales
+                    </h4>
+                    <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                      <table className="min-w-full border-collapse text-sm">
+                        <thead className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                          <tr>
+                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                              PRODUCTO
+                            </th>
+                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                              FECHA DE PAGO
+                            </th>
+                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                              MÉTODO DE PAGO
+                            </th>
+                            <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                              VALOR
+                            </th>
+                            <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                              ACCIONES
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {[
+                            { label: 'PÓLIZA Y CARNET', idxBase: 12 }, // nroPago 13
+                            { label: 'UNIFORME', idxBase: 13 }, // nroPago 14
+                            { label: 'DERECHOS DE GRADO', idxBase: 14 }, // nroPago 15
+                          ].map(({ label, idxBase }) => {
+                            const nroPago = idxBase + 1;
+                            const row = editablePagos[idxBase] ?? {};
+                            const rawValor =
+                              (typeof row.valor === 'number'
+                                ? row.valor
+                                : Number(row.valor ?? 0)) || 0;
+
+                            return (
+                              <tr
+                                key={`especial-${nroPago}`}
+                                className="align-top odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
+                              >
+                                {/* CONCEPTO (editable, se guarda tal cual en 'pagos') */}
+                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                  <input
+                                    type="text"
+                                    value={row.concepto ?? label}
+                                    onChange={(e) =>
+                                      handleCuotaChange(
+                                        idxBase,
+                                        'concepto',
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                  />
+                                </td>
+
+                                {/* FECHA */}
+                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                  <input
+                                    type="date"
+                                    value={
+                                      typeof editablePagos[idxBase]?.fecha ===
+                                      'string'
+                                        ? (editablePagos[idxBase]!
+                                            .fecha as string)
+                                        : toISODateLike(
+                                            editablePagos[idxBase]?.fecha
+                                          )
+                                    }
+                                    onChange={(e) =>
+                                      handleCuotaChange(
+                                        idxBase,
+                                        'fecha',
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                  />
+                                </td>
+
+                                {/* SELECT MÉTODO */}
+                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                  <select
+                                    value={row.metodo ?? ''}
+                                    onChange={(e) =>
+                                      handleCuotaChange(
+                                        idxBase,
+                                        'metodo',
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                  >
+                                    <option value="">—</option>
+                                    <option value="Transferencia">
+                                      Transferencia
+                                    </option>
+                                    <option value="Artiefy">Artiefy</option>
+                                  </select>
+                                </td>
+
+                                {/* VALOR + acciones */}
+                                <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
+                                  <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={rawValor.toString()}
+                                      onChange={(e) =>
+                                        handleCuotaChange(
+                                          idxBase,
+                                          'valor',
+                                          e.target.value
+                                        )
+                                      }
+                                      className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
+                                  <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => savePagoRow(idxBase)}
+                                        className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                                      >
+                                        Guardar
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPendingRowForReceipt(idxBase);
+                                          fileInputRef.current?.click();
+                                        }}
+                                        className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                                      >
+                                        Subir comprobante
+                                      </button>
+
+                                      {editablePagos[idxBase]?.receiptUrl && (
+                                        <a
+                                          href={
+                                            editablePagos[idxBase]
+                                              .receiptUrl as string
+                                          }
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="ml-1 text-xs underline"
+                                          title={
+                                            editablePagos[idxBase]
+                                              ?.receiptName ?? 'Comprobante'
+                                          }
+                                        >
+                                          Ver
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   {/* input global para subir comprobantes */}
                   <input
                     ref={fileInputRef}

@@ -14,11 +14,15 @@ interface User {
   isNew?: boolean;
 }
 
+interface BulkUploadUsersProps {
+  onUsersUploaded: (newUsers: User[]) => void;
+  onFinished?: (res: unknown) => void; // 👈 NUEVO (opcional)
+}
+
 const BulkUploadUsers = ({
   onUsersUploaded,
-}: {
-  onUsersUploaded: (newUsers: User[]) => void;
-}) => {
+  onFinished,
+}: BulkUploadUsersProps) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -58,13 +62,23 @@ const BulkUploadUsers = ({
         throw new Error('Respuesta inesperada del servidor, no es JSON.');
       }
 
-      // ✅ Recibir JSON con usuarios creados
-      const { users: newUsers }: { users: User[] } = (await res.json()) as {
-        users: User[];
-      };
+      // ✅ Recibir JSON (puede incluir users, summary, files/base64, etc.)
+      const result: unknown = await res.json();
 
-      // ✅ Enviar los usuarios creados al Dashboard
-      onUsersUploaded(newUsers);
+      // ✅ Extraer users de forma segura si vienen
+      let newUsers: User[] = [];
+      if (
+        result &&
+        typeof result === 'object' &&
+        'users' in result &&
+        Array.isArray((result as { users: unknown }).users)
+      ) {
+        newUsers = (result as { users: User[] }).users;
+        onUsersUploaded(newUsers);
+      }
+
+      // ✅ Notificar al padre para que descargue archivos / muestre resumen
+      onFinished?.(result);
 
       // ✅ Cerrar el modal después de la carga
       setModalIsOpen(false);
