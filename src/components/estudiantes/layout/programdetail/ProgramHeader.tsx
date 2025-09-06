@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import { FaCalendar, FaCheck, FaTrophy, FaUserGraduate } from 'react-icons/fa';
 import { toast } from 'sonner';
 import useSWR from 'swr';
@@ -317,7 +317,12 @@ export function ProgramHeader({
           />
           <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
             <h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
-              {program.title}
+              <span className="inline">
+                {program.title}{' '}
+                {isEnrolled && (
+                  <CheckCircleIcon className="mb-1 ml-1 inline-block h-6 w-6 flex-shrink-0 align-middle text-green-500" />
+                )}
+              </span>
             </h1>
           </div>
         </AspectRatio>

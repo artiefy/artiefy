@@ -11,7 +11,7 @@ import {
 } from 'next/navigation';
 
 import { SignInButton, useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
   FaCheck,
@@ -1360,14 +1360,22 @@ export function CourseHeader({
           {/* <-- Ensure no top margin/padding */}
           {/* Course titles - desktop and mobile */}
           <div className="w-full">
-            {/* Título en móviles */}
-            <h1 className="-mt-7 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
-              {course.title}
+            {/* Título en móviles - con chulito alineado a última palabra */}
+            <h1 className="-mt-10 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
+              <span className="inline">
+                {course.title}{' '}
+                {isEnrolled && (
+                  <CheckCircleIcon className="mb-1 ml-1 inline-block h-5 w-5 flex-shrink-0 align-middle text-green-500" />
+                )}
+              </span>
             </h1>
 
             {/* Título en desktop - adjusted top margin */}
-            <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-6 sm:block md:text-2xl lg:text-3xl">
+            <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-12 sm:flex sm:items-center md:text-2xl lg:text-3xl">
               {course.title}
+              {isEnrolled && (
+                <CheckCircleIcon className="ml-3 h-6 w-6 flex-shrink-0 text-green-500" />
+              )}
             </h1>
           </div>
           {/* MOVED: Mobile metadata section - now below title in mobile view */}
