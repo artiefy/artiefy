@@ -1,14 +1,21 @@
 // src/app/api/super-admin/teams/video/route.ts
 import { NextResponse } from 'next/server';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { eq, sql } from 'drizzle-orm';
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { eq, inArray, sql as dsql } from 'drizzle-orm';
+import { Readable } from 'node:stream';
 import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { classMeetings } from '~/server/db/schema';
 
-// ---------------------- Helpers ----------------------
+import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
+
+// Para asegurarte de que estás en runtime Node (streams grandes)
+export const runtime = 'nodejs';
+
+// ---------------------- Helpers (puedes reutilizar los tuyos) ----------------------
 
 function decodeMeetingId(encodedId: string): string {
   try {
@@ -76,7 +83,39 @@ interface ClassMeetingRow {
   video_key: string | null;
 }
 
-// ---------------------- Handler ----------------------
+function errMsg(e: unknown): string {
+  if (e instanceof Error && typeof e.message === 'string') return e.message;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
+}
+
+async function withDbRetry<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      const msg = errMsg(e);
+      const transient =
+        msg.includes('fetch failed') ||
+        msg.includes('ECONNRESET') ||
+        msg.includes('ETIMEDOUT') ||
+        msg.includes('ECONNREFUSED') ||
+        msg.includes('503') ||
+        msg.includes('502');
+
+      lastErr = e;
+      if (!transient || i === tries - 1) throw e;
+      await new Promise((r) => setTimeout(r, 200 * Math.pow(2, i))); // backoff: 200,400,800,1600
+    }
+  }
+  throw lastErr;
+}
+
+// ---------------------- GET ----------------------
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -95,141 +134,248 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Auth Graph' }, { status: 500 });
   }
 
-  // 2) Llamada a getAllRecordings
+  // 2) Llamada a getAllRecordings (con timeout)
   const url = `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/getAllRecordings(meetingOrganizerUserId='${userId}')`;
-  const response = await fetch(url, {
+  const listRes = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(20_000),
   });
-  console.log('📡 Graph status:', response.status);
 
-  if (!response.ok) {
-    const raw = await response.text().catch(() => '');
+  console.log('📡 Graph status:', listRes.status);
+
+  if (!listRes.ok) {
+    const raw = await listRes.text().catch(() => '');
     console.error('❌ Error getAllRecordings:', raw);
     return NextResponse.json({ error: 'Graph error' }, { status: 500 });
   }
 
-  const data = (await response.json()) as GetRecordingsResponse;
+  const data = (await listRes.json()) as GetRecordingsResponse;
   const recordings = data.value ?? [];
   console.log('🎥 Grabaciones encontradas:', recordings.length);
 
-  const videos: {
-    meetingId: string;
-    videoKey: string;
-    videoUrl: string;
-  }[] = [];
+  // ---- PRE-CARGA EN BATCH DE CLASS_MEETINGS ----
+  const decodedIds = recordings
+    .map((r) => decodeMeetingId(r.meetingId))
+    .filter(Boolean);
 
-  // 3) Recorremos recordings
-  for (const recording of recordings) {
-    console.log('🔍 Procesando recording:', recording);
+  const uniqueIds = Array.from(new Set(decodedIds));
 
-    // a) Obtener el meetingId real desde base64
-    const decodedId = decodeMeetingId(recording.meetingId);
+  const existingByMeetingId = new Map<string, ClassMeetingRow>();
 
-    // b) Buscar por meeting_id
-    let existing = await db
-      .select()
-      .from(classMeetings)
-      .where(eq(classMeetings.meetingId, decodedId))
-      .limit(1)
-      .then((r) => r[0] as ClassMeetingRow | undefined);
-
-    // c) Si no está por meeting_id, intentar backfill buscando en join_url
-    if (!existing) {
-      // Trae todas las filas que tengan join_url (limit por seguridad)
-      const candidates = (await db
+  // a) Trae de una sola vez los que ya tienen meeting_id
+  if (uniqueIds.length) {
+    const rows = (await withDbRetry(() =>
+      db
         .select()
         .from(classMeetings)
-        .where(sql`${classMeetings.joinUrl} IS NOT NULL`)
-        .limit(500)) as unknown as ClassMeetingRow[];
+        .where(inArray(classMeetings.meetingId, uniqueIds))
+    )) as unknown as ClassMeetingRow[];
+    rows.forEach((r) => {
+      if (r.meetingId) existingByMeetingId.set(r.meetingId, r);
+    });
+  }
 
-      // Compara en Node (tipado estricto)
+  // b) Para IDs que faltan, intenta un backfill ÚNICO basado en join_url
+  const missingIds = uniqueIds.filter((id) => !existingByMeetingId.has(id));
+  if (missingIds.length) {
+    const candidates = (await withDbRetry(() =>
+      db
+        .select()
+        .from(classMeetings)
+        .where(dsql`${classMeetings.joinUrl} IS NOT NULL`)
+        .limit(1000)
+    )) as unknown as ClassMeetingRow[];
+
+    const updates: { id: number; meetingId: string }[] = [];
+
+    for (const mid of missingIds) {
       const match = candidates.find((row) => {
         try {
           const decodedJoin = decodeURIComponent(row.joinUrl ?? '');
-          return decodedJoin.includes(decodedId);
+          return decodedJoin.includes(mid);
         } catch {
           return false;
         }
       });
 
       if (match) {
-        // Backfill del meeting_id en la fila encontrada
-        const updateMeetingId: Partial<typeof classMeetings.$inferInsert> = {
-          meetingId: decodedId,
-        };
-
-        await db
-          .update(classMeetings)
-          .set(updateMeetingId)
-          .where(eq(classMeetings.id, match.id));
-
-        existing = { ...match, meetingId: decodedId };
+        updates.push({ id: match.id, meetingId: mid });
+        existingByMeetingId.set(mid, { ...match, meetingId: mid });
         console.log(
           `🧩 Backfill meeting_id por join_url en class_meetings.id=${match.id}`
         );
       } else {
-        console.warn(
-          `⚠️ No encontré class_meetings para ${decodedId}. Omitiendo...`
-        );
-        continue; // no insertamos nuevas filas (courseId es NOT NULL)
+        console.warn(`⚠️ No encontré class_meetings para ${mid}. Omitiendo...`);
       }
     }
 
-    // d) Si ya tiene video_key, lo devolvemos
-    if (existing.video_key) {
-      console.log(`✅ Ya tenía video_key: ${existing.video_key}`);
-      videos.push({
-        meetingId: decodedId,
-        videoKey: existing.video_key,
-        videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${existing.video_key}`,
-      });
+    // Persiste los backfills (uno por uno con retry; o podrías chunkear)
+    for (const u of updates) {
+      await withDbRetry(() =>
+        db
+          .update(classMeetings)
+          .set({ meetingId: u.meetingId })
+          .where(eq(classMeetings.id, u.id))
+      );
+    }
+  }
+
+  // Para no bloquear el request por mucho tiempo
+  const MAX_NEW_UPLOADS = 2; // súbelo si quieres, pero no lo dejes infinito
+  const PER_DOWNLOAD_TIMEOUT_MS = 90_000; // 90s por grabación
+
+  const videos: {
+    meetingId: string;
+    videoKey: string;
+    videoUrl: string;
+    createdAt?: string;
+  }[] = [];
+
+  let uploadsStarted = 0;
+
+  // 3) Recorremos recordings
+  // 3) Recorremos recordings
+  for (const recording of recordings) {
+    try {
+      // a) Obtener el meetingId real desde base64
+      const decodedId = decodeMeetingId(recording.meetingId);
+
+      // b) Usar el mapa precargado (SIN hacer query aquí)
+      const existing = existingByMeetingId.get(decodedId);
+      if (!existing) {
+        console.warn(
+          `⚠️ No encontré class_meetings para ${decodedId}. Omitiendo...`
+        );
+        continue;
+      }
+
+      // c) Si ya tiene video_key, lo devolvemos
+      if (existing.video_key) {
+        console.log(`✅ Ya tenía video_key: ${existing.video_key}`);
+        videos.push({
+          meetingId: decodedId,
+          videoKey: existing.video_key,
+          videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${existing.video_key}`,
+          createdAt: recording.createdDateTime,
+        });
+        continue;
+      }
+
+      // d) Control de subidas nuevas por request
+      if (uploadsStarted >= MAX_NEW_UPLOADS) {
+        console.log('⏭️ Límite de subidas nuevas alcanzado para este request');
+        continue;
+      }
+
+      // e) Validar URL de descarga
+      if (!recording.recordingContentUrl) {
+        console.warn(`⚠️ recordingContentUrl vacío para ${decodedId}`);
+        continue;
+      }
+
+      // f) Descargar por streaming con timeout (si falla, seguimos)
+      console.log(`⬇️ Descargando video para ${decodedId}...`);
+      const dlController = new AbortController();
+      const dlTimeout = setTimeout(
+        () => dlController.abort(),
+        PER_DOWNLOAD_TIMEOUT_MS
+      );
+
+      let videoRes: Response;
+      try {
+        videoRes = await fetch(recording.recordingContentUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: dlController.signal,
+        });
+      } catch (err: unknown) {
+        console.error(`❌ Error inicio descarga (${decodedId}):`, errMsg(err));
+        clearTimeout(dlTimeout);
+        continue;
+      }
+
+      clearTimeout(dlTimeout);
+
+      if (!videoRes.ok || !videoRes.body) {
+        console.error(`❌ Error descarga (${decodedId}):`, videoRes.status);
+        continue;
+      }
+
+      // g) Subir a S3 por streaming con Upload (evita headers inválidos)
+      const videoKey = `${uuidv4()}.mp4`;
+      try {
+        // 1) Convertir a Node Readable
+        const webStream =
+          videoRes.body as unknown as NodeWebReadableStream<Uint8Array>;
+        const nodeStream = Readable.fromWeb(webStream);
+
+        // 2) Metadata segura (sin undefined)
+        const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
+        const contentLengthHeader = videoRes.headers.get('content-length');
+        const contentLength =
+          contentLengthHeader && !Number.isNaN(Number(contentLengthHeader))
+            ? Number(contentLengthHeader)
+            : undefined;
+
+        // 3) Subir con Upload (multipart/chunked)
+        const uploader = new Upload({
+          client: s3,
+          params: {
+            Bucket: 'artiefy-upload',
+            Key: `video_clase/${videoKey}`,
+            Body: nodeStream,
+            ContentType: contentType,
+            ...(contentLength !== undefined
+              ? { ContentLength: contentLength }
+              : {}),
+          },
+          queueSize: 3,
+          partSize: 10 * 1024 * 1024, // 10MB
+          leavePartsOnError: false,
+        });
+
+        await uploader.done();
+        console.log(`🚀 Subido a S3: ${videoKey}`);
+
+        // h) Guardar en BD el video_key (con retry)
+        try {
+          await withDbRetry(() =>
+            db
+              .update(classMeetings)
+              .set({ video_key: videoKey })
+              .where(eq(classMeetings.id, existing.id))
+          );
+        } catch (err: unknown) {
+          console.error(
+            `❌ Error guardando video_key en BD (${decodedId}):`,
+            errMsg(err)
+          );
+          continue;
+        }
+
+        // refresca cache en memoria para este request
+        existing.video_key = videoKey;
+        existingByMeetingId.set(decodedId, { ...existing });
+
+        // i) Añadir a payload
+        videos.push({
+          meetingId: decodedId,
+          videoKey,
+          videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`,
+          createdAt: recording.createdDateTime,
+        });
+
+        uploadsStarted += 1;
+      } catch (err: unknown) {
+        console.error(`❌ Error subiendo a S3 (${decodedId}):`, errMsg(err));
+        continue;
+      }
+    } catch (err: unknown) {
+      console.error(
+        '❌ Error inesperado en iteración de recording:',
+        errMsg(err)
+      );
       continue;
     }
-
-    // e) Descargar recording del Graph
-    if (!recording.recordingContentUrl) {
-      console.warn(`⚠️ recordingContentUrl vacío para ${decodedId}`);
-      continue;
-    }
-
-    console.log(`⬇️ Descargando video para ${decodedId}...`);
-    const videoRes = await fetch(recording.recordingContentUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!videoRes.ok) {
-      console.error(`❌ Error descarga (${decodedId}):`, videoRes.status);
-      continue;
-    }
-
-    // f) Subir a S3
-    const buffer = await videoRes.arrayBuffer();
-    const videoKey = `${uuidv4()}.mp4`;
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: 'artiefy-upload',
-        Key: `video_clase/${videoKey}`,
-        Body: Buffer.from(buffer),
-        ContentType: 'video/mp4',
-      })
-    );
-    console.log(`🚀 Subido a S3: ${videoKey}`);
-
-    const updateVideoKey: Partial<typeof classMeetings.$inferInsert> = {
-      video_key: videoKey,
-    };
-
-    await db
-      .update(classMeetings)
-      .set(updateVideoKey)
-      .where(eq(classMeetings.id, existing.id));
-
-    // h) Añadir a payload de respuesta
-    videos.push({
-      meetingId: decodedId,
-      videoKey,
-      videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`,
-    });
   }
 
   console.log('📤 Videos listos para enviar:', videos.length);
