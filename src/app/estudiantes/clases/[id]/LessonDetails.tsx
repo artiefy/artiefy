@@ -41,6 +41,8 @@ import {
 } from '~/utils/scrollPosition';
 import { useMediaQuery } from '~/utils/useMediaQuery';
 
+import '~/styles/arrowactivity.css';
+
 // Add interface for API response
 interface GradeSummaryResponse {
   finalGrade: number;
@@ -971,7 +973,7 @@ export default function LessonDetails({
 
         {/* Right Sidebar - SOLO calificaciones y recursos cuando no hay video */}
         {!isMobile && (
-          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-0 md:shadow-sm lg:w-72">
+          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-2 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
             {lesson.coverVideoKey === 'none' ? (
               <>
                 <div className="mt-4">
@@ -982,23 +984,39 @@ export default function LessonDetails({
                     </h2>
                   </div>
                   {activities.length > 0 && (
-                    <div className="mb-6 flex flex-col items-center justify-center rounded-lg bg-blue-50 p-4 shadow-sm">
-                      <p className="mb-2 text-center font-semibold text-blue-800">
+                    <div className="mb-6 flex flex-col items-center justify-center rounded-lg bg-gradient-to-r from-cyan-50 to-green-50 p-4 shadow-sm">
+                      <p className="mb-2 text-center font-semibold text-emerald-700">
                         Actividad disponible en el centro
                       </p>
-                      <div className="animate-pulse">
+                      <div className="arrow-glow-container">
+                        {/* Flecha apuntando hacia la izquierda con colores invertidos para mejor visibilidad */}
                         <svg
-                          width="32"
-                          height="32"
+                          width="40"
+                          height="40"
                           viewBox="0 0 24 24"
                           fill="none"
-                          className="text-blue-500"
-                          style={{ transform: 'rotate(180deg)' }}
+                          className="arrow-glow"
+                          style={{
+                            filter:
+                              'drop-shadow(0 0 6px rgba(58, 244, 239, 0.7))',
+                          }}
                         >
+                          <defs>
+                            <linearGradient
+                              id="arrowGradient"
+                              x1="100%"
+                              y1="0%"
+                              x2="0%"
+                              y2="0%"
+                            >
+                              <stop offset="0%" stopColor="#3AF4EF" />
+                              <stop offset="100%" stopColor="#2ecc71" />
+                            </linearGradient>
+                          </defs>
                           <path
-                            d="M12 19V5M12 19L5 12M12 19L19 12"
-                            stroke="currentColor"
-                            strokeWidth="2"
+                            d="M19 12H5M5 12L12 5M5 12L12 19"
+                            stroke="url(#arrowGradient)"
+                            strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
