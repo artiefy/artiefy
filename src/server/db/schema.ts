@@ -1304,4 +1304,8 @@ export const pagos = pgTable('pagos', {
   metodo: varchar('metodo', { length: 50 }).notNull(),
   valor: integer('valor').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  receiptKey: varchar('receipt_key', { length: 255 }),
+  receiptUrl: varchar('receipt_url', { length: 512 }),
+  receiptName: varchar('receipt_name', { length: 255 }),
+  receiptUploadedAt: timestamp('receipt_uploaded_at', { withTimezone: true }),
 });

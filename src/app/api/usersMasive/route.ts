@@ -8,6 +8,29 @@ import { db } from '~/server/db';
 import { userCredentials, users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
+// 👉 Helper para construir un Excel con Resultados y Resumen
+function buildExcelFromResultados(
+  resultados: {
+    email: string;
+    estado: 'GUARDADO' | 'YA_EXISTE' | 'ERROR';
+    detalle?: string;
+  }[],
+  summary: Record<string, unknown>
+) {
+  const wb = XLSX.utils.book_new();
+  const wsResultados = XLSX.utils.json_to_sheet(resultados);
+  XLSX.utils.book_append_sheet(wb, wsResultados, 'Resultados');
+
+  const wsResumen = XLSX.utils.json_to_sheet([summary]);
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  const excelArrayBuffer = XLSX.write(wb, {
+    bookType: 'xlsx',
+    type: 'array',
+  }) as ArrayBuffer;
+  return Buffer.from(excelArrayBuffer);
+}
+
 interface UserInput {
   firstName: string;
   lastName: string;
@@ -77,6 +100,12 @@ export async function POST(request: Request) {
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
+    // 👉 log por fila
+    const resultados: {
+      email: string;
+      estado: 'GUARDADO' | 'YA_EXISTE' | 'ERROR';
+      detalle?: string;
+    }[] = [];
 
     const successfulUsers = [];
     const emailErrors = [];
@@ -85,6 +114,15 @@ export async function POST(request: Request) {
     for (const userData of usersData) {
       try {
         console.log(`Creating user: ${userData.email}`);
+        // 👉 fin de suscripción +1 mes (YYYY-MM-DD)
+        const now = new Date();
+        const endDate = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          now.getDate()
+        );
+        const formattedEndDate = endDate.toISOString().split('T')[0];
+
         const result = await createUser(
           userData.firstName.trim(),
           userData.lastName.trim(),
@@ -96,6 +134,7 @@ export async function POST(request: Request) {
           console.log(
             `User ${userData.email} already exists, skipping creation`
           );
+          resultados.push({ email: userData.email, estado: 'YA_EXISTE' });
           continue;
         }
 
@@ -136,13 +175,16 @@ export async function POST(request: Request) {
                 | 'super-admin',
               createdAt: new Date(),
               updatedAt: new Date(),
+              planType: 'Premium',
+              subscriptionEndDate: new Date(formattedEndDate),
             })
             .onConflictDoUpdate({
               target: [users.email, users.role],
               set: {
-                id: createdUser.id,
                 name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
                 updatedAt: new Date(),
+                planType: 'Premium',
+                subscriptionEndDate: new Date(formattedEndDate),
               },
             });
 
@@ -185,32 +227,106 @@ export async function POST(request: Request) {
             });
 
             console.log(`✅ User ${userData.email} created successfully`);
+            resultados.push({ email: userData.email, estado: 'GUARDADO' });
           } catch (error) {
             console.log(
               `❌ Error updating or inserting user ${userData.email}:`,
               error
             );
+            resultados.push({
+              email: userData.email,
+              estado: 'ERROR',
+              detalle: error instanceof Error ? error.message : 'Error DB',
+            });
+
             continue;
           }
         } catch (error) {
           console.log(`❌ Error creating user ${userData.email}:`, error);
+          resultados.push({
+            email: userData.email,
+            estado: 'ERROR',
+            detalle: error instanceof Error ? error.message : 'Error creación',
+          });
+
           continue;
         }
       } catch (error) {
         console.log(`❌ Error creating user ${userData.email}:`, error);
+        resultados.push({
+          email: userData.email,
+          estado: 'ERROR',
+          detalle: error instanceof Error ? error.message : 'Error desconocido',
+        });
+
         continue;
       }
     }
 
+    const summary = {
+      total: usersData.length,
+      guardados: resultados.filter((r) => r.estado === 'GUARDADO').length,
+      yaExiste: resultados.filter((r) => r.estado === 'YA_EXISTE').length,
+      errores: resultados.filter((r) => r.estado === 'ERROR').length,
+      emailErrors: emailErrors.length,
+    };
+
+    // 👉 Armar payload y buffers para adjuntar y descargar
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      summary,
+      resultados,
+    };
+
+    // Buffer JSON
+    const jsonBuffer = Buffer.from(JSON.stringify(payload, null, 2));
+
+    // Buffer Excel
+    const excelBuffer = buildExcelFromResultados(resultados, summary);
+
+    // 👉 Enviar correo con adjuntos al responsable
+    await transporter.sendMail({
+      from: '"Artiefy" <direcciongeneral@artiefy.com>',
+      to: 'lmsg829@gmail.com',
+      subject: 'Reporte de carga masiva de usuarios - Artiefy',
+      html: `
+    <p>Hola,</p>
+    <p>Adjuntamos el resultado de la carga masiva de usuarios.</p>
+    <ul>
+      <li><strong>Total:</strong> ${summary.total}</li>
+      <li><strong>Guardados:</strong> ${summary.guardados}</li>
+      <li><strong>Ya existen:</strong> ${summary.yaExiste}</li>
+      <li><strong>Errores:</strong> ${summary.errores}</li>
+    </ul>
+    <p>Se adjuntan <code>resultado.json</code> y <code>resultado.xlsx</code>.</p>
+  `,
+      attachments: [
+        {
+          filename: 'resultado.json',
+          content: jsonBuffer,
+          contentType: 'application/json',
+        },
+        {
+          filename: 'resultado.xlsx',
+          content: excelBuffer,
+          contentType:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+      ],
+    });
+
     return NextResponse.json({
       message: 'Proceso completado',
-      users: successfulUsers,
-      emailErrors,
-      summary: {
-        total: usersData.length,
-        created: successfulUsers.length,
-        failed: usersData.length - successfulUsers.length,
-        emailErrors: emailErrors.length,
+      resultados,
+      summary,
+      files: {
+        jsonBase64: jsonBuffer.toString('base64'),
+        excelBase64: excelBuffer.toString('base64'),
+        jsonFilename: 'resultado.json',
+        excelFilename: 'resultado.xlsx',
+        jsonMime: 'application/json',
+        excelMime:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       },
     });
   } catch (error) {
