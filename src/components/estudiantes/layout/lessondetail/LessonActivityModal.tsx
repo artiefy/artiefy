@@ -1776,6 +1776,19 @@ export function LessonActivityModal({
     );
   };
 
+  // Emit events when modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      // Dispatch event when modal opens
+      const openEvent = new CustomEvent('activity-modal-open');
+      window.dispatchEvent(openEvent);
+    } else {
+      // Dispatch event when modal closes
+      const closeEvent = new CustomEvent('activity-modal-close');
+      window.dispatchEvent(closeEvent);
+    }
+  }, [isOpen]);
+
   // Define handleRequestClose aquí
   const handleRequestClose = async () => {
     // Si es la última actividad de la lección, no es la última lección, y corresponde desbloquear, desbloquea automáticamente
@@ -1789,6 +1802,10 @@ export function LessonActivityModal({
       await handleFinishAndNavigate();
       return;
     }
+    // Emit close event before actual closing
+    const closeEvent = new CustomEvent('activity-modal-close');
+    window.dispatchEvent(closeEvent);
+
     // Permitir cerrar siempre con la X
     onCloseAction();
   };

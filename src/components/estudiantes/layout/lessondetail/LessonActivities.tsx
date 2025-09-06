@@ -42,6 +42,7 @@ interface LessonActivitiesProps {
   lessons: { id: number; title: string; coverVideoKey?: string }[];
   activityModalId?: number;
   inMainContent?: boolean; // Nuevo prop para indicar si está en el contenido principal
+  lessonCoverVideoKey?: string; // Add this prop to receive the current lesson's coverVideoKey
 }
 
 interface SavedResults {
@@ -153,6 +154,7 @@ const LessonActivities = ({
   lessons,
   activityModalId,
   inMainContent = false, // Valor por defecto
+  lessonCoverVideoKey, // Receive the prop
 }: LessonActivitiesProps) => {
   const [activitiesState, setActivitiesState] = useState<
     Record<number, ActivityState>
@@ -717,7 +719,40 @@ const LessonActivities = ({
         setIsModalOpen(true);
       }
     }
+    // Si el id no es válido o no hay actividad, cerrar el modal
+    if (!activityModalId) {
+      setIsModalOpen(false);
+      setSelectedActivity(null);
+    }
   }, [activityModalId, activities]);
+
+  // Add a more robust event listener for the custom event
+  useEffect(() => {
+    const handleCustomEvent = (event: Event) => {
+      if (
+        'detail' in event &&
+        typeof event.detail === 'object' &&
+        event.detail !== null
+      ) {
+        const customEvent = event as CustomEvent<{ activityId: number }>;
+        const activityId = customEvent.detail?.activityId;
+
+        // Only process if it's a valid activity ID
+        if (activityId && activities.some((a) => a.id === activityId)) {
+          const activity = activities.find((a) => a.id === activityId);
+          if (activity) {
+            setSelectedActivity(activity);
+            setIsModalOpen(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('open-activity-modal', handleCustomEvent);
+    return () => {
+      window.removeEventListener('open-activity-modal', handleCustomEvent);
+    };
+  }, [activities]);
 
   // Handle activity completion event
   const handleActivityCompletion = async () => {
@@ -849,14 +884,14 @@ const LessonActivities = ({
       )}
       {/* Activities section */}
       {!collapsed ? (
-        activities.length > 0 ? (
+        activities.length > 0 && !inMainContent ? (
           <div className={`space-y-4 ${isMobile ? 'space-y-2' : ''}`}>
             {(showAll ? activities : activities.slice(0, 3)).map(
               (activity, index) => renderActivityCard(activity, index)
             )}
           </div>
-        ) : // Solo mostrar el mensaje de "Actividad disponible" y flecha si NO es móvil y NO está en el contenido principal
-        !inMainContent && !isMobile ? (
+        ) : // Para clases sin video, mostrar la flecha apuntando a la izquierda
+        !inMainContent && !isMobile && lessonCoverVideoKey === 'none' ? (
           <div className="flex flex-col items-center justify-center rounded-lg bg-white p-4 shadow-lg">
             <p className="mb-2 font-semibold text-blue-600">
               Actividad disponible
@@ -868,7 +903,7 @@ const LessonActivities = ({
                 viewBox="0 0 24 24"
                 fill="none"
                 className="text-blue-500"
-                style={{ transform: 'rotate(-90deg)' }}
+                style={{ transform: 'rotate(180deg)' }}
               >
                 <path
                   d="M12 19V5M12 19L5 12M12 19L19 12"
@@ -914,6 +949,7 @@ const LessonActivities = ({
       {/* Resources section */}
       <LessonResource lessonId={lessonId} />
 
+      {/* Siempre renderizar el modal independientemente de inMainContent */}
       {selectedActivity && (
         <LessonActivityModal
           isOpen={isModalOpen}

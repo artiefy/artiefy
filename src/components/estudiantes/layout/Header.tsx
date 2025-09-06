@@ -22,10 +22,8 @@ import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
 
 export function Header({
-  // Eliminado: onProyectosClickAction
   onEspaciosClickAction,
 }: {
-  // Eliminado: onProyectosClickAction?: () => void;
   onEspaciosClickAction?: () => void;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,6 +33,12 @@ export function Header({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
+  // New state to track if activity modal is open
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  // New state to track scroll direction
+  const [isScrollingDown, setIsScrollingDown] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   // MODAL DISPONIBLE MUY PRONTO
   // Solo para Espacios
@@ -53,14 +57,51 @@ export function Header({
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  // Listen for activity modal open/close events
+  useEffect(() => {
+    const handleModalOpen = () => {
+      setIsActivityModalOpen(true);
+    };
+
+    const handleModalClose = () => {
+      setIsActivityModalOpen(false);
+    };
+
+    window.addEventListener('activity-modal-open', handleModalOpen);
+    window.addEventListener('activity-modal-close', handleModalClose);
+
+    return () => {
+      window.removeEventListener('activity-modal-open', handleModalOpen);
+      window.removeEventListener('activity-modal-close', handleModalClose);
+    };
+  }, []);
+
+  // Enhanced scroll handling for direction detection
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const currentScrollY = window.scrollY;
+
+      // Determine scroll direction
+      const isDown = currentScrollY > lastScrollY;
+      setIsScrollingDown(isDown);
+
+      // Show header if scrolling down, hide if scrolling up
+      if (currentScrollY > 100) {
+        setIsHeaderVisible(isDown);
+      } else {
+        setIsHeaderVisible(true); // Always show header at the top of the page
+      }
+
+      // Update last scroll position
+      setLastScrollY(currentScrollY);
+
+      // Original scroll behavior for visual changes
+      setIsScrolled(currentScrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -221,11 +262,13 @@ export function Header({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 z-[9999] w-full transition-all duration-300 ${
+        className={`sticky top-0 w-full transition-all duration-300 ${
           isScrolled
             ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
             : 'md:py-3'
-        } div-header-nav`}
+        } ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'} div-header-nav ${
+          isActivityModalOpen ? 'z-40' : 'z-[9999]'
+        }`}
       >
         <div className="container mx-auto max-w-7xl px-4">
           <div className="hidden w-full items-center md:flex md:justify-between">

@@ -9,13 +9,19 @@ import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import { LessonActivityModal } from '~/components/estudiantes/layout/lessondetail/LessonActivityModal';
 import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+// Import the missing components
+import { GradeHistory } from '~/components/estudiantes/layout/lessondetail/LessonGradeHistory';
+import { LessonGrades } from '~/components/estudiantes/layout/lessondetail/LessonGrades';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
@@ -34,6 +40,38 @@ import {
   saveScrollPosition,
 } from '~/utils/scrollPosition';
 import { useMediaQuery } from '~/utils/useMediaQuery';
+
+// Add interface for API response
+interface GradeSummaryResponse {
+  finalGrade: number;
+  isCompleted: boolean;
+  parameters: {
+    name: string;
+    grade: number;
+    weight: number;
+    activities: {
+      id: number;
+      name: string;
+      grade: number;
+    }[];
+  }[];
+}
+
+// Update CourseGradeSummary interface to match GradeHistory requirements
+interface CourseGradeSummary {
+  finalGrade: number;
+  courseCompleted?: boolean;
+  parameters: {
+    name: string;
+    grade: number;
+    weight: number;
+    activities: {
+      id: number;
+      name: string;
+      grade: number;
+    }[];
+  }[];
+}
 
 interface LessonDetailsProps {
   lesson: LessonWithProgress;
@@ -78,17 +116,14 @@ export default function LessonDetails({
   const [isNavigating, setIsNavigating] = useState(false);
   const { user } = useUser();
   const router = useRouter();
-  // Add selectedLessonId state
   const [selectedLessonId, setSelectedLessonId] = useState<number>(lesson?.id);
   const [progress, setProgress] = useState(lesson?.porcentajecompletado ?? 0);
   const [isVideoCompleted, setIsVideoCompleted] = useState(
     lesson?.porcentajecompletado === 100
   );
-  // Update to use first activity's completion status
   const [isActivityCompleted, setIsActivityCompleted] = useState(
     activities[0]?.isCompleted ?? false
   );
-  // Inicializar lessonsState con un valor predeterminado
   const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>(() =>
     sortLessons(lessons).map((lessonItem) => ({
       ...lessonItem,
@@ -100,15 +135,21 @@ export default function LessonDetails({
     }))
   );
 
-  // Mover la inicialización de estados al useEffect con una bandera
+  // Add the missing state variables
+  const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
+  const [isGradesLoading, setIsGradesLoading] = useState(true);
+  const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
+    null
+  );
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-
   const searchParams = useSearchParams();
   const { start, stop } = useProgress();
-  // Cambia el estado a undefined por defecto
-
-  // Add isInitialized ref to prevent infinite loop
   const isInitialized = useRef(false);
+
+  // Add the activity modal state variables at the top level
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [selectedActivityForModal, setSelectedActivityForModal] =
+    useState<Activity | null>(null);
 
   // Move course active check to the top
   useEffect(() => {
@@ -128,6 +169,34 @@ export default function LessonDetails({
       isInitialized.current = true;
     }
   }, [lesson?.porcentajecompletado, activities]);
+
+  // Update the useEffect that loads grades with proper typing
+  useEffect(() => {
+    const loadGrades = async () => {
+      try {
+        setIsGradesLoading(true);
+        const response = await fetch(
+          `/api/grades/summary?courseId=${lesson.courseId}&userId=${userId}`
+        );
+        if (response.ok) {
+          const data = (await response.json()) as GradeSummaryResponse;
+          setGradeSummary({
+            finalGrade: data.finalGrade ?? 0,
+            courseCompleted: data.isCompleted ?? false,
+            parameters: data.parameters ?? [],
+          });
+        }
+      } catch (error) {
+        console.error('Error loading grades:', error);
+      } finally {
+        setIsGradesLoading(false);
+      }
+    };
+
+    if (lesson.courseId && userId) {
+      void loadGrades();
+    }
+  }, [lesson.courseId, userId]);
 
   // Show loading progress on initial render
   useEffect(() => {
@@ -597,18 +666,25 @@ export default function LessonDetails({
     );
   };
 
-  // Mueve todos los hooks useEffect fuera de condicionales
-  // (No hay hooks dentro de condicionales en el código actual, pero si tienes alguno, sácalo fuera)
-
   // Add these functions inside your component before the return statement
   const handleCompletedActivityClick = (activity: Activity) => {
     // If activityModalId is defined, open the modal
     setActivityModalId(activity.id);
   };
 
-  const handleOpenActivity = (activity: Activity) => {
-    // Open the activity modal directly
-    setActivityModalId(activity.id);
+  // Añade esta función para manejar el cierre del modal
+  const handleActivityModalClose = () => {
+    setIsActivityModalOpen(false);
+    setSelectedActivityForModal(null);
+    setActivityModalId(undefined);
+  };
+
+  // Añade esta función para manejar la compleción de la actividad modal
+  const markActivityAsCompletedAction = async (): Promise<void> => {
+    if (selectedActivityForModal) {
+      // Aquí puedes añadir lógica adicional si es necesario
+    }
+    return Promise.resolve();
   };
 
   return (
@@ -676,85 +752,178 @@ export default function LessonDetails({
                 <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
                   {lesson.title}
                 </h1>
-                <p className="font-semibold text-gray-600">
+                <p className="mb-6 font-semibold text-gray-600">
                   {lesson.description}
                 </p>
-                <div className="mt-8">
-                  {/* Tarjetas de actividades con el mismo diseño del sidebar derecho */}
-                  <div className="space-y-4">
-                    {activities.length > 0 ? (
-                      activities.map((activity, index) => {
-                        const isLocked = !isVideoCompleted && index > 0;
-                        return (
-                          <div
-                            key={activity.id}
-                            className={`rounded-lg border bg-white p-4 shadow-sm ${
-                              isLocked ? 'bg-gray-100 opacity-60' : 'bg-white'
-                            }`}
-                          >
-                            <div className="mb-2 flex items-center justify-between">
-                              <h3 className="font-semibold text-gray-900">
-                                {activity.name}
-                              </h3>
-                              <div className="ml-2 rounded-full bg-blue-100 p-1">
-                                {activity.isCompleted ? (
-                                  <FaCheckCircle className="text-green-500" />
-                                ) : isLocked ? (
-                                  <FaLock className="text-gray-400" />
-                                ) : (
-                                  <div className="text-blue-500">
-                                    {index === 0 ? 'Disponible' : 'Pendiente'}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <p className="mb-4 text-sm text-gray-600">
-                              {activity.description}
-                            </p>
-                            <div className="flex justify-center">
-                              <Button
-                                onClick={() => {
-                                  if (activity.isCompleted) {
-                                    handleCompletedActivityClick(activity);
-                                  } else if (!isLocked) {
-                                    handleOpenActivity(activity);
-                                  }
-                                }}
-                                disabled={isLocked}
-                                className={`rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 font-medium text-white hover:from-blue-600 hover:to-indigo-700 ${
+
+                {/* Contenedor destacado para la actividad principal cuando no hay video */}
+                {activities.length > 0 ? (
+                  <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+                    <div className="mb-4 flex flex-col items-center justify-center text-center">
+                      <h2 className="mb-2 text-2xl font-bold text-gray-800">
+                        {activities[0].name}
+                      </h2>
+                      <p className="mb-6 max-w-3xl text-gray-600">
+                        {activities[0].description}
+                      </p>
+
+                      <div className="flex w-full max-w-md flex-col items-center space-y-2">
+                        {/* Botón que imita exactamente el del sidebar, incluyendo estados de carga */}
+                        {(() => {
+                          // Use underscore prefix for unused variables
+                          const _activityState = activities[0]
+                            ? {
+                                isCompleted: activities[0].isCompleted || false,
+                                isLoading: false,
+                                typeid: activities[0].typeid,
+                              }
+                            : null;
+
+                          return (
+                            <button
+                              onClick={() => {
+                                if (activities[0]) {
+                                  // Establece directamente los estados para el modal
+                                  setSelectedActivityForModal(activities[0]);
+                                  setIsActivityModalOpen(true);
+
+                                  // También actualiza el activityModalId para mantener la consistencia
+                                  setActivityModalId(activities[0].id);
+                                }
+                              }}
+                              className="group relative z-10 w-full overflow-hidden rounded-md px-6 py-4 text-lg font-semibold text-black transition-all duration-300"
+                            >
+                              {/* Animated gradient background */}
+                              <div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
+
+                              <span className="relative z-10 flex items-center justify-center">
+                                {(() => {
+                                  // Use the activity state directly here
+                                  const activityState = activities[0]
+                                    ? {
+                                        isCompleted:
+                                          activities[0].isCompleted || false,
+                                        isLoading: false,
+                                        typeid: activities[0].typeid,
+                                      }
+                                    : null;
+
+                                  return (
+                                    <>
+                                      {activityState?.isLoading && (
+                                        <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
+                                      )}
+                                      {activityState?.isCompleted ? (
+                                        <>
+                                          <span className="font-semibold">
+                                            {activityState.typeid === 1
+                                              ? 'Ver Documento'
+                                              : 'Ver Resultados'}
+                                          </span>
+                                          <FaCheckCircle className="ml-2 inline text-white" />
+                                        </>
+                                      ) : (
+                                        <span className="font-semibold">
+                                          Ver Actividad
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </span>
+                            </button>
+                          );
+                        })()}
+
+                        <div className="mt-4 w-full">
+                          <div className="mb-2 flex items-center justify-between">
+                            <span className="font-bold text-gray-700">
+                              Progreso de la clase
+                            </span>
+                            <span className="text-gray-600">{progress}%</span>
+                          </div>
+                          <Progress value={progress} showPercentage={true} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lista de actividades adicionales si hay más de una */}
+                    {activities.length > 1 && (
+                      <div className="mt-8 border-t border-blue-200 pt-6">
+                        <h3 className="mb-4 text-lg font-semibold text-blue-800">
+                          Actividades adicionales
+                        </h3>
+                        <div className="space-y-4">
+                          {activities.slice(1).map((activity, index) => {
+                            const isLocked = !isVideoCompleted && index > 0;
+                            return (
+                              <div
+                                key={activity.id}
+                                className={`rounded-lg border bg-white p-4 shadow-sm ${
                                   isLocked
-                                    ? 'cursor-not-allowed opacity-60'
-                                    : ''
+                                    ? 'bg-gray-100 opacity-60'
+                                    : 'bg-white'
                                 }`}
                               >
-                                {activity.isCompleted
-                                  ? 'Ver Resultados'
-                                  : isLocked
-                                    ? 'Bloqueada'
-                                    : 'Iniciar Actividad'}
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-                        <p className="text-gray-600">
-                          No hay actividades disponibles para esta clase.
-                        </p>
+                                <div className="mb-2 flex items-center justify-between">
+                                  <h3 className="font-semibold text-gray-900">
+                                    {activity.name}
+                                  </h3>
+                                  <div className="ml-2 rounded-full bg-blue-100 p-1">
+                                    {activity.isCompleted ? (
+                                      <FaCheckCircle className="text-green-500" />
+                                    ) : isLocked ? (
+                                      <FaLock className="text-gray-400" />
+                                    ) : (
+                                      <div className="text-blue-500">
+                                        {index === 0
+                                          ? 'Disponible'
+                                          : 'Pendiente'}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="mb-4 text-sm text-gray-600">
+                                  {activity.description}
+                                </p>
+                                <div className="flex justify-center">
+                                  <Button
+                                    onClick={() => {
+                                      if (activity.isCompleted) {
+                                        handleCompletedActivityClick(activity);
+                                      } else if (!isLocked) {
+                                        // Abrir el modal correctamente al iniciar actividad
+                                        setActivityModalId(activity.id);
+                                      }
+                                    }}
+                                    disabled={isLocked}
+                                    className={`rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 font-medium text-white hover:from-blue-600 hover:to-indigo-700 ${
+                                      isLocked
+                                        ? 'cursor-not-allowed opacity-60'
+                                        : ''
+                                    }`}
+                                  >
+                                    {activity.isCompleted
+                                      ? 'Ver Resultados'
+                                      : isLocked
+                                        ? 'Bloqueada'
+                                        : 'Iniciar Actividad'}
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
-                  <div className="mt-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="font-bold text-gray-700">
-                        Progreso de la clase
-                      </span>
-                      <span className="text-gray-600">{progress}%</span>
-                    </div>
-                    <Progress value={progress} showPercentage={true} />
+                ) : (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
+                    <p className="text-gray-600">
+                      No hay actividades disponibles para esta clase.
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           ) : (
@@ -793,6 +962,7 @@ export default function LessonDetails({
                 )}
                 lessons={lessonsState}
                 activityModalId={activityModalId}
+                lessonCoverVideoKey={lesson.coverVideoKey} // Pass the coverVideoKey
               />
             </div>
           )}
@@ -805,25 +975,55 @@ export default function LessonDetails({
             {lesson.coverVideoKey === 'none' ? (
               <>
                 <div className="mt-4">
-                  <LessonActivities
-                    activities={[]} // No mostrar actividades aquí
-                    isVideoCompleted={true}
-                    isActivityCompleted={isActivityCompleted}
-                    handleActivityCompletion={handleActivityCompletion}
-                    userId={userId}
-                    onLessonUnlocked={handleLessonUnlocked}
-                    courseId={lesson.courseId}
-                    lessonId={lesson.id}
-                    isLastLesson={isLastLesson(lessonsState, lesson.id)}
-                    isLastActivity={isLastActivity(
-                      lessonsState,
-                      activities,
-                      lesson
-                    )}
-                    lessons={lessonsState}
-                    activityModalId={activityModalId}
-                    inMainContent={false}
-                  />
+                  {/* Mostrar mensaje y flecha apuntando hacia la izquierda cuando hay actividades */}
+                  <div className="mb-2">
+                    <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
+                      Actividades
+                    </h2>
+                  </div>
+                  {activities.length > 0 && (
+                    <div className="mb-6 flex flex-col items-center justify-center rounded-lg bg-blue-50 p-4 shadow-sm">
+                      <p className="mb-2 text-center font-semibold text-blue-800">
+                        Actividad disponible en el centro
+                      </p>
+                      <div className="animate-pulse">
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="text-blue-500"
+                          style={{ transform: 'rotate(180deg)' }}
+                        >
+                          <path
+                            d="M12 19V5M12 19L5 12M12 19L19 12"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <span className="mt-2 text-center text-sm text-gray-600">
+                        Haz clic en &quot;Ver Actividad&quot; para completar
+                        esta clase
+                      </span>
+                    </div>
+                  )}
+                  {/* Grades section */}
+                  <div className="mt-4">
+                    <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
+                      Calificaciones
+                    </h2>
+                    <LessonGrades
+                      finalGrade={gradeSummary?.finalGrade ?? null}
+                      onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
+                      isLoading={isGradesLoading}
+                    />
+                  </div>
+
+                  {/* Resources section */}
+                  <LessonResource lessonId={lesson.id} />
                 </div>
               </>
             ) : (
@@ -846,10 +1046,57 @@ export default function LessonDetails({
                 )}
                 lessons={lessonsState}
                 activityModalId={activityModalId}
+                lessonCoverVideoKey={lesson.coverVideoKey} // Pass the coverVideoKey
               />
             )}
           </div>
         )}
+
+        {/* Modal de actividad montado directamente en LessonDetails */}
+        {selectedActivityForModal && (
+          <LessonActivityModal
+            isOpen={isActivityModalOpen}
+            onCloseAction={handleActivityModalClose}
+            activity={selectedActivityForModal}
+            userId={userId}
+            onQuestionsAnsweredAction={(allAnswered) => {
+              // Puedes manejar la lógica de respuesta aquí
+              if (
+                allAnswered &&
+                activities[0]?.id === selectedActivityForModal.id
+              ) {
+                setIsActivityCompleted(true);
+              }
+            }}
+            markActivityAsCompletedAction={markActivityAsCompletedAction}
+            onActivityCompletedAction={handleActivityCompletion}
+            savedResults={null} // Puedes obtener resultados guardados si es necesario
+            onLessonUnlockedAction={handleLessonUnlocked}
+            isLastLesson={isLastLesson(lessonsState, lesson.id)}
+            courseId={lesson.courseId}
+            isLastActivity={isLastActivity(lessonsState, activities, lesson)}
+            onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
+            onActivityCompleteAction={() => {
+              handleActivityCompletion().catch(console.error);
+            }}
+            isLastActivityInLesson={
+              activities[0]?.id === selectedActivityForModal.id
+            }
+          />
+        )}
+
+        {/* GradeHistory modal */}
+        <GradeHistory
+          isOpen={isGradeHistoryOpen}
+          onClose={() => setIsGradeHistoryOpen(false)}
+          gradeSummary={
+            gradeSummary ?? {
+              finalGrade: 0,
+              courseCompleted: false,
+              parameters: [],
+            }
+          }
+        />
 
         {/* Chatbot Button and Modal */}
         <StudentChatbot isAlwaysVisible={true} />
