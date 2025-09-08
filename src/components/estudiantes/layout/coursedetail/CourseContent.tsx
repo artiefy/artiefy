@@ -532,16 +532,23 @@ export function CourseContent({
       : [];
   }, [classMeetings]);
 
+  // Helper function to convert UTC time to Colombia time
+  const convertToColombiaTime = (dateString: string) => {
+    const utcDate = new Date(dateString);
+    // Convert to Colombia time (UTC-5)
+    const colombiaTime = new Date(utcDate.getTime() - 5 * 60 * 60 * 1000);
+    return colombiaTime;
+  };
+
   // Add this helper function to format the date in Spanish
   const formatSpanishDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const colombiaDate = convertToColombiaTime(dateString);
     const options: Intl.DateTimeFormatOptions = {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      timeZone: 'America/Bogota',
     };
-    return date.toLocaleDateString('es-ES', options);
+    return colombiaDate.toLocaleDateString('es-ES', options);
   };
 
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
@@ -705,23 +712,21 @@ export function CourseContent({
                                 textDecoration: 'none',
                               }}
                             >
-                              {new Date(
+                              {convertToColombiaTime(
                                 upcomingMeetings[0].startDateTime
                               ).toLocaleTimeString('es-CO', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: true,
-                                timeZone: 'America/Bogota',
                               })}{' '}
                               -{' '}
                               {upcomingMeetings[0].endDateTime
-                                ? new Date(
+                                ? convertToColombiaTime(
                                     upcomingMeetings[0].endDateTime
                                   ).toLocaleTimeString('es-CO', {
                                     hour: '2-digit',
                                     minute: '2-digit',
                                     hour12: true,
-                                    timeZone: 'America/Bogota',
                                   })
                                 : ''}
                             </span>
@@ -748,23 +753,21 @@ export function CourseContent({
                                   textDecoration: 'none',
                                 }}
                               >
-                                {new Date(
+                                {convertToColombiaTime(
                                   upcomingMeetings[0].startDateTime
                                 ).toLocaleTimeString('es-CO', {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                   hour12: true,
-                                  timeZone: 'America/Bogota',
                                 })}{' '}
                                 -{' '}
                                 {upcomingMeetings[0].endDateTime
-                                  ? new Date(
+                                  ? convertToColombiaTime(
                                       upcomingMeetings[0].endDateTime
                                     ).toLocaleTimeString('es-CO', {
                                       hour: '2-digit',
                                       minute: '2-digit',
                                       hour12: true,
-                                      timeZone: 'America/Bogota',
                                     })
                                   : ''}
                               </span>
@@ -992,7 +995,7 @@ export function CourseContent({
                                 >
                                   {/* Eliminar título duplicado */}
                                   {typeof meeting.startDateTime === 'string'
-                                    ? new Date(
+                                    ? convertToColombiaTime(
                                         meeting.startDateTime
                                       ).toLocaleString('es-CO', {
                                         weekday: 'short',
@@ -1001,17 +1004,15 @@ export function CourseContent({
                                         day: 'numeric',
                                         hour: '2-digit',
                                         minute: '2-digit',
-                                        timeZone: 'America/Bogota',
                                       })
                                     : ''}
                                   {' — '}
                                   {typeof meeting.endDateTime === 'string'
-                                    ? new Date(
+                                    ? convertToColombiaTime(
                                         meeting.endDateTime
                                       ).toLocaleString('es-CO', {
                                         hour: '2-digit',
                                         minute: '2-digit',
-                                        timeZone: 'America/Bogota',
                                       })
                                     : ''}
                                   <span className="text-secondary ml-2 font-semibold">
