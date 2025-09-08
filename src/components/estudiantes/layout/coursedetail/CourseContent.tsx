@@ -532,22 +532,15 @@ export function CourseContent({
       : [];
   }, [classMeetings]);
 
-  // Helper function to convert UTC time to Colombia time
-  const convertToColombiaTime = (dateString: string) => {
-    // Si los datos en BD ya están en hora de Colombia, no convertir
-    // Solo crear el objeto Date directamente
-    return new Date(dateString);
-  };
-
   // Add this helper function to format the date in Spanish
   const formatSpanishDate = (dateString: string) => {
-    const colombiaDate = convertToColombiaTime(dateString);
+    const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     };
-    return colombiaDate.toLocaleDateString('es-ES', options);
+    return date.toLocaleDateString('es-ES', options);
   };
 
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
@@ -564,24 +557,15 @@ export function CourseContent({
       // Si es la próxima clase programada, está disponible
       if (meeting.id === nextMeetingId) return true;
 
-      // Get current date in Colombia time (UTC-5)
-      const colombiaOptions = { timeZone: 'America/Bogota' };
+      // Usar directamente los datos de BD sin conversión de zona horaria
       const now = new Date();
-      const todayInColombia = new Date(
-        now.toLocaleString('en-US', colombiaOptions)
-      );
-
-      // Get meeting date in Colombia time
       const meetingDate = new Date(meeting.startDateTime);
-      const meetingDateInColombia = new Date(
-        meetingDate.toLocaleString('en-US', colombiaOptions)
-      );
 
-      // Compare year, month, and day
+      // Compare year, month, and day directly
       return (
-        todayInColombia.getFullYear() === meetingDateInColombia.getFullYear() &&
-        todayInColombia.getMonth() === meetingDateInColombia.getMonth() &&
-        todayInColombia.getDate() === meetingDateInColombia.getDate()
+        now.getFullYear() === meetingDate.getFullYear() &&
+        now.getMonth() === meetingDate.getMonth() &&
+        now.getDate() === meetingDate.getDate()
       );
     },
     [nextMeetingId]
@@ -711,7 +695,7 @@ export function CourseContent({
                                 textDecoration: 'none',
                               }}
                             >
-                              {convertToColombiaTime(
+                              {new Date(
                                 upcomingMeetings[0].startDateTime
                               ).toLocaleTimeString('es-CO', {
                                 hour: '2-digit',
@@ -720,7 +704,7 @@ export function CourseContent({
                               })}{' '}
                               -{' '}
                               {upcomingMeetings[0].endDateTime
-                                ? convertToColombiaTime(
+                                ? new Date(
                                     upcomingMeetings[0].endDateTime
                                   ).toLocaleTimeString('es-CO', {
                                     hour: '2-digit',
@@ -752,7 +736,7 @@ export function CourseContent({
                                   textDecoration: 'none',
                                 }}
                               >
-                                {convertToColombiaTime(
+                                {new Date(
                                   upcomingMeetings[0].startDateTime
                                 ).toLocaleTimeString('es-CO', {
                                   hour: '2-digit',
@@ -761,7 +745,7 @@ export function CourseContent({
                                 })}{' '}
                                 -{' '}
                                 {upcomingMeetings[0].endDateTime
-                                  ? convertToColombiaTime(
+                                  ? new Date(
                                       upcomingMeetings[0].endDateTime
                                     ).toLocaleTimeString('es-CO', {
                                       hour: '2-digit',
@@ -861,24 +845,14 @@ export function CourseContent({
                       !showLiveClasses && 'hidden'
                     )}
                   >
-                    {/* Filtrar clases en vivo para ocultar las vencidas hoy */}
+                    {/* Filtrar clases en vivo para ocultar las vencidas */}
                     {liveMeetings
                       .filter((meeting: ClassMeeting) => {
                         // Ocultar cualquier clase cuya hora de fin ya pasó (vencida)
                         if (meeting.endDateTime) {
-                          const colombiaOptions = {
-                            timeZone: 'America/Bogota',
-                          };
-                          const nowCol = new Date(
-                            new Date().toLocaleString('en-US', colombiaOptions)
-                          );
-                          const endCol = new Date(
-                            new Date(meeting.endDateTime).toLocaleString(
-                              'en-US',
-                              colombiaOptions
-                            )
-                          );
-                          if (nowCol > endCol) return false;
+                          const now = new Date();
+                          const end = new Date(meeting.endDateTime);
+                          if (now > end) return false;
                         }
                         return true;
                       })
@@ -886,37 +860,22 @@ export function CourseContent({
                       .map((meeting: ClassMeeting) => {
                         const isAvailable = isMeetingAvailable(meeting);
                         const isNext = meeting.id === nextMeetingId;
-                        // Determinar si es hoy
+                        // Determinar si es hoy usando directamente los datos de BD
                         let isToday = false;
                         let isJoinEnabled = false;
                         let isMeetingStarted = false;
                         let isMeetingEnded = false;
                         if (meeting.startDateTime && meeting.endDateTime) {
-                          const colombiaOptions = {
-                            timeZone: 'America/Bogota',
-                          };
                           const now = new Date();
-                          const nowCol = new Date(
-                            now.toLocaleString('en-US', colombiaOptions)
-                          );
-                          const start = new Date(
-                            new Date(meeting.startDateTime).toLocaleString(
-                              'en-US',
-                              colombiaOptions
-                            )
-                          );
-                          const end = new Date(
-                            new Date(meeting.endDateTime).toLocaleString(
-                              'en-US',
-                              colombiaOptions
-                            )
-                          );
+                          const start = new Date(meeting.startDateTime);
+                          const end = new Date(meeting.endDateTime);
+
                           isToday =
-                            nowCol.getFullYear() === start.getFullYear() &&
-                            nowCol.getMonth() === start.getMonth() &&
-                            nowCol.getDate() === start.getDate();
-                          isMeetingStarted = nowCol >= start;
-                          isMeetingEnded = nowCol > end;
+                            now.getFullYear() === start.getFullYear() &&
+                            now.getMonth() === start.getMonth() &&
+                            now.getDate() === start.getDate();
+                          isMeetingStarted = now >= start;
+                          isMeetingEnded = now > end;
                           // Solo permitir unirse si es hoy y la hora actual está entre start y end
                           isJoinEnabled =
                             isToday && isMeetingStarted && !isMeetingEnded;
@@ -992,9 +951,9 @@ export function CourseContent({
                                   className="truncate text-sm"
                                   style={{ color: '#fff' }}
                                 >
-                                  {/* Eliminar título duplicado */}
+                                  {/* Mostrar fecha/hora directamente de BD */}
                                   {typeof meeting.startDateTime === 'string'
-                                    ? convertToColombiaTime(
+                                    ? new Date(
                                         meeting.startDateTime
                                       ).toLocaleString('es-CO', {
                                         weekday: 'short',
@@ -1007,7 +966,7 @@ export function CourseContent({
                                     : ''}
                                   {' — '}
                                   {typeof meeting.endDateTime === 'string'
-                                    ? convertToColombiaTime(
+                                    ? new Date(
                                         meeting.endDateTime
                                       ).toLocaleString('es-CO', {
                                         hour: '2-digit',
