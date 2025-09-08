@@ -189,11 +189,11 @@ export function CourseContent({
       return (
         <div
           key={lesson.id}
-          className={`overflow-hidden rounded-lg border transition-colors ${
+          className={`overflow-hidden rounded-lg border-0 transition-colors ${
             isUnlocked
-              ? 'bg-gray-50 hover:bg-gray-100'
-              : 'bg-gray-100 opacity-75'
-          }`}
+              ? 'bg-gray-800 hover:bg-gray-700'
+              : 'bg-gray-800 opacity-75'
+          } text-white`}
         >
           <button
             className="flex w-full items-center justify-between px-6 py-4"
@@ -207,9 +207,9 @@ export function CourseContent({
                 ) : (
                   <FaLock className="mr-2 size-5 text-gray-400" />
                 )}
-                <span className="text-background font-medium">
+                <span className="font-medium text-white">
                   {lesson.title}{' '}
-                  <span className="ml-2 text-sm text-gray-500">
+                  <span className="ml-2 text-sm text-gray-300">
                     ({lesson.duration} mins)
                   </span>
                 </span>
@@ -232,14 +232,14 @@ export function CourseContent({
             </div>
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
-            <div className="border-t bg-white px-6 py-4">
-              <p className="mb-4 text-gray-700">
+            <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
+              <p className="mb-4 text-gray-300">
                 {lesson.description ??
                   'No hay descripción disponible para esta clase.'}
               </p>
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-gray-700">
+                  <p className="text-sm font-semibold text-gray-300">
                     Progreso De La Clase:
                   </p>
                 </div>
@@ -253,7 +253,7 @@ export function CourseContent({
                 href={`/estudiantes/clases/${lesson.id}`}
                 onClick={handleClick}
               >
-                <button className="buttonclass text-background transition-none active:scale-95">
+                <button className="buttonclass text-black transition-none active:scale-95">
                   <div className="outline" />
                   <div className="state state--default">
                     <div className="icon">
@@ -1150,7 +1150,7 @@ export function CourseContent({
 
               {/* Clases Grabadas - Sección con su propio toggle independiente */}
               {recordedMeetings.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-6 rounded-lg bg-gray-800 p-4">
                   {/* Header with toggle button for recorded classes */}
                   <div className="mb-2 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-white">
@@ -1189,7 +1189,7 @@ export function CourseContent({
                       return (
                         <div
                           key={meeting.id}
-                          className={`overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100`}
+                          className={`overflow-hidden rounded-lg border-0 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
                         >
                           <button
                             className="flex w-full items-center justify-between px-6 py-4"
@@ -1198,9 +1198,9 @@ export function CourseContent({
                             <div className="flex w-full items-center justify-between">
                               <div className="flex items-center space-x-2">
                                 <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                                <span className="text-background font-medium">
+                                <span className="font-medium text-white">
                                   {meeting.title}{' '}
-                                  <span className="ml-2 text-sm text-gray-500">
+                                  <span className="ml-2 text-sm text-gray-300">
                                     ({durationMinutes} mins)
                                   </span>
                                 </span>
@@ -1215,8 +1215,8 @@ export function CourseContent({
                             </div>
                           </button>
                           {isExpanded && (
-                            <div className="border-t bg-white px-6 py-4">
-                              <p className="mb-4 text-gray-700">
+                            <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
+                              <p className="mb-4 text-gray-300">
                                 {
                                   'Clase grabada disponible para repaso y consulta.'
                                 }
@@ -1224,10 +1224,10 @@ export function CourseContent({
                               {/* Barra de progreso de la clase grabada (shadcn) */}
                               <div className="mb-4">
                                 <div className="mb-2 flex items-center justify-between">
-                                  <p className="text-sm font-semibold text-gray-700">
+                                  <p className="text-sm font-semibold text-gray-300">
                                     Progreso De La Clase Grabada:
                                   </p>
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-gray-400">
                                     {currentProgress}%
                                   </span>
                                 </div>
@@ -1240,7 +1240,7 @@ export function CourseContent({
                               {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
                               <button
                                 className={cn(
-                                  'buttonclass text-background transition-none active:scale-95',
+                                  'buttonclass text-black transition-none active:scale-95',
                                   !isSubscriptionActive &&
                                     'pointer-events-none cursor-not-allowed opacity-60'
                                 )}
@@ -1278,11 +1278,9 @@ export function CourseContent({
       )}
 
       {/* Regular lessons - Now with white container */}
-      <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
+      <div className="bg-background mb-8 rounded-lg border p-6 shadow-sm">
         {/* Increased padding from p-4 to p-6 */}
-        <h2 className="text-background mb-4 text-xl font-bold">
-          Clases del curso
-        </h2>
+        <h2 className="mb-4 text-xl font-bold text-white">Clases del curso</h2>
         <div
           className={cn(
             'transition-all duration-300',
