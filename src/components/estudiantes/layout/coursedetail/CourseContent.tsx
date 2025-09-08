@@ -532,17 +532,6 @@ export function CourseContent({
       : [];
   }, [classMeetings]);
 
-  // Add this helper function to format the date in Spanish
-  const formatSpanishDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    };
-    return date.toLocaleDateString('es-ES', options);
-  };
-
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
   const nextMeetingId = useMemo(() => {
     if (upcomingMeetings.length === 0) return null;
@@ -684,7 +673,13 @@ export function CourseContent({
                             color: '#00BDD8', // secondary
                           }}
                         >
-                          {formatSpanishDate(upcomingMeetings[0].startDateTime)}
+                          {new Date(
+                            upcomingMeetings[0].startDateTime
+                          ).toLocaleDateString('es-ES', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
                         </span>
                         {upcomingMeetings[0].startDateTime && (
                           <span className="mt-1 block sm:hidden">
@@ -722,9 +717,13 @@ export function CourseContent({
                             className="font-extrabold underline underline-offset-2"
                             style={{ color: '#00BDD8' }}
                           >
-                            {formatSpanishDate(
+                            {new Date(
                               upcomingMeetings[0].startDateTime
-                            )}
+                            ).toLocaleDateString('es-ES', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
                           </span>
                           {upcomingMeetings[0].startDateTime && (
                             <>
