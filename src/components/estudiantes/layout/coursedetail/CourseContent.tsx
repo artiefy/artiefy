@@ -539,6 +539,7 @@ export function CourseContent({
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'America/Bogota',
     };
     return date.toLocaleDateString('es-ES', options);
   };
@@ -700,7 +701,7 @@ export function CourseContent({
                             <span
                               className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold"
                               style={{
-                                color: '#006b7a', // secondary más oscuro
+                                color: '#006b7a',
                                 textDecoration: 'none',
                               }}
                             >
@@ -710,6 +711,7 @@ export function CourseContent({
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: true,
+                                timeZone: 'America/Bogota',
                               })}{' '}
                               -{' '}
                               {upcomingMeetings[0].endDateTime
@@ -719,6 +721,7 @@ export function CourseContent({
                                     hour: '2-digit',
                                     minute: '2-digit',
                                     hour12: true,
+                                    timeZone: 'America/Bogota',
                                   })
                                 : ''}
                             </span>
@@ -741,7 +744,7 @@ export function CourseContent({
                               <span
                                 className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold"
                                 style={{
-                                  color: '#006b7a', // secondary más oscuro
+                                  color: '#006b7a',
                                   textDecoration: 'none',
                                 }}
                               >
@@ -751,6 +754,7 @@ export function CourseContent({
                                   hour: '2-digit',
                                   minute: '2-digit',
                                   hour12: true,
+                                  timeZone: 'America/Bogota',
                                 })}{' '}
                                 -{' '}
                                 {upcomingMeetings[0].endDateTime
@@ -760,6 +764,7 @@ export function CourseContent({
                                       hour: '2-digit',
                                       minute: '2-digit',
                                       hour12: true,
+                                      timeZone: 'America/Bogota',
                                     })
                                   : ''}
                               </span>
@@ -996,6 +1001,7 @@ export function CourseContent({
                                         day: 'numeric',
                                         hour: '2-digit',
                                         minute: '2-digit',
+                                        timeZone: 'America/Bogota',
                                       })
                                     : ''}
                                   {' — '}
@@ -1005,6 +1011,7 @@ export function CourseContent({
                                       ).toLocaleString('es-CO', {
                                         hour: '2-digit',
                                         minute: '2-digit',
+                                        timeZone: 'America/Bogota',
                                       })
                                     : ''}
                                   <span className="text-secondary ml-2 font-semibold">
