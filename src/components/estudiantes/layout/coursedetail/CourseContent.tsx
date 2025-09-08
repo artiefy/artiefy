@@ -534,10 +534,9 @@ export function CourseContent({
 
   // Helper function to convert UTC time to Colombia time
   const convertToColombiaTime = (dateString: string) => {
-    const utcDate = new Date(dateString);
-    // Convert to Colombia time (UTC-5)
-    const colombiaTime = new Date(utcDate.getTime() - 5 * 60 * 60 * 1000);
-    return colombiaTime;
+    // Si los datos en BD ya están en hora de Colombia, no convertir
+    // Solo crear el objeto Date directamente
+    return new Date(dateString);
   };
 
   // Add this helper function to format the date in Spanish
