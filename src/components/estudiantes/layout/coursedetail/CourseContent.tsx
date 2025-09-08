@@ -826,6 +826,7 @@ export function CourseContent({
                 <div className={cn('mb-6')}>
                   {/* Header with toggle button for live classes */}
                   <div className="mb-4 flex items-center justify-between">
+                    {/* Título único, eliminar doble título */}
                     <h2 className="text-xl font-bold text-white">
                       Clases en Vivo
                     </h2>
@@ -853,157 +854,187 @@ export function CourseContent({
                       !showLiveClasses && 'hidden'
                     )}
                   >
-                    {liveMeetings.map((meeting: ClassMeeting) => {
-                      const isAvailable = isMeetingAvailable(meeting);
-                      const isNext = meeting.id === nextMeetingId;
-                      // Determinar si es hoy
-                      let isToday = false;
-                      let isJoinEnabled = false;
-                      let isMeetingStarted = false;
-                      let isMeetingEnded = false;
-                      if (meeting.startDateTime && meeting.endDateTime) {
-                        const colombiaOptions = { timeZone: 'America/Bogota' };
-                        const now = new Date();
-                        const nowCol = new Date(
-                          now.toLocaleString('en-US', colombiaOptions)
-                        );
-                        const start = new Date(
-                          new Date(meeting.startDateTime).toLocaleString(
-                            'en-US',
-                            colombiaOptions
-                          )
-                        );
-                        const end = new Date(
-                          new Date(meeting.endDateTime).toLocaleString(
-                            'en-US',
-                            colombiaOptions
-                          )
-                        );
-                        isToday =
-                          nowCol.getFullYear() === start.getFullYear() &&
-                          nowCol.getMonth() === start.getMonth() &&
-                          nowCol.getDate() === start.getDate();
-                        isMeetingStarted = nowCol >= start;
-                        isMeetingEnded = nowCol > end;
-                        // Solo permitir unirse si es hoy y la hora actual está entre start y end
-                        isJoinEnabled =
-                          isToday && isMeetingStarted && !isMeetingEnded;
-                      }
+                    {/* Filtrar clases en vivo para ocultar las vencidas hoy */}
+                    {liveMeetings
+                      .filter((meeting: ClassMeeting) => {
+                        // Ocultar cualquier clase cuya hora de fin ya pasó (vencida)
+                        if (meeting.endDateTime) {
+                          const colombiaOptions = {
+                            timeZone: 'America/Bogota',
+                          };
+                          const nowCol = new Date(
+                            new Date().toLocaleString('en-US', colombiaOptions)
+                          );
+                          const endCol = new Date(
+                            new Date(meeting.endDateTime).toLocaleString(
+                              'en-US',
+                              colombiaOptions
+                            )
+                          );
+                          if (nowCol > endCol) return false;
+                        }
+                        return true;
+                      })
+                      // Mostrar todas las futuras (se elimina el filtro de solo próxima clase)
+                      .map((meeting: ClassMeeting) => {
+                        const isAvailable = isMeetingAvailable(meeting);
+                        const isNext = meeting.id === nextMeetingId;
+                        // Determinar si es hoy
+                        let isToday = false;
+                        let isJoinEnabled = false;
+                        let isMeetingStarted = false;
+                        let isMeetingEnded = false;
+                        if (meeting.startDateTime && meeting.endDateTime) {
+                          const colombiaOptions = {
+                            timeZone: 'America/Bogota',
+                          };
+                          const now = new Date();
+                          const nowCol = new Date(
+                            now.toLocaleString('en-US', colombiaOptions)
+                          );
+                          const start = new Date(
+                            new Date(meeting.startDateTime).toLocaleString(
+                              'en-US',
+                              colombiaOptions
+                            )
+                          );
+                          const end = new Date(
+                            new Date(meeting.endDateTime).toLocaleString(
+                              'en-US',
+                              colombiaOptions
+                            )
+                          );
+                          isToday =
+                            nowCol.getFullYear() === start.getFullYear() &&
+                            nowCol.getMonth() === start.getMonth() &&
+                            nowCol.getDate() === start.getDate();
+                          isMeetingStarted = nowCol >= start;
+                          isMeetingEnded = nowCol > end;
+                          // Solo permitir unirse si es hoy y la hora actual está entre start y end
+                          isJoinEnabled =
+                            isToday && isMeetingStarted && !isMeetingEnded;
+                        }
 
-                      // Badge: Hoy (verde SOLO si botón es "Unirse a la Clase"), gris si "Clase Finalizada"
-                      const badgeHoyClass =
-                        'rounded-full border border-green-500 bg-green-100 px-3 py-1 font-bold text-green-700 shadow-sm sm:ml-auto';
-                      const badgeFinalizadaClass =
-                        'rounded-full border border-gray-400 bg-gray-200 px-3 py-1 font-bold text-gray-700 shadow-sm sm:ml-auto';
+                        // Badge: Hoy (verde SOLO si botón es "Unirse a la Clase"), gris si "Clase Finalizada"
+                        const badgeHoyClass =
+                          'rounded-full border border-green-500 bg-green-100 px-3 py-1 font-bold text-green-700 shadow-sm sm:ml-auto';
+                        const badgeFinalizadaClass =
+                          'rounded-full border border-gray-400 bg-gray-200 px-3 py-1 font-bold text-gray-700 shadow-sm sm:ml-auto';
 
-                      // --- Botón: color según estado ---
-                      const buttonClass =
-                        'inline-flex h-8 w-[180px] items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold transition-all border-0';
-                      let buttonBg = '';
-                      let buttonDisabled = false;
-                      let buttonText = '';
-                      let buttonIcon = null;
-                      let buttonExtraClass = '';
+                        // --- Botón: color según estado ---
+                        const buttonClass =
+                          'inline-flex h-8 w-[180px] items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold transition-all border-0';
+                        let buttonBg = '';
+                        let buttonDisabled = false;
+                        let buttonText = '';
+                        let buttonIcon = null;
+                        let buttonExtraClass = '';
 
-                      if (isNext && !isJoinEnabled) {
-                        // Cambia el color a azul aguamarina y fuerza el texto en una sola línea
-                        buttonBg = 'buttonneon-aqua';
-                        buttonDisabled = true;
-                        buttonText = 'Próxima Clase';
-                        buttonIcon = <FaLock className="size-4" />;
-                        buttonExtraClass = 'buttonneon';
-                      } else if (isToday && isJoinEnabled) {
-                        buttonBg = 'bg-green-600 text-white hover:bg-green-700';
-                        buttonDisabled = false;
-                        buttonText = 'Unirse a la Clase';
-                        buttonIcon = <FaVideo className="size-4" />;
-                      } else if (isToday && !isJoinEnabled && isMeetingEnded) {
-                        buttonBg = 'bg-gray-400 text-white';
-                        buttonDisabled = true;
-                        buttonText = 'Clase Finalizada';
-                        buttonIcon = <FaLock className="size-4" />;
-                      } else if (!isAvailable && !isNext && !isToday) {
-                        buttonBg = 'bg-[#01142B] text-white';
-                        buttonDisabled = true;
-                        buttonText = 'Clase Bloqueada';
-                        buttonIcon = <FaLock className="size-4" />;
-                      }
+                        if (isNext && !isJoinEnabled) {
+                          // Cambia el color a azul aguamarina y fuerza el texto en una sola línea
+                          buttonBg = 'buttonneon-aqua';
+                          buttonDisabled = true;
+                          buttonText = 'Próxima Clase';
+                          buttonIcon = <FaLock className="size-4" />;
+                          buttonExtraClass = 'buttonneon';
+                        } else if (isToday && isJoinEnabled) {
+                          buttonBg =
+                            'bg-green-600 text-white hover:bg-green-700';
+                          buttonDisabled = false;
+                          buttonText = 'Unirse a la Clase';
+                          buttonIcon = <FaVideo className="size-4" />;
+                        } else if (
+                          isToday &&
+                          !isJoinEnabled &&
+                          isMeetingEnded
+                        ) {
+                          buttonBg = 'bg-gray-400 text-white';
+                          buttonDisabled = true;
+                          buttonText = 'Clase Finalizada';
+                          buttonIcon = <FaLock className="size-4" />;
+                        } else if (!isAvailable && !isNext && !isToday) {
+                          buttonBg = 'bg-[#01142B] text-white';
+                          buttonDisabled = true;
+                          buttonText = 'Clase Bloqueada';
+                          buttonIcon = <FaLock className="size-4" />;
+                        }
 
-                      return (
-                        <div
-                          key={meeting.id}
-                          className={cn(
-                            'relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
-                            'bg-gray-800',
-                            'hover:neon-live-class'
-                          )}
-                        >
-                          <div className="flex min-w-0 flex-1 items-center gap-3">
-                            <FaVideo
-                              className={cn(
-                                'h-5 w-5 flex-shrink-0 text-cyan-600'
-                              )}
-                            />
-                            <div className="min-w-0">
-                              <h3
-                                className="truncate text-lg font-bold"
-                                style={{ color: '#fff' }}
-                              >
-                                {meeting.title}
-                              </h3>
-                              <p
-                                className="truncate text-sm"
-                                style={{ color: '#fff' }}
-                              >
-                                <strong>{meeting.title}</strong>
-                                <br />
-                                {typeof meeting.startDateTime === 'string'
-                                  ? new Date(
-                                      meeting.startDateTime
-                                    ).toLocaleString('es-CO', {
-                                      weekday: 'short',
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : ''}
-                                {' — '}
-                                {typeof meeting.endDateTime === 'string'
-                                  ? new Date(
-                                      meeting.endDateTime
-                                    ).toLocaleString('es-CO', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : ''}
-                                <span className="text-secondary ml-2 font-semibold">
-                                  {' • Duración: '}
-                                  {formatDuration(getDurationMinutes(meeting))}
-                                </span>
-                              </p>
+                        return (
+                          <div
+                            key={meeting.id}
+                            className={cn(
+                              'relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
+                              'bg-gray-800',
+                              'hover:neon-live-class'
+                            )}
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                              <FaVideo
+                                className={cn(
+                                  'h-5 w-5 flex-shrink-0 text-cyan-600'
+                                )}
+                              />
+                              <div className="min-w-0">
+                                <h3
+                                  className="truncate text-lg font-bold"
+                                  style={{ color: '#fff' }}
+                                >
+                                  {meeting.title}
+                                </h3>
+                                <p
+                                  className="truncate text-sm"
+                                  style={{ color: '#fff' }}
+                                >
+                                  {/* Eliminar título duplicado */}
+                                  {typeof meeting.startDateTime === 'string'
+                                    ? new Date(
+                                        meeting.startDateTime
+                                      ).toLocaleString('es-CO', {
+                                        weekday: 'short',
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
+                                    : ''}
+                                  {' — '}
+                                  {typeof meeting.endDateTime === 'string'
+                                    ? new Date(
+                                        meeting.endDateTime
+                                      ).toLocaleString('es-CO', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
+                                    : ''}
+                                  <span className="text-secondary ml-2 font-semibold">
+                                    {' • Duración: '}
+                                    {formatDuration(
+                                      getDurationMinutes(meeting)
+                                    )}
+                                  </span>
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          {/* Badges al extremo derecho */}
-                          <div className="mt-3 flex min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex-col sm:items-end">
-                            {isToday && isJoinEnabled && (
-                              <Badge
-                                variant="secondary"
-                                className={badgeHoyClass}
-                              >
-                                Hoy
-                              </Badge>
-                            )}
-                            {isToday && !isJoinEnabled && isMeetingEnded && (
-                              <Badge
-                                variant="secondary"
-                                className={badgeFinalizadaClass}
-                              >
-                                Hoy
-                              </Badge>
-                            )}
-                            {/* {isNext && (
+                            {/* Badges al extremo derecho */}
+                            <div className="mt-3 flex min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex-col sm:items-end">
+                              {isToday && isJoinEnabled && (
+                                <Badge
+                                  variant="secondary"
+                                  className={badgeHoyClass}
+                                >
+                                  Hoy
+                                </Badge>
+                              )}
+                              {isToday && !isJoinEnabled && isMeetingEnded && (
+                                <Badge
+                                  variant="secondary"
+                                  className={badgeFinalizadaClass}
+                                >
+                                  Hoy
+                                </Badge>
+                              )}
+                              {/* {isNext && (
                               <Badge
                                 variant="outline"
                                 className="rounded-full border border-yellow-500 bg-yellow-100 px-3 py-1 font-bold text-yellow-700 shadow-sm sm:ml-auto"
@@ -1011,62 +1042,81 @@ export function CourseContent({
                                 Próxima Clase
                               </Badge>
                             )} */}
-                            {/* Eliminado el Badge de Próxima Clase */}
-                          </div>
-                          {/* Botón al fondo, debajo de badges en mobile, a la derecha en desktop */}
-                          <div className="mt-3 flex min-w-fit flex-col sm:mt-0 sm:ml-4">
-                            {meeting.joinUrl && (
-                              <>
-                                {/* Botón para "Próxima Clase" (neón, nunca clickable) */}
-                                {isNext && !isJoinEnabled && (
-                                  <button
-                                    type="button"
-                                    className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
-                                    disabled={buttonDisabled}
-                                    style={{
-                                      fontFamily:
-                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {buttonIcon}
-                                    <span className="relative z-10">
-                                      {buttonText}
-                                    </span>
-                                  </button>
-                                )}
-                                {/* Botón para "Unirse a la Clase en Teams" (verde) */}
-                                {isToday && isJoinEnabled && (
-                                  <a
-                                    href={meeting.joinUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`${buttonClass} ${buttonBg}`}
-                                    tabIndex={!isSubscriptionActive ? -1 : 0}
-                                    aria-disabled={!isSubscriptionActive}
-                                    onClick={(e) => {
-                                      if (!isSubscriptionActive)
-                                        e.preventDefault();
-                                    }}
-                                    style={{
-                                      pointerEvents: !isSubscriptionActive
-                                        ? 'none'
-                                        : undefined,
-                                      opacity: !isSubscriptionActive ? 0.6 : 1,
-                                      fontFamily:
-                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
-                                    }}
-                                  >
-                                    {buttonIcon}
-                                    <span className="relative z-10">
-                                      {buttonText}
-                                    </span>
-                                  </a>
-                                )}
-                                {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado (gris) */}
-                                {isToday &&
-                                  !isJoinEnabled &&
-                                  isMeetingEnded && (
+                              {/* Eliminado el Badge de Próxima Clase */}
+                            </div>
+                            {/* Botón al fondo, debajo de badges en mobile, a la derecha en desktop */}
+                            <div className="mt-3 flex min-w-fit flex-col sm:mt-0 sm:ml-4">
+                              {meeting.joinUrl && (
+                                <>
+                                  {/* Botón para "Próxima Clase" (neón, nunca clickable) */}
+                                  {isNext && !isJoinEnabled && (
+                                    <button
+                                      type="button"
+                                      className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                      disabled={buttonDisabled}
+                                      style={{
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {buttonIcon}
+                                      <span className="relative z-10">
+                                        {buttonText}
+                                      </span>
+                                    </button>
+                                  )}
+                                  {/* Botón para "Unirse a la Clase en Teams" (verde) */}
+                                  {isToday && isJoinEnabled && (
+                                    <a
+                                      href={meeting.joinUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`${buttonClass} ${buttonBg}`}
+                                      tabIndex={!isSubscriptionActive ? -1 : 0}
+                                      aria-disabled={!isSubscriptionActive}
+                                      onClick={(e) => {
+                                        if (!isSubscriptionActive)
+                                          e.preventDefault();
+                                      }}
+                                      style={{
+                                        pointerEvents: !isSubscriptionActive
+                                          ? 'none'
+                                          : undefined,
+                                        opacity: !isSubscriptionActive
+                                          ? 0.6
+                                          : 1,
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                      }}
+                                    >
+                                      {buttonIcon}
+                                      <span className="relative z-10">
+                                        {buttonText}
+                                      </span>
+                                    </a>
+                                  )}
+                                  {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado (gris) */}
+                                  {isToday &&
+                                    !isJoinEnabled &&
+                                    isMeetingEnded && (
+                                      <button
+                                        type="button"
+                                        className={`${buttonClass} ${buttonBg}`}
+                                        disabled={buttonDisabled}
+                                        style={{
+                                          fontFamily:
+                                            'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                        }}
+                                      >
+                                        {buttonIcon}
+                                        <span className="relative z-10">
+                                          {buttonText}
+                                        </span>
+                                      </button>
+                                    )}
+                                  {/* Botón para "Clase Bloqueada" (azul oscuro) */}
+                                  {!isAvailable && !isNext && !isToday && (
                                     <button
                                       type="button"
                                       className={`${buttonClass} ${buttonBg}`}
@@ -1082,35 +1132,18 @@ export function CourseContent({
                                       </span>
                                     </button>
                                   )}
-                                {/* Botón para "Clase Bloqueada" (azul oscuro) */}
-                                {!isAvailable && !isNext && !isToday && (
-                                  <button
-                                    type="button"
-                                    className={`${buttonClass} ${buttonBg}`}
-                                    disabled={buttonDisabled}
-                                    style={{
-                                      fontFamily:
-                                        'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
-                                    }}
-                                  >
-                                    {buttonIcon}
-                                    <span className="relative z-10">
-                                      {buttonText}
-                                    </span>
-                                  </button>
-                                )}
-                                {!isSubscriptionActive && (
-                                  <div className="mt-2 text-xs font-semibold text-red-600">
-                                    Debes tener una suscripción activa para
-                                    acceder a las clases en vivo.
-                                  </div>
-                                )}
-                              </>
-                            )}
+                                  {!isSubscriptionActive && (
+                                    <div className="mt-2 text-xs font-semibold text-red-600">
+                                      Debes tener una suscripción activa para
+                                      acceder a las clases en vivo.
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
               )}
