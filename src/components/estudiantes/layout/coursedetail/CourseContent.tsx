@@ -1157,10 +1157,10 @@ export function CourseContent({
 
               {/* Clases Grabadas - Sección con su propio toggle independiente */}
               {recordedMeetings.length > 0 && (
-                <div className="mb-6 rounded-lg bg-gray-800 p-4">
+                <div className="bg-background mb-6 rounded-lg border p-6 shadow-sm">
                   {/* Header with toggle button for recorded classes */}
-                  <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-white">
                       Clases Grabadas
                     </h3>
                     <button
@@ -1181,101 +1181,103 @@ export function CourseContent({
                   {/* Recorded classes content - only this gets hidden */}
                   <div
                     className={cn(
-                      'space-y-3 transition-all duration-300',
+                      'transition-all duration-300',
                       shouldBlurContent &&
                         'pointer-events-none opacity-100 blur-[2px]',
                       !showRecordedClasses && 'hidden' // Hide only recorded classes
                     )}
                   >
-                    {recordedMeetings.map((meeting: ClassMeeting) => {
-                      const isExpanded = expandedRecorded === meeting.id;
-                      const durationMinutes = getDurationMinutes(meeting);
-                      const currentProgress =
-                        meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
+                    <div className="space-y-4">
+                      {recordedMeetings.map((meeting: ClassMeeting) => {
+                        const isExpanded = expandedRecorded === meeting.id;
+                        const durationMinutes = getDurationMinutes(meeting);
+                        const currentProgress =
+                          meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
 
-                      return (
-                        <div
-                          key={meeting.id}
-                          className={`overflow-hidden rounded-lg border-0 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
-                        >
-                          <button
-                            className="flex w-full items-center justify-between px-6 py-4"
-                            onClick={() => toggleRecorded(meeting.id)}
+                        return (
+                          <div
+                            key={meeting.id}
+                            className={`overflow-hidden rounded-lg border-0 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
                           >
-                            <div className="flex w-full items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                                <span className="font-medium text-white">
-                                  {meeting.title}{' '}
-                                  <span className="ml-2 text-sm text-gray-300">
-                                    ({durationMinutes} mins)
-                                  </span>
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {isExpanded ? (
-                                  <FaChevronUp className="text-gray-400" />
-                                ) : (
-                                  <FaChevronDown className="text-gray-400" />
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                          {isExpanded && (
-                            <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
-                              <p className="mb-4 text-gray-300">
-                                {
-                                  'Clase grabada disponible para repaso y consulta.'
-                                }
-                              </p>
-                              {/* Barra de progreso de la clase grabada (shadcn) */}
-                              <div className="mb-4">
-                                <div className="mb-2 flex items-center justify-between">
-                                  <p className="text-sm font-semibold text-gray-300">
-                                    Progreso De La Clase Grabada:
-                                  </p>
-                                  <span className="text-xs text-gray-400">
-                                    {currentProgress}%
+                            <button
+                              className="flex w-full items-center justify-between px-6 py-4"
+                              onClick={() => toggleRecorded(meeting.id)}
+                            >
+                              <div className="flex w-full items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                                  <span className="font-medium text-white">
+                                    {meeting.title}{' '}
+                                    <span className="ml-2 text-sm text-gray-300">
+                                      ({durationMinutes} mins)
+                                    </span>
                                   </span>
                                 </div>
-                                <Progress
-                                  value={currentProgress}
-                                  showPercentage={true}
-                                  className="transition-none"
-                                />
+                                <div className="flex items-center space-x-2">
+                                  {isExpanded ? (
+                                    <FaChevronUp className="text-gray-400" />
+                                  ) : (
+                                    <FaChevronDown className="text-gray-400" />
+                                  )}
+                                </div>
                               </div>
-                              {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
-                              <button
-                                className={cn(
-                                  'buttonclass text-black transition-none active:scale-95',
-                                  !isSubscriptionActive &&
-                                    'pointer-events-none cursor-not-allowed opacity-60'
-                                )}
-                                onClick={() =>
-                                  isSubscriptionActive &&
-                                  handleOpenRecordedModal(meeting)
-                                }
-                                disabled={!isSubscriptionActive}
-                              >
-                                <div className="outline" />
-                                <div className="state state--default">
-                                  <div className="icon">
-                                    <FaVideo className="text-green-600" />
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
+                                <p className="mb-4 text-gray-300">
+                                  {
+                                    'Clase grabada disponible para repaso y consulta.'
+                                  }
+                                </p>
+                                {/* Barra de progreso de la clase grabada (shadcn) */}
+                                <div className="mb-4">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <p className="text-sm font-semibold text-gray-300">
+                                      Progreso De La Clase Grabada:
+                                    </p>
+                                    <span className="text-xs text-gray-400">
+                                      {currentProgress}%
+                                    </span>
                                   </div>
-                                  <span>Clase Grabada</span>
+                                  <Progress
+                                    value={currentProgress}
+                                    showPercentage={true}
+                                    className="transition-none"
+                                  />
                                 </div>
-                              </button>
-                              {!isSubscriptionActive && (
-                                <div className="mt-2 text-xs font-semibold text-red-600">
-                                  Debes tener una suscripción activa para ver la
-                                  clase grabada.
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                                {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
+                                <button
+                                  className={cn(
+                                    'buttonclass text-black transition-none active:scale-95',
+                                    !isSubscriptionActive &&
+                                      'pointer-events-none cursor-not-allowed opacity-60'
+                                  )}
+                                  onClick={() =>
+                                    isSubscriptionActive &&
+                                    handleOpenRecordedModal(meeting)
+                                  }
+                                  disabled={!isSubscriptionActive}
+                                >
+                                  <div className="outline" />
+                                  <div className="state state--default">
+                                    <div className="icon">
+                                      <FaVideo className="text-green-600" />
+                                    </div>
+                                    <span>Clase Grabada</span>
+                                  </div>
+                                </button>
+                                {!isSubscriptionActive && (
+                                  <div className="mt-2 text-xs font-semibold text-red-600">
+                                    Debes tener una suscripción activa para ver
+                                    la clase grabada.
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
