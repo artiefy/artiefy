@@ -126,6 +126,131 @@ function formatHour12(dateString: string) {
   return `${hour12}:${minStr} ${ampm}`;
 }
 
+// Modificar la visualización de la fecha/hora para resaltar día, mes y hora de inicio
+function formatMeetingDateTimePrettyHighlighted(dateString: string) {
+  if (!dateString) return '';
+  const match =
+    /^([0-9]{4})-([0-9]{2})-([0-9]{2})[T\s]([0-9]{2}):([0-9]{2})/.exec(
+      dateString
+    );
+  if (!match) return dateString;
+  const [, year, month, day, hour, minute] = match;
+  const y = parseInt(month) < 3 ? parseInt(year) - 1 : parseInt(year);
+  const m = parseInt(month) < 3 ? parseInt(month) + 12 : parseInt(month);
+  const q = parseInt(day);
+  const h = parseInt(hour);
+  const min = parseInt(minute);
+  const K = y % 100;
+  const J = Math.floor(y / 100);
+  const dow =
+    (q +
+      Math.floor((13 * (m + 1)) / 5) +
+      K +
+      Math.floor(K / 4) +
+      Math.floor(J / 4) +
+      5 * J) %
+    7;
+  const dias = ['sáb', 'dom', 'lun', 'mar', 'mié', 'jue', 'vie'];
+  const meses = [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sept',
+    'oct',
+    'nov',
+    'dic',
+  ];
+  const diaSemana = dias[dow];
+  const mesNombre = meses[parseInt(month, 10) - 1];
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  const ampm = h < 12 ? 'a. m.' : 'p. m.';
+  const minStr = min.toString().padStart(2, '0');
+  // Día y mes destacados, hora destacada
+  return (
+    <>
+      <span className="text-lg font-bold text-yellow-400">
+        {parseInt(day, 10)}
+      </span>
+      <span className="text-lg font-bold text-yellow-400"> {mesNombre}</span>
+      <span className="font-semibold text-cyan-300"> {year}, </span>
+      <span className="text-lg font-bold text-cyan-400">
+        {hour12}:{minStr} {ampm}
+      </span>
+    </>
+  );
+}
+
+// Nuevo formateador para el estilo solicitado
+function formatMeetingDateTimeModern(startDate: string, endDate: string) {
+  if (!startDate) return '';
+  const matchStart =
+    /^([0-9]{4})-([0-9]{2})-([0-9]{2})[T\s]([0-9]{2}):([0-9]{2})/.exec(
+      startDate
+    );
+  const matchEnd = endDate
+    ? /^([0-9]{4})-([0-9]{2})-([0-9]{2})[T\s]([0-9]{2}):([0-9]{2})/.exec(
+        endDate
+      )
+    : null;
+  if (!matchStart) return startDate;
+  const [, , month, day, hour, minute] = matchStart;
+  const meses = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sept',
+    'Oct',
+    'Nov',
+    'Dic',
+  ];
+  const mesNombre = meses[parseInt(month, 10) - 1];
+  // Hora inicio
+  const h = parseInt(hour, 10);
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  const ampm = h < 12 ? 'a. m.' : 'p. m.';
+  const minStr = minute.padStart(2, '0');
+  // Hora fin
+  let horaFin = '';
+  if (matchEnd) {
+    const h2 = parseInt(matchEnd[4], 10);
+    let hour12_2 = h2 % 12;
+    if (hour12_2 === 0) hour12_2 = 12;
+    const ampm2 = h2 < 12 ? 'a. m.' : 'p. m.';
+    const minStr2 = matchEnd[5].padStart(2, '0');
+    horaFin = `${hour12_2}:${minStr2} ${ampm2}`;
+  }
+  return (
+    <>
+      <span className="text-base font-bold text-yellow-400">
+        {mesNombre} {parseInt(day, 10)},
+      </span>{' '}
+      <span className="text-base font-bold text-cyan-400">
+        {hour12}:{minStr} {ampm}
+      </span>
+      {horaFin && (
+        <>
+          <span className="text-base font-bold text-cyan-400">
+            {' '}
+            — {horaFin}
+          </span>
+        </>
+      )}
+    </>
+  );
+}
+
 export function CourseContent({
   course,
   isEnrolled,
@@ -1004,16 +1129,17 @@ export function CourseContent({
                                 )}
                               />
                               <div>
-                                <div className="font-semibold text-white">
+                                {/* Título grande y negrita */}
+                                <div className="mb-1 text-lg leading-tight font-bold text-white">
                                   {meeting.title}
                                 </div>
-                                <div className="text-xs text-gray-300">
-                                  {/* Mostrar fecha y hora amigable, sin conversión de zona horaria */}
-                                  {formatMeetingDateTimePretty(
-                                    meeting.startDateTime
-                                  )}{' '}
-                                  — {formatHour12(meeting.endDateTime)}
-                                  <span className="ml-2">
+                                {/* Fecha y hora estilizada debajo del título */}
+                                <div className="mb-1 flex items-center gap-2 text-base font-medium">
+                                  {formatMeetingDateTimeModern(
+                                    meeting.startDateTime,
+                                    meeting.endDateTime
+                                  )}
+                                  <span className="ml-2 text-sm font-bold text-green-400">
                                     • Duración:{' '}
                                     {formatDuration(
                                       getDurationMinutes(meeting)
