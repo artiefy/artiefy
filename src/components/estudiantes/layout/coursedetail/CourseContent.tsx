@@ -927,7 +927,6 @@ export function CourseContent({
                         // Determinar si es hoy usando directamente los datos de BD
                         let isToday = false;
                         let isJoinEnabled = false;
-                        let isMeetingStarted = false;
                         let isMeetingEnded = false;
                         if (meeting.startDateTime && meeting.endDateTime) {
                           const now = new Date();
@@ -938,11 +937,9 @@ export function CourseContent({
                             now.getFullYear() === start.getFullYear() &&
                             now.getMonth() === start.getMonth() &&
                             now.getDate() === start.getDate();
-                          isMeetingStarted = now >= start;
                           isMeetingEnded = now > end;
-                          // Solo permitir unirse si es hoy y la hora actual está entre start y end
-                          isJoinEnabled =
-                            isToday && isMeetingStarted && !isMeetingEnded;
+                          // Permitir unirse todo el día, solo deshabilitar si ya terminó
+                          isJoinEnabled = isToday && !isMeetingEnded;
                         }
 
                         // Badge: Hoy (verde SOLO si botón es "Unirse a la Clase"), gris si "Clase Finalizada"
@@ -1075,35 +1072,39 @@ export function CourseContent({
                                     </button>
                                   )}
                                   {/* Botón para "Unirse a la Clase en Teams" (verde) */}
-                                  {isToday && isJoinEnabled && (
-                                    <a
-                                      href={meeting.joinUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`${buttonClass} ${buttonBg}`}
-                                      tabIndex={!isSubscriptionActive ? -1 : 0}
-                                      aria-disabled={!isSubscriptionActive}
-                                      onClick={(e) => {
-                                        if (!isSubscriptionActive)
-                                          e.preventDefault();
-                                      }}
-                                      style={{
-                                        pointerEvents: !isSubscriptionActive
-                                          ? 'none'
-                                          : undefined,
-                                        opacity: !isSubscriptionActive
-                                          ? 0.6
-                                          : 1,
-                                        fontFamily:
-                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
-                                      }}
-                                    >
-                                      {buttonIcon}
-                                      <span className="relative z-10">
-                                        {buttonText}
-                                      </span>
-                                    </a>
-                                  )}
+                                  {isToday &&
+                                    isJoinEnabled &&
+                                    meeting.joinUrl && (
+                                      <a
+                                        href={meeting.joinUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`${buttonClass} ${buttonBg}`}
+                                        tabIndex={
+                                          !isSubscriptionActive ? -1 : 0
+                                        }
+                                        aria-disabled={!isSubscriptionActive}
+                                        onClick={(e) => {
+                                          if (!isSubscriptionActive)
+                                            e.preventDefault();
+                                        }}
+                                        style={{
+                                          pointerEvents: !isSubscriptionActive
+                                            ? 'none'
+                                            : undefined,
+                                          opacity: !isSubscriptionActive
+                                            ? 0.6
+                                            : 1,
+                                          fontFamily:
+                                            'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                        }}
+                                      >
+                                        <FaVideo className="size-4" />
+                                        <span className="relative z-10">
+                                          Unirse a la Clase
+                                        </span>
+                                      </a>
+                                    )}
                                   {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado (gris) */}
                                   {isToday &&
                                     !isJoinEnabled &&
