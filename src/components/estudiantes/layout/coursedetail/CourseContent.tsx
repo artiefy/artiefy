@@ -62,6 +62,70 @@ function formatDuration(minutes: number): string {
   }
 }
 
+// Formatea fecha y hora desde string exacto de la BD (sin conversión de zona horaria)
+function formatMeetingDateTimePretty(dateString: string) {
+  if (!dateString) return '';
+  // Extraer partes: YYYY-MM-DDTHH:mm:ss o YYYY-MM-DD HH:mm:ss
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/.exec(dateString);
+  if (!match) return dateString;
+  const [, year, month, day, hour, minute] = match;
+  // Día de la semana (calcular manualmente para evitar new Date)
+  // Usar algoritmo de Zeller para obtener el día de la semana
+  const y = parseInt(month) < 3 ? parseInt(year) - 1 : parseInt(year);
+  const m = parseInt(month) < 3 ? parseInt(month) + 12 : parseInt(month);
+  const q = parseInt(day);
+  const h = parseInt(hour);
+  const min = parseInt(minute);
+  const K = y % 100;
+  const J = Math.floor(y / 100);
+  const dow =
+    (q +
+      Math.floor((13 * (m + 1)) / 5) +
+      K +
+      Math.floor(K / 4) +
+      Math.floor(J / 4) +
+      5 * J) %
+    7;
+  const dias = ['sáb', 'dom', 'lun', 'mar', 'mié', 'jue', 'vie'];
+  const meses = [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sept',
+    'oct',
+    'nov',
+    'dic',
+  ];
+  // Ajustar el índice del día de la semana (Zeller: 0=sábado)
+  const diaSemana = dias[dow];
+  const mesNombre = meses[parseInt(month, 10) - 1];
+  // Formato 12h
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  const ampm = h < 12 ? 'a. m.' : 'p. m.';
+  const minStr = min.toString().padStart(2, '0');
+  return `${diaSemana}, ${parseInt(day, 10)} ${mesNombre} ${year}, ${hour12}:${minStr} ${ampm}`;
+}
+
+// Formatea solo la hora en 12h para el rango final
+function formatHour12(dateString: string) {
+  if (!dateString) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/.exec(dateString);
+  if (!match) return dateString;
+  const [, , , , hour, minute] = match;
+  const h = parseInt(hour, 10);
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  const ampm = h < 12 ? 'a. m.' : 'p. m.';
+  const minStr = minute.padStart(2, '0');
+  return `${hour12}:${minStr} ${ampm}`;
+}
+
 export function CourseContent({
   course,
   isEnrolled,
@@ -939,46 +1003,23 @@ export function CourseContent({
                                   'h-5 w-5 flex-shrink-0 text-cyan-600'
                                 )}
                               />
-                              <div className="min-w-0">
-                                <h3
-                                  className="truncate text-lg font-bold"
-                                  style={{ color: '#fff' }}
-                                >
+                              <div>
+                                <div className="font-semibold text-white">
                                   {meeting.title}
-                                </h3>
-                                <p
-                                  className="truncate text-sm"
-                                  style={{ color: '#fff' }}
-                                >
-                                  {/* Mostrar fecha/hora directamente de BD */}
-                                  {typeof meeting.startDateTime === 'string'
-                                    ? new Date(
-                                        meeting.startDateTime
-                                      ).toLocaleString('es-CO', {
-                                        weekday: 'short',
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })
-                                    : ''}
-                                  {' — '}
-                                  {typeof meeting.endDateTime === 'string'
-                                    ? new Date(
-                                        meeting.endDateTime
-                                      ).toLocaleString('es-CO', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })
-                                    : ''}
-                                  <span className="text-secondary ml-2 font-semibold">
-                                    {' • Duración: '}
+                                </div>
+                                <div className="text-xs text-gray-300">
+                                  {/* Mostrar fecha y hora amigable, sin conversión de zona horaria */}
+                                  {formatMeetingDateTimePretty(
+                                    meeting.startDateTime
+                                  )}{' '}
+                                  — {formatHour12(meeting.endDateTime)}
+                                  <span className="ml-2">
+                                    • Duración:{' '}
                                     {formatDuration(
                                       getDurationMinutes(meeting)
                                     )}
                                   </span>
-                                </p>
+                                </div>
                               </div>
                             </div>
                             {/* Badges al extremo derecho */}
