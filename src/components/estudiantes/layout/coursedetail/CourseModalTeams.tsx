@@ -131,7 +131,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
         <div className="relative flex w-full max-w-2xl flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
           <button
             className="absolute top-3 right-3 z-20 text-2xl font-bold text-gray-700 hover:text-red-600"
-            onClick={handleModalClose} // Usa nuestro handler personalizado
+            onClick={handleModalClose}
             aria-label="Cerrar"
             type="button"
           >
