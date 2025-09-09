@@ -13,12 +13,12 @@ import {
   dates,
   enrollmentPrograms,
   horario,
+pagos,
   programas,
   sede,
   userCredentials,
   userInscriptionDetails,
-  users,
-} from '~/server/db/schema';
+  users} from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
 export const runtime = 'nodejs'; // asegurar Node runtime (Buffer/S3)
@@ -391,35 +391,46 @@ export async function POST(req: Request) {
       'birthDate:',
       fields.birthDate || null
     );
-    await db
-      .insert(users)
-      .values({
-        id: userId,
-        role,
-        name: fullName,
-        email: fields.email,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .onConflictDoNothing(); // evita violar PK si se reintenta
+   
+    // Calcular fecha fin (ahora + 1 mes)
 
-    await db
-      .update(users)
-      .set({
-        role,
-        name: fullName,
-        email: fields.email,
-        phone: fields.telefono,
-        address: fields.direccion,
-        country: fields.pais,
-        city: fields.ciudad,
-        birthDate:
-          fields.birthDate && fields.birthDate.trim() !== ''
-            ? fields.birthDate
-            : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
+await db
+  .insert(users)
+  .values({
+    id: userId,
+    role,
+    name: fullName,
+    email: fields.email,
+    subscriptionEndDate, // <--- aquí se agrega
+       planType: 'Premium',          // <--- planType
+    subscriptionStatus: 'activo', // <--- status activo
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+  .onConflictDoNothing(); // evita violar PK si se reintenta
+
+// UPDATE para rellenar otros campos
+await db
+  .update(users)
+  .set({
+    role,
+    name: fullName,
+    email: fields.email,
+    phone: fields.telefono,
+    address: fields.direccion,
+    country: fields.pais,
+    city: fields.ciudad,
+    birthDate:
+      fields.birthDate && fields.birthDate.trim() !== ''
+        ? fields.birthDate
+        : null,
+    subscriptionEndDate, // <--- aquí también
+    planType: 'Premium',          // <--- planType
+    subscriptionStatus: 'activo',
+    updatedAt: new Date(),
+  })
+  .where(eq(users.id, userId));
+
 
     // 3) user_credentials: upsert manual (sin tocar schema)
     if (generatedPassword !== null) {
@@ -581,6 +592,28 @@ export async function POST(req: Request) {
         notifyErr
       );
     }
+
+    // ... después de enviar notificaciones y todo
+try {
+const hoy = new Date();
+const fechaStr = hoy.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  await db.insert(pagos).values({
+    userId,
+    programaId: programRow.id,
+    concepto: 'Cuota 1',
+    nroPago: 1,
+    fecha: fechaStr,
+    metodo: 'Artiefy',
+    valor: 150000,
+    createdAt: hoy,
+  });
+  console.log('[PAGO AUTOMÁTICO] Cuota 1 registrada para userId:', userId);
+} catch (pagoErr) {
+  console.error('❌ Error creando pago automático:', pagoErr);
+}
+
+console.log('==== [FORM SUBMIT] FIN OK ====');
+
 
     console.log('==== [FORM SUBMIT] FIN OK ====');
     return NextResponse.json({

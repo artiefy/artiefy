@@ -72,6 +72,82 @@ export const ScheduledMeetingsList = ({
     {}
   );
 
+  const handleDeleteGroup = async (group: UIMeeting[]) => {
+    if (!confirm(`¿Seguro que quieres eliminar estas ${group.length} clases y sus videos?`)) return;
+
+    try {
+      for (const m of group) {
+        const res = await fetch('/api/super-admin/teams/delete', {
+          method: 'DELETE',
+          body: JSON.stringify({ id: m.id, video_key: m.video_key }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data: unknown = await res.json();
+        const { error } = data as { error?: string };
+        if (!res.ok) throw new Error(error ?? "Error eliminando");
+      }
+
+      alert('Grupo eliminado correctamente');
+      setOpenGroup(null); // opcional: cerrar el grupo
+      setVideoToShow(null); // opcional: cerrar video si estaba abierto
+      window.location.reload(); // 🔹 refresca la página
+
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "error" in err &&
+        typeof (err as Record<string, unknown>).error === "string"
+      ) {
+        console.error((err as Record<string, string>).error);
+      } else {
+        console.error(err);
+      }
+      alert("Error eliminando grupo"); // o clase
+    }
+
+
+  };
+
+
+  const handleDelete = async (m: UIMeeting) => {
+    if (!confirm('¿Seguro que quieres eliminar esta clase y su video?')) return;
+
+    try {
+      const res = await fetch('/api/super-admin/teams/delete', {
+        method: 'DELETE',
+        body: JSON.stringify({ id: m.id, video_key: m.video_key }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data: unknown = await res.json();
+      const { error } = data as { error?: string };
+      if (!res.ok) throw new Error(error ?? "Error eliminando");
+
+
+      // 3) Actualizar UI
+      setVideoToShow((prev) => (prev === m.videoUrl ? null : prev));
+      setOpenGroup(null); // opcional: cerrar grupo para refrescar
+      alert('Clase eliminada correctamente');
+      window.location.reload(); // 🔹 refresca la página
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "error" in err &&
+        typeof (err as Record<string, unknown>).error === "string"
+      ) {
+        console.error((err as Record<string, string>).error);
+      } else {
+        console.error(err);
+      }
+      alert("Error eliminando clase");
+    }
+
+
+  };
+
+
   // Extrae días únicos por grupo (usando ensureDate y tz fija)
   const getDaysOfWeek = (group: ScheduledMeeting[]) => {
     const days = group.map((m) =>
@@ -89,14 +165,15 @@ export const ScheduledMeetingsList = ({
   return (
     <div className="mt-6 space-y-6">
       {Object.entries(groupedByMainTitle).map(([mainTitle, groupMeetings]) => {
-        const subGroups = groupMeetings.reduce<
-          Record<string, ScheduledMeeting[]>
-        >((acc, meeting) => {
-          const fullTitle = meeting.title || 'Sin título';
-          if (!acc[fullTitle]) acc[fullTitle] = [];
-          acc[fullTitle].push(meeting);
-          return acc;
-        }, {});
+        const subGroups = groupMeetings.reduce<Record<string, UIMeeting[]>>(
+          (acc, meeting) => {
+            const fullTitle = meeting.title || 'Sin título';
+            if (!acc[fullTitle]) acc[fullTitle] = [];
+            acc[fullTitle].push(meeting as UIMeeting); // ⚡ cast
+            return acc;
+          },
+          {}
+        );
 
         const daysText = getDaysOfWeek(groupMeetings);
         console.log('📚 Subgrupos para', mainTitle, subGroups);
@@ -113,15 +190,27 @@ export const ScheduledMeetingsList = ({
                   {groupMeetings.length} clases programadas — {daysText}
                 </p>
               </div>
-              <button
-                onClick={() =>
-                  setOpenGroup(openGroup === mainTitle ? null : mainTitle)
-                }
-                className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-500"
-              >
-                {openGroup === mainTitle ? 'Ocultar' : 'Ver más'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    setOpenGroup(openGroup === mainTitle ? null : mainTitle)
+                  }
+                  className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-500"
+                >
+                  {openGroup === mainTitle ? 'Ocultar' : 'Ver más'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteGroup(groupMeetings)}
+                  className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
+                >
+                  🗑 Eliminar todas las clases
+                </button>
+              </div>
+
             </div>
+
 
             {openGroup === mainTitle && (
               <div className="mt-6 space-y-4">
@@ -199,6 +288,14 @@ export const ScheduledMeetingsList = ({
                                 ▶ Ver grabación
                               </button>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(m)}
+                              className="mt-2 ml-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
+                            >
+                              🗑 Eliminar clase
+                            </button>
+
                           </li>
                         );
                       })}

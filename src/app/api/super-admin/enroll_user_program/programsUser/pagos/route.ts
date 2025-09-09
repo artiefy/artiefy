@@ -1,10 +1,30 @@
 import { NextResponse } from 'next/server';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { pagos } from '~/server/db/schema';
+import { pagos, users } from '~/server/db/schema';
+
+export const planPrices: Record<string, number> = {
+  Pro: 20000,       
+  Premium: 35000,
+  Enterprise: 60000,
+};
+
+
+function formatDateToClerk(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+
 
 export const runtime = 'nodejs';
 
@@ -105,13 +125,42 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
   }
   try {
-    const pagosUsuarioPrograma = await db
-      .select()
-      .from(pagos)
-      .where(
-        and(eq(pagos.userId, userId), eq(pagos.programaId, Number(programId)))
-      );
-    return NextResponse.json({ pagos: pagosUsuarioPrograma });
+    // Trae pagos + usuario
+const [dbUser] = await db
+  .select()
+  .from(users)
+  .where(eq(users.id, userId));
+
+if (!dbUser) {
+  return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+}
+
+const pagosUsuarioPrograma = await db
+  .select()
+  .from(pagos)
+  .where(
+    and(eq(pagos.userId, userId), eq(pagos.programaId, Number(programId)))
+  );
+
+// Usa plan de usuario o Premium por defecto
+const planType = dbUser.planType && dbUser.planType !== 'none'
+  ? dbUser.planType
+  : 'Premium';
+
+// Precios de referencia
+const planPrices: Record<string, number> = {
+  Pro: 99800,
+  Premium: 149800,
+  Enterprise: 200000,
+};
+const programaPrice = planPrices[planType] ?? planPrices.Premium;
+
+return NextResponse.json({
+  pagos: pagosUsuarioPrograma,
+  planType,
+  programaPrice,
+});
+
   } catch (error) {
     console.error('Error al consultar pagos:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
@@ -306,6 +355,87 @@ export async function POST(req: Request) {
         valor,
       });
     }
+
+    // ──────────────────────────────
+// 🔄 Actualizar plan en Clerk y en la BD
+// ──────────────────────────────
+// ──────────────────────────────
+// 🔄 Calcular fecha fin a partir de la primera cuota
+// ──────────────────────────────
+const firstPayment = await db
+  .select()
+  .from(pagos)
+  .where(and(eq(pagos.userId, userId), eq(pagos.programaId, programId)))
+  .orderBy(pagos.nroPago) // cuota más antigua
+  .limit(1);
+
+if (firstPayment.length === 0) {
+  return NextResponse.json(
+    { error: 'No existe cuota inicial para este usuario' },
+    { status: 400 }
+  );
+}
+
+const firstDate = new Date(firstPayment[0].fecha); // ej: 2025-09-01
+const cutoffDay = firstDate.getDate(); // 1
+
+// Fecha del último pago
+const lastPaymentDate = new Date(fecha);
+
+// Calcular fecha fin en el mes del pago
+let subscriptionEndDate = new Date(
+  lastPaymentDate.getFullYear(),
+  lastPaymentDate.getMonth(),
+  cutoffDay
+);
+
+// Si esa fecha ya pasó respecto al pago → mover al siguiente mes
+if (subscriptionEndDate <= lastPaymentDate) {
+  subscriptionEndDate = new Date(
+    subscriptionEndDate.getFullYear(),
+    subscriptionEndDate.getMonth() + 1,
+    cutoffDay
+  );
+}
+
+try {
+  // Usuario en tu BD
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+
+  if (!dbUser?.id) {
+    throw new Error("El usuario no tiene clerkId guardado");
+  }
+
+  // Plan actual o default Premium
+  const normalizedPlanType = dbUser.planType && dbUser.planType !== 'none'
+    ? dbUser.planType
+    : 'Premium';
+
+
+const clerk = await clerkClient(); // tu wrapper
+await clerk.users.updateUserMetadata(dbUser.id, {
+  publicMetadata: {
+    planType: normalizedPlanType,
+    subscriptionStatus: 'active',
+    subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
+  },
+});
+  // BD
+  await db
+    .update(users)
+    .set({
+      planType: normalizedPlanType,
+      subscriptionStatus: 'active',
+      subscriptionEndDate,
+    })
+    .where(eq(users.id, userId));
+} catch (err) {
+  console.error('Error actualizando plan en Clerk/DB:', err);
+}
+
+
 
     return NextResponse.json({ ok: true });
   } catch (error) {

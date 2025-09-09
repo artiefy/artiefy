@@ -2,6 +2,7 @@ import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
   date,
+decimal,
   integer,
   jsonb,
   pgTable,
@@ -11,8 +12,7 @@ import {
   text,
   timestamp,
   unique,
-  varchar,
-} from 'drizzle-orm/pg-core';
+  varchar, } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable(
@@ -1309,3 +1309,19 @@ export const pagos = pgTable('pagos', {
   receiptName: varchar('receipt_name', { length: 255 }),
   receiptUploadedAt: timestamp('receipt_uploaded_at', { withTimezone: true }),
 });
+
+
+export const userProgramPrice = pgTable('user_program_price', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').references(() => users.id).notNull(),
+  programaId: integer('programa_id').references(() => programas.id).notNull(),
+price: decimal('price', { precision: 12, scale: 2 }).notNull().default('150000'),
+  numCuotas: integer('num_cuotas').notNull().default(12),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const userProgramPriceRelations = relations(userProgramPrice, ({ one }) => ({
+  user: one(users, { fields: [userProgramPrice.userId], references: [users.id] }),
+  programa: one(programas, { fields: [userProgramPrice.programaId], references: [programas.id] }),
+}));

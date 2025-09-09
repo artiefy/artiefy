@@ -277,10 +277,11 @@ export default function EnrolledUsersPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
+  const [editablePagos, setEditablePagos] = useState<Pago[]>([]);
+
   void setCodigoPais;
 
   // === NUEVO: estados para edición de cuotas y programa actual ===
-  const [editablePagos, setEditablePagos] = useState<Pago[]>([]);
   const [currentProgramId, setCurrentProgramId] = useState<string | null>(null);
 
   // Reutilizamos el input global para subir comprobante por fila
@@ -346,8 +347,7 @@ export default function EnrolledUsersPage() {
   // ⛳️ CONVIERTE esta función en useCallback para estabilizar referencia (ayuda con el useEffect)
   const mapPagosToEditable = useCallback(
     (pagosFromApi: unknown[]): Pago[] => {
-      const slots: Pago[] = Array.from({ length: 15 }, () => ({}));
-
+      const slots: Pago[] = Array.from({ length: 15 }, () => ({} as Pago));
       for (const raw of pagosFromApi ?? []) {
         const p = asRec(raw);
 
@@ -416,20 +416,9 @@ export default function EnrolledUsersPage() {
         }
       }
 
-      // normaliza fechas a 'YYYY-MM-DD'
-      const normalized = slots.map((row) => ({
-        ...row,
-        fecha:
-          typeof row?.fecha === 'string'
-            ? toISODateLike(row.fecha)
-            : typeof row?.fecha === 'number' || row?.fecha instanceof Date
-              ? toISODateLike(row.fecha as string | number | Date)
-              : '',
-      }));
-
-      return ensure15(normalized);
+      return ensure15(slots);
     },
-    [ensure15, toISODateLike, ESPECIALES]
+    [ensure15, ESPECIALES]
   );
 
   const daysInMonthUTC = useCallback((year: number, month0: number) => {
@@ -522,137 +511,7 @@ export default function EnrolledUsersPage() {
     });
   }
 
-  const _normalizePagos = useCallback(
-    (raw: unknown[] = []): Pago[] => {
-      const toNum = (v: unknown): number => {
-        if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
-        if (typeof v === 'string') {
-          const n = Number(v);
-          return Number.isFinite(n) ? n : 0;
-        }
-        return 0;
-      };
 
-      const toStr = (v: unknown): string => (typeof v === 'string' ? v : '');
-
-      // 3 conceptos especiales y sus posiciones/nroPago fijos
-      const SPECIALS = [
-        { label: 'PÓLIZA Y CARNET', idxBase: 12, nroPago: 13 },
-        { label: 'UNIFORME', idxBase: 13, nroPago: 14 },
-        { label: 'DERECHOS DE GRADO', idxBase: 14, nroPago: 15 },
-      ] as const;
-
-      // preparamos 15 slots (0..11 cuotas, 12..14 especiales)
-      const slots: Pago[] = Array.from({ length: 15 }, () => ({}));
-
-      for (const p of raw ?? []) {
-        const r = (p ?? {}) as Record<string, unknown>;
-
-        const conceptoRaw =
-          toStr(r.concepto) || getStr(r as Record<string, unknown>, 'producto');
-
-        const conceptoUC = conceptoRaw.toUpperCase().trim();
-
-        // extraer nroPago desde varios nombres posibles
-        const nroPago =
-          typeof r.nroPago === 'number'
-            ? r.nroPago
-            : typeof r.nroPago === 'string'
-              ? Number(r.nroPago)
-              : typeof r.nro_pago === 'number'
-                ? r.nro_pago
-                : typeof r.nro_pago === 'string'
-                  ? Number(r.nro_pago)
-                  : Number.isFinite(
-                        getNum(r as Record<string, unknown>, 'numero')
-                      )
-                    ? getNum(r as Record<string, unknown>, 'numero')
-                    : NaN;
-
-        // ¿coincide con un especial por LABEL exacto?
-        const esp = SPECIALS.find((e) => e.label === conceptoUC);
-
-        if (esp) {
-          const idx = esp.idxBase; // 12..14
-          slots[idx] = {
-            concepto: conceptoRaw || esp.label,
-            nro_pago: Number.isFinite(
-              getNum(r as Record<string, unknown>, 'nroPago')
-            )
-              ? getNum(r as Record<string, unknown>, 'nroPago')
-              : Number.isFinite(
-                    getNum(r as Record<string, unknown>, 'nro_pago')
-                  )
-                ? getNum(r as Record<string, unknown>, 'nro_pago')
-                : esp.nroPago,
-            fecha:
-              typeof r.fecha === 'string' ||
-              typeof r.fecha === 'number' ||
-              r.fecha instanceof Date
-                ? r.fecha
-                : '',
-            metodo:
-              toStr(r.metodo) ||
-              getStr(r as Record<string, unknown>, 'metodoPago'),
-            valor: toNum(r.valor),
-            receiptUrl:
-              typeof r.receiptUrl === 'string'
-                ? (r.receiptUrl as string)
-                : undefined,
-            receiptName:
-              typeof r.receiptName === 'string'
-                ? (r.receiptName as string)
-                : undefined,
-          };
-          continue;
-        }
-
-        // si no es especial, solo mapeamos a cuotas por nroPago 1..12
-        if (Number.isFinite(nroPago) && nroPago >= 1 && nroPago <= 12) {
-          const idx = (nroPago as number) - 1;
-          slots[idx] = {
-            concepto: conceptoRaw || `Cuota ${idx + 1}`,
-            nro_pago: nroPago as number,
-            fecha:
-              typeof r.fecha === 'string' ||
-              typeof r.fecha === 'number' ||
-              r.fecha instanceof Date
-                ? r.fecha
-                : '',
-            metodo:
-              toStr(r.metodo) ||
-              getStr(r as Record<string, unknown>, 'metodoPago'),
-            valor: toNum(r.valor),
-            receiptUrl:
-              typeof r.receiptUrl === 'string'
-                ? (r.receiptUrl as string)
-                : undefined,
-            receiptName:
-              typeof r.receiptName === 'string'
-                ? (r.receiptName as string)
-                : undefined,
-          };
-        }
-        // si llega un nroPago 13..15 sin label especial correcto, lo ignoramos para no contaminar cuotas
-      }
-
-      // normaliza fechas a 'YYYY-MM-DD'
-      const normalized = slots.map((row) => ({
-        ...row,
-        fecha:
-          typeof row?.fecha === 'string'
-            ? toISODateLike(row.fecha)
-            : typeof row?.fecha === 'number' || row?.fecha instanceof Date
-              ? toISODateLike(
-                  row.fecha as string | number | Date | null | undefined
-                )
-              : '',
-      }));
-
-      return ensure15(normalized);
-    },
-    [toISODateLike, ensure15]
-  );
 
   // Al finalizar openCarteraModal, cuando ya tengas pagosUsuarioPrograma:
 
@@ -677,8 +536,8 @@ export default function EnrolledUsersPage() {
       (especial ? labelForIndex(index) : `Cuota ${index + 1}`);
     const nro_pago = Number(
       row.nro_pago ??
-        row.nroPago ??
-        (especial ? nroPagoForIndex(index) : index + 1)
+      row.nroPago ??
+      (especial ? nroPagoForIndex(index) : index + 1)
     );
 
     try {
@@ -860,11 +719,22 @@ export default function EnrolledUsersPage() {
     pagosUsuarioPrograma: Pago[];
     totalPagado: number;
     deuda: number;
-    carnetPolizaUniforme?: number; // monto detectado
-    derechosGrado?: number; // monto detectado
+    carnetPolizaUniforme: number; // obligatorio
+    derechosGrado: number;        // obligatorio
+    planType?: string;             // opcional
   }
 
-  const [carteraInfo, setCarteraInfo] = useState<CarteraInfo | null>(null);
+  // Ahora el estado usa exactamente CarteraInfo
+  const [carteraInfo, setCarteraInfo] = useState<CarteraInfo>({
+    programaPrice: 0,
+    pagosUsuarioPrograma: [],
+    totalPagado: 0,
+    deuda: 0,
+    carnetPolizaUniforme: 0, // inicializado
+    derechosGrado: 0,        // inicializado
+    planType: undefined,
+  });
+
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
@@ -881,6 +751,42 @@ export default function EnrolledUsersPage() {
     setUserCourses(unique);
   }
 
+  const DEFAULT_CUOTAS = 12;
+  const DEFAULT_VALOR = 150000;
+
+  const [price, setPrice] = useState<number>(0);
+
+  useEffect(() => {
+    if (carteraInfo?.programaPrice) {
+      // Si ya hay un plan guardado
+      setPrice(carteraInfo.programaPrice);
+
+      // Ajustamos las cuotas al valor existente
+      const cuotas = Array.from({ length: DEFAULT_CUOTAS }, (_, idx) => ({
+        concepto: `Cuota ${idx + 1}`,
+        nro_pago: idx + 1,
+        fecha: '',
+        metodo: '',
+        valor: Math.round(carteraInfo.programaPrice / DEFAULT_CUOTAS),
+      }));
+      setEditablePagos(cuotas);
+    } else {
+      // Si no hay plan creado, usamos 12 cuotas por defecto de 150000
+      setPrice(DEFAULT_CUOTAS * DEFAULT_VALOR);
+
+      const cuotas = Array.from({ length: DEFAULT_CUOTAS }, (_, idx) => ({
+        concepto: `Cuota ${idx + 1}`,
+        nro_pago: idx + 1,
+        fecha: '',
+        metodo: '',
+        valor: DEFAULT_VALOR,
+      }));
+      setEditablePagos(cuotas);
+    }
+  }, [carteraInfo]);
+
+
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -895,51 +801,30 @@ export default function EnrolledUsersPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
 
-  async function fetchPagosUsuarioPrograma(userId: string, programId: string) {
-    const url = `/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`;
-    console.log('➡️ GET Pagos:', url);
-
-    const res = await fetch(url);
+  async function fetchPagosUsuarioPrograma(userId: string, programId: string): Promise<Pago[]> {
+    const res = await fetch(`/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`);
     if (!res.ok) throw new Error('Error cargando pagos');
 
     const json: unknown = await res.json();
-    const pagos: Pago[] = Array.isArray((json as { pagos?: unknown }).pagos)
-      ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p) => {
-          const r = p as Record<string, unknown>;
-          return {
-            concepto: typeof r.concepto === 'string' ? r.concepto : null,
-            nro_pago:
-              typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
-                ? r.nro_pago
-                : null,
-            nroPago:
-              typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
-                ? r.nroPago
-                : null,
-            fecha:
-              typeof r.fecha === 'string' ||
-              typeof r.fecha === 'number' ||
-              r.fecha instanceof Date
-                ? (r.fecha as string | number | Date)
-                : null,
-            metodo: typeof r.metodo === 'string' ? r.metodo : null,
-            valor:
-              typeof r.valor === 'string' || typeof r.valor === 'number'
-                ? r.valor
-                : null,
-
-            // 👇 nuevos
-            receiptUrl:
-              typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
-            receiptName:
-              typeof r.receiptName === 'string' ? r.receiptName : undefined,
-          } satisfies Pago;
-        })
+    const pagos = Array.isArray((json as { pagos?: unknown }).pagos)
+      ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p): Pago => {
+        const r = p as Record<string, unknown>;
+        return {
+          concepto: typeof r.concepto === 'string' ? r.concepto : null,
+          nro_pago: typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number' ? r.nro_pago : null,
+          nroPago: typeof r.nroPago === 'string' || typeof r.nroPago === 'number' ? r.nroPago : null,
+          fecha: typeof r.fecha === 'string' || typeof r.fecha === 'number' || r.fecha instanceof Date ? r.fecha : null,
+          metodo: typeof r.metodo === 'string' ? r.metodo : null,
+          valor: typeof r.valor === 'string' || typeof r.valor === 'number' ? r.valor : null,
+          receiptUrl: typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
+          receiptName: typeof r.receiptName === 'string' ? r.receiptName : undefined,
+        };
+      })
       : [];
 
-    console.log('✅ Pagos recibidos:', pagos.length);
     return pagos;
   }
+
 
   useEffect(() => {
     // función asíncrona para cargar programasp
@@ -1018,13 +903,13 @@ export default function EnrolledUsersPage() {
 
     const whatsappNumbers = sendWhatsapp
       ? Array.from(
-          new Set([
-            ...students
-              .filter((s) => selectedStudents.includes(s.id) && s.phone)
-              .map((s) => `${codigoPais}${s.phone}`),
-            ...manualPhones.map((p) => `${codigoPais}${p}`),
-          ])
-        )
+        new Set([
+          ...students
+            .filter((s) => selectedStudents.includes(s.id) && s.phone)
+            .map((s) => `${codigoPais}${s.phone}`),
+          ...manualPhones.map((p) => `${codigoPais}${p}`),
+        ])
+      )
       : [];
 
     try {
@@ -1088,6 +973,26 @@ export default function EnrolledUsersPage() {
   const [carteraUserId, setCarteraUserId] = useState<string | null>(null);
   const [carteraReceipt, setCarteraReceipt] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const existingRecord = Boolean(carteraInfo?.programaPrice); // true si ya hay precio guardado
+  const userId = currentUser?.id; // o currentUser?.document si prefieres
+  const programaId = userPrograms?.[0]?.id; // tomamos el primer programa
+
+
+
+  const handleSavePrice = async () => {
+    // Guardamos en backend
+    await fetch('/api/super-admin/teams/price_program', {
+      method: existingRecord ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, programaId, price }),
+    });
+
+    // Actualizamos las cuotas proporcionalmente
+    setEditablePagos((prev) =>
+      prev.map((p) => ({ ...p, valor: Math.round(price / prev.length) }))
+    );
+  };
+
 
   const openCarteraModal = async (userId: string) => {
     try {
@@ -1107,12 +1012,14 @@ export default function EnrolledUsersPage() {
       setCurrentProgramId(programId);
 
       if (!programId) {
-        // Sin programa: modal vacío pero visible
-        const vacio = {
+        const vacio: CarteraInfo = {
           programaPrice: 0,
           pagosUsuarioPrograma: [],
           totalPagado: 0,
           deuda: 0,
+          carnetPolizaUniforme: 0, // no undefined
+          derechosGrado: 0,        // no undefined
+          planType: undefined,
         };
         setCarteraInfo(vacio);
         setEditablePagos(ensure15([]));
@@ -1120,24 +1027,66 @@ export default function EnrolledUsersPage() {
         return;
       }
 
-      // 1) Precio del programa
-      interface ProgramPriceResponse {
-        programaPrice?: number | null;
-      }
-      let programaPrice = 0;
-      const priceRes = await fetch(
-        `/api/super-admin/enroll_user_program?userId=${userId}&programId=${programId}`
-      );
-      if (priceRes.ok) {
-        const priceJson = (await priceRes.json()) as ProgramPriceResponse;
-        programaPrice = Number(priceJson.programaPrice ?? 0);
+
+      let programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
+      console.log('💡 Valor inicial de programaPrice (default):', programaPrice);
+      try {
+        console.log('💡 Iniciando fetch de price_program para userId:', userId, 'programaId:', programaId);
+
+        const res = await fetch(
+          `/api/super-admin/teams/price_program?userId=${userId}&programaId=${programId}`
+        );
+        console.log('💡 Fetch completado, status:', res.status);
+
+        if (res.ok) {
+          const data: { price?: number | string } = await res.json();
+          console.log('💡 Data recibida del backend:', data);
+
+          // Convertir price a número seguro
+          const priceNumber = data.price !== undefined ? Number(data.price) : NaN;
+          console.log('💡 Price convertido a número:', priceNumber);
+
+          if (Number.isFinite(priceNumber)) {
+            programaPrice = priceNumber;
+            console.log('✅ Se actualiza programaPrice con el valor del backend:', programaPrice);
+          } else {
+            programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
+            console.warn('⚠️ No hay price válido en data, se mantiene default:', programaPrice);
+          }
+        } else {
+          programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
+          console.warn('⚠️ No se pudo cargar precio del programa, usando default:', programaPrice);
+        }
+
+        console.log('💡 Valor final de programaPrice después del try/catch:', programaPrice);
+      } catch (err) {
+        programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
+        console.error('❌ Error al consultar precio del programa, usando default:', programaPrice, err);
       }
 
-      // 2) Pagos del usuario en ese programa
-      const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(
-        userId,
-        programId
-      );
+
+      console.log('💡 Valor final de programaPrice después del try/catch:', programaPrice);
+
+
+      // 2️⃣ Pagos del usuario en ese programa
+      const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, programId);
+
+      // Total pagado
+      const totalPagado = pagosUsuarioPrograma.reduce((sum: number, p: Pago) => {
+        const v =
+          typeof p.valor === 'string'
+            ? Number(p.valor)
+            : typeof p.valor === 'number'
+              ? p.valor
+              : 0;
+        return sum + (Number.isFinite(v) ? v : 0);
+      }, 0);
+
+      // Deuda = precio total - totalPagado
+      const deuda = Math.max(programaPrice - totalPagado, 0);
+
+
+      // Guardar en state
 
       // Montos detectados por concepto
       const toNumber = (v: unknown) =>
@@ -1148,33 +1097,18 @@ export default function EnrolledUsersPage() {
         );
         return toNumber(pago?.valor);
       };
-      const carnetPolizaUniforme = findMonto(/carnet|p[oó]liza|uniforme/);
-      const derechosGrado = findMonto(/derechos?\s+de\s+grado/);
+      void findMonto;
 
-      // 3) Totales y deuda
-      const totalPagado = pagosUsuarioPrograma.reduce(
-        (sum: number, p: Pago) => {
-          const v =
-            typeof p.valor === 'string'
-              ? Number(p.valor)
-              : typeof p.valor === 'number'
-                ? p.valor
-                : 0;
-          return sum + (Number.isFinite(v) ? v : 0);
-        },
-        0
-      );
-      const deuda = Math.max(Number(programaPrice ?? 0) - totalPagado, 0);
-
-      // Setear info + precargar la tabla editable
       setCarteraInfo({
         programaPrice,
         pagosUsuarioPrograma,
         totalPagado,
         deuda,
-        carnetPolizaUniforme,
-        derechosGrado,
+        carnetPolizaUniforme: 0, // o el valor real que corresponda
+        derechosGrado: 0,        // o el valor real que corresponda
+        planType: undefined,      // opcional
       });
+
 
       setEditablePagos(() => {
         const norm = mapPagosToEditable(pagosUsuarioPrograma);
@@ -1209,6 +1143,8 @@ export default function EnrolledUsersPage() {
     }
   };
 
+
+
   const markCarteraActivo = async () => {
     if (!carteraUserId) return;
     const res = await fetch('/api/super-admin/enroll_user_program', {
@@ -1231,6 +1167,8 @@ export default function EnrolledUsersPage() {
       alert('No se pudo actualizar el estado.');
     }
   };
+
+
 
   const uploadCarteraReceipt = async () => {
     if (!carteraUserId || !carteraReceipt) return;
@@ -1342,7 +1280,7 @@ export default function EnrolledUsersPage() {
           const displayName = s.isNew ? `${s.name} (NEW)` : s.name;
           const computedByDate =
             s.subscriptionEndDate &&
-            new Date(s.subscriptionEndDate) >= new Date()
+              new Date(s.subscriptionEndDate) >= new Date()
               ? 'activo' // al día
               : 'inactivo'; // en cartera
 
@@ -1358,8 +1296,8 @@ export default function EnrolledUsersPage() {
             planType: s.planType ?? undefined,
             customFields: s.customFields
               ? Object.fromEntries(
-                  Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
-                )
+                Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
+              )
               : undefined,
             inscripcionOrigen: s.inscripcionOrigen ?? 'artiefy',
             carteraStatus: s.carteraStatus ?? computedByDate, // 👈 añade esto
@@ -1573,13 +1511,13 @@ export default function EnrolledUsersPage() {
         .filter((s) =>
           filters.purchaseDateFrom
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
-              filters.purchaseDateFrom
+            filters.purchaseDateFrom
             : true
         )
         .filter((s) =>
           filters.purchaseDateTo
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
-              filters.purchaseDateTo
+            filters.purchaseDateTo
             : true
         )
 
@@ -1757,8 +1695,8 @@ export default function EnrolledUsersPage() {
       purchaseDate: updatedStudent.purchaseDate,
       subscriptionEndDate: updatedStudent.subscriptionEndDate
         ? new Date(updatedStudent.subscriptionEndDate)
-            .toISOString()
-            .split('T')[0]
+          .toISOString()
+          .split('T')[0]
         : null,
       customFields: updatedStudent.customFields ?? {},
     };
@@ -2034,15 +1972,15 @@ export default function EnrolledUsersPage() {
                         setSelectedStudents(
                           e.target.checked
                             ? Array.from(
-                                new Set([
-                                  ...selectedStudents,
-                                  ...displayedStudents.map((s) => s.id),
-                                ])
-                              )
+                              new Set([
+                                ...selectedStudents,
+                                ...displayedStudents.map((s) => s.id),
+                              ])
+                            )
                             : selectedStudents.filter(
-                                (id) =>
-                                  !displayedStudents.some((s) => s.id === id)
-                              )
+                              (id) =>
+                                !displayedStudents.some((s) => s.id === id)
+                            )
                         )
                       }
                       className="rounded border-white/20"
@@ -2177,9 +2115,8 @@ export default function EnrolledUsersPage() {
                               className="px-4 py-2 align-top whitespace-nowrap"
                             >
                               <span
-                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                  esAlDia ? 'bg-green-600' : 'bg-red-600'
-                                }`}
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${esAlDia ? 'bg-green-600' : 'bg-red-600'
+                                  }`}
                                 title={etiqueta}
                               >
                                 {etiqueta}
@@ -2759,11 +2696,10 @@ export default function EnrolledUsersPage() {
                                   : [...prev, col.id]
                               )
                             }
-                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
-                              isSelected
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-300 hover:bg-gray-600'
-                            }`}
+                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${isSelected
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-300 hover:bg-gray-600'
+                              }`}
                           >
                             {col.label}
                           </div>
@@ -2997,8 +2933,8 @@ export default function EnrolledUsersPage() {
                     <span className="font-semibold">FIN SUSCRIPCIÓN: </span>
                     {currentUser.subscriptionEndDate
                       ? new Date(currentUser.subscriptionEndDate)
-                          .toISOString()
-                          .split('T')[0]
+                        .toISOString()
+                        .split('T')[0]
                       : '-'}
                   </p>
                   <p>
@@ -3133,18 +3069,15 @@ export default function EnrolledUsersPage() {
                                 <input
                                   type="text"
                                   inputMode="numeric"
-                                  value={rawValor.toString()}
-                                  onChange={(e) =>
-                                    handleCuotaChange(
-                                      idx,
-                                      'valor',
-                                      e.target.value
-                                    )
+                                  defaultValue={rawValor.toString()} // 👈 usa defaultValue en vez de value
+                                  onBlur={(e) =>
+                                    handleCuotaChange(idx, 'valor', e.target.value) // 👈 actualiza solo al perder focus
                                   }
                                   className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                 />
                               </div>
                             </td>
+
 
                             <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
                               <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
@@ -3193,43 +3126,64 @@ export default function EnrolledUsersPage() {
                     </tbody>
 
                     <tfoot>
-                      <tr className="bg-gray-50 font-semibold dark:bg-gray-900">
-                        <td className="px-3 py-2" colSpan={4}>
-                          VALOR PROGRAMA
+                      {/* Encabezado plan */}
+                      <tr>
+                        <td colSpan={5} className="px-3 py-3">
+                          <div className="flex justify-between items-center rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                            <span className="font-semibold text-gray-700 dark:text-gray-200">
+                              PLAN / VALOR PROGRAMA
+                            </span>
+                            <input
+                              type="number"
+                              className="w-32 text-right font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border rounded px-2 py-1"
+                              value={price}
+                              onChange={(e) => setPrice(Number(e.target.value))}
+                              onBlur={handleSavePrice}
+                            />
+                          </div>
                         </td>
-                        <td className="px-3 py-2 text-right">
-                          {new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            maximumFractionDigits: 0,
-                          }).format(carteraInfo?.programaPrice ?? 0)}
+
+                      </tr>
+
+                      {/* Valor pagado */}
+                      <tr>
+                        <td colSpan={5} className="px-3 py-3">
+                          <div className="flex justify-between items-center rounded-lg bg-green-50 dark:bg-green-900/30 p-3">
+                            <span className="font-semibold text-green-700 dark:text-green-400">
+                              VALOR PAGADO
+                            </span>
+                            <span className="font-semibold text-green-700 dark:text-green-400">
+                              {new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                maximumFractionDigits: 0,
+                              }).format(carteraInfo?.totalPagado ?? 0)}
+                            </span>
+                          </div>
                         </td>
                       </tr>
-                      <tr className="bg-gray-50 dark:bg-gray-900">
-                        <td className="px-3 py-2 font-semibold" colSpan={4}>
-                          VALOR PAGADO
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold">
-                          {new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            maximumFractionDigits: 0,
-                          }).format(carteraInfo?.totalPagado ?? 0)}
-                        </td>
-                      </tr>
-                      <tr className="bg-gray-50 dark:bg-gray-900">
-                        <td className="px-3 py-2 font-semibold" colSpan={4}>
-                          DEUDA RESTANTE
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-red-600">
-                          {new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            maximumFractionDigits: 0,
-                          }).format(carteraInfo?.deuda ?? 0)}
+
+                      {/* Deuda restante */}
+                      <tr>
+                        <td colSpan={5} className="px-3 py-3">
+                          <div className="flex justify-between items-center rounded-lg bg-red-50 dark:bg-red-900/30 p-3">
+                            <span className="font-semibold text-red-700 dark:text-red-400">
+                              DEUDA RESTANTE
+                            </span>
+                            <span className="font-semibold text-red-700 dark:text-red-400">
+                              {new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                maximumFractionDigits: 0,
+                              }).format(carteraInfo?.deuda ?? 0)}
+                            </span>
+
+                          </div>
                         </td>
                       </tr>
                     </tfoot>
+
+
                   </table>
                   {/* ───────────────────────────────────────────────────────── */}
                   {/* TABLA APARTE: Conceptos especiales (13, 14, 15) */}
@@ -3300,12 +3254,12 @@ export default function EnrolledUsersPage() {
                                     type="date"
                                     value={
                                       typeof editablePagos[idxBase]?.fecha ===
-                                      'string'
+                                        'string'
                                         ? (editablePagos[idxBase]!
-                                            .fecha as string)
+                                          .fecha as string)
                                         : toISODateLike(
-                                            editablePagos[idxBase]?.fecha
-                                          )
+                                          editablePagos[idxBase]?.fecha
+                                        )
                                     }
                                     onChange={(e) =>
                                       handleCuotaChange(
@@ -3477,15 +3431,108 @@ export default function EnrolledUsersPage() {
                     </div>
                   </div>
                 )}
+                <div id="printable" className="hidden">
+                  {currentUser && (
+                    <div className="p-6 text-gray-900 dark:text-gray-100">
+                      {/* Cabecera */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex gap-2">
+                          <Image
+                            src="/artiefy-logo.png"
+                            alt="Artiefy"
+                            width={48}
+                            height={48}
+                            className="h-12 w-auto"
+                            priority
+                          />
+                          <Image
+                            src="/logo-ponao.png"
+                            alt="PONAO"
+                            width={48}
+                            height={48}
+                            className="h-12 w-auto"
+                          />
+                        </div>
+                        <div className="text-right">
+                          <h3 className="text-lg font-bold">FACTURA PAGO DE MATRÍCULA</h3>
+                          <p className="text-xs">POLITÉCNICO NACIONAL DE ARTES Y OFICIOS</p>
+                        </div>
+                      </div>
+
+                      {/* Info estudiante */}
+                      <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p><strong>NOMBRE:</strong> {currentUser.name}</p>
+                          <p><strong>CC:</strong> {currentUser.document ?? currentUser.id}</p>
+                          <p><strong>CELULAR:</strong> {currentUser.phone}</p>
+                          <p><strong>PROGRAMA:</strong> {userPrograms?.[0]?.title ?? '—'}</p>
+                          <p><strong>FECHA:</strong> {new Date().toISOString().split('T')[0]}</p>
+                        </div>
+                        <div>
+                          <p><strong>DIRECCIÓN:</strong> {currentUser.address}</p>
+                          <p><strong>CIUDAD:</strong> {currentUser.city}</p>
+                          <p><strong>EMAIL:</strong> {currentUser.email}</p>
+                          <p>
+                            <strong>ESTADO:</strong>{' '}
+                            {currentUser.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}
+                          </p>
+                          <p><strong>FIN SUSCRIPCIÓN:</strong> {currentUser.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toISOString().split('T')[0] : '-'}</p>
+                        </div>
+                      </div>
+
+                      {/* Tabla pagos */}
+                      <table className="w-full border-collapse border border-gray-300 text-sm">
+                        <thead>
+                          <tr>
+                            <th className="border px-2 py-1">PRODUCTO</th>
+                            <th className="border px-2 py-1">N° PAGO</th>
+                            <th className="border px-2 py-1">FECHA DE PAGO</th>
+                            <th className="border px-2 py-1">MÉTODO DE PAGO</th>
+                            <th className="border px-2 py-1 text-right">VALOR</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {editablePagos.map((row, idx) => (
+                            <tr key={idx}>
+                              <td className="border px-2 py-1">{row.concepto ?? `Cuota ${idx + 1}`}</td>
+                              <td className="border px-2 py-1 text-center">{row.nro_pago ?? idx + 1}</td>
+                              <td className="border px-2 py-1">{row.fecha ? new Date(row.fecha).toLocaleDateString() : '-'}</td>
+                              <td className="border px-2 py-1">{row.metodo ?? '-'}</td>
+                              <td className="border px-2 py-1 text-right">{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(row.valor ?? 0))}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {/* Totales */}
+                      <div className="mt-4 space-y-2">
+                        <p><strong>PLAN / VALOR PROGRAMA:</strong> {carteraInfo?.planType ?? 'Sin plan'} — {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.programaPrice ?? 0)}</p>
+                        <p><strong>VALOR PAGADO:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.totalPagado ?? 0)}</p>
+                        <p><strong>DEUDA RESTANTE:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.deuda ?? 0)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* FOOTER / BOTONES */}
               <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    const printContents = document.getElementById('printable')?.innerHTML;
+                    const originalContents = document.body.innerHTML;
+
+                    if (printContents) {
+                      document.body.innerHTML = printContents;
+                      window.print();
+                      document.body.innerHTML = originalContents;
+                      window.location.reload(); // para restaurar React
+                    }
+                  }}
                   className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                   Imprimir / Guardar PDF
                 </button>
+
                 <button
                   onClick={() => setShowCarteraModal(false)}
                   className="rounded bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-700"
@@ -3495,7 +3542,10 @@ export default function EnrolledUsersPage() {
               </div>
             </div>
           </div>
+
         )}
+
+
 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">

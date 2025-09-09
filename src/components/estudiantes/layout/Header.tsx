@@ -39,6 +39,7 @@ export function Header({
   const [isScrollingDown, setIsScrollingDown] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  void isScrollingDown;
 
   // MODAL DISPONIBLE MUY PRONTO
   // Solo para Espacios
@@ -262,13 +263,11 @@ export function Header({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 w-full transition-all duration-300 ${
-          isScrolled
-            ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
-            : 'md:py-3'
-        } ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'} div-header-nav ${
-          isActivityModalOpen ? 'z-40' : 'z-[9999]'
-        }`}
+        className={`sticky top-0 w-full transition-all duration-300 ${isScrolled
+          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
+          : 'md:py-3'
+          } ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'} div-header-nav ${isActivityModalOpen ? 'z-40' : 'z-[9999]'
+          }`}
       >
         <div className="container mx-auto max-w-7xl px-4">
           <div className="hidden w-full items-center md:flex md:justify-between">
