@@ -9,7 +9,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
-import FloatingChat from '~/app/dashboard/admin/chat/FloatingChat';
 
 import TicketModal from './TicketModal';
 
@@ -25,21 +24,22 @@ const uploadSchema = z.object({
 
 const rawTicketSchema = z.array(
   z.object({
-    id: z.union([z.string(), z.number()]), // acepta string o number
+    id: z.union([z.string(), z.number()]),
     email: z.string(),
     description: z.string(),
     tipo: z.string(),
     estado: z.string(),
     assigned_users: z.array(
       z.object({
-        id: z.string(), // ✅ necesario para <Select />
+        id: z.string(),
         name: z.string(),
         email: z.string(),
       })
     ),
     assigned_to_id: z.string().optional(),
-    creator_name: z.string().optional(),
-    creator_email: z.string().optional(),
+    // 👇 aceptar null o undefined
+    creator_name: z.string().nullable().optional(),
+    creator_email: z.string().nullable().optional(),
     comments: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
@@ -49,6 +49,7 @@ const rawTicketSchema = z.array(
     document_key: z.union([z.string(), z.null()]).optional(),
   })
 );
+
 
 // Types
 
@@ -143,11 +144,6 @@ export default function TicketsPage() {
     }
   }, [viewTicket?.id]);
 
-  useEffect(() => {
-    fetch('/api/socketio', {
-      method: 'POST',
-    }).catch((err) => console.warn('Socket init error:', err));
-  }, []);
 
   function formatElapsedTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
@@ -447,41 +443,37 @@ export default function TicketsPage() {
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('created')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'created'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'created'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+                }`}
             >
               Tickets Creados
             </button>
             <button
               onClick={() => setActiveTab('assigned')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'assigned'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'assigned'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+                }`}
             >
               Tickets Asignados
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'logs'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'logs'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+                }`}
             >
               Logs
             </button>
             <button
               onClick={() => setActiveTab('chats')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'chats'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'chats'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+                }`}
             >
               Chats
             </button>
@@ -535,11 +527,10 @@ export default function TicketsPage() {
                 }
               }}
               disabled={selectedIds.length === 0}
-              className={`rounded-md border px-4 py-2 text-sm transition ${
-                selectedIds.length === 0
-                  ? 'cursor-not-allowed bg-gray-700 text-gray-400'
-                  : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
+              className={`rounded-md border px-4 py-2 text-sm transition ${selectedIds.length === 0
+                ? 'cursor-not-allowed bg-gray-700 text-gray-400'
+                : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
             >
               Eliminar Seleccionados
             </button>
@@ -742,39 +733,37 @@ export default function TicketsPage() {
                         <td className="px-4 py-4">{ticket.email}</td>
                         <td className="px-4 py-4">
                           <span
-                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                              ticket.tipo === 'bug'
-                                ? 'bg-red-500/10 text-red-500'
-                                : ticket.tipo === 'revision'
-                                  ? 'bg-yellow-500/10 text-yellow-500'
-                                  : ticket.tipo === 'logs'
-                                    ? 'bg-purple-500/10 text-purple-500'
-                                    : 'bg-gray-500/10 text-gray-500'
-                            }`}
+                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${ticket.tipo === 'bug'
+                              ? 'bg-red-500/10 text-red-500'
+                              : ticket.tipo === 'revision'
+                                ? 'bg-yellow-500/10 text-yellow-500'
+                                : ticket.tipo === 'logs'
+                                  ? 'bg-purple-500/10 text-purple-500'
+                                  : 'bg-gray-500/10 text-gray-500'
+                              }`}
                           >
                             {ticket.tipo}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span
-                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                              ticket.estado === 'abierto'
-                                ? 'bg-green-500/10 text-green-500'
-                                : ticket.estado === 'en proceso'
-                                  ? 'bg-blue-500/10 text-blue-500'
-                                  : ticket.estado === 'en revision'
-                                    ? 'bg-yellow-500/10 text-yellow-500'
-                                    : ticket.estado === 'solucionado'
-                                      ? 'bg-purple-500/10 text-purple-500'
-                                      : 'bg-gray-500/10 text-gray-500'
-                            }`}
+                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${ticket.estado === 'abierto'
+                              ? 'bg-green-500/10 text-green-500'
+                              : ticket.estado === 'en proceso'
+                                ? 'bg-blue-500/10 text-blue-500'
+                                : ticket.estado === 'en revision'
+                                  ? 'bg-yellow-500/10 text-yellow-500'
+                                  : ticket.estado === 'solucionado'
+                                    ? 'bg-purple-500/10 text-purple-500'
+                                    : 'bg-gray-500/10 text-gray-500'
+                              }`}
                           >
                             {ticket.estado}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           {ticket.assignedUsers &&
-                          ticket.assignedUsers.length > 0
+                            ticket.assignedUsers.length > 0
                             ? ticket.assignedUsers.map((u) => u.name).join(', ')
                             : 'Sin asignar'}
                         </td>
@@ -896,15 +885,14 @@ export default function TicketsPage() {
                       Tipo
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.tipo === 'bug'
-                          ? 'bg-red-500/10 text-red-400'
-                          : viewTicket.tipo === 'revision'
-                            ? 'bg-yellow-500/10 text-yellow-400'
-                            : viewTicket.tipo === 'logs'
-                              ? 'bg-purple-500/10 text-purple-400'
-                              : 'bg-gray-500/10 text-gray-400'
-                      }`}
+                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${viewTicket.tipo === 'bug'
+                        ? 'bg-red-500/10 text-red-400'
+                        : viewTicket.tipo === 'revision'
+                          ? 'bg-yellow-500/10 text-yellow-400'
+                          : viewTicket.tipo === 'logs'
+                            ? 'bg-purple-500/10 text-purple-400'
+                            : 'bg-gray-500/10 text-gray-400'
+                        }`}
                     >
                       {viewTicket.tipo}
                     </span>
@@ -917,17 +905,16 @@ export default function TicketsPage() {
                       Estado
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.estado === 'abierto'
-                          ? 'bg-green-500/10 text-green-400'
-                          : viewTicket.estado === 'en proceso'
-                            ? 'bg-blue-500/10 text-blue-400'
-                            : viewTicket.estado === 'en revision'
-                              ? 'bg-yellow-500/10 text-yellow-400'
-                              : viewTicket.estado === 'solucionado'
-                                ? 'bg-purple-500/10 text-purple-400'
-                                : 'bg-gray-500/10 text-gray-400'
-                      }`}
+                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${viewTicket.estado === 'abierto'
+                        ? 'bg-green-500/10 text-green-400'
+                        : viewTicket.estado === 'en proceso'
+                          ? 'bg-blue-500/10 text-blue-400'
+                          : viewTicket.estado === 'en revision'
+                            ? 'bg-yellow-500/10 text-yellow-400'
+                            : viewTicket.estado === 'solucionado'
+                              ? 'bg-purple-500/10 text-purple-400'
+                              : 'bg-gray-500/10 text-gray-400'
+                        }`}
                     >
                       {viewTicket.estado}
                     </span>
@@ -939,7 +926,7 @@ export default function TicketsPage() {
                     </h3>
                     <p className="text-lg text-white">
                       {viewTicket.assignedUsers &&
-                      viewTicket.assignedUsers.length > 0
+                        viewTicket.assignedUsers.length > 0
                         ? viewTicket.assignedUsers.map((u) => u.name).join(', ')
                         : 'Sin asignar'}
                     </p>
@@ -1070,16 +1057,7 @@ export default function TicketsPage() {
           ticket={selectedTicket}
           onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
         />
-        {selectedChat && (
-          <FloatingChat
-            chatId={selectedChat.id}
-            receiverId={selectedChat.receiverId}
-            userName={selectedChat.userName}
-            unreadConversations={unreadConversationIds}
-            setUnreadConversations={() => undefined}
-            onClose={() => setSelectedChat(null)}
-          />
-        )}
+
       </div>
       <ToastContainer position="top-right" autoClose={3000} />
     </>

@@ -142,11 +142,7 @@ export default function TicketsPage() {
     }
   }, [viewTicket?.id]);
 
-  useEffect(() => {
-    fetch('/api/socketio', {
-      method: 'POST',
-    }).catch((err) => console.warn('Socket init error:', err));
-  }, []);
+
 
   function formatElapsedTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
