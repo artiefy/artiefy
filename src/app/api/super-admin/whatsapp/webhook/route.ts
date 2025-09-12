@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { inbox, pushInbox } from '../_inbox';
+import { eq } from 'drizzle-orm';
+
+import { db } from '~/server/db';
+import { waMessages } from '~/server/db/schema';
+
+import { inbox, pushInbox } from '../_inbox'; // puedes mantenerlo para “pintar” al vuelo
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,6 +94,59 @@ interface WaWebhookBody {
   }[];
 }
 
+/** Recepción de mensajes (Meta → tu backend) */
+function toMs(ts?: string): number {
+  if (!ts) return Date.now();
+  if (/^\d+$/.test(ts)) return ts.length === 10 ? Number(ts) * 1000 : Number(ts);
+  return Date.now();
+}
+
+async function saveMessage({
+  metaMessageId,
+  waid,
+  name,
+  direction,
+  msgType,
+  body,
+  tsMs,
+  raw,
+}: {
+  metaMessageId?: string;
+  waid: string;
+  name?: string | null;
+  direction: 'inbound' | 'outbound' | 'status';
+  msgType: string;
+  body?: string;
+  tsMs: number;
+  raw?: unknown;
+}) {
+  try {
+    // upsert suave por metaMessageId (cuando exista)
+    if (metaMessageId) {
+      const exists = await db
+        .select({ id: waMessages.id })
+        .from(waMessages)
+        .where(eq(waMessages.metaMessageId, metaMessageId))
+        .limit(1);
+
+      if (exists.length) return; // ya guardado
+    }
+
+    await db.insert(waMessages).values({
+      metaMessageId,
+      waid,
+      name: name ?? undefined,
+      direction,
+      msgType,
+      body,
+      tsMs,
+      raw: raw as object | undefined,
+    });
+  } catch (e) {
+    console.error('[WA][DB] Error guardando mensaje:', e);
+  }
+}
+
 /** Verificación inicial (Meta) */
 export function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -106,6 +164,8 @@ export function GET(req: NextRequest) {
   return NextResponse.json({ error: 'verification failed' }, { status: 403 });
 }
 
+
+
 /** Recepción de mensajes (Meta → tu backend) */
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as WaWebhookBody;
@@ -115,83 +175,58 @@ export async function POST(req: NextRequest) {
     for (const entry of body.entry ?? []) {
       for (const change of entry.changes ?? []) {
         const v = change.value;
+        const contacts = v?.contacts ?? [];
 
-        const messages: WaMessage[] = Array.isArray(v?.messages)
-          ? (v!.messages as WaMessage[])
-          : [];
-        const statuses: WaStatus[] = Array.isArray(v?.statuses)
-          ? (v!.statuses as WaStatus[])
-          : [];
+        const messages = Array.isArray(v?.messages) ? (v!.messages as WaMessage[]) : [];
+        const statuses = Array.isArray(v?.statuses) ? (v!.statuses as WaStatus[]) : [];
 
         for (const m of messages) {
-          const tsMs =
-            m.timestamp && /^\d+$/.test(m.timestamp)
-              ? m.timestamp.length === 10
-                ? Number(m.timestamp) * 1000
-                : Number(m.timestamp)
-              : Date.now();
-
+          const tsMs = toMs(m.timestamp);
           let text = '';
+
           switch (m.type) {
-            case 'text':
-              text = m.text?.body ?? '';
-              break;
-            case 'image':
-              text = m.image?.caption
-                ? `📷 Imagen: ${m.image.caption}`
-                : '📷 Imagen recibida';
-              break;
-            case 'audio':
-              text = '🎧 Audio recibido';
-              break;
-            case 'video':
-              text = m.video?.caption
-                ? `🎬 Video: ${m.video.caption}`
-                : '🎬 Video recibido';
-              break;
-            case 'document':
-              text = m.document?.filename
-                ? `📄 Documento: ${m.document.filename}`
-                : '📄 Documento recibido';
-              break;
-            case 'button':
-              text = m.button?.text
-                ? `🔘 Botón: ${m.button.text}`
-                : `🔘 Botón: ${m.button?.payload ?? ''}`;
-              break;
+            case 'text': text = m.text?.body ?? ''; break;
+            case 'image': text = m.image?.caption ? `📷 Imagen: ${m.image.caption}` : '📷 Imagen recibida'; break;
+            case 'audio': text = '🎧 Audio recibido'; break;
+            case 'video': text = m.video?.caption ? `🎬 Video: ${m.video.caption}` : '🎬 Video recibido'; break;
+            case 'document': text = m.document?.filename ? `📄 Documento: ${m.document.filename}` : '📄 Documento recibido'; break;
+            case 'button': text = m.button?.text ?? m.button?.payload ?? '🔘 Botón'; break;
             case 'interactive': {
               const br = m.interactive?.button_reply;
               const lr = m.interactive?.list_reply;
-              if (br?.title) text = `🔘 Botón: ${br.title}`;
-              else if (lr?.title) text = `📋 Lista: ${lr.title}`;
-              else text = '🧩 Interactivo';
+              text = br?.title ? `🔘 Botón: ${br.title}` : lr?.title ? `📋 Lista: ${lr.title}` : '🧩 Interactivo';
               break;
             }
-            default: {
-              text = '📝 Mensaje recibido';
-              break;
-            }
+            default: text = '📝 Mensaje recibido';
           }
 
+          // pinta en UI inmediata (opcional)
           pushInbox({
             id: m.id,
             direction: 'inbound',
             timestamp: tsMs,
             from: m.from,
-            name: v?.contacts?.[0]?.profile?.name ?? null,
+            name: contacts?.[0]?.profile?.name ?? null,
             type: m.type,
             text,
+            raw: m,
+          });
+
+          // guarda en BD (permanente)
+          await saveMessage({
+            metaMessageId: m.id,
+            waid: m.from,
+            name: contacts?.[0]?.profile?.name ?? null,
+            direction: 'inbound',
+            msgType: m.type,
+            body: text,
+            tsMs,
             raw: m,
           });
         }
 
         for (const st of statuses) {
-          const tsMs =
-            st.timestamp && /^\d+$/.test(st.timestamp)
-              ? st.timestamp.length === 10
-                ? Number(st.timestamp) * 1000
-                : Number(st.timestamp)
-              : Date.now();
+          const tsMs = toMs(st.timestamp);
 
           pushInbox({
             id: st.id,
@@ -200,6 +235,16 @@ export async function POST(req: NextRequest) {
             to: st.recipient_id,
             type: 'status',
             text: `Status: ${st.status ?? 'unknown'}`,
+            raw: st,
+          });
+
+          await saveMessage({
+            metaMessageId: st.id,
+            waid: st.recipient_id ?? 'unknown',
+            direction: 'status',
+            msgType: 'status',
+            body: `Status: ${st.status ?? 'unknown'}`,
+            tsMs,
             raw: st,
           });
         }

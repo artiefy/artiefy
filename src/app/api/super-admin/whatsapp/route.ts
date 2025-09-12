@@ -1,6 +1,9 @@
 // src/app/api/super-admin/whatsapp/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
+import { db } from '~/server/db';
+import { waMessages } from '~/server/db/schema';
+
 import { isIn24hWindow, pushInbox } from './_inbox';
 
 
@@ -394,6 +397,21 @@ const replyTo: string | undefined =
       text,
       raw: textResp,
     });
+
+    const metaId = textResp.messages?.[0]?.id;
+try {
+  await db.insert(waMessages).values({
+    metaMessageId: metaId,
+    waid: to,
+    direction: 'outbound',
+    msgType: 'text',
+    body: text,
+    tsMs: Date.now(),
+    raw: textResp as object,
+  });
+} catch (e) {
+  console.error('[WA][DB] No se pudo guardar OUTBOUND:', e);
+}
 
     return NextResponse.json({
       success: true,
