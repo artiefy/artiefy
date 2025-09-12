@@ -1,7 +1,7 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { desc, eq, sql, inArray } from 'drizzle-orm';
+import { desc, eq, inArray,sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -33,7 +33,7 @@ interface GetCoursesOptions {
 export async function getAdminUsers(query?: string) {
   const client = await clerkClient();
 
-  const allUsers: Array<{
+  const allUsers: {
     id: string;
     firstName?: string;
     lastName?: string;
@@ -42,7 +42,7 @@ export async function getAdminUsers(query?: string) {
     phoneNumbers?: { id: string; phoneNumber: string }[];
     primaryPhoneNumberId?: string;
     publicMetadata?: Record<string, unknown>;
-  }> = [];
+  }[] = [];
 
   let offset = 0;
   const limit = 100;
@@ -84,12 +84,12 @@ export async function getAdminUsers(query?: string) {
   );
 
   const simplified = allUsers.map((u) => {
-    const phoneFromDb = phoneById.get(u.id) || '';
+    const phoneFromDb = phoneById.get(u.id) ?? '';
 
     const phoneFromClerk =
       (u.primaryPhoneNumberId &&
-        u.phoneNumbers?.find((p) => p.id === u.primaryPhoneNumberId)?.phoneNumber) ||
-      u.phoneNumbers?.[0]?.phoneNumber ||
+        u.phoneNumbers?.find((p) => p.id === u.primaryPhoneNumberId)?.phoneNumber) ??
+      u.phoneNumbers?.[0]?.phoneNumber ??
       '';
 
     const phoneFromMetadata =

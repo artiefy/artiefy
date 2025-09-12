@@ -123,6 +123,31 @@ interface WhatsAppTemplate {
   langCode?: string;
 }
 
+// Tipado seguro del usuario “crudo” que puede venir con claves variadas
+interface RawUser {
+  id?: string | number;
+  firstName?: unknown;
+  first_name?: unknown;
+  lastName?: unknown;
+  last_name?: unknown;
+  email?: unknown;
+  role?: unknown;
+  status?: unknown;
+  phone?: unknown;
+  phoneNumber?: unknown;
+  primaryPhoneNumber?: { phoneNumber?: unknown } | null;
+  telefono?: unknown;
+  permissions?: unknown;
+}
+
+// Helpers para leer tipos seguros
+const asString = (v: unknown): string | undefined =>
+  typeof v === 'string' ? v : undefined;
+
+const asStringArray = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   // 🔍 Estados de búsqueda y filtros
@@ -234,20 +259,21 @@ export default function AdminDashboard() {
       email,
       phone: u?.phone ?? null,
     });
+
     setSelectedUsers((prevSelected) =>
       prevSelected.includes(userId)
         ? prevSelected.filter((id) => id !== userId)
         : [...prevSelected, userId]
     );
 
-    setSelectedEmails((prevEmails) => {
-      if (prevEmails.includes(email)) {
-        return prevEmails.filter((e) => e !== email);
-      } else {
-        return [...prevEmails, email];
-      }
-    });
-  }, []);
+    setSelectedEmails((prevEmails) =>
+      prevEmails.includes(email)
+        ? prevEmails.filter((e) => e !== email)
+        : [...prevEmails, email]
+    );
+  }, [users]); // 👈 agrega 'users' como dependencia
+
+
 
   // 👉 Helper para descargar un archivo desde base64
   const downloadBase64File = (
@@ -407,13 +433,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!showEmailModal) return;
 
-    // limpia a dígitos
     const onlyDigits = (s: string) => s.replace(/\D/g, '');
-
-    // quita el código del país seleccionado para dejarlo "local"
     const countryDigits = codigoPais.replace('+', '');
-    const toLocal = (p: string) => {
-      const d = onlyDigits(p);
+    const toLocal = (p?: string) => {
+      const d = onlyDigits(p ?? '');
       return d.startsWith(countryDigits) ? d.slice(countryDigits.length) : d;
     };
 
@@ -423,14 +446,20 @@ export default function AdminDashboard() {
       .map(u => toLocal(u.phone!))
       .filter(Boolean);
 
-    // mezcla con lo que ya haya escrito el admin (sin duplicados)
-    const current = numerosLocales
-      ? numerosLocales.split(',').map(s => s.trim()).filter(Boolean)
-      : [];
+    // usar functional update para NO depender de numerosLocales
+    setNumerosLocales(prev => {
+      const current = prev
+        ? prev.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
 
-    const unique = Array.from(new Set([...current, ...phones]));
-    setNumerosLocales(unique.join(','));
+      const unique = Array.from(new Set([...current, ...phones]));
+      const next = unique.join(',');
+
+      // evita setear si no cambió (previene bucles innecesarios)
+      return next === prev ? prev : next;
+    });
   }, [showEmailModal, selectedUsers, users, codigoPais]);
+
 
 
   // Cargar plantillas al abrir el modal de Email (no sólo cuando marcas el check)
@@ -1153,26 +1182,37 @@ export default function AdminDashboard() {
       const rawData: unknown = await res.json();
       if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
-      const data: User[] = (rawData as any[]).map((item) => {
-        // intenta varias claves comunes
+      const rawList: RawUser[] = Array.isArray(rawData) ? (rawData as RawUser[]) : [];
+
+      const data: User[] = rawList.map((item) => {
         const rawPhone =
-          (typeof item.phone === 'string' && item.phone) ||
-          (typeof item.phoneNumber === 'string' && item.phoneNumber) ||
-          (item?.primaryPhoneNumber?.phoneNumber as string | undefined) ||
-          (typeof item.telefono === 'string' && item.telefono) ||
-          '';
+          asString(item.phone) ??
+          asString(item.phoneNumber) ??
+          asString(item.primaryPhoneNumber?.phoneNumber) ??
+          asString(item.telefono);
+
+        // 👉 normaliza a string | undefined (no null)
+        const phone: string | undefined =
+          rawPhone && rawPhone.trim() !== '' ? rawPhone.trim() : undefined;
+
+        const idVal = item.id;
+        const id =
+          typeof idVal === 'string' || typeof idVal === 'number' ? String(idVal) : '';
 
         return {
-          id: String(item.id),
-          firstName: String(item.firstName ?? item.first_name ?? ''),
-          lastName: String(item.lastName ?? item.last_name ?? ''),
-          email: String(item.email),
-          role: String(item.role ?? 'sin-role'),
-          status: String(item.status ?? 'activo'),
-          phone: rawPhone || null, // 👈 conservar
-          permissions: Array.isArray(item.permissions) ? item.permissions : [],
+          id,
+          firstName: asString(item.firstName) ?? asString(item.first_name) ?? '',
+          lastName: asString(item.lastName) ?? asString(item.last_name) ?? '',
+          email: asString(item.email) ?? '',
+          role: asString(item.role) ?? 'sin-role',
+          status: asString(item.status) ?? 'activo',
+          // 👉 sólo agrega phone si existe (coincide con phone?: string)
+          ...(phone !== undefined ? { phone } : {}),
+          permissions: asStringArray(item.permissions),
         };
       });
+
+
       console.table(
         data.map((u) => ({
           id: u.id,
