@@ -35,6 +35,7 @@ interface User {
   email: string;
   role: string;
   status: string;
+  phone?: string;             // 👈 nuevo
   selected?: boolean;
   isNew?: boolean;
   permissions?: string[]; // 👈 AGREGA ESTO
@@ -227,6 +228,12 @@ export default function AdminDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
 
   const handleUserSelection = useCallback((userId: string, email: string) => {
+    const u = users.find((x) => x.id === userId);
+    console.log('[UI] toggle selección', {
+      userId,
+      email,
+      phone: u?.phone ?? null,
+    });
     setSelectedUsers((prevSelected) =>
       prevSelected.includes(userId)
         ? prevSelected.filter((id) => id !== userId)
@@ -397,6 +404,34 @@ export default function AdminDashboard() {
   }, []);
 
   const [allCourses, setAllCourses] = useState<Course[]>([]);
+  useEffect(() => {
+    if (!showEmailModal) return;
+
+    // limpia a dígitos
+    const onlyDigits = (s: string) => s.replace(/\D/g, '');
+
+    // quita el código del país seleccionado para dejarlo "local"
+    const countryDigits = codigoPais.replace('+', '');
+    const toLocal = (p: string) => {
+      const d = onlyDigits(p);
+      return d.startsWith(countryDigits) ? d.slice(countryDigits.length) : d;
+    };
+
+    // teléfonos de los usuarios seleccionados que tengan phone
+    const phones = users
+      .filter(u => selectedUsers.includes(u.id) && u.phone)
+      .map(u => toLocal(u.phone!))
+      .filter(Boolean);
+
+    // mezcla con lo que ya haya escrito el admin (sin duplicados)
+    const current = numerosLocales
+      ? numerosLocales.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const unique = Array.from(new Set([...current, ...phones]));
+    setNumerosLocales(unique.join(','));
+  }, [showEmailModal, selectedUsers, users, codigoPais]);
+
 
   // Cargar plantillas al abrir el modal de Email (no sólo cuando marcas el check)
   useEffect(() => {
@@ -405,6 +440,7 @@ export default function AdminDashboard() {
         if (!showEmailModal) return;
         setWaLoading(true);
         setWaError(null);
+
 
         interface WaGetOk {
           templates?: WhatsAppTemplate[];
@@ -684,12 +720,25 @@ export default function AdminDashboard() {
     // ⚡ procesar los números para whatsapp
     let whatsappNumbers: string[] = [];
     if (sendWhatsapp && numerosLocales.trim()) {
-      whatsappNumbers = numerosLocales
-        .split(',')
-        .map((num) => num.trim())
-        .filter(Boolean)
-        .map((num) => `${codigoPais}${num}`);
+      const onlyDigits = (s: string) => s.replace(/\D/g, '');
+      const countryDigits = codigoPais.replace('+', '');
+
+      whatsappNumbers = Array.from(new Set(
+        numerosLocales
+          .split(',')
+          .map(n => n.trim())
+          .filter(Boolean)
+          .map((n) => {
+            const d = onlyDigits(n);
+            // si ya viene con el código de país, lo dejamos tal cual
+            if (d.startsWith(countryDigits)) return d;
+            // si no, lo prefijamos con el país seleccionado
+            return countryDigits + d;
+          })
+          .filter(d => d.length >= 10) // naive sanity check
+      ));
     }
+
 
     try {
       const formData = new FormData();
@@ -734,28 +783,28 @@ export default function AdminDashboard() {
 
           const body = useTemplate
             ? {
-                // ➜ SOLO PLANTILLA
-                to,
-                forceTemplate: true,
-                templateName: waSelectedTemplate,
-                languageCode:
-                  selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
-                variables: waVariables,
-              }
+              // ➜ SOLO PLANTILLA
+              to,
+              forceTemplate: true,
+              templateName: waSelectedTemplate,
+              languageCode:
+                selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+              variables: waVariables,
+            }
             : textOnly
               ? {
-                  // ➜ SOLO TEXTO (ya existe sesión abierta de 24h)
-                  to,
-                  text: textMessage,
-                }
+                // ➜ SOLO TEXTO (ya existe sesión abierta de 24h)
+                to,
+                text: textMessage,
+              }
               : {
-                  // ➜ TEXTO + abrir sesión con plantilla de sesión (hello_world)
-                  to,
-                  text: textMessage,
-                  ensureSession: true,
-                  sessionTemplate: 'hello_world',
-                  sessionLanguage: 'en_US',
-                };
+                // ➜ TEXTO + abrir sesión con plantilla de sesión (hello_world)
+                to,
+                text: textMessage,
+                ensureSession: true,
+                sessionTemplate: 'hello_world',
+                sessionLanguage: 'en_US',
+              };
 
           const resp = await fetch('/api/super-admin/whatsapp', {
             method: 'POST',
@@ -1104,19 +1153,33 @@ export default function AdminDashboard() {
       const rawData: unknown = await res.json();
       if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
-      const data: User[] = (rawData as User[]).map((item) => ({
-        id: String(item.id),
-        firstName: String(item.firstName),
-        lastName: String(item.lastName),
-        email: String(item.email),
-        role: String(item.role),
-        status: String(item.status),
-        permissions:
-          'permissions' in item && Array.isArray(item.permissions)
-            ? item.permissions
-            : [], // ✅ Asegura que `permissions` se guarden correctamente
-      }));
+      const data: User[] = (rawData as any[]).map((item) => {
+        // intenta varias claves comunes
+        const rawPhone =
+          (typeof item.phone === 'string' && item.phone) ||
+          (typeof item.phoneNumber === 'string' && item.phoneNumber) ||
+          (item?.primaryPhoneNumber?.phoneNumber as string | undefined) ||
+          (typeof item.telefono === 'string' && item.telefono) ||
+          '';
 
+        return {
+          id: String(item.id),
+          firstName: String(item.firstName ?? item.first_name ?? ''),
+          lastName: String(item.lastName ?? item.last_name ?? ''),
+          email: String(item.email),
+          role: String(item.role ?? 'sin-role'),
+          status: String(item.status ?? 'activo'),
+          phone: rawPhone || null, // 👈 conservar
+          permissions: Array.isArray(item.permissions) ? item.permissions : [],
+        };
+      });
+      console.table(
+        data.map((u) => ({
+          id: u.id,
+          email: u.email,
+          phone: u.phone,
+        })),
+      );
       setUsers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -1630,11 +1693,10 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => handleMassUpdateStatus('activo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
-            }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
+              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+              : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
+              }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Activar</span>
@@ -1643,11 +1705,10 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => handleMassUpdateStatus('inactivo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
-            }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
+              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+              : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
+              }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Desactivar</span>
@@ -1656,11 +1717,10 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={handleMassRemoveRole}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
-            }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
+              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+              : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
+              }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Quitar Rol</span>
@@ -1724,11 +1784,10 @@ export default function AdminDashboard() {
                 setSendingEmails(false);
               }
             }}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-            }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
+              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+              : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+              }`}
             disabled={selectedUsers.length === 0 || sendingEmails}
           >
             <span className="relative z-10 font-medium">
@@ -1925,22 +1984,20 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            user.status === 'activo'
-                              ? 'bg-green-500/10 text-green-500'
-                              : user.status === 'inactivo'
-                                ? 'bg-red-500/10 text-red-500'
-                                : 'bg-yellow-500/10 text-yellow-500'
-                          }`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.status === 'activo'
+                            ? 'bg-green-500/10 text-green-500'
+                            : user.status === 'inactivo'
+                              ? 'bg-red-500/10 text-red-500'
+                              : 'bg-yellow-500/10 text-yellow-500'
+                            }`}
                         >
                           <div
-                            className={`mr-1 size-1.5 rounded-full sm:size-2 ${
-                              user.status === 'activo'
-                                ? 'bg-green-500'
-                                : user.status === 'inactivo'
-                                  ? 'bg-red-500'
-                                  : 'bg-yellow-500'
-                            }`}
+                            className={`mr-1 size-1.5 rounded-full sm:size-2 ${user.status === 'activo'
+                              ? 'bg-green-500'
+                              : user.status === 'inactivo'
+                                ? 'bg-red-500'
+                                : 'bg-yellow-500'
+                              }`}
                           />
                           <span className="hidden sm:inline">
                             {user.status}
@@ -2178,18 +2235,16 @@ export default function AdminDashboard() {
                   {/* Badges */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                        viewUser.status === 'activo'
-                          ? 'bg-green-500/10 text-green-400'
-                          : 'bg-red-500/10 text-red-400'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${viewUser.status === 'activo'
+                        ? 'bg-green-500/10 text-green-400'
+                        : 'bg-red-500/10 text-red-400'
+                        }`}
                     >
                       <span
-                        className={`size-2 rounded-full ${
-                          viewUser.status === 'activo'
-                            ? 'bg-green-400'
-                            : 'bg-red-400'
-                        }`}
+                        className={`size-2 rounded-full ${viewUser.status === 'activo'
+                          ? 'bg-green-400'
+                          : 'bg-red-400'
+                          }`}
                       />
                       {viewUser.status}
                     </span>
@@ -2646,8 +2701,8 @@ export default function AdminDashboard() {
         onConfirm={
           confirmation?.onConfirm
             ? async () => {
-                await Promise.resolve(confirmation.onConfirm?.());
-              }
+              await Promise.resolve(confirmation.onConfirm?.());
+            }
             : async () => Promise.resolve()
         } // Asegura que `onConfirm` siempre devuelva una Promise<void></void>
         onCancel={() => setConfirmation(null)}
@@ -2778,11 +2833,17 @@ export default function AdminDashboard() {
             {sendWhatsapp && (
               <>
                 {/* ⬇️ Plantillas de WhatsApp */}
-                {/* ⬇️ Plantillas de WhatsApp */}
                 <div className="mb-3">
                   <label className="mb-1 block text-sm">
                     Plantilla de WhatsApp
                   </label>
+                  <div className="mb-2 text-xs text-gray-400">
+                    Teléfonos detectados de seleccionados:{' '}
+                    {users
+                      .filter((u) => selectedUsers.includes(u.id) && u.phone)
+                      .map((u) => u.phone)
+                      .join(', ') || '—'}
+                  </div>
 
                   {waLoading ? (
                     <div className="text-sm text-gray-400">
@@ -2815,10 +2876,10 @@ export default function AdminDashboard() {
                             tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
                           setWaVariables(
                             tmpl.example?.slice(0, placeholders.length) ??
-                              Array.from(
-                                { length: placeholders.length },
-                                () => ''
-                              )
+                            Array.from(
+                              { length: placeholders.length },
+                              () => ''
+                            )
                           );
                         } else {
                           setWaVariables([]);
@@ -2942,9 +3003,13 @@ export default function AdminDashboard() {
                   type="text"
                   placeholder="Números locales separados por coma, ej: 3001234567,3012345678"
                   value={numerosLocales}
-                  onChange={(e) => setNumerosLocales(e.target.value)}
+                  onChange={(e) => {
+                    console.log('[WA][input] numerosLocales change →', e.target.value);
+                    setNumerosLocales(e.target.value);
+                  }}
                   className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
                 />
+
               </>
             )}
 

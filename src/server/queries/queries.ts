@@ -1,7 +1,7 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -30,72 +30,113 @@ interface GetCoursesOptions {
   search?: string;
 }
 
-// Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query?: string) {
-  console.log('DEBUG: Ejecutando getAdminUsers (SIN paginar por count)');
-
   const client = await clerkClient();
-  const allUsers: {
+
+  const allUsers: Array<{
     id: string;
     firstName?: string;
     lastName?: string;
     emailAddresses: { emailAddress: string; id: string }[];
     primaryEmailAddressId?: string;
-    publicMetadata?: { role?: string; status?: string };
-  }[] = [];
+    phoneNumbers?: { id: string; phoneNumber: string }[];
+    primaryPhoneNumberId?: string;
+    publicMetadata?: Record<string, unknown>;
+  }> = [];
 
   let offset = 0;
   const limit = 100;
 
   while (true) {
-    const response = await client.users.getUserList({ limit, offset });
-    const users = response.data;
-
-    console.log(`🧪 Página offset: ${offset}, Traídos: ${users.length}`);
-
-    if (!users.length) break;
+    const resp = await client.users.getUserList({ limit, offset });
+    if (!resp.data.length) break;
 
     allUsers.push(
-      ...users.map((user) => ({
-        ...user,
-        firstName: user.firstName ?? undefined,
-        lastName: user.lastName ?? undefined,
-        primaryEmailAddressId: user.primaryEmailAddressId ?? undefined,
+      ...resp.data.map((u) => ({
+        id: u.id,
+        firstName: u.firstName ?? undefined,
+        lastName: u.lastName ?? undefined,
+        emailAddresses: u.emailAddresses.map((e) => ({
+          id: e.id,
+          emailAddress: e.emailAddress,
+        })),
+        primaryEmailAddressId: u.primaryEmailAddressId ?? undefined,
+        phoneNumbers:
+          u.phoneNumbers?.map((p) => ({ id: p.id, phoneNumber: p.phoneNumber })) ?? [],
+        primaryPhoneNumberId: u.primaryPhoneNumberId ?? undefined,
+        publicMetadata: (u.publicMetadata ?? {}) as Record<string, unknown>,
       }))
     );
 
     offset += limit;
   }
 
-  const simplifiedUsers = allUsers.map((user) => ({
-    id: user.id,
-    firstName: user.firstName ?? '',
-    lastName: user.lastName ?? '',
-    email:
-      user.emailAddresses.find(
-        (email) => email.id === user.primaryEmailAddressId
-      )?.emailAddress ?? '',
-    role:
-      typeof user.publicMetadata?.role === 'string'
-        ? user.publicMetadata.role.trim().toLowerCase()
-        : 'estudiante',
-    status:
-      typeof user.publicMetadata?.status === 'string'
-        ? user.publicMetadata.status
-        : 'activo',
-  }));
+  // 🔹 Traer teléfonos desde la BD por ID
+  const clerkIds = allUsers.map((u) => u.id);
+  const dbPhones = clerkIds.length
+    ? await db
+        .select({ id: users.id, phone: users.phone })
+        .from(users)
+        .where(inArray(users.id, clerkIds))
+    : [];
+  const phoneById = new Map<string, string>(
+    dbPhones.map((r) => [r.id, (r.phone ?? '').trim()])
+  );
+
+  const simplified = allUsers.map((u) => {
+    const phoneFromDb = phoneById.get(u.id) || '';
+
+    const phoneFromClerk =
+      (u.primaryPhoneNumberId &&
+        u.phoneNumbers?.find((p) => p.id === u.primaryPhoneNumberId)?.phoneNumber) ||
+      u.phoneNumbers?.[0]?.phoneNumber ||
+      '';
+
+    const phoneFromMetadata =
+      typeof u.publicMetadata?.phone === 'string'
+        ? (u.publicMetadata.phone as string).trim()
+        : '';
+
+    // 👉 Preferimos BD > Clerk > Metadata
+    const phone = phoneFromDb || phoneFromClerk || phoneFromMetadata;
+
+    const role =
+      typeof u.publicMetadata?.role === 'string'
+        ? (u.publicMetadata.role as string).trim().toLowerCase()
+        : 'estudiante';
+
+    const status =
+      typeof u.publicMetadata?.status === 'string'
+        ? (u.publicMetadata.status as string)
+        : 'activo';
+
+    return {
+      id: u.id,
+      firstName: u.firstName ?? '',
+      lastName: u.lastName ?? '',
+      email:
+        u.emailAddresses.find((e) => e.id === u.primaryEmailAddressId)?.emailAddress ?? '',
+      role,
+      status,
+      phone, // 👈 ahora viene desde la BD si existe
+    };
+  });
 
   const filtered = query
-    ? simplifiedUsers.filter((user) =>
+    ? simplified.filter((user) =>
         `${user.firstName} ${user.lastName} ${user.email}`
           .toLowerCase()
           .includes(query.toLowerCase())
       )
-    : simplifiedUsers;
+    : simplified;
 
-  console.log(`✅ Total de usuarios encontrados: ${filtered.length}`);
+  console.table(
+    filtered.map((u) => ({ id: u.id, email: u.email, phone: u.phone || '' }))
+  );
+
   return filtered;
 }
+
 
 // ✅ Función para actualizar el rol de un usuario
 export async function setRoleWrapper({
