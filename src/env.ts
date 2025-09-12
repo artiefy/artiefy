@@ -37,6 +37,8 @@ export const env = createEnv({
       .default('development'),
     CRON_SECRET: z.string().min(1),
     SKIP_ENV_VALIDATION: z.boolean().default(false),
+
+    N8N_LICENSE_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -92,6 +94,8 @@ export const env = createEnv({
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
+
+    N8N_LICENSE_KEY: process.env.N8N_LICENSE_KEY,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,
