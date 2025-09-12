@@ -517,8 +517,8 @@ export default function EnrolledUsersPage() {
 
   // === GUARDAR UNA SOLA CUOTA ===
   async function savePagoRow(index: number) {
-    if (!carteraUserId || !currentProgramId) {
-      alert('Falta userId o programId');
+    if (!carteraUserId) {
+      alert('Falta userId');
       return;
     }
 
@@ -548,7 +548,7 @@ export default function EnrolledUsersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: carteraUserId,
-            programId: Number(currentProgramId),
+            programId: currentProgramId ? Number(currentProgramId) : null, // 👈 soporta null
             index,
             concepto,
             nro_pago,
@@ -987,10 +987,14 @@ export default function EnrolledUsersPage() {
       body: JSON.stringify({ userId, programaId, price }),
     });
 
-    // Actualizamos las cuotas proporcionalmente
     setEditablePagos((prev) =>
-      prev.map((p) => ({ ...p, valor: Math.round(price / prev.length) }))
+      prev.map((p, idx) =>
+        idx < 12
+          ? { ...p, valor: Math.round(price / 12) } // solo cuotas 1..12
+          : p                                       // no tocar especiales
+      )
     );
+
   };
 
 
@@ -1028,50 +1032,56 @@ export default function EnrolledUsersPage() {
       }
 
 
-      let programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
-      console.log('💡 Valor inicial de programaPrice (default):', programaPrice);
-      try {
-        console.log('💡 Iniciando fetch de price_program para userId:', userId, 'programaId:', programaId);
 
+
+
+      // ✅ Regla: si viene del backend, usar ese valor tal cual.
+      // Si no viene (o no es numérico), usar 1.800.000 (12 x 150.000).
+      let programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000 por defecto
+
+      try {
+        console.log('🧮 [PRICE] Fetching price_program', { userId, programId });
         const res = await fetch(
           `/api/super-admin/teams/price_program?userId=${userId}&programaId=${programId}`
         );
-        console.log('💡 Fetch completado, status:', res.status);
+        console.log('🧮 [PRICE] status:', res.status);
 
         if (res.ok) {
-          const data: { price?: number | string } = await res.json();
-          console.log('💡 Data recibida del backend:', data);
+          const data = (await res.json()) as { price?: number | string };
+          const raw = data?.price;
+          // normaliza por si llega "1.800.000" o "1,800,000"
+          const normalized =
+            typeof raw === 'number'
+              ? raw
+              : raw != null
+                ? Number(String(raw).replace(/[^\d.-]/g, ''))
+                : NaN;
 
-          // Convertir price a número seguro
-          const priceNumber = data.price !== undefined ? Number(data.price) : NaN;
-          console.log('💡 Price convertido a número:', priceNumber);
+          console.log('🧮 [PRICE] backend ->', { raw, normalized });
 
-          if (Number.isFinite(priceNumber)) {
-            programaPrice = priceNumber;
-            console.log('✅ Se actualiza programaPrice con el valor del backend:', programaPrice);
+          if (Number.isFinite(normalized)) {
+            programaPrice = normalized; // 👉 usa exactamente lo del backend (ej: 150000 o 1800000)
+            console.log('✅ [PRICE] Usando precio del backend:', programaPrice);
           } else {
-            programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
-            console.warn('⚠️ No hay price válido en data, se mantiene default:', programaPrice);
+            programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
+            console.warn('⚠️ [PRICE] Backend sin precio válido. Usando 1.800.000');
           }
         } else {
-          programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
-          console.warn('⚠️ No se pudo cargar precio del programa, usando default:', programaPrice);
+          programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
+          console.warn('⚠️ [PRICE] fetch NO OK. Usando 1.800.000. status=', res.status);
         }
-
-        console.log('💡 Valor final de programaPrice después del try/catch:', programaPrice);
       } catch (err) {
-        programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS;
-        console.error('❌ Error al consultar precio del programa, usando default:', programaPrice, err);
+        programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
+        console.error('❌ [PRICE] Error de red. Usando 1.800.000', err);
       }
 
-
-      console.log('💡 Valor final de programaPrice después del try/catch:', programaPrice);
+      console.log('🏁 [PRICE] programaPrice final:', programaPrice);
 
 
       // 2️⃣ Pagos del usuario en ese programa
       const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, programId);
 
-      // Total pagado
+      // Total pagado (todos los registros, igual que antes)
       const totalPagado = pagosUsuarioPrograma.reduce((sum: number, p: Pago) => {
         const v =
           typeof p.valor === 'string'
@@ -1082,8 +1092,38 @@ export default function EnrolledUsersPage() {
         return sum + (Number.isFinite(v) ? v : 0);
       }, 0);
 
-      // Deuda = precio total - totalPagado
-      const deuda = Math.max(programaPrice - totalPagado, 0);
+      // ➕ NUEVO: total pagado SOLO por las 12 cuotas (excluye los 3 especiales)
+      const ESPECIALES = new Set([
+        'PÓLIZA Y CARNET',
+        'POLIZA Y CARNET', // por si viene sin tilde
+        'UNIFORME',
+        'DERECHOS DE GRADO',
+      ]);
+
+      const esEspecial = (p: Pago) => {
+        const c = (typeof p.concepto === 'string' ? p.concepto : '')
+          .toUpperCase()
+          .trim();
+        if (ESPECIALES.has(c)) return true;
+        const n = Number(p.nro_pago ?? p.nroPago);
+        return Number.isFinite(n) && n >= 13; // también excluye si viene como 13/14/15
+      };
+
+      const totalPagadoCuotas = pagosUsuarioPrograma
+        .filter((p) => !esEspecial(p))
+        .reduce((sum: number, p: Pago) => {
+          const v =
+            typeof p.valor === 'string'
+              ? Number(p.valor)
+              : typeof p.valor === 'number'
+                ? p.valor
+                : 0;
+          return sum + (Number.isFinite(v) ? v : 0);
+        }, 0);
+
+      // ⬅️ Deuda = precio total - (solo cuotas)
+      const deuda = Math.max(programaPrice - totalPagadoCuotas, 0);
+
 
 
       // Guardar en state
@@ -3134,12 +3174,18 @@ export default function EnrolledUsersPage() {
                               PLAN / VALOR PROGRAMA
                             </span>
                             <input
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
                               className="w-32 text-right font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border rounded px-2 py-1"
-                              value={price}
-                              onChange={(e) => setPrice(Number(e.target.value))}
+                              value={price ? String(price) : ''}             // muestra 150000
+                              onChange={(e) => {
+                                // acepta 150000, 150.000, 150,000 → siempre queda 150000
+                                const onlyDigits = e.target.value.replace(/\D/g, '');
+                                setPrice(onlyDigits ? parseInt(onlyDigits, 10) : 0);
+                              }}
                               onBlur={handleSavePrice}
                             />
+
                           </div>
                         </td>
 

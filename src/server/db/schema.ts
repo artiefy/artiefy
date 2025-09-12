@@ -1295,9 +1295,8 @@ export const pagos = pgTable('pagos', {
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-  programaId: integer('programa_id')
-    .references(() => programas.id)
-    .notNull(),
+   programaId: integer('programa_id')
+    .references(() => programas.id, { onDelete: 'set null', onUpdate: 'cascade' }),   // 👈 ¡importante!
   concepto: varchar('concepto', { length: 100 }).notNull(), // Ej: INSCRIPCIÓN, CUOTA, etc.
   nroPago: integer('nro_pago').notNull(),
   fecha: date('fecha').notNull(),

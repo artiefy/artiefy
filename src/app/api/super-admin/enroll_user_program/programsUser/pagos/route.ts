@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { pagos, users } from '~/server/db/schema';
@@ -47,7 +47,7 @@ const s3 = new S3Client({
 async function uploadToS3(
   file: File,
   userId: string,
-  programId: number,
+  programId: number | null,
   nroPago: number
 ) {
   const buf = Buffer.from(await file.arrayBuffer());
@@ -59,7 +59,10 @@ async function uploadToS3(
         ? '.jpg'
         : '';
 
-  const key = `documents/pagos/${userId}/${programId}/${nroPago}-${Date.now()}${ext}`;
+  const programFolder = programId === null ? 'no-program' : String(programId);
+
+
+  const key = `documents/pagos/${userId}/${programFolder}/${nroPago}-${Date.now()}${ext}`;
   await s3.send(
     new PutObjectCommand({
       Bucket: BUCKET,
@@ -116,56 +119,64 @@ function coerceJsonBody(u: unknown): JsonBody {
   return {};
 }
 
+const parseProgramId = (v: unknown): number | null => {
+  if (v === undefined || v === null) return null;
+
+  // normalizar strings vacíos / 'null' / '0'
+  if (typeof v === 'string') {
+    const s = v.trim().toLowerCase();
+    if (s === '' || s === 'null' || s === '0') return null;
+  }
+
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return n === 0 ? null : n;
+};
+  
+
 // GET /api/super-admin/enroll_user_program/programsUser/pagos?userId=...&programId=...
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const userId = url.searchParams.get('userId');
-  const programId = url.searchParams.get('programId');
-  if (!userId || !programId) {
-    return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
+  const programId = parseProgramId(url.searchParams.get('programId'));
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
   }
+
   try {
-    // Trae pagos + usuario
-const [dbUser] = await db
-  .select()
-  .from(users)
-  .where(eq(users.id, userId));
+    const [dbUser] = await db.select().from(users).where(eq(users.id, userId));
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
 
-if (!dbUser) {
-  return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
-}
+    const pagosUsuarioPrograma = await db
+      .select()
+      .from(pagos)
+      .where(
+        and(
+          eq(pagos.userId, userId),
+          programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId)
+        )
+      );
 
-const pagosUsuarioPrograma = await db
-  .select()
-  .from(pagos)
-  .where(
-    and(eq(pagos.userId, userId), eq(pagos.programaId, Number(programId)))
-  );
+    const planType = dbUser.planType && dbUser.planType !== 'none'
+      ? dbUser.planType
+      : 'Premium';
 
-// Usa plan de usuario o Premium por defecto
-const planType = dbUser.planType && dbUser.planType !== 'none'
-  ? dbUser.planType
-  : 'Premium';
+    const programaPrice = planPrices[planType] ?? planPrices.Premium;
 
-// Precios de referencia
-const planPrices: Record<string, number> = {
-  Pro: 99800,
-  Premium: 149800,
-  Enterprise: 200000,
-};
-const programaPrice = planPrices[planType] ?? planPrices.Premium;
-
-return NextResponse.json({
-  pagos: pagosUsuarioPrograma,
-  planType,
-  programaPrice,
-});
-
+    return NextResponse.json({
+      pagos: pagosUsuarioPrograma,
+      planType,
+      programaPrice,
+    });
   } catch (error) {
     console.error('Error al consultar pagos:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
+
 
 // POST /api/super-admin/enroll_user_program/programsUser/pagos
 // Body: { userId, programId, index, concepto, nro_pago, fecha, metodo, valor }
@@ -179,82 +190,71 @@ export async function POST(req: Request) {
     if (contentType.includes('multipart/form-data')) {
       const fd = await req.formData();
 
-      const userIdEntry = fd.get('userId');
-      const programIdEntry = fd.get('programId');
-      const indexEntry = fd.get('index'); // opcional (0..11)
-      const nroPagoEntry = fd.get('nro_pago'); // opcional
-      const file = fd.get('receipt');
+const userIdEntry = fd.get('userId');
+const programIdEntry = fd.get('programId'); // puede venir vacío/ausente
+const indexEntry = fd.get('index');         // opcional (0..11)
+const nroPagoEntry = fd.get('nro_pago');    // opcional
+const file = fd.get('receipt');
 
-      // Evita "no-base-to-string": valida tipos antes de usar
-      if (
-        typeof userIdEntry !== 'string' ||
-        typeof programIdEntry !== 'string' ||
-        !(file instanceof File)
-      ) {
-        return NextResponse.json(
-          { error: 'Parámetros inválidos' },
-          { status: 400 }
-        );
-      }
+// ✅ No exigimos programId aquí
+if (typeof userIdEntry !== 'string' || !(file instanceof File)) {
+  return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
+}
 
-      const userId = userIdEntry.trim();
-      const programId = Number(programIdEntry);
+const userId = userIdEntry.trim();
+const programId = parseProgramId(programIdEntry); // number | null
 
-      const index =
-        typeof indexEntry === 'string' && indexEntry !== ''
-          ? Number(indexEntry)
-          : undefined;
+const index =
+  typeof indexEntry === 'string' && indexEntry !== ''
+    ? Number(indexEntry)
+    : undefined;
 
-      const nroPago =
-        typeof nroPagoEntry === 'string' && nroPagoEntry !== ''
-          ? Number(nroPagoEntry)
-          : (index ?? NaN) + 1;
+const nroPago =
+  typeof nroPagoEntry === 'string' && nroPagoEntry !== ''
+    ? Number(nroPagoEntry)
+    : (index ?? NaN) + 1;
 
-      if (!userId || !Number.isFinite(programId) || !Number.isFinite(nroPago)) {
-        return NextResponse.json(
-          { error: 'nro_pago/index inválido' },
-          { status: 400 }
-        );
-      }
+if (!userId || !Number.isFinite(nroPago)) {
+  return NextResponse.json({ error: 'nro_pago/index inválido' }, { status: 400 });
+}
 
-      // Subir a S3
-      const { key, url } = await uploadToS3(file, userId, programId, nroPago);
+// S3
+const { key, url } = await uploadToS3(file, userId, programId, nroPago);
 
-      // Actualizar la fila del pago (debe existir)
-      const updated = await db
-        .update(pagos)
-        .set({
-          receiptKey: key,
-          receiptUrl: url,
-          receiptName: file.name ?? 'comprobante',
-          receiptUploadedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(pagos.userId, userId),
-            eq(pagos.programaId, programId),
-            eq(pagos.nroPago, nroPago)
-          )
-        )
-        .returning();
+// ✅ WHERE compatible con NULL
+const updated = await db
+  .update(pagos)
+  .set({
+    receiptKey: key,
+    receiptUrl: url,
+    receiptName: file.name ?? 'comprobante',
+    receiptUploadedAt: new Date(),
+  })
+  .where(
+    and(
+      eq(pagos.userId, userId),
+      programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId),
+      eq(pagos.nroPago, nroPago)
+    )
+  )
+  .returning();
 
-      if (updated.length === 0) {
-        return NextResponse.json(
-          {
-            error:
-              'No existe esa cuota. Guarda la cuota antes de subir comprobante.',
-          },
-          { status: 404 }
-        );
-      }
+if (updated.length === 0) {
+  return NextResponse.json(
+    { error: 'No existe esa cuota. Guarda la cuota antes de subir comprobante.' },
+    { status: 404 }
+  );
+}
 
-      return NextResponse.json({ ok: true, receiptUrl: url, pago: updated[0] });
+return NextResponse.json({ ok: true, receiptUrl: url, pago: updated[0] });
+
     }
 
     // ──────────────────────────────
     // Branch JSON (crear/actualizar pago)
     // ──────────────────────────────
-
+    
+   
     interface JsonBody {
       userId?: string | number;
       programId?: number | string;
@@ -288,7 +288,7 @@ export async function POST(req: Request) {
     const body: JsonBody = coerceJsonBody(rawUnknown);
 
     const userId = String(body.userId ?? '').trim();
-    const programId = Number(body.programId ?? NaN);
+const programId = parseProgramId(body.programId); // number | null
     const index = Number(body.index ?? 0);
     const concepto = body.concepto ?? '';
     const nroPago = Number(body.nro_pago ?? index + 1);
@@ -301,13 +301,13 @@ export async function POST(req: Request) {
       fechaInput && !Number.isNaN(new Date(fechaInput).getTime())
         ? new Date(fechaInput).toISOString().split('T')[0]
         : null;
+if (!userId || !Number.isFinite(nroPago)) {
+  return NextResponse.json(
+    { error: 'Parámetros inválidos' },
+    { status: 400 }
+  );
+}
 
-    if (!userId || !Number.isFinite(programId) || !Number.isFinite(nroPago)) {
-      return NextResponse.json(
-        { error: 'Parámetros inválidos' },
-        { status: 400 }
-      );
-    }
 
     if (!fecha) {
       return NextResponse.json(
@@ -321,12 +321,12 @@ export async function POST(req: Request) {
       .select()
       .from(pagos)
       .where(
-        and(
-          eq(pagos.userId, userId),
-          eq(pagos.programaId, programId),
-          eq(pagos.nroPago, nroPago)
-        )
-      );
+  and(
+    eq(pagos.userId, userId),
+    programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId),
+    eq(pagos.nroPago, nroPago)
+  )
+);
 
     if (existing.length > 0) {
       await db
@@ -338,12 +338,13 @@ export async function POST(req: Request) {
           fecha, // string 'YYYY-MM-DD'
         })
         .where(
-          and(
-            eq(pagos.userId, userId),
-            eq(pagos.programaId, programId),
-            eq(pagos.nroPago, nroPago)
-          )
-        );
+  and(
+    eq(pagos.userId, userId),
+    programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId),
+    eq(pagos.nroPago, nroPago)
+  )
+)
+;
     } else {
       await db.insert(pagos).values({
         userId,
@@ -365,7 +366,12 @@ export async function POST(req: Request) {
 const firstPayment = await db
   .select()
   .from(pagos)
-  .where(and(eq(pagos.userId, userId), eq(pagos.programaId, programId)))
+.where(
+  and(
+    eq(pagos.userId, userId),
+    programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId)
+  )
+)
   .orderBy(pagos.nroPago) // cuota más antigua
   .limit(1);
 

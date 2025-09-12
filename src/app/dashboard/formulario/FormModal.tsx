@@ -2,7 +2,134 @@
 
 import { useEffect, useState } from 'react';
 
+import Image from 'next/image';
+
 import { Dialog } from '@headlessui/react';
+
+
+function formatBytes(bytes: number) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let num = bytes;
+  while (num >= 1024 && i < units.length - 1) {
+    num /= 1024;
+    i++;
+  }
+  return `${num.toFixed(1)} ${units[i]}`;
+}
+
+function FileBadge({
+  file,
+  onClear,
+}: {
+  file: File | null;
+  onClear: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setUrl(null);
+      return;
+    }
+
+    // 1) Intento rápido con objectURL
+    try {
+      const u = URL.createObjectURL(file);
+      setUrl(u);
+
+      // 2) Si el tipo viene vacío o es HEIC/HEIF, hacemos fallback a dataURL
+      const needsFallback =
+        !file.type ||
+        /heic|heif/i.test(file.name || '') ||
+        /heic|heif/i.test(file.type || '');
+
+      if (needsFallback) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          // Solo sobreescribe si sigue siendo el mismo archivo
+          setUrl(typeof reader.result === 'string' ? reader.result : u);
+          // Liberamos el objectURL inicial si ya no se usa
+          URL.revokeObjectURL(u);
+        };
+        reader.readAsDataURL(file);
+        return () => {
+          reader.abort?.();
+        };
+      }
+
+      return () => URL.revokeObjectURL(u);
+    } catch {
+      // 3) Último recurso: FileReader para todo lo demás
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUrl(typeof reader.result === 'string' ? reader.result : null);
+      };
+      reader.readAsDataURL(file);
+      return () => reader.abort?.();
+    }
+  }, [file]);
+
+
+  if (!file) return null;
+
+  const isImg =
+    file.type.startsWith('image/') ||
+    /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.name || '');
+
+  const isPdf =
+    file.type === 'application/pdf' ||
+    /\.pdf$/i.test(file.name || '');
+
+
+  return (
+    <div className="mt-2 flex items-center gap-3 rounded border border-cyan-900/40 bg-[#0f1a38] p-2">
+      {isImg && url ? (
+        <Image
+          src={url}
+          alt={file.name}
+          width={48}
+          height={48}
+          className="h-12 w-12 rounded object-cover"
+          unoptimized
+          priority
+        />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#101a35] text-xs text-gray-300">
+          {isPdf ? 'PDF' : 'FILE'}
+        </div>
+      )}
+
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm">{file.name}</div>
+        <div className="text-xs text-gray-400">
+          {formatBytes(file.size)} • {file.type || 'archivo'}
+        </div>
+        {url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-cyan-400 underline"
+          >
+            Ver
+          </a>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-xs rounded border border-gray-600 px-2 py-1 hover:bg-gray-800"
+      >
+        Quitar
+      </button>
+    </div>
+  );
+}
+
+
 
 /* =======================
    Listas estáticas
@@ -162,35 +289,98 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [actaGrado, setActaGrado] = useState<File | null>(null);
   const [pagare, setPagare] = useState<File | null>(null);
   const CUOTAS_OPTS = ['1', '2', '3', '4', '8', '10', '12'] as const;
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    if (!showSuccess) return;
+    setCountdown(5);
+    const i = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(i);
+          // Redirección tras 5s
+          window.location.assign('https://artiefy.com/');
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+  }, [showSuccess]);
+
 
   const [comprobanteInscripcion, setComprobanteInscripcion] =
     useState<File | null>(null);
 
   function FieldFile({
     label,
+    file,
     onChange,
     required = false,
+    accept = 'application/pdf,image/*',
+    error,
   }: {
     label: string;
+    file: File | null;
     onChange: (f: File | null) => void;
     required?: boolean;
+    accept?: string;
+    error?: string;
   }) {
+    const [inputKey, setInputKey] = useState(0);
+
+    const clear = () => {
+      onChange(null);
+      setInputKey((k) => k + 1); // resetea el input file
+    };
+
     return (
       <label className="flex flex-col text-white">
         <span className="mb-1">
           {label} {required && <span className="text-red-400">*</span>}
         </span>
+
         <input
+          key={inputKey}
           type="file"
+          accept={accept}
           onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-          className="rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          aria-required={required}
+          aria-invalid={!!error}
+          className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none ${error ? 'border border-red-500' : ''}`}
         />
+
+
+        {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
+
+        {/* Vista del archivo seleccionado */}
+        <FileBadge file={file} onClear={clear} />
       </label>
     );
   }
+
+
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
+  interface ProgramObj { title?: string | null }
+  interface ApiOk { program?: ProgramObj; emailSent?: boolean }
+  interface ApiErr { error: string }
+
+  function hasError(p: unknown): p is ApiErr {
+    return isRecord(p) && typeof p.error === 'string';
+  }
+
+  function hasProgram(p: unknown): p is { program: ProgramObj } {
+    return isRecord(p) && 'program' in p && isRecord((p as Record<string, unknown>).program);
+  }
+
+  function hasEmailSent(p: unknown): p is { emailSent: boolean } {
+    return isRecord(p) && typeof (p as Record<string, unknown>).emailSent === 'boolean';
+  }
+
   void isRecord; // <- para evitar warning de unused
   // Cargar fechas y comerciales
   const [sedeOptions, setSedeOptions] = useState<string[]>([]);
@@ -273,11 +463,55 @@ export default function FormModal({ isOpen, onClose }: Props) {
     );
   }
 
+  // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
+  function sanitizeValueByKey(key: keyof Fields, value: string) {
+    const TRIM_AND_FOLD: (keyof Fields)[] = [
+      'nombres',
+      'apellidos',
+      'direccion',
+      'ciudad',
+      'comercial',
+      'programa',
+      'sede',
+      'horario',
+      'pais',
+      'nivelEducacion',
+      'tieneAcudiente',
+      'acudienteNombre',
+      'acudienteContacto',
+      'acudienteEmail',
+      'modalidad',
+    ];
+    const TRIM_ONLY: (keyof Fields)[] = [
+      'email',
+      'identificacionTipo',
+      'identificacionNumero',
+      'telefono',
+      'numeroCuotas',
+      'fechaInicio',
+      'birthDate',
+      'fecha',
+      'pagoInscripcion',
+      'pagoCuota1',
+    ];
+
+    if (typeof value !== 'string') return value as unknown as string;
+
+    if (TRIM_AND_FOLD.includes(key)) {
+      return value.replace(/\s+/g, ' ').trim();
+    }
+    if (TRIM_ONLY.includes(key)) {
+      return value.trim();
+    }
+    return value.trim();
+  }
+
   const handleChange = (key: keyof Fields, value: string) => {
-    setFields((prev) => ({ ...prev, [key]: value }));
-    // limpiar error al escribir
+    const sanitized = sanitizeValueByKey(key, value);
+    setFields((prev) => ({ ...prev, [key]: sanitized }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
+
 
   // estado nuevo
 
@@ -360,12 +594,48 @@ export default function FormModal({ isOpen, onClose }: Props) {
       return;
     }
 
+    // … dentro de handleSubmit, después de const v = validate(fields) …
+    const fe: Record<string, string> = {};
+
+    // Requeridos: documento de identidad y pagaré
+    if (!docIdentidad) fe.docIdentidad = 'Adjunta el documento de identidad.';
+    if (!pagare) fe.pagare = 'Adjunta el pagaré.';
+
+    // (Opcional) Validaciones de tamaño/tipo
+    const MAX_MB = 10;
+    const check = (f: File | null, key: string) => {
+      if (!f) return;
+      if (f.size > MAX_MB * 1024 * 1024)
+        fe[key] = `Máximo ${MAX_MB}MB por archivo.`;
+      // ejemplo de tipo permitido
+      const okType =
+        f.type === 'application/pdf' || f.type.startsWith('image/');
+      if (!okType) fe[key] = 'Solo PDF o imágenes.';
+    };
+    check(docIdentidad, 'docIdentidad');
+    check(actaGrado, 'actaGrado');
+    check(reciboServicio, 'reciboServicio');
+    check(pagare, 'pagare');
+
+    setFileErrors(fe);
+
+    if (Object.keys(v).length > 0 || Object.keys(fe).length > 0) {
+      setErrors(v);
+      setSubmitting(false);
+      setSubmittedOK(false);
+      setSubmitMessage('Por favor corrige los campos marcados.');
+      return;
+    }
+
+
     try {
       const fd = new FormData();
-      // Campos “core” (los que ya mapeas a users y los extra)
-      Object.entries(fields).forEach(([k, val]) =>
-        fd.append(k, String(val ?? ''))
-      );
+
+      // Normaliza TODO antes de enviar
+      (Object.entries(fields) as [keyof Fields, string][])
+        .map(([k, v]) => [k, sanitizeValueByKey(k, v)])
+        .forEach(([k, v]) => fd.append(String(k), v ?? ''));
+
       if (comprobanteInscripcion)
         fd.append('comprobanteInscripcion', comprobanteInscripcion);
 
@@ -380,19 +650,31 @@ export default function FormModal({ isOpen, onClose }: Props) {
         body: fd, // ¡sin Content-Type manual!
       });
 
+      const payload: unknown = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as unknown;
-
-        const message =
-          isRecord(j) && typeof j.error === 'string'
-            ? j.error
-            : `Error HTTP ${res.status}`;
-
+        const message = hasError(payload) ? payload.error : `Error HTTP ${res.status}`;
         throw new Error(message);
       }
 
+      const programTitle =
+        hasProgram(payload) && typeof payload.program.title === 'string'
+          ? payload.program.title
+          : fields.programa;
+
+      const emailSent = hasEmailSent(payload) ? payload.emailSent : false;
+
+
+      const successMsg = emailSent
+        ? ` ¡Inscripción creada con éxito! Te enviamos tus credenciales a ${fields.email}. Programa: ${programTitle}.`
+        : ` ¡Inscripción creada con éxito! Tu cuenta ya existía; no enviamos un nuevo correo. Programa: ${programTitle}.`;
+
       setSubmittedOK(true);
-      setSubmitMessage('¡Inscripción enviada con éxito!');
+      setSubmitMessage(successMsg);
+      setShowSuccess(true);
+
+
+      // Reset de formulario y cierre
       setTimeout(() => {
         setFields({ ...defaultFields });
         setErrors({});
@@ -401,8 +683,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
         setComprobanteInscripcion(null);
         setActaGrado(null);
         setPagare(null);
-        handleClose();
       }, 1500);
+
     } catch (err: unknown) {
       setSubmittedOK(false);
 
@@ -426,308 +708,378 @@ export default function FormModal({ isOpen, onClose }: Props) {
       onClose={handleClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
-      {/* Panel con scroll interno */}
-      <Dialog.Panel className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20">
-        {/* Header sticky */}
-        <div className="sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95 px-6 py-4 backdrop-blur">
-          <Dialog.Title className="text-2xl font-semibold text-cyan-400">
-            Formulario de Inscripción
-          </Dialog.Title>
-          <p className="text-sm text-gray-300">
-            Completa los campos y envía tu inscripción.
-          </p>
-        </div>
-
-        {/* Banner resultado */}
-        {submittedOK !== null && submitMessage && (
-          <div
-            className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${
-              submittedOK
-                ? 'bg-green-600/20 text-green-300'
-                : 'bg-red-600/20 text-red-300'
-            }`}
-            role="alert"
-          >
-            {submitMessage}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
-          {/* Datos personales */}
-          <Section title="Datos personales">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldInput
-                label="Nombres*"
-                value={fields.nombres}
-                onChange={(v) => handleChange('nombres', v)}
-                error={errors.nombres}
-              />
-              <FieldInput
-                label="Apellidos*"
-                value={fields.apellidos}
-                onChange={(v) => handleChange('apellidos', v)}
-                error={errors.apellidos}
-              />
-
-              <FieldSelect
-                label="Tipo de Identificación*"
-                value={fields.identificacionTipo}
-                onChange={(v) => handleChange('identificacionTipo', v)}
-                placeholder="Selecciona un tipo de identificación"
-                options={[...ID_TYPES]}
-                error={errors.identificacionTipo}
-              />
-              <FieldInput
-                label="Número de Identificación*"
-                value={fields.identificacionNumero}
-                onChange={(v) => handleChange('identificacionNumero', v)}
-                error={errors.identificacionNumero}
-              />
-
-              <FieldInput
-                label="Correo Electrónico*"
-                type="email"
-                value={fields.email}
-                onChange={(v) => handleChange('email', v)}
-                error={errors.email}
-              />
-              <FieldInput
-                label="Dirección*"
-                value={fields.direccion}
-                onChange={(v) => handleChange('direccion', v)}
-                error={errors.direccion}
-              />
+      <Dialog.Panel className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20 flex flex-col">
+        {showSuccess ? (
+          // ==== Pantalla de ÉXITO ====
+          <div className="flex flex-col items-center justify-center gap-6 px-8 py-12 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1C2541] shadow shadow-cyan-500/30">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10 text-cyan-400" aria-hidden="true">
+                <path fillRule="evenodd" d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm13.28-2.03a.75.75 0 10-1.06-1.06L10.5 12.88l-1.72-1.72a.75.75 0 10-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.5-4.5z" clipRule="evenodd" />
+              </svg>
             </div>
-          </Section>
 
-          {/* Ubicación y educación */}
-          <Section title="Ubicación y educación">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldSelect
-                label="País de Residencia*"
-                value={fields.pais}
-                onChange={(v) => handleChange('pais', v)}
-                placeholder="Selecciona un país"
-                options={COUNTRY_LIST}
-                error={errors.pais}
-              />
-              <FieldInput
-                label="Ciudad de Residencia*"
-                value={fields.ciudad}
-                onChange={(v) => handleChange('ciudad', v)}
-                error={errors.ciudad}
-              />
-
-              <FieldInput
-                label="Teléfono*"
-                value={fields.telefono}
-                onChange={(v) => handleChange('telefono', v)}
-                error={errors.telefono}
-              />
-              <FieldInput
-                label="Fecha de Nacimiento*"
-                type="date"
-                value={fields.birthDate}
-                onChange={(v) => handleChange('birthDate', v)}
-                error={errors.birthDate}
-              />
-
-              <FieldSelect
-                label="Nivel de Educación*"
-                value={fields.nivelEducacion}
-                onChange={(v) => handleChange('nivelEducacion', v)}
-                placeholder="Elige"
-                options={[...NIVEL_EDUCACION_OPTS]}
-                error={errors.nivelEducacion}
-              />
+            <div>
+              <h2 className="text-2xl font-semibold text-cyan-300">
+                ¡Gracias por diligenciar tus datos!
+              </h2>
+              <p className="mt-2 text-gray-300">
+                Ya puedes disfrutar de <span className="text-cyan-400 font-semibold">Artiefy</span>.
+              </p>
             </div>
-          </Section>
 
-          {/* Acudiente (opcional) */}
-          <Section title="Acudiente o empresa (opcional)">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldSelect
-                label="¿Acudiente o empresa?"
-                value={fields.tieneAcudiente}
-                onChange={(v) => handleChange('tieneAcudiente', v)}
-                placeholder="Selecciona una opción"
-                options={['Sí', 'No']}
-                error={errors.tieneAcudiente}
-              />
+            {submitMessage && (
+              <p className="max-w-xl text-sm text-gray-400">{submitMessage}</p>
+            )}
 
-              {fields.tieneAcudiente === 'Sí' && (
-                <>
-                  <FieldInput
-                    label="Nombre Acudiente / Empresa"
-                    value={fields.acudienteNombre}
-                    onChange={(v) => handleChange('acudienteNombre', v)}
-                    error={errors.acudienteNombre}
-                  />
-                  <FieldInput
-                    label="Contacto Acudiente / Empresa"
-                    value={fields.acudienteContacto}
-                    onChange={(v) => handleChange('acudienteContacto', v)}
-                    error={errors.acudienteContacto}
-                  />
-                  <FieldInput
-                    label="Email Acudiente / Empresa"
-                    type="email"
-                    value={fields.acudienteEmail}
-                    onChange={(v) => handleChange('acudienteEmail', v)}
-                    error={errors.acudienteEmail}
-                  />
-                </>
-              )}
-            </div>
-          </Section>
-
-          {/* Programa y fechas */}
-          <Section title="Programa y fechas">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldSelect
-                label={
-                  loadingPrograms
-                    ? 'Programa* (cargando...)'
-                    : errorPrograms
-                      ? 'Programa* (error al cargar)'
-                      : 'Programa*'
-                }
-                value={fields.programa}
-                onChange={(v) => handleChange('programa', v)}
-                placeholder={
-                  loadingPrograms
-                    ? 'Cargando programas...'
-                    : errorPrograms
-                      ? 'Error al cargar programas'
-                      : programTitles.length === 0
-                        ? 'No hay programas'
-                        : 'Selecciona un programa'
-                }
-                options={programTitles}
-                disabled={
-                  loadingPrograms ||
-                  !!errorPrograms ||
-                  programTitles.length === 0
-                }
-                error={errors.programa}
-              />
-
-              <FieldSelect
-                label="Fecha de Inicio*"
-                value={fields.fechaInicio}
-                onChange={(v) => handleChange('fechaInicio', v)}
-                placeholder="Selecciona una fecha"
-                options={dateOptions}
-                error={errors.fechaInicio}
-              />
-
-              <FieldSelect
-                label="Comercial*"
-                value={fields.comercial}
-                onChange={(v) => handleChange('comercial', v)}
-                placeholder="Selecciona un comercial"
-                options={commercialOptions}
-                error={errors.comercial}
-              />
-            </div>
-          </Section>
-
-          {/* Sede, modalidad y cuotas */}
-          <Section title="Sede y detalles de pago">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldSelect
-                label="Sede*"
-                value={fields.sede}
-                onChange={(v) => handleChange('sede', v)}
-                placeholder={
-                  sedeOptions.length ? 'Selecciona una sede' : 'No hay sedes'
-                }
-                options={sedeOptions}
-                disabled={sedeOptions.length === 0}
-                error={errors.sede}
-              />
-              <FieldSelect
-                label="Horario*"
-                value={fields.horario}
-                onChange={(v) => handleChange('horario', v)}
-                placeholder={
-                  horarioOptions.length
-                    ? 'Selecciona un horario'
-                    : 'No hay horarios'
-                }
-                options={horarioOptions}
-                disabled={horarioOptions.length === 0}
-                error={errors.horario}
-              />
-
-              <FieldSelect
-                label="Pago de Inscripción*"
-                value={fields.pagoInscripcion}
-                onChange={(v) => handleChange('pagoInscripcion', v)}
-                placeholder="Selecciona una opción"
-                options={['Sí', 'No']}
-                error={errors.pagoInscripcion}
-              />
-
-              {fields.pagoInscripcion === 'Sí' && (
-                <FieldFile
-                  label="Subir comprobante de pago de inscripción (PDF/imagen)"
-                  required
-                  onChange={setComprobanteInscripcion}
+            <div className="w-full max-w-md">
+              <div className="h-2 w-full rounded bg-[#101a35]">
+                <div
+                  className="h-2 rounded bg-cyan-500 transition-all"
+                  style={{ width: `${((5 - Math.max(countdown, 0)) / 5) * 100}%` }}
                 />
+              </div>
+              <p className="mt-2 text-xs text-gray-400">
+                Te redirigiremos en {countdown}s…
+              </p>
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="https://artiefy.com/"
+                className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400"
+              >
+                Ir ahora
+              </a>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        ) : (
+          // ==== Pantalla de FORMULARIO ====
+          <>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {/* Header sticky */}
+              <div className="sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95 px-6 py-4 backdrop-blur">
+                <Dialog.Title className="text-2xl font-semibold text-cyan-400">
+                  Formulario de Inscripción
+                </Dialog.Title>
+                <p className="text-sm text-gray-300">Completa los campos y envía tu inscripción.</p>
+              </div>
+
+              {/* Banner resultado */}
+              {submittedOK !== null && submitMessage && (
+                <div
+                  className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${submittedOK ? 'bg-green-600/20 text-green-300' : 'bg-red-600/20 text-red-300'
+                    }`}
+                  role="alert"
+                >
+                  {submitMessage}
+                </div>
               )}
 
-              <FieldSelect
-                label="Número de Cuotas*"
-                value={fields.numeroCuotas}
-                onChange={(v) => handleChange('numeroCuotas', v)}
-                placeholder="Elige"
-                options={[...CUOTAS_OPTS]}
-                error={errors.numeroCuotas}
-              />
-            </div>
-          </Section>
 
-          <Section title="Documentos requeridos">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FieldFile
-                label="Subir Documento de Identidad"
-                required
-                onChange={setDocIdentidad}
-              />
-              <FieldFile
-                label="Subir Acta de Grado (Bachiller o Noveno)"
-                onChange={setActaGrado}
-              />
-              <FieldFile
-                label="Subir Recibo Servicio Público"
-                onChange={setReciboServicio}
-              />
-              <FieldFile label="Subir Pagaré" required onChange={setPagare} />
-            </div>
-          </Section>
+              <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
+                {/* Datos personales */}
+                <Section title="Datos personales">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldInput
+                      label="Nombres*"
+                      value={fields.nombres}
+                      onChange={(v) => handleChange('nombres', v)}
+                      error={errors.nombres}
+                    />
+                    <FieldInput
+                      label="Apellidos*"
+                      value={fields.apellidos}
+                      onChange={(v) => handleChange('apellidos', v)}
+                      error={errors.apellidos}
+                    />
 
-          {/* Acciones */}
-          <div className="sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30 bg-[#0B132B] py-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400 disabled:opacity-60"
-            >
-              {submitting ? 'Enviando…' : 'Enviar Inscripción'}
-            </button>
-          </div>
-        </form>
+                    <FieldSelect
+                      label="Tipo de Identificación*"
+                      value={fields.identificacionTipo}
+                      onChange={(v) => handleChange('identificacionTipo', v)}
+                      placeholder="Selecciona un tipo de identificación"
+                      options={[...ID_TYPES]}
+                      error={errors.identificacionTipo}
+                    />
+                    <FieldInput
+                      label="Número de Identificación*"
+                      value={fields.identificacionNumero}
+                      onChange={(v) => handleChange('identificacionNumero', v)}
+                      error={errors.identificacionNumero}
+                    />
+
+                    <FieldInput
+                      label="Correo Electrónico*"
+                      type="email"
+                      value={fields.email}
+                      onChange={(v) => handleChange('email', v)}
+                      error={errors.email}
+                    />
+                    <FieldInput
+                      label="Dirección*"
+                      value={fields.direccion}
+                      onChange={(v) => handleChange('direccion', v)}
+                      error={errors.direccion}
+                    />
+                  </div>
+                </Section>
+
+                {/* Ubicación y educación */}
+                <Section title="Ubicación y educación">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldSelect
+                      label="País de Residencia*"
+                      value={fields.pais}
+                      onChange={(v) => handleChange('pais', v)}
+                      placeholder="Selecciona un país"
+                      options={COUNTRY_LIST}
+                      error={errors.pais}
+                    />
+                    <FieldInput
+                      label="Ciudad de Residencia*"
+                      value={fields.ciudad}
+                      onChange={(v) => handleChange('ciudad', v)}
+                      error={errors.ciudad}
+                    />
+
+                    <FieldInput
+                      label="Teléfono*"
+                      value={fields.telefono}
+                      onChange={(v) => handleChange('telefono', v)}
+                      error={errors.telefono}
+                    />
+                    <FieldInput
+                      label="Fecha de Nacimiento*"
+                      type="date"
+                      value={fields.birthDate}
+                      onChange={(v) => handleChange('birthDate', v)}
+                      error={errors.birthDate}
+                    />
+
+                    <FieldSelect
+                      label="Nivel de Educación*"
+                      value={fields.nivelEducacion}
+                      onChange={(v) => handleChange('nivelEducacion', v)}
+                      placeholder="Elige"
+                      options={[...NIVEL_EDUCACION_OPTS]}
+                      error={errors.nivelEducacion}
+                    />
+                  </div>
+                </Section>
+
+                {/* Acudiente (opcional) */}
+                <Section title="Acudiente o empresa (opcional)">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldSelect
+                      label="¿Acudiente o empresa?"
+                      value={fields.tieneAcudiente}
+                      onChange={(v) => handleChange('tieneAcudiente', v)}
+                      placeholder="Selecciona una opción"
+                      options={['Sí', 'No']}
+                      error={errors.tieneAcudiente}
+                    />
+
+                    {fields.tieneAcudiente === 'Sí' && (
+                      <>
+                        <FieldInput
+                          label="Nombre Acudiente / Empresa"
+                          value={fields.acudienteNombre}
+                          onChange={(v) => handleChange('acudienteNombre', v)}
+                          error={errors.acudienteNombre}
+                        />
+                        <FieldInput
+                          label="Contacto Acudiente / Empresa"
+                          value={fields.acudienteContacto}
+                          onChange={(v) => handleChange('acudienteContacto', v)}
+                          error={errors.acudienteContacto}
+                        />
+                        <FieldInput
+                          label="Email Acudiente / Empresa"
+                          type="email"
+                          value={fields.acudienteEmail}
+                          onChange={(v) => handleChange('acudienteEmail', v)}
+                          error={errors.acudienteEmail}
+                        />
+                      </>
+                    )}
+                  </div>
+                </Section>
+
+                {/* Programa y fechas */}
+                <Section title="Programa y fechas">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldSelect
+                      label={
+                        loadingPrograms
+                          ? 'Programa* (cargando...)'
+                          : errorPrograms
+                            ? 'Programa* (error al cargar)'
+                            : 'Programa*'
+                      }
+                      value={fields.programa}
+                      onChange={(v) => handleChange('programa', v)}
+                      placeholder={
+                        loadingPrograms
+                          ? 'Cargando programas...'
+                          : errorPrograms
+                            ? 'Error al cargar programas'
+                            : programTitles.length === 0
+                              ? 'No hay programas'
+                              : 'Selecciona un programa'
+                      }
+                      options={programTitles}
+                      disabled={
+                        loadingPrograms ||
+                        !!errorPrograms ||
+                        programTitles.length === 0
+                      }
+                      error={errors.programa}
+                    />
+
+                    <FieldSelect
+                      label="Fecha de Inicio*"
+                      value={fields.fechaInicio}
+                      onChange={(v) => handleChange('fechaInicio', v)}
+                      placeholder="Selecciona una fecha"
+                      options={dateOptions}
+                      error={errors.fechaInicio}
+                    />
+
+                    <FieldSelect
+                      label="Comercial*"
+                      value={fields.comercial}
+                      onChange={(v) => handleChange('comercial', v)}
+                      placeholder="Selecciona un comercial"
+                      options={commercialOptions}
+                      error={errors.comercial}
+                    />
+                  </div>
+                </Section>
+
+                {/* Sede, modalidad y cuotas */}
+                <Section title="Sede y detalles de pago">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldSelect
+                      label="Sede*"
+                      value={fields.sede}
+                      onChange={(v) => handleChange('sede', v)}
+                      placeholder={
+                        sedeOptions.length ? 'Selecciona una sede' : 'No hay sedes'
+                      }
+                      options={sedeOptions}
+                      disabled={sedeOptions.length === 0}
+                      error={errors.sede}
+                    />
+                    <FieldSelect
+                      label="Horario*"
+                      value={fields.horario}
+                      onChange={(v) => handleChange('horario', v)}
+                      placeholder={
+                        horarioOptions.length
+                          ? 'Selecciona un horario'
+                          : 'No hay horarios'
+                      }
+                      options={horarioOptions}
+                      disabled={horarioOptions.length === 0}
+                      error={errors.horario}
+                    />
+
+                    <FieldSelect
+                      label="Pago de Inscripción*"
+                      value={fields.pagoInscripcion}
+                      onChange={(v) => handleChange('pagoInscripcion', v)}
+                      placeholder="Selecciona una opción"
+                      options={['Sí', 'No']}
+                      error={errors.pagoInscripcion}
+                    />
+
+                    <div className={fields.pagoInscripcion === 'Sí' ? 'block' : 'hidden'}>
+                      <FieldFile
+                        label="Subir comprobante de pago de inscripción (PDF/imagen)"
+                        file={comprobanteInscripcion}
+                        onChange={setComprobanteInscripcion}
+                        error={fileErrors?.comprobanteInscripcion}
+                        required={fields.pagoInscripcion === 'Sí'}
+                      />
+                    </div>
+
+
+
+                    <FieldSelect
+                      label="Número de Cuotas*"
+                      value={fields.numeroCuotas}
+                      onChange={(v) => handleChange('numeroCuotas', v)}
+                      placeholder="Elige"
+                      options={[...CUOTAS_OPTS]}
+                      error={errors.numeroCuotas}
+                    />
+                  </div>
+                </Section>
+
+                <Section title="Documentos requeridos">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FieldFile
+                      label="Subir Documento de Identidad"
+                      required
+                      file={docIdentidad}
+                      onChange={setDocIdentidad}
+                      error={fileErrors.docIdentidad}
+                    />
+                    <FieldFile
+                      label="Subir Acta de Grado (Bachiller o Noveno)"
+                      file={actaGrado}
+                      onChange={setActaGrado}
+                      error={fileErrors.actaGrado}
+                    />
+                    <FieldFile
+                      label="Subir Recibo Servicio Público"
+                      file={reciboServicio}
+                      onChange={setReciboServicio}
+                      error={fileErrors.reciboServicio}
+                    />
+                    <FieldFile
+                      label="Subir Pagaré"
+                      required
+                      file={pagare}
+                      onChange={setPagare}
+                      error={fileErrors.pagare}
+                    />
+                  </div>
+                </Section>
+
+
+                {/* Acciones */}
+                <div className="sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30 bg-[#0B132B] py-4">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400 disabled:opacity-60"
+                  >
+                    {submitting ? 'Enviando…' : 'Enviar Inscripción'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
+        )}
       </Dialog.Panel>
     </Dialog>
   );
+
 }
 
 /* =======================

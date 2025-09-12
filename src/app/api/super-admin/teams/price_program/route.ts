@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       const defaultResponse = {
         userId,
         programaId: programaIdInt,
-        price: 150000,
+        price: 1800000,
         numCuotas: 12,
         createdAt: now,
         updatedAt: now,

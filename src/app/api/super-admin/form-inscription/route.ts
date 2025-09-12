@@ -593,23 +593,81 @@ await db
       );
     }
 
-    // ... después de enviar notificaciones y todo
-try {
-const hoy = new Date();
-const fechaStr = hoy.toISOString().split('T')[0]; // "YYYY-MM-DD"
-  await db.insert(pagos).values({
-    userId,
-    programaId: programRow.id,
-    concepto: 'Cuota 1',
-    nroPago: 1,
-    fecha: fechaStr,
-    metodo: 'Artiefy',
-    valor: 150000,
-    createdAt: hoy,
-  });
-  console.log('[PAGO AUTOMÁTICO] Cuota 1 registrada para userId:', userId);
-} catch (pagoErr) {
-  console.error('❌ Error creando pago automático:', pagoErr);
+// ... después de enviar notificaciones y todo
+// Solo registrar el pago si el usuario indicó que ya pagó la inscripción
+console.log('[PAGO] valor de fields.pagoInscripcion =>', fields.pagoInscripcion);
+const pagoInscripcionEsSi = /^s[ií]$/i.test(fields.pagoInscripcion || '');
+console.log('[PAGO] ¿pagoInscripcionEsSi? =>', pagoInscripcionEsSi);
+
+// Debug del comprobante
+console.log('[PAGO] Comprobante (S3):', {
+  comprobanteInscripcionKey,
+  comprobanteInscripcionUrl,
+  hasFile: !!comprobanteInscripcion,
+  fileName: comprobanteInscripcion?.name ?? null,
+  fileType: comprobanteInscripcion?.type ?? null,
+  fileSize: comprobanteInscripcion?.size ?? null,
+});
+
+if (pagoInscripcionEsSi) {
+  try {
+    const hoy = new Date();
+    const fechaStr = hoy.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+    const payload = {
+      userId,
+      programaId: programRow.id,
+      concepto: 'Cuota 1',        // o 'Inscripción' si prefieres
+      nroPago: 1,
+      fecha: fechaStr,
+      metodo: 'Artiefy',
+      valor: 150000,
+      createdAt: hoy,
+
+      // Comprobante subido a S3
+      receiptKey: comprobanteInscripcionKey ?? null,
+      receiptUrl: comprobanteInscripcionUrl ?? null,
+      receiptName: comprobanteInscripcion?.name ?? null,
+      receiptUploadedAt: hoy,
+    };
+
+    console.log('[PAGO] Insert payload =>', payload);
+
+    const inserted = await db
+      .insert(pagos)
+      .values(payload)
+      .returning({
+        id: pagos.id,
+        userId: pagos.userId,
+        programaId: pagos.programaId,
+        concepto: pagos.concepto,
+        nroPago: pagos.nroPago,
+        fecha: pagos.fecha,
+        metodo: pagos.metodo,
+        valor: pagos.valor,
+        receiptKey: pagos.receiptKey,
+        receiptUrl: pagos.receiptUrl,
+        createdAt: pagos.createdAt,
+      });
+
+    console.log('[PAGO] Resultado de INSERT (returning):');
+    console.table(inserted);
+
+    if (inserted?.length) {
+      console.log(
+        `[PAGO OK] id=${inserted[0].id} registrado para userId=${userId}, programaId=${programRow.id}`
+      );
+    } else {
+      console.warn('[PAGO] INSERT no devolvió filas (returning vacío).');
+    }
+  } catch (pagoErr) {
+    console.error('❌ Error creando pago automático:', pagoErr);
+  }
+} else {
+  console.log(
+    '[PAGO] No se registra pago porque pagoInscripcion ≠ "Sí". Valor:',
+    fields.pagoInscripcion
+  );
 }
 
 console.log('==== [FORM SUBMIT] FIN OK ====');
