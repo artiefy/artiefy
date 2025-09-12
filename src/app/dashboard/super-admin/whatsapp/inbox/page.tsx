@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { KeyboardEvent } from 'react';
+
 interface InboxItem {
   id?: string;
   from?: string;
@@ -32,6 +34,9 @@ export default function WhatsAppInboxPage() {
   const [sending, setSending] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
+  // móvil: mostrar lista (true) o chat (false)
+  const [showList, setShowList] = useState<boolean>(true);
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Agrupar por chat (wa_id) ----
@@ -58,14 +63,16 @@ export default function WhatsAppInboxPage() {
         items: sorted,
       });
     }
-    // más reciente primero
     return list.sort((a, b) => b.lastTs - a.lastTs);
   }, [inbox]);
 
   // ---- Selección inicial y persistencia ----
   useEffect(() => {
     const saved = localStorage.getItem('wa_selected_chat');
-    if (saved) setSelected(saved);
+    if (saved) {
+      setSelected(saved);
+      setShowList(false); // si había uno seleccionado, abre chat en móvil
+    }
   }, []);
   useEffect(() => {
     if (!selected && threads.length) setSelected(threads[0].waid);
@@ -116,8 +123,7 @@ export default function WhatsAppInboxPage() {
   const lastInboundId = (waid: string) =>
     threads
       .find((t) => t.waid === waid)
-      ?.items
-      .slice()
+      ?.items.slice()
       .reverse()
       .find((m) => m.direction === 'inbound' && m.id)?.id;
 
@@ -143,23 +149,17 @@ export default function WhatsAppInboxPage() {
 
       if (!res.ok) {
         let errMsg = `Error enviando WhatsApp (HTTP ${res.status})`;
-
         try {
           const j: unknown = await res.json();
-
-          if (j && typeof j === 'object' && 'error' in j) {
+          if (typeof j === 'object' && j !== null && 'error' in j) {
             const maybe = (j as { error?: unknown }).error;
-            if (typeof maybe === 'string' && maybe.trim()) {
-              errMsg = maybe;
-            }
+            if (typeof maybe === 'string' && maybe.trim()) errMsg = maybe;
           }
-        } catch {
-          // ignoramos parse errors y usamos el mensaje por defecto
+        } catch (parseErr) {
+          console.debug('[WA] Error parseando cuerpo JSON de error:', parseErr);
         }
-
         throw new Error(errMsg);
       }
-
 
       // Optimista
       setInbox((prev) => [
@@ -176,13 +176,14 @@ export default function WhatsAppInboxPage() {
       setCompose((p) => ({ ...p, [waid]: '' }));
     } catch (e) {
       console.error(e);
-      alert('No se pudo enviar el WhatsApp');
+      const msg = e instanceof Error ? e.message : 'No se pudo enviar el WhatsApp';
+      alert(msg);
     } finally {
       setSending(null);
     }
   };
 
-  const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend(waid);
@@ -191,31 +192,37 @@ export default function WhatsAppInboxPage() {
 
   // ---- UI ----
   return (
-    <div className="flex h-[calc(100vh-80px)] min-h-[560px] w-full gap-0 rounded-lg border border-gray-800 bg-gray-900">
+    <div className="flex h-[calc(100vh-80px)] min-h-[560px] w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
       {/* Sidebar chats */}
-      <aside className="w-80 border-r border-gray-800 bg-gray-950">
-        <div className="px-4 py-3 text-lg font-semibold">WhatsApp Inbox</div>
+      <aside
+        className={`w-full md:w-80 border-r border-gray-200 bg-white ${showList ? 'block' : 'hidden md:block'
+          }`}
+      >
+        <div className="px-4 py-3 text-lg font-semibold text-gray-800">WhatsApp Inbox</div>
         <div className="max-h-[calc(100%-48px)] overflow-y-auto">
           {threads.length === 0 && (
-            <div className="p-4 text-sm text-gray-400">Sin conversaciones aún.</div>
+            <div className="p-4 text-sm text-gray-500">Sin conversaciones aún.</div>
           )}
           {threads.map((t) => (
             <button
               key={t.waid}
-              onClick={() => setSelected(t.waid)}
-              className={`block w-full px-4 py-3 text-left hover:bg-gray-800/60 ${selected === t.waid ? 'bg-gray-800' : ''
+              onClick={() => {
+                setSelected(t.waid);
+                setShowList(false); // en móvil, al elegir chat, mostramos la conversación
+              }}
+              className={`block w-full px-4 py-3 text-left hover:bg-gray-50 ${selected === t.waid ? 'bg-gray-100' : ''
                 }`}
             >
               <div className="flex items-baseline justify-between">
-                <div className="truncate font-medium">
+                <div className="truncate font-medium text-gray-900">
                   {t.name ?? t.waid}
-                  <span className="ml-2 text-xs text-gray-400">({t.waid})</span>
+                  <span className="ml-2 text-xs text-gray-500">({t.waid})</span>
                 </div>
-                <div className="ml-2 shrink-0 text-xs text-gray-400">
+                <div className="ml-2 shrink-0 text-xs text-gray-500">
                   {t.lastTs ? fmtTime(t.lastTs) : ''}
                 </div>
               </div>
-              <div className="mt-1 truncate text-sm text-gray-400">
+              <div className="mt-1 truncate text-sm text-gray-500">
                 {t.lastText ?? '(sin texto)'}
               </div>
             </button>
@@ -224,15 +231,25 @@ export default function WhatsAppInboxPage() {
       </aside>
 
       {/* Chat window */}
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section
+        className={`flex min-w-0 flex-1 flex-col ${showList ? 'hidden md:flex' : 'flex'}`}
+      >
         {/* Header */}
-        <div className="flex items-center gap-2 border-b border-gray-800 px-5 py-3">
-          <div className="h-8 w-8 rounded-full bg-emerald-700/40" />
+        <div className="flex items-center gap-2 border-b border-gray-200 px-5 py-3 bg-[#075E54] text-white">
+          {/* Back on mobile */}
+          <button
+            onClick={() => setShowList(true)}
+            className="md:hidden rounded px-2 py-1 text-sm hover:bg-white/10"
+            aria-label="Volver a chats"
+          >
+            ← Chats
+          </button>
+          <div className="h-8 w-8 rounded-full bg-white/20" />
           <div className="min-w-0">
             <div className="truncate font-medium">
               {threads.find((t) => t.waid === selected)?.name ?? selected ?? '—'}
             </div>
-            <div className="truncate text-xs text-gray-400">
+            <div className="truncate text-xs opacity-90">
               {selected ? `(${selected})` : 'Selecciona una conversación'}
             </div>
           </div>
@@ -241,10 +258,17 @@ export default function WhatsAppInboxPage() {
         {/* Messages */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-2 overflow-y-auto bg-[url('https://i.imgur.com/dYcYQ7E.png')] bg-cover p-4"
+          className="flex-1 space-y-2 overflow-y-auto p-4"
+          style={{
+            backgroundImage: "url('/wallWhat.png')",
+            backgroundRepeat: 'no-repeat',  // si tu imagen es wallpaper grande
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#ECE5DD',     // color base de WhatsApp (fallback)
+          }}
         >
           {!selected && (
-            <div className="p-6 text-center text-sm text-gray-400">
+            <div className="p-6 text-center text-sm text-gray-500">
               Selecciona un chat para comenzar.
             </div>
           )}
@@ -255,7 +279,7 @@ export default function WhatsAppInboxPage() {
                 return (
                   <div
                     key={m.id ?? String(m.timestamp)}
-                    className="mx-auto w-fit max-w-[70%] rounded-full bg-gray-800/70 px-3 py-1 text-center text-xs text-gray-300"
+                    className="mx-auto w-fit max-w-[70%] rounded-full bg-gray-100 px-3 py-1 text-center text-xs text-gray-600"
                     title={m.id ? `id: ${m.id}` : ''}
                   >
                     {m.text} · {fmtTime(m.timestamp)}
@@ -270,17 +294,14 @@ export default function WhatsAppInboxPage() {
                   className={`flex w-full ${isOutbound ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl px-3 py-2 shadow ${isOutbound
-                      ? 'rounded-br-sm bg-emerald-600 text-white'
-                      : 'rounded-bl-sm bg-gray-800 text-gray-100'
+                    className={`max-w-[80%] rounded-2xl px-3 py-2 shadow border ${isOutbound
+                      ? 'rounded-br-sm bg-[#DCF8C6] border-green-200 text-gray-900' // enviado (verde WhatsApp)
+                      : 'rounded-bl-sm bg-white border-gray-200 text-gray-900' // recibido (blanco)
                       }`}
                     title={m.id ? `id: ${m.id}` : ''}
                   >
                     {m.text && <div className="whitespace-pre-wrap">{m.text}</div>}
-                    <div
-                      className={`mt-1 text-[10px] ${isOutbound ? 'text-emerald-100/80' : 'text-gray-300/70'
-                        } text-right`}
-                    >
+                    <div className="mt-1 text-right text-[10px] text-gray-500">
                       {fmtTime(m.timestamp)}
                     </div>
                   </div>
@@ -290,15 +311,17 @@ export default function WhatsAppInboxPage() {
         </div>
 
         {/* Composer */}
-        <div className="border-t border-gray-800 p-3">
+        <div className="border-t border-gray-200 bg-white p-3">
           <div className="flex items-end gap-2">
             <textarea
               disabled={!selected}
               rows={1}
               onKeyDown={(e) => selected && handleKey(e, selected)}
-              className="max-h-40 min-h-[44px] w-full resize-y rounded-xl border border-gray-700 bg-gray-900 p-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:opacity-50"
+              className="max-h-40 min-h-[44px] w-full resize-y rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:opacity-50"
               placeholder={
-                selected ? 'Escribe un mensaje (Enter para enviar, Shift+Enter salto de línea)' : 'Selecciona un chat…'
+                selected
+                  ? 'Escribe un mensaje (Enter para enviar, Shift+Enter salto de línea)'
+                  : 'Selecciona un chat…'
               }
               value={selected ? compose[selected] || '' : ''}
               onChange={(e) =>
