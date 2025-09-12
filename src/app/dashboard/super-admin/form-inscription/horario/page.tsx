@@ -14,6 +14,62 @@ export default function HorariosPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // --- NUEVO: estados para editar / borrar ---
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // helpers de edición
+  const startEdit = (row: Horario) => {
+    setEditingId(row.id);
+    setEditValue(row.schedule);
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  // UPDATE
+  const handleUpdate = async (id: number) => {
+    const value = editValue.trim();
+    if (!value) return;
+    try {
+      setUpdatingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/horario?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedules: value }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setEditingId(null);
+      setEditValue('');
+      await load();
+    } catch {
+      alert('No se pudo actualizar el horario');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // DELETE
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Eliminar este horario?')) return;
+    try {
+      setDeletingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/horario?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await load();
+    } catch {
+      alert('No se pudo eliminar el horario');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
   const load = async () => {
     try {
       setLoading(true);
@@ -139,12 +195,61 @@ export default function HorariosPage() {
             <p className="text-gray-400">No hay horarios registrados.</p>
           ) : (
             <ul className="divide-y divide-gray-700">
-              {items.map((c) => (
-                <li key={c.id} className="py-2">
-                  {c.schedule}
-                </li>
-              ))}
+              {items.map((row) => {
+                const isEditing = editingId === row.id;
+                const isUpdating = updatingId === row.id;
+                const isDeleting = deletingId === row.id;
+
+                return (
+                  <li key={row.id} className="flex items-center gap-3 py-2">
+                    {isEditing ? (
+                      <input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                      />
+                    ) : (
+                      <span className="flex-1">{row.schedule}</span>
+                    )}
+
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={() => void handleUpdate(row.id)}
+                          disabled={isUpdating || !editValue.trim()}
+                          className="rounded bg-green-500 px-3 py-1 text-black font-semibold hover:bg-green-400 disabled:opacity-60"
+                        >
+                          {isUpdating ? 'Guardando…' : 'Guardar'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="rounded bg-gray-600 px-3 py-1 text-white font-semibold hover:bg-gray-500"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(row)}
+                          className="rounded bg-blue-500 px-3 py-1 text-black font-semibold hover:bg-blue-400"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => void handleDelete(row.id)}
+                          disabled={isDeleting}
+                          className="rounded bg-red-500 px-3 py-1 text-black font-semibold hover:bg-red-400 disabled:opacity-60"
+                        >
+                          {isDeleting ? 'Eliminando…' : 'Eliminar'}
+                        </button>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
+
           )}
         </div>
       </div>

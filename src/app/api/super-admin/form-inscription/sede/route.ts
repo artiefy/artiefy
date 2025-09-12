@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
@@ -10,6 +10,76 @@ import { sede } from '~/server/db/schema';
 const schema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la sede es requerido'),
 });
+
+// Zod para ID por query (?id=123)
+const idSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+
+// PUT: actualizar sede (?id=)
+export async function PUT(req: NextRequest) {
+  try {
+    const { id } = idSchema.parse({ id: req.nextUrl.searchParams.get('id') });
+    const { nombre } = schema.parse(await req.json());
+
+    const updated = await db
+      .update(sede)
+      .set({ nombre })
+      .where(eq(sede.id, id))
+      .returning({ id: sede.id, nombre: sede.nombre });
+
+    if (updated.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'Sede no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, sede: updated[0] });
+  } catch (e: unknown) {
+    console.error('PUT /sede error:', e);
+
+    const isUniqueViolation =
+      typeof e === 'object' &&
+      e !== null &&
+      'code' in e &&
+      (e as { code?: string }).code === '23505';
+
+    return NextResponse.json(
+      { ok: false, error: isUniqueViolation ? 'Ya existe una sede con ese nombre' : 'No se pudo actualizar la sede' },
+      { status: 400 }
+    );
+  }
+}
+
+// DELETE: eliminar sede (?id=)
+export async function DELETE(req: NextRequest) {
+  try {
+    const { id } = idSchema.parse({ id: req.nextUrl.searchParams.get('id') });
+
+    const deleted = await db
+      .delete(sede)
+      .where(eq(sede.id, id))
+      .returning({ id: sede.id, nombre: sede.nombre });
+
+    if (deleted.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'Sede no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, sede: deleted[0] });
+  } catch (e) {
+    console.error('DELETE /sede error:', e);
+    return NextResponse.json(
+      { ok: false, error: 'No se pudo eliminar la sede' },
+      { status: 400 }
+    );
+  }
+}
+
 
 // GET: listar todas las sedes (ordenadas alfabéticamente)
 export async function GET() {
