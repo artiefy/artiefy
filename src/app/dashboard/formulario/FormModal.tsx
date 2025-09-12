@@ -291,24 +291,18 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const CUOTAS_OPTS = ['1', '2', '3', '4', '8', '10', '12'] as const;
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
-  const [countdown, setCountdown] = useState(5);
 
-  useEffect(() => {
-    if (!showSuccess) return;
-    setCountdown(5);
-    const i = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(i);
-          // Redirección tras 5s
-          window.location.assign('https://artiefy.com/');
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(i);
-  }, [showSuccess]);
+  const resetForm = () => {
+    setFields({ ...defaultFields });
+    setErrors({});
+    setDocIdentidad(null);
+    setReciboServicio(null);
+    setComprobanteInscripcion(null);
+    setActaGrado(null);
+    setPagare(null);
+    setShowSuccess(false); // 👈 vuelve al formulario
+  };
+
 
 
   const [comprobanteInscripcion, setComprobanteInscripcion] =
@@ -366,9 +360,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
     return typeof value === 'object' && value !== null;
   }
   interface ProgramObj { title?: string | null }
-  interface ApiOk { program?: ProgramObj; emailSent?: boolean }
   interface ApiErr { error: string }
-
   function hasError(p: unknown): p is ApiErr {
     return isRecord(p) && typeof p.error === 'string';
   }
@@ -731,34 +723,25 @@ export default function FormModal({ isOpen, onClose }: Props) {
               <p className="max-w-xl text-sm text-gray-400">{submitMessage}</p>
             )}
 
-            <div className="w-full max-w-md">
-              <div className="h-2 w-full rounded bg-[#101a35]">
-                <div
-                  className="h-2 rounded bg-cyan-500 transition-all"
-                  style={{ width: `${((5 - Math.max(countdown, 0)) / 5) * 100}%` }}
-                />
-              </div>
-              <p className="mt-2 text-xs text-gray-400">
-                Te redirigiremos en {countdown}s…
-              </p>
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="https://artiefy.com/"
-                className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400"
-              >
-                Ir ahora
-              </a>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={handleClose}
+                onClick={resetForm}
+                className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400"
+              >
+                Llenar otro formulario
+              </button>
+              <a
+                href="https://artiefy.com/"
+                target="_blank"
+                rel="noreferrer"
                 className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
               >
-                Cerrar
-              </button>
+                Ir a Artiefy
+              </a>
             </div>
           </div>
+
         ) : (
           // ==== Pantalla de FORMULARIO ====
           <>
