@@ -2,10 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /** ===================== Config ===================== */
-const WHATSAPP_WABA_ID = '1229944015242086';
-const WHATSAPP_PHONE_NUMBER_ID = '687425254451016';
+const WHATSAPP_WABA_ID = '683921414745007';
+const WHATSAPP_PHONE_NUMBER_ID = '805951652593761';
 const ACCESS_TOKEN =
-  'EAAgXFWT4Gt8BPfZApZC0ZBQSZBaiyOtxKsvMWTyTqIcRLPb8pfZCGhm1RB6vNr1szLrfNSJLiNreJPvXZC51vIQ5Y6TfpGAcwYJN0x21O8A9ZAShbmFiy0oqUN0nMQZBdP1FGa9zoBqa1RmSLQID1PZAX9c97imZAZCq2hzVnBxpFDiEu0PkE8B1PlgNmXvmhx4uiXZCCgZDZD';
+  'EAAgXFWT4Gt8BPRnyw8HZA038BKjYZAgQQN4q83KlIfQPeaq58gFlZAerzNTYmthlZA6h9CZBqZC9ZCS2Sp21JeRiW9go6iKonNdRsRzZBVrC5FkMgt84O8hMkpg8GODzU5tL8cCyKocnKl7ymjZCe84KompirjoRHZBvyX9uilAqEBBEF9gZABzTcf47ZCPpe9ovB4u0CAZDZD';
 
 /** ===================== Tipos ===================== */
 // Request body del POST
@@ -26,10 +26,12 @@ interface TemplateParameter {
   type: 'text';
   text: string;
 }
+
 interface TemplateComponentBody {
   type: 'body' | 'BODY';
   parameters: TemplateParameter[];
 }
+
 interface TemplatePayload {
   messaging_product: 'whatsapp';
   to: string;
@@ -40,12 +42,14 @@ interface TemplatePayload {
     components?: TemplateComponentBody[];
   };
 }
+
 interface TextPayload {
   messaging_product: 'whatsapp';
   to: string;
   type: 'text';
   text: { body: string };
 }
+
 type WhatsAppPayload = TemplatePayload | TextPayload;
 
 // Meta success mínimo
