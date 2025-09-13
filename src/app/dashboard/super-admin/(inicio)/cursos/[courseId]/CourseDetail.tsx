@@ -173,10 +173,27 @@ const FullscreenLoader = () => {
   );
 };
 
-// --- Helpers de tipado seguros ---
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+interface VideoIdxItem {
+  meetingId: string;
+  videoKey: string;
+  videoUrl: string;
+  createdAt?: string;
 }
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
+}
+
+function isVideoIdxItem(v: unknown): v is VideoIdxItem {
+  if (!isRecord(v)) return false;
+  return (
+    typeof v.meetingId === 'string' &&
+    typeof v.videoKey === 'string' &&
+    typeof v.videoUrl === 'string' &&
+    (typeof v.createdAt === 'string' || typeof v.createdAt === 'undefined')
+  );
+}
+
 
 // Tipo auxiliar con las props que necesitamos leer de forma segura
 type MaybeMeeting = Partial<
@@ -212,9 +229,22 @@ function toUIMeeting(m: ScheduledMeeting): UIMeeting {
     typeof obj.videoUrl === 'string' ? obj.videoUrl : undefined;
 
   const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
-  const fromKey = video_key ? `${aws}/video_clase/${video_key}` : undefined;
-  const finalVideoUrl =
-    videoUrlRaw ?? recordingContentUrl ?? fromKey ?? undefined;
+  const { url: finalVideoUrl, source } = resolveVideo(
+    { video_key, videoUrl: videoUrlRaw, recordingContentUrl },
+    aws,
+  );
+
+
+  // 🐞 log detallado por ítem
+  console.log('🎥 resolveVideo()', {
+    id,
+    meetingId,
+    video_key,
+    videoUrlRaw,
+    recordingContentUrl,
+    finalVideoUrl,
+    source,
+  });
 
   return {
     ...(m as ScheduledMeeting),
@@ -225,7 +255,69 @@ function toUIMeeting(m: ScheduledMeeting): UIMeeting {
     video_key,
     videoUrl: finalVideoUrl,
   };
+
 }
+
+type VideoSource = 'S3_BY_KEY' | 'EXPLICIT_URL' | 'GRAPH_TEMP' | 'NONE';
+
+function resolveVideo(m: {
+  video_key?: string;
+  videoUrl?: string;
+  recordingContentUrl?: string;
+}, awsBase: string): { url?: string; source: VideoSource } {
+  const aws = (awsBase ?? '').replace(/\/+$/, '');
+
+  // 1) Preferimos S3 (estable)
+  if (m.video_key && m.video_key.trim() !== '') {
+    return { url: `${aws}/video_clase/${m.video_key.trim()}`, source: 'S3_BY_KEY' };
+  }
+
+  // 2) URL explícita válida
+  if (typeof m.videoUrl === 'string') {
+    const v = m.videoUrl.trim();
+    if (v && !/^(null|undefined)$/i.test(v)) {
+      try {
+        const u = new URL(v);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          return { url: v, source: 'EXPLICIT_URL' };
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  // 3) Fallback Graph temporal
+  if (typeof m.recordingContentUrl === 'string') {
+    const r = m.recordingContentUrl.trim();
+    if (r && !/^(null|undefined)$/i.test(r)) {
+      return { url: r, source: 'GRAPH_TEMP' };
+    }
+  }
+
+  return { url: undefined, source: 'NONE' };
+}
+
+function getMeetingIdFrom(m: ScheduledMeeting): string {
+  const obj = (m as unknown) as MaybeMeeting;
+
+  // 1) Si viene en la data, úsalo
+  if (typeof obj.meetingId === 'string' && obj.meetingId.trim() !== '') {
+    return obj.meetingId.trim();
+  }
+
+  // 2) Fallback: intenta extraerlo del joinUrl
+  const ju = typeof obj.joinUrl === 'string' ? obj.joinUrl : '';
+  if (!ju) return '';
+
+  try {
+    const dec = decodeURIComponent(ju);
+    const match = /19:meeting_[^@]+@thread\.v2/.exec(dec);
+    return match?.[0] ?? '';
+  } catch {
+    return '';
+  }
+}
+
+
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const router = useRouter(); // Obtener el router
@@ -298,6 +390,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [scheduledMeetings, setScheduledMeetings] = useState<
     ScheduledMeeting[]
   >([]);
+  // índice de videos por meetingId
+  const [videosByMeetingId, setVideosByMeetingId] = useState<
+    Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>
+  >(new Map());
+  // Lista completa de videos para asignación por fecha (no colapsada por meetingId)
+  const [videosRaw, setVideosRaw] = useState<
+    { meetingId: string; videoKey: string; videoUrl: string; createdAt?: string }[]
+  >([]);
+  void videosByMeetingId;
+
+
 
   const { user } = useUser(); // Ya está dentro del componente
 
@@ -325,9 +428,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const errorMessage =
           typeof responseData === 'object' &&
-          responseData !== null &&
-          'error' in responseData &&
-          typeof (responseData as { error?: unknown }).error === 'string'
+            responseData !== null &&
+            'error' in responseData &&
+            typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
             : 'Error al matricular';
 
@@ -454,6 +557,62 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     void fetchEducators(); // Use void operator to explicitly ignore the promise
   }, []);
 
+  useEffect(() => {
+    // ⚠️ Usa el AAD userId del organizador (GUID). Este es el que aparece en tus logs.
+    const organizerAadUserId = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
+
+    if (!organizerAadUserId) return;
+
+    const run = async () => {
+      try {
+        console.log('🎥 Haciendo fetch de videos...');
+        const res = await fetch(`/api/super-admin/teams/video?userId=${organizerAadUserId}`);
+        console.log('🛰️ /teams/video status: ', res.status, 'url usada:', res.url);
+
+        if (!res.ok) return;
+
+        interface VideoIdxItem {
+          meetingId: string;
+          videoKey: string;
+          videoUrl: string;
+          createdAt?: string;
+        }
+
+        const raw = (await res.json()) as unknown;
+
+        const videos: VideoIdxItem[] =
+          isRecord(raw) && Array.isArray((raw as Record<string, unknown>).videos)
+            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(isVideoIdxItem)
+            : [];
+
+
+        setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
+
+        console.log('🎬 Lista de videos extraída:', videos);
+
+        // construir índice meetingId -> video más reciente (por si acaso)
+        const map = new Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>();
+        for (const v of videos) {
+          const prev = map.get(v.meetingId);
+          if (!prev) {
+            map.set(v.meetingId, v);
+          } else {
+            const pt = prev.createdAt ? new Date(prev.createdAt).getTime() : 0;
+            const ct = v.createdAt ? new Date(v.createdAt).getTime() : 0;
+            if (ct >= pt) map.set(v.meetingId, v);
+          }
+        }
+
+        setVideosByMeetingId(map);
+      } catch (e) {
+        console.error('❌ Error fetch /teams/video:', e);
+      }
+    };
+
+    void run();
+  }, []); // solo una vez
+
+
   // Obtener el color seleccionado al cargar la página
   useEffect(() => {
     const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -466,6 +625,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setScheduledMeetings(course.meetings);
     }
   }, [course?.meetings]);
+
+
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -837,6 +998,94 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return <FullscreenLoader />;
   }
 
+  // Base de reuniones (las del estado si existen; si no, las del curso)
+  const baseMeetings = (scheduledMeetings.length
+    ? scheduledMeetings
+    : (course.meetings ?? []));
+
+  // --- Helper local para parsear fechas robusto (si no trae zona, asumimos Bogotá -05:00)
+  const toMs = (s: string) => {
+    const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(s);
+    const final = hasTZ ? s : `${s}-05:00`;
+    return new Date(final).getTime();
+  };
+
+  // 1) Normalizamos ocurrencias y limpiamos cualquier video heredado
+  const occs: UIMeeting[] = baseMeetings.map((m) => {
+    const ui = toUIMeeting(m);
+    const mId = getMeetingIdFrom(m);
+
+    return {
+      ...ui,
+      meetingId: mId,
+      // limpiamos para que NO se hereden videos entre ocurrencias
+      video_key: undefined,
+      videoUrl: undefined,
+      recordingContentUrl: undefined,
+    };
+  });
+
+  // 2) Asignamos cada video a UNA sola ocurrencia: la más cercana por fecha
+  for (const v of videosRaw) {
+    // si el video no tiene createdAt, no podemos emparejar por fecha
+    const vMs = v.createdAt ? new Date(v.createdAt).getTime() : Number.NaN;
+
+    // candidatos: si viene meetingId, filtramos por ese; si no, consideramos todos
+    const candidates = occs
+      .map((o, idx) => ({ idx, o }))
+      .filter(({ o }) => !v.meetingId || o.meetingId === v.meetingId);
+
+    if (!candidates.length || Number.isNaN(vMs)) continue;
+
+    // elegimos el idx con |start - createdAt| mínimo, y que aún no tenga video
+    let bestIdx = -1;
+    let bestDiff = Number.POSITIVE_INFINITY;
+
+    for (const { idx, o } of candidates) {
+      const startMs = toMs(String((o as unknown as { startDateTime: string }).startDateTime));
+      const diff = Math.abs(startMs - vMs);
+
+      // si ya tiene video, lo saltamos (mantenemos 1:1)
+      const alreadyHasVideo = Boolean(o.video_key ?? o.videoUrl);
+      if (!alreadyHasVideo && diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = idx;
+      }
+    }
+
+    if (bestIdx >= 0) {
+      occs[bestIdx].video_key = v.videoKey;
+      occs[bestIdx].videoUrl = v.videoUrl;
+    }
+  }
+
+  const mergedMeetings: UIMeeting[] = occs;
+
+  // (Opcional) Log compacto para verificar asignaciones
+  console.table(
+    mergedMeetings.map(m => ({
+      id: m.id,
+      meetingId: m.meetingId,
+      video_key: m.video_key,
+      videoUrl: m.videoUrl,
+    }))
+  );
+
+
+
+  console.table(
+    mergedMeetings.map(m => ({
+      id: m.id,
+      meetingId: m.meetingId,
+      video_key: m.video_key,
+      videoUrl: m.videoUrl,
+    }))
+  );
+
+
+
+
+
   // Renderizar el componente
   return (
     <div className="bg-background h-auto w-full rounded-lg p-4">
@@ -893,11 +1142,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
-                    } `}
+                    className={`size-8 border ${selectedColor === '#FFFFFF'
+                      ? 'border-black'
+                      : 'border-white'
+                      } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -973,9 +1221,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Curso:
                   </h2>
@@ -985,9 +1232,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Categoría:
                   </h2>
@@ -1001,25 +1247,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1036,9 +1279,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Educador:
                   </h2>
@@ -1079,9 +1321,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Nivel:
                   </h2>
@@ -1094,9 +1335,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Modalidad:
                   </h2>
@@ -1109,9 +1349,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1140,19 +1379,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${
-                      course.isActive
-                        ? 'border-green-500 text-green-500'
-                        : 'border-red-500 text-red-500'
-                    } bg-background hover:bg-black/70`}
+                    className={`ml-1 w-fit border ${course.isActive
+                      ? 'border-green-500 text-green-500'
+                      : 'border-red-500 text-red-500'
+                      } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -1203,25 +1440,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </Button>
               </div>
               <ScheduledMeetingsList
-                meetings={(scheduledMeetings.length
-                  ? scheduledMeetings
-                  : (course.meetings ?? [])
-                ).map((m) => {
-                  const ui = toUIMeeting(m);
-
-                  console.log('🎯 Meeting video resolve:', {
-                    id: ui.id,
-                    meetingId: ui.meetingId,
-                    video_key: ui.video_key,
-                    videoUrl: ui.videoUrl,
-                    recordingContentUrl: ui.recordingContentUrl,
-                    finalVideoUrl: ui.videoUrl,
-                  });
-
-                  return ui;
-                })}
+                meetings={mergedMeetings}
                 color={selectedColor}
               />
+
+
             </div>
             <LessonsListEducator
               courseId={courseIdNumber}

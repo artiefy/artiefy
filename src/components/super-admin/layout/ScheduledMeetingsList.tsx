@@ -45,6 +45,26 @@ export const ScheduledMeetingsList = ({
     timeZone: tz,
   });
 
+  // ✅ Devuelve la URL final SOLO si hay video real (video_key o videoUrl válido)
+  // ✅ Devuelve la URL final SOLO si hay video real (S3 por key o URL http/https válida)
+  const getFinalVideoUrl = (m: UIMeeting, awsBase: string) => {
+    const key = (m.video_key ?? '').toString().trim();
+    if (key) return `${awsBase}/video_clase/${key}`;
+
+    const url = (m.videoUrl ?? '').toString().trim();
+    if (
+      url &&
+      !/^(null|undefined)$/i.test(url) &&
+      /^https?:\/\//i.test(url)
+    ) {
+      return url;
+    }
+
+    return null;
+  };
+
+
+
   // Si el string no trae zona, asumimos Bogotá (-05:00)
   const ensureDate = (isoLike: string) => {
     const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(isoLike);
@@ -223,83 +243,87 @@ export const ScheduledMeetingsList = ({
                       {fullTitle}
                     </p>
                     <ul className="space-y-2">
-                      {classes.map((m, idx) => {
-                        const start = ensureDate(m.startDateTime);
-                        const end = ensureDate(m.endDateTime);
+                      {classes
+                        .slice() // copiamos para no mutar el original
+                        .sort((a, b) => {
+                          const aTime = ensureDate(a.startDateTime).getTime();
+                          const bTime = ensureDate(b.startDateTime).getTime();
+                          return aTime - bTime; // ⬅️ ascendente (más antiguas primero)
+                        })
+                        .map((m, idx) => {
+                          const start = ensureDate(m.startDateTime);
+                          const end = ensureDate(m.endDateTime);
 
-                        const isValidStart = !isNaN(start.getTime());
-                        const isValidEnd = !isNaN(end.getTime());
+                          const isValidStart = !isNaN(start.getTime());
+                          const isValidEnd = !isNaN(end.getTime());
 
-                        const key = m.video_key;
-                        const finalVideo =
-                          m.videoUrl ??
-                          (key ? `${aws}/video_clase/${key}` : null);
+                          const finalVideo = getFinalVideoUrl(m, aws);
 
-                        console.log('🧾 Clase item', {
-                          idx,
-                          title: m.title,
-                          startRaw: m.startDateTime,
-                          endRaw: m.endDateTime,
-                          startISO: start.toISOString(),
-                          endISO: end.toISOString(),
-                          isValidStart,
-                          isValidEnd,
-                          joinUrl: m.joinUrl,
-                          finalVideo,
-                        });
+                          const hasVideo = Boolean(finalVideo);
 
-                        const endShort = new Intl.DateTimeFormat('es-CO', {
-                          timeStyle: 'medium',
-                          timeZone: tz,
-                        }).format(end);
+                          console.log('🧾 Clase item', {
+                            idx,
+                            title: m.title,
+                            startRaw: m.startDateTime,
+                            endRaw: m.endDateTime,
+                            startISO: start.toISOString(),
+                            endISO: end.toISOString(),
+                            isValidStart,
+                            isValidEnd,
+                            joinUrl: m.joinUrl,
+                            finalVideo,
+                          });
 
-                        return (
-                          <li key={idx} className="text-sm text-gray-300">
-                            <p>
-                              🕒{' '}
-                              {isValidStart && isValidEnd ? (
-                                <>
-                                  {formatter.format(start)} → {endShort}
-                                </>
-                              ) : (
-                                <span className="text-red-400">
-                                  Fecha inválida
-                                </span>
+                          const endShort = new Intl.DateTimeFormat('es-CO', {
+                            timeStyle: 'medium',
+                            timeZone: tz,
+                          }).format(end);
+
+                          return (
+                            <li key={idx} className="text-sm text-gray-300">
+                              <p>
+                                🕒{' '}
+                                {isValidStart && isValidEnd ? (
+                                  <>
+                                    {formatter.format(start)} → {endShort}
+                                  </>
+                                ) : (
+                                  <span className="text-red-400">Fecha inválida</span>
+                                )}
+                              </p>
+
+                              {m.joinUrl && (
+                                <a
+                                  href={m.joinUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
+                                >
+                                  🔗 Enlace de clase
+                                </a>
                               )}
-                            </p>
 
-                            {m.joinUrl && (
-                              <a
-                                href={m.joinUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
-                              >
-                                🔗 Enlace de clase
-                              </a>
-                            )}
-
-                            {finalVideo && (
+                              {hasVideo && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVideoToShow(finalVideo!)}
+                                  className="mt-2 inline-block rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500"
+                                >
+                                  Ver grabación
+                                </button>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => setVideoToShow(finalVideo)}
-                                className="mt-2 inline-block rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500"
+                                onClick={() => handleDelete(m)}
+                                className="mt-2 ml-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
                               >
-                                ▶ Ver grabación
+                                🗑 Eliminar clase
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(m)}
-                              className="mt-2 ml-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
-                            >
-                              🗑 Eliminar clase
-                            </button>
-
-                          </li>
-                        );
-                      })}
+                            </li>
+                          );
+                        })}
                     </ul>
+
                   </div>
                 ))}
               </div>
