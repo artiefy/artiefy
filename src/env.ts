@@ -39,6 +39,8 @@ export const env = createEnv({
     SKIP_ENV_VALIDATION: z.boolean().default(false),
 
     N8N_LICENSE_KEY: z.string().min(1),
+
+    OPENAI_API_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -96,6 +98,8 @@ export const env = createEnv({
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
 
     N8N_LICENSE_KEY: process.env.N8N_LICENSE_KEY,
+
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,
