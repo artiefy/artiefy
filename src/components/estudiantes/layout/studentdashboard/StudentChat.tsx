@@ -89,6 +89,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   });
   const router = useRouter();
   const pathname = usePathname();
+  const safePathname = pathname ?? '';
 
   useEffect(() => {
     setShowChatList(false);
@@ -138,7 +139,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
     let inCourse = false;
 
-    if (pathname.includes('cursos') || pathname.includes('curso')) {
+    if (safePathname.includes('cursos') || safePathname.includes('curso')) {
       console.log('Ingreso al if');
       if (isEnrolled) {
         console.log('Usuario está inscrito en el curso');
@@ -256,7 +257,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
     courseId,
     courseTitle,
     isEnrolled,
-    pathname,
+    safePathname,
     setChatMode,
     setMessages,
     user?.id,

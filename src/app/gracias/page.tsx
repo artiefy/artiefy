@@ -15,7 +15,7 @@ export default function GraciasPage() {
 
   // Solo permitir acceso si viene de PayU (from=payu)
   useEffect(() => {
-    if (searchParams.get('from') === 'payu') {
+    if (searchParams && searchParams.get('from') === 'payu') {
       setShowModal(true);
     } else {
       router.replace('/'); // Redirigir si no viene de PayU
@@ -23,8 +23,8 @@ export default function GraciasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const type = searchParams.get('type');
-  const courseId = searchParams.get('courseId');
+  const type = searchParams ? searchParams.get('type') : null;
+  const courseId = searchParams ? searchParams.get('courseId') : null;
 
   const handleContinue = () => {
     if (type === 'curso' && courseId) {
