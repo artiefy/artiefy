@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo,useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -53,8 +53,25 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // Añadir este estado
-  console.log(courseId);
+  // Extrae el número de "Clase N" desde el título. Ej: "Clase 6: ..." -> 6
+  const getLessonNumberFromTitle = (title: string) => {
+    const match = /clase\s*(\d+)/i.exec(title);
+    return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER; // si no encuentra número, lo manda al final
+  };
 
+  // Ordena priorizando `lesson.order`; si no existe/vale, usa el número del título
+  const sortedLessons = useMemo(() => {
+    return [...lessons].sort((a, b) => {
+      const aNum = Number.isFinite(a.order) ? a.order : getLessonNumberFromTitle(a.title);
+      const bNum = Number.isFinite(b.order) ? b.order : getLessonNumberFromTitle(b.title);
+
+      // Si empatan por número, ordena por fecha de creación (opcional)
+      if (aNum === bNum) {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return aNum - bNum;
+    });
+  }, [lessons]);
   const courseIdString = courseId.toString();
 
   const getContrastYIQ = (hexcolor: string) => {
@@ -156,7 +173,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
       {/* Grid responsivo: 1 / 2 / 3 / 4 columnas */}
       <div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
-        {lessons.map((lesson) => (
+        {sortedLessons.map((lesson) => (
           <div key={lesson.id} className="group relative">
             <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
             <Card
@@ -181,9 +198,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                   </div>
                 </CardHeader>
                 <CardContent
-                  className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`flex grow flex-col justify-between space-y-2 px-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   <CardTitle className="rounded-lg text-lg">
                     <div className={`font-bold`}>Clase: {lesson.title}</div>

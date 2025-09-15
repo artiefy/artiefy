@@ -10,6 +10,60 @@ export default function ComercialsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // --- NUEVO estado para editar / borrar ---
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // helpers de edición
+  const startEdit = (c: Commercial) => {
+    setEditingId(c.id);
+    setEditValue(c.contact);
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  // UPDATE
+  const handleUpdate = async (id: number) => {
+    if (!editValue.trim()) return;
+    try {
+      setUpdatingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/comercials?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commercialContact: editValue.trim() }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setEditingId(null);
+      setEditValue('');
+      await load();
+    } catch {
+      alert('No se pudo actualizar el comercial');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // DELETE
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Eliminar este comercial?')) return;
+    try {
+      setDeletingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/comercials?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await load();
+    } catch {
+      alert('No se pudo eliminar el comercial');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
 
   const load = async () => {
     try {
@@ -86,11 +140,59 @@ export default function ComercialsPage() {
             <p className="text-gray-400">No hay comerciales registrados.</p>
           ) : (
             <ul className="divide-y divide-gray-700">
-              {items.map((c) => (
-                <li key={c.id} className="py-2">
-                  {c.contact}
-                </li>
-              ))}
+              {items.map((c) => {
+                const isEditing = editingId === c.id;
+                const isUpdating = updatingId === c.id;
+                const isDeleting = deletingId === c.id;
+
+                return (
+                  <li key={c.id} className="flex items-center gap-3 py-2">
+                    {isEditing ? (
+                      <input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                      />
+                    ) : (
+                      <span className="flex-1">{c.contact}</span>
+                    )}
+
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={() => void handleUpdate(c.id)}
+                          disabled={isUpdating || !editValue.trim()}
+                          className="rounded bg-green-500 px-3 py-1 text-black font-semibold hover:bg-green-400 disabled:opacity-60"
+                        >
+                          {isUpdating ? 'Guardando…' : 'Guardar'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="rounded bg-gray-600 px-3 py-1 text-white font-semibold hover:bg-gray-500"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(c)}
+                          className="rounded bg-blue-500 px-3 py-1 text-black font-semibold hover:bg-blue-400"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => void handleDelete(c.id)}
+                          disabled={isDeleting}
+                          className="rounded bg-red-500 px-3 py-1 text-black font-semibold hover:bg-red-400 disabled:opacity-60"
+                        >
+                          {isDeleting ? 'Eliminando…' : 'Eliminar'}
+                        </button>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

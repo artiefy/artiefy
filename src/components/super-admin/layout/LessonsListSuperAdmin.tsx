@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo,useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -55,7 +55,28 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log(courseId);
+  // Extrae el número de "Clase N" desde el título. Ej: "Clase 6: ..." -> 6
+  const getLessonNumberFromTitle = (title: string) => {
+    const match = /clase\s*(\d+)/i.exec(title);
+    return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER; // si no encuentra número, lo manda al final
+  };
+
+  // Ordena priorizando `lesson.order` si existe; si no, usa el número del título
+  const sortedLessons = useMemo(() => {
+    return [...lessons].sort((a, b) => {
+      const aNum = typeof a.order === 'number' && !Number.isNaN(a.order)
+        ? a.order
+        : getLessonNumberFromTitle(a.title);
+
+      const bNum = typeof b.order === 'number' && !Number.isNaN(b.order)
+        ? b.order
+        : getLessonNumberFromTitle(b.title);
+
+      return aNum - bNum;
+    });
+  }, [lessons]);
+
+
 
   const courseIdString = courseId.toString();
 
@@ -119,9 +140,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mt-3">
           <Button
             style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -151,7 +171,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <h2 className="mt-10 mb-4 text-2xl font-bold">Lista de clases:</h2>
       <div className="flex w-full flex-col">
         <div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
-          {lessons.map((lesson) => (
+          {sortedLessons.map((lesson) => (
             <div key={lesson.id} className="group relative">
               <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
               <Card
@@ -176,9 +196,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     </div>
                   </CardHeader>
                   <CardContent
-                    className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`flex grow flex-col justify-between space-y-2 px-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     <CardTitle className="rounded-lg text-lg">
                       <div className={`font-bold`}>Clase: {lesson.title}</div>
@@ -236,9 +255,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         </div>
         <div className="mx-auto my-4">
           <Button
-            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');

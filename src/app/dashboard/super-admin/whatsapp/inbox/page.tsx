@@ -1,15 +1,16 @@
-// src/app/dashboard/super-admin/whatsapp/inbox/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type KeyboardEvent,useEffect, useMemo, useRef, useState } from 'react';
 
 interface InboxItem {
   id?: string;
-  from: string;
+  from?: string;
+  to?: string;
   name?: string | null;
   timestamp: number;
   type: string;
-  text: string;
+  text?: string;
+  direction: 'inbound' | 'outbound' | 'status';
 }
 
 interface ApiInboxResponse {
@@ -17,44 +18,333 @@ interface ApiInboxResponse {
   total?: number;
 }
 
+interface Thread {
+  waid: string;
+  name?: string | null;
+  lastTs: number;
+  lastText?: string;
+  items: InboxItem[];
+}
+
 export default function WhatsAppInboxPage() {
   const [inbox, setInbox] = useState<InboxItem[]>([]);
+  const [compose, setCompose] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // móvil: mostrar lista (true) o chat (false)
+  const [showList, setShowList] = useState<boolean>(true);
 
-    fetch('/api/super-admin/whatsapp/inbox', { cache: 'no-store' })
-      .then((res) => res.json() as Promise<ApiInboxResponse>)
-      .then((data) => {
-        if (!cancelled) setInbox(Array.isArray(data?.items) ? data.items : []);
-      })
-      .catch(() => {
-        if (!cancelled) setInbox([]);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // ---- Agrupar por chat (wa_id) ----
+  const threads = useMemo<Thread[]>(() => {
+    const map = new Map<string, InboxItem[]>();
+    for (const it of inbox) {
+      const key = (it.from ?? it.to ?? 'unknown')!;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(it);
+    }
+    const list: Thread[] = [];
+    for (const [waid, items] of map.entries()) {
+      const sorted = items.slice().sort((a, b) => a.timestamp - b.timestamp);
+      const last = sorted[sorted.length - 1];
+      const name =
+        sorted.find((x) => x.name)?.name ??
+        sorted.find((x) => x.from)?.from ??
+        undefined;
+      list.push({
+        waid,
+        name,
+        lastTs: last?.timestamp ?? 0,
+        lastText: last?.text ?? '',
+        items: sorted,
       });
+    }
+    return list.sort((a, b) => b.lastTs - a.lastTs);
+  }, [inbox]);
 
+  // ---- Selección inicial y persistencia ----
+  useEffect(() => {
+    const saved = localStorage.getItem('wa_selected_chat');
+    if (saved) {
+      setSelected(saved);
+      setShowList(false); // si había uno seleccionado, abre chat en móvil
+    }
+  }, []);
+  useEffect(() => {
+    if (!selected && threads.length) setSelected(threads[0].waid);
+    if (selected) localStorage.setItem('wa_selected_chat', selected);
+  }, [threads, selected]);
+
+  // ---- Carga + polling ----
+  useEffect(() => {
+    let cancel = false;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/super-admin/whatsapp/inbox', {
+          cache: 'no-store',
+        });
+        const data = (await res.json()) as ApiInboxResponse;
+        if (!cancel) setInbox(Array.isArray(data?.items) ? data.items : []);
+      } catch {
+        if (!cancel) setInbox([]);
+      }
+    };
+    load();
+    const iv = setInterval(load, 4000);
     return () => {
-      cancelled = true;
+      cancel = true;
+      clearInterval(iv);
     };
   }, []);
 
+  // ---- Autoscroll al final cuando cambian mensajes del chat activo ----
+  const activeItems = useMemo(
+    () => threads.find((t) => t.waid === (selected ?? ''))?.items ?? [],
+    [threads, selected]
+  );
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 9999;
+  }, [activeItems.length]);
+
+  // ---- Helpers UI ----
+  const fmtTime = (ts: number) =>
+    new Date(ts).toLocaleString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+    });
+
+  const lastInboundId = (waid: string) =>
+    threads
+      .find((t) => t.waid === waid)
+      ?.items.slice()
+      .reverse()
+      .find((m) => m.direction === 'inbound' && m.id)?.id;
+
+  // ---- Enviar ----
+  const handleSend = async (waid: string) => {
+    const text = (compose[waid] || '').trim();
+    if (!text) return;
+
+    try {
+      setSending(waid);
+      const replyTo = lastInboundId(waid);
+
+      const res = await fetch('/api/super-admin/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: waid,
+          text,
+          autoSession: true,
+          replyTo,
+        }),
+      });
+
+      if (!res.ok) {
+        let errMsg = `Error enviando WhatsApp (HTTP ${res.status})`;
+        try {
+          const j: unknown = await res.json();
+          if (typeof j === 'object' && j !== null && 'error' in j) {
+            const maybe = (j as { error?: unknown }).error;
+            if (typeof maybe === 'string' && maybe.trim()) errMsg = maybe;
+          }
+        } catch (parseErr) {
+          console.debug('[WA] Error parseando cuerpo JSON de error:', parseErr);
+        }
+        throw new Error(errMsg);
+      }
+
+      // Optimista
+      setInbox((prev) => [
+        {
+          id: 'local-' + Date.now(),
+          direction: 'outbound',
+          timestamp: Date.now(),
+          to: waid,
+          type: 'text',
+          text,
+        },
+        ...prev,
+      ]);
+      setCompose((p) => ({ ...p, [waid]: '' }));
+    } catch (e) {
+      console.error(e);
+      const msg = e instanceof Error ? e.message : 'No se pudo enviar el WhatsApp';
+      alert(msg);
+    } finally {
+      setSending(null);
+    }
+  };
+
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(waid);
+    }
+  };
+
+  // ---- UI ----
   return (
-    <div className="p-4">
-      <h1 className="mb-4 text-xl font-bold">WhatsApp Inbox</h1>
-      <ul className="space-y-2">
-        {inbox.map((item) => (
-          <li
-            key={item.id ?? String(item.timestamp)}
-            className="rounded border p-2"
+    <div className="flex h-[calc(100vh-80px)] min-h-[560px] w-full overflow-hidden rounded-lg border border-gray-800 bg-[#0B141A]">
+      {/* Sidebar chats (oscuro) */}
+      <aside
+        className={`w-full md:w-80 border-r border-gray-800 bg-[#111B21] text-gray-200 ${
+          showList ? 'block' : 'hidden md:block'
+        }`}
+      >
+        <div className="px-4 py-3 text-lg font-semibold text-gray-100">WhatsApp Inbox</div>
+        <div className="max-h-[calc(100%-48px)] overflow-y-auto">
+          {threads.length === 0 && (
+            <div className="p-4 text-sm text-[#8696A0]">Sin conversaciones aún.</div>
+          )}
+          {threads.map((t) => (
+            <button
+              key={t.waid}
+              onClick={() => {
+                setSelected(t.waid);
+                setShowList(false); // en móvil, al elegir chat, mostramos la conversación
+              }}
+              className={`block w-full px-4 py-3 text-left transition-colors ${
+                selected === t.waid ? 'bg-[#2A3942]' : 'hover:bg-[#202C33]'
+              }`}
+            >
+              <div className="flex items-baseline justify-between">
+                <div className="truncate font-medium text-gray-100">
+                  {t.name ?? t.waid}
+                  <span className="ml-2 text-xs text-[#8696A0]">({t.waid})</span>
+                </div>
+                <div className="ml-2 shrink-0 text-xs text-[#8696A0]">
+                  {t.lastTs ? fmtTime(t.lastTs) : ''}
+                </div>
+              </div>
+              <div className="mt-1 truncate text-sm text-[#8696A0]">
+                {t.lastText ?? '(sin texto)'}
+              </div>
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {/* Chat window (oscuro) */}
+      <section
+        className={`flex min-w-0 flex-1 flex-col ${showList ? 'hidden md:flex' : 'flex'}`}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2 border-b border-gray-800 bg-[#202C33] px-5 py-3 text-gray-100">
+          {/* Back on mobile */}
+          <button
+            onClick={() => setShowList(true)}
+            className="rounded px-2 py-1 text-sm hover:bg-white/10 md:hidden"
+            aria-label="Volver a chats"
           >
-            <div>
-              <strong>📨 {item.text}</strong>
+            ← Chats
+          </button>
+          <div className="h-8 w-8 rounded-full bg-white/10" />
+          <div className="min-w-0">
+            <div className="truncate font-medium">
+              {threads.find((t) => t.waid === selected)?.name ?? selected ?? '—'}
             </div>
-            <div>👤 {item.name ?? item.from}</div>
-            <div>📅 {new Date(item.timestamp).toLocaleString()}</div>
-            <div>📦 Tipo: {item.type}</div>
-          </li>
-        ))}
-      </ul>
+            <div className="truncate text-xs text-[#8696A0]">
+              {selected ? `(${selected})` : 'Selecciona una conversación'}
+            </div>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div
+          ref={scrollRef}
+          className="flex-1 space-y-2 overflow-y-auto p-4"
+          style={{
+            backgroundImage: "url('/wallWhat.png')",
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#0B141A',
+          }}
+        >
+          {!selected && (
+            <div className="p-6 text-center text-sm text-[#8696A0]">
+              Selecciona un chat para comenzar.
+            </div>
+          )}
+
+          {selected &&
+            activeItems.map((m) => {
+              if (m.direction === 'status') {
+                return (
+                  <div
+                    key={m.id ?? String(m.timestamp)}
+                    className="mx-auto w-fit max-w-[70%] rounded-full bg-[#202C33] px-3 py-1 text-center text-xs text-gray-200"
+                    title={m.id ? `id: ${m.id}` : ''}
+                  >
+                    {m.text} · {fmtTime(m.timestamp)}
+                  </div>
+                );
+              }
+
+              const isOutbound = m.direction === 'outbound';
+              return (
+                <div
+                  key={m.id ?? String(m.timestamp)}
+                  className={`flex w-full ${isOutbound ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-3 py-2 shadow ${
+                      isOutbound
+                        ? 'rounded-br-sm bg-[#005C4B] text-white'
+                        : 'rounded-bl-sm bg-[#202C33] text-gray-100'
+                    }`}
+                    title={m.id ? `id: ${m.id}` : ''}
+                  >
+                    {m.text && <div className="whitespace-pre-wrap">{m.text}</div>}
+                    <div
+                      className={`mt-1 text-right text-[10px] ${
+                        isOutbound ? 'text-white/70' : 'text-[#8696A0]'
+                      }`}
+                    >
+                      {fmtTime(m.timestamp)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* Composer */}
+        <div className="border-t border-gray-800 bg-[#111B21] p-3">
+          <div className="flex items-end gap-2">
+            <textarea
+              disabled={!selected}
+              rows={1}
+              onKeyDown={(e) => selected && handleKey(e, selected)}
+              className="max-h-40 min-h-[44px] w-full resize-y rounded-xl border border-transparent bg-[#202C33] p-3 text-sm text-gray-100 placeholder-[#8696A0] focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:opacity-50"
+              placeholder={
+                selected
+                  ? 'Escribe un mensaje (Enter para enviar, Shift+Enter salto de línea)'
+                  : 'Selecciona un chat…'
+              }
+              value={selected ? compose[selected] || '' : ''}
+              onChange={(e) =>
+                selected && setCompose((prev) => ({ ...prev, [selected]: e.target.value }))
+              }
+            />
+            <button
+              disabled={
+                !selected || sending === selected || !(compose[selected ?? ''] || '').trim()
+              }
+              onClick={() => selected && handleSend(selected)}
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-white shadow hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {sending === selected ? 'Enviando…' : 'Enviar'}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

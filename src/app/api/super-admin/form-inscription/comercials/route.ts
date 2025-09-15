@@ -1,6 +1,6 @@
 import { type NextRequest,NextResponse } from 'next/server';
 
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
@@ -10,6 +10,12 @@ import { comercials } from '~/server/db/schema';
 const schema = z.object({
   commercialContact: z.string().min(1, 'El contacto es requerido'),
 });
+
+// Zod schema para ID por query (?id=123)
+const idSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
 
 // GET: listar todos los comerciales (ordenados por contacto)
 export async function GET() {
@@ -27,6 +33,66 @@ export async function GET() {
     );
   }
 }
+
+// PUT: actualizar comercial (?id=)
+export async function PUT(req: NextRequest) {
+  try {
+    const { id } = idSchema.parse({
+      id: req.nextUrl.searchParams.get('id'),
+    });
+    const body = await req.json();
+    const { commercialContact } = schema.parse(body);
+
+    const updated = await db
+      .update(comercials)
+      .set({ contact: commercialContact })
+      .where(eq(comercials.id, id))
+      .returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'Comercial no encontrado' },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ ok: true, commercial: updated[0] });
+  } catch (e) {
+    console.error('PUT /comercials error:', e);
+    return NextResponse.json(
+      { ok: false, error: 'No se pudo actualizar el comercial' },
+      { status: 400 }
+    );
+  }
+}
+
+// DELETE: eliminar comercial (?id=)
+export async function DELETE(req: NextRequest) {
+  try {
+    const { id } = idSchema.parse({
+      id: req.nextUrl.searchParams.get('id'),
+    });
+
+    const deleted = await db
+      .delete(comercials)
+      .where(eq(comercials.id, id))
+      .returning();
+
+    if (deleted.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'Comercial no encontrado' },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ ok: true, commercial: deleted[0] });
+  } catch (e) {
+    console.error('DELETE /comercials error:', e);
+    return NextResponse.json(
+      { ok: false, error: 'No se pudo eliminar el comercial' },
+      { status: 400 }
+    );
+  }
+}
+
 
 // POST: crear comercial
 export async function POST(req: NextRequest) {

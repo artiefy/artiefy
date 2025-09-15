@@ -1,24 +1,40 @@
 // src/app/api/super-admin/whatsapp/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-/** ===================== Config ===================== */
-const WHATSAPP_WABA_ID = '1229944015242086';
-const WHATSAPP_PHONE_NUMBER_ID = '687425254451016';
-const ACCESS_TOKEN =
-  'EAAgXFWT4Gt8BPfZApZC0ZBQSZBaiyOtxKsvMWTyTqIcRLPb8pfZCGhm1RB6vNr1szLrfNSJLiNreJPvXZC51vIQ5Y6TfpGAcwYJN0x21O8A9ZAShbmFiy0oqUN0nMQZBdP1FGa9zoBqa1RmSLQID1PZAX9c97imZAZCq2hzVnBxpFDiEu0PkE8B1PlgNmXvmhx4uiXZCCgZDZD';
+import { db } from '~/server/db';
+import { waMessages } from '~/server/db/schema';
 
-/** ===================== Tipos ===================== */
-// Request body del POST
+import { isIn24hWindow, pushInbox } from './_inbox';
+
+
+/** ===================== Config ===================== */
+const WHATSAPP_WABA_ID = '683921414745007';
+const WHATSAPP_PHONE_NUMBER_ID = '805951652593761';
+const ACCESS_TOKEN =
+  'EAAgXFWT4Gt8BPRnyw8HZA038BKjYZAgQQN4q83KlIfQPeaq58gFlZAerzNTYmthlZA6h9CZBqZC9ZCS2Sp21JeRiW9go6iKonNdRsRzZBVrC5FkMgt84O8hMkpg8GODzU5tL8cCyKocnKl7ymjZCe84KompirjoRHZBvyX9uilAqEBBEF9gZABzTcf47ZCPpe9ovB4u0CAZDZD';
+
 interface PostBody {
-  to: string; // "57XXXXXXXXXX" (sin +)
+  to: string;                     // "57XXXXXXXXXX"
   text?: string;
   forceTemplate?: boolean;
   templateName?: string;
-  languageCode?: string; // ej. es_ES, es_MX, en_US
+  languageCode?: string;
   variables?: string[];
-  ensureSession?: boolean;
-  sessionTemplate?: string; // p.ej. "hello_world"
-  sessionLanguage?: string; // p.ej. "en_US"
+  ensureSession?: boolean;        // nombre “oficial”
+  autoSession?: boolean;          // alias que usas en el front
+  sessionTemplate?: string;
+  sessionLanguage?: string;
+  replyTo?: string;               // 👈 id del mensaje a citar
+}
+
+
+// agrega context para responder a un mensaje específico
+interface TextPayload {
+  messaging_product: 'whatsapp';
+  to: string;
+  type: 'text';
+  text: { body: string };
+  context?: { message_id: string }; // 👈 reply
 }
 
 // WhatsApp payloads
@@ -26,10 +42,12 @@ interface TemplateParameter {
   type: 'text';
   text: string;
 }
+
 interface TemplateComponentBody {
   type: 'body' | 'BODY';
   parameters: TemplateParameter[];
 }
+
 interface TemplatePayload {
   messaging_product: 'whatsapp';
   to: string;
@@ -40,12 +58,14 @@ interface TemplatePayload {
     components?: TemplateComponentBody[];
   };
 }
+
 interface TextPayload {
   messaging_product: 'whatsapp';
   to: string;
   type: 'text';
   text: { body: string };
 }
+
 type WhatsAppPayload = TemplatePayload | TextPayload;
 
 // Meta success mínimo
@@ -171,7 +191,6 @@ function bodyComponent(
   return components?.find((c) => c.type.toUpperCase() === 'BODY');
 }
 
-/** ===================== POST: enviar ===================== */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = (await req.json()) as PostBody;
@@ -182,7 +201,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       templateName,
       languageCode,
       variables = [],
-      ensureSession = false, // por defecto NO abre sesión
+      ensureSession,            // opcional (override)
+      autoSession = true,       // auto por defecto
       sessionTemplate = 'hello_world',
       sessionLanguage = 'en_US',
     } = body;
@@ -193,6 +213,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 400 }
       );
     }
+
+    // ¿hay que abrir ventana? -> override > auto > false
+    const needEnsure =
+      typeof ensureSession === 'boolean'
+        ? ensureSession
+        : autoSession
+          ? !isIn24hWindow(to)
+          : false;
 
     const usingExplicitTemplate = Boolean(forceTemplate ?? templateName);
 
@@ -226,14 +254,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           baseTpl,
           `ENVÍO DE PLANTILLA (${baseTpl.template.name}/${baseTpl.template.language.code})`
         );
+
+        pushInbox({
+          id: ok.messages?.[0]?.id,
+          direction: 'outbound',
+          timestamp: Date.now(),
+          to,
+          type: 'template',
+          text: `[TPL] ${baseTpl.template.name}/${baseTpl.template.language.code}${variables.length ? ' | ' + variables.join(' | ') : ''}`,
+          raw: ok,
+        });
+
         return NextResponse.json({
           success: true,
           step: 'template',
           used: baseTpl.template,
           data: ok,
         });
-      } catch (_e: unknown) {
-        // 1) mismo template en en_US
+      } catch {
         try {
           const fallback1: TemplatePayload = {
             ...baseTpl,
@@ -243,14 +281,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             fallback1,
             'FALLBACK MISMA PLANTILLA (en_US)'
           );
+
+          pushInbox({
+            id: ok1.messages?.[0]?.id,
+            direction: 'outbound',
+            timestamp: Date.now(),
+            to,
+            type: 'template',
+            text: `[TPL] ${fallback1.template.name}/${fallback1.template.language.code}${variables.length ? ' | ' + variables.join(' | ') : ''}`,
+            raw: ok1,
+          });
+
           return NextResponse.json({
             success: true,
             step: 'template_fallback_en_US',
             used: fallback1.template,
             data: ok1,
           });
-        } catch (_e2: unknown) {
-          // 2) hello_world en en_US
+        } catch {
           const fallback2: TemplatePayload = {
             messaging_product: 'whatsapp',
             to,
@@ -261,6 +309,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             fallback2,
             'FALLBACK hello_world (en_US)'
           );
+
+          pushInbox({
+            id: ok2.messages?.[0]?.id,
+            direction: 'outbound',
+            timestamp: Date.now(),
+            to,
+            type: 'template',
+            text: `[TPL] hello_world/en_US`,
+            raw: ok2,
+          });
+
           return NextResponse.json({
             success: true,
             step: 'hello_world_fallback',
@@ -271,26 +330,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // ---------- B) Texto (con/sin ensureSession) ----------
+    // ---------- B) Texto (auto ventana + reply) ----------
     let templateOpened: MetaMessageResponse | null = null;
 
-    if (ensureSession) {
-      // intenta con plantilla indicada; si falla, usa hello_world/en_US
+    // Abre ventana si hace falta (auto/override)
+    if (needEnsure) {
       try {
         const open1: TemplatePayload = {
           messaging_product: 'whatsapp',
           to,
           type: 'template',
-          template: {
-            name: sessionTemplate,
-            language: { code: sessionLanguage },
-          },
+          template: { name: sessionTemplate, language: { code: sessionLanguage } },
         };
         templateOpened = await sendToMeta<MetaMessageResponse>(
           open1,
           'APERTURA DE VENTANA (plantilla inicial)'
         );
-      } catch (_e: unknown) {
+      } catch {
         const open2: TemplatePayload = {
           messaging_product: 'whatsapp',
           to,
@@ -307,25 +363,59 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!text) {
       return NextResponse.json({
         success: true,
-        step: ensureSession ? 'session_template_only' : 'no_content',
+        step: needEnsure ? 'session_template_only' : 'no_content',
         templateOpened,
       });
     }
+
+    // si no nos pasan replyTo, intenta citar el último inbound
+// body ya debe estar tipado como PostBody
+const replyTo: string | undefined =
+  typeof body.replyTo === 'string' ? body.replyTo : undefined;
+
+// si usas alias autoSession desde el front, unifícalo aquí:
 
     const payloadText: TextPayload = {
       messaging_product: 'whatsapp',
       to,
       type: 'text',
       text: { body: text },
+      ...(replyTo ? { context: { message_id: replyTo } } : {}),
     };
+
     const textResp = await sendToMeta<MetaMessageResponse>(
       payloadText,
-      'ENVÍO DE TEXTO'
+      replyTo ? 'ENVÍO DE TEXTO (reply)' : 'ENVÍO DE TEXTO'
     );
+
+    pushInbox({
+      id: textResp.messages?.[0]?.id,
+      direction: 'outbound',
+      timestamp: Date.now(),
+      to,
+      type: 'text',
+      text,
+      raw: textResp,
+    });
+
+    const metaId = textResp.messages?.[0]?.id;
+try {
+  await db.insert(waMessages).values({
+    metaMessageId: metaId,
+    waid: to,
+    direction: 'outbound',
+    msgType: 'text',
+    body: text,
+    tsMs: Date.now(),
+    raw: textResp as object,
+  });
+} catch (e) {
+  console.error('[WA][DB] No se pudo guardar OUTBOUND:', e);
+}
 
     return NextResponse.json({
       success: true,
-      step: ensureSession ? 'template_then_text' : 'text_only',
+      step: needEnsure ? 'template_then_text' : 'text_only',
       templateOpened,
       textMessage: textResp,
     });
@@ -335,6 +425,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
 
 /** ===================== GET: listar plantillas ===================== */
 export async function GET(): Promise<NextResponse> {

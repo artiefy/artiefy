@@ -10,6 +10,65 @@ export default function DatesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // --- NUEVO: estados para editar / borrar ---
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');        // YYYY-MM-DD
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // helpers edición
+  const startEdit = (row: DateRow) => {
+    setEditingId(row.id);
+    // row.startDate ya viene YYYY-MM-DD (ideal para <input type="date" />)
+    setEditValue(row.startDate);
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  // UPDATE
+  const handleUpdate = async (id: number) => {
+    const value = editValue.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      alert('Formato de fecha inválido. Usa YYYY-MM-DD');
+      return;
+    }
+    try {
+      setUpdatingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/dates?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startDate: value }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setEditingId(null);
+      setEditValue('');
+      await load();
+    } catch {
+      alert('No se pudo actualizar la fecha');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // DELETE
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Eliminar esta fecha?')) return;
+    try {
+      setDeletingId(id);
+      const res = await fetch(`/api/super-admin/form-inscription/dates?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await load();
+    } catch {
+      alert('No se pudo eliminar la fecha');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
 
   const load = async () => {
     try {
@@ -87,12 +146,60 @@ export default function DatesPage() {
             <p className="text-gray-400">No hay fechas registradas.</p>
           ) : (
             <ul className="divide-y divide-gray-700">
-              {items.map((d) => (
-                <li key={d.id} className="py-2">
-                  {/* d.startDate ya viene en formato YYYY-MM-DD */}
-                  {d.startDate}
-                </li>
-              ))}
+              {items.map((row) => {
+                const isEditing = editingId === row.id;
+                const isUpdating = updatingId === row.id;
+                const isDeleting = deletingId === row.id;
+
+                return (
+                  <li key={row.id} className="flex items-center gap-3 py-2">
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                      />
+                    ) : (
+                      <span className="flex-1">{row.startDate}</span>
+                    )}
+
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={() => void handleUpdate(row.id)}
+                          disabled={isUpdating || !editValue}
+                          className="rounded bg-green-500 px-3 py-1 text-black font-semibold hover:bg-green-400 disabled:opacity-60"
+                        >
+                          {isUpdating ? 'Guardando…' : 'Guardar'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="rounded bg-gray-600 px-3 py-1 text-white font-semibold hover:bg-gray-500"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(row)}
+                          className="rounded bg-blue-500 px-3 py-1 text-black font-semibold hover:bg-blue-400"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => void handleDelete(row.id)}
+                          disabled={isDeleting}
+                          className="rounded bg-red-500 px-3 py-1 text-black font-semibold hover:bg-red-400 disabled:opacity-60"
+                        >
+                          {isDeleting ? 'Eliminando…' : 'Eliminar'}
+                        </button>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
