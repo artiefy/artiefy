@@ -631,7 +631,9 @@ export default function LessonDetails({
 
   // En el efecto que lee el query param, asigna undefined si no existe
   useEffect(() => {
-    const activityIdParam = searchParams.get('activityId');
+    const activityIdParam = searchParams
+      ? searchParams.get('activityId')
+      : null;
     setActivityModalId(activityIdParam ? Number(activityIdParam) : undefined);
   }, [searchParams, setActivityModalId]);
 

@@ -165,7 +165,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [chatMode]);
 
   const pathname = usePathname();
-  const isChatPage = pathname === '/';
+  const safePathname = pathname ?? ''; // Usa safePathname en vez de pathname donde sea necesario
+  const isChatPage = safePathname === '/';
 
   const newChatMessage = () => {
     setChatMode({ idChat: null, status: true, curso_title: '' });
@@ -287,7 +288,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       }
       // Obtener url y ver si esta dentro de un curso
 
-      if (pathname.includes('cursos') || pathname.includes('curso')) {
+      if (safePathname.includes('cursos') || safePathname.includes('curso')) {
         console.log('Ingreso al if');
         if (isEnrolled) {
           console.log('Usuario está inscrito en el curso');
@@ -488,7 +489,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       chatMode,
       isEnrolled,
       isSignedIn,
-      pathname,
+      safePathname,
       user?.id,
     ]
   );
@@ -597,7 +598,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   useEffect(() => {
     const handleEnrollmentMessage = (event: Event) => {
-      const customEvent = event as CustomEvent<{ message: string; courseTitle?: string }>;
+      const customEvent = event as CustomEvent<{
+        message: string;
+        courseTitle?: string;
+      }>;
       setIsOpen(true);
       setMessages([
         {
@@ -617,10 +621,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       setShowChatList(false); // Oculta el chatlist si estaba abierto
     };
 
-    window.addEventListener('open-chatbot-with-enrollment-message', handleEnrollmentMessage);
+    window.addEventListener(
+      'open-chatbot-with-enrollment-message',
+      handleEnrollmentMessage
+    );
 
     return () => {
-      window.removeEventListener('open-chatbot-with-enrollment-message', handleEnrollmentMessage);
+      window.removeEventListener(
+        'open-chatbot-with-enrollment-message',
+        handleEnrollmentMessage
+      );
     };
   }, []);
 

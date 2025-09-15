@@ -40,9 +40,7 @@ export default function StudentForumPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useUser();
-  const forumId = Array.isArray(params?.forumId)
-    ? params.forumId[0]
-    : params.forumId;
+  const forumId = params ? params.forumId : undefined;
   const [forum, setForum] = useState<Foro | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [message, setMessage] = useState('');
@@ -56,7 +54,10 @@ export default function StudentForumPage() {
     const fetchForum = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/estudiantes/forums/${forumId}`);
+        // Asegura que forumId sea string para el template literal
+        const forumIdStr =
+          typeof forumId === 'string' ? forumId : String(forumId ?? '');
+        const res = await fetch(`/api/estudiantes/forums/${forumIdStr}`);
         if (!res.ok) throw new Error('No se encontró el foro');
         const data = (await res.json()) as Partial<Foro>;
         if (data && typeof data.id === 'number') setForum(data as Foro);
