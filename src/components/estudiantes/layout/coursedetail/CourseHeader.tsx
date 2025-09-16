@@ -1819,29 +1819,54 @@ export function CourseHeader({
                   </Button>
                 </div>
               ) : (
-                <button
-                  className="btn"
-                  onClick={handleEnrollClick}
-                  disabled={isEnrolling || isEnrollClicked}
-                >
-                  <strong>
-                    {isEnrolling || isEnrollClicked ? (
-                      <Icons.spinner className="h-6 w-6" />
-                    ) : (
-                      <>
-                        {getButtonPrice() && <span>{getButtonPrice()}</span>}
-                        <span>{getEnrollButtonText()}</span>
-                      </>
-                    )}
-                  </strong>
-                  <div id="container-stars">
-                    <div id="stars" />
-                  </div>
-                  <div id="glow">
-                    <div className="circle" />
-                    <div className="circle" />
-                  </div>
-                </button>
+                <>
+                  {!isSignedIn ? (
+                    <SignInButton
+                      mode="modal"
+                      forceRedirectUrl={`${pathname}?comprar=1`}
+                    >
+                      <button className="btn">
+                        <strong>
+                          {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                          <span>{getEnrollButtonText()}</span>
+                        </strong>
+                        <div id="container-stars">
+                          <div id="stars" />
+                        </div>
+                        <div id="glow">
+                          <div className="circle" />
+                          <div className="circle" />
+                        </div>
+                      </button>
+                    </SignInButton>
+                  ) : (
+                    <button
+                      className="btn"
+                      onClick={handleEnrollClick}
+                      disabled={isEnrolling || isEnrollClicked}
+                    >
+                      <strong>
+                        {isEnrolling || isEnrollClicked ? (
+                          <Icons.spinner className="h-6 w-6" />
+                        ) : (
+                          <>
+                            {getButtonPrice() && (
+                              <span>{getButtonPrice()}</span>
+                            )}
+                            <span>{getEnrollButtonText()}</span>
+                          </>
+                        )}
+                      </strong>
+                      <div id="container-stars">
+                        <div id="stars" />
+                      </div>
+                      <div id="glow">
+                        <div className="circle" />
+                        <div className="circle" />
+                      </div>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
