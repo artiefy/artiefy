@@ -1,4 +1,5 @@
 {
+  "name": "My workflow",
   "nodes": [
     {
       "parameters": {
@@ -56,7 +57,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-256, -960],
+      "position": [-272, -960],
       "id": "e5d99abb-d98c-45b6-aee3-d16d87dabda3",
       "name": "HTTP Embedding1"
     },
@@ -66,7 +67,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-32, -944],
+      "position": [-48, -960],
       "id": "d3ee9552-f6e3-446d-9891-9e2d1b86875e",
       "name": "Code Embedding1"
     },
@@ -129,6 +130,7 @@
       "name": "OpenAI Chat Completion"
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -197,9 +199,16 @@
       ]
     }
   },
-  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "d0a3ec4f-1145-4f60-a9dc-d3fe518952d9",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b32aab7b368c694b22577044a9cea7d6da16d7b16cf7935deb1385e070ce445f"
-  }
+  },
+  "id": "6ci25alDfnUnhzzo",
+  "tags": []
 }

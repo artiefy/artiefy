@@ -28,8 +28,8 @@ export const extractNumbersFromTitle = (title: string) => {
     };
   }
 
-  // SESION X: ...
-  const sessionOnly = /sesión\s*(\d+)/i.exec(title);
+  // SESIÓN/SESION X: ...
+  const sessionOnly = /ses(?:i|í)on\s*(\d+)/i.exec(title);
   if (sessionOnly) {
     return {
       session: parseInt(sessionOnly[1], 10),
@@ -46,6 +46,27 @@ export const extractNumbersFromTitle = (title: string) => {
     };
   }
 
+  // Nuevo: Número al inicio, e.g. "3: Introducción", "1 - Tema", "2) ..."
+  const leadingNumber =
+    /^\s*(?:lecci[oó]n|lesson|clase|ses(?:i|í)on)?\s*(\d+)(?=\s*[:.\-)]|\s|$)/i.exec(
+      title
+    );
+  if (leadingNumber) {
+    return {
+      session: 0,
+      class: parseInt(leadingNumber[1], 10),
+    };
+  }
+
+  // Nuevo: cualquier número en el título como fallback
+  const anyNumber = numberPattern.exec(title);
+  if (anyNumber) {
+    return {
+      session: 0,
+      class: parseInt(anyNumber[0], 10),
+    };
+  }
+
   // Default: put at the end
   return { session: 999, class: 999 };
 };
@@ -58,6 +79,10 @@ export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
     if (numbersA.session !== numbersB.session) {
       return numbersA.session - numbersB.session;
     }
-    return numbersA.class - numbersB.class;
+    const classDiff = numbersA.class - numbersB.class;
+    if (classDiff !== 0) return classDiff;
+
+    // Estabilizar: si empatan, ordenar por título para determinismo
+    return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
   });
 };
