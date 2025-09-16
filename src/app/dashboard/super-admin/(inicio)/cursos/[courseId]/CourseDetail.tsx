@@ -195,127 +195,7 @@ function isVideoIdxItem(v: unknown): v is VideoIdxItem {
 }
 
 
-// Tipo auxiliar con las props que necesitamos leer de forma segura
-type MaybeMeeting = Partial<
-  Pick<
-    UIMeeting,
-    | 'id'
-    | 'meetingId'
-    | 'joinUrl'
-    | 'recordingContentUrl'
-    | 'video_key'
-    | 'videoUrl'
-  >
-> &
-  Record<string, unknown>;
 
-function toUIMeeting(m: ScheduledMeeting): UIMeeting {
-  const obj: MaybeMeeting = isRecord(m)
-    ? (m as MaybeMeeting)
-    : ({} as MaybeMeeting);
-
-  const id = typeof obj.id === 'number' ? obj.id : 0;
-  const meetingId = typeof obj.meetingId === 'string' ? obj.meetingId : '';
-
-  // Todas como string | undefined (NO null)
-  const joinUrl = typeof obj.joinUrl === 'string' ? obj.joinUrl : undefined;
-  const recordingContentUrl =
-    typeof obj.recordingContentUrl === 'string'
-      ? obj.recordingContentUrl
-      : undefined;
-  const video_key =
-    typeof obj.video_key === 'string' ? obj.video_key : undefined;
-  const videoUrlRaw =
-    typeof obj.videoUrl === 'string' ? obj.videoUrl : undefined;
-
-  const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
-  const { url: finalVideoUrl, source } = resolveVideo(
-    { video_key, videoUrl: videoUrlRaw, recordingContentUrl },
-    aws,
-  );
-
-
-  // 🐞 log detallado por ítem
-  console.log('🎥 resolveVideo()', {
-    id,
-    meetingId,
-    video_key,
-    videoUrlRaw,
-    recordingContentUrl,
-    finalVideoUrl,
-    source,
-  });
-
-  return {
-    ...(m as ScheduledMeeting),
-    id,
-    meetingId,
-    joinUrl,
-    recordingContentUrl,
-    video_key,
-    videoUrl: finalVideoUrl,
-  };
-
-}
-
-type VideoSource = 'S3_BY_KEY' | 'EXPLICIT_URL' | 'GRAPH_TEMP' | 'NONE';
-
-function resolveVideo(m: {
-  video_key?: string;
-  videoUrl?: string;
-  recordingContentUrl?: string;
-}, awsBase: string): { url?: string; source: VideoSource } {
-  const aws = (awsBase ?? '').replace(/\/+$/, '');
-
-  // 1) Preferimos S3 (estable)
-  if (m.video_key && m.video_key.trim() !== '') {
-    return { url: `${aws}/video_clase/${m.video_key.trim()}`, source: 'S3_BY_KEY' };
-  }
-
-  // 2) URL explícita válida
-  if (typeof m.videoUrl === 'string') {
-    const v = m.videoUrl.trim();
-    if (v && !/^(null|undefined)$/i.test(v)) {
-      try {
-        const u = new URL(v);
-        if (u.protocol === 'http:' || u.protocol === 'https:') {
-          return { url: v, source: 'EXPLICIT_URL' };
-        }
-      } catch { /* ignore */ }
-    }
-  }
-
-  // 3) Fallback Graph temporal
-  if (typeof m.recordingContentUrl === 'string') {
-    const r = m.recordingContentUrl.trim();
-    if (r && !/^(null|undefined)$/i.test(r)) {
-      return { url: r, source: 'GRAPH_TEMP' };
-    }
-  }
-
-  return { url: undefined, source: 'NONE' };
-}
-
-function getMeetingIdFrom(m: ScheduledMeeting): string {
-  const obj = (m as unknown) as MaybeMeeting;
-
-  // 1) Si viene en la data, úsalo
-  if (typeof obj.meetingId === 'string' && obj.meetingId.trim() !== '') {
-    return obj.meetingId.trim();
-  }
-
-  // 2) Fallback: intenta extraerlo del joinUrl
-  const ju = typeof obj.joinUrl === 'string' ? obj.joinUrl : '';
-  if (!ju) return '';
-
-  try {
-    const dec = decodeURIComponent(ju);
-    const match = /19:meeting_[^@]+@thread\.v2/.exec(dec);
-    return match?.[0] ?? '';
-  } catch {
-    return '';
-  }
-}
 
 
 
@@ -342,6 +222,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     string | null
   >(null);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
+
+
 
   const BADGE_GRADIENTS = [
     'from-pink-500 via-red-500 to-yellow-500',
@@ -387,22 +269,108 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
-  const [scheduledMeetings, setScheduledMeetings] = useState<
-    ScheduledMeeting[]
-  >([]);
-  // índice de videos por meetingId
-  const [videosByMeetingId, setVideosByMeetingId] = useState<
-    Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>
-  >(new Map());
-  // Lista completa de videos para asignación por fecha (no colapsada por meetingId)
-  const [videosRaw, setVideosRaw] = useState<
-    { meetingId: string; videoKey: string; videoUrl: string; createdAt?: string }[]
-  >([]);
-  void videosByMeetingId;
 
 
 
   const { user } = useUser(); // Ya está dentro del componente
+
+  // Estado para meetings ya poblados desde backend
+  const [populatedMeetings, setPopulatedMeetings] = useState<UIMeeting[]>([]);
+  const [videosRaw, setVideosRaw] = useState<
+    { meetingId: string; videoKey: string; videoUrl: string; createdAt?: string }[]
+  >([]);
+
+
+  useEffect(() => {
+    if (!courseIdNumber) return;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/super-admin/teams/recordings/by-course?courseId=${courseIdNumber}`,
+          { cache: 'no-store' }
+        );
+
+        const body = (await res.json()) as unknown;
+        if (!res.ok) {
+          console.error('❌ by-course:', body);
+          return;
+        }
+
+        interface ByCourseResponse { meetings?: unknown }
+        const meetingsUnknown = (body as ByCourseResponse)?.meetings;
+        const rawMeetings: unknown[] = Array.isArray(meetingsUnknown)
+          ? meetingsUnknown
+          : [];
+
+        // Helpers locales (evitan usar ensureUIMeeting y "any")
+        const getStr = (obj: Record<string, unknown>, key: string) => {
+          const v = obj[key];
+          return typeof v === 'string' && v.trim() ? (v as string) : undefined;
+        };
+        const toIsoDate = (v: unknown): string | undefined => {
+          if (typeof v === 'string' && v.trim()) return v; // ya viene ISO/legible
+          if (v instanceof Date) return v.toISOString();
+          if (typeof v === 'number' && Number.isFinite(v)) {
+            const d = new Date(v);
+            return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+          }
+          // Si es un objeto con toISOString (e.g. dayjs/moment toDate()):
+          if (
+            v &&
+            typeof v === 'object' &&
+            typeof (v as { toISOString?: () => string }).toISOString === 'function'
+          ) {
+            try {
+              return (v as { toISOString: () => string }).toISOString();
+            } catch {
+              return undefined;
+            }
+          }
+          return undefined;
+        };
+
+        const toUIMeeting = (raw: unknown): UIMeeting => {
+          const r = (raw ?? {}) as Record<string, unknown>;
+
+          const meetingId =
+            getStr(r, 'meeting_id') ?? getStr(r, 'meetingId') ?? '';
+
+          return {
+            ...(r as Partial<ScheduledMeeting>), // conserva campos extra si existen
+            id: Number(r.id) || 0,
+            meetingId,
+            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
+            recordingContentUrl: getStr(r, 'recordingContentUrl'),
+            video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
+            videoUrl: getStr(r, 'videoUrl'),
+            title: typeof r.title === 'string' ? (r.title as string) : '',
+            startDateTime: toIsoDate(r.startDateTime) ?? '',
+            endDateTime: toIsoDate(r.endDateTime) ?? '',
+            weekNumber: Number(r.weekNumber ?? 0),
+          };
+        };
+
+        const mts: UIMeeting[] = rawMeetings.map(toUIMeeting);
+
+        setPopulatedMeetings(mts);
+
+        // log compacto (sin any)
+        console.table(
+          mts.map((x) => ({
+            id: x.id,
+            meetingId: x.meetingId,
+            start: String(x.startDateTime),
+            video_key: x.video_key ?? '',
+            videoUrl: x.videoUrl ?? '',
+          }))
+        );
+      } catch (e) {
+        console.error('❌ fetch populated meetings:', e);
+      }
+    })();
+  }, [courseIdNumber]);
+
 
   const handleEnrollAndRedirect = async () => {
     if (!user?.id || !courseIdNumber) {
@@ -563,11 +531,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     if (!organizerAadUserId) return;
 
+
     const run = async () => {
       try {
-        console.log('🎥 Haciendo fetch de videos...');
         const res = await fetch(`/api/super-admin/teams/video?userId=${organizerAadUserId}`);
-        console.log('🛰️ /teams/video status: ', res.status, 'url usada:', res.url);
+        // estado arriba del componente
+
+
 
         if (!res.ok) return;
 
@@ -577,7 +547,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           videoUrl: string;
           createdAt?: string;
         }
-
+        // ...
         const raw = (await res.json()) as unknown;
 
         const videos: VideoIdxItem[] =
@@ -585,10 +555,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             ? ((raw as Record<string, unknown>).videos as unknown[]).filter(isVideoIdxItem)
             : [];
 
+        // ⬇️⬇️ IMPORTANTE
+        setVideosRaw(videos);
 
-        setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
 
-        console.log('🎬 Lista de videos extraída:', videos);
+        console.log(`🎥 videosRaw=${videos.length}`);
+        for (const v of videos) {
+          console.log(
+            `  • videoKey=${v.videoKey} createdAt=${v.createdAt ?? '-'} meetingId=${v.meetingId || '-'}`
+          );
+        }
+
+
 
         // construir índice meetingId -> video más reciente (por si acaso)
         const map = new Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>();
@@ -603,7 +581,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           }
         }
 
-        setVideosByMeetingId(map);
       } catch (e) {
         console.error('❌ Error fetch /teams/video:', e);
       }
@@ -620,11 +597,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setSelectedColor(savedColor);
     }
   }, [courseIdNumber]);
-  useEffect(() => {
-    if (course?.meetings) {
-      setScheduledMeetings(course.meetings);
-    }
-  }, [course?.meetings]);
+
+
+
 
 
 
@@ -772,7 +747,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               );
             }
           } else {
-            console.log(`➕ Creando nuevo parámetro`);
 
             const createResponse = await fetch(`/api/educadores/parametros`, {
               method: 'POST',
@@ -801,7 +775,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }
 
       const updatedCourse = (await response.json()) as Course;
-      console.log('🟢 Curso actualizado correctamente:', updatedCourse);
 
       setCourse(updatedCourse);
       setIsModalOpen(false);
@@ -938,6 +911,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     );
   }
 
+
   // Función para manejar el cambio de color predefinido
   const handlePredefinedColorChange = (color: string) => {
     setSelectedColor(color);
@@ -998,89 +972,138 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return <FullscreenLoader />;
   }
 
-  // Base de reuniones (las del estado si existen; si no, las del curso)
-  const baseMeetings = (scheduledMeetings.length
-    ? scheduledMeetings
-    : (course.meetings ?? []));
 
-  // --- Helper local para parsear fechas robusto (si no trae zona, asumimos Bogotá -05:00)
-  const toMs = (s: string) => {
-    const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(s);
-    const final = hasTZ ? s : `${s}-05:00`;
-    return new Date(final).getTime();
-  };
+  // --- Helpers locales ---
+  const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
 
-  // 1) Normalizamos ocurrencias y limpiamos cualquier video heredado
-  const occs: UIMeeting[] = baseMeetings.map((m) => {
-    const ui = toUIMeeting(m);
-    const mId = getMeetingIdFrom(m);
+  function toMsFlexible(v: unknown): number {
+    if (v instanceof Date) return v.getTime();
+    if (typeof v === 'string') {
+      const s = v.trim();
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+        if (/Z$|[+-]\d{2}:\d{2}$/.test(s)) return new Date(s).getTime();
+        return new Date(`${s}-05:00`).getTime(); // Bogotá
+      }
+      const t = new Date(s).getTime();
+      if (!Number.isNaN(t)) return t;
+    }
+    return Number.NaN;
+  }
+  function ensureUIMeeting(raw: unknown): UIMeeting {
+    const r = isRecord(raw) ? raw : {};
+
+    const str = (k: string): string | undefined => {
+      const v = r[k];
+      return typeof v === 'string' && v.trim() ? v : undefined;
+    };
+
+    const num = (k: string): number | undefined => {
+      const v = r[k];
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'string' && v.trim() && !Number.isNaN(Number(v))) {
+        return Number(v);
+      }
+      return undefined;
+    };
+
+    const id = num('id') ?? 0;
+
+    const meetingId =
+      str('meeting_id') ?? str('meetingId') ?? '';
+
+    const joinUrl = str('join_url') ?? str('joinUrl');
+
+    const video_key = str('video_key') ?? str('videoKey');
+    const videoUrlFromApi = str('videoUrl');
+    const finalVideoUrl = video_key
+      ? `${awsBase}/video_clase/${video_key}`
+      : videoUrlFromApi;
 
     return {
-      ...ui,
-      meetingId: mId,
-      // limpiamos para que NO se hereden videos entre ocurrencias
-      video_key: undefined,
-      videoUrl: undefined,
+      id,
+      meetingId,
+      joinUrl,
       recordingContentUrl: undefined,
+      video_key,
+      videoUrl: finalVideoUrl,
+      title: str('title') ?? '',
+      startDateTime: str('startDateTime') ?? '',
+      endDateTime: str('endDateTime') ?? '',
+      weekNumber: num('weekNumber') ?? 0,
     };
+  }
+
+
+
+
+  const WINDOW_MS = 48 * 60 * 60 * 1000; // ±48h
+
+  // Fuente base: si el back ya te trajo meetings "poblados", úsalos; si no, usa las del curso
+  const baseMeetings: UIMeeting[] = (populatedMeetings.length
+    ? populatedMeetings
+    : (course.meetings ?? [])
+  ).map(ensureUIMeeting);
+  const occTimes = baseMeetings.map((o) => toMsFlexible(o.startDateTime));
+
+
+  // Ordena videos por fecha (antiguo → nuevo)
+  const sortedVideos = [...videosRaw].sort((a, b) => {
+    const am = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bm = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return am - bm;
   });
 
-  // 2) Asignamos cada video a UNA sola ocurrencia: la más cercana por fecha
-  for (const v of videosRaw) {
-    // si el video no tiene createdAt, no podemos emparejar por fecha
+  // Marcador de ocurrencias ya usadas
+  const usedOcc = baseMeetings.map(() => false);
+
+  // Asigna cada video a la ocurrencia más cercana y libre (con pequeño sesgo si el meetingId coincide)
+  for (const v of sortedVideos) {
     const vMs = v.createdAt ? new Date(v.createdAt).getTime() : Number.NaN;
+    let best = -1;
+    let bestScore = Number.POSITIVE_INFINITY;
 
-    // candidatos: si viene meetingId, filtramos por ese; si no, consideramos todos
-    const candidates = occs
-      .map((o, idx) => ({ idx, o }))
-      .filter(({ o }) => !v.meetingId || o.meetingId === v.meetingId);
+    for (let i = 0; i < baseMeetings.length; i++) {
+      if (usedOcc[i]) continue;
+      const start = occTimes[i];
+      if (Number.isNaN(start)) continue;
 
-    if (!candidates.length || Number.isNaN(vMs)) continue;
+      // distancia temporal
+      const diff = Number.isNaN(vMs) ? Number.POSITIVE_INFINITY : Math.abs(start - vMs);
+      if (diff > WINDOW_MS) continue; // fuera de ventana, no lo considero
 
-    // elegimos el idx con |start - createdAt| mínimo, y que aún no tenga video
-    let bestIdx = -1;
-    let bestDiff = Number.POSITIVE_INFINITY;
+      // sesgo si el meetingId coincide
+      const idMatch =
+        v.meetingId &&
+        baseMeetings[i].meetingId &&
+        baseMeetings[i].meetingId === v.meetingId;
 
-    for (const { idx, o } of candidates) {
-      const startMs = toMs(String((o as unknown as { startDateTime: string }).startDateTime));
-      const diff = Math.abs(startMs - vMs);
+      // score: menor es mejor (resta 5 min si idMatch)
+      const score = diff - (idMatch ? 5 * 60 * 1000 : 0);
 
-      // si ya tiene video, lo saltamos (mantenemos 1:1)
-      const alreadyHasVideo = Boolean(o.video_key ?? o.videoUrl);
-      if (!alreadyHasVideo && diff < bestDiff) {
-        bestDiff = diff;
-        bestIdx = idx;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
       }
     }
 
-    if (bestIdx >= 0) {
-      occs[bestIdx].video_key = v.videoKey;
-      occs[bestIdx].videoUrl = v.videoUrl;
+    if (best >= 0) {
+      // Solo asigna si esa ocurrencia aún NO tiene video (p. ej. ya vino del backend)
+      if (!baseMeetings[best].video_key && !baseMeetings[best].videoUrl) {
+        baseMeetings[best].video_key = v.videoKey;
+        baseMeetings[best].videoUrl = `${awsBase}/video_clase/${v.videoKey}`;
+        usedOcc[best] = true; // marcamos usada solo cuando asignamos
+      }
     }
+
   }
 
-  const mergedMeetings: UIMeeting[] = occs;
-
-  // (Opcional) Log compacto para verificar asignaciones
-  console.table(
-    mergedMeetings.map(m => ({
-      id: m.id,
-      meetingId: m.meetingId,
-      video_key: m.video_key,
-      videoUrl: m.videoUrl,
-    }))
-  );
+  const meetingsForList: UIMeeting[] = [...baseMeetings].sort((a, b) => {
+    const aMs = toMsFlexible(a.startDateTime);
+    const bMs = toMsFlexible(b.startDateTime);
+    return (aMs || 0) - (bMs || 0);
+  });
 
 
-
-  console.table(
-    mergedMeetings.map(m => ({
-      id: m.id,
-      meetingId: m.meetingId,
-      video_key: m.video_key,
-      videoUrl: m.videoUrl,
-    }))
-  );
 
 
 
@@ -1439,11 +1462,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   + Agendar clase en Teams
                 </Button>
               </div>
+
+
+
               <ScheduledMeetingsList
-                meetings={mergedMeetings}
+                meetings={meetingsForList}
                 color={selectedColor}
               />
-
 
             </div>
             <LessonsListEducator

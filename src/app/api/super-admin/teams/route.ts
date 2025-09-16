@@ -51,14 +51,12 @@ function formatLocalDate(date: Date): string {
   return `${y}-${m}-${d}T${h}:${min}:00`;
 }
 
-function parseLocalDateTimeToUTC(dateStr: string): Date {
-  const [datePart, timePart] = dateStr.split('T');
-  const [year, month, day] = datePart.split('-').map(Number);
-  const [hour, minute] = timePart.split(':').map(Number);
-
-  const local = new Date(year, month - 1, day, hour, minute);
-  return new Date(local.getTime() - local.getTimezoneOffset() * 60000);
+// "YYYY-MM-DDTHH:mm:00" interpretado como hora local Bogotá
+function parseBogotaLocalToUTC(dateStr: string): Date {
+  // truco simple y robusto: explícita la zona -05:00
+  return new Date(`${dateStr}-05:00`);
 }
+
 
 function generateClassDates(
   startDate: Date,
@@ -67,22 +65,25 @@ function generateClassDates(
 ): Date[] {
   const result: Date[] = [];
   const targetDays = daysOfWeek.map((d) => d.toLowerCase());
-  const current = new Date(startDate);
+
+  const weekdayFmt = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'long',
+    timeZone: 'America/Bogota',
+  });
+
+  const current = new Date(startDate); // cursor
 
   while (result.length < totalCount) {
-    const weekday = current
-      .toLocaleDateString('es-CO', { weekday: 'long' }) // ← clave
-      .toLowerCase();
-
+    const weekday = weekdayFmt.format(current).toLowerCase();
     if (targetDays.includes(weekday)) {
       result.push(new Date(current));
     }
-
     current.setDate(current.getDate() + 1);
   }
 
   return result;
 }
+
 
 export async function POST(req: Request) {
   try {
@@ -219,31 +220,30 @@ export async function POST(req: Request) {
     }
 
     console.log('🟡 [MAPPING] Preparando reuniones para guardar...');
-    const meetings = classDates.map((startDate, index) => {
-      const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
-      let displayTitle: string;
+ const meetings = classDates.map((startDate, index) => {
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+  const startLocal = formatLocalDate(startDate);
+  const endLocal = formatLocalDate(endDate);
 
-      if (Array.isArray(customTitles) && customTitles[index]) {
-        const custom = customTitles[index].trim();
-        displayTitle = custom
-          ? `${title} (${custom})`
-          : `${title} (Clase ${index + 1})`;
-      } else {
-        displayTitle = `${title} (Clase ${index + 1})`;
-      }
+  const startUTC = parseBogotaLocalToUTC(startLocal);
+  const endUTC = parseBogotaLocalToUTC(endLocal);
 
-      console.log(`🧠 Título para clase ${index + 1}:`, displayTitle);
+  const displayTitle =
+    Array.isArray(customTitles) && customTitles[index]?.trim()
+      ? `${title} (${customTitles[index].trim()})`
+      : `${title} (Clase ${index + 1})`;
 
-      return {
-        courseId: Number(courseId),
-        title: displayTitle,
-        startDateTime: parseLocalDateTimeToUTC(formatLocalDate(startDate)),
-        endDateTime: parseLocalDateTimeToUTC(formatLocalDate(endDate)),
-        joinUrl,
-        weekNumber: Math.floor(index / daysOfWeek.length) + 1,
-        meetingId,
-      };
-    });
+  return {
+    courseId: Number(courseId),
+    title: displayTitle,
+    startDateTime: startUTC, // ✅ UTC correcto
+    endDateTime: endUTC,     // ✅ UTC correcto
+    joinUrl,
+    weekNumber: Math.floor(index / daysOfWeek.length) + 1,
+    meetingId,
+  };
+});
+
 
     console.log('[🗃️ Reuniones preparadas para insertar]:', meetings);
 

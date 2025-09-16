@@ -296,22 +296,55 @@ function resolveVideo(m: {
   return { url: undefined, source: 'NONE' };
 }
 
+function logAssignments(meetings: UIMeeting[]) {
+  try {
+    console.table(
+      meetings.map((m) => ({
+        id: m.id,
+        meetingId: m.meetingId,
+        start: String((m as unknown as { startDateTime: string }).startDateTime),
+        hasVideoKey: Boolean(m.video_key),
+        hasVideoUrl: Boolean(m.videoUrl),
+        video_key: m.video_key ?? '',
+        videoUrl: m.videoUrl ?? '',
+      }))
+    );
+  } catch {
+    // ignore
+  }
+}
+
+
 function getMeetingIdFrom(m: ScheduledMeeting): string {
   const obj = (m as unknown) as MaybeMeeting;
 
-  // 1) Si viene en la data, úsalo
+  // 1) Si ya viene como campo
   if (typeof obj.meetingId === 'string' && obj.meetingId.trim() !== '') {
     return obj.meetingId.trim();
   }
 
-  // 2) Fallback: intenta extraerlo del joinUrl
+  // 2) Varios patrones comunes en joinUrl
   const ju = typeof obj.joinUrl === 'string' ? obj.joinUrl : '';
   if (!ju) return '';
 
   try {
     const dec = decodeURIComponent(ju);
-    const match = /19:meeting_[^@]+@thread\.v2/.exec(dec);
-    return match?.[0] ?? '';
+
+    // a) id de evento online meeting (clásico)
+    const m1 = /19:meeting_[^@]+@thread\.v2/.exec(dec);
+    if (m1?.[0]) return m1[0];
+
+    // b) query param meetingId=...
+    const u = new URL(ju);
+    const q = u.searchParams.get('meetingId');
+    const qTrim = q?.trim();
+    if (qTrim) return qTrim;
+
+    // c) paths alternos (algunas orgs)
+    const m3 = /\/meet\/([A-Za-z0-9:_\-@.]+)/.exec(dec);
+    if (m3?.[1]) return m3[1];
+
+    return '';
   } catch {
     return '';
   }
@@ -1003,14 +1036,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     ? scheduledMeetings
     : (course.meetings ?? []));
 
-  // --- Helper local para parsear fechas robusto (si no trae zona, asumimos Bogotá -05:00)
+  // Convierte string de fecha a ms. Si no trae zona, asumimos Bogotá -05:00
   const toMs = (s: string) => {
     const hasTZ = /Z$|[+-]\d{2}:\d{2}$/.test(s);
     const final = hasTZ ? s : `${s}-05:00`;
     return new Date(final).getTime();
   };
 
-  // 1) Normalizamos ocurrencias y limpiamos cualquier video heredado
+  // Normalizamos ocurrencias y “limpiamos” cualquier video heredado
   const occs: UIMeeting[] = baseMeetings.map((m) => {
     const ui = toUIMeeting(m);
     const mId = getMeetingIdFrom(m);
@@ -1018,37 +1051,52 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return {
       ...ui,
       meetingId: mId,
-      // limpiamos para que NO se hereden videos entre ocurrencias
       video_key: undefined,
       videoUrl: undefined,
       recordingContentUrl: undefined,
     };
   });
 
-  // 2) Asignamos cada video a UNA sola ocurrencia: la más cercana por fecha
-  for (const v of videosRaw) {
-    // si el video no tiene createdAt, no podemos emparejar por fecha
-    const vMs = v.createdAt ? new Date(v.createdAt).getTime() : Number.NaN;
+  // --- NUEVO MATCHER: asigna cada video a una sola ocurrencia --- //
+  // 1) Preparamos índices útiles
+  const OCC_TIME: number[] = occs.map((o) =>
+    toMs(String((o as unknown as { startDateTime: string }).startDateTime))
+  );
 
-    // candidatos: si viene meetingId, filtramos por ese; si no, consideramos todos
-    const candidates = occs
-      .map((o, idx) => ({ idx, o }))
-      .filter(({ o }) => !v.meetingId || o.meetingId === v.meetingId);
+  // 2) Ordenamos videos por fecha (viejo→nuevo) para estabilizar
+  const videosSorted = [...videosRaw].sort((a, b) => {
+    const am = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bm = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return am - bm;
+  });
 
-    if (!candidates.length || Number.isNaN(vMs)) continue;
+  // Ventana de tolerancia (p.ej. ±12h)
+  const WINDOW_MS = 12 * 60 * 60 * 1000;
 
-    // elegimos el idx con |start - createdAt| mínimo, y que aún no tenga video
+  // Marca de “ya usado”
+  const usedOcc: boolean[] = occs.map(() => false);
+
+  // 3) Asignamos
+  for (const v of videosSorted) {
+    const vMs = v.createdAt ? new Date(v.createdAt).getTime() : NaN;
+    if (Number.isNaN(vMs)) continue;
+
+    // candidatos por meetingId (si viene)
+    const candidatesIdx = occs
+      .map((_o, idx) => idx)
+      .filter((idx) =>
+        v.meetingId ? occs[idx].meetingId === v.meetingId : true
+      );
+
     let bestIdx = -1;
-    let bestDiff = Number.POSITIVE_INFINITY;
+    let bestScore = Number.POSITIVE_INFINITY;
 
-    for (const { idx, o } of candidates) {
-      const startMs = toMs(String((o as unknown as { startDateTime: string }).startDateTime));
-      const diff = Math.abs(startMs - vMs);
+    for (const idx of candidatesIdx) {
+      if (usedOcc[idx]) continue; // ya tiene video
 
-      // si ya tiene video, lo saltamos (mantenemos 1:1)
-      const alreadyHasVideo = Boolean(o.video_key ?? o.videoUrl);
-      if (!alreadyHasVideo && diff < bestDiff) {
-        bestDiff = diff;
+      const diff = Math.abs(OCC_TIME[idx] - vMs);
+      if (diff <= WINDOW_MS && diff < bestScore) {
+        bestScore = diff;
         bestIdx = idx;
       }
     }
@@ -1056,10 +1104,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     if (bestIdx >= 0) {
       occs[bestIdx].video_key = v.videoKey;
       occs[bestIdx].videoUrl = v.videoUrl;
+      usedOcc[bestIdx] = true;
     }
   }
 
   const mergedMeetings: UIMeeting[] = occs;
+
+  logAssignments(mergedMeetings);
 
   // (Opcional) Log compacto para verificar asignaciones
   console.table(
