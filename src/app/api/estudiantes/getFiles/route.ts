@@ -1,69 +1,47 @@
-import { NextResponse } from 'next/server';
-
-import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
 
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-  region: process.env.AWS_REGION,
-});
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const lessonId = searchParams.get('lessonId');
-
-  if (!lessonId || isNaN(Number(lessonId))) {
-    return NextResponse.json({ message: 'Invalid lessonId' }, { status: 400 });
-  }
-
+export async function GET(request: NextRequest) {
   try {
-    const lesson = await db.query.lessons.findFirst({
-      where: eq(lessons.id, parseInt(lessonId)),
-      columns: {
-        resourceKey: true,
-        resourceNames: true,
-      },
-    });
+    // Get the lessonId from the query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const lessonId = searchParams.get('lessonId');
 
-    if (!lesson?.resourceKey || !lesson?.resourceNames) {
-      return NextResponse.json({ files: [] });
+    if (!lessonId) {
+      return NextResponse.json(
+        { message: 'lessonId is required' },
+        { status: 400 }
+      );
     }
 
-    const resourceKeys = lesson.resourceKey.split(',').filter(Boolean);
-    const resourceNames = lesson.resourceNames.split(',').filter(Boolean);
+    const lesson = await db.query.lessons.findFirst({
+      where: eq(lessons.id, parseInt(lessonId)),
+    });
 
-    const filesInfo = await Promise.all(
-      resourceKeys.map(async (key, index) => {
-        const params = {
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: key.trim(),
-        };
+    if (!lesson) {
+      return NextResponse.json(
+        { message: 'Lesson not found' },
+        { status: 404 }
+      );
+    }
 
-        try {
-          await s3Client.send(new HeadObjectCommand(params));
-          return {
-            key: key.trim(),
-            fileName: resourceNames[index]?.trim() || key.trim(),
-          };
-        } catch (err) {
-          console.error(`Error checking file ${key}:`, err);
-          return null;
-        }
-      })
-    );
+    // Log what we found for debugging
+    console.log(`Lesson ${lessonId} resourceKey:`, lesson.resourceKey);
+    console.log(`Lesson ${lessonId} resourceNames:`, lesson.resourceNames);
 
-    const validFiles = filesInfo.filter(
-      (file): file is NonNullable<typeof file> => file !== null
-    );
-    return NextResponse.json(validFiles);
+    // Return raw data from the database to let the frontend handle parsing
+    return NextResponse.json({
+      resourceKey: lesson.resourceKey,
+      resourceNames: lesson.resourceNames,
+    });
   } catch (error) {
     console.error('Error fetching files:', error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
