@@ -209,8 +209,10 @@ const ID_TYPES = [
    Tipos y defaults
    ======================= */
 const defaultFields = {
-  nombres: '',
-  apellidos: '',
+  primerNombre: '',
+  segundoNombre: '',        // opcional
+  primerApellido: '',
+  segundoApellido: '',      // opcional
   identificacionTipo: '',
   identificacionNumero: '',
   email: '',
@@ -458,45 +460,24 @@ export default function FormModal({ isOpen, onClose }: Props) {
   // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
   function sanitizeValueByKey(key: keyof Fields, value: string) {
     const TRIM_AND_FOLD: (keyof Fields)[] = [
-      'nombres',
-      'apellidos',
-      'direccion',
-      'ciudad',
-      'comercial',
-      'programa',
-      'sede',
-      'horario',
-      'pais',
-      'nivelEducacion',
-      'tieneAcudiente',
-      'acudienteNombre',
-      'acudienteContacto',
-      'acudienteEmail',
-      'modalidad',
+      'primerNombre', 'segundoNombre',
+      'primerApellido', 'segundoApellido',
+      'direccion', 'ciudad', 'comercial', 'programa',
+      'sede', 'horario', 'pais', 'nivelEducacion',
+      'tieneAcudiente', 'acudienteNombre', 'acudienteContacto',
+      'acudienteEmail', 'modalidad',
     ];
     const TRIM_ONLY: (keyof Fields)[] = [
-      'email',
-      'identificacionTipo',
-      'identificacionNumero',
-      'telefono',
-      'numeroCuotas',
-      'fechaInicio',
-      'birthDate',
-      'fecha',
-      'pagoInscripcion',
-      'pagoCuota1',
+      'email', 'identificacionTipo', 'identificacionNumero',
+      'telefono', 'numeroCuotas', 'fechaInicio', 'birthDate',
+      'fecha', 'pagoInscripcion', 'pagoCuota1',
     ];
-
     if (typeof value !== 'string') return value as unknown as string;
-
-    if (TRIM_AND_FOLD.includes(key)) {
-      return value.replace(/\s+/g, ' ').trim();
-    }
-    if (TRIM_ONLY.includes(key)) {
-      return value.trim();
-    }
+    if (TRIM_AND_FOLD.includes(key)) return value.replace(/\s+/g, ' ').trim();
+    if (TRIM_ONLY.includes(key)) return value.trim();
     return value.trim();
   }
+
 
   const handleChange = (key: keyof Fields, value: string) => {
     const sanitized = sanitizeValueByKey(key, value);
@@ -512,8 +493,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
     const e: Partial<Record<keyof Fields, string>> = {};
 
     const required: (keyof Fields)[] = [
-      'nombres',
-      'apellidos',
+      'primerNombre',
+      'primerApellido',
       'identificacionTipo',
       'identificacionNumero',
       'email',
@@ -771,16 +752,28 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Datos personales">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <FieldInput
-                      label="Nombres*"
-                      value={fields.nombres}
-                      onChange={(v) => handleChange('nombres', v)}
-                      error={errors.nombres}
+                      label="Primer nombre*"
+                      value={fields.primerNombre}
+                      onChange={(v) => handleChange('primerNombre', v)}
+                      error={errors.primerNombre}
                     />
                     <FieldInput
-                      label="Apellidos*"
-                      value={fields.apellidos}
-                      onChange={(v) => handleChange('apellidos', v)}
-                      error={errors.apellidos}
+                      label="Segundo nombre (opcional)"
+                      value={fields.segundoNombre}
+                      onChange={(v) => handleChange('segundoNombre', v)}
+                      error={errors.segundoNombre}
+                    />
+                    <FieldInput
+                      label="Primer apellido*"
+                      value={fields.primerApellido}
+                      onChange={(v) => handleChange('primerApellido', v)}
+                      error={errors.primerApellido}
+                    />
+                    <FieldInput
+                      label="Segundo apellido (opcional)"
+                      value={fields.segundoApellido}
+                      onChange={(v) => handleChange('segundoApellido', v)}
+                      error={errors.segundoApellido}
                     />
 
                     <FieldSelect
@@ -813,6 +806,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
                     />
                   </div>
                 </Section>
+
 
                 {/* Ubicación y educación */}
                 <Section title="Ubicación y educación">
