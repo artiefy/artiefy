@@ -297,6 +297,24 @@ async function generateUniqueUsername(baseUsername: string): Promise<string> {
   }
 }
 
+interface ClerkErrorItem { code: string; meta?: { paramName?: string } }
+interface ClerkApiError { clerkError: true; errors: ClerkErrorItem[] }
+
+function isClerkApiError(e: unknown): e is ClerkApiError {
+  if (typeof e !== 'object' || e === null) return false;
+  const maybe = e as Record<string, unknown>;
+  if (maybe.clerkError !== true) return false;
+
+  const errs = maybe.errors;
+  if (!Array.isArray(errs)) return false;
+
+  return errs.every(it => {
+    if (typeof it !== 'object' || it === null) return false;
+    return 'code' in (it as Record<string, unknown>);
+  });
+}
+
+
 export async function createUser(
   firstName: string,
   lastName: string,
@@ -306,52 +324,76 @@ export async function createUser(
   subscriptionEndDate?: string
 ) {
   try {
+    // 1) Generar password que cumpla políticas
     const generatedPassword = generateSecurePassword();
-    let baseUsername =
-      `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
-    if (baseUsername.length < 4) baseUsername += 'user';
-    baseUsername = baseUsername.slice(0, 60);
 
+    // 2) Normalizar email (Clerk trata emails case-insensitive, pero mejor en minúsculas)
+    const emailNormalized = (email ?? '').trim().toLowerCase();
+
+// dentro de createUser(...)
+const takeFirst = (s?: string) => {
+  const first = (s ?? '').split(' ').find(p => p.trim().length > 0);
+  return first ?? '';
+};
+
+    const normalize = (s: string) =>
+      s
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase();
+
+    const firstPiece = normalize(takeFirst(firstName));
+    const lastPiece = normalize(takeFirst(lastName));
+
+    let baseUsername = (firstPiece + lastPiece).replace(/[^a-z0-9_]/g, '');
+    if (baseUsername.length < 4) baseUsername = (baseUsername + 'user').slice(0, 60);
+    else baseUsername = baseUsername.slice(0, 60);
+
+    // 4) Garantizar que el username sea único en Clerk
     const uniqueUsername = await generateUniqueUsername(baseUsername);
 
+    // 5) Crear usuario en Clerk
     const client = await clerkClient();
     try {
       const newUser = await client.users.createUser({
         firstName,
         lastName,
-        username: uniqueUsername,
+        username: uniqueUsername,       // <- OBLIGATORIO sin llaves extra
         password: generatedPassword,
-        emailAddress: [email],
+        emailAddress: [emailNormalized],
         publicMetadata: {
           role,
           mustChangePassword: true,
-          planType: 'Premium', // 👈 siempre Premium
+          planType: 'Premium',
           subscriptionStatus: subscriptionStatus ?? 'inactive',
           subscriptionEndDate: subscriptionEndDate ?? null,
         },
       });
 
       return { user: newUser, generatedPassword };
-    } catch (error: unknown) {
-      if (
-        (
-          error as { errors?: { code: string; meta?: { paramName: string } }[] }
-        )?.errors?.some(
-          (e) =>
-            e.code === 'form_identifier_exists' &&
-            e.meta?.paramName === 'email_address'
-        )
-      ) {
-        // usuario ya existe → null
-        return null;
-      }
-      throw error;
+   } catch (error: unknown) {
+  if (isClerkApiError(error)) {
+    console.error(
+      '[CLERK 422] createUser errors:',
+      JSON.stringify(error.errors, null, 2)
+    );
+
+    const emailExists = error.errors.some(
+      (e) => e.code === 'form_identifier_exists' && e.meta?.paramName === 'email_address'
+    );
+    if (emailExists) {
+      return null;
     }
+  }
+  throw error;
+}
+
   } catch (error) {
     console.error('Error al crear usuario:', error);
     throw error;
   }
 }
+
 
 export async function updateUserStatus(id: string, status: string) {
   try {
