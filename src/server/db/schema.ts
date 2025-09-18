@@ -1,9 +1,11 @@
 import { relations, sql } from 'drizzle-orm';
 import {
-bigint,   boolean,
+  bigint,
+  boolean,
   date,
-decimal,
-index,   integer,
+  decimal,
+  index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -11,8 +13,11 @@ index,   integer,
   serial,
   text,
   timestamp,
-  unique, uniqueIndex,
-  varchar, } from 'drizzle-orm/pg-core';
+  unique,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable(
@@ -96,6 +101,8 @@ export const courses = pgTable('courses', {
   isActive: boolean('is_active').default(true),
   is_top: boolean('is_top').default(false),
   is_featured: boolean('is_featured').default(false),
+  // 👉 Agrega la columna embedding para pgvector (usa 1536 dimensiones para OpenAI)
+  embedding: vector('embedding', { dimensions: 1536 }),
 });
 
 // Tabla de tipos de actividades
@@ -1295,8 +1302,10 @@ export const pagos = pgTable('pagos', {
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-   programaId: integer('programa_id')
-    .references(() => programas.id, { onDelete: 'set null', onUpdate: 'cascade' }),   // 👈 ¡importante!
+  programaId: integer('programa_id').references(() => programas.id, {
+    onDelete: 'set null',
+    onUpdate: 'cascade',
+  }), // 👈 ¡importante!
   concepto: varchar('concepto', { length: 100 }).notNull(), // Ej: INSCRIPCIÓN, CUOTA, etc.
   nroPago: integer('nro_pago').notNull(),
   fecha: date('fecha').notNull(),
@@ -1309,42 +1318,59 @@ export const pagos = pgTable('pagos', {
   receiptUploadedAt: timestamp('receipt_uploaded_at', { withTimezone: true }),
 });
 
-
 export const userProgramPrice = pgTable('user_program_price', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').references(() => users.id).notNull(),
-  programaId: integer('programa_id').references(() => programas.id).notNull(),
-price: decimal('price', { precision: 12, scale: 2 }).notNull().default('150000'),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  programaId: integer('programa_id')
+    .references(() => programas.id)
+    .notNull(),
+  price: decimal('price', { precision: 12, scale: 2 })
+    .notNull()
+    .default('150000'),
   numCuotas: integer('num_cuotas').notNull().default(12),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const userProgramPriceRelations = relations(userProgramPrice, ({ one }) => ({
-  user: one(users, { fields: [userProgramPrice.userId], references: [users.id] }),
-  programa: one(programas, { fields: [userProgramPrice.programaId], references: [programas.id] }),
-}));
+export const userProgramPriceRelations = relations(
+  userProgramPrice,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userProgramPrice.userId],
+      references: [users.id],
+    }),
+    programa: one(programas, {
+      fields: [userProgramPrice.programaId],
+      references: [programas.id],
+    }),
+  })
+);
 
-
-export const waMessages = pgTable('wa_messages', {
-  id: serial('id').primaryKey(),
-  // id devuelto por Meta (wamid-...), puede venir vacío en algunos status
-  metaMessageId: text('meta_message_id'),
-  // número WhatsApp del contacto (wa_id / from / to, sin +)
-  waid: varchar('waid', { length: 32 }).notNull(),
-  name: text('name'),
-  // 'inbound' | 'outbound' | 'status'
-  direction: varchar('direction', { length: 16 }).notNull(),
-  // 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive' | 'button' | 'status' | ...
-  msgType: varchar('msg_type', { length: 32 }).notNull(),
-  // texto principal (si aplica)
-  body: text('body'),
-  // timestamp en ms (para ordenar exacto como ya usa tu UI)
-  tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
-  // dump crudo por si luego necesitas algo
-  raw: jsonb('raw'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (t) => ({
-  byWaidTs: index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
-  uniqMetaId: uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
-}));
+export const waMessages = pgTable(
+  'wa_messages',
+  {
+    id: serial('id').primaryKey(),
+    // id devuelto por Meta (wamid-...), puede venir vacío en algunos status
+    metaMessageId: text('meta_message_id'),
+    // número WhatsApp del contacto (wa_id / from / to, sin +)
+    waid: varchar('waid', { length: 32 }).notNull(),
+    name: text('name'),
+    // 'inbound' | 'outbound' | 'status'
+    direction: varchar('direction', { length: 16 }).notNull(),
+    // 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive' | 'button' | 'status' | ...
+    msgType: varchar('msg_type', { length: 32 }).notNull(),
+    // texto principal (si aplica)
+    body: text('body'),
+    // timestamp en ms (para ordenar exacto como ya usa tu UI)
+    tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
+    // dump crudo por si luego necesitas algo
+    raw: jsonb('raw'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => ({
+    byWaidTs: index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
+    uniqMetaId: uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
+  })
+);
