@@ -388,3 +388,35 @@
 }
 
 /* - Bola Artie - */
+
+
+@media print {
+  /* Mostrar SOLO el recibo */
+  body * {
+    visibility: hidden !important;
+  }
+  #printable, #printable * {
+    visibility: visible !important;
+  }
+  #printable {
+    position: absolute !important;
+    inset: 0 !important;            /* top/right/bottom/left = 0 */
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* Forzar colores correctos en impresión (evita “modo oscuro” en papel) */
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Oculta cualquier overlay/modal si quedara montado */
+  [data-modal], .modal, .fixed, .sticky {
+    display: none !important;
+  }
+}

@@ -1305,8 +1305,8 @@ export const pagos = pgTable('pagos', {
   programaId: integer('programa_id').references(() => programas.id, {
     onDelete: 'set null',
     onUpdate: 'cascade',
-  }), // 👈 ¡importante!
-  concepto: varchar('concepto', { length: 100 }).notNull(), // Ej: INSCRIPCIÓN, CUOTA, etc.
+  }),
+  concepto: varchar('concepto', { length: 100 }).notNull(),
   nroPago: integer('nro_pago').notNull(),
   fecha: date('fecha').notNull(),
   metodo: varchar('metodo', { length: 50 }).notNull(),
@@ -1316,7 +1316,34 @@ export const pagos = pgTable('pagos', {
   receiptUrl: varchar('receipt_url', { length: 512 }),
   receiptName: varchar('receipt_name', { length: 255 }),
   receiptUploadedAt: timestamp('receipt_uploaded_at', { withTimezone: true }),
+
+  // ✅ Estado de verificación del comprobante
+  receiptVerified: boolean('receipt_verified').notNull().default(false),
+  receiptVerifiedAt: timestamp('receipt_verified_at', { withTimezone: true }),
+  receiptVerifiedBy: text('receipt_verified_by').references(() => users.id),
+
+  // 📎 (Opcional) archivo “verificado”/validado (por ejemplo, versión sellada)
+  verifiedReceiptKey: varchar('verified_receipt_key', { length: 255 }),
+  verifiedReceiptUrl: varchar('verified_receipt_url', { length: 512 }),
+  verifiedReceiptName: varchar('verified_receipt_name', { length: 255 }),
 });
+
+// 🆕 Historial de verificaciones de comprobantes (tabla intermedia)
+export const pagoVerificaciones = pgTable('pago_verificaciones', {
+  id: serial('id').primaryKey(),
+  pagoId: integer('pago_id')
+    .references(() => pagos.id, { onDelete: 'cascade' })
+    .notNull(),
+  verifiedBy: text('verified_by').references(() => users.id), // ← ahora NULLABLE
+  notes: text('notes'),
+  fileKey: varchar('file_key', { length: 255 }),
+  fileUrl: varchar('file_url', { length: 512 }),
+  fileName: varchar('file_name', { length: 255 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+
+
 
 export const userProgramPrice = pgTable('user_program_price', {
   id: serial('id').primaryKey(),
