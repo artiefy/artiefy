@@ -13,8 +13,8 @@ export async function POST(req: Request) {
     // Log del prompt recibido
     console.log('Prompt recibido:', prompt);
 
-    // URL de tu webhook de n8n
-    const n8nWebhookUrl = `https://n8n.srv1000134.hstgr.cloud/${env.N8N_WEBHOOK_ID}`;
+    // URL de producción del webhook de n8n
+    const n8nWebhookUrl = `https://n8n.srv1000134.hstgr.cloud/webhook/${env.N8N_WEBHOOK_ID}`;
 
     // Llama al webhook de n8n con el prompt
     const n8nRes = await fetch(n8nWebhookUrl, {
