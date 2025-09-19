@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
 import { Loader2, Mail, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -278,6 +279,25 @@ export default function EnrolledUsersPage() {
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
   const [editablePagos, setEditablePagos] = useState<Pago[]>([]);
+  const { user: clerkUser } = useUser();
+
+  // Modal de vista previa de comprobantes
+  const [receiptPreview, setReceiptPreview] = useState<{
+    open: boolean;
+    url?: string;
+    name?: string;
+  }>({ open: false });
+
+  const openReceiptPreview = (url?: string, name?: string) => {
+    if (!url) return;
+    setReceiptPreview({ open: true, url, name });
+  };
+  const closeReceiptPreview = () =>
+    setReceiptPreview((p) => ({ ...p, open: false }));
+
+  const isPdfUrl = (u?: string) => !!u && /\.pdf(\?|$)/i.test(u);
+
+
 
   void setCodigoPais;
 
@@ -348,6 +368,7 @@ export default function EnrolledUsersPage() {
   const mapPagosToEditable = useCallback(
     (pagosFromApi: unknown[]): Pago[] => {
       const slots: Pago[] = Array.from({ length: 15 }, () => ({} as Pago));
+
       for (const raw of pagosFromApi ?? []) {
         const p = asRec(raw);
 
@@ -366,7 +387,7 @@ export default function EnrolledUsersPage() {
         // ¿especial?
         const esp = ESPECIALES.find((e) => e.label === conceptoUC);
         if (esp) {
-          const idx = esp.idxBase; // 12..14
+          const idx = esp.idxBase; // 👈 este sí existe en ESPECIALES
           slots[idx] = {
             concepto: getStr(p, 'concepto') || esp.label,
             nro_pago: Number.isFinite(getNum(p, 'nroPago'))
@@ -386,6 +407,12 @@ export default function EnrolledUsersPage() {
             valor: Number.isFinite(getNum(p, 'valor')) ? getNum(p, 'valor') : 0,
             receiptUrl: getStr(p, 'receiptUrl') || undefined,
             receiptName: getStr(p, 'receiptName') || undefined,
+            receiptVerified: ((): boolean => {
+              const v = p.receiptVerified;
+              return typeof v === 'boolean' ? v : false;
+            })(),
+            verifiedReceiptUrl: getStr(p, 'verifiedReceiptUrl') || undefined,
+            verifiedReceiptName: getStr(p, 'verifiedReceiptName') || undefined,
           };
           continue;
         }
@@ -412,6 +439,12 @@ export default function EnrolledUsersPage() {
             valor: Number.isFinite(getNum(p, 'valor')) ? getNum(p, 'valor') : 0,
             receiptUrl: getStr(p, 'receiptUrl') || undefined,
             receiptName: getStr(p, 'receiptName') || undefined,
+            receiptVerified: ((): boolean => {
+              const v = p.receiptVerified;
+              return typeof v === 'boolean' ? v : false;
+            })(),
+            verifiedReceiptUrl: getStr(p, 'verifiedReceiptUrl') || undefined,
+            verifiedReceiptName: getStr(p, 'verifiedReceiptName') || undefined,
           };
         }
       }
@@ -420,6 +453,8 @@ export default function EnrolledUsersPage() {
     },
     [ensure15, ESPECIALES]
   );
+
+
 
   const daysInMonthUTC = useCallback((year: number, month0: number) => {
     return new Date(Date.UTC(year, month0 + 1, 0)).getUTCDate();
@@ -712,6 +747,10 @@ export default function EnrolledUsersPage() {
     valor?: string | number | null;
     receiptUrl?: string;
     receiptName?: string;
+    receiptVerified?: boolean;
+    verifiedReceiptUrl?: string;
+    verifiedReceiptName?: string;
+
   }
 
   interface CarteraInfo {
@@ -802,28 +841,63 @@ export default function EnrolledUsersPage() {
   }, [showColumnSelector]);
 
   async function fetchPagosUsuarioPrograma(userId: string, programId: string): Promise<Pago[]> {
-    const res = await fetch(`/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`);
+    const res = await fetch(
+      `/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`
+    );
     if (!res.ok) throw new Error('Error cargando pagos');
 
     const json: unknown = await res.json();
+
     const pagos = Array.isArray((json as { pagos?: unknown }).pagos)
       ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p): Pago => {
         const r = p as Record<string, unknown>;
         return {
-          concepto: typeof r.concepto === 'string' ? r.concepto : null,
-          nro_pago: typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number' ? r.nro_pago : null,
-          nroPago: typeof r.nroPago === 'string' || typeof r.nroPago === 'number' ? r.nroPago : null,
-          fecha: typeof r.fecha === 'string' || typeof r.fecha === 'number' || r.fecha instanceof Date ? r.fecha : null,
+          concepto:
+            typeof r.concepto === 'string' ? r.concepto : null,
+          nro_pago:
+            typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
+              ? r.nro_pago
+              : null,
+          nroPago:
+            typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
+              ? r.nroPago
+              : null,
+          fecha:
+            typeof r.fecha === 'string' ||
+              typeof r.fecha === 'number' ||
+              r.fecha instanceof Date
+              ? r.fecha
+              : null,
           metodo: typeof r.metodo === 'string' ? r.metodo : null,
-          valor: typeof r.valor === 'string' || typeof r.valor === 'number' ? r.valor : null,
-          receiptUrl: typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
-          receiptName: typeof r.receiptName === 'string' ? r.receiptName : undefined,
+          valor:
+            typeof r.valor === 'string' || typeof r.valor === 'number'
+              ? r.valor
+              : null,
+
+          // 👇 campos del comprobante original
+          receiptUrl:
+            typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
+          receiptName:
+            typeof r.receiptName === 'string' ? r.receiptName : undefined,
+
+          // 👇 NUEVOS: verificación + archivo verificado
+          receiptVerified:
+            typeof r.receiptVerified === 'boolean' ? (r.receiptVerified as boolean) : false,
+          verifiedReceiptUrl:
+            typeof r.verifiedReceiptUrl === 'string'
+              ? (r.verifiedReceiptUrl as string)
+              : undefined,
+          verifiedReceiptName:
+            typeof r.verifiedReceiptName === 'string'
+              ? (r.verifiedReceiptName as string)
+              : undefined,
         };
       })
       : [];
 
     return pagos;
   }
+
 
 
   useEffect(() => {
@@ -1854,7 +1928,7 @@ export default function EnrolledUsersPage() {
         message={infoDialogMessage}
         onClose={() => setInfoDialogOpen(false)}
       />
-      <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white">
+      <div className="print:hidden min-h-screen space-y-8 bg-gray-900 p-6 text-white">
         <div
           ref={headerRef}
           className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
@@ -2998,9 +3072,8 @@ export default function EnrolledUsersPage() {
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
                           PRODUCTO
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-center dark:border-gray-600">
-                          N° PAGO
-                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                          N° PAGO	                        </th>
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
                           FECHA DE PAGO
                         </th>
@@ -3010,11 +3083,18 @@ export default function EnrolledUsersPage() {
                         <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
                           VALOR
                         </th>
+
+                        {/* 👇 NUEVA COLUMNA */}
+                        <th className="border-b border-gray-200 px-3 py-2 text-center dark:border-gray-600">
+                          VERIFICADO
+                        </th>
+
                         <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
                           ACCIONES
                         </th>
                       </tr>
                     </thead>
+
                     {/* ───────────────────────────────────────────────────────── */}
                     {/* TABLA: 12 cuotas (ahora con select en Método de pago) */}
                     {/* ───────────────────────────────────────────────────────── */}
@@ -3032,38 +3112,31 @@ export default function EnrolledUsersPage() {
                             key={`cuota-${cuotaNum}`}
                             className="align-top odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
                           >
+                            {/* PRODUCTO */}
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                               <input
                                 type="text"
                                 value={row.concepto ?? `Cuota ${cuotaNum}`}
                                 onChange={(e) =>
-                                  handleCuotaChange(
-                                    idx,
-                                    'concepto',
-                                    e.target.value
-                                  )
+                                  handleCuotaChange(idx, 'concepto', e.target.value)
                                 }
                                 className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
                             </td>
 
+                            {/* N° PAGO */}
                             <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
                               <input
                                 type="text"
-                                value={String(
-                                  row.nro_pago ?? row.nroPago ?? cuotaNum
-                                )}
+                                value={String(row.nro_pago ?? row.nroPago ?? cuotaNum)}
                                 onChange={(e) =>
-                                  handleCuotaChange(
-                                    idx,
-                                    'nro_pago',
-                                    e.target.value
-                                  )
+                                  handleCuotaChange(idx, 'nro_pago', e.target.value)
                                 }
                                 className="w-24 rounded border border-gray-300 bg-white p-1 text-center text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
                             </td>
 
+                            {/* FECHA */}
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                               <input
                                 type="date"
@@ -3073,95 +3146,214 @@ export default function EnrolledUsersPage() {
                                     : toISODateLike(editablePagos[idx]?.fecha)
                                 }
                                 onChange={(e) =>
-                                  handleCuotaChange(
-                                    idx,
-                                    'fecha',
-                                    e.target.value
-                                  )
+                                  handleCuotaChange(idx, 'fecha', e.target.value)
                                 }
                                 className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
                             </td>
 
-                            {/* SELECT método: Transferencia | Artiefy */}
+                            {/* MÉTODO */}
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                               <select
                                 value={row.metodo ?? ''}
                                 onChange={(e) =>
-                                  handleCuotaChange(
-                                    idx,
-                                    'metodo',
-                                    e.target.value
-                                  )
+                                  handleCuotaChange(idx, 'metodo', e.target.value)
                                 }
                                 className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               >
                                 <option value="">—</option>
-                                <option value="Transferencia">
-                                  Transferencia
-                                </option>
+                                <option value="Transferencia">Transferencia</option>
                                 <option value="Artiefy">Artiefy</option>
                               </select>
                             </td>
 
+                            {/* VALOR */}
                             <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
                               <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
                                 <input
                                   type="text"
                                   inputMode="numeric"
-                                  defaultValue={rawValor.toString()} // 👈 usa defaultValue en vez de value
-                                  onBlur={(e) =>
-                                    handleCuotaChange(idx, 'valor', e.target.value) // 👈 actualiza solo al perder focus
+                                  value={rawValor.toString()}
+                                  onChange={(e) =>
+                                    handleCuotaChange(idx, 'valor', e.target.value)
                                   }
                                   className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                 />
                               </div>
                             </td>
 
+                            {/* VERIFICADO */}
+                            <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
+                              <div className="flex flex-col items-center gap-1">
+                                <span
+                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-500 text-white'
+                                    }`}
+                                  title="Estado de verificación del comprobante"
+                                >
+                                  {editablePagos[idx]?.receiptVerified ? 'Verificado' : 'No verificado'}
+                                </span>
 
-                            <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
-                              <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => savePagoRow(idx)}
-                                    className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                                {editablePagos[idx]?.verifiedReceiptUrl && (
+                                  <a
+                                    href={editablePagos[idx].verifiedReceiptUrl as string}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[11px] underline"
+                                    title={
+                                      editablePagos[idx]?.verifiedReceiptName ?? 'Comprobante verificado'
+                                    }
                                   >
-                                    Guardar
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setPendingRowForReceipt(idx);
-                                      fileInputRef.current?.click();
-                                    }}
-                                    className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                                  >
-                                    Subir comprobante
-                                  </button>
-
-                                  {editablePagos[idx]?.receiptUrl && (
-                                    <a
-                                      href={
-                                        editablePagos[idx].receiptUrl as string
-                                      }
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="ml-1 text-xs underline"
-                                      title={
-                                        editablePagos[idx]?.receiptName ??
-                                        'Comprobante'
-                                      }
-                                    >
-                                      Ver
-                                    </a>
-                                  )}
-                                </div>
+                                    Ver verificado
+                                  </a>
+                                )}
                               </div>
                             </td>
+
+                            <td className="border-b border-gray-100 px-3 py-2 text-right dark:border-gray-700">
+                              <div className="flex flex-wrap items-center justify-end gap-1.5">
+                                {/* Guardar */}
+                                <button
+                                  type="button"
+                                  onClick={() => savePagoRow(idx)}
+                                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                                  title="Guardar cambios de esta cuota"
+                                >
+                                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <path d="M3 4a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4zM5 4v4h6V4H5z" />
+                                  </svg>
+                                  Guardar
+                                </button>
+
+                                {/* Subir comprobante */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPendingRowForReceipt(idx);
+                                    fileInputRef.current?.click();
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                                  title="Subir comprobante"
+                                >
+                                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <path d="M3 16a2 2 0 002 2h10a2 2 0 002-2v-5h-2v5H5V5h5V3H5a2 2 0 00-2 2v11z" />
+                                    <path d="M15 3h-3V1h5v5h-2V3z" />
+                                    <path d="M10 14l4-4h-3V5H9v5H6l4 4z" />
+                                  </svg>
+                                  Subir
+                                </button>
+
+                                {/* Ver comprobante (si existe) */}
+                                {editablePagos[idx]?.receiptUrl ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openReceiptPreview(
+                                        editablePagos[idx].receiptUrl!,
+                                        editablePagos[idx]?.receiptName ?? 'Comprobante'
+                                      )
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700/60"
+                                    title={editablePagos[idx]?.receiptName ?? 'Ver comprobante'}
+                                  >
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                      <path d="M10 3c-5 0-8 7-8 7s3 7 8 7 8-7 8-7-3-7-8-7zm0 2a5 5 0 110 10A5 5 0 0110 5zm0 2a3 3 0 100 6 3 3 0 000-6z" />
+                                    </svg>
+                                    Ver
+                                  </button>
+                                ) : (
+                                  <span
+                                    className="inline-flex items-center gap-1 cursor-not-allowed rounded-md border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
+                                    title="Sin comprobante"
+                                  >
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                      <path d="M10 3c-5 0-8 7-8 7l2 2s3-7 6-7 6 7 6 7l2-2s-3-7-8-7z" />
+                                    </svg>
+                                    Ver
+                                  </span>
+                                )}
+
+                                {/* Badge de verificación (compacto) */}
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
+                                    ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
+                                    : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
+                                  title="Estado de verificación del comprobante"
+                                >
+                                  <svg
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className="h-3 w-3"
+                                    aria-hidden="true"
+                                  >
+                                    {editablePagos[idx]?.receiptVerified ? (
+                                      <path d="M16.707 5.293l-8 8-4-4 1.414-1.414L8.707 10.586l6.293-6.293 1.707 1z" />
+                                    ) : (
+                                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-5H9v2h2v-2zm0-8H9v6h2V5z" />
+                                    )}
+                                  </svg>
+                                  {editablePagos[idx]?.receiptVerified ? 'Verificado' : 'No verificado'}
+                                </span>
+
+                                {/* Verificar (solo si hay comprobante) */}
+                                {!!editablePagos[idx]?.receiptUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const nro_pago = Number(
+                                        editablePagos[idx]?.nro_pago ??
+                                        editablePagos[idx]?.nroPago ??
+                                        (idx + 1)
+                                      );
+                                      const verifiedBy = clerkUser?.id ?? null; // ID real del admin (o null si no está logueado)
+                                      const programIdNum = currentProgramId ? Number(currentProgramId) : null;
+
+                                      const res = await fetch(
+                                        '/api/super-admin/enroll_user_program/programsUser/pagos/verify',
+                                        {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            userId: carteraUserId,
+                                            programId: programIdNum,
+                                            nro_pago,
+                                            verified: true,
+                                            verifiedBy,
+                                          }),
+                                        }
+                                      );
+
+                                      if (!res.ok) {
+                                        const data = await res.json().catch(() => ({}));
+                                        alert(isErrorResponse(data) ? data.error : 'No se pudo verificar');
+                                        return;
+                                      }
+
+                                      const pagosRefrescados = await fetchPagosUsuarioPrograma(
+                                        carteraUserId!,
+                                        String(currentProgramId)
+                                      );
+                                      setEditablePagos(mapPagosToEditable(pagosRefrescados));
+                                      alert('✅ Comprobante verificado');
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+                                    title="Marcar como verificado"
+                                  >
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                      <path d="M10 2l2.39 4.84 5.34.78-3.86 3.76.91 5.31L10 14.77 4.22 16.7l.91-5.31L1.27 7.62l5.34-.78L10 2z" />
+                                    </svg>
+                                    Verificar
+                                  </button>
+                                )}
+
+                              </div>
+                            </td>
+
                           </tr>
                         );
+
                       })}
                     </tbody>
 
@@ -3393,7 +3585,7 @@ export default function EnrolledUsersPage() {
                                               ?.receiptName ?? 'Comprobante'
                                           }
                                         >
-                                          Ver
+                                          Versosa
                                         </a>
                                       )}
                                     </div>
@@ -3477,9 +3669,9 @@ export default function EnrolledUsersPage() {
                     </div>
                   </div>
                 )}
-                <div id="printable" className="hidden">
+                <div id="printable" className="hidden print:block pointer-events-none">
                   {currentUser && (
-                    <div className="p-6 text-gray-900 dark:text-gray-100">
+                    <div className="">
                       {/* Cabecera */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex gap-2">
@@ -3563,17 +3755,8 @@ export default function EnrolledUsersPage() {
               {/* FOOTER / BOTONES */}
               <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
                 <button
-                  onClick={() => {
-                    const printContents = document.getElementById('printable')?.innerHTML;
-                    const originalContents = document.body.innerHTML;
+                  onClick={() => window.print()}
 
-                    if (printContents) {
-                      document.body.innerHTML = printContents;
-                      window.print();
-                      document.body.innerHTML = originalContents;
-                      window.location.reload(); // para restaurar React
-                    }
-                  }}
                   className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                   Imprimir / Guardar PDF
@@ -3689,6 +3872,70 @@ export default function EnrolledUsersPage() {
           </div>
         )}
       </div>
+      {/* Modal Vista previa de comprobante */}
+      {receiptPreview.open && receiptPreview.url && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+          <div className="relative grid max-h-[90vh] w-full max-w-4xl grid-rows-[auto,1fr,auto] overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+              <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {receiptPreview.name ?? 'Comprobante'}
+              </h3>
+              <button
+                onClick={closeReceiptPreview}
+                className="inline-flex items-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-800"
+                aria-label="Cerrar"
+                title="Cerrar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body (preview) */}
+            <div className="min-h-[50vh] overflow-auto bg-gray-50 dark:bg-gray-950">
+              {isPdfUrl(receiptPreview.url) ? (
+                <iframe
+                  src={receiptPreview.url}
+                  className="h-[70vh] w-full"
+                  title="Vista previa PDF"
+                />
+              ) : (
+                // Si no es PDF, mostramos imagen. (Usamos <img> para evitar necesitar domain config de Next/Image)
+                <div className="flex items-center justify-center p-3">
+                  <Image
+                    src={receiptPreview.url}
+                    alt={receiptPreview.name ?? 'Comprobante'}
+                    className="max-h-[70vh] max-w-full rounded-md shadow"
+                    width={800}
+                    height={600}
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+              <a
+                href={receiptPreview.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Abrir en pestaña
+              </a>
+              <a
+                href={receiptPreview.url}
+                download={receiptPreview.name ?? 'comprobante'}
+                className="inline-flex items-center gap-1 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+              >
+                Descargar
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }
