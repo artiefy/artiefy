@@ -5,26 +5,42 @@ import { chat_messages } from '~/server/db/schema';
 
 import { getOrCreateConversation } from './saveChat';
 
+// Modifica el tipo para aceptar coursesData
+interface MessageToSave {
+  text: string;
+  sender: string;
+  sender_id: string;
+  coursesData?: { id: number; title: string }[];
+}
+
 export async function saveMessages(
   senderId: string,
   cursoId: number,
-  messages: {
-    text: string;
-    sender: string;
-    sender_id: string;
-  }[]
+  messages: MessageToSave[]
 ) {
   const conversation = await getOrCreateConversation({
     senderId,
     cursoId,
   });
 
-  await db.insert(chat_messages).values(
-    messages.map((msg) => ({
-      senderId: msg.sender_id,
+  for (const msg of messages) {
+    // Si coursesData es undefined, no agregues el campo (no lo incluyas en el objeto)
+    // Si coursesData es un array vacío, tampoco lo agregues
+    const insertObj: {
+      conversation_id: number;
+      sender: string;
+      senderId: string;
+      message: string;
+      courses_data?: { id: number; title: string }[];
+    } = {
       conversation_id: conversation.id,
       sender: msg.sender,
+      senderId: msg.sender_id,
       message: msg.text,
-    }))
-  );
+    };
+    if (msg.coursesData && msg.coursesData.length > 0) {
+      insertObj.courses_data = msg.coursesData;
+    }
+    await db.insert(chat_messages).values(insertObj);
+  }
 }

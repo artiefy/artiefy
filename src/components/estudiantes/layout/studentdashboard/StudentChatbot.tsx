@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 // Importar StudentChat
 import { useExtras } from '~/app/estudiantes/StudentContext';
+import { Badge } from '~/components/estudiantes/ui/badge'; // <-- Importa Badge
 import { Card } from '~/components/estudiantes/ui/card';
 // Importar StudentChatList.tsx
 import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
@@ -39,10 +40,6 @@ interface StudentChatbotProps {
   isEnrolled?: boolean;
 }
 
-interface BotResponse {
-  result: string | Curso[];
-}
-
 interface ResizeData {
   size: {
     width: number;
@@ -56,6 +53,24 @@ interface Curso {
   title: string;
 }
 
+// Añadir una nueva interfaz para los datos del curso
+interface CourseData {
+  id: number;
+  title: string;
+  modalidad?: string; // <-- Añade modalidad opcional
+}
+
+// Tipos fuertes para la respuesta de n8n
+interface N8nPayload {
+  mensaje_inicial?: string;
+  cursos?: Curso[];
+  pregunta_final?: string;
+}
+interface N8nApiResponse {
+  prompt: string;
+  n8nData: N8nPayload;
+}
+
 // Añade la interfaz para los botones y actualiza el tipo de mensaje
 interface ChatButton {
   label: string;
@@ -66,6 +81,7 @@ interface ChatMessage {
   text: string;
   sender: string;
   buttons?: ChatButton[];
+  coursesData?: CourseData[];
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -239,7 +255,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       });
   };
 
-  const saveBotMessage = (trimmedInput: string) => {
+  // Modifica saveBotMessage para aceptar cursosData opcional
+  const saveBotMessage = (trimmedInput: string, coursesData?: CourseData[]) => {
     const currentChatId = chatModeRef.current.idChat;
 
     // No guardar si es un chat temporal (ID muy grande o menor a 1000)
@@ -258,6 +275,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             text: trimmedInput,
             sender: 'bot',
             sender_id: 'bot',
+            coursesData:
+              coursesData && coursesData.length > 0 ? coursesData : undefined, // Nuevo campo
           },
         ]
       );
@@ -266,105 +285,31 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   };
 
+  // Type guards
+  const isN8nApiResponse = (x: unknown): x is N8nApiResponse =>
+    typeof x === 'object' && x !== null && 'n8nData' in x;
+
   const handleBotResponse = useCallback(
     async (query: string) => {
       if (processingQuery || searchRequestInProgress.current) return;
-
-      let booleanVar = false;
-      let inCourse = false;
 
       searchRequestInProgress.current = true;
       setProcessingQuery(true);
       setIsLoading(true);
 
-      const modoActual = chatModeRef.current;
-      const courseTitle = modoActual.curso_title;
-
-      console.log('Modo actual del chat:', modoActual);
-
-      if (courseTitle.includes('Nuevo Chat')) {
-        console.log('Ingreso al titlenewChat');
-        booleanVar = true;
-      }
-      // Obtener url y ver si esta dentro de un curso
-
-      if (safePathname.includes('cursos') || safePathname.includes('curso')) {
-        console.log('Ingreso al if');
-        if (isEnrolled) {
-          console.log('Usuario está inscrito en el curso');
-          inCourse = true;
-        }
-      }
-
-      console.log(chatMode);
-      // Url para la petición según si hay courseTitle
-      const urlDefault = {
-        url: '/api/chat/courses',
+      // Siempre usar el flujo de n8n
+      const fetchConfig = {
+        url: '/api/ia-cursos',
         body: { prompt: query },
       };
-      const urlCourses = {
-        url: '/api/chat/info/',
-        body: {
-          user_id: user?.id,
-          curso: courseTitle ? courseTitle : chatMode.curso_title,
-          prompt: query,
-        },
-      };
-      const urlSales = {
-        url: '/api/sales',
-        body: {
-          userMessage: query ? query : 'Precios generales de los programas',
-        },
-      };
-
-      console.log('Titulo del chat de curso: ' + courseTitle);
-      console.log('Var to fetching:', booleanVar, courseTitle, isSignedIn);
-      console.log('InCourse:', inCourse);
-      let fetchConfig;
-
-      if (
-        (!courseTitle.includes('Nuevo Chat') &&
-          !courseTitle.includes('Sin título') &&
-          courseTitle) ||
-        inCourse
-      ) {
-        console.log('1');
-        fetchConfig = urlCourses;
-      } else if (
-        isSignedIn ||
-        courseTitle.includes('Nuevo Chat') ||
-        courseTitle.includes('Sin título') ||
-        booleanVar
-      ) {
-        console.log('2');
-        fetchConfig = urlDefault;
-      } else if (!isSignedIn && !courseTitle) {
-        console.log('3');
-        fetchConfig = urlSales;
-      }
-
-      if (fetchConfig) {
-        console.log('Fetching URL:', fetchConfig.url);
-        console.log('Fetching body:', fetchConfig.body);
-      } else {
-        console.error('fetchConfig is undefined. Cannot proceed with fetch.');
-        setIsLoading(false);
-        setProcessingQuery(false);
-        searchRequestInProgress.current = false;
-        onSearchComplete?.();
-        return;
-      }
 
       try {
         const result = await fetch(fetchConfig.url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fetchConfig.body),
         });
 
-        // Verificar si la respuesta es exitosa
         if (!result.ok) {
           const errorText = await result.text();
           console.error(
@@ -373,7 +318,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           throw new Error(`HTTP error! status: ${result.status}`);
         }
 
-        // Verificar si hay contenido antes de parsear JSON
         const contentType = result.headers.get('content-type');
         if (!contentType?.includes('application/json')) {
           const responseText = await result.text();
@@ -386,76 +330,73 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           throw new Error('Respuesta vacía del servidor');
         }
 
-        const data = JSON.parse(text) as BotResponse;
+        const parsed: unknown = JSON.parse(text);
+        console.log('Respuesta del servidor (parsed):', parsed);
 
-        console.log('Respuesta del servidor:', data);
+        // 1) Respuesta n8n
+        if (isN8nApiResponse(parsed)) {
+          const n8nResponse = parsed.n8nData;
 
-        console.log('respuesta del bot:', data.result);
+          // Mensaje de introducción
+          const introText =
+            n8nResponse.mensaje_inicial ??
+            'He encontrado estos cursos que podrían interesarte:';
+          const introMessage: ChatMessage = {
+            id: Date.now() + Math.random(),
+            text: introText,
+            sender: 'bot',
+          };
+          setMessages((prev) => [...prev, introMessage]);
+          saveBotMessage(introText);
 
-        if (
-          Array.isArray(data.result) &&
-          fetchConfig.url.includes('/api/chat/courses')
-        ) {
-          console.log('Ingreso a mapear cursos');
-          const cursos: Curso[] = data.result;
-
-          if (cursos.length > 0) {
-            const cursosTexto = cursos
-              .map(
-                (curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`
-              )
-              .join('\n\n');
-
-            const introText =
-              cursosTexto.length !== 0
-                ? 'Aquí tienes algunos cursos recomendados:'
-                : 'No se encontraron cursos recomendados. Intenta con otra consulta.';
-
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                text: `${introText}\n\n${cursosTexto}`,
-                sender: 'bot' as const,
-              },
-            ]);
-          } else {
-            console.log('Ingreso a otros');
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                text: 'No se encontraron cursos.',
-                sender: 'bot' as const,
-              },
-            ]);
-          }
-        } else {
-          console.log('Ingreso afuera del mapeo de cursos');
-          setMessages((prev) => [
-            ...prev,
-            {
+          // Cursos recomendados (como bloque de tarjetas)
+          if (
+            Array.isArray(n8nResponse.cursos) &&
+            n8nResponse.cursos.length > 0
+          ) {
+            const coursesData = n8nResponse.cursos.map((c: Curso) => ({
+              id: c.id,
+              title: c.title,
+            }));
+            const coursesMessage: ChatMessage = {
               id: Date.now() + Math.random(),
-              text:
-                typeof data.result === 'string'
-                  ? data.result
-                  : JSON.stringify(data.result),
-              sender: 'bot' as const,
-            },
-          ]);
+              text: 'Cursos recomendados:',
+              sender: 'bot',
+              coursesData,
+            };
+            setMessages((prev) => [...prev, coursesMessage]);
+            // Guarda el mensaje con los cursos en el historial (para renderizar tarjetas tras refrescar)
+            saveBotMessage('Cursos recomendados:', coursesData);
+          }
+
+          // Pregunta final
+          if (n8nResponse.pregunta_final) {
+            const finalMessage: ChatMessage = {
+              id: Date.now() + Math.random(),
+              text: n8nResponse.pregunta_final,
+              sender: 'bot',
+            };
+            setMessages((prev) => [...prev, finalMessage]);
+            saveBotMessage(n8nResponse.pregunta_final);
+          }
+
+          setIdea({ selected: false, idea: '' });
+          return;
         }
 
-        saveBotMessage(
-          typeof data.result === 'string'
-            ? data.result
-            : JSON.stringify(data.result)
-        );
+        // Fallback: cualquier otro JSON
+        const fallbackText =
+          typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + Math.random(), text: fallbackText, sender: 'bot' },
+        ]);
+        saveBotMessage(fallbackText);
       } catch (error) {
         console.error('Error getting bot response:', error);
 
         let errorMessage =
           'Lo siento, ocurrió un error al procesar tu solicitud.';
-
         if (error instanceof Error) {
           if (error.message.includes('404')) {
             errorMessage =
@@ -468,13 +409,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
         setMessages((prev) => [
           ...prev,
-          {
-            id: Date.now() + Math.random(),
-            text: errorMessage,
-            sender: 'bot' as const,
-          },
+          { id: Date.now() + Math.random(), text: errorMessage, sender: 'bot' },
         ]);
-
         saveBotMessage(errorMessage);
       } finally {
         setIsLoading(false);
@@ -483,15 +419,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         onSearchComplete?.();
       }
     },
-    [
-      processingQuery,
-      onSearchComplete,
-      chatMode,
-      isEnrolled,
-      isSignedIn,
-      safePathname,
-      user?.id,
-    ]
+    [processingQuery, onSearchComplete]
   );
 
   // useEffect para manejar búsquedas desde StudentDetails
@@ -758,11 +686,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     /*
-		if (!isSignedIn && pathname !== '/') {
-			toast.error('Debes iniciar sesión para usar el chat');
-			return;
-		}
-			*/
+    if (!isSignedIn && pathname !== '/') {
+      toast.error('Debes iniciar sesión para usar el chat');
+      return;
+    }
+      */
 
     const trimmedInput = inputText.trim();
     if (!trimmedInput || searchRequestInProgress.current) return;
@@ -808,19 +736,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const handleClick = () => {
     /*
-		if (!isSignedIn && pathname !== '/') {
-			const currentUrl = encodeURIComponent(window.location.href);
-			toast.error('Acceso restringido', {
-				description: 'Debes iniciar sesión para usar el chatbot.',
-				action: {
-					label: 'Iniciar sesión',
-					onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
-				},
-				duration: 5000,
-			});
-			return;
-		}
-			*/
+    if (!isSignedIn && pathname !== '/') {
+      const currentUrl = encodeURIComponent(window.location.href);
+      toast.error('Acceso restringido', {
+        description: 'Debes iniciar sesión para usar el chatbot.',
+        action: {
+          label: 'Iniciar sesión',
+          onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
+        },
+        duration: 5000,
+      });
+      return;
+    }
+      */
     if (isOpen) {
       handleClose();
     } else {
@@ -860,7 +788,51 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   };
 
+  // Modificar la función renderMessage para mostrar modalidad como Badge
   const renderMessage = (message: ChatMessage) => {
+    // Si el mensaje tiene datos de cursos (nueva propiedad)
+    if (
+      message.sender === 'bot' &&
+      'coursesData' in message &&
+      message.coursesData
+    ) {
+      return (
+        <div className="flex flex-col space-y-4">
+          <p className="font-medium text-gray-800">{message.text}</p>
+          <div className="grid gap-4">
+            {message.coursesData.map((course: CourseData) => (
+              <Card
+                key={course.id}
+                className="text-primary overflow-hidden rounded-lg bg-gray-800 transition-all hover:scale-[1.02]"
+              >
+                <div className="flex flex-col px-4 py-3">
+                  <h4 className="mb-2 text-base font-bold tracking-wide text-white">
+                    {course.title}
+                  </h4>
+                  <Link
+                    href={`/estudiantes/cursos/${course.id}`}
+                    className="group/button inline-flex h-10 items-center justify-center rounded-md border border-cyan-400 bg-cyan-500/10 px-4 text-cyan-300 shadow-md backdrop-blur-sm transition-all duration-300 ease-in-out hover:bg-cyan-400/20"
+                  >
+                    <span className="font-semibold tracking-wide">
+                      Ir al curso
+                    </span>
+                    <ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5 text-cyan-300" />
+                  </Link>
+                  {/* Modalidad Badge */}
+                  {course.modalidad && (
+                    <div className="mt-2">
+                      <Badge variant="secondary">{course.modalidad}</Badge>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // El resto del renderMessage existente
     if (message.sender === 'bot') {
       const parts = message.text.split('\n\n');
       const introText = parts[0];

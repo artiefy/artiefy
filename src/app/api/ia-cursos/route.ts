@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     });
 
     if (!n8nRes.ok) {
+      console.error('Error en llamada a n8n:', await n8nRes.text());
       return new Response(JSON.stringify({ error: 'Error llamando a n8n' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -35,12 +36,13 @@ export async function POST(req: Request) {
     // Log de la respuesta de n8n
     console.log('Respuesta de n8n:', n8nData);
 
-    // Devuelve la respuesta de n8n y el prompt para depuración
+    // Devuelve la respuesta de n8n directamente para procesarla en el cliente
     return new Response(JSON.stringify({ prompt, n8nData }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (_err) {
+  } catch (err) {
+    console.error('Error en ia-cursos:', err);
     return new Response(JSON.stringify({ error: 'Error llamando a n8n' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

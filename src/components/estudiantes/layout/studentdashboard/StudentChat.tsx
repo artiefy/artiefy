@@ -24,6 +24,7 @@ interface ChatProps {
     text: string;
     sender: string;
     buttons?: { label: string; action: string }[]; // <- Nuevo campo opcional
+    coursesData?: { id: number; title: string }[]; // Añadir esta propiedad
   }[];
   setMessages: React.Dispatch<
     React.SetStateAction<{ id: number; text: string; sender: string }[]>
@@ -48,7 +49,12 @@ interface ChatProps {
   isSignedIn?: boolean;
   inputRef?: React.RefObject<HTMLInputElement>;
   renderMessage: (
-    message: { id: number; text: string; sender: string },
+    message: {
+      id: number;
+      text: string;
+      sender: string;
+      coursesData?: { id: number; title: string }[];
+    },
     idx: number
   ) => React.ReactNode;
   idea?: { selected: boolean; idea: string };
@@ -173,10 +179,16 @@ export const ChatMessages: React.FC<ChatProps> = ({
           }
 
           const loadedMessages = chats.messages.map(
-            (msg: { id: number; message: string; sender: string }) => ({
+            (msg: {
+              id: number;
+              message: string;
+              sender: string;
+              courses_data?: { id: number; title: string }[];
+            }) => ({
               id: msg.id,
               text: msg.message,
               sender: msg.sender,
+              coursesData: msg.courses_data, // <-- mapea el campo de la BD
             })
           );
 
@@ -189,14 +201,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
                 : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
             sender: 'bot',
-            /* DOCUMENTADO POR SI ME PIDE VOLVERLO A PONER
-                        buttons: [
-                        { label: '📚 Crear Proyecto', action: 'new_project' },
-                        { label: '💬 Nueva Idea', action: 'new_idea' },
-                        { label: '🛠 Soporte Técnico', action: 'contact_support' },
-                         
-                        ],
-                        */
+            buttons: [
+              { label: '📚 Crear Proyecto', action: 'new_project' },
+              { label: '💬 Nueva Idea', action: 'new_idea' },
+              { label: '🛠 Soporte Técnico', action: 'contact_support' },
+            ],
           };
 
           const alreadyHasBot = loadedMessages.some(

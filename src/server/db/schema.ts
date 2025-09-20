@@ -959,10 +959,11 @@ export const chat_messages = pgTable('chat_messages', {
   conversation_id: integer('conversation_id')
     .references(() => conversations.id)
     .notNull(),
-  sender: text('sender').notNull(), // Este campo puede ser el ID del usuario o su nombre
+  sender: text('sender').notNull(),
   senderId: text('sender_id').references(() => users.id),
   message: text('message').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
+  courses_data: jsonb('courses_data').default(null), // <-- Asegura default null para evitar errores de consulta
 });
 
 // Tabla de roles secundarios
@@ -1339,11 +1340,10 @@ export const pagoVerificaciones = pgTable('pago_verificaciones', {
   fileKey: varchar('file_key', { length: 255 }),
   fileUrl: varchar('file_url', { length: 512 }),
   fileName: varchar('file_name', { length: 255 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
-
-
-
 
 export const userProgramPrice = pgTable('user_program_price', {
   id: serial('id').primaryKey(),
@@ -1379,25 +1379,19 @@ export const waMessages = pgTable(
   'wa_messages',
   {
     id: serial('id').primaryKey(),
-    // id devuelto por Meta (wamid-...), puede venir vacío en algunos status
     metaMessageId: text('meta_message_id'),
-    // número WhatsApp del contacto (wa_id / from / to, sin +)
     waid: varchar('waid', { length: 32 }).notNull(),
     name: text('name'),
-    // 'inbound' | 'outbound' | 'status'
     direction: varchar('direction', { length: 16 }).notNull(),
-    // 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive' | 'button' | 'status' | ...
     msgType: varchar('msg_type', { length: 32 }).notNull(),
-    // texto principal (si aplica)
     body: text('body'),
-    // timestamp en ms (para ordenar exacto como ya usa tu UI)
     tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
-    // dump crudo por si luego necesitas algo
     raw: jsonb('raw'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
-  (t) => ({
-    byWaidTs: index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
-    uniqMetaId: uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
-  })
+  // Cambia el objeto por un array para evitar el warning deprecado
+  (t) => [
+    index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
+    uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
+  ]
 );
