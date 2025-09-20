@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
 import { GoArrowLeft } from 'react-icons/go';
 import { HiMiniCpuChip } from 'react-icons/hi2';
@@ -15,11 +16,9 @@ import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
-// Importar StudentChat
 import { useExtras } from '~/app/estudiantes/StudentContext';
-import { Badge } from '~/components/estudiantes/ui/badge'; // <-- Importa Badge
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { Card } from '~/components/estudiantes/ui/card';
-// Importar StudentChatList.tsx
 import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
 
@@ -57,7 +56,8 @@ interface Curso {
 interface CourseData {
   id: number;
   title: string;
-  modalidad?: string; // <-- Añade modalidad opcional
+  modalidad?: string;
+  modalidadId?: number; // <-- Añade modalidadId para identificar la modalidad
 }
 
 // Tipos fuertes para la respuesta de n8n
@@ -82,6 +82,31 @@ interface ChatMessage {
   sender: string;
   buttons?: ChatButton[];
   coursesData?: CourseData[];
+}
+
+// Hook para obtener descripciones de modalidades
+function useModalidadDescriptions() {
+  const [modalidadMap, setModalidadMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    async function fetchModalidades() {
+      try {
+        const res = await fetch('/api/modalidades');
+        const data: { name: string; description: string | null }[] =
+          await res.json();
+        const map: Record<string, string> = {};
+        for (const m of data) {
+          map[m.name] = m.description ?? '';
+        }
+        setModalidadMap(map);
+      } catch {
+        setModalidadMap({});
+      }
+    }
+    fetchModalidades();
+  }, []);
+
+  return modalidadMap;
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -149,6 +174,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const { show } = useExtras();
 
   const ideaRef = useRef(idea);
+
+  // Usa el hook aquí para obtener el mapa de descripciones
+  const modalidadDescriptions = useModalidadDescriptions();
 
   useEffect(() => {
     // Solo se ejecuta en el cliente
@@ -354,10 +382,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             Array.isArray(n8nResponse.cursos) &&
             n8nResponse.cursos.length > 0
           ) {
-            const coursesData = n8nResponse.cursos.map((c: Curso) => ({
-              id: c.id,
-              title: c.title,
-            }));
+            // Corrige el tipado, no uses any
+            const coursesData = n8nResponse.cursos.map(
+              (c: {
+                id: number;
+                title: string;
+                modalidad?: string;
+                modalidadId?: number;
+              }) => ({
+                id: c.id,
+                title: c.title,
+                modalidad: c.modalidad,
+                modalidadId: c.modalidadId,
+              })
+            );
             const coursesMessage: ChatMessage = {
               id: Date.now() + Math.random(),
               text: 'Cursos recomendados:',
@@ -788,9 +826,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   };
 
-  // Modificar la función renderMessage para mostrar modalidad como Badge
+  // Modificar la función renderMessage para mostrar modalidad como Badge y tooltip
   const renderMessage = (message: ChatMessage) => {
-    // Si el mensaje tiene datos de cursos (nueva propiedad)
     if (
       message.sender === 'bot' &&
       'coursesData' in message &&
@@ -800,33 +837,76 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         <div className="flex flex-col space-y-4">
           <p className="font-medium text-gray-800">{message.text}</p>
           <div className="grid gap-4">
-            {message.coursesData.map((course: CourseData) => (
-              <Card
-                key={course.id}
-                className="text-primary overflow-hidden rounded-lg bg-gray-800 transition-all hover:scale-[1.02]"
-              >
-                <div className="flex flex-col px-4 py-3">
-                  <h4 className="mb-2 text-base font-bold tracking-wide text-white">
-                    {course.title}
-                  </h4>
-                  <Link
-                    href={`/estudiantes/cursos/${course.id}`}
-                    className="group/button inline-flex h-10 items-center justify-center rounded-md border border-cyan-400 bg-cyan-500/10 px-4 text-cyan-300 shadow-md backdrop-blur-sm transition-all duration-300 ease-in-out hover:bg-cyan-400/20"
-                  >
-                    <span className="font-semibold tracking-wide">
-                      Ir al curso
-                    </span>
-                    <ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5 text-cyan-300" />
-                  </Link>
-                  {/* Modalidad Badge */}
-                  {course.modalidad && (
-                    <div className="mt-2">
-                      <Badge variant="secondary">{course.modalidad}</Badge>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
+            {message.coursesData.map((course) => {
+              const modalidad =
+                typeof course.modalidad === 'string' ? course.modalidad : '';
+              const modalidadDesc =
+                modalidad &&
+                Object.prototype.hasOwnProperty.call(
+                  modalidadDescriptions,
+                  modalidad
+                )
+                  ? modalidadDescriptions[modalidad]
+                  : '';
+
+              return (
+                <Card
+                  key={course.id}
+                  className="text-primary overflow-hidden rounded-lg bg-gray-800 transition-all hover:scale-[1.02]"
+                >
+                  <div className="flex flex-col px-4 py-3">
+                    <h4 className="mb-2 text-base font-bold tracking-wide text-white">
+                      {course.title}
+                    </h4>
+                    <Link
+                      href={`/estudiantes/cursos/${course.id}`}
+                      className="group/button inline-flex h-10 items-center justify-center rounded-md border border-cyan-400 bg-cyan-500/10 px-4 text-cyan-300 shadow-md backdrop-blur-sm transition-all duration-200 ease-in-out hover:bg-cyan-400/20 active:scale-95"
+                    >
+                      <span className="font-semibold tracking-wide">
+                        Ir al curso
+                      </span>
+                      <ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5 text-cyan-300" />
+                    </Link>
+                    {modalidad && (
+                      <div className="mt-2">
+                        {modalidadDesc ? (
+                          <Tooltip.Root>
+                            <Tooltip.Trigger asChild>
+                              <span>
+                                <Badge
+                                  variant="destructive"
+                                  className="cursor-pointer border-none bg-red-600 text-white"
+                                >
+                                  {modalidad}
+                                </Badge>
+                              </span>
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                              <Tooltip.Content
+                                side="bottom"
+                                align="center"
+                                sideOffset={8}
+                                className="z-[99999] rounded border border-gray-200 bg-white px-3 py-2 text-xs text-black shadow-lg"
+                              >
+                                {modalidadDesc}
+                                <Tooltip.Arrow className="fill-white" />
+                              </Tooltip.Content>
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                        ) : (
+                          <Badge
+                            variant="destructive"
+                            className="border-none bg-red-600 text-white"
+                          >
+                            {modalidad}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       );
@@ -980,254 +1060,257 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   }, [isOpen]);
 
+  // Renderiza el TooltipProvider en el nivel superior del componente
   return (
-    <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
-      {isAlwaysVisible && (
-        <div className="fixed right-6 bottom-6 z-50">
-          <button
-            className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
-            onMouseEnter={() => {
-              setIsHovered(true);
-              show(); // Muestra tour y soporte por 5s
-            }}
-            onMouseLeave={() => setIsHovered(false)}
-            onClick={handleClick}
-          >
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
-
-            {/* Inner circle with darker gradient */}
-            <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-              {/* Icon container */}
-              <div className="relative">
-                <MessageCircle
-                  className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
-                />
-
-                {/* Animated spark effect */}
-                {isHovered && (
-                  <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
-                )}
-              </div>
-            </div>
-
-            {/* Rotating border effect */}
-            <div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              style={{
-                background:
-                  'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+    <Tooltip.Provider>
+      <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
+        {isAlwaysVisible && (
+          <div className="fixed right-6 bottom-6 z-50">
+            <button
+              className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+              onMouseEnter={() => {
+                setIsHovered(true);
+                show(); // Muestra tour y soporte por 5s
               }}
-            />
-
-            {/* Pulse ring */}
-            <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
-          </button>
-
-          {/* Tooltip with neon effect - always visible */}
-
-          {isDesktop && (
-            <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
-              <div className="relative">
-                {/* Main tooltip box */}
-                <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
-                  Asistente IA
-                </div>
-
-                {/* Neon glow effects */}
-                <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
-                  Asistente IA
-                </div>
-                <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
-                  Asistente IA
-                </div>
-
-                {/* Outer glow */}
-                <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
-
-                {/* Arrow with neon effect */}
-                <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
-                <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        /*  Boton nuevo*/
-      )}
-
-      {/* Mostrar el chat solo cuando isOpen es true */}
-      {isOpen && (
-        <div
-          className={`fixed ${
-            isDesktop
-              ? 'right-0 bottom-0'
-              : 'inset-0 top-0 right-0 bottom-0 left-0'
-          }`}
-          ref={chatContainerRef}
-          style={{ zIndex: 110000 }}
-        >
-          <ResizableBox
-            width={dimensions.width}
-            height={dimensions.height}
-            onResize={handleResize}
-            minConstraints={
-              isDesktop
-                ? [500, window.innerHeight]
-                : [window.innerWidth, window.innerHeight]
-            }
-            maxConstraints={[
-              isDesktop
-                ? Math.min(window.innerWidth, window.innerWidth - 20)
-                : window.innerWidth,
-              isDesktop ? window.innerHeight : window.innerHeight,
-            ]}
-            resizeHandles={isDesktop ? ['sw'] : []}
-            className="chat-resizable"
-          >
-            <div
-              className={`relative flex h-full w-full flex-col overflow-hidden ${
-                isDesktop ? 'rounded-lg border border-gray-200' : ''
-              } bg-white`}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={handleClick}
             >
-              {/* Logo background */}
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
 
-              <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
-                <Image
-                  src="/artiefy-logo2.svg"
-                  alt="Artiefy Logo Background"
-                  width={300}
-                  height={100}
-                  className="w-4/5"
-                  priority
-                />
+              {/* Inner circle with darker gradient */}
+              <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
+                {/* Icon container */}
+                <div className="relative">
+                  <MessageCircle
+                    className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                  />
+
+                  {/* Animated spark effect */}
+                  {isHovered && (
+                    <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
+                  )}
+                </div>
               </div>
 
-              {/* Header */}
-              <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
-                <div className="flex items-start justify-between">
-                  <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+              {/* Rotating border effect */}
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                style={{
+                  background:
+                    'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                }}
+              />
 
-                  <div className="-ml-6 flex flex-1 flex-col items-center">
-                    <h2 className="mt-1 text-lg font-semibold text-gray-800">
-                      Artie IA
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <em className="text-sm font-semibold text-gray-600">
-                        {user?.fullName}
-                      </em>
-                      <div className="relative inline-flex">
-                        <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
-                        <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+              {/* Pulse ring */}
+              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
+            </button>
+
+            {/* Tooltip with neon effect - always visible */}
+
+            {isDesktop && (
+              <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
+                <div className="relative">
+                  {/* Main tooltip box */}
+                  <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
+                    Asistente IA
+                  </div>
+
+                  {/* Neon glow effects */}
+                  <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
+                    Asistente IA
+                  </div>
+                  <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
+                    Asistente IA
+                  </div>
+
+                  {/* Outer glow */}
+                  <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
+
+                  {/* Arrow with neon effect */}
+                  <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
+                  <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          /*  Boton nuevo*/
+        )}
+
+        {/* Mostrar el chat solo cuando isOpen es true */}
+        {isOpen && (
+          <div
+            className={`fixed ${
+              isDesktop
+                ? 'right-0 bottom-0'
+                : 'inset-0 top-0 right-0 bottom-0 left-0'
+            }`}
+            ref={chatContainerRef}
+            style={{ zIndex: 110000 }}
+          >
+            <ResizableBox
+              width={dimensions.width}
+              height={dimensions.height}
+              onResize={handleResize}
+              minConstraints={
+                isDesktop
+                  ? [500, window.innerHeight]
+                  : [window.innerWidth, window.innerHeight]
+              }
+              maxConstraints={[
+                isDesktop
+                  ? Math.min(window.innerWidth, window.innerWidth - 20)
+                  : window.innerWidth,
+                isDesktop ? window.innerHeight : window.innerHeight,
+              ]}
+              resizeHandles={isDesktop ? ['sw'] : []}
+              className="chat-resizable"
+            >
+              <div
+                className={`relative flex h-full w-full flex-col overflow-hidden ${
+                  isDesktop ? 'rounded-lg border border-gray-200' : ''
+                } bg-white`}
+              >
+                {/* Logo background */}
+
+                <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
+                  <Image
+                    src="/artiefy-logo2.svg"
+                    alt="Artiefy Logo Background"
+                    width={300}
+                    height={100}
+                    className="w-4/5"
+                    priority
+                  />
+                </div>
+
+                {/* Header */}
+                <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
+                  <div className="flex items-start justify-between">
+                    <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+
+                    <div className="-ml-6 flex flex-1 flex-col items-center">
+                      <h2 className="mt-1 text-lg font-semibold text-gray-800">
+                        Artie IA
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <em className="text-sm font-semibold text-gray-600">
+                          {user?.fullName}
+                        </em>
+                        <div className="relative inline-flex">
+                          <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
+                          <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex">
-                    <button
-                      className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
-                      aria-label="Minimizar chatbot"
-                    >
-                      {!isChatPage &&
-                        (chatMode.status ? (
-                          <GoArrowLeft
-                            className="text-xl text-gray-500"
-                            onClick={() => {
-                              setChatMode({
-                                idChat: null,
-                                status: true,
-                                curso_title: '',
-                              });
-                              setShowChatList(true);
-                            }}
-                          />
-                        ) : null)}
-                    </button>
-                    <button
-                      onClick={() => setIsOpen(false)}
-                      className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
-                      aria-label="Cerrar chatbot"
-                    >
-                      <IoMdClose className="text-xl text-gray-500" />
-                    </button>
+                    <div className="flex">
+                      <button
+                        className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                        aria-label="Minimizar chatbot"
+                      >
+                        {!isChatPage &&
+                          (chatMode.status ? (
+                            <GoArrowLeft
+                              className="text-xl text-gray-500"
+                              onClick={() => {
+                                setChatMode({
+                                  idChat: null,
+                                  status: true,
+                                  curso_title: '',
+                                });
+                                setShowChatList(true);
+                              }}
+                            />
+                          ) : null)}
+                      </button>
+                      <button
+                        onClick={() => setIsOpen(false)}
+                        className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                        aria-label="Cerrar chatbot"
+                      >
+                        <IoMdClose className="text-xl text-gray-500" />
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {chatMode.status && !isSignedIn ? (
+                  <ChatMessages
+                    idea={idea}
+                    setIdea={setIdea}
+                    setShowChatList={setShowChatList}
+                    courseId={courseId}
+                    isEnrolled={isEnrolled}
+                    courseTitle={courseTitle}
+                    messages={messages}
+                    setMessages={setMessages}
+                    chatMode={chatMode}
+                    setChatMode={setChatMode}
+                    inputText={inputText}
+                    setInputText={setInputText}
+                    handleSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    messagesEndRef={
+                      messagesEndRef as React.RefObject<HTMLDivElement>
+                    }
+                    isSignedIn={isSignedIn}
+                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                    renderMessage={renderMessage}
+                  />
+                ) : chatMode.status && isSignedIn && chatMode.idChat ? (
+                  <ChatMessages
+                    idea={idea}
+                    setIdea={setIdea}
+                    setShowChatList={setShowChatList}
+                    courseId={courseId}
+                    isEnrolled={isEnrolled}
+                    courseTitle={courseTitle}
+                    messages={messages}
+                    setMessages={setMessages}
+                    chatMode={chatMode}
+                    setChatMode={setChatMode}
+                    inputText={inputText}
+                    setInputText={setInputText}
+                    handleSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    messagesEndRef={
+                      messagesEndRef as React.RefObject<HTMLDivElement>
+                    }
+                    isSignedIn={isSignedIn}
+                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                    renderMessage={renderMessage}
+                  />
+                ) : (
+                  chatMode.status &&
+                  isSignedIn &&
+                  !chatMode.idChat && (
+                    <ChatList
+                      setChatMode={setChatMode}
+                      setShowChatList={setShowChatList}
+                    />
+                  )
+                )}
               </div>
 
-              {chatMode.status && !isSignedIn ? (
-                <ChatMessages
-                  idea={idea}
-                  setIdea={setIdea}
-                  setShowChatList={setShowChatList}
-                  courseId={courseId}
-                  isEnrolled={isEnrolled}
-                  courseTitle={courseTitle}
-                  messages={messages}
-                  setMessages={setMessages}
-                  chatMode={chatMode}
-                  setChatMode={setChatMode}
-                  inputText={inputText}
-                  setInputText={setInputText}
-                  handleSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  messagesEndRef={
-                    messagesEndRef as React.RefObject<HTMLDivElement>
-                  }
-                  isSignedIn={isSignedIn}
-                  inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                  renderMessage={renderMessage}
-                />
-              ) : chatMode.status && isSignedIn && chatMode.idChat ? (
-                <ChatMessages
-                  idea={idea}
-                  setIdea={setIdea}
-                  setShowChatList={setShowChatList}
-                  courseId={courseId}
-                  isEnrolled={isEnrolled}
-                  courseTitle={courseTitle}
-                  messages={messages}
-                  setMessages={setMessages}
-                  chatMode={chatMode}
-                  setChatMode={setChatMode}
-                  inputText={inputText}
-                  setInputText={setInputText}
-                  handleSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  messagesEndRef={
-                    messagesEndRef as React.RefObject<HTMLDivElement>
-                  }
-                  isSignedIn={isSignedIn}
-                  inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                  renderMessage={renderMessage}
-                />
-              ) : (
-                chatMode.status &&
-                isSignedIn &&
-                !chatMode.idChat && (
-                  <ChatList
-                    setChatMode={setChatMode}
-                    setShowChatList={setShowChatList}
-                  />
-                )
+              {chatMode.status && isSignedIn && showChatList && (
+                <button
+                  className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
+                  onClick={() => newChatMessage()}
+                >
+                  <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
+                    +
+                  </span>
+
+                  <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF3EE] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
+                </button>
               )}
-            </div>
-
-            {chatMode.status && isSignedIn && showChatList && (
-              <button
-                className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
-                onClick={() => newChatMessage()}
-              >
-                <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
-                  +
-                </span>
-
-                <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF3EE] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
-              </button>
-            )}
-          </ResizableBox>
-        </div>
-      )}
-    </div>
+            </ResizableBox>
+          </div>
+        )}
+      </div>
+    </Tooltip.Provider>
   );
 };
 
