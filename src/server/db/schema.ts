@@ -159,10 +159,12 @@ export const preferences = pgTable('preferences', {
 
 // Tabla de lecciones
 export const lessons = pgTable('lessons', {
-  id: serial('id').primaryKey(), // ID autoincremental de la lección
-  title: varchar('title', { length: 255 }).notNull(), // Título de la lección
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
   description: text('description'), // Descripción de la lección
   duration: integer('duration').notNull(),
+  // NUEVO: índice de orden explícito para evitar depender del título
+  orderIndex: integer('order_index').notNull().default(0),
   coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
   coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
   courseId: integer('course_id')
@@ -318,19 +320,26 @@ export const projectsTaken = pgTable('projects_taken', {
 });
 
 // Tabla de progreso de lecciones por usuario
-export const userLessonsProgress = pgTable('user_lessons_progress', {
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  lessonId: integer('lesson_id')
-    .references(() => lessons.id)
-    .notNull(),
-  progress: real('progress').default(0).notNull(),
-  isCompleted: boolean('is_completed').default(false).notNull(),
-  isLocked: boolean('is_locked').default(true),
-  isNew: boolean('is_new').default(true).notNull(),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
+export const userLessonsProgress = pgTable(
+  'user_lessons_progress',
+  {
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    lessonId: integer('lesson_id')
+      .references(() => lessons.id)
+      .notNull(),
+    progress: real('progress').default(0).notNull(),
+    isCompleted: boolean('is_completed').default(false).notNull(),
+    isLocked: boolean('is_locked').default(true),
+    isNew: boolean('is_new').default(true).notNull(),
+    lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  },
+  // AÑADIR índice único para soportar onConflictDoUpdate y evitar duplicados
+  (table) => [
+    unique('uniq_user_lesson_progress').on(table.userId, table.lessonId),
+  ]
+);
 
 //tabla de foros
 export const forums = pgTable('forums', {

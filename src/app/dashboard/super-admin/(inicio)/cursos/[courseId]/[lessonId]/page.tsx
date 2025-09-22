@@ -429,7 +429,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 <a
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
-                  className="bg-primary focus:ring-secondary rounded-lg px-6 py-3 text-white transition duration-300 hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                  className="bg-primary focus:ring-secondary rounded-lg px-6 py-3 text-black transition duration-300 hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-none"
                 >
                   Descargar transcripción (.txt)
                 </a>

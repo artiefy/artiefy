@@ -17,6 +17,7 @@ import useSWR from 'swr';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
+import { sortLessons } from '~/utils/lessonSorting';
 import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import { LessonActivityModal } from './LessonActivityModal';
@@ -132,13 +133,6 @@ interface ActivityState {
   isLoading: boolean;
   isCompleted: boolean;
 }
-
-// Add helper function to extract and sort lesson numbers
-const extractLessonNumber = (title: string): number => {
-  if (title.toLowerCase().includes('bienvenida')) return -1;
-  const match = /\d+/.exec(title);
-  return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
-};
 
 const LessonActivities = ({
   activities = [],
@@ -559,23 +553,11 @@ const LessonActivities = ({
 
   const getNextAvailableLessonId = useCallback(() => {
     if (!lessons || lessons.length === 0) return undefined;
-
-    // Sort lessons by their number
-    const sortedLessons = [...lessons].sort((a, b) => {
-      const aNum = extractLessonNumber(a.title);
-      const bNum = extractLessonNumber(b.title);
-      return aNum - bNum;
-    });
-
-    // Find current lesson index
-    const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
-    if (currentIndex === -1 || currentIndex === sortedLessons.length - 1) {
+    const sorted = sortLessons(lessons);
+    const currentIndex = sorted.findIndex((l) => l.id === lessonId);
+    if (currentIndex === -1 || currentIndex === sorted.length - 1)
       return undefined;
-    }
-
-    // Get next lesson
-    const nextLesson = sortedLessons[currentIndex + 1];
-    return nextLesson?.id;
+    return sorted[currentIndex + 1]?.id;
   }, [lessons, lessonId]);
 
   const renderActivityCard = (activity: Activity, index: number) => {
@@ -762,7 +744,6 @@ const LessonActivities = ({
       await completeActivity(activities[0].id, userId);
       setIsActivityCompleted(true);
 
-      // Actualizar el progreso de la lección cuando se completa una actividad
       // Verificar si todas las actividades están completadas
       const allActivitiesCompleted = activities.every(
         (activity) =>
@@ -771,8 +752,7 @@ const LessonActivities = ({
       );
 
       if (allActivitiesCompleted) {
-        // Actualizar el progreso de la lección a 100% en el backend
-        // Esto automáticamente desbloqueará la siguiente lección si corresponde
+        // Actualizar progreso de la lección a 100% (si hay video, el backend validará)
         const lessonProgressResponse = await fetch(
           '/api/lessons/update-progress',
           {
@@ -787,6 +767,17 @@ const LessonActivities = ({
         );
 
         if (lessonProgressResponse.ok) {
+          // Intentar desbloquear la siguiente clase estrictamente en orden
+          await fetch('/api/lessons/unlock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              currentLessonId: lessonId,
+              hasActivities: true,
+              allActivitiesCompleted: true,
+            }),
+          }).catch(() => undefined);
+
           toast.success(
             '¡Todas las actividades completadas! Clase finalizada.'
           );

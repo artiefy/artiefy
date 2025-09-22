@@ -194,11 +194,6 @@ function isVideoIdxItem(v: unknown): v is VideoIdxItem {
   );
 }
 
-
-
-
-
-
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const router = useRouter(); // Obtener el router
   const params = useParams(); // Obtener los parámetros
@@ -222,8 +217,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     string | null
   >(null);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
-
-
 
   const BADGE_GRADIENTS = [
     'from-pink-500 via-red-500 to-yellow-500',
@@ -270,16 +263,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
 
-
-
   const { user } = useUser(); // Ya está dentro del componente
 
   // Estado para meetings ya poblados desde backend
   const [populatedMeetings, setPopulatedMeetings] = useState<UIMeeting[]>([]);
   const [videosRaw, setVideosRaw] = useState<
-    { meetingId: string; videoKey: string; videoUrl: string; createdAt?: string }[]
+    {
+      meetingId: string;
+      videoKey: string;
+      videoUrl: string;
+      createdAt?: string;
+    }[]
   >([]);
-
 
   useEffect(() => {
     if (!courseIdNumber) return;
@@ -297,7 +292,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           return;
         }
 
-        interface ByCourseResponse { meetings?: unknown }
+        interface ByCourseResponse {
+          meetings?: unknown;
+        }
         const meetingsUnknown = (body as ByCourseResponse)?.meetings;
         const rawMeetings: unknown[] = Array.isArray(meetingsUnknown)
           ? meetingsUnknown
@@ -319,7 +316,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           if (
             v &&
             typeof v === 'object' &&
-            typeof (v as { toISOString?: () => string }).toISOString === 'function'
+            typeof (v as { toISOString?: () => string }).toISOString ===
+              'function'
           ) {
             try {
               return (v as { toISOString: () => string }).toISOString();
@@ -371,7 +369,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     })();
   }, [courseIdNumber]);
 
-
   const handleEnrollAndRedirect = async () => {
     if (!user?.id || !courseIdNumber) {
       toast.error('Usuario no autenticado o curso inválido');
@@ -396,9 +393,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const errorMessage =
           typeof responseData === 'object' &&
-            responseData !== null &&
-            'error' in responseData &&
-            typeof (responseData as { error?: unknown }).error === 'string'
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
             : 'Error al matricular';
 
@@ -531,13 +528,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     if (!organizerAadUserId) return;
 
-
     const run = async () => {
       try {
-        const res = await fetch(`/api/super-admin/teams/video?userId=${organizerAadUserId}`);
+        const res = await fetch(
+          `/api/super-admin/teams/video?userId=${organizerAadUserId}`
+        );
         // estado arriba del componente
-
-
 
         if (!res.ok) return;
 
@@ -551,13 +547,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         const raw = (await res.json()) as unknown;
 
         const videos: VideoIdxItem[] =
-          isRecord(raw) && Array.isArray((raw as Record<string, unknown>).videos)
-            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(isVideoIdxItem)
+          isRecord(raw) &&
+          Array.isArray((raw as Record<string, unknown>).videos)
+            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
+                isVideoIdxItem
+              )
             : [];
 
         // ⬇️⬇️ IMPORTANTE
         setVideosRaw(videos);
-
 
         console.log(`🎥 videosRaw=${videos.length}`);
         for (const v of videos) {
@@ -566,10 +564,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           );
         }
 
-
-
         // construir índice meetingId -> video más reciente (por si acaso)
-        const map = new Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>();
+        const map = new Map<
+          string,
+          { videoKey: string; videoUrl: string; createdAt?: string }
+        >();
         for (const v of videos) {
           const prev = map.get(v.meetingId);
           if (!prev) {
@@ -580,7 +579,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             if (ct >= pt) map.set(v.meetingId, v);
           }
         }
-
       } catch (e) {
         console.error('❌ Error fetch /teams/video:', e);
       }
@@ -589,7 +587,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     void run();
   }, []); // solo una vez
 
-
   // Obtener el color seleccionado al cargar la página
   useEffect(() => {
     const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -597,11 +594,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setSelectedColor(savedColor);
     }
   }, [courseIdNumber]);
-
-
-
-
-
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -747,7 +739,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               );
             }
           } else {
-
             const createResponse = await fetch(`/api/educadores/parametros`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -911,7 +902,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     );
   }
 
-
   // Función para manejar el cambio de color predefinido
   const handlePredefinedColorChange = (color: string) => {
     setSelectedColor(color);
@@ -972,9 +962,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return <FullscreenLoader />;
   }
 
-
   // --- Helpers locales ---
-  const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
+  const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(
+    /\/+$/,
+    ''
+  );
 
   function toMsFlexible(v: unknown): number {
     if (v instanceof Date) return v.getTime();
@@ -1008,8 +1000,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     const id = num('id') ?? 0;
 
-    const meetingId =
-      str('meeting_id') ?? str('meetingId') ?? '';
+    const meetingId = str('meeting_id') ?? str('meetingId') ?? '';
 
     const joinUrl = str('join_url') ?? str('joinUrl');
 
@@ -1033,18 +1024,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     };
   }
 
-
-
-
   const WINDOW_MS = 48 * 60 * 60 * 1000; // ±48h
 
   // Fuente base: si el back ya te trajo meetings "poblados", úsalos; si no, usa las del curso
-  const baseMeetings: UIMeeting[] = (populatedMeetings.length
-    ? populatedMeetings
-    : (course.meetings ?? [])
+  const baseMeetings: UIMeeting[] = (
+    populatedMeetings.length ? populatedMeetings : (course.meetings ?? [])
   ).map(ensureUIMeeting);
   const occTimes = baseMeetings.map((o) => toMsFlexible(o.startDateTime));
-
 
   // Ordena videos por fecha (antiguo → nuevo)
   const sortedVideos = [...videosRaw].sort((a, b) => {
@@ -1068,7 +1054,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       if (Number.isNaN(start)) continue;
 
       // distancia temporal
-      const diff = Number.isNaN(vMs) ? Number.POSITIVE_INFINITY : Math.abs(start - vMs);
+      const diff = Number.isNaN(vMs)
+        ? Number.POSITIVE_INFINITY
+        : Math.abs(start - vMs);
       if (diff > WINDOW_MS) continue; // fuera de ventana, no lo considero
 
       // sesgo si el meetingId coincide
@@ -1094,7 +1082,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         usedOcc[best] = true; // marcamos usada solo cuando asignamos
       }
     }
-
   }
 
   const meetingsForList: UIMeeting[] = [...baseMeetings].sort((a, b) => {
@@ -1102,12 +1089,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     const bMs = toMsFlexible(b.startDateTime);
     return (aMs || 0) - (bMs || 0);
   });
-
-
-
-
-
-
 
   // Renderizar el componente
   return (
@@ -1165,10 +1146,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${selectedColor === '#FFFFFF'
-                      ? 'border-black'
-                      : 'border-white'
-                      } `}
+                    className={`size-8 border ${
+                      selectedColor === '#FFFFFF'
+                        ? 'border-black'
+                        : 'border-white'
+                    } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -1244,8 +1226,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Curso:
                   </h2>
@@ -1255,8 +1238,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Categoría:
                   </h2>
@@ -1270,22 +1254,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-justify text-sm sm:text-base ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1302,8 +1289,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Educador:
                   </h2>
@@ -1344,8 +1332,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Nivel:
                   </h2>
@@ -1358,8 +1347,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Modalidad:
                   </h2>
@@ -1372,8 +1362,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1402,17 +1393,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${course.isActive
-                      ? 'border-green-500 text-green-500'
-                      : 'border-red-500 text-red-500'
-                      } bg-background hover:bg-black/70`}
+                    className={`ml-1 w-fit border ${
+                      course.isActive
+                        ? 'border-green-500 text-green-500'
+                        : 'border-red-500 text-red-500'
+                    } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -1453,23 +1446,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="mt-12 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-primary text-xl font-bold">
-                  Clases agendadas
+                  Clases agendada
                 </h2>
                 <Button
                   onClick={() => setIsMeetingModalOpen(true)}
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-primary hover:bg-primary/90 text-black"
                 >
                   + Agendar clase en Teams
                 </Button>
               </div>
 
-
-
               <ScheduledMeetingsList
                 meetings={meetingsForList}
                 color={selectedColor}
               />
-
             </div>
             <LessonsListEducator
               courseId={courseIdNumber}

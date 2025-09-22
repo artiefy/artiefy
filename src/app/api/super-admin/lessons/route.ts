@@ -65,14 +65,6 @@ export async function POST(req: NextRequest) {
       courseId: number;
       resourceKey: string;
       resourceNames: string;
-      modalidadesId: {
-        id: number;
-        name: string;
-      };
-      categoryId: {
-        id: number;
-        name: string;
-      };
     };
 
     const {
@@ -81,12 +73,35 @@ export async function POST(req: NextRequest) {
       duration,
       coverImageKey,
       coverVideoKey,
+      courseId,
       resourceKey,
       resourceNames,
-      courseId,
     } = body;
 
-    await createLesson(body);
+    // 1. Obtener el mayor order_index actual del curso
+    const { db } = await import('~/server/db');
+    const { lessons } = await import('~/server/db/schema');
+    const { desc, eq } = await import('drizzle-orm');
+
+    const lastLesson = await db.query.lessons.findFirst({
+      where: eq(lessons.courseId, courseId),
+      orderBy: [desc(lessons.orderIndex)],
+      columns: { orderIndex: true },
+    });
+    const nextOrderIndex = (lastLesson?.orderIndex ?? 0) + 1;
+
+    // 2. Asignar orderIndex a la nueva lección y pasar todos los campos explícitamente
+    await createLesson({
+      title,
+      description,
+      duration,
+      coverImageKey,
+      coverVideoKey,
+      courseId,
+      resourceKey,
+      resourceNames,
+      orderIndex: nextOrderIndex,
+    });
 
     console.log('Datos recibidos en el backend:', {
       title,

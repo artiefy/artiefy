@@ -199,6 +199,9 @@ export async function enrollInCourse(
       )
     );
 
+    // Ya usamos sortLessons que ahora prioriza orderIndex, por lo que la primera lección
+    // se desbloqueará correctamente según orderIndex si está definido.
+
     return {
       success: true,
       message: 'Inscripción exitosa',

@@ -23,6 +23,11 @@ const s3Client = new S3Client({
   region: process.env.AWS_REGION,
 });
 
+// Función para detectar si es una URL externa
+const isExternalUrl = (key: string): boolean => {
+  return key.startsWith('http://') || key.startsWith('https://');
+};
+
 // Método GET
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url); // Obtén los parámetros de búsqueda desde la URL
@@ -65,14 +70,23 @@ export async function GET(req: Request) {
             Key: key,
           };
           try {
-            const headData = await s3Client.send(new HeadObjectCommand(params));
-            return { key, fileName: headData.Metadata?.filename ?? key }; // Regresamos clave y nombre
+            if (isExternalUrl(key)) {
+              // Si es una URL externa, devuelve la URL como nombre y clave
+              return { key, fileName: key };
+            } else {
+              // Lógica existente para archivos S3
+              const headData = await s3Client.send(
+                new HeadObjectCommand(params)
+              );
+              return { key, fileName: headData.Metadata?.filename ?? key }; // Regresamos clave y nombre
+            }
           } catch (err) {
             console.error(
               `Error al obtener metadata para el archivo ${key}`,
               err
             );
-            return { key, fileName: key }; // Si no hay metadata, usamos la clave como nombre
+            // Aun si hay error, devuelve algo útil
+            return { key, fileName: key.split('/').pop() ?? key }; // Si no hay metadata, usamos la clave como nombre
           }
         })
       );
