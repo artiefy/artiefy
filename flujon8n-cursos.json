@@ -1,0 +1,214 @@
+{
+  "name": "Artie Sells",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Obtenemos el contenido devuelto por OpenAI\nlet text = $json[\"choices\"][0].message.content;\n\n// Eliminamos posibles backticks y espacios extras\ntext = text.replace(/```json|```/g, '').trim();\n\n// Parseamos el string JSON a objeto nativo de n8n\nconst data = JSON.parse(text);\n\n// Retornamos como JSON nativo\nreturn [{ json: data }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1552, -80],
+      "id": "b0a59448-ee44-4194-a27f-96061e8a57c0",
+      "name": "Parse JSON Response"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f71bd676-9eb3-4da9-beb8-8aab1c8dcdb7",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [128, -80],
+      "id": "0b8e7bde-9136-4848-930b-0900a3a17b96",
+      "name": "Webhook",
+      "webhookId": "0774a7fd-9baf-451c-9812-1484850222a8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "text-embedding-ada-002"
+            },
+            {
+              "name": "input",
+              "value": "={{ $json.body.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [352, -80],
+      "id": "46750731-b538-4cc8-8377-5d28a68d6677",
+      "name": "HTTP Embedding1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ embedding: items[0].json.data[0].embedding.join(',') }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [576, -80],
+      "id": "d6df503d-c14d-4df7-b17d-cae5c6c22563",
+      "name": "Code Embedding1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  courses.id,\n  courses.title,\n  modalidades.name AS modalidad\nFROM courses\nJOIN modalidades ON courses.modalidadesid = modalidades.id\nWHERE courses.embedding IS NOT NULL\nORDER BY courses.embedding <-> ARRAY[{{ $json.embedding }}]::vector\nLIMIT 5;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [816, -80],
+      "id": "fb32df73-248d-419c-8a68-796955fe3258",
+      "name": "Execute SQL1",
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Array de cursos desde SQL, incluyendo modalidad\nconst cursos = items.map(i => ({\n  id: i.json.id,\n  title: i.json.title,\n  modalidad: i.json.modalidad // <-- Asegúrate que el nodo SQL trae modalidad\n}));\n\n// Generamos el prompt para IA\nconst promptText = `Eres un asistente que responde de forma amable y motivadora a un usuario interesado en cursos.\nSolo debes crear:\n1. Un mensaje inicial breve y motivador.\n2. Una pregunta final que invite a seguir conversando.\nNo inventes cursos. Esta es la lista de cursos disponibles (cada uno tiene id, title y modalidad):\n${JSON.stringify(cursos, null, 2)}\nDevuelve la respuesta en JSON con las siguientes claves:\n- mensaje_inicial\n- cursos (debe ser un array de objetos con id, title y modalidad, usa exactamente la lista que te doy)\n- pregunta_final\n`;\n\n// Retorna el body para el request a OpenAI\nreturn [\n  {\n    json: {\n      body: JSON.stringify({\n        model: \"gpt-4o-mini\",\n        temperature: 0.9,\n        messages: [\n          { role: \"system\", content: \"Eres un asistente amable que responde en formato JSON.\" },\n          { role: \"user\", content: promptText }\n        ]\n      })\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1056, -80],
+      "id": "34493986-1acb-4284-b55d-179620f0c0db",
+      "name": "Build Prompt for OpenAI"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "=keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json[\"body\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1296, -80],
+      "id": "b2bd91ec-703d-4932-8b3d-8fc6c83d01a4",
+      "name": "OpenAI Chat Completion"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Embedding1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Embedding1": {
+      "main": [
+        [
+          {
+            "node": "Code Embedding1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Embedding1": {
+      "main": [
+        [
+          {
+            "node": "Execute SQL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL1": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt for OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt for OpenAI": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Chat Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Completion": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "e9ffa3fe-58fb-43ec-affc-e982d2c670cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9274630f1207c3987e0db2530e01c6f5cdb0496fd052cc39f9b0f1545012cd23"
+  },
+  "id": "hjhEwgz8vPvPCwPs",
+  "tags": []
+}

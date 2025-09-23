@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
 import { GoArrowLeft } from 'react-icons/go';
@@ -159,7 +159,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }>({ idChat: null, status: true, curso_title: '' });
 
   // Saber si el chatlist esta abierto
-
   const [showChatList, setShowChatList] = useState(false);
 
   const chatModeRef = useRef(chatMode);
@@ -237,45 +236,30 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       inputRef.current.focus();
     }
 
-    console.log('Nuevo mensaje de chat creado');
     if (ideaRef.current.selected) {
-      // Si se está esperando una idea, se guarda el mensaje del usuario como idea
       setIdea({ selected: false, idea: '' });
     }
 
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = 0; // Resetea el scroll al inicio
+      chatContainerRef.current.scrollTop = 0;
     }
 
-    console.log(
-      'Nuevo mensaje de chat creado con ref',
-      chatModeRef.current.idChat
-    );
-    console.log('Nuevo mensaje de chat creado chatId', chatMode.idChat);
-
-    // Parseo fe fecha para el título del chat
-
+    // Crear conversación en BD
     const timestamp = Date.now();
     const fecha = new Date(timestamp);
-
     const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // ¡Ojo! Los meses van de 0 a 11
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
     const anio = fecha.getFullYear();
-
     const hora = String(fecha.getHours()).padStart(2, '0');
     const minuto = String(fecha.getMinutes()).padStart(2, '0');
-
     const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
-
-    // Función para crear el nuevo chat en la base de datos
 
     getOrCreateConversation({
       senderId: user?.id ?? '',
-      cursoId: courseId ?? +Math.round(Math.random() * 100 + 1), // Genera un ID único si no hay cursoId
+      cursoId: courseId ?? +Math.round(Math.random() * 100 + 1),
       title: courseTitle ?? 'Nuevo Chat ' + resultado,
     })
       .then((response) => {
-        console.log('Nuevo chat creado con ID:', response.id);
         setChatMode({ idChat: response.id, status: true, curso_title: '' });
       })
       .catch((error) => {
@@ -287,29 +271,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const saveBotMessage = (trimmedInput: string, coursesData?: CourseData[]) => {
     const currentChatId = chatModeRef.current.idChat;
 
-    // No guardar si es un chat temporal (ID muy grande o menor a 1000)
     if (currentChatId && currentChatId < 1000000000000) {
-      console.log(
-        'Guardando mensaje del bot:',
-        trimmedInput,
-        'en chat ID:',
-        currentChatId
-      );
-      void saveMessages(
-        'bot', // senderId
-        currentChatId, // cursoId
-        [
-          {
-            text: trimmedInput,
-            sender: 'bot',
-            sender_id: 'bot',
-            coursesData:
-              coursesData && coursesData.length > 0 ? coursesData : undefined, // Nuevo campo
-          },
-        ]
-      );
-    } else {
-      console.log('Chat temporal - no guardando mensaje del bot');
+      void saveMessages('bot', currentChatId, [
+        {
+          text: trimmedInput,
+          sender: 'bot',
+          sender_id: 'bot',
+          coursesData:
+            coursesData && coursesData.length > 0 ? coursesData : undefined,
+        },
+      ]);
     }
   };
 
@@ -317,134 +288,222 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const isN8nApiResponse = (x: unknown): x is N8nApiResponse =>
     typeof x === 'object' && x !== null && 'n8nData' in x;
 
+  // ----------------------- ADDED: Type guards for external data -----------------------
+  /**
+   * Valida un objeto de curso que proviene de n8n / iahome
+   */
+  function isCourseRaw(x: unknown): x is {
+    id: number;
+    title: string;
+    modalidad?: string;
+    modalidadId?: number;
+  } {
+    // basic shape check
+    if (typeof x !== 'object' || x === null) return false;
+    const anyX = x as Record<string, unknown>;
+    return typeof anyX.id === 'number' && typeof anyX.title === 'string';
+  }
+
+  /**
+   * Valida una posible respuesta de /api/iahome
+   */
+  function isIahomeResponse(
+    x: unknown
+  ): x is { response?: string; courses?: unknown[] } {
+    if (typeof x !== 'object' || x === null) return false;
+    const anyX = x as Record<string, unknown>;
+    return 'response' in anyX || 'courses' in anyX;
+  }
+
+  // Modificado: handleBotResponse ahora acepta opciones y solo usa n8n si useN8n === true
   const handleBotResponse = useCallback(
-    async (query: string) => {
+    async (query: string, options?: { useN8n?: boolean }) => {
+      const useN8n = options?.useN8n === true;
       if (processingQuery || searchRequestInProgress.current) return;
 
       searchRequestInProgress.current = true;
       setProcessingQuery(true);
       setIsLoading(true);
 
-      // Siempre usar el flujo de n8n
-      const fetchConfig = {
-        url: '/api/ia-cursos',
-        body: { prompt: query },
-      };
-
       try {
-        const result = await fetch(fetchConfig.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fetchConfig.body),
-        });
+        if (useN8n) {
+          const result = await fetch('/api/ia-cursos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: query }),
+          });
+          if (!result.ok) throw new Error(`HTTP ${result.status}`);
+          const text = await result.text();
+          if (!text) throw new Error('Respuesta vacía del servidor');
 
-        if (!result.ok) {
-          const errorText = await result.text();
-          console.error(
-            `HTTP error! status: ${result.status}, response: ${errorText}`
-          );
-          throw new Error(`HTTP error! status: ${result.status}`);
-        }
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(text);
+          } catch (err) {
+            console.error('JSON parse error n8n:', err);
+            throw new Error('Respuesta inválida de n8n');
+          }
 
-        const contentType = result.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          const responseText = await result.text();
-          console.error('Response is not JSON:', responseText);
-          throw new Error('La respuesta no es JSON válido');
-        }
+          if (isN8nApiResponse(parsed)) {
+            const n8nResponse = parsed.n8nData;
 
-        const text = await result.text();
-        if (!text) {
-          throw new Error('Respuesta vacía del servidor');
-        }
+            const introText =
+              n8nResponse.mensaje_inicial ??
+              'He encontrado estos cursos que podrían interesarte:';
+            const introMessage: ChatMessage = {
+              id: Date.now() + Math.random(),
+              text: introText,
+              sender: 'bot',
+            };
+            setMessages((prev) => [...prev, introMessage]);
+            saveBotMessage(introText);
 
-        const parsed: unknown = JSON.parse(text);
-        console.log('Respuesta del servidor (parsed):', parsed);
+            // Cursos recomendados - validación estricta
+            if (
+              Array.isArray(n8nResponse.cursos) &&
+              n8nResponse.cursos.length
+            ) {
+              const coursesData: CourseData[] = n8nResponse.cursos
+                .filter(isCourseRaw)
+                .map((c) => ({
+                  id: c.id,
+                  title: c.title,
+                  modalidad: c.modalidad,
+                  modalidadId: c.modalidadId,
+                }));
 
-        // 1) Respuesta n8n
-        if (isN8nApiResponse(parsed)) {
-          const n8nResponse = parsed.n8nData;
+              if (coursesData.length) {
+                const coursesMessage: ChatMessage = {
+                  id: Date.now() + Math.random(),
+                  text: 'Cursos recomendados:',
+                  sender: 'bot',
+                  coursesData,
+                };
+                setMessages((prev) => [...prev, coursesMessage]);
+                // Guarda el mensaje con los cursos en el historial (tipado seguro)
+                saveBotMessage('Cursos recomendados:', coursesData);
+              }
+            }
 
-          // Mensaje de introducción
-          const introText =
-            n8nResponse.mensaje_inicial ??
-            'He encontrado estos cursos que podrían interesarte:';
-          const introMessage: ChatMessage = {
-            id: Date.now() + Math.random(),
-            text: introText,
-            sender: 'bot',
+            // Pregunta final -> añadimos botones Sí / No
+            if (n8nResponse.pregunta_final) {
+              const finalMessage: ChatMessage = {
+                id: Date.now() + Math.random(),
+                text: n8nResponse.pregunta_final,
+                sender: 'bot',
+                buttons: [
+                  { label: 'Sí', action: 'final_yes' },
+                  { label: 'No', action: 'final_no' },
+                ],
+              };
+              setMessages((prev) => [...prev, finalMessage]);
+              saveBotMessage(n8nResponse.pregunta_final);
+            }
+
+            setIdea({ selected: false, idea: '' });
+            return;
+          }
+
+          // fallback n8n
+          const fallbackText =
+            typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + Math.random(),
+              text: fallbackText,
+              sender: 'bot',
+            },
+          ]);
+          saveBotMessage(fallbackText);
+          return;
+        } else {
+          // flujo local (iahome) para búsquedas normales
+          const res = await fetch('/api/iahome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: query }),
+          });
+
+          // Si el backend responde con error (500) pero incluye JSON con "response",
+          // preferimos usar ese texto en vez de lanzar excepción y cortar el flujo.
+          let dataUnknown: unknown = null;
+          if (!res.ok) {
+            try {
+              dataUnknown = await res.json();
+              console.warn(
+                'iahome returned non-ok but with JSON:',
+                dataUnknown
+              );
+            } catch (_e) {
+              // <-- cambiado de "catch (e)" a "catch (_e)" para evitar warning de ESLint
+              const errText = await res.text().catch(() => '');
+              throw new Error(errText || `HTTP ${res.status}`);
+            }
+          } else {
+            dataUnknown = await res.json();
+          }
+
+          // Validamos la estructura esperada y mostramos el texto que venga en "response"
+          if (!isIahomeResponse(dataUnknown)) {
+            const responseText = 'No encontré resultados.';
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                text: responseText,
+                sender: 'bot',
+              },
+            ]);
+            saveBotMessage(responseText);
+            return;
+          }
+
+          const dataObj = dataUnknown as {
+            response?: unknown;
+            courses?: unknown[];
           };
-          setMessages((prev) => [...prev, introMessage]);
-          saveBotMessage(introText);
+          const responseText =
+            typeof dataObj.response === 'string'
+              ? dataObj.response
+              : 'No encontré resultados.';
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + Math.random(),
+              text: responseText,
+              sender: 'bot',
+            },
+          ]);
+          saveBotMessage(responseText);
 
-          // Cursos recomendados (como bloque de tarjetas)
-          if (
-            Array.isArray(n8nResponse.cursos) &&
-            n8nResponse.cursos.length > 0
-          ) {
-            // Corrige el tipado, no uses any
-            const coursesData = n8nResponse.cursos.map(
-              (c: {
-                id: number;
-                title: string;
-                modalidad?: string;
-                modalidadId?: number;
-              }) => ({
+          // si hay courses retornados por iahome, filtramos y mostramos
+          if (Array.isArray(dataObj.courses) && dataObj.courses.length > 0) {
+            const coursesData: CourseData[] = dataObj.courses
+              .filter(isCourseRaw)
+              .map((c) => ({
                 id: c.id,
                 title: c.title,
-                modalidad: c.modalidad,
-                modalidadId: c.modalidadId,
-              })
-            );
-            const coursesMessage: ChatMessage = {
-              id: Date.now() + Math.random(),
-              text: 'Cursos recomendados:',
-              sender: 'bot',
-              coursesData,
-            };
-            setMessages((prev) => [...prev, coursesMessage]);
-            // Guarda el mensaje con los cursos en el historial (para renderizar tarjetas tras refrescar)
-            saveBotMessage('Cursos recomendados:', coursesData);
+              }));
+            if (coursesData.length) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + Math.random(),
+                  text: 'Cursos encontrados:',
+                  sender: 'bot',
+                  coursesData,
+                },
+              ]);
+              saveBotMessage('Cursos encontrados:', coursesData);
+            }
           }
-
-          // Pregunta final
-          if (n8nResponse.pregunta_final) {
-            const finalMessage: ChatMessage = {
-              id: Date.now() + Math.random(),
-              text: n8nResponse.pregunta_final,
-              sender: 'bot',
-            };
-            setMessages((prev) => [...prev, finalMessage]);
-            saveBotMessage(n8nResponse.pregunta_final);
-          }
-
-          setIdea({ selected: false, idea: '' });
           return;
         }
-
-        // Fallback: cualquier otro JSON
-        const fallbackText =
-          typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + Math.random(), text: fallbackText, sender: 'bot' },
-        ]);
-        saveBotMessage(fallbackText);
       } catch (error) {
         console.error('Error getting bot response:', error);
-
-        let errorMessage =
+        const errorMessage =
           'Lo siento, ocurrió un error al procesar tu solicitud.';
-        if (error instanceof Error) {
-          if (error.message.includes('404')) {
-            errorMessage =
-              'El servicio de consultas del curso no está disponible temporalmente.';
-          } else if (error.message.includes('503')) {
-            errorMessage =
-              'Los servicios están temporalmente no disponibles. Intenta más tarde.';
-          }
-        }
-
         setMessages((prev) => [
           ...prev,
           { id: Date.now() + Math.random(), text: errorMessage, sender: 'bot' },
@@ -468,15 +527,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const query = event.detail.query;
       if (!query) return;
 
-      console.log('🤖 Evento create-new-chat-with-search recibido:', query);
-
-      // Crear nuevo chat directamente con idChat temporal
-      const tempChatId = Date.now(); // ID temporal hasta que se cree en la DB
+      const tempChatId = Date.now();
 
       setChatMode({ idChat: tempChatId, status: true, curso_title: '' });
       setShowChatList(false);
 
-      // Resetear mensajes y abrir chatbot
       setMessages([
         {
           id: Date.now(),
@@ -494,18 +549,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       setIsOpen(true);
       initialSearchDone.current = false;
       setProcessingQuery(false);
-      // onSearchComplete?.(); // Comentado para evitar cierre automático
 
-      console.log('💬 Chatbot abierto, enviando búsqueda:', query);
-
-      // Forzar apertura del chatbot desde StudentDetails
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('force-open-chatbot'));
       }, 50);
 
-      // Después de abrir el chatbot, enviar la búsqueda
       setTimeout(() => {
-        // Agregar mensaje del usuario
         const newUserMessage = {
           id: Date.now(),
           text: query,
@@ -513,10 +562,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         };
         setMessages((prev) => [...prev, newUserMessage]);
 
-        // Procesar respuesta del bot
-        handleBotResponse(query);
+        void handleBotResponse(query, { useN8n: false });
 
-        // Crear el chat real en la base de datos
         const timestamp = Date.now();
         const fecha = new Date(timestamp);
         const dia = String(fecha.getDate()).padStart(2, '0');
@@ -533,7 +580,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
           })
             .then((response) => {
-              console.log('✅ Chat creado en DB con ID:', response.id);
               setChatMode({
                 idChat: response.id,
                 status: true,
@@ -541,20 +587,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               });
             })
             .catch((error) => {
-              console.error('❌ Error creando chat:', error);
+              console.error('Error creando chat:', error);
             });
         }
       }, 200);
     };
 
-    console.log('👂 Listener create-new-chat-with-search registrado');
     window.addEventListener(
       'create-new-chat-with-search',
       handleCreateNewChatWithSearch as EventListener
     );
 
     return () => {
-      console.log('🔇 Listener create-new-chat-with-search removido');
       window.removeEventListener(
         'create-new-chat-with-search',
         handleCreateNewChatWithSearch as EventListener
@@ -577,14 +621,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         },
       ]);
       setInputText('');
-      // Forzar chatMode para mostrar ChatMessages
       setChatMode((prev) => ({
         ...prev,
-        idChat: Date.now(), // id temporal para ChatMessages
+        idChat: Date.now(),
         status: true,
         curso_title: customEvent.detail.courseTitle ?? '',
       }));
-      setShowChatList(false); // Oculta el chatlist si estaba abierto
+      setShowChatList(false);
     };
 
     window.addEventListener(
@@ -616,7 +659,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         !initialSearchQuery?.trim() ||
         !isSignedIn ||
         !showChat ||
-        processingQuery || // This is used in the dependency check
+        processingQuery ||
         searchRequestInProgress.current ||
         initialSearchDone.current
       )
@@ -625,7 +668,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       initialSearchDone.current = true;
       setIsOpen(true);
 
-      // Add user message first
       setMessages((prev) => [
         ...prev,
         {
@@ -635,8 +677,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         },
       ]);
 
-      // Then process the bot response
-      await handleBotResponse(initialSearchQuery.trim());
+      await handleBotResponse(initialSearchQuery.trim(), { useN8n: false });
     };
 
     void handleInitialSearch();
@@ -646,7 +687,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     showChat,
     handleBotResponse,
     processingQuery,
-  ]); // Added processingQuery
+  ]);
 
   useEffect(() => {
     return () => {
@@ -697,38 +738,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const saveUserMessage = (trimmedInput: string, sender: string) => {
     const currentChatId = chatMode.idChat;
-    console.log(
-      'Guardando mensaje del usuario:',
-      trimmedInput,
-      'en chat ID:',
-      currentChatId
-    );
-    // No guardar si es un chat temporal (ID muy grande o menor a 1000)
     if (currentChatId && currentChatId < 1000000000000) {
-      void saveMessages(
-        user?.id ?? '', // senderId
-        currentChatId, // cursoId
-        [
-          {
-            text: trimmedInput,
-            sender: sender,
-            sender_id: user?.id ?? '',
-          },
-        ]
-      );
-    } else {
-      console.log('Chat temporal - no guardando mensaje del usuario');
+      void saveMessages(user?.id ?? '', currentChatId, [
+        {
+          text: trimmedInput,
+          sender: sender,
+          sender_id: user?.id ?? '',
+        },
+      ]);
     }
   };
 
+  // Manejo de envío de mensajes
+  // Nota: este handle usa ideaRef para decidir si invocar n8n
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    /*
-    if (!isSignedIn && pathname !== '/') {
-      toast.error('Debes iniciar sesión para usar el chat');
-      return;
-    }
-      */
 
     const trimmedInput = inputText.trim();
     if (!trimmedInput || searchRequestInProgress.current) return;
@@ -739,17 +763,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       sender: 'user' as const,
     };
 
-    // Lógica para almacenar el mensaje del usuario en la base de datos
     saveUserMessage(trimmedInput, 'user');
-
     setMessages((prev) => [...prev, newUserMessage]);
     setInputText('');
 
     if (ideaRef.current.selected) {
-      // Si se está esperando una idea, se guarda el mensaje del usuario como idea
       setIdea({ selected: false, idea: trimmedInput });
+      await handleBotResponse(trimmedInput, { useN8n: true });
+    } else {
+      await handleBotResponse(trimmedInput, { useN8n: false });
     }
-    await handleBotResponse(trimmedInput);
   };
 
   const handleClose = () => {
@@ -773,20 +796,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   };
 
   const handleClick = () => {
-    /*
-    if (!isSignedIn && pathname !== '/') {
-      const currentUrl = encodeURIComponent(window.location.href);
-      toast.error('Acceso restringido', {
-        description: 'Debes iniciar sesión para usar el chatbot.',
-        action: {
-          label: 'Iniciar sesión',
-          onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
-        },
-        duration: 5000,
-      });
-      return;
-    }
-      */
     if (isOpen) {
       handleClose();
     } else {
@@ -801,29 +810,136 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     []
   );
 
-  // Añade el manejador para los botones del mensaje inicial
-  const handleBotButtonClick = (action: string) => {
+  // Manejo de botones (creación, idea, soporte, flujo final_yes/no, selección/creación de proyecto)
+  const handleBotButtonClick = async (action: string) => {
     if (action === 'new_project') {
-      // Lógica para crear proyecto
       if (!isSignedIn) {
-        // Redirigir a la página de planes
-
         router.push(`/planes`);
+      } else {
+        router.push('/proyectos');
       }
-    } else if (action === 'new_idea') {
+      return;
+    }
+
+    if (action === 'new_idea') {
       setIdea({ selected: true, idea: '' });
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: '¡Cuéntame tu nueva idea!', sender: 'bot' },
+      ]);
+      return;
+    }
+
+    if (action === 'contact_support') {
+      toast.info('Redirigiendo a soporte técnico');
+      return;
+    }
+
+    if (action === 'final_yes') {
+      const lastCoursesMsg = [...messages]
+        .reverse()
+        .find((m) => m.coursesData?.length);
+      const courses = lastCoursesMsg?.coursesData ?? [];
+      if (courses.length === 0) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: 'No hay cursos disponibles para mostrar.',
+            sender: 'bot',
+          },
+        ]);
+        return;
+      }
+
+      const courseButtons = courses.map((c) => ({
+        label: c.title,
+        action: `select_course_${c.id}`,
+      }));
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now(),
-          text: '¡Cuéntame tu nueva idea!',
+          text: 'Selecciona un curso para ver la descripción:',
           sender: 'bot',
+          buttons: courseButtons,
         },
       ]);
-    } else if (action === 'contact_support') {
-      toast.info('Redirigiendo a soporte técnico');
-      // Aquí puedes redirigir o abrir modal de soporte
+      return;
     }
+
+    if (action === 'final_no') {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+          sender: 'bot',
+          buttons: [
+            { label: '📚 Crear Proyecto', action: 'new_project' },
+            { label: '💬 Nueva Idea', action: 'new_idea' },
+            { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          ],
+        },
+      ]);
+      setIdea({ selected: false, idea: '' });
+      return;
+    }
+
+    if (action.startsWith('select_course_')) {
+      const idStr = action.replace('select_course_', '');
+      const courseIdNum = parseInt(idStr, 10);
+      if (Number.isNaN(courseIdNum)) return;
+
+      try {
+        const res = await fetch(`/api/courses/${courseIdNum}`);
+        if (!res.ok) throw new Error('No se pudo obtener el curso');
+
+        const courseUnknown = (await res.json()) as unknown;
+        let description = 'Sin descripción disponible.';
+        if (typeof courseUnknown === 'object' && courseUnknown !== null) {
+          const anyCourse = courseUnknown as Record<string, unknown>;
+          if (typeof anyCourse.description === 'string') {
+            description = anyCourse.description;
+          }
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: `Descripción del curso: ${description}`,
+            sender: 'bot',
+          },
+          {
+            id: Date.now() + 1,
+            text: '¿Quieres crear el proyecto de este curso?',
+            sender: 'bot',
+            buttons: [
+              {
+                label: 'Crear proyecto',
+                action: `create_project_${courseIdNum}`,
+              },
+              { label: 'Volver', action: 'final_yes' },
+            ],
+          },
+        ]);
+      } catch (err) {
+        console.error('Error fetching course details', err);
+        toast.error('No se pudo cargar la descripción del curso');
+      }
+      return;
+    }
+
+    if (action.startsWith('create_project_')) {
+      const idStr = action.replace('create_project_', '');
+      const courseIdNum = parseInt(idStr, 10);
+      if (Number.isNaN(courseIdNum)) return;
+      router.push(`/proyectos?courseId=${courseIdNum}`);
+      return;
+    }
+
+    console.log('Acción de botón no gestionada:', action);
   };
 
   // Modificar la función renderMessage para mostrar modalidad como Badge y tooltip
@@ -912,7 +1028,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       );
     }
 
-    // El resto del renderMessage existente
+    // El resto del renderMessage existente (mantiene compatibilidad original)
     if (message.sender === 'bot') {
       const parts = message.text.split('\n\n');
       const introText = parts[0];
@@ -934,13 +1050,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             Boolean(course)
         );
 
-      // ⚠️ Si no hay cursos, mostramos todo el texto directamente
       if (courses.length === 0) {
         return (
           <div className="flex flex-col space-y-4">
             <div className="space-y-3">
               {message.text.split('\n').map((line, index) => {
-                // Si la línea parece un título (por ejemplo: "Carreras Técnicas")
                 if (
                   /^(Carreras|Diplomados|Cursos|Financiación)/i.test(
                     line.trim()
@@ -956,7 +1070,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   );
                 }
 
-                // Si contiene un monto
                 if (/\$\d[\d.]*\s?COP/.test(line)) {
                   return (
                     <p key={index} className="text-gray-800">
@@ -965,12 +1078,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   );
                 }
 
-                // Línea vacía = espacio
                 if (line.trim() === '') {
                   return <div key={index} className="h-2" />;
                 }
 
-                // Texto normal
                 return (
                   <p key={index} className="leading-relaxed text-gray-700">
                     {line}
@@ -982,7 +1093,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         );
       }
 
-      // Si hay cursos, usamos intro + tarjetas
       return (
         <div className="flex flex-col space-y-4">
           <p className="font-medium text-gray-800">{introText}</p>
@@ -1023,7 +1133,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       );
     }
 
-    // Para mensajes del usuario o genéricos
     return (
       <div className="flex flex-col space-y-4">
         <p className="font-medium whitespace-pre-line text-gray-800">
@@ -1060,6 +1169,27 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   }, [isOpen]);
 
+  function handleDeleteHistory(
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ): void {
+    event.preventDefault();
+    setMessages([
+      {
+        id: Date.now(),
+        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+        sender: 'bot',
+        buttons: [
+          { label: '📚 Crear Proyecto', action: 'new_project' },
+          { label: '💬 Nueva Idea', action: 'new_idea' },
+          { label: '🛠 Soporte Técnico', action: 'contact_support' },
+        ],
+      },
+    ]);
+    setInputText('');
+    setIdea({ selected: false, idea: '' });
+    toast.success('Historial de chat eliminado');
+  }
+
   // Renderiza el TooltipProvider en el nivel superior del componente
   return (
     <Tooltip.Provider>
@@ -1070,30 +1200,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
               onMouseEnter={() => {
                 setIsHovered(true);
-                show(); // Muestra tour y soporte por 5s
+                show();
               }}
               onMouseLeave={() => setIsHovered(false)}
               onClick={handleClick}
             >
-              {/* Glow effect */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
-
-              {/* Inner circle with darker gradient */}
               <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-                {/* Icon container */}
                 <div className="relative">
                   <MessageCircle
                     className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
                   />
-
-                  {/* Animated spark effect */}
                   {isHovered && (
                     <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
                   )}
                 </div>
               </div>
-
-              {/* Rotating border effect */}
               <div
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                 style={{
@@ -1101,51 +1223,33 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
                 }}
               />
-
-              {/* Pulse ring */}
               <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
             </button>
-
-            {/* Tooltip with neon effect - always visible */}
 
             {isDesktop && (
               <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
                 <div className="relative">
-                  {/* Main tooltip box */}
                   <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
                     Asistente IA
                   </div>
-
-                  {/* Neon glow effects */}
                   <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
                     Asistente IA
                   </div>
                   <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
                     Asistente IA
                   </div>
-
-                  {/* Outer glow */}
                   <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
-
-                  {/* Arrow with neon effect */}
                   <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
                   <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
                 </div>
               </div>
             )}
           </div>
-
-          /*  Boton nuevo*/
         )}
 
-        {/* Mostrar el chat solo cuando isOpen es true */}
         {isOpen && (
           <div
-            className={`fixed ${
-              isDesktop
-                ? 'right-0 bottom-0'
-                : 'inset-0 top-0 right-0 bottom-0 left-0'
-            }`}
+            className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'}`}
             ref={chatContainerRef}
             style={{ zIndex: 110000 }}
           >
@@ -1168,12 +1272,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               className="chat-resizable"
             >
               <div
-                className={`relative flex h-full w-full flex-col overflow-hidden ${
-                  isDesktop ? 'rounded-lg border border-gray-200' : ''
-                } bg-white`}
+                className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'rounded-lg border border-gray-200' : ''} bg-white`}
               >
-                {/* Logo background */}
-
                 <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
                   <Image
                     src="/artiefy-logo2.svg"
@@ -1225,6 +1325,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                             />
                           ) : null)}
                       </button>
+
+                      <button
+                        onClick={handleDeleteHistory}
+                        className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                        aria-label="Borrar historial"
+                        title="Borrar historial"
+                      >
+                        <TrashIcon className="text-xl text-red-500" />
+                      </button>
+
                       <button
                         onClick={() => setIsOpen(false)}
                         className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
