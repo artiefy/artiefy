@@ -142,7 +142,8 @@ export interface Lesson {
   activities?: Activity[];
   isLocked: boolean | null;
   resourceNames: string[];
-  isNew: boolean; // Agregar propiedad isNew
+  isNew: boolean;
+  orderIndex?: number | null; // NUEVO: orden explícito opcional
 }
 
 export interface LessonWithProgress extends Lesson {
@@ -157,6 +158,7 @@ export interface LessonWithProgress extends Lesson {
     questions?: Question[];
   };
   isNew: boolean;
+  orderIndex?: number | null; // NUEVO: orden explícito opcional
 }
 
 export interface UserLessonsProgress {

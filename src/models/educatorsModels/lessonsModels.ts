@@ -44,6 +44,7 @@ export async function createLesson({
   courseId,
   resourceKey,
   resourceNames,
+  orderIndex, // <--- Añade este campo
 }: {
   title: string;
   description: string;
@@ -53,6 +54,7 @@ export async function createLesson({
   courseId: number;
   resourceKey?: string;
   resourceNames?: string;
+  orderIndex?: number; // <--- Añade este campo (opcional para compatibilidad)
 }): Promise<{ id: number }> {
   try {
     // 1. Crear la nueva lección primero
@@ -67,6 +69,7 @@ export async function createLesson({
         courseId,
         resourceKey: resourceKey ?? '',
         resourceNames: resourceNames ?? '',
+        orderIndex: orderIndex ?? 0, // <--- Guarda el orderIndex
       })
       .returning({ id: lessons.id });
 

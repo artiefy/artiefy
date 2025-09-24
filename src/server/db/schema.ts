@@ -159,10 +159,12 @@ export const preferences = pgTable('preferences', {
 
 // Tabla de lecciones
 export const lessons = pgTable('lessons', {
-  id: serial('id').primaryKey(), // ID autoincremental de la lección
-  title: varchar('title', { length: 255 }).notNull(), // Título de la lección
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
   description: text('description'), // Descripción de la lección
   duration: integer('duration').notNull(),
+  // NUEVO: índice de orden explícito para evitar depender del título
+  orderIndex: integer('order_index').notNull().default(0),
   coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
   coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
   courseId: integer('course_id')
@@ -318,19 +320,26 @@ export const projectsTaken = pgTable('projects_taken', {
 });
 
 // Tabla de progreso de lecciones por usuario
-export const userLessonsProgress = pgTable('user_lessons_progress', {
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  lessonId: integer('lesson_id')
-    .references(() => lessons.id)
-    .notNull(),
-  progress: real('progress').default(0).notNull(),
-  isCompleted: boolean('is_completed').default(false).notNull(),
-  isLocked: boolean('is_locked').default(true),
-  isNew: boolean('is_new').default(true).notNull(),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
+export const userLessonsProgress = pgTable(
+  'user_lessons_progress',
+  {
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    lessonId: integer('lesson_id')
+      .references(() => lessons.id)
+      .notNull(),
+    progress: real('progress').default(0).notNull(),
+    isCompleted: boolean('is_completed').default(false).notNull(),
+    isLocked: boolean('is_locked').default(true),
+    isNew: boolean('is_new').default(true).notNull(),
+    lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  },
+  // AÑADIR índice único para soportar onConflictDoUpdate y evitar duplicados
+  (table) => [
+    unique('uniq_user_lesson_progress').on(table.userId, table.lessonId),
+  ]
+);
 
 //tabla de foros
 export const forums = pgTable('forums', {
@@ -959,10 +968,11 @@ export const chat_messages = pgTable('chat_messages', {
   conversation_id: integer('conversation_id')
     .references(() => conversations.id)
     .notNull(),
-  sender: text('sender').notNull(), // Este campo puede ser el ID del usuario o su nombre
+  sender: text('sender').notNull(),
   senderId: text('sender_id').references(() => users.id),
   message: text('message').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
+  courses_data: jsonb('courses_data').default(null), // <-- Asegura default null para evitar errores de consulta
 });
 
 // Tabla de roles secundarios
@@ -1339,11 +1349,10 @@ export const pagoVerificaciones = pgTable('pago_verificaciones', {
   fileKey: varchar('file_key', { length: 255 }),
   fileUrl: varchar('file_url', { length: 512 }),
   fileName: varchar('file_name', { length: 255 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
-
-
-
 
 export const userProgramPrice = pgTable('user_program_price', {
   id: serial('id').primaryKey(),
@@ -1379,28 +1388,22 @@ export const waMessages = pgTable(
   'wa_messages',
   {
     id: serial('id').primaryKey(),
-    // id devuelto por Meta (wamid-...), puede venir vacío en algunos status
     metaMessageId: text('meta_message_id'),
-    // número WhatsApp del contacto (wa_id / from / to, sin +)
     waid: varchar('waid', { length: 32 }).notNull(),
     name: text('name'),
-    // 'inbound' | 'outbound' | 'status'
     direction: varchar('direction', { length: 16 }).notNull(),
-    // 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive' | 'button' | 'status' | ...
     msgType: varchar('msg_type', { length: 32 }).notNull(),
-    // texto principal (si aplica)
     body: text('body'),
-    // timestamp en ms (para ordenar exacto como ya usa tu UI)
     tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
-    // dump crudo por si luego necesitas algo
     raw: jsonb('raw'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
           mediaId: text('media_id'),
   mediaType: text('media_type'),
   fileName: text('file_name'),
   },
-  (t) => ({
-    byWaidTs: index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
-    uniqMetaId: uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
-  })
+  // Cambia el objeto por un array para evitar el warning deprecado
+  (t) => [
+    index('wa_messages_waid_ts_idx').on(t.waid, t.tsMs),
+    uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
+  ]
 );

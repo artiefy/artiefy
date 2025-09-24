@@ -1,10 +1,5 @@
 'use client';
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-} from 'react';
+import { type Dispatch, type SetStateAction, useEffect } from 'react';
 
 import Link from 'next/link';
 
@@ -20,7 +15,7 @@ import {
   SelectValue,
 } from '~/components/estudiantes/ui/select';
 import { ClassMeeting, type LessonWithProgress } from '~/types';
-import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
+import { sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
   lessonsState: LessonWithProgress[];
@@ -35,13 +30,9 @@ interface LessonCardsProps {
   isMobile?: boolean; // <-- nuevo prop
 }
 
-interface NextLessonStatus {
-  lessonId: number | null;
-  isUnlocked: boolean;
-}
-
 interface UnlockResponse {
   success: boolean;
+  nextLessonId?: number;
   error?: string;
 }
 
@@ -79,36 +70,7 @@ const LessonCards = ({
     }
   }, [swrLessons, setLessonsState]);
 
-  const checkLessonStatus = useCallback(
-    async (lessonId: number) => {
-      if (selectedLessonId && progress === 100) {
-        try {
-          const response = await fetch(
-            `/api/lessons/${lessonId}/next-lesson-status`
-          );
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          const data = (await response.json()) as NextLessonStatus;
-
-          if (data.isUnlocked && data.lessonId) {
-            setLessonsState((prev: LessonWithProgress[]) =>
-              prev.map((lesson) =>
-                lesson.id === data.lessonId
-                  ? { ...lesson, isLocked: false, isNew: true }
-                  : lesson
-              )
-            );
-          }
-        } catch (error) {
-          console.error('Error checking lesson status:', error);
-        }
-      }
-    },
-    [selectedLessonId, progress, setLessonsState]
-  );
-
-  // Pre-sort lessons once
+  // Pre-sort lessons once (orderIndex-aware)
   const sortedLessons = sortLessons(lessonsState);
 
   useEffect(() => {
@@ -128,88 +90,74 @@ const LessonCards = ({
       const currentLesson = sortedLessons.find(
         (l) => l.id === selectedLessonId
       );
+      if (!currentLesson) return;
 
-      if (!currentLesson || currentLesson.porcentajecompletado < 100) return;
+      const activities = currentLesson.activities ?? [];
+      const hasActivities = activities.length > 0;
+      const isVideoLesson = currentLesson.coverVideoKey !== 'none';
 
-      // Encontrar la siguiente lección en secuencia
-      const currentNumbers = extractNumbersFromTitle(currentLesson.title);
-      let nextLesson: LessonWithProgress | undefined;
+      // Determine if we should attempt to unlock the next lesson
+      const allActivitiesCompleted = hasActivities
+        ? activities.every((a) => a.isCompleted)
+        : false;
 
-      // Buscar la siguiente lección en orden
-      for (const lesson of sortedLessons) {
-        const lessonNumbers = extractNumbersFromTitle(lesson.title);
+      const shouldUnlock =
+        (isVideoLesson &&
+          currentLesson.porcentajecompletado === 100 &&
+          (!hasActivities || allActivitiesCompleted)) ||
+        (!isVideoLesson && hasActivities && allActivitiesCompleted);
 
-        // Verificar si es la siguiente lección en secuencia
-        if (
-          (lessonNumbers.session === currentNumbers.session &&
-            lessonNumbers.class === currentNumbers.class + 1) ||
-          (lessonNumbers.session === currentNumbers.session + 1 &&
-            lessonNumbers.class === 1)
-        ) {
-          nextLesson = lesson;
-          break;
-        }
-      }
+      if (!shouldUnlock) return;
 
+      // Find the next lesson to ensure we update state after server unlock
+      const currentIndex = sortedLessons.findIndex(
+        (l) => l.id === selectedLessonId
+      );
+      const nextLesson =
+        currentIndex >= 0 ? sortedLessons[currentIndex + 1] : undefined;
       if (!nextLesson?.isLocked) return;
 
-      const activities = currentLesson?.activities ?? [];
-      const hasActivities = activities.length > 0;
-      const shouldUnlock = hasActivities
-        ? activities.every((activity) => activity.isCompleted) &&
-          currentLesson.porcentajecompletado === 100
-        : currentLesson.porcentajecompletado === 100;
+      try {
+        const res = await fetch('/api/lessons/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentLessonId: selectedLessonId,
+            hasActivities,
+            allActivitiesCompleted,
+          }),
+        });
 
-      if (shouldUnlock) {
-        try {
-          const response = await fetch('/api/lessons/unlock', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lessonId: nextLesson.id,
-              currentLessonId: selectedLessonId,
-              hasActivities,
-              allActivitiesCompleted: hasActivities
-                ? activities.every((a) => a.isCompleted)
-                : true,
-            }),
-          });
-
-          if (!response.ok) throw new Error('Failed to unlock lesson');
-
-          const result = (await response.json()) as UnlockResponse;
-          if (result.success) {
-            setLessonsState((prev) =>
-              prev.map((lesson) =>
-                nextLesson && lesson.id === nextLesson.id
-                  ? { ...lesson, isLocked: false, isNew: true }
-                  : lesson
-              )
-            );
-
-            // Solo mostrar el toast una vez después de actualizar el estado
-            toast.success('¡Nueva clase desbloqueada!', {
-              id: 'lesson-unlocked', // Identificador único para evitar duplicados
-              duration: 3000,
-            });
-
-            // Remover el toast del checkLessonStatus
-            await checkLessonStatus(selectedLessonId);
-          }
-        } catch (error) {
-          console.error('Error unlocking next lesson:', error);
-          toast.error('Error al desbloquear la siguiente clase');
+        const result = (await res.json()) as UnlockResponse;
+        if (!res.ok || !result.success) {
+          throw new Error(result.error ?? 'Failed to unlock next lesson');
         }
+
+        // Update state to reflect unlocked lesson from DB
+        setLessonsState((prev) =>
+          prev.map((lesson) =>
+            result.nextLessonId && lesson.id === result.nextLessonId
+              ? { ...lesson, isLocked: false, isNew: true }
+              : lesson
+          )
+        );
+
+        toast.success('¡Nueva clase desbloqueada!', {
+          id: 'lesson-unlocked',
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error('Error unlocking next lesson:', error);
+        toast.error('Error al desbloquear la siguiente clase');
       }
     };
 
-    // Debounce la ejecución para evitar múltiples llamadas
     const timeoutId = setTimeout(() => {
       void unlockNextLesson();
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedLessonId, sortedLessons, checkLessonStatus, setLessonsState]);
+  }, [selectedLessonId, sortedLessons, setLessonsState]);
 
   const getActivityStatus = (lessonItem: LessonWithProgress) => {
     // Siempre usar el estado isLocked de la base de datos

@@ -1,90 +1,132 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
+import { auth } from '@clerk/nextjs/server';
+import { asc } from 'drizzle-orm';
+import { z } from 'zod';
 
-import {
-  getLessonById,
-  updateLesson,
-} from '~/models/educatorsModels/lessonsModels';
+const bodySchema = z.object({
+  orderIndex: z.number().int().positive(),
+});
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: Request, ctx: { params: { id: string } }) {
   try {
-    const resolvedParams = await params;
-    const LessonsId = parseInt(resolvedParams.id);
-    if (isNaN(LessonsId)) {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
+    const lessonId = Number(ctx.params.id);
+    if (!lessonId || Number.isNaN(lessonId)) {
       return NextResponse.json(
-        { error: 'ID de curso inválido' },
+        { error: 'ID de lección inválido' },
         { status: 400 }
       );
     }
 
-    const lesson = await getLessonById(LessonsId);
+    // Obtener la lección con datos del curso asociado
+    const lesson = await db.query.lessons.findFirst({
+      where: eq(lessons.id, lessonId),
+      with: {
+        course: {
+          columns: {
+            id: true,
+            title: true,
+            description: true,
+            instructor: true,
+          },
+        },
+      },
+    });
+
     if (!lesson) {
       return NextResponse.json(
-        { error: 'Curso no encontrado' },
+        { error: 'Lección no encontrada' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(lesson);
+    // Preparar respuesta con recursos como array si están en formato string
+    const resourceNames =
+      typeof lesson.resourceNames === 'string'
+        ? lesson.resourceNames.split(',').map((name) => name.trim())
+        : [lesson.resourceNames];
+
+    const response = {
+      ...lesson,
+      resourceNames,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error al obtener el curso:', error);
+    console.error('Error al obtener la lección:', error);
     return NextResponse.json(
-      { error: 'Error al obtener el curso' },
+      { error: 'Error al cargar la lección' },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request, ctx: { params: { id: string } }) {
   try {
-    const lessonId = parseInt(params.id);
-
-    if (isNaN(lessonId)) {
-      return new Response(JSON.stringify({ error: 'ID de lección inválido' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    const idParam = ctx.params?.id;
+    const lessonId = Number(idParam);
+    if (!lessonId || Number.isNaN(lessonId)) {
+      return NextResponse.json({ error: 'Invalid lesson id' }, { status: 400 });
     }
 
-    const data = (await req.json()) as {
-      title?: string;
-      description?: string;
-      duration?: number;
-      coverImageKey?: string;
-      coverVideoKey?: string;
-      resourceKey?: string;
-      resourceNames?: string;
-      courseId: number;
-    };
+    const json = await req.json().catch(() => ({}));
+    const parsed = bodySchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    }
+    const desiredIndex = parsed.data.orderIndex;
 
-    const updatedLesson = await updateLesson(lessonId, {
-      title: data.title,
-      description: data.description,
-      duration: Number(data.duration),
-      coverImageKey: data.coverImageKey,
-      coverVideoKey: data.coverVideoKey,
-      resourceKey: data.resourceKey,
-      resourceNames: data.resourceNames,
-      courseId: Number(data.courseId),
+    // 1) Obtener la lección y su curso
+    const current = await db.query.lessons.findFirst({
+      where: eq(lessons.id, lessonId),
+      columns: { id: true, courseId: true },
     });
+    if (!current?.courseId) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
 
-    return new Response(JSON.stringify(updatedLesson), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+    // 2) Obtener todas las lecciones del curso ordenadas por orderIndex, id
+    const courseLessons = await db.query.lessons.findMany({
+      where: eq(lessons.courseId, current.courseId),
+      orderBy: [asc(lessons.orderIndex), asc(lessons.id)],
+      columns: { id: true, orderIndex: true },
     });
-  } catch (error) {
-    console.error('Error updating lesson:', error);
-    return new Response(
-      JSON.stringify({ error: 'Error al actualizar la lección' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
+    if (!courseLessons.length) {
+      return NextResponse.json(
+        { error: 'No lessons to reorder' },
+        { status: 400 }
+      );
+    }
+
+    // 3) Mover la lección a la posición deseada (clamp entre 1..N)
+    const list = courseLessons.filter((l) => l.id !== lessonId);
+    const clampedIndex = Math.max(1, Math.min(desiredIndex, list.length + 1));
+    const insertPos = clampedIndex - 1;
+    const moved = { id: lessonId, orderIndex: clampedIndex };
+    list.splice(insertPos, 0, moved);
+
+    // 4) Resequenciar 1..N y persistir (solo si cambió)
+    let position = 1;
+    for (const l of list) {
+      if (l.orderIndex !== position) {
+        await db
+          .update(lessons)
+          .set({ orderIndex: position })
+          .where(eq(lessons.id, l.id));
       }
-    );
+      position++;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('PUT /api/super-admin/lessons/[id] error:', err);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

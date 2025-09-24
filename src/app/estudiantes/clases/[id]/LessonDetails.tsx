@@ -349,7 +349,6 @@ export default function LessonDetails({
       await handleProgressUpdate(100);
       setIsVideoCompleted(true);
 
-      // Mensaje diferente según si tiene actividades o no
       const hasActivities = activities.length > 0;
       toast.success('Clase completada', {
         description: hasActivities
@@ -357,20 +356,27 @@ export default function LessonDetails({
           : 'Video completado exitosamente',
       });
 
-      // Si no tiene actividades, actualizar el progreso localmente a 100%
+      // Si no tiene actividades, actualizar local y pedir desbloqueo siguiente clase
       if (!hasActivities) {
         setProgress(100);
         setLessonsState((prevLessons) =>
           prevLessons.map((l) =>
             l.id === lesson.id
-              ? {
-                  ...l,
-                  porcentajecompletado: 100,
-                  isCompleted: true,
-                }
+              ? { ...l, porcentajecompletado: 100, isCompleted: true }
               : l
           )
         );
+
+        // Desbloquear siguiente lección estrictamente en orden (el backend valida)
+        await fetch('/api/lessons/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentLessonId: lesson.id,
+            hasActivities: false,
+            allActivitiesCompleted: true,
+          }),
+        }).catch(() => undefined);
       }
     } catch (error) {
       console.error('Error al completar la lección:', error);

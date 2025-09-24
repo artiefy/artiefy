@@ -1,7 +1,6 @@
 const numberPattern = /\d+/;
 
 export const extractLessonOrder = (title: string): number => {
-  // Use RegExp.exec() instead of String.match()
   const match = numberPattern.exec(title);
   return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
 };
@@ -71,8 +70,17 @@ export const extractNumbersFromTitle = (title: string) => {
   return { session: 999, class: 999 };
 };
 
-export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
+// NUEVO: ordenar usando orderIndex si está disponible, de lo contrario fallback por números/título
+export const sortLessons = <
+  T extends { title: string; orderIndex?: number | null },
+>(
+  lessons: T[]
+): T[] => {
   return [...lessons].sort((a, b) => {
+    const ai = a.orderIndex ?? Number.MAX_SAFE_INTEGER;
+    const bi = b.orderIndex ?? Number.MAX_SAFE_INTEGER;
+    if (ai !== bi) return ai - bi;
+
     const numbersA = extractNumbersFromTitle(a.title);
     const numbersB = extractNumbersFromTitle(b.title);
 
@@ -82,7 +90,6 @@ export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
     const classDiff = numbersA.class - numbersB.class;
     if (classDiff !== 0) return classDiff;
 
-    // Estabilizar: si empatan, ordenar por título para determinismo
     return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
   });
 };

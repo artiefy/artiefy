@@ -194,7 +194,6 @@ function isVideoIdxItem(v: unknown): v is VideoIdxItem {
   );
 }
 
-
 // Tipo auxiliar con las props que necesitamos leer de forma segura
 type MaybeMeeting = Partial<
   Pick<
@@ -231,9 +230,8 @@ function toUIMeeting(m: ScheduledMeeting): UIMeeting {
   const aws = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(/\/+$/, '');
   const { url: finalVideoUrl, source } = resolveVideo(
     { video_key, videoUrl: videoUrlRaw, recordingContentUrl },
-    aws,
+    aws
   );
-
 
   // 🐞 log detallado por ítem
   console.log('🎥 resolveVideo()', {
@@ -255,21 +253,26 @@ function toUIMeeting(m: ScheduledMeeting): UIMeeting {
     video_key,
     videoUrl: finalVideoUrl,
   };
-
 }
 
 type VideoSource = 'S3_BY_KEY' | 'EXPLICIT_URL' | 'GRAPH_TEMP' | 'NONE';
 
-function resolveVideo(m: {
-  video_key?: string;
-  videoUrl?: string;
-  recordingContentUrl?: string;
-}, awsBase: string): { url?: string; source: VideoSource } {
+function resolveVideo(
+  m: {
+    video_key?: string;
+    videoUrl?: string;
+    recordingContentUrl?: string;
+  },
+  awsBase: string
+): { url?: string; source: VideoSource } {
   const aws = (awsBase ?? '').replace(/\/+$/, '');
 
   // 1) Preferimos S3 (estable)
   if (m.video_key && m.video_key.trim() !== '') {
-    return { url: `${aws}/video_clase/${m.video_key.trim()}`, source: 'S3_BY_KEY' };
+    return {
+      url: `${aws}/video_clase/${m.video_key.trim()}`,
+      source: 'S3_BY_KEY',
+    };
   }
 
   // 2) URL explícita válida
@@ -281,7 +284,9 @@ function resolveVideo(m: {
         if (u.protocol === 'http:' || u.protocol === 'https:') {
           return { url: v, source: 'EXPLICIT_URL' };
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -302,7 +307,9 @@ function logAssignments(meetings: UIMeeting[]) {
       meetings.map((m) => ({
         id: m.id,
         meetingId: m.meetingId,
-        start: String((m as unknown as { startDateTime: string }).startDateTime),
+        start: String(
+          (m as unknown as { startDateTime: string }).startDateTime
+        ),
         hasVideoKey: Boolean(m.video_key),
         hasVideoUrl: Boolean(m.videoUrl),
         video_key: m.video_key ?? '',
@@ -314,9 +321,8 @@ function logAssignments(meetings: UIMeeting[]) {
   }
 }
 
-
 function getMeetingIdFrom(m: ScheduledMeeting): string {
-  const obj = (m as unknown) as MaybeMeeting;
+  const obj = m as unknown as MaybeMeeting;
 
   // 1) Si ya viene como campo
   if (typeof obj.meetingId === 'string' && obj.meetingId.trim() !== '') {
@@ -349,8 +355,6 @@ function getMeetingIdFrom(m: ScheduledMeeting): string {
     return '';
   }
 }
-
-
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const router = useRouter(); // Obtener el router
@@ -429,11 +433,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   >(new Map());
   // Lista completa de videos para asignación por fecha (no colapsada por meetingId)
   const [videosRaw, setVideosRaw] = useState<
-    { meetingId: string; videoKey: string; videoUrl: string; createdAt?: string }[]
+    {
+      meetingId: string;
+      videoKey: string;
+      videoUrl: string;
+      createdAt?: string;
+    }[]
   >([]);
   void videosByMeetingId;
-
-
 
   const { user } = useUser(); // Ya está dentro del componente
 
@@ -461,9 +468,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const errorMessage =
           typeof responseData === 'object' &&
-            responseData !== null &&
-            'error' in responseData &&
-            typeof (responseData as { error?: unknown }).error === 'string'
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
             : 'Error al matricular';
 
@@ -599,8 +606,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     const run = async () => {
       try {
         console.log('🎥 Haciendo fetch de videos...');
-        const res = await fetch(`/api/super-admin/teams/video?userId=${organizerAadUserId}`);
-        console.log('🛰️ /teams/video status: ', res.status, 'url usada:', res.url);
+        const res = await fetch(
+          `/api/super-admin/teams/video?userId=${organizerAadUserId}`
+        );
+        console.log(
+          '🛰️ /teams/video status: ',
+          res.status,
+          'url usada:',
+          res.url
+        );
 
         if (!res.ok) return;
 
@@ -614,17 +628,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         const raw = (await res.json()) as unknown;
 
         const videos: VideoIdxItem[] =
-          isRecord(raw) && Array.isArray((raw as Record<string, unknown>).videos)
-            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(isVideoIdxItem)
+          isRecord(raw) &&
+          Array.isArray((raw as Record<string, unknown>).videos)
+            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
+                isVideoIdxItem
+              )
             : [];
-
 
         setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
 
         console.log('🎬 Lista de videos extraída:', videos);
 
         // construir índice meetingId -> video más reciente (por si acaso)
-        const map = new Map<string, { videoKey: string; videoUrl: string; createdAt?: string }>();
+        const map = new Map<
+          string,
+          { videoKey: string; videoUrl: string; createdAt?: string }
+        >();
         for (const v of videos) {
           const prev = map.get(v.meetingId);
           if (!prev) {
@@ -645,7 +664,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     void run();
   }, []); // solo una vez
 
-
   // Obtener el color seleccionado al cargar la página
   useEffect(() => {
     const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -658,8 +676,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setScheduledMeetings(course.meetings);
     }
   }, [course?.meetings]);
-
-
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -1032,9 +1048,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   }
 
   // Base de reuniones (las del estado si existen; si no, las del curso)
-  const baseMeetings = (scheduledMeetings.length
+  const baseMeetings = scheduledMeetings.length
     ? scheduledMeetings
-    : (course.meetings ?? []));
+    : (course.meetings ?? []);
 
   // Convierte string de fecha a ms. Si no trae zona, asumimos Bogotá -05:00
   const toMs = (s: string) => {
@@ -1114,28 +1130,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // (Opcional) Log compacto para verificar asignaciones
   console.table(
-    mergedMeetings.map(m => ({
+    mergedMeetings.map((m) => ({
       id: m.id,
       meetingId: m.meetingId,
       video_key: m.video_key,
       videoUrl: m.videoUrl,
     }))
   );
-
-
 
   console.table(
-    mergedMeetings.map(m => ({
+    mergedMeetings.map((m) => ({
       id: m.id,
       meetingId: m.meetingId,
       video_key: m.video_key,
       videoUrl: m.videoUrl,
     }))
   );
-
-
-
-
 
   // Renderizar el componente
   return (
@@ -1193,10 +1203,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${selectedColor === '#FFFFFF'
-                      ? 'border-black'
-                      : 'border-white'
-                      } `}
+                    className={`size-8 border ${
+                      selectedColor === '#FFFFFF'
+                        ? 'border-black'
+                        : 'border-white'
+                    } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -1272,8 +1283,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Curso:
                   </h2>
@@ -1283,8 +1295,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Categoría:
                   </h2>
@@ -1298,22 +1311,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-justify text-sm sm:text-base ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1330,8 +1346,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     educador:
                   </h2>
@@ -1372,8 +1389,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Nivel:
                   </h2>
@@ -1386,8 +1404,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Modalidad:
                   </h2>
@@ -1400,8 +1419,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1430,17 +1450,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${course.isActive
-                      ? 'border-green-500 text-green-500'
-                      : 'border-red-500 text-red-500'
-                      } bg-background hover:bg-black/70`}
+                    className={`ml-1 w-fit border ${
+                      course.isActive
+                        ? 'border-green-500 text-green-500'
+                        : 'border-red-500 text-red-500'
+                    } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -1485,7 +1507,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </h2>
                 <Button
                   onClick={() => setIsMeetingModalOpen(true)}
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-primary hover:bg-primary/90 text-black"
                 >
                   + Agendar clase en Teams
                 </Button>
@@ -1494,8 +1516,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 meetings={mergedMeetings}
                 color={selectedColor}
               />
-
-
             </div>
             <LessonsListEducator
               courseId={courseIdNumber}
