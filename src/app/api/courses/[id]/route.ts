@@ -1,45 +1,42 @@
 import { NextResponse } from 'next/server';
-
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
 
 export async function GET(
-  _request: Request,
+  _req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const course = await db.query.courses.findFirst({
-      where: eq(courses.id, parseInt(params.id)),
-      with: {
-        courseType: true,
-      },
-    });
-
-    if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
-    }
-
-    if (course.courseTypeId !== 4) {
+    const id = Number(params.id);
+    if (!id) {
       return NextResponse.json(
-        { error: 'Course is not available for individual purchase' },
+        { error: 'Course id inválido' },
         { status: 400 }
       );
     }
 
-    // Ensure individualPrice is not undefined
-    const safeResponse = {
-      ...course,
-      individualPrice: course.individualPrice ?? null,
-    };
+    const [course] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+      })
+      .from(courses)
+      .where(eq(courses.id, id))
+      .limit(1);
 
-    return NextResponse.json(safeResponse);
-  } catch (error) {
-    console.error('Error fetching course:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    if (!course) {
+      return NextResponse.json(
+        { error: 'Curso no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(course);
+  } catch (err) {
+    console.error('Error fetching course details:', err);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
