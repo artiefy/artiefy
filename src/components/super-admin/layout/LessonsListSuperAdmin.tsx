@@ -136,9 +136,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mt-3">
           <Button
             style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -163,25 +162,24 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   }
 
   // Al soltar, reordena localmente, recalcula orderIndex y guarda en backend (PUT por lección)
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
+  const handleDragEnd = async (result: DropResult): Promise<void> => {
+    const { source, destination } = result;
+    if (!destination) return;
 
-    const sourceIdx = result.source.index;
-    const destIdx = result.destination.index;
+    const sourceIdx: number = source.index;
+    const destIdx: number = destination.index;
     if (sourceIdx === destIdx) return;
 
     const reordered = Array.from(ordered);
     const [moved] = reordered.splice(sourceIdx, 1);
     reordered.splice(destIdx, 0, moved);
 
-    // Reasigna orderIndex = posición + 1
     const withNewOrder = reordered.map((l, idx) => ({
       ...l,
       orderIndex: idx + 1,
     }));
     setLessons(withNewOrder);
 
-    // Persistir cambios: PUT /api/super-admin/lessons/[id] con { orderIndex }
     try {
       await Promise.all(
         withNewOrder.map((l) =>
@@ -194,30 +192,27 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       );
     } catch (e) {
       console.error('Error al guardar el nuevo orden:', e);
-      // opcional: recargar si falla
-      // location.reload();
     }
   };
 
+
   // Agrega esta función para manejar el drag and drop
-  const handleDragEndVisible = async (result: DropResult) => {
-    if (!result.destination) return;
+  const handleDragEndVisible = async (result: DropResult): Promise<void> => {
+    const { source, destination } = result;
+    if (!destination) return;
 
     const reordered = Array.from(lessons);
-    const [removed] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, removed);
+    const [removed] = reordered.splice(source.index, 1);
+    reordered.splice(destination.index, 0, removed);
 
-    // Actualizar state local inmediatamente para feedback visual
     setLessons(reordered);
 
-    // Recalcular orderIndex = posición + 1 para cada elemento
     const withNewOrder = reordered.map((lesson, index) => ({
       ...lesson,
       orderIndex: index + 1,
     }));
 
     try {
-      // Enviar nuevo orden al servidor
       const response = await fetch('/api/super-admin/lessons/reorder', {
         method: 'POST',
         headers: {
@@ -235,7 +230,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         toast.success('Orden actualizado correctamente');
       } else {
         toast.error('Error al actualizar el orden');
-        // Revertir cambios locales si hay error
         await fetchLessons();
       }
     } catch (error) {
@@ -244,6 +238,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       await fetchLessons();
     }
   };
+
 
   // Asegúrate de que fetchLessons sea accesible y reutilizable
   const fetchLessons = async () => {
@@ -311,20 +306,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     className="max-h-[500px] space-y-2 overflow-y-auto p-2"
                   >
                     {lessons.map((lesson, index) => (
-                      <Draggable
-                        key={lesson.id}
-                        draggableId={String(lesson.id)}
-                        index={index}
-                      >
-                        {(provided: DraggableProvided, _snapshot) => (
+                      <Draggable key={lesson.id} draggableId={String(lesson.id)} index={index}>
+                        {(provided: DraggableProvided, _snapshot: { isDragging: boolean }) => (
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             className="flex items-center gap-2 rounded-md border bg-white p-3 shadow-sm hover:bg-gray-50"
-                            style={
-                              provided.draggableProps
-                                .style as React.CSSProperties
-                            }
+                            style={provided.draggableProps.style as React.CSSProperties}
                           >
                             <div
                               {...provided.dragHandleProps}
@@ -332,9 +320,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             >
                               <GripVertical className="h-5 w-5 text-gray-400" />
                             </div>
+
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
                               {lesson.orderIndex || index + 1}
                             </div>
+
                             <div className="flex-1 font-medium">
                               {lesson.title}
                             </div>
@@ -346,6 +336,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                   </div>
                 )}
               </Droppable>
+
+
             </DragDropContext>
           </>
         ) : (
@@ -369,15 +361,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                       draggableId={String(lesson.id)}
                       index={index}
                     >
-                      {(provided: DraggableProvided, _snapshot) => (
+                      {(provided: DraggableProvided, _snapshot: { isDragging: boolean }) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                           className="lesson-card"
-                          style={
-                            provided.draggableProps.style as React.CSSProperties
-                          }
+                          style={provided.draggableProps.style as React.CSSProperties}
                         >
                           <div key={lesson.id} className="group relative">
                             <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
@@ -403,22 +393,15 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                   </div>
                                 </CardHeader>
                                 <CardContent
-                                  className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                                    selectedColor === '#FFFFFF'
-                                      ? 'text-black'
-                                      : 'text-white'
-                                  }`}
+                                  className={`flex grow flex-col justify-between space-y-2 px-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                                    }`}
                                 >
                                   <CardTitle className="rounded-lg text-lg">
-                                    <div className={`font-bold`}>
-                                      Clase: {lesson.title}
-                                    </div>
+                                    <div className="font-bold">Clase: {lesson.title}</div>
                                   </CardTitle>
-                                  <div className="mb-2 items-center">
-                                    <p className="text-sm font-bold">
-                                      Perteneciente al curso:
-                                    </p>
 
+                                  <div className="mb-2 items-center">
+                                    <p className="text-sm font-bold">Perteneciente al curso:</p>
                                     <Badge
                                       variant="outline"
                                       className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
@@ -426,27 +409,32 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       {lesson.course.title}
                                     </Badge>
                                   </div>
+
                                   <p className="mb-2 line-clamp-2 text-sm">
                                     Descripción: {lesson.description}
                                   </p>
+
                                   <p className="text-sm font-bold italic">
                                     Educador:{' '}
                                     <span className="font-bold italic">
                                       {lesson.course.instructor}
                                     </span>
                                   </p>
+
                                   <p className="text-sm font-bold italic">
                                     Clase #{' '}
                                     <span className="font-bold italic">
                                       {lesson.orderIndex}
                                     </span>
                                   </p>
+
                                   <p className="text-sm font-bold italic">
                                     Duración:{' '}
                                     <span className="font-bold italic">
                                       {lesson.duration} Minutos
                                     </span>
                                   </p>
+
                                   <p className="text-sm font-bold italic">
                                     Orden:{' '}
                                     <input
@@ -456,32 +444,27 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       className="w-16 rounded border px-2 py-1 text-black"
                                       onChange={async (e) => {
                                         const newOrder = Number(e.target.value);
-                                        // Llama a tu endpoint para actualizar el order_index en la BD
                                         await fetch(
                                           `/api/super-admin/lessons/${lesson.id}/order`,
                                           {
                                             method: 'PUT',
-                                            headers: {
-                                              'Content-Type':
-                                                'application/json',
-                                            },
-                                            body: JSON.stringify({
-                                              orderIndex: newOrder,
-                                            }),
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ orderIndex: newOrder }),
                                           }
                                         );
-                                        // Refresca la lista después de actualizar
-                                        // ...puedes volver a cargar las lecciones aquí...
+                                        // Si quieres refrescar la lista aquí, llama a fetchLessons()
+                                        // await fetchLessons();
                                       }}
                                     />
                                   </p>
                                 </CardContent>
                               </div>
+
                               <CardFooter className="-mt-6 flex flex-col items-start justify-between">
                                 <Button asChild className="mx-auto">
                                   <Link
                                     href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                                    className={`group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
+                                    className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95"
                                   >
                                     <p>Ver clase</p>
                                     <ArrowRightIcon className="animate-bounce-right size-5" />
@@ -501,13 +484,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                 </div>
               )}
             </Droppable>
+
           </DragDropContext>
         </div>
         <div className="mx-auto my-4">
           <Button
-            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');

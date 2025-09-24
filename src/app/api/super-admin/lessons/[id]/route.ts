@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { db } from '~/server/db';
-import { lessons } from '~/server/db/schema';
+
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { asc } from 'drizzle-orm';
 import { z } from 'zod';
+
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
 
 const bodySchema = z.object({
   orderIndex: z.number().int().positive(),

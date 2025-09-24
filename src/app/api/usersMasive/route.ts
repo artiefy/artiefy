@@ -107,8 +107,16 @@ export async function POST(request: Request) {
       detalle?: string;
     }[] = [];
 
-    const successfulUsers = [];
-    const emailErrors = [];
+    const successfulUsers: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: string;
+      status: string;
+      isNew: boolean;
+    }[] = [];
+    const emailErrors: string[] = [];
     console.log(`Processing ${usersData.length} users...`);
 
     for (const userData of usersData) {

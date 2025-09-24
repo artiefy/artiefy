@@ -1,11 +1,27 @@
 // src/app/api/super-admin/whatsapp/inbox/route.ts
 import { NextResponse } from 'next/server';
+
 import { desc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// Definir tipos para la estructura del raw data
+interface MediaData {
+  id?: string;
+  mime_type?: string;
+  filename?: string;
+}
+
+interface RawMessageData {
+  image?: MediaData;
+  video?: MediaData;
+  audio?: MediaData;
+  document?: MediaData & { filename?: string };
+}
 
 export async function GET(): Promise<NextResponse> {
   try {
@@ -29,7 +45,8 @@ export async function GET(): Promise<NextResponse> {
       .limit(5000);
 
     const items = rows.map((r) => {
-      const raw: any = r.raw ?? {};
+      // Tipado seguro del raw data
+      const raw: RawMessageData = (r.raw as RawMessageData) ?? {};
 
       // Fallbacks desde raw si BD no tiene columnas/valores
       const fbMediaId =

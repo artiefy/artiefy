@@ -1,7 +1,10 @@
 'use client';
 
 import React, { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Image, FileText, Video, Mic, Paperclip, Send } from 'lucide-react';
+
+import Image from 'next/image';
+
+import { FileText, Image as ImageIcon, Mic, Paperclip, Send, Video } from 'lucide-react';
 
 interface InboxItem {
   id?: string;
@@ -43,8 +46,13 @@ function MediaMessage({ item }: { item: InboxItem }) {
     case 'image':
       return (
         <div className="space-y-1">
-          <img src={src} alt={item.fileName ?? 'Imagen'} className="max-h-72 rounded-lg" />
-          {caption}
+          <Image
+            src={src}
+            alt={item.fileName ?? "Imagen"}
+            width={500}   // ⚠️ requerido en next/image
+            height={300}  // ⚠️ requerido en next/image
+            className="max-h-72 rounded-lg"
+          />          {caption}
           <a href={downloadHref} className="inline-flex items-center gap-1 text-xs underline">
             Descargar
           </a>
@@ -215,7 +223,8 @@ export default function WhatsAppInboxPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Error enviando archivo');
+        const errMsg = (errorData as { error?: string })?.error ?? 'Error enviando archivo';
+        throw new Error(errMsg);
       }
 
       // Limpiar selección
@@ -319,7 +328,7 @@ export default function WhatsAppInboxPage() {
   };
 
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <Image className="h-4 w-4" />;
+    if (file.type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
     if (file.type.startsWith('video/')) return <Video className="h-4 w-4" />;
     if (file.type.startsWith('audio/')) return <Mic className="h-4 w-4" />;
     return <FileText className="h-4 w-4" />;

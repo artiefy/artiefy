@@ -47,6 +47,14 @@
     individualPrice?: number | null;
   }
 
+  interface CreatedCourse {
+  id: string;
+  title: string;
+  description?: string;
+  // agrega aquí las propiedades reales que uses
+}
+
+
   // Extrae el meetingId de un joinUrl de Teams
   function extractMeetingIdFromUrl(joinUrl?: string | null) {
     if (!joinUrl) return null;
@@ -610,7 +618,9 @@
         return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
       }
 
-      const createdCourses = [];
+      // Use the correct type for createdCourses, adjust 'Course' to your actual type if needed
+
+const createdCourses: CreatedCourse[] = [];
 
       // Crear cursos por cada modalidad
       for (const modalidadId of data.modalidadesid) {
@@ -643,7 +653,11 @@
         const newCourse = await createCourse(coursePayload);
         console.log(`Curso creado para modalidad ${modalidadId}:`, newCourse);
 
-        createdCourses.push(newCourse);
+        createdCourses.push({
+          ...newCourse,
+          id: String(newCourse.id),
+          description: newCourse.description ?? undefined,
+        });
       }
 
       console.log('Todos los cursos creados:', createdCourses);

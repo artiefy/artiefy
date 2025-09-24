@@ -78,7 +78,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
-    const createdCourses = [];
+    // Explicitly type the array to match the return type of createCourse
+    const createdCourses: Awaited<ReturnType<typeof createCourse>>[] = [];
 
     // Iterar sobre cada modalidadId y crear un curso
     for (const modalidadId of data.modalidadesid) {

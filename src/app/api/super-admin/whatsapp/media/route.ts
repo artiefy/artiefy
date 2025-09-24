@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
   }
 
 const token =
-  process.env.WHATSAPP_ACCESS_TOKEN ||
-  process.env.WHATSAPP_GRAPH_TOKEN ||
+  process.env.WHATSAPP_ACCESS_TOKEN ??
+  process.env.WHATSAPP_GRAPH_TOKEN ??
   process.env.FB_GRAPH_TOKEN;
 
 
@@ -50,7 +50,7 @@ const token =
   }
 
   const contentType =
-    fileRes.headers.get('content-type') || meta.mime_type || 'application/octet-stream';
+    fileRes.headers.get('content-type') ?? meta.mime_type ?? 'application/octet-stream';
 
   const headers: Record<string, string> = {
     'Content-Type': contentType,

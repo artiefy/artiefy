@@ -1,6 +1,7 @@
 // src/app/api/super-admin/whatsapp/_inbox.ts
 
-import { desc, eq, and } from 'drizzle-orm';
+import { and,desc, eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
 

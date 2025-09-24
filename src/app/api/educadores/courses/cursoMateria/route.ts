@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     };
     console.log('📽️ Video key recibida:', data.videoKey);
 
-    const createdCourses = [];
+    const createdCourses: typeof courses.$inferInsert[] = [];
     const isMultipleModalities = data.modalidadesid.length > 1;
     // Iterar sobre cada modalidadId y crear un curso
     for (const modalidadId of data.modalidadesid) {

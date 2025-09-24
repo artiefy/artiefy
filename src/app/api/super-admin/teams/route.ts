@@ -162,7 +162,7 @@ export async function POST(req: Request) {
     }));
 
     // ➕ Asegurar que el cohost reciba invitación (aparece en su calendario)
-const coHostUpn = (coHostEmail?.trim() || 'educadorsoftwarem@ponao.com.co').toLowerCase();
+const coHostUpn = (coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co').toLowerCase();
 if (coHostUpn && !attendees.some(a => a.emailAddress.address.toLowerCase() === coHostUpn)) {
   attendees.push({
     emailAddress: { address: coHostUpn, name: coHostUpn },
@@ -191,11 +191,11 @@ const res = await fetch(
   }
 );
 
-type GraphEventResponse = {
+interface GraphEventResponse {
   id: string;
   error?: { message?: string };
   onlineMeeting?: { joinUrl?: string; id?: string };
-};
+}
 
 const eventData = (await res.json()) as GraphEventResponse;
 
