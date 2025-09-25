@@ -14,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/estudiantes/ui/select';
-import { ClassMeeting, type LessonWithProgress } from '~/types';
+import { ClassMeeting } from '~/types';
 import { sortLessons } from '~/utils/lessonSorting';
 
+import type { LessonWithProgress } from '~/types';
+
 interface LessonCardsProps {
-  lessonsState: LessonWithProgress[];
+  lessons: LessonWithProgress[];
   selectedLessonId: number | null;
   onLessonClick: (id: number) => void;
   progress: number;
@@ -37,7 +39,7 @@ interface UnlockResponse {
 }
 
 const LessonCards = ({
-  lessonsState,
+  lessons,
   selectedLessonId,
   onLessonClick,
   progress,
@@ -70,8 +72,8 @@ const LessonCards = ({
     }
   }, [swrLessons, setLessonsState]);
 
-  // Pre-sort lessons once (orderIndex-aware)
-  const sortedLessons = sortLessons(lessonsState);
+  // Ordenar las lecciones por orderIndex (puede ser null)
+  const orderedLessons = sortLessons(lessons);
 
   useEffect(() => {
     if (selectedLessonId && progress >= 1) {
@@ -87,7 +89,7 @@ const LessonCards = ({
     const unlockNextLesson = async () => {
       if (!selectedLessonId) return;
 
-      const currentLesson = sortedLessons.find(
+      const currentLesson = orderedLessons.find(
         (l) => l.id === selectedLessonId
       );
       if (!currentLesson) return;
@@ -110,11 +112,11 @@ const LessonCards = ({
       if (!shouldUnlock) return;
 
       // Find the next lesson to ensure we update state after server unlock
-      const currentIndex = sortedLessons.findIndex(
+      const currentIndex = orderedLessons.findIndex(
         (l) => l.id === selectedLessonId
       );
       const nextLesson =
-        currentIndex >= 0 ? sortedLessons[currentIndex + 1] : undefined;
+        currentIndex >= 0 ? orderedLessons[currentIndex + 1] : undefined;
       if (!nextLesson?.isLocked) return;
 
       try {
@@ -157,7 +159,7 @@ const LessonCards = ({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedLessonId, sortedLessons, setLessonsState]);
+  }, [selectedLessonId, orderedLessons, setLessonsState]);
 
   const getActivityStatus = (lessonItem: LessonWithProgress) => {
     // Siempre usar el estado isLocked de la base de datos
@@ -296,7 +298,7 @@ const LessonCards = ({
   };
 
   // Agregar un estado de carga inicial
-  const hasLessons = lessonsState.length > 0;
+  const hasLessons = lessons.length > 0;
 
   // Renderizar un esqueleto mientras no hay lecciones
   if (!hasLessons) {
@@ -315,6 +317,15 @@ const LessonCards = ({
       </div>
     );
   }
+
+  // Si aquí se mapean varias lecciones, asegúrate de ordenarlas así:
+  const sortedLessons = orderedLessons
+    ?.slice()
+    .sort(
+      (a, b) =>
+        (a.orderIndex ?? 1e9) - (b.orderIndex ?? 1e9) ||
+        (a.id ?? 0) - (b.id ?? 0)
+    );
 
   // Renderizar select en móvil
   if (isMobile) {

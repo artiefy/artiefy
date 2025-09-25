@@ -1,5 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -44,7 +44,7 @@ export async function createLesson({
   courseId,
   resourceKey,
   resourceNames,
-  orderIndex, // <--- Añade este campo
+  orderIndex,
 }: {
   title: string;
   description: string;
@@ -54,9 +54,21 @@ export async function createLesson({
   courseId: number;
   resourceKey?: string;
   resourceNames?: string;
-  orderIndex?: number; // <--- Añade este campo (opcional para compatibilidad)
+  orderIndex?: number;
 }): Promise<{ id: number }> {
   try {
+    // --- Calcular el orderIndex correcto (el mayor + 1, o 1 si es la primera clase) ---
+    let finalOrderIndex = orderIndex;
+    if (typeof finalOrderIndex !== 'number' || finalOrderIndex <= 0) {
+      // Usar COALESCE para asegurar que si no hay clases previas, el máximo sea 0
+      const maxOrderRow = await db
+        .select({ max: sql<number>`COALESCE(MAX(${lessons.orderIndex}), 0)` })
+        .from(lessons)
+        .where(eq(lessons.courseId, courseId));
+      const maxOrder = maxOrderRow[0]?.max ?? 0;
+      finalOrderIndex = Number(maxOrder) + 1;
+    }
+
     // 1. Crear la nueva lección primero
     const [newLesson] = await db
       .insert(lessons)
@@ -69,7 +81,7 @@ export async function createLesson({
         courseId,
         resourceKey: resourceKey ?? '',
         resourceNames: resourceNames ?? '',
-        orderIndex: orderIndex ?? 0, // <--- Guarda el orderIndex
+        orderIndex: finalOrderIndex, // <-- Siempre asigna el consecutivo correcto
       })
       .returning({ id: lessons.id });
 

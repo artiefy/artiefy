@@ -665,6 +665,24 @@ export default function LessonDetails({
     );
   }
 
+  // Add safety check for lesson
+  if (lesson.isLocked) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>
+          Lección bloqueada. Completa las lecciones anteriores para desbloquear
+          esta clase.
+        </p>
+      </div>
+    );
+  }
+
+  // Si aquí se mapean varias lecciones, ordena así:
+  // const orderedLessons = lessons?.slice().sort(
+  //   (a, b) =>
+  //     (a.orderIndex ?? 1e9) - (b.orderIndex ?? 1e9) || (a.id ?? 0) - (b.id ?? 0)
+  // );
+
   // Function to handle lesson unlock
   const handleLessonUnlocked = (lessonId: number) => {
     setLessonsState((prevLessons) =>
@@ -712,7 +730,7 @@ export default function LessonDetails({
               Clases
             </h2>
             <LessonCards
-              lessonsState={lessonsState}
+              lessons={lessonsState}
               selectedLessonId={selectedLessonId}
               onLessonClick={handleCardClick}
               progress={progress}
@@ -741,7 +759,7 @@ export default function LessonDetails({
             {isMobile && (
               <div className="mb-4">
                 <LessonCards
-                  lessonsState={lessonsState}
+                  lessons={lessonsState}
                   selectedLessonId={selectedLessonId}
                   onLessonClick={handleCardClick}
                   progress={progress}
