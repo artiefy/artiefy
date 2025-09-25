@@ -66,6 +66,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReorderModeActive, setIsReorderModeActive] = useState(false);
 
+  // Nuevo: bloqueo mientras se persiste el nuevo orden y cooldown para evitar re-arrastres rápidos
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderCooldown, setReorderCooldown] = useState(false);
+
   const courseIdString = courseId.toString();
 
   const getContrastYIQ = (hexcolor: string) => {
@@ -165,6 +169,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   // Al soltar, reordena localmente, recalcula orderIndex y guarda en backend (PUT por lección)
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
+    if (isReordering || reorderCooldown) return; // bloquea si ya hay una ordenación en curso o cooldown
+
+    setIsReordering(true);
 
     const sourceIdx = result.source.index;
     const destIdx = result.destination.index;
@@ -196,12 +203,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       console.error('Error al guardar el nuevo orden:', e);
       // opcional: recargar si falla
       // location.reload();
+    } finally {
+      setIsReordering(false);
     }
   };
 
-  // Agrega esta función para manejar el drag and drop
+  // Al soltar en la vista "visible" (arrastrable en panel lateral)
   const handleDragEndVisible = async (result: DropResult) => {
     if (!result.destination) return;
+    if (isReordering || reorderCooldown) return; // bloquea si ya hay una ordenación en curso o cooldown
+
+    setIsReordering(true);
 
     // ✅ USAR ordered EN LUGAR DE lessons
     const reordered = Array.from(ordered);
@@ -234,15 +246,19 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
       if (response.ok) {
         toast.success('Orden actualizado correctamente');
+        // Establecer cooldown corto para evitar nuevos drags inmediatos
+        setReorderCooldown(true);
+        setTimeout(() => setReorderCooldown(false), 1000);
       } else {
         toast.error('Error al actualizar el orden');
-        // Revertir cambios locales si hay error
         await fetchLessons();
       }
     } catch (error) {
       console.error('Error al reordenar lecciones:', error);
       toast.error('Error al actualizar el orden');
       await fetchLessons();
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -607,6 +623,14 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         onClose={() => setIsModalOpen(false)}
         courseId={courseId}
       />
+
+      {isReordering && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black">
+            Guardando nuevo orden...
+          </div>
+        </div>
+      )}
     </>
   );
 };

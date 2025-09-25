@@ -66,6 +66,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReorderModeActive, setIsReorderModeActive] = useState(false);
 
+  // Nuevo bloqueo + cooldown
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderCooldown, setReorderCooldown] = useState(false);
+
   const courseIdString = courseId.toString();
 
   const getContrastYIQ = (hexcolor: string) => {
@@ -136,8 +140,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mt-3">
           <Button
             style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }`}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -195,15 +200,15 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
     }
   };
 
-
   // Agrega esta función para manejar el drag and drop
   const handleDragEndVisible = async (result: DropResult): Promise<void> => {
-    const { source, destination } = result;
-    if (!destination) return;
+    if (!result.destination) return;
+    if (isReordering || reorderCooldown) return;
+    setIsReordering(true);
 
     const reordered = Array.from(lessons);
-    const [removed] = reordered.splice(source.index, 1);
-    reordered.splice(destination.index, 0, removed);
+    const [removed] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, removed);
 
     setLessons(reordered);
 
@@ -228,6 +233,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
       if (response.ok) {
         toast.success('Orden actualizado correctamente');
+        setReorderCooldown(true);
+        setTimeout(() => setReorderCooldown(false), 1000);
       } else {
         toast.error('Error al actualizar el orden');
         await fetchLessons();
@@ -236,9 +243,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       console.error('Error al reordenar lecciones:', error);
       toast.error('Error al actualizar el orden');
       await fetchLessons();
+    } finally {
+      setIsReordering(false);
     }
   };
-
 
   // Asegúrate de que fetchLessons sea accesible y reutilizable
   const fetchLessons = async () => {
@@ -306,13 +314,23 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     className="max-h-[500px] space-y-2 overflow-y-auto p-2"
                   >
                     {lessons.map((lesson, index) => (
-                      <Draggable key={lesson.id} draggableId={String(lesson.id)} index={index}>
-                        {(provided: DraggableProvided, _snapshot: { isDragging: boolean }) => (
+                      <Draggable
+                        key={lesson.id}
+                        draggableId={String(lesson.id)}
+                        index={index}
+                      >
+                        {(
+                          provided: DraggableProvided,
+                          _snapshot: { isDragging: boolean }
+                        ) => (
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             className="flex items-center gap-2 rounded-md border bg-white p-3 shadow-sm hover:bg-gray-50"
-                            style={provided.draggableProps.style as React.CSSProperties}
+                            style={
+                              provided.draggableProps
+                                .style as React.CSSProperties
+                            }
                           >
                             <div
                               {...provided.dragHandleProps}
@@ -336,8 +354,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                   </div>
                 )}
               </Droppable>
-
-
             </DragDropContext>
           </>
         ) : (
@@ -361,13 +377,18 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                       draggableId={String(lesson.id)}
                       index={index}
                     >
-                      {(provided: DraggableProvided, _snapshot: { isDragging: boolean }) => (
+                      {(
+                        provided: DraggableProvided,
+                        _snapshot: { isDragging: boolean }
+                      ) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                           className="lesson-card"
-                          style={provided.draggableProps.style as React.CSSProperties}
+                          style={
+                            provided.draggableProps.style as React.CSSProperties
+                          }
                         >
                           <div key={lesson.id} className="group relative">
                             <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
@@ -393,15 +414,22 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                   </div>
                                 </CardHeader>
                                 <CardContent
-                                  className={`flex grow flex-col justify-between space-y-2 px-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                                    }`}
+                                  className={`flex grow flex-col justify-between space-y-2 px-2 ${
+                                    selectedColor === '#FFFFFF'
+                                      ? 'text-black'
+                                      : 'text-white'
+                                  }`}
                                 >
                                   <CardTitle className="rounded-lg text-lg">
-                                    <div className="font-bold">Clase: {lesson.title}</div>
+                                    <div className="font-bold">
+                                      Clase: {lesson.title}
+                                    </div>
                                   </CardTitle>
 
                                   <div className="mb-2 items-center">
-                                    <p className="text-sm font-bold">Perteneciente al curso:</p>
+                                    <p className="text-sm font-bold">
+                                      Perteneciente al curso:
+                                    </p>
                                     <Badge
                                       variant="outline"
                                       className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
@@ -448,8 +476,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                           `/api/super-admin/lessons/${lesson.id}/order`,
                                           {
                                             method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ orderIndex: newOrder }),
+                                            headers: {
+                                              'Content-Type':
+                                                'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                              orderIndex: newOrder,
+                                            }),
                                           }
                                         );
                                         // Si quieres refrescar la lista aquí, llama a fetchLessons()
@@ -484,13 +517,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                 </div>
               )}
             </Droppable>
-
           </DragDropContext>
         </div>
         <div className="mx-auto my-4">
           <Button
-            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }`}
+            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
@@ -514,6 +547,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         onClose={() => setIsModalOpen(false)}
         courseId={courseId}
       />
+      {isReordering && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black">
+            Guardando nuevo orden...
+          </div>
+        </div>
+      )}
     </>
   );
 };

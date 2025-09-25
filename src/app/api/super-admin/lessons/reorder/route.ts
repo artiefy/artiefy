@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm'; // ...added inArray
+import { sql } from 'drizzle-orm'; // <-- needed for COALESCE
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
@@ -30,8 +31,35 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Actualiza todos los orderIndex a valores temporales fuera de rango para evitar colisiones
-    const tempOffset = 10000;
+    // Determinar courseId a partir de los lesson ids (asumimos same course)
+    const ids = lessonIds.map((l) => l.id);
+    const first = await db
+      .select({ courseId: lessons.courseId })
+      .from(lessons)
+      .where(inArray(lessons.id, ids))
+      .limit(1)
+      .then((r) => r[0]);
+
+    if (!first) {
+      return NextResponse.json(
+        { success: false, error: 'Lección no encontrada' },
+        { status: 404 }
+      );
+    }
+    const courseId = first.courseId;
+
+    // Calcular tempOffset seguro: mayor que el max orderIndex actual para evitar colisiones
+    const maxRow = await db
+      .select({
+        maxOrder: sql<number>`COALESCE(MAX(${lessons.orderIndex}), 0)`,
+      })
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+
+    const maxOrder = maxRow?.[0]?.maxOrder ?? 0;
+    const tempOffset = Number(maxOrder) + 100000; // suficientemente grande para evitar colisiones
+
+    // 1. Actualiza los orderIndex a valores temporales (dentro del mismo curso y sólo para los ids enviados)
     for (const lesson of lessonIds) {
       await db
         .update(lessons)
@@ -39,7 +67,7 @@ export async function POST(req: Request) {
         .where(eq(lessons.id, lesson.id));
     }
 
-    // 2. Asigna los orderIndex definitivos
+    // 2. Asigna los orderIndex definitivos (sin usar condiciones que puedan colisionar)
     for (const lesson of lessonIds) {
       await db
         .update(lessons)
