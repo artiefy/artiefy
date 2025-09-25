@@ -14,6 +14,7 @@ async function getGraphToken() {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID!;
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET!;
   void tenant;
+
   const params = new URLSearchParams();
   params.append('grant_type', 'client_credentials');
   params.append('client_id', clientId);
@@ -30,7 +31,6 @@ async function getGraphToken() {
   );
 
   const data = (await res.json()) as TokenResponse;
-
   if (!res.ok) {
     throw new Error(
       `[Token] Error al obtener token: ${data.error_description ?? data.error}`
@@ -40,6 +40,7 @@ async function getGraphToken() {
   console.log('[TOKEN OK]', data.access_token);
   return data.access_token;
 }
+
 
 // convierte Date a string local sin "Z"
 function formatLocalDate(date: Date): string {
@@ -97,6 +98,8 @@ export async function POST(req: Request) {
       repeatCount: number;
       daysOfWeek: string[];
       customTitles?: string[];
+        coHostEmail?: string; // 👈 NUEVO
+
     }
 
     const {
@@ -107,6 +110,8 @@ export async function POST(req: Request) {
       repeatCount,
       daysOfWeek,
       customTitles,
+        coHostEmail, // 👈 NUEVO
+
     } = (await req.json()) as CreateMeetingRequest;
 
     console.log('🕒 startDateTime recibido:', startDateTime);
@@ -156,48 +161,109 @@ export async function POST(req: Request) {
       type: 'required',
     }));
 
-    console.log('🟡 [TEAMS] Creando evento principal...');
-    const res = await fetch(
-      'https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/events',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subject: `${title} (Reunión General)`,
-          start: {
-            dateTime: startForApi,
-            timeZone: 'America/Bogota',
-          },
-          end: {
-            dateTime: endForApi,
-            timeZone: 'America/Bogota',
-          },
-          isOnlineMeeting: true,
-          onlineMeetingProvider: 'teamsForBusiness',
-          attendees,
-        }),
-      }
-    );
+    // ➕ Asegurar que el cohost reciba invitación (aparece en su calendario)
+const coHostUpn = (coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co').toLowerCase();
+if (coHostUpn && !attendees.some(a => a.emailAddress.address.toLowerCase() === coHostUpn)) {
+  attendees.push({
+    emailAddress: { address: coHostUpn, name: coHostUpn },
+    type: 'required',
+  });
+}
 
-    interface GraphEventResponse {
-      error?: { message?: string };
-      onlineMeeting?: { joinUrl?: string; id?: string };
+
+console.log('🟡 [TEAMS] Creando evento principal...');
+const res = await fetch(
+  'https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/events',
+  {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      subject: `${title} (Reunión General)`,
+      start: { dateTime: startForApi, timeZone: 'America/Bogota' },
+      end:   { dateTime: endForApi,   timeZone: 'America/Bogota' },
+      isOnlineMeeting: true,
+      onlineMeetingProvider: 'teamsForBusiness',
+      attendees,
+    }),
+  }
+);
+
+interface GraphEventResponse {
+  id: string;
+  error?: { message?: string };
+  onlineMeeting?: { joinUrl?: string; id?: string };
+}
+
+const eventData = (await res.json()) as GraphEventResponse;
+
+if (!res.ok) {
+  console.error('[❌ ERROR TEAMS]', eventData);
+  throw new Error(
+    `[Teams] Error creando reunión principal: ${eventData.error?.message ?? 'Desconocido'}`
+  );
+}
+
+// 1) Tomar del payload
+let joinUrl = eventData.onlineMeeting?.joinUrl ?? '';
+let meetingId = eventData.onlineMeeting?.id ?? '';
+const eventId = eventData.id;
+
+// 2) Si falta info, hacer GET con $expand=onlineMeeting (leer el body SOLO una vez)
+if (!meetingId || !joinUrl) {
+  const evGet = await fetch(
+    `https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/events/${encodeURIComponent(eventId)}?$expand=onlineMeeting`,
+    { method: 'GET', headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (evGet.ok) {
+    const evFull = (await evGet.json()) as GraphEventResponse;
+    meetingId = evFull.onlineMeeting?.id ?? meetingId;
+    joinUrl   = evFull.onlineMeeting?.joinUrl ?? joinUrl;
+  } else {
+    const errTxt = await evGet.text(); // 👈 no se ha leído antes
+    console.warn('[⚠️ TEAMS] No se pudo expandir onlineMeeting:', errTxt);
+  }
+}
+
+
+console.log('✅ Reunión creada con éxito en Teams.', { meetingId, joinUrl });
+
+// 3) PATCH para coorganizer y grabación (una sola vez y con guarda)
+console.log('🟡 [TEAMS] Asignando coorganizer y habilitando grabación...');
+if (!meetingId) {
+  console.warn('[⚠️ TEAMS] meetingId vacío; no se puede asignar coorganizer.');
+} else {
+  const patchBody = {
+    allowRecording: true,
+    allowTranscription: true,
+    participants: { attendees: [{ upn: coHostUpn, role: 'coorganizer' }] },
+    // opcional:
+    // recordAutomatically: true,
+  };
+
+  const patchRes = await fetch(
+    `https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/onlineMeetings/${encodeURIComponent(meetingId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patchBody),
     }
+  );
 
-    const eventData = (await res.json()) as unknown as GraphEventResponse;
+  if (!patchRes.ok) {
+    const errTxt = await patchRes.text();
+    console.warn('[⚠️ TEAMS] No se pudo asignar coorganizer o habilitar grabación:', errTxt);
+  } else {
+    console.log('✅ Coorganizer asignado y grabación habilitada.');
+  }
+}
 
-    if (!res.ok) {
-      console.error('[❌ ERROR TEAMS]', eventData);
-      throw new Error(
-        `[Teams] Error creando reunión principal: ${eventData.error?.message ?? 'Desconocido'}`
-      );
-    }
-
-    const joinUrl = eventData.onlineMeeting?.joinUrl ?? '';
-    const meetingId = eventData.onlineMeeting?.id ?? '';
 
     console.log('✅ Reunión creada con éxito en Teams.');
 

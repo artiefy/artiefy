@@ -66,7 +66,7 @@ export async function getConversationWithMessages(curso_id: number): Promise<{
   conversation: typeof conversations.$inferSelect | undefined;
   messages: (typeof chat_messages.$inferSelect)[];
 }> {
-  let conversation = undefined;
+  let conversation: typeof conversations.$inferSelect | undefined = undefined;
   let msgs: (typeof chat_messages.$inferSelect)[] = [];
   if (curso_id !== null) {
     conversation = await db

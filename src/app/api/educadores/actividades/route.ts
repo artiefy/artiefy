@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, SQL } from 'drizzle-orm';
 
 import {
   createActivity,
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     const lessonIds = courseLessons.map((lesson) => lesson.id);
 
     // Construir las condiciones de la consulta
-    const conditions = [];
+const conditions: SQL[] = [];
 
     if (lessonIds.length > 0) {
       conditions.push(eq(activities.lessonsId, lessonIds[0]));

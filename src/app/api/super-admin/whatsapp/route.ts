@@ -219,10 +219,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       typeof ensureSession === 'boolean'
         ? ensureSession
         : autoSession
-          ? !isIn24hWindow(to)
+          ? !(await isIn24hWindow(to)) // ← Ahora es async
           : false;
 
     const usingExplicitTemplate = Boolean(forceTemplate ?? templateName);
+    console.log('[WA] needEnsure para', to, ':', needEnsure);
 
     // ---------- A) Plantilla explícita ----------
     if (usingExplicitTemplate) {

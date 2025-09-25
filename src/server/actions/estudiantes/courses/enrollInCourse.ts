@@ -19,7 +19,7 @@ import type { EnrollmentResponse } from '~/types';
 export async function enrollInCourse(
   courseId: number
 ): Promise<EnrollmentResponse> {
-  let course = null;
+  let course: (typeof courses.$inferSelect & { courseType?: { requiredSubscriptionLevel?: string } | null }) | null = null;
 
   try {
     const user = await currentUser();
@@ -34,12 +34,13 @@ export async function enrollInCourse(
     const userId = user.id;
 
     // Get course information first
-    course = await db.query.courses.findFirst({
+    const foundCourse = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
       with: {
         courseType: true,
       },
     });
+    course = foundCourse ?? null;
 
     if (!course) {
       return { success: false, message: 'Curso no encontrado' };

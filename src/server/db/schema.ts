@@ -1397,6 +1397,9 @@ export const waMessages = pgTable(
     tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
     raw: jsonb('raw'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+          mediaId: text('media_id'),
+  mediaType: text('media_type'),
+  fileName: text('file_name'),
   },
   // Cambia el objeto por un array para evitar el warning deprecado
   (t) => [

@@ -105,7 +105,7 @@ export default function TopFeaturedCourses() {
   };
 
   const renderPagination = () => {
-    const buttons = [];
+    const buttons: (number | string)[] = [];
     if (page > 1) buttons.push(1);
     if (page > 3) buttons.push('...');
     for (
