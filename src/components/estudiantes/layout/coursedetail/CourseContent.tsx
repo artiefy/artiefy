@@ -127,6 +127,18 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
   );
 }
 
+interface Lesson {
+  id: number;
+  title: string;
+  description?: string;
+  duration: number;
+  orderIndex?: number;
+  isLocked?: boolean;
+  isNew?: boolean;
+  porcentajecompletado?: number;
+  // ...otros campos necesarios...
+}
+
 export function CourseContent({
   course,
   isEnrolled,
@@ -239,7 +251,7 @@ export function CourseContent({
   };
 
   const memoizedLessons = useMemo(() => {
-    return sortLessons(course.lessons).map((lesson) => {
+    return sortLessons(course.lessons as Lesson[]).map((lesson) => {
       const isUnlocked =
         isEnrolled &&
         (course.courseType?.requiredSubscriptionLevel === 'none' ||

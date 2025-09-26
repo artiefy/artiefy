@@ -61,6 +61,7 @@ interface ChatProps {
   setIdea?: React.Dispatch<
     React.SetStateAction<{ selected: boolean; idea: string }>
   >;
+  onBotButtonClick?: (action: string) => void; // <-- nueva prop
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -84,6 +85,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
       {message.text}
     </div>
   ),
+  onBotButtonClick,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
@@ -101,11 +103,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
     setShowChatList(false);
   }, [setShowChatList]);
 
-  function handleBotButtonClick(action: string) {
+  // Manejo de botones: si el padre provee onBotButtonClick, delegamos en él.
+  const handleLocalButton = (action: string) => {
+    if (typeof onBotButtonClick === 'function') {
+      void onBotButtonClick(action);
+      return;
+    }
+    // Fallback local para compatibilidad si no vino la función del padre
     switch (action) {
-      case 'show_toc':
-        console.log('Mostrar temario');
-        break;
       case 'new_idea':
         window.dispatchEvent(new CustomEvent('new-idea'));
         setMessages((prevMessages) => [
@@ -121,16 +126,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
         window.dispatchEvent(new CustomEvent('support-open-chat'));
         break;
       case 'new_project':
-        // Lógica para crear proyecto
-        if (!isSignedIn) {
-          // Redirigir a la página de planes
-          router.push(`/planes`);
-        }
+        if (!isSignedIn) router.push(`/planes`);
         break;
       default:
-        console.log('Acción no reconocida:', action);
+        console.log('Acción no reconocida (fallback):', action);
     }
-  }
+  };
 
   useEffect(() => {
     console.log('La conversación: ' + conversation.id);
@@ -316,25 +317,23 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
                 {message.sender === 'bot' && message.buttons && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {message.buttons && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {message.buttons
-                          .filter(
-                            (btn) =>
-                              !(btn.action === 'contact_support' && !isSignedIn)
-                          )
-                          .map((btn) => (
-                            <button
-                              key={btn.action}
-                              className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                              onClick={() => handleBotButtonClick(btn.action)}
-                              type="button"
-                            >
-                              {btn.label}
-                            </button>
-                          ))}
-                      </div>
-                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.buttons
+                        .filter(
+                          (btn) =>
+                            !(btn.action === 'contact_support' && !isSignedIn)
+                        )
+                        .map((btn) => (
+                          <button
+                            key={btn.action}
+                            className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
+                            onClick={() => handleLocalButton(btn.action)}
+                            type="button"
+                          >
+                            {btn.label}
+                          </button>
+                        ))}
+                    </div>
                   </div>
                 )}
               </div>
