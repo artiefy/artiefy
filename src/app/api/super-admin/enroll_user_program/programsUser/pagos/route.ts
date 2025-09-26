@@ -149,22 +149,58 @@ export async function GET(req: Request) {
     if (!dbUser) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
+    // LOG INICIAL DE PARAMS
+console.info('[PAGOS][GET] params', {
+  url: req.url,
+  userId,
+  rawProgramId: new URL(req.url).searchParams.get('programId'),
+});
+
+console.info('[PAGOS][GET] parsed', {
+  parsedProgramId: programId,
+  branch: programId === null ? 'IS NULL' : 'EQUALS',
+});
+
+console.info('[PAGOS][GET] parsed', {
+  parsedProgramId: programId,
+  branch: programId === null ? 'IS NULL' : 'EQUALS',
+});
+
+
 
     const pagosUsuarioPrograma = await db
-      .select()
-      .from(pagos)
-      .where(
-        and(
-          eq(pagos.userId, userId),
-          programId === null ? isNull(pagos.programaId) : eq(pagos.programaId, programId)
-        )
-      );
+  .select()
+  .from(pagos)
+  .where(
+    and(
+      eq(pagos.userId, userId),
+      programId ? eq(pagos.programaId, programId) : undefined
+    )
+  );
+
+  console.info('[PAGOS][GET] resultados', {
+  count: pagosUsuarioPrograma.length,
+  sample: pagosUsuarioPrograma.slice(0, 5).map(p => ({
+    nroPago: p.nroPago,
+    programaId: p.programaId ?? null,
+    valor: p.valor,
+    fecha: p.fecha,
+    receipt: Boolean(p.receiptUrl),
+  })),
+});
+
 
     const planType = dbUser.planType && dbUser.planType !== 'none'
       ? dbUser.planType
       : 'Premium';
 
     const programaPrice = planPrices[planType] ?? planPrices.Premium;
+    console.info('[PAGOS][GET] plan y precio', {
+  userPlanTypeInDB: dbUser.planType,
+  resolvedPlanType: planType,
+  programaPrice,
+});
+
 
     return NextResponse.json({
       pagos: pagosUsuarioPrograma,

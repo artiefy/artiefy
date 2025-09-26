@@ -38,7 +38,7 @@ const studentSchema = z.object({
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
   inscripcionOrigen: z.enum(['formulario', 'artiefy']).optional(),
-  carteraStatus: z.enum(['activo', 'inactivo']).optional(),
+  carteraStatus: z.enum(['activo', 'inactivo', 'no verificado']).optional(),
 });
 
 const courseSchema = z.object({
@@ -87,7 +87,7 @@ interface Student {
   enrolledInCourse?: boolean;
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
-  carteraStatus?: 'activo' | 'inactivo';
+  carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
 
   // ➕ CAMPOS PARA CARTERA Y PAGOS
   document?: string;
@@ -182,7 +182,7 @@ const allColumns: Column[] = [
     label: 'Cartera',
     defaultVisible: true,
     type: 'select',
-    options: ['activo', 'inactivo'], // solo para filtrar
+    options: ['activo', 'inactivo', 'No verificado'],
   },
   {
     id: 'inscripcionOrigen',
@@ -550,10 +550,10 @@ export default function EnrolledUsersPage() {
 
       rows += `
       <tr>
-        <td>${row.concepto || `Cuota ${cuotaNum}`}</td>
+        <td>${row.concepto ?? `Cuota ${cuotaNum}`}</td>
         <td class="text-center">${row.nro_pago ?? row.nroPago ?? cuotaNum}</td>
         <td>${row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}</td>
-        <td>${row.metodo || '-'}</td>
+        <td>${row.metodo ?? '-'}</td>
         <td class="text-right">${formatCOP(valor)}</td>
       </tr>
     `;
@@ -660,15 +660,19 @@ export default function EnrolledUsersPage() {
 
         const conceptoUC = getStr(p, 'concepto').toUpperCase().trim();
 
-        // nroPago puede venir con varios nombres
+        // nroPago puede venir con varios nombres (y a veces como "index" 0-based)
         const nroPagoNum = (() => {
           const n1 = getNum(p, 'nroPago');
           if (Number.isFinite(n1)) return n1;
           const n2 = getNum(p, 'nro_pago');
           if (Number.isFinite(n2)) return n2;
-          const n3 = getNum(p, 'numero'); // si tu backend a veces lo llama "numero"
-          return Number.isFinite(n3) ? n3 : NaN;
+          const n3 = getNum(p, 'numero');
+          if (Number.isFinite(n3)) return n3;
+          const idx0 = getNum(p, 'index');        // 👈 NUEVO
+          if (Number.isFinite(idx0)) return idx0 + 1; //    convertir 0-based → 1..12
+          return NaN;
         })();
+
 
         // ¿especial?
         const esp = ESPECIALES.find((e) => e.label === conceptoUC);
@@ -980,7 +984,52 @@ export default function EnrolledUsersPage() {
     {}
   );
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+  // Opciones únicas de programas
+  const programOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(students.flatMap((s) => s.programTitles ?? []))
+      )
+        .map((t) => String(t ?? '').trim())
+        .filter(Boolean),
+    [students]
+  );
+
+  // Estado/UI del multiselect
+  const [programQuery, setProgramQuery] = useState('');
+  const [programOpen, setProgramOpen] = useState(false);
+  const programRef = useRef<HTMLDivElement>(null);
+
+  // Lista filtrada (excluye ya seleccionados mientras escribes)
+  const filteredProgramOptions = useMemo(
+    () =>
+      programOptions.filter(
+        (o) =>
+          o.toLowerCase().includes(programQuery.toLowerCase()) &&
+          !selectedPrograms.includes(o)
+      ),
+    [programOptions, programQuery, selectedPrograms]
+  );
+
+  // Handlers
+  const toggleProgram = (val: string) =>
+    setSelectedPrograms((prev) =>
+      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+    );
+  const removeProgram = (val: string) =>
+    setSelectedPrograms((prev) => prev.filter((v) => v !== val));
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!programRef.current) return;
+      if (!programRef.current.contains(e.target as Node)) setProgramOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
   const [userPrograms, setUserPrograms] = useState<
     { id: string; title: string }[]
@@ -991,6 +1040,58 @@ export default function EnrolledUsersPage() {
   const currentUser = currentUserId
     ? students.find((s) => s.id === currentUserId)
     : undefined;
+  // Estado de cartera que respeta la regla del "último pago del mes no verificado"
+  const estadoCarteraUI = useMemo(() => {
+    // Estado base según el dato que ya trae el usuario
+    const base =
+      currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera';
+
+    // Si no hay pagos cargados aún, mostramos el base
+    if (!editablePagos || editablePagos.length === 0) return base;
+
+    // Filtramos pagos del MES actual que tengan algún valor (>0) y fecha válida
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = hoy.getMonth();
+
+    const pagosMesActual = editablePagos.filter((p) => {
+      const f = p?.fecha ? new Date(String(p.fecha)) : null;
+      const v = typeof p?.valor === 'number'
+        ? p.valor
+        : Number(p?.valor ?? 0);
+      return (
+        f &&
+        !isNaN(f.getTime()) &&
+        f.getFullYear() === y &&
+        f.getMonth() === m &&
+        v > 0
+      );
+    });
+
+    if (pagosMesActual.length === 0) {
+      // No hay pago en el mes → no cambia nada
+      return base;
+    }
+
+    // Tomamos el ÚLTIMO pago del mes por fecha
+    const ultimoPagoMes = [...pagosMesActual].sort(
+      (a, b) =>
+        new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+    )[pagosMesActual.length - 1];
+
+    // Regla: si tiene pago y el verificado dice "No verificado", mostramos "No verificado"
+    if (
+      ultimoPagoMes &&
+      (ultimoPagoMes.valor as number) > 0 &&
+      ultimoPagoMes.receiptUrl && // hay comprobante subido
+      ultimoPagoMes.receiptVerified === false
+    ) {
+      return 'No verificado';
+    }
+
+    return base;
+  }, [editablePagos, currentUser?.carteraStatus]);
+
   const [userCourses, setUserCourses] = useState<
     { id: string; title: string }[]
   >([]);
@@ -1376,24 +1477,64 @@ export default function EnrolledUsersPage() {
       setCurrentProgramId(programId);
 
       if (!programId) {
-        const vacio: CarteraInfo = {
-          programaPrice: 0,
-          pagosUsuarioPrograma: [],
-          totalPagado: 0,
-          deuda: 0,
-          carnetPolizaUniforme: 0, // no undefined
-          derechosGrado: 0,        // no undefined
+        // ⬇️ AÚN SIN PROGRAMA: igual traemos pagos (programId=null)
+        setCurrentProgramId(null);
+
+        const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, 'null');
+
+        // Totales básicos (sin depender de helpers externos)
+        const toNum = (v: unknown) =>
+          typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0;
+
+        const totalPagado = pagosUsuarioPrograma.reduce(
+          (s, p) => s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0),
+          0
+        );
+
+        // Solo cuotas 1..12 para deuda
+        const totalPagadoCuotas = pagosUsuarioPrograma
+          .filter((p) => {
+            const n = Number(p.nro_pago ?? p.nroPago ?? 0);
+            return Number.isFinite(n) && n >= 1 && n <= 12;
+          })
+          .reduce((s, p) => s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0), 0);
+
+        // Usa el precio por defecto que ya manejas (12 x 150000)
+        const programaPrice = DEFAULT_CUOTAS * DEFAULT_VALOR;
+        const deuda = Math.max(programaPrice - totalPagadoCuotas, 0);
+
+        setCarteraInfo({
+          programaPrice,
+          pagosUsuarioPrograma,
+          totalPagado,
+          deuda,
+          carnetPolizaUniforme: 0,
+          derechosGrado: 0,
           planType: undefined,
-        };
-        setCarteraInfo(vacio);
-        setEditablePagos(ensure15([]));
+        });
+
+        // Mapea y muestra las cuotas reales
+        setEditablePagos(mapPagosToEditable(pagosUsuarioPrograma));
+        // 👇 NUEVO: actualizar el chip en la lista también cuando NO hay programa
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === userId
+              ? {
+                ...s,
+                carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
+                  ? 'no verificado'
+                  : s.carteraStatus,
+              }
+              : s
+          )
+        );
+
+
+
+        // Abrir modal
         setShowCarteraModal(true);
         return;
       }
-
-
-
-
 
       // ✅ Regla: si viene del backend, usar ese valor tal cual.
       // Si no viene (o no es numérico), usar 1.800.000 (12 x 150.000).
@@ -1451,6 +1592,38 @@ export default function EnrolledUsersPage() {
               : 0;
         return sum + (Number.isFinite(v) ? v : 0);
       }, 0);
+      // 👇 NUEVO: decide si el estado de cartera debe ser "no verificado" según la regla
+      function shouldMarkNoVerificado(arr: Pago[]): boolean {
+        if (!Array.isArray(arr) || arr.length === 0) return false;
+
+        const hoy = new Date();
+        const y = hoy.getFullYear();
+        const m = hoy.getMonth();
+
+        // pagos del MES actual con valor > 0 y fecha válida
+        const pagosMes = arr.filter((p) => {
+          const f = p?.fecha ? new Date(String(p.fecha)) : null;
+          const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+          return (
+            f && !isNaN(f.getTime()) &&
+            f.getFullYear() === y &&
+            f.getMonth() === m &&
+            v > 0
+          );
+        });
+
+        if (pagosMes.length === 0) return false;
+
+        // último por fecha
+        const ultimo = [...pagosMes].sort(
+          (a, b) =>
+            new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+        )[pagosMes.length - 1];
+
+        // condición: tiene recibo y está no verificado
+        return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
+      }
+
 
       // ➕ NUEVO: total pagado SOLO por las 12 cuotas (excluye los 3 especiales)
       const ESPECIALES = new Set([
@@ -1866,10 +2039,13 @@ export default function EnrolledUsersPage() {
       [...students]
         // Filtro por programa seleccionado
         .filter((student) =>
-          selectedProgram
-            ? student.programTitles?.includes(selectedProgram)
+          selectedPrograms.length
+            ? (student.programTitles ?? []).some((t) =>
+              selectedPrograms.includes(String(t).trim())
+            )
             : true
         )
+
 
         // Filtros por columnas dinámicas (incluye customFields)
         .filter((student) =>
@@ -1880,6 +2056,38 @@ export default function EnrolledUsersPage() {
               ? student.customFields?.[key.split('.')[1]]
               : student[key as keyof Student];
 
+            // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
+            if (key === 'carteraStatus') {
+              // base que viene guardada en el alumno
+              const base = safeToString(studentValue);
+
+              // estado UI derivado solo si es el alumno actualmente abierto y hay pagos en memoria
+              let ui = base;
+              if (student.id === currentUserId) {
+                const hoy = new Date();
+                const y = hoy.getFullYear();
+                const m = hoy.getMonth();
+
+                const pagosMes = (editablePagos ?? []).filter((p) => {
+                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+                });
+
+                if (pagosMes.length > 0) {
+                  const ultimo = [...pagosMes].sort(
+                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+                  )[pagosMes.length - 1];
+
+                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                    ui = 'no verificado';
+                  }
+                }
+              }
+
+              return ui.toLowerCase().includes(value.toLowerCase());
+            }
+
             if (!studentValue) return false;
 
             if (key === 'subscriptionEndDate') {
@@ -1889,6 +2097,7 @@ export default function EnrolledUsersPage() {
 
             const safeStudentValue = safeToString(studentValue);
             return safeStudentValue.toLowerCase().includes(value.toLowerCase());
+
           })
         )
 
@@ -2329,23 +2538,87 @@ export default function EnrolledUsersPage() {
             className="rounded border border-gray-700 bg-gray-800 p-2"
           />
 
-          <select
-            value={selectedProgram}
-            onChange={(e) => setSelectedProgram(e.target.value)}
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          >
-            <option value="">Todos los programas</option>
-            {Array.from(
-              new Set(students.flatMap((s) => s.programTitles ?? []))
-            ).map((title, idx) => (
-              <option
-                key={`${title?.trim() || 'prog'}-${idx}`}
-                value={title?.trim()}
+          {/* Filtro: Programas (multiselect con búsqueda y chips) */}
+          <div ref={programRef} className="relative">
+            <label className="mb-1 block text-sm text-gray-300">Programas</label>
+
+            {/* “Input” con chips + búsqueda */}
+            <div
+              onClick={() => setProgramOpen(true)}
+              className="flex min-h-[40px] w-full cursor-text flex-wrap items-center gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500"
+            >
+              {selectedPrograms.length === 0 && (
+                <span className="px-1 text-sm text-gray-400">Selecciona programas…</span>
+              )}
+
+              {/* Chips seleccionados (reducidos / truncados) */}
+              {selectedPrograms.map((p) => (
+                <span
+                  key={p}
+                  className="group inline-flex max-w-[160px] items-center gap-1 truncate rounded bg-blue-700/70 px-2 py-0.5 text-xs"
+                  title={p}
+                >
+                  <span className="truncate">{p}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeProgram(p);
+                    }}
+                    className="opacity-80 transition group-hover:opacity-100"
+                    aria-label={`Quitar ${p}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+
+              {/* Input de búsqueda dentro del “input” */}
+              <input
+                type="text"
+                value={programQuery}
+                onChange={(e) => setProgramQuery(e.target.value)}
+                onFocus={() => setProgramOpen(true)}
+                placeholder={selectedPrograms.length ? '' : ''}
+                className="min-w-[80px] flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Dropdown de opciones */}
+            {programOpen && (
+              <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-gray-700 bg-gray-800 shadow-xl">
+                {filteredProgramOptions.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-gray-400">Sin resultados</div>
+                ) : (
+                  filteredProgramOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        toggleProgram(opt);
+                        setProgramQuery('');
+                      }}
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-700"
+                    >
+                      <span>{opt}</span>
+                      {selectedPrograms.includes(opt) && <span>✓</span>}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {selectedPrograms.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedPrograms([])}
+                className="mt-1 rounded bg-gray-700 px-2 py-1 text-xs"
               >
-                {title?.trim()}
-              </option>
-            ))}
-          </select>
+                Limpiar selección
+              </button>
+            )}
+          </div>
+
         </div>
 
         <div>
@@ -2507,17 +2780,57 @@ export default function EnrolledUsersPage() {
                         }
 
                         if (col.id === 'carteraStatus') {
-                          const esAlDia = raw === 'activo'; // 'activo' = al día
-                          const etiqueta = esAlDia ? 'Al día' : 'En cartera';
+                          // Estado base según el dato del alumno
+                          const esAlDiaBase = raw === 'activo';
+
+                          // 🔎 Reglas "No verificado" usando los pagos cargados del alumno actualmente abierto
+                          // (solo podemos evaluar para el alumno activo en la modal)
+                          const pagosParaEvaluar =
+                            student.id === currentUserId ? editablePagos : [];
+
+                          const hoy = new Date();
+                          const y = hoy.getFullYear();
+                          const m = hoy.getMonth();
+
+                          const pagosMes = pagosParaEvaluar.filter((p) => {
+                            const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                            return (
+                              f &&
+                              !isNaN(f.getTime()) &&
+                              f.getFullYear() === y &&
+                              f.getMonth() === m &&
+                              v > 0
+                            );
+                          });
+
+                          let etiqueta: 'Al día' | 'En cartera' | 'No verificado' =
+                            esAlDiaBase ? 'Al día' : 'En cartera';
+
+                          if (pagosMes.length > 0) {
+                            const ultimo = [...pagosMes].sort(
+                              (a, b) =>
+                                new Date(String(a.fecha)).getTime() -
+                                new Date(String(b.fecha)).getTime()
+                            )[pagosMes.length - 1];
+
+                            // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
+                            if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                              etiqueta = 'No verificado';
+                            }
+                          }
+
+                          const badgeClass =
+                            etiqueta === 'Al día'
+                              ? 'bg-green-600'
+                              : etiqueta === 'No verificado'
+                                ? 'bg-gray-600'
+                                : 'bg-red-600';
 
                           return (
-                            <td
-                              key={col.id}
-                              className="px-4 py-2 align-top whitespace-nowrap"
-                            >
+                            <td key={col.id} className="px-4 py-2 align-top whitespace-nowrap">
                               <span
-                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${esAlDia ? 'bg-green-600' : 'bg-red-600'
-                                  }`}
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
                                 title={etiqueta}
                               >
                                 {etiqueta}
@@ -2531,6 +2844,7 @@ export default function EnrolledUsersPage() {
                             </td>
                           );
                         }
+
 
                         // 2) columna Último curso
                         if (col.id === 'courseTitle') {
@@ -4000,8 +4314,7 @@ export default function EnrolledUsersPage() {
                         <p className="text-black"><strong>CIUDAD:</strong> {currentUser?.city ?? '-'}</p>
                         <p className="text-black"><strong>EMAIL:</strong> {currentUser?.email ?? '-'}</p>
                         <p className="text-black">
-                          <strong>ESTADO:</strong>{' '}
-                          {currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}
+                          <strong>ESTADO:</strong> {estadoCarteraUI}
                         </p>
                         <p className="text-black">
                           <strong>FIN SUSCRIPCIÓN:</strong>{' '}
