@@ -251,6 +251,7 @@ export function CourseContent({
   };
 
   const memoizedLessons = useMemo(() => {
+    // sortLessons usa orderIndex, así que el orden será correcto
     return sortLessons(course.lessons as Lesson[]).map((lesson) => {
       const isUnlocked =
         isEnrolled &&

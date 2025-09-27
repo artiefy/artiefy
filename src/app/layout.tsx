@@ -149,17 +149,17 @@ export default async function RootLayout({
           {/* Microformatos para información de contacto */}
           <div className="h-card" style={{ display: 'none' }}>
             <a className="p-name u-url" href="https://artiefy.com">
-              Artiefy
+              CCOET
             </a>
-            <span className="p-org">Artiefy Educación</span>
+            <span className="p-org">CCOET Educación</span>
             <a className="u-email" href="mailto:artiefy4@gmail.com">
               artiefy4@gmail.com
             </a>
             {/* eslint-disable @next/next/no-img-element */}
             <img
               className="u-photo"
-              src="https://artiefy.com/artiefy-icon.png"
-              alt="Logo de Artiefy"
+              src="https://CCOET.com/CCOET-icon.png"
+              alt="Logo de CCOET"
             />
           </div>
 
