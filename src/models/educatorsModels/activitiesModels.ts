@@ -209,16 +209,29 @@ export const getActivitiesByLessonId = async (
   }
 };
 
-// Actualizar una actividad
 export const updateActivity = async (
   activityId: number,
-  { name, description, typeid }: Partial<Omit<Activity, 'id' | 'lessonsId'>>
+  data: {
+    name?: string;
+    description?: string;
+    typeid?: number;
+    revisada?: boolean;
+    parametroId?: number | null;
+    porcentaje?: number;
+    fechaMaximaEntrega?: Date | null;
+  }
 ): Promise<void> => {
   try {
-    const updateData: Partial<Omit<Activity, 'id' | 'lessonsId'>> = {};
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description;
-    if (typeid !== undefined) updateData.typeid = typeid;
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.typeid !== undefined) updateData.typeid = data.typeid;
+    if (data.revisada !== undefined) updateData.revisada = data.revisada;
+    if (data.parametroId !== undefined) updateData.parametroId = data.parametroId;
+    if (data.porcentaje !== undefined) updateData.porcentaje = data.porcentaje;
+    if (data.fechaMaximaEntrega !== undefined) {
+      updateData.fechaMaximaEntrega = data.fechaMaximaEntrega; // Date | null
+    }
 
     await db
       .update(activities)
@@ -226,10 +239,13 @@ export const updateActivity = async (
       .where(eq(activities.id, activityId));
   } catch (error) {
     throw new Error(
-      `Error al actualizar la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      `Error al actualizar la actividad: ${
+        error instanceof Error ? error.message : 'Error desconocido'
+      }`
     );
   }
 };
+
 
 // Eliminar una actividad y todos los datos asociados
 export const deleteActivity = async (activityId: number): Promise<void> => {

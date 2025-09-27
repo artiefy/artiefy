@@ -668,14 +668,12 @@ const Page: React.FC = () => {
                           className="absolute size-0"
                         />
                         <span
-                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            isActive ? 'bg-gray-300' : 'bg-red-500'
-                          }`}
+                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'
+                            }`}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              isActive ? 'translate-x-8' : 'translate-x-0'
-                            }`}
+                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'
+                              }`}
                           />
                         </span>
                       </label>
@@ -712,18 +710,16 @@ const Page: React.FC = () => {
 
                           <Label
                             htmlFor="porcentaje"
-                            className={`mb-2 ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }`}
+                            className={`mb-2 ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                              }`}
                           >
                             Peso actividad en el parámetro (0-100 %):
                           </Label>
 
                           <Input
                             value={formData.porcentaje}
-                            className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }`}
+                            className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                              }`}
                             type="number"
                             id="percentage"
                             min="0"
@@ -736,11 +732,10 @@ const Page: React.FC = () => {
 
                           {porcentajeDisponible !== null && (
                             <p
-                              className={`mt-1 text-sm ${
-                                color === '#FFFFFF'
-                                  ? 'text-black'
-                                  : 'text-white'
-                              }`}
+                              className={`mt-1 text-sm ${color === '#FFFFFF'
+                                ? 'text-black'
+                                : 'text-white'
+                                }`}
                             >
                               Porcentaje disponible:{' '}
                               <strong>{porcentajeDisponible}%</strong>
@@ -769,14 +764,12 @@ const Page: React.FC = () => {
                           className="absolute size-0"
                         />
                         <span
-                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            fechaMaxima ? 'bg-gray-300' : 'bg-red-500'
-                          }`}
+                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'
+                            }`}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              fechaMaxima ? 'translate-x-8' : 'translate-x-0'
-                            }`}
+                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'
+                              }`}
                           />
                         </span>
                       </label>
@@ -789,9 +782,8 @@ const Page: React.FC = () => {
                   {fechaMaxima && (
                     <>
                       <span
-                        className={`text-xl font-medium ${
-                          color === '#FFFFFF' ? 'text-black' : 'text-white'
-                        }`}
+                        className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                          }`}
                       >
                         Fecha máxima de entrega:
                       </span>
@@ -800,8 +792,8 @@ const Page: React.FC = () => {
                         value={
                           formData.fechaMaximaEntrega
                             ? new Date(formData.fechaMaximaEntrega)
-                                .toISOString()
-                                .slice(0, 16)
+                              .toISOString()
+                              .slice(0, 16)
                             : ''
                         }
                         className="w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none"
@@ -819,9 +811,8 @@ const Page: React.FC = () => {
 
               {/* ─────  TÍTULO, DESCRIPCIÓN y SELECT de tipo ───── */}
               <Label
-                className={`mt-6 mb-2 text-xl ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`mt-6 mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
               >
                 Título
               </Label>
@@ -831,16 +822,14 @@ const Page: React.FC = () => {
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="Nombre de la actividad"
-                className={`border-slate-200 ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`border-slate-200 ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
               />
 
               <div className="my-4 flex flex-col">
                 <Label
-                  className={`mb-2 text-xl ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Descripción actividad:
                 </Label>
@@ -849,16 +838,14 @@ const Page: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 />
               </div>
 
               <Label
-                className={`mb-2 text-xl ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
               >
                 Tipo de actividad
               </Label>

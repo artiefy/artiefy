@@ -41,70 +41,89 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'ID de la actividad inválido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'ID de la actividad inválido' }, { status: 400 });
     }
 
     const bodySchema = z.object({
       name: z.string().optional(),
       description: z.string().optional(),
       typeid: z.number().optional(),
+      revisada: z.boolean().optional(),
+      parametroId: z.number().nullable().optional(),
+      porcentaje: z.number().min(0).max(100).optional(),
+      fechaMaximaEntrega: z.string().datetime().nullable().optional(), // ISO string
+      // opcional: “dryRun” para solo loguear sin guardar
+      dryRun: z.boolean().optional(),
     });
 
     const parsed = bodySchema.safeParse(await request.json());
-
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Datos de entrada no válidos' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Datos de entrada no válidos', issues: parsed.error.flatten() }, { status: 400 });
     }
 
     const {
       name,
       description,
       typeid,
-    }: { name?: string; description?: string; typeid?: number } = parsed.data;
+      revisada,
+      parametroId,
+      porcentaje,
+      fechaMaximaEntrega,
+      dryRun,
+    } = parsed.data;
 
-    if (
-      (name && typeof name !== 'string') ||
-      (description && typeof description !== 'string') ||
-      (typeid && typeof typeid !== 'number')
-    ) {
-      return NextResponse.json(
-        { error: 'Datos de entrada no válidos' },
-        { status: 400 }
-      );
-    }
-
-    await updateActivity(id, {
+    // Reglas de negocio: si no es revisada => limpiar parametro/porcentaje
+    const payload: Record<string, unknown> = {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
       ...(typeid !== undefined && { typeid }),
-    });
+      ...(revisada !== undefined && { revisada }),
+      ...(fechaMaximaEntrega !== undefined && {
+        fechaMaximaEntrega: fechaMaximaEntrega ? new Date(fechaMaximaEntrega) : null,
+      }),
+    };
 
-    return NextResponse.json({
-      message: 'Actividad actualizada correctamente',
-      id,
-    });
+    if (revisada === false) {
+      payload.parametroId = null;
+      payload.porcentaje = 0;
+    } else if (revisada === true) {
+      if (parametroId !== undefined) payload.parametroId = parametroId ?? null;
+      if (porcentaje !== undefined) payload.porcentaje = porcentaje ?? 0;
+    } else {
+      // Si no vino “revisada”, igual permite actualizar parámetro/porcentaje de forma explícita
+      if (parametroId !== undefined) payload.parametroId = parametroId ?? null;
+      if (porcentaje !== undefined) payload.porcentaje = porcentaje ?? 0;
+    }
+
+    // 🔎 Log visible + modo DryRun
+    const types = {
+      name: typeof name,
+      description: typeof description,
+      typeid: typeof typeid,
+      revisada: typeof revisada,
+      parametroId: parametroId === null ? 'null' : typeof parametroId,
+      porcentaje: typeof porcentaje,
+      fechaMaximaEntrega: typeof fechaMaximaEntrega,
+    };
+    console.log('▶ PUT /actividades/:id payload normalizado:', { id, payload, types, dryRun: !!dryRun });
+    console.log('🧩 updateActivity(id, payload):', id, payload);
+
+
+    if (dryRun) {
+      return NextResponse.json({ ok: true, dryRun: true, id, payload });
+    }
+
+    await updateActivity(id, payload);
+
+    return NextResponse.json({ message: 'Actividad actualizada correctamente', id });
   } catch (error) {
     console.error('❌ Error en PUT /api/educadores/actividades/[id]:', error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Error desconocido al actualizar la actividad',
-      },
+      { error: error instanceof Error ? error.message : 'Error desconocido al actualizar la actividad' },
       { status: 500 }
     );
   }
