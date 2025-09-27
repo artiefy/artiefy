@@ -389,34 +389,130 @@
 
 /* - Bola Artie - */
 
+/* Agrega estas reglas CSS para solucionar el problema de impresión */
 
 @media print {
-  /* Mostrar SOLO el recibo */
+  /* Ocultar todo excepto el contenido de cartera */
   body * {
     visibility: hidden !important;
   }
-  #printable, #printable * {
+  
+  /* Mostrar solo el modal de cartera */
+  .showCarteraModal,
+  .showCarteraModal * {
     visibility: visible !important;
   }
-  #printable {
-    position: absolute !important;
-    inset: 0 !important;            /* top/right/bottom/left = 0 */
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-  }
 
-  /* Forzar colores correctos en impresión (evita “modo oscuro” en papel) */
-  html, body {
+  /* Mostrar el contenido específico para imprimir */
+  #printable,
+  #printable * {
+    visibility: visible !important;
+    display: block !important;
+    position: static !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* IMPORTANTE: Forzar todos los elementos a colores de impresión */
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    background: #fff !important;
-    color: #000 !important;
+    color-adjust: exact !important;
+    background: white !important;
+    color: black !important;
+    border-color: black !important;
   }
-
-  /* Oculta cualquier overlay/modal si quedara montado */
-  [data-modal], .modal, .fixed, .sticky {
+  
+  /* Específicamente para tablas */
+  table, th, td, tr {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Headers de tabla */
+  thead, th {
+    background: white !important;
+    color: black !important;
+    font-weight: bold !important;
+  }
+  
+  /* Celdas de tabla */
+  tbody td {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Ocultar elementos interactivos */
+  button,
+  input[type="button"],
+  input[type="file"],
+  select,
+  .cursor-pointer,
+  [class*="bg-blue"],
+  [class*="bg-indigo"],
+  [class*="bg-emerald"],
+  [class*="bg-amber"],
+  [class*="hover:"],
+  [class*="focus:"] {
     display: none !important;
+  }
+  
+  /* Remover el fondo del modal */
+  .fixed.inset-0.z-50 {
+    position: static !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Asegurar que el contenido sea legible */
+  .text-white {
+    color: black !important;
+  }
+  
+  .bg-gray-800,
+  .bg-gray-900,
+  .bg-gray-700 {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Bordes para mejor legibilidad */
+  .border-gray-200,
+  .border-gray-700,
+  .dark\:border-gray-700 {
+    border-color: black !important;
+  }
+  
+  /* Remover shadows y efectos */
+  .shadow-xl,
+  .shadow-2xl,
+  .shadow,
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+  
+  /* Asegurar que los inputs no aparezcan */
+  input, select, textarea {
+    display: none !important;
+  }
+  
+  /* Mostrar solo el texto del contenido */
+  .showCarteraModal table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  /* Page breaks */
+  .showCarteraModal {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Asegurar márgenes apropiados */
+  @page {
+    margin: 1in;
+    size: A4;
   }
 }

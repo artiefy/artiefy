@@ -38,7 +38,7 @@ const studentSchema = z.object({
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
   inscripcionOrigen: z.enum(['formulario', 'artiefy']).optional(),
-  carteraStatus: z.enum(['activo', 'inactivo']).optional(),
+  carteraStatus: z.enum(['activo', 'inactivo', 'no verificado']).optional(),
 });
 
 const courseSchema = z.object({
@@ -87,7 +87,7 @@ interface Student {
   enrolledInCourse?: boolean;
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
-  carteraStatus?: 'activo' | 'inactivo';
+  carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
 
   // ➕ CAMPOS PARA CARTERA Y PAGOS
   document?: string;
@@ -182,7 +182,7 @@ const allColumns: Column[] = [
     label: 'Cartera',
     defaultVisible: true,
     type: 'select',
-    options: ['activo', 'inactivo'], // solo para filtrar
+    options: ['activo', 'inactivo', 'No verificado'],
   },
   {
     id: 'inscripcionOrigen',
@@ -297,6 +297,292 @@ export default function EnrolledUsersPage() {
 
   const isPdfUrl = (u?: string) => !!u && /\.pdf(\?|$)/i.test(u);
 
+  // Reemplaza tu botón de imprimir con esta función más robusta
+
+  // Opción 3: La más simple - usar parámetros de ventana específicos
+
+  const handlePrint = () => {
+    // Crear ventana con parámetros específicos para que aparezca al frente
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=800,height=600,scrollbars=yes,resizable=yes,toolbar=no,location=no,status=no,menubar=no,top=50,left=50'
+    );
+
+    const printContent = generatePrintableHTML();
+
+    if (!printWindow) {
+      alert('No se pudo abrir la ventana de impresión.');
+      return;
+    }
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+
+    // Forzar que la ventana esté al frente
+    printWindow.focus();
+    printWindow.moveTo(100, 100); // Mover la ventana para asegurar visibilidad
+
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus(); // Doble enfoque para asegurar
+        printWindow.print();
+        printWindow.close();
+      }, 300);
+    };
+  };
+
+  // Esta es la función generatePrintableHTML que también necesitas:
+  const generatePrintableHTML = () => {
+    return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Factura de Matrícula - ${currentUser?.name}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          color: black !important;
+          background: white !important;
+        }
+        
+        body {
+          font-family: Arial, sans-serif;
+          padding: 20px;
+          background: white !important;
+          color: black !important;
+        }
+        
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 30px;
+          border-bottom: 2px solid black;
+          padding-bottom: 15px;
+        }
+        
+        .logos {
+          display: flex;
+          gap: 20px;
+          align-items: center;
+        }
+        
+        .title {
+          text-align: right;
+        }
+        
+        .title h1 {
+          font-size: 16px;
+          font-weight: bold;
+          color: black !important;
+          margin-bottom: 5px;
+        }
+        
+        .title p {
+          font-size: 12px;
+          color: black !important;
+        }
+        
+        .info-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 30px;
+          margin-bottom: 30px;
+          font-size: 13px;
+        }
+        
+        .info-section p {
+          margin-bottom: 6px;
+          color: black !important;
+        }
+        
+        .info-section strong {
+          color: black !important;
+        }
+        
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+          font-size: 12px;
+        }
+        
+        th, td {
+          border: 1px solid black !important;
+          padding: 6px;
+          text-align: left;
+          background: white !important;
+          color: black !important;
+        }
+        
+        th {
+          font-weight: bold;
+          background: white !important;
+          color: black !important;
+        }
+        
+        .text-right {
+          text-align: right;
+        }
+        
+        .text-center {
+          text-align: center;
+        }
+        
+        .totals {
+          border-top: 2px solid black;
+          padding-top: 15px;
+          margin-top: 20px;
+          font-size: 14px;
+        }
+        
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        
+        .total-row.final {
+          font-weight: bold;
+          font-size: 16px;
+          border-top: 1px solid black;
+          padding-top: 8px;
+        }
+        
+        .footer {
+          margin-top: 30px;
+          text-align: center;
+          font-size: 11px;
+          border-top: 1px solid black;
+          padding-top: 10px;
+        }
+        
+        @page {
+          margin: 0.5in;
+          size: A4;
+        }
+        
+        @media print {
+          body { margin: 0; padding: 10px; }
+          .header { page-break-after: avoid; }
+          table { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logos">
+          <strong>ARTIEFY - PONAO</strong>
+        </div>
+        <div class="title">
+          <p>POLITÉCNICO NACIONAL DE ARTES Y OFICIOS</p>
+          <h1>FACTURA PAGO DE MATRÍCULA</h1>
+        </div>
+      </div>
+      
+      <div class="info-section">
+        <div>
+          <p><strong>NOMBRE ESTUDIANTE:</strong> ${currentUser?.name ?? '-'}</p>
+          <p><strong>CC:</strong> ${currentUser?.document ?? currentUser?.id ?? '-'}</p>
+          <p><strong>CELULAR:</strong> ${currentUser?.phone ?? '-'}</p>
+          <p><strong>PROGRAMA:</strong> ${userPrograms?.[0]?.title ?? '—'}</p>
+          <p><strong>FECHA:</strong> ${new Date().toLocaleDateString('es-CO')}</p>
+        </div>
+        <div>
+          <p><strong>DIRECCIÓN:</strong> ${currentUser?.address ?? '-'}</p>
+          <p><strong>CIUDAD:</strong> ${currentUser?.city ?? '-'}</p>
+          <p><strong>EMAIL:</strong> ${currentUser?.email ?? '-'}</p>
+          <p><strong>ESTADO:</strong> ${currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}</p>
+          <p><strong>FIN SUSCRIPCIÓN:</strong> ${currentUser?.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toLocaleDateString('es-CO') : '-'}</p>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>PRODUCTO</th>
+            <th class="text-center">N° PAGO</th>
+            <th>FECHA DE PAGO</th>
+            <th>MÉTODO DE PAGO</th>
+            <th class="text-right">VALOR</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${generateTableRows()}
+        </tbody>
+      </table>
+      
+      <div class="totals">
+        <div class="total-row">
+          <span>PLAN / VALOR PROGRAMA:</span>
+          <span>${formatCOP(price)}</span>
+        </div>
+        <div class="total-row">
+          <span>VALOR PAGADO:</span>
+          <span>${formatCOP(carteraInfo?.totalPagado ?? 0)}</span>
+        </div>
+        <div class="total-row final">
+          <span>DEUDA RESTANTE:</span>
+          <span>${formatCOP(carteraInfo?.deuda ?? 0)}</span>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <p>Este documento es un comprobante de los pagos registrados</p>
+        <p>Fecha de impresión: ${new Date().toLocaleString('es-CO')}</p>
+      </div>
+    </body>
+    </html>
+  `;
+  };
+  const generateTableRows = () => {
+    let rows = '';
+
+    // Generar filas de cuotas (1-12)
+    for (let idx = 0; idx < 12; idx++) {
+      const cuotaNum = idx + 1;
+      const row = editablePagos[idx] ?? {};
+      const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+
+      rows += `
+      <tr>
+        <td>${row.concepto ?? `Cuota ${cuotaNum}`}</td>
+        <td class="text-center">${row.nro_pago ?? row.nroPago ?? cuotaNum}</td>
+        <td>${row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}</td>
+        <td>${row.metodo ?? '-'}</td>
+        <td class="text-right">${formatCOP(valor)}</td>
+      </tr>
+    `;
+    }
+
+    // Generar filas de conceptos especiales
+    const especiales = [
+      { label: 'PÓLIZA Y CARNET', idxBase: 12 },
+      { label: 'UNIFORME', idxBase: 13 },
+      { label: 'DERECHOS DE GRADO', idxBase: 14 },
+    ];
+
+    especiales.forEach(({ label, idxBase }) => {
+      const row = editablePagos[idxBase] ?? {};
+      const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+
+      rows += `
+      <tr>
+        <td style="font-weight: bold;">${row.concepto ?? label}</td>
+        <td class="text-center">${idxBase + 1}</td>
+        <td>${row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}</td>
+        <td>${row.metodo ?? '-'}</td>
+        <td class="text-right">${formatCOP(valor)}</td>
+      </tr>
+    `;
+    });
+
+    return rows;
+  };
 
 
   void setCodigoPais;
@@ -374,15 +660,19 @@ export default function EnrolledUsersPage() {
 
         const conceptoUC = getStr(p, 'concepto').toUpperCase().trim();
 
-        // nroPago puede venir con varios nombres
+        // nroPago puede venir con varios nombres (y a veces como "index" 0-based)
         const nroPagoNum = (() => {
           const n1 = getNum(p, 'nroPago');
           if (Number.isFinite(n1)) return n1;
           const n2 = getNum(p, 'nro_pago');
           if (Number.isFinite(n2)) return n2;
-          const n3 = getNum(p, 'numero'); // si tu backend a veces lo llama "numero"
-          return Number.isFinite(n3) ? n3 : NaN;
+          const n3 = getNum(p, 'numero');
+          if (Number.isFinite(n3)) return n3;
+          const idx0 = getNum(p, 'index');        // 👈 NUEVO
+          if (Number.isFinite(idx0)) return idx0 + 1; //    convertir 0-based → 1..12
+          return NaN;
         })();
+
 
         // ¿especial?
         const esp = ESPECIALES.find((e) => e.label === conceptoUC);
@@ -694,7 +984,52 @@ export default function EnrolledUsersPage() {
     {}
   );
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+  // Opciones únicas de programas
+  const programOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(students.flatMap((s) => s.programTitles ?? []))
+      )
+        .map((t) => String(t ?? '').trim())
+        .filter(Boolean),
+    [students]
+  );
+
+  // Estado/UI del multiselect
+  const [programQuery, setProgramQuery] = useState('');
+  const [programOpen, setProgramOpen] = useState(false);
+  const programRef = useRef<HTMLDivElement>(null);
+
+  // Lista filtrada (excluye ya seleccionados mientras escribes)
+  const filteredProgramOptions = useMemo(
+    () =>
+      programOptions.filter(
+        (o) =>
+          o.toLowerCase().includes(programQuery.toLowerCase()) &&
+          !selectedPrograms.includes(o)
+      ),
+    [programOptions, programQuery, selectedPrograms]
+  );
+
+  // Handlers
+  const toggleProgram = (val: string) =>
+    setSelectedPrograms((prev) =>
+      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+    );
+  const removeProgram = (val: string) =>
+    setSelectedPrograms((prev) => prev.filter((v) => v !== val));
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!programRef.current) return;
+      if (!programRef.current.contains(e.target as Node)) setProgramOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
   const [userPrograms, setUserPrograms] = useState<
     { id: string; title: string }[]
@@ -705,6 +1040,58 @@ export default function EnrolledUsersPage() {
   const currentUser = currentUserId
     ? students.find((s) => s.id === currentUserId)
     : undefined;
+  // Estado de cartera que respeta la regla del "último pago del mes no verificado"
+  const estadoCarteraUI = useMemo(() => {
+    // Estado base según el dato que ya trae el usuario
+    const base =
+      currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera';
+
+    // Si no hay pagos cargados aún, mostramos el base
+    if (!editablePagos || editablePagos.length === 0) return base;
+
+    // Filtramos pagos del MES actual que tengan algún valor (>0) y fecha válida
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = hoy.getMonth();
+
+    const pagosMesActual = editablePagos.filter((p) => {
+      const f = p?.fecha ? new Date(String(p.fecha)) : null;
+      const v = typeof p?.valor === 'number'
+        ? p.valor
+        : Number(p?.valor ?? 0);
+      return (
+        f &&
+        !isNaN(f.getTime()) &&
+        f.getFullYear() === y &&
+        f.getMonth() === m &&
+        v > 0
+      );
+    });
+
+    if (pagosMesActual.length === 0) {
+      // No hay pago en el mes → no cambia nada
+      return base;
+    }
+
+    // Tomamos el ÚLTIMO pago del mes por fecha
+    const ultimoPagoMes = [...pagosMesActual].sort(
+      (a, b) =>
+        new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+    )[pagosMesActual.length - 1];
+
+    // Regla: si tiene pago y el verificado dice "No verificado", mostramos "No verificado"
+    if (
+      ultimoPagoMes &&
+      (ultimoPagoMes.valor as number) > 0 &&
+      ultimoPagoMes.receiptUrl && // hay comprobante subido
+      ultimoPagoMes.receiptVerified === false
+    ) {
+      return 'No verificado';
+    }
+
+    return base;
+  }, [editablePagos, currentUser?.carteraStatus]);
+
   const [userCourses, setUserCourses] = useState<
     { id: string; title: string }[]
   >([]);
@@ -1090,24 +1477,64 @@ export default function EnrolledUsersPage() {
       setCurrentProgramId(programId);
 
       if (!programId) {
-        const vacio: CarteraInfo = {
-          programaPrice: 0,
-          pagosUsuarioPrograma: [],
-          totalPagado: 0,
-          deuda: 0,
-          carnetPolizaUniforme: 0, // no undefined
-          derechosGrado: 0,        // no undefined
+        // ⬇️ AÚN SIN PROGRAMA: igual traemos pagos (programId=null)
+        setCurrentProgramId(null);
+
+        const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, 'null');
+
+        // Totales básicos (sin depender de helpers externos)
+        const toNum = (v: unknown) =>
+          typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0;
+
+        const totalPagado = pagosUsuarioPrograma.reduce(
+          (s, p) => s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0),
+          0
+        );
+
+        // Solo cuotas 1..12 para deuda
+        const totalPagadoCuotas = pagosUsuarioPrograma
+          .filter((p) => {
+            const n = Number(p.nro_pago ?? p.nroPago ?? 0);
+            return Number.isFinite(n) && n >= 1 && n <= 12;
+          })
+          .reduce((s, p) => s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0), 0);
+
+        // Usa el precio por defecto que ya manejas (12 x 150000)
+        const programaPrice = DEFAULT_CUOTAS * DEFAULT_VALOR;
+        const deuda = Math.max(programaPrice - totalPagadoCuotas, 0);
+
+        setCarteraInfo({
+          programaPrice,
+          pagosUsuarioPrograma,
+          totalPagado,
+          deuda,
+          carnetPolizaUniforme: 0,
+          derechosGrado: 0,
           planType: undefined,
-        };
-        setCarteraInfo(vacio);
-        setEditablePagos(ensure15([]));
+        });
+
+        // Mapea y muestra las cuotas reales
+        setEditablePagos(mapPagosToEditable(pagosUsuarioPrograma));
+        // 👇 NUEVO: actualizar el chip en la lista también cuando NO hay programa
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === userId
+              ? {
+                ...s,
+                carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
+                  ? 'no verificado'
+                  : s.carteraStatus,
+              }
+              : s
+          )
+        );
+
+
+
+        // Abrir modal
         setShowCarteraModal(true);
         return;
       }
-
-
-
-
 
       // ✅ Regla: si viene del backend, usar ese valor tal cual.
       // Si no viene (o no es numérico), usar 1.800.000 (12 x 150.000).
@@ -1165,6 +1592,38 @@ export default function EnrolledUsersPage() {
               : 0;
         return sum + (Number.isFinite(v) ? v : 0);
       }, 0);
+      // 👇 NUEVO: decide si el estado de cartera debe ser "no verificado" según la regla
+      function shouldMarkNoVerificado(arr: Pago[]): boolean {
+        if (!Array.isArray(arr) || arr.length === 0) return false;
+
+        const hoy = new Date();
+        const y = hoy.getFullYear();
+        const m = hoy.getMonth();
+
+        // pagos del MES actual con valor > 0 y fecha válida
+        const pagosMes = arr.filter((p) => {
+          const f = p?.fecha ? new Date(String(p.fecha)) : null;
+          const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+          return (
+            f && !isNaN(f.getTime()) &&
+            f.getFullYear() === y &&
+            f.getMonth() === m &&
+            v > 0
+          );
+        });
+
+        if (pagosMes.length === 0) return false;
+
+        // último por fecha
+        const ultimo = [...pagosMes].sort(
+          (a, b) =>
+            new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+        )[pagosMes.length - 1];
+
+        // condición: tiene recibo y está no verificado
+        return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
+      }
+
 
       // ➕ NUEVO: total pagado SOLO por las 12 cuotas (excluye los 3 especiales)
       const ESPECIALES = new Set([
@@ -1580,10 +2039,13 @@ export default function EnrolledUsersPage() {
       [...students]
         // Filtro por programa seleccionado
         .filter((student) =>
-          selectedProgram
-            ? student.programTitles?.includes(selectedProgram)
+          selectedPrograms.length
+            ? (student.programTitles ?? []).some((t) =>
+              selectedPrograms.includes(String(t).trim())
+            )
             : true
         )
+
 
         // Filtros por columnas dinámicas (incluye customFields)
         .filter((student) =>
@@ -1594,6 +2056,38 @@ export default function EnrolledUsersPage() {
               ? student.customFields?.[key.split('.')[1]]
               : student[key as keyof Student];
 
+            // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
+            if (key === 'carteraStatus') {
+              // base que viene guardada en el alumno
+              const base = safeToString(studentValue);
+
+              // estado UI derivado solo si es el alumno actualmente abierto y hay pagos en memoria
+              let ui = base;
+              if (student.id === currentUserId) {
+                const hoy = new Date();
+                const y = hoy.getFullYear();
+                const m = hoy.getMonth();
+
+                const pagosMes = (editablePagos ?? []).filter((p) => {
+                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+                });
+
+                if (pagosMes.length > 0) {
+                  const ultimo = [...pagosMes].sort(
+                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+                  )[pagosMes.length - 1];
+
+                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                    ui = 'no verificado';
+                  }
+                }
+              }
+
+              return ui.toLowerCase().includes(value.toLowerCase());
+            }
+
             if (!studentValue) return false;
 
             if (key === 'subscriptionEndDate') {
@@ -1603,6 +2097,7 @@ export default function EnrolledUsersPage() {
 
             const safeStudentValue = safeToString(studentValue);
             return safeStudentValue.toLowerCase().includes(value.toLowerCase());
+
           })
         )
 
@@ -1928,6 +2423,7 @@ export default function EnrolledUsersPage() {
         message={infoDialogMessage}
         onClose={() => setInfoDialogOpen(false)}
       />
+
       <div className="print:hidden min-h-screen space-y-8 bg-gray-900 p-6 text-white">
         <div
           ref={headerRef}
@@ -2042,23 +2538,87 @@ export default function EnrolledUsersPage() {
             className="rounded border border-gray-700 bg-gray-800 p-2"
           />
 
-          <select
-            value={selectedProgram}
-            onChange={(e) => setSelectedProgram(e.target.value)}
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          >
-            <option value="">Todos los programas</option>
-            {Array.from(
-              new Set(students.flatMap((s) => s.programTitles ?? []))
-            ).map((title, idx) => (
-              <option
-                key={`${title?.trim() || 'prog'}-${idx}`}
-                value={title?.trim()}
+          {/* Filtro: Programas (multiselect con búsqueda y chips) */}
+          <div ref={programRef} className="relative">
+            <label className="mb-1 block text-sm text-gray-300">Programas</label>
+
+            {/* “Input” con chips + búsqueda */}
+            <div
+              onClick={() => setProgramOpen(true)}
+              className="flex min-h-[40px] w-full cursor-text flex-wrap items-center gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500"
+            >
+              {selectedPrograms.length === 0 && (
+                <span className="px-1 text-sm text-gray-400">Selecciona programas…</span>
+              )}
+
+              {/* Chips seleccionados (reducidos / truncados) */}
+              {selectedPrograms.map((p) => (
+                <span
+                  key={p}
+                  className="group inline-flex max-w-[160px] items-center gap-1 truncate rounded bg-blue-700/70 px-2 py-0.5 text-xs"
+                  title={p}
+                >
+                  <span className="truncate">{p}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeProgram(p);
+                    }}
+                    className="opacity-80 transition group-hover:opacity-100"
+                    aria-label={`Quitar ${p}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+
+              {/* Input de búsqueda dentro del “input” */}
+              <input
+                type="text"
+                value={programQuery}
+                onChange={(e) => setProgramQuery(e.target.value)}
+                onFocus={() => setProgramOpen(true)}
+                placeholder={selectedPrograms.length ? '' : ''}
+                className="min-w-[80px] flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Dropdown de opciones */}
+            {programOpen && (
+              <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-gray-700 bg-gray-800 shadow-xl">
+                {filteredProgramOptions.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-gray-400">Sin resultados</div>
+                ) : (
+                  filteredProgramOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => {
+                        toggleProgram(opt);
+                        setProgramQuery('');
+                      }}
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-700"
+                    >
+                      <span>{opt}</span>
+                      {selectedPrograms.includes(opt) && <span>✓</span>}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {selectedPrograms.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedPrograms([])}
+                className="mt-1 rounded bg-gray-700 px-2 py-1 text-xs"
               >
-                {title?.trim()}
-              </option>
-            ))}
-          </select>
+                Limpiar selección
+              </button>
+            )}
+          </div>
+
         </div>
 
         <div>
@@ -2220,17 +2780,57 @@ export default function EnrolledUsersPage() {
                         }
 
                         if (col.id === 'carteraStatus') {
-                          const esAlDia = raw === 'activo'; // 'activo' = al día
-                          const etiqueta = esAlDia ? 'Al día' : 'En cartera';
+                          // Estado base según el dato del alumno
+                          const esAlDiaBase = raw === 'activo';
+
+                          // 🔎 Reglas "No verificado" usando los pagos cargados del alumno actualmente abierto
+                          // (solo podemos evaluar para el alumno activo en la modal)
+                          const pagosParaEvaluar =
+                            student.id === currentUserId ? editablePagos : [];
+
+                          const hoy = new Date();
+                          const y = hoy.getFullYear();
+                          const m = hoy.getMonth();
+
+                          const pagosMes = pagosParaEvaluar.filter((p) => {
+                            const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                            return (
+                              f &&
+                              !isNaN(f.getTime()) &&
+                              f.getFullYear() === y &&
+                              f.getMonth() === m &&
+                              v > 0
+                            );
+                          });
+
+                          let etiqueta: 'Al día' | 'En cartera' | 'No verificado' =
+                            esAlDiaBase ? 'Al día' : 'En cartera';
+
+                          if (pagosMes.length > 0) {
+                            const ultimo = [...pagosMes].sort(
+                              (a, b) =>
+                                new Date(String(a.fecha)).getTime() -
+                                new Date(String(b.fecha)).getTime()
+                            )[pagosMes.length - 1];
+
+                            // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
+                            if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                              etiqueta = 'No verificado';
+                            }
+                          }
+
+                          const badgeClass =
+                            etiqueta === 'Al día'
+                              ? 'bg-green-600'
+                              : etiqueta === 'No verificado'
+                                ? 'bg-gray-600'
+                                : 'bg-red-600';
 
                           return (
-                            <td
-                              key={col.id}
-                              className="px-4 py-2 align-top whitespace-nowrap"
-                            >
+                            <td key={col.id} className="px-4 py-2 align-top whitespace-nowrap">
                               <span
-                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${esAlDia ? 'bg-green-600' : 'bg-red-600'
-                                  }`}
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
                                 title={etiqueta}
                               >
                                 {etiqueta}
@@ -2244,6 +2844,7 @@ export default function EnrolledUsersPage() {
                             </td>
                           );
                         }
+
 
                         // 2) columna Último curso
                         if (col.id === 'courseTitle') {
@@ -2954,7 +3555,7 @@ export default function EnrolledUsersPage() {
           </div>
         )}
         {showCarteraModal && currentUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="showCarteraModal fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)] overflow-y-auto rounded-lg bg-white text-gray-900 shadow-2xl dark:bg-gray-800 dark:text-gray-100">
               {/* CABECERA / LOGOS */}
               <div className="border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
@@ -3669,98 +4270,168 @@ export default function EnrolledUsersPage() {
                     </div>
                   </div>
                 )}
-                <div id="printable" className="hidden print:block pointer-events-none">
-                  {currentUser && (
-                    <div className="">
-                      {/* Cabecera */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex gap-2">
-                          <Image
-                            src="/artiefy-logo.png"
-                            alt="Artiefy"
-                            width={48}
-                            height={48}
-                            className="h-12 w-auto"
-                            priority
-                          />
-                          <Image
-                            src="/logo-ponao.png"
-                            alt="PONAO"
-                            width={48}
-                            height={48}
-                            className="h-12 w-auto"
-                          />
-                        </div>
-                        <div className="text-right">
-                          <h3 className="text-lg font-bold">FACTURA PAGO DE MATRÍCULA</h3>
-                          <p className="text-xs">POLITÉCNICO NACIONAL DE ARTES Y OFICIOS</p>
-                        </div>
+                {/* Contenido específico para impresión - agregarlo después del botón imprimir */}
+                <div id="printable-invoice" className="hidden print:block pointer-events-none">
+                  <div className="bg-white text-black p-8">
+                    {/* Cabecera */}
+                    <div className="flex items-center justify-between mb-6 border-b border-black pb-4">
+                      <div className="flex items-center gap-4">
+                        <Image
+                          src="/artiefy-logo.png"
+                          alt="Artiefy"
+                          width={120}
+                          height={36}
+                          className="h-9 w-auto object-contain"
+                          priority
+                        />
+                        <Image
+                          src="/logo-ponao.png"
+                          alt="PONAO"
+                          width={120}
+                          height={36}
+                          className="h-9 w-auto object-contain"
+                        />
                       </div>
-
-                      {/* Info estudiante */}
-                      <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p><strong>NOMBRE:</strong> {currentUser.name}</p>
-                          <p><strong>CC:</strong> {currentUser.document ?? currentUser.id}</p>
-                          <p><strong>CELULAR:</strong> {currentUser.phone}</p>
-                          <p><strong>PROGRAMA:</strong> {userPrograms?.[0]?.title ?? '—'}</p>
-                          <p><strong>FECHA:</strong> {new Date().toISOString().split('T')[0]}</p>
-                        </div>
-                        <div>
-                          <p><strong>DIRECCIÓN:</strong> {currentUser.address}</p>
-                          <p><strong>CIUDAD:</strong> {currentUser.city}</p>
-                          <p><strong>EMAIL:</strong> {currentUser.email}</p>
-                          <p>
-                            <strong>ESTADO:</strong>{' '}
-                            {currentUser.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}
-                          </p>
-                          <p><strong>FIN SUSCRIPCIÓN:</strong> {currentUser.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toISOString().split('T')[0] : '-'}</p>
-                        </div>
-                      </div>
-
-                      {/* Tabla pagos */}
-                      <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead>
-                          <tr>
-                            <th className="border px-2 py-1">PRODUCTO</th>
-                            <th className="border px-2 py-1">N° PAGO</th>
-                            <th className="border px-2 py-1">FECHA DE PAGO</th>
-                            <th className="border px-2 py-1">MÉTODO DE PAGO</th>
-                            <th className="border px-2 py-1 text-right">VALOR</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {editablePagos.map((row, idx) => (
-                            <tr key={idx}>
-                              <td className="border px-2 py-1">{row.concepto ?? `Cuota ${idx + 1}`}</td>
-                              <td className="border px-2 py-1 text-center">{row.nro_pago ?? idx + 1}</td>
-                              <td className="border px-2 py-1">{row.fecha ? new Date(row.fecha).toLocaleDateString() : '-'}</td>
-                              <td className="border px-2 py-1">{row.metodo ?? '-'}</td>
-                              <td className="border px-2 py-1 text-right">{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(row.valor ?? 0))}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-
-                      {/* Totales */}
-                      <div className="mt-4 space-y-2">
-                        <p><strong>PLAN / VALOR PROGRAMA:</strong> {carteraInfo?.planType ?? 'Sin plan'} — {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.programaPrice ?? 0)}</p>
-                        <p><strong>VALOR PAGADO:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.totalPagado ?? 0)}</p>
-                        <p><strong>DEUDA RESTANTE:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(carteraInfo?.deuda ?? 0)}</p>
+                      <div className="text-right">
+                        <p className="text-xs font-semibold tracking-wide text-black">
+                          POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
+                        </p>
+                        <h3 className="text-lg font-bold text-black">FACTURA PAGO DE MATRÍCULA</h3>
                       </div>
                     </div>
-                  )}
+
+                    {/* Info estudiante */}
+                    <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
+                      <div className="space-y-2">
+                        <p className="text-black"><strong>NOMBRE ESTUDIANTE:</strong> {currentUser?.name ?? '-'}</p>
+                        <p className="text-black"><strong>CC:</strong> {currentUser?.document ?? currentUser?.id ?? '-'}</p>
+                        <p className="text-black"><strong>CELULAR:</strong> {currentUser?.phone ?? '-'}</p>
+                        <p className="text-black"><strong>PROGRAMA:</strong> {userPrograms?.[0]?.title ?? '—'}</p>
+                        <p className="text-black"><strong>FECHA:</strong> {new Date().toISOString().split('T')[0]}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-black"><strong>DIRECCIÓN:</strong> {currentUser?.address ?? '-'}</p>
+                        <p className="text-black"><strong>CIUDAD:</strong> {currentUser?.city ?? '-'}</p>
+                        <p className="text-black"><strong>EMAIL:</strong> {currentUser?.email ?? '-'}</p>
+                        <p className="text-black">
+                          <strong>ESTADO:</strong> {estadoCarteraUI}
+                        </p>
+                        <p className="text-black">
+                          <strong>FIN SUSCRIPCIÓN:</strong>{' '}
+                          {currentUser?.subscriptionEndDate
+                            ? new Date(currentUser.subscriptionEndDate).toISOString().split('T')[0]
+                            : '-'
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Tabla de pagos solo con información, sin inputs */}
+                    <table className="w-full border-collapse border border-black text-sm mb-6">
+                      <thead>
+                        <tr className="bg-white">
+                          <th className="border border-black px-3 py-2 text-left text-black font-bold">PRODUCTO</th>
+                          <th className="border border-black px-3 py-2 text-center text-black font-bold">N° PAGO</th>
+                          <th className="border border-black px-3 py-2 text-left text-black font-bold">FECHA DE PAGO</th>
+                          <th className="border border-black px-3 py-2 text-left text-black font-bold">MÉTODO DE PAGO</th>
+                          <th className="border border-black px-3 py-2 text-right text-black font-bold">VALOR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Primero las 12 cuotas */}
+                        {Array.from({ length: 12 }, (_, idx) => {
+                          const cuotaNum = idx + 1;
+                          const row = editablePagos[idx] ?? {};
+                          const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+
+                          return (
+                            <tr key={`print-cuota-${cuotaNum}`} className="bg-white">
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.concepto ?? `Cuota ${cuotaNum}`}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-center text-black">
+                                {row.nro_pago ?? row.nroPago ?? cuotaNum}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.metodo ?? '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-right text-black">
+                                {formatCOP(valor)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {/* Luego los conceptos especiales */}
+                        {[
+                          { label: 'PÓLIZA Y CARNET', idxBase: 12 },
+                          { label: 'UNIFORME', idxBase: 13 },
+                          { label: 'DERECHOS DE GRADO', idxBase: 14 },
+                        ].map(({ label, idxBase }) => {
+                          const row = editablePagos[idxBase] ?? {};
+                          const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+
+                          return (
+                            <tr key={`print-especial-${idxBase}`} className="bg-white">
+                              <td className="border border-black px-3 py-2 text-black font-semibold">
+                                {row.concepto ?? label}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-center text-black">
+                                {idxBase + 1}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.metodo ?? '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-right text-black">
+                                {formatCOP(valor)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+
+                    {/* Totales */}
+                    <div className="border-t border-black pt-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-black">PLAN / VALOR PROGRAMA:</span>
+                        <span className="font-semibold text-black">{formatCOP(price)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-black">VALOR PAGADO:</span>
+                        <span className="font-semibold text-black">{formatCOP(carteraInfo?.totalPagado ?? 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t border-black pt-2">
+                        <span className="font-bold text-black text-lg">DEUDA RESTANTE:</span>
+                        <span className="font-bold text-black text-lg">{formatCOP(carteraInfo?.deuda ?? 0)}</span>
+                      </div>
+                    </div>
+
+                    {/* Pie de página opcional */}
+                    <div className="mt-8 pt-4 border-t border-black text-center text-xs text-black">
+                      <p>Este documento es un comprobante de los pagos registrados</p>
+                      <p>Fecha de impresión: {new Date().toLocaleString('es-CO')}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               {/* FOOTER / BOTONES */}
               <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
-                <button
-                  onClick={() => window.print()}
 
+                <button
+                  onClick={handlePrint}
                   className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                   Imprimir / Guardar PDF
                 </button>
+
+
 
                 <button
                   onClick={() => setShowCarteraModal(false)}
