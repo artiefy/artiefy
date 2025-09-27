@@ -1283,9 +1283,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [isOpen]);
 
   function handleDeleteHistory(
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ): void {
-    event.preventDefault();
+    if (event) event.preventDefault();
     const conversationId = chatMode.idChat;
 
     // Si existe una conversación persistida en BD, pedir al servidor que la elimine
@@ -1537,6 +1537,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     isSignedIn={isSignedIn}
                     inputRef={inputRef as React.RefObject<HTMLInputElement>}
                     renderMessage={renderMessage}
+                    onDeleteHistory={handleDeleteHistory}
                     onBotButtonClick={handleBotButtonClick}
                   />
                 ) : chatMode.status && isSignedIn && chatMode.idChat ? (
@@ -1561,6 +1562,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     isSignedIn={isSignedIn}
                     inputRef={inputRef as React.RefObject<HTMLInputElement>}
                     renderMessage={renderMessage}
+                    onDeleteHistory={handleDeleteHistory}
                     onBotButtonClick={handleBotButtonClick}
                   />
                 ) : (

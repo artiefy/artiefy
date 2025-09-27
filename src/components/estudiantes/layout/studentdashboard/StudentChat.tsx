@@ -62,6 +62,10 @@ interface ChatProps {
     React.SetStateAction<{ selected: boolean; idea: string }>
   >;
   onBotButtonClick?: (action: string) => void; // <-- nueva prop
+  // Permitir que el handler reciba opcionalmente el MouseEvent (o se llame sin args)
+  onDeleteHistory?: (
+    event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => void;
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -86,6 +90,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
     </div>
   ),
   onBotButtonClick,
+  onDeleteHistory,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
@@ -275,6 +280,27 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
   return (
     <>
+      {/* Top bar: botón borrar historial */}
+      <div className="flex items-center justify-end gap-2 border-b bg-white/95 p-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (!onDeleteHistory) return;
+            // confirmación sencilla
+            const ok = window.confirm(
+              '¿Deseas eliminar todo el historial de esta conversación? Esta acción no se puede deshacer.'
+            );
+            if (ok) {
+              onDeleteHistory();
+            }
+          }}
+          className="rounded px-3 py-1 text-sm font-semibold text-red-600 hover:bg-red-50"
+          title="Borrar historial"
+        >
+          Borrar historial
+        </button>
+      </div>
+
       {/* Messages */}
       <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((message, idx) => (
@@ -362,7 +388,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
         )}
         <div ref={messagesEndRef} />
       </div>
-
       {/* Input */}
       <div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
         <form onSubmit={handleSendMessage}>
