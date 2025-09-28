@@ -599,7 +599,12 @@ export default async function StudentListCourses({
 
                 <CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
                   <CardTitle className="text-background rounded text-lg">
-                    <div className="text-primary font-bold">{course.title}</div>
+                    <div
+                      className="text-primary font-bold"
+                      title={course.title}
+                    >
+                      {course.title}
+                    </div>
                   </CardTitle>
                   <div className="flex items-center justify-between">
                     <Badge
@@ -615,7 +620,10 @@ export default async function StudentListCourses({
                       </div>
                     )}
                   </div>
-                  <p className="line-clamp-2 text-sm text-gray-300">
+                  <p
+                    className="line-clamp-2 text-sm text-gray-300"
+                    title={course.description ?? ''}
+                  >
                     {course.description}
                   </p>
                   {/* MOBILE: Modalidad (izq) y tipo de curso (der) en la misma fila */}
