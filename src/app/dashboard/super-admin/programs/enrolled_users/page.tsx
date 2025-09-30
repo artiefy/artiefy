@@ -2268,8 +2268,13 @@ export default function EnrolledUsersPage() {
     field: string,
     value: string
   ) => {
+    console.log('🔧 [updateStudentField] Iniciando actualización:', { userId, field, value });
+
     const student = students.find((s) => s.id === userId);
-    if (!student) return;
+    if (!student) {
+      console.error('❌ [updateStudentField] Estudiante no encontrado:', userId);
+      return;
+    }
 
     const updatedStudent = { ...student };
 
@@ -2292,6 +2297,7 @@ export default function EnrolledUsersPage() {
       userId: updatedStudent.id,
       firstName: firstName || '',
       lastName,
+      email: updatedStudent.email, // 📧 CRÍTICO: Siempre incluir el email
       role: updatedStudent.role ?? 'estudiante',
       status: updatedStudent.subscriptionStatus,
       permissions: [],
@@ -2310,30 +2316,41 @@ export default function EnrolledUsersPage() {
       customFields: updatedStudent.customFields ?? {},
     };
 
+    console.log('📤 [updateStudentField] Payload completo:', JSON.stringify(payload, null, 2));
+    console.log('📧 [updateStudentField] Email en payload:', payload.email);
+
     if (field === 'programTitle') {
       const prog = programs.find((p) => p.title === value);
-      if (prog) payload.programId = Number(prog.id);
+      if (prog) {
+        payload.programId = Number(prog.id);
+        console.log('🎓 [updateStudentField] Programa encontrado:', prog.id);
+      }
     }
 
-    // 5. Si cambió de curso, añadimos courseId
     if (field === 'courseTitle') {
       const curso = availableCourses.find((c) => c.title === value);
-      if (curso) payload.courseId = Number(curso.id);
+      if (curso) {
+        payload.courseId = Number(curso.id);
+        console.log('📚 [updateStudentField] Curso encontrado:', curso.id);
+      }
     }
 
+    console.log('🚀 [updateStudentField] Enviando request a API...');
     const res = await fetch('/api/super-admin/udateUser/updateUserDinamic', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
+    console.log('📡 [updateStudentField] Response status:', res.status);
+
     if (!res.ok) {
       const data: unknown = await res.json();
-      if (!res.ok) {
-        const errorData = errorResponseSchema.parse(data);
-        alert(`❌ Error al guardar: ${errorData.error}`);
-      }
+      const errorData = errorResponseSchema.parse(data);
+      console.error('❌ [updateStudentField] Error del servidor:', errorData.error);
+      alert(`❌ Error al guardar: ${errorData.error}`);
     } else {
+      console.log('✅ [updateStudentField] Actualización exitosa');
       setStudents((prev) =>
         prev.map((s) => (s.id === userId ? updatedStudent : s))
       );
