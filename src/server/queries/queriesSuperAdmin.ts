@@ -18,6 +18,8 @@ import {
 
 import type { BaseCourse, Program } from '~/types';
 
+
+
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
   const day = String(date.getDate()).padStart(2, '0');
@@ -59,13 +61,13 @@ export async function getAdminUsers(query: string | undefined) {
 
   const filteredUsers = query
     ? users.filter(
-        (user) =>
-          (user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-          (user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-          user.emailAddresses.some((email) =>
-            email.emailAddress.toLowerCase().includes(query.toLowerCase())
-          )
-      )
+      (user) =>
+        (user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+        (user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+        user.emailAddresses.some((email) =>
+          email.emailAddress.toLowerCase().includes(query.toLowerCase())
+        )
+    )
     : users;
 
   const simplifiedUsers = filteredUsers.map((user) => ({
@@ -489,11 +491,11 @@ export const getProgramById = async (id: string) => {
     courseid: materia.curso?.id ?? 0,
     curso: materia.curso
       ? {
-          ...materia.curso,
-          Nivelid: materia.curso.nivelid,
-          totalStudents: enrollmentCount,
-          lessons: [],
-        }
+        ...materia.curso,
+        Nivelid: materia.curso.nivelid,
+        totalStudents: enrollmentCount,
+        lessons: [],
+      }
       : undefined, // Ahora sí encaja con curso: BaseCourse | undefined
   }));
 
@@ -587,12 +589,13 @@ export async function deleteProgram(programId: number): Promise<void> {
   await db.delete(programas).where(eq(programas.id, programId)).execute();
 }
 
-export {};
+export { };
 
 export interface FullUserUpdateInput {
   userId: string;
   firstName: string;
   lastName: string;
+  email: string; // 📧 Campo de email (requerido)
   role: string;
   status: string;
   permissions: string[];
@@ -630,6 +633,7 @@ export async function updateFullUser(
     lastName,
     role,
     status,
+    email,
     permissions,
     phone,
     address,
@@ -672,27 +676,51 @@ export async function updateFullUser(
 
   const formattedEndDate = formatDateForClerk(subscriptionEndDate);
 
-  const newMetadata = {
-    ...existingMetadata,
-    role: (role || 'estudiante') as
-      | 'admin'
-      | 'educador'
-      | 'super-admin'
-      | 'estudiante',
-    planType: planType ?? 'none',
-    subscriptionStatus: normalizedStatus,
-    subscriptionEndDate: formattedEndDate,
-    permissions: Array.isArray(permissions) ? permissions : [],
-  };
+
 
   try {
     if (userExistsInClerk) {
-      await client.users.updateUser(userId, {
-        firstName,
-        lastName,
-        publicMetadata: newMetadata,
-      });
+      // (opcional) sanear metadata para evitar 422
+      const newMetadataRaw = {
+        ...existingMetadata,
+        role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+        planType: planType ?? 'none',
+        subscriptionStatus: normalizedStatus,
+        subscriptionEndDate: formattedEndDate ?? null,
+        permissions: Array.isArray(permissions) ? permissions : [],
+      };
+      const safeMetadata = JSON.parse(JSON.stringify(newMetadataRaw));
+
+      // 1) Actualiza nombre
+      await client.users.updateUser(userId, { firstName, lastName });
+
+      // 2) Marca el email como verificado y primario (como en la UI)
+      if (email) {
+        const u = await client.users.getUser(userId);
+        const target = email.toLowerCase();
+        const ea = u.emailAddresses.find(e => e.emailAddress.toLowerCase() === target);
+
+        if (ea) {
+          // ✅ ya existe: hazlo verificado y primario
+          await client.emailAddresses.updateEmailAddress(ea.id, {
+            verified: true,
+            primary: true,
+          });
+        } else {
+          // ✅ no existe: créalo directamente como verificado y primario
+          await client.emailAddresses.createEmailAddress({
+            userId,
+            emailAddress: email,
+            verified: true,
+            primary: true,
+          });
+        }
+      }
+
+      // 3) Metadata
+      await client.users.updateUser(userId, { publicMetadata: safeMetadata });
     }
+
 
     await db
       .update(users)
@@ -715,6 +743,8 @@ export async function updateFullUser(
           ? new Date(formattedEndDate)
           : null,
         updatedAt: new Date(),
+        email: email,
+
       })
       .where(eq(users.id, userId));
 
@@ -846,6 +876,7 @@ export async function updateMultipleUsers(
       userId,
       firstName: user.name?.split(' ')[0] ?? 'Usuario',
       lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
+      email: user.email ?? '', // <-- Add email property from user object
       role: user.role ?? 'estudiante',
       status: input.status ?? user.subscriptionStatus ?? 'active',
       permissions: input.permissions ?? [],
