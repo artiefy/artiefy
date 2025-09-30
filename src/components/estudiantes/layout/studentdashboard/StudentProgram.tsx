@@ -48,12 +48,18 @@ export function StudentProgram({ program }: StudenProgramProps) {
         <CardContent className="flex grow flex-col justify-between space-y-0.5 px-6 sm:space-y-4">
           <div className="flex min-h-[90px] flex-col space-y-2 sm:min-h-[120px] sm:space-y-4">
             <div>
-              <h3 className="text-primary line-clamp-2 text-xs font-bold sm:-mb-2 sm:text-lg">
+              <h3
+                className="text-primary line-clamp-2 text-xs font-bold sm:-mb-2 sm:text-lg"
+                title={program.title}
+              >
                 {program.title}
               </h3>
             </div>
             <div>
-              <p className="line-clamp-2 text-xs text-gray-300 sm:text-sm">
+              <p
+                className="line-clamp-2 text-xs text-gray-300 sm:text-sm"
+                title={program.description ?? ''}
+              >
                 {program.description}
               </p>
             </div>

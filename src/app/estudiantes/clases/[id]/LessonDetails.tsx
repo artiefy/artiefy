@@ -408,8 +408,8 @@ export default function LessonDetails({
     }
   }, [lesson, isVideoCompleted]);
 
-  // Update handleNavigationClick to use await y solo navegar si la clase destino está desbloqueada
-  const handleNavigationClick = async (direction: 'prev' | 'next') => {
+  // Update handleNavigationClick to remove async
+  const handleNavigationClick = (direction: 'prev' | 'next') => {
     if (isNavigating) return;
     const sortedLessons = sortLessons(lessonsState);
     const currentIndex = sortedLessons.findIndex(
@@ -430,15 +430,14 @@ export default function LessonDetails({
 
     // Solo navegar si la clase destino está desbloqueada
     if (targetLesson && !targetLesson.isLocked) {
-      await navigateWithProgress(targetLesson.id);
+      navigateWithProgress(targetLesson.id);
     }
   };
 
-  // Update handleCardClick to use await
-  const handleCardClick = async (targetId: number) => {
+  // Update handleCardClick to remove await and Promise.resolve
+  const handleCardClick = (targetId: number) => {
     if (!isNavigating && targetId !== selectedLessonId) {
-      // Convert to Promise
-      await Promise.resolve(navigateWithProgress(targetId));
+      navigateWithProgress(targetId);
     }
   };
 
@@ -448,7 +447,7 @@ export default function LessonDetails({
   }, [searchParams, stop]);
 
   // Helper function for navigation with progress
-  const navigateWithProgress = async (targetId: number) => {
+  const navigateWithProgress = (targetId: number) => {
     if (isNavigating) return;
 
     setIsNavigating(true);
@@ -456,19 +455,11 @@ export default function LessonDetails({
 
     try {
       saveScrollPosition();
-      const navigationPromise = router.push(`/estudiantes/clases/${targetId}`);
       setSelectedLessonId(targetId);
-
-      // Create and resolve a Promise for state updates
-      await Promise.all([
-        navigationPromise,
-        new Promise<void>((resolve) => {
-          setProgress(0);
-          setIsVideoCompleted(false);
-          setIsActivityCompleted(false);
-          resolve();
-        }),
-      ]);
+      setProgress(0);
+      setIsVideoCompleted(false);
+      setIsActivityCompleted(false);
+      router.push(`/estudiantes/clases/${targetId}`);
     } finally {
       stop();
       setIsNavigating(false);

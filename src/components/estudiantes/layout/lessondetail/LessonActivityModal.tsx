@@ -160,9 +160,6 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
-// Add a description ID constant
-const MODAL_DESCRIPTION_ID = 'activity-modal-description';
-
 // Add interfaces for submission tabs
 interface SubmissionTab {
   id: 'local' | 'drive';
@@ -1557,6 +1554,7 @@ export function LessonActivityModal({
                         >
                           <input
                             type="file"
+                            aria-label="Seleccionar archivo para subir"
                             className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
                             onChange={(e) => {
                               if (e.target.files?.[0]) {
@@ -1564,6 +1562,7 @@ export function LessonActivityModal({
                               }
                             }}
                             disabled={!!uploadedFileInfo}
+                            tabIndex={0}
                           />
                           <div className="space-y-6 text-center">
                             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
@@ -1825,6 +1824,10 @@ export function LessonActivityModal({
     );
   }
 
+  // Añade id para el título y descripción accesibles
+  const modalTitleId = 'activity-modal-title';
+  const modalDescId = 'activity-modal-description';
+
   return (
     <Dialog
       open={isOpen}
@@ -1835,38 +1838,62 @@ export function LessonActivityModal({
       }}
     >
       <DialogContent
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={modalTitleId}
+        aria-describedby={modalDescId}
         className={`[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex flex-col overflow-hidden ${
           isMobile
             ? 'w-full max-w-full rounded-none p-1'
             : 'max-h-[90vh] sm:max-w-[500px]'
         }`}
-        aria-describedby={MODAL_DESCRIPTION_ID}
       >
         {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
         <button
           type="button"
-          aria-label="Cerrar"
+          aria-label="Cerrar modal"
           onClick={handleRequestClose}
           className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
         >
           <XMarkIcon className="h-6 w-6 text-white" />
         </button>
         <DialogHeader className="bg-background sticky top-0 z-40">
-          <DialogTitle className="text-center text-3xl font-bold">
+          <DialogTitle
+            id={modalTitleId}
+            className="text-center text-3xl font-bold"
+            tabIndex={0}
+          >
             {activity.content?.questionsFilesSubida?.[0] != null
               ? 'SUBIDA DE DOCUMENTO'
               : 'ACTIVIDAD'}
           </DialogTitle>
-          <div id={MODAL_DESCRIPTION_ID} className="sr-only">
+          <div
+            id={modalDescId}
+            className="sr-only"
+            aria-live="polite"
+            tabIndex={0}
+          >
             {activity.description ?? 'Actividad del curso'}
           </div>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-4">
-          {isUnlocking
-            ? renderLoadingState('Desbloqueando Siguiente Clase...')
-            : isSavingResults
-              ? renderLoadingState('Cargando Resultados...')
-              : renderContent()}
+          {isUnlocking ? (
+            <>
+              <div aria-live="assertive" className="sr-only">
+                Desbloqueando Siguiente Clase...
+              </div>
+              {renderLoadingState('Desbloqueando Siguiente Clase...')}
+            </>
+          ) : isSavingResults ? (
+            <>
+              <div aria-live="assertive" className="sr-only">
+                Cargando Resultados...
+              </div>
+              {renderLoadingState('Cargando Resultados...')}
+            </>
+          ) : (
+            renderContent()
+          )}
         </div>
       </DialogContent>
     </Dialog>

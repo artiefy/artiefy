@@ -87,7 +87,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint @eslint/eslintrc typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier @types/react @eslint/js @types/node eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort globals dotenv`: Dependencias para que funcione el archivo eslint.config.mjs
+10. `npm install --save-dev eslint typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort globals`: Dependencias para que funcione el archivo eslint.config.mjs
 11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
 12. `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 
@@ -143,7 +143,7 @@ Tutorial UPDATE DEPENDENCIES:
 14. `npx @clerk/upgrade -g` // Instala la última versión de Clerk para Next.js 2
 15. `npm install drizzle-orm@latest` // Instala la última versión de Drizzle ORM
 16. `npx @next/codemod@canary upgrade latest` // Ayuda a actualizar tu código para que sea compatible con la última versión de Next.js
-17. `npm i next@latest react@latest react-dom@latest eslint-config-next@latest` // Este comando instala las últimas versiones estables de los paquetes core necesarios para Next.js
+17. `npm i next@latest react@latest react-dom@latest` // Este comando instala las últimas versiones estables de los paquetes core necesarios para Next.js
 
 ---
 

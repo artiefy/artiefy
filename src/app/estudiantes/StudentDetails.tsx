@@ -293,6 +293,7 @@ export default function StudentDetails({
             </div>
 
             <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+              {/* Carousel grande - Featured Courses */}
               {latestFiveCourses.length > 0 ? (
                 latestFiveCourses.map((course, index) => (
                   <div
@@ -324,7 +325,10 @@ export default function StudentDetails({
                       >
                         {/* Mobile view (sm:hidden) */}
                         <div className="flex flex-col space-y-2 sm:hidden">
-                          <h2 className="line-clamp-2 text-xl font-semibold">
+                          <h2
+                            className="line-clamp-2 text-xl font-semibold"
+                            title={course.title}
+                          >
                             {course.title}
                           </h2>
                           <div className="flex items-center justify-between">
@@ -365,7 +369,10 @@ export default function StudentDetails({
 
                         {/* Desktop view (hidden sm:block) */}
                         <div className="hidden sm:block">
-                          <h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
+                          <h2
+                            className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl"
+                            title={course.title}
+                          >
                             {course.title}
                           </h2>
                           <Badge
@@ -374,7 +381,10 @@ export default function StudentDetails({
                           >
                             {course.category?.name ?? 'Sin categoría'}
                           </Badge>
-                          <p className="mb-2 line-clamp-2 text-sm sm:text-base">
+                          <p
+                            className="mb-2 line-clamp-2 text-sm sm:text-base"
+                            title={course.description ?? ''}
+                          >
                             {truncateDescription(course.description ?? '', 150)}
                           </p>
                           <p className="mb-1 text-sm font-bold sm:text-base">
@@ -469,7 +479,10 @@ export default function StudentDetails({
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
                               <Link href={`/estudiantes/cursos/${course.id}`}>
-                                <h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
+                                <h3
+                                  className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg"
+                                  title={course.title}
+                                >
                                   {course.title}
                                 </h3>
                               </Link>
