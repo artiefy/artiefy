@@ -94,7 +94,7 @@ const getContrastYIQ = (hexcolor: string) => {
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
   const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  const yiq = (r * 29 + g * 587 + b * 14) / 1000;
   return yiq >= 128 ? 'black' : 'white';
 };
 
@@ -108,7 +108,22 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
+  const [color, setColor] = useState<string>('#1f2937'); // Estado del color
+  const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores rápidos
+
+  const handlePredefinedColorChange = (v: string) => {
+    setColor(v);
+    localStorage.setItem(`selectedColor_${courseIdNumber}`, v);
+  };
+
+  type ColorChangeEvent =
+    React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+
+  const handleCustomColorChange = (e: ColorChangeEvent) => {
+    const v = e.currentTarget.value;
+    setColor(v);
+    localStorage.setItem(`selectedColor_${courseIdNumber}`, v);
+  };
   const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
   const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 
@@ -417,6 +432,34 @@ const Page: React.FC = () => {
               Perteneciente a la clase: {actividad.lesson?.title}
             </h3>
           </div>
+          {/* Selector de color del contenedor */}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium">Color de fondo:</span>
+
+            {/* Color personalizado */}
+            <input
+              type="color"
+              value={color}
+              onChange={handleCustomColorChange}
+              className="h-8 w-10 cursor-pointer rounded border p-0"
+              aria-label="Elegir color de fondo"
+            />
+
+            {/* Atajos de colores predefinidos */}
+            <div className="flex items-center gap-2">
+              {predefinedColors.map((c) => (
+                <Button
+                  key={c}
+                  type="button"
+                  onClick={() => handlePredefinedColorChange(c)}
+                  style={{ backgroundColor: c }}
+                  className="size-8 rounded border"
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
             <div className="space-y-5 text-lg">
               <p className="font-semibold">
@@ -486,7 +529,7 @@ const Page: React.FC = () => {
             </Link>
 
             <Link
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
+              href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
               className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
             >
               Editar Actividad

@@ -203,9 +203,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       variables = [],
       ensureSession,            // opcional (override)
       autoSession = true,       // auto por defecto
-      sessionTemplate = 'hello_world',
-      sessionLanguage = 'en_US',
+      sessionTemplate = 'bienvenida', // 👈 usa bienvenida por defecto
+      sessionLanguage = 'es_ES',      // 👈 idioma por defecto español
     } = body;
+
 
     if (!to) {
       return NextResponse.json(
@@ -236,16 +237,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           language: { code: languageCode ?? 'en_US' },
           ...(variables.length > 0
             ? {
-                components: [
-                  {
-                    type: 'body',
-                    parameters: variables.map<TemplateParameter>((v) => ({
-                      type: 'text',
-                      text: v,
-                    })),
-                  },
-                ],
-              }
+              components: [
+                {
+                  type: 'body',
+                  parameters: variables.map<TemplateParameter>((v) => ({
+                    type: 'text',
+                    text: v,
+                  })),
+                },
+              ],
+            }
             : {}),
         },
       };
@@ -370,11 +371,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // si no nos pasan replyTo, intenta citar el último inbound
-// body ya debe estar tipado como PostBody
-const replyTo: string | undefined =
-  typeof body.replyTo === 'string' ? body.replyTo : undefined;
+    // body ya debe estar tipado como PostBody
+    const replyTo: string | undefined =
+      typeof body.replyTo === 'string' ? body.replyTo : undefined;
 
-// si usas alias autoSession desde el front, unifícalo aquí:
+    // si usas alias autoSession desde el front, unifícalo aquí:
 
     const payloadText: TextPayload = {
       messaging_product: 'whatsapp',
@@ -400,19 +401,19 @@ const replyTo: string | undefined =
     });
 
     const metaId = textResp.messages?.[0]?.id;
-try {
-  await db.insert(waMessages).values({
-    metaMessageId: metaId,
-    waid: to,
-    direction: 'outbound',
-    msgType: 'text',
-    body: text,
-    tsMs: Date.now(),
-    raw: textResp as object,
-  });
-} catch (e) {
-  console.error('[WA][DB] No se pudo guardar OUTBOUND:', e);
-}
+    try {
+      await db.insert(waMessages).values({
+        metaMessageId: metaId,
+        waid: to,
+        direction: 'outbound',
+        msgType: 'text',
+        body: text,
+        tsMs: Date.now(),
+        raw: textResp as object,
+      });
+    } catch (e) {
+      console.error('[WA][DB] No se pudo guardar OUTBOUND:', e);
+    }
 
     return NextResponse.json({
       success: true,

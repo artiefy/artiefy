@@ -25,12 +25,26 @@ interface ApiInboxResponse {
   total?: number;
 }
 
+interface UiTemplate {
+  name: string;
+  label: string;
+  language: 'es' | 'en';
+  langCode: string;
+  body: string;
+  example: string[];
+  status: string;
+}
+
 interface Thread {
   waid: string;
   name?: string | null;
   lastTs: number;
   lastText?: string;
   items: InboxItem[];
+  firstTs: number;
+  isNew24h: boolean;
+  remainingMs: number;
+  isAlmostExpired: boolean;
 }
 
 function MediaMessage({ item }: { item: InboxItem }) {
@@ -49,10 +63,11 @@ function MediaMessage({ item }: { item: InboxItem }) {
           <Image
             src={src}
             alt={item.fileName ?? "Imagen"}
-            width={500}   // ⚠️ requerido en next/image
-            height={300}  // ⚠️ requerido en next/image
+            width={500}
+            height={300}
             className="max-h-72 rounded-lg"
-          />          {caption}
+          />
+          {caption}
           <a href={downloadHref} className="inline-flex items-center gap-1 text-xs underline">
             Descargar
           </a>
@@ -98,8 +113,6 @@ function MediaMessage({ item }: { item: InboxItem }) {
   }
 }
 
-
-
 export default function WhatsAppInboxPage() {
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [compose, setCompose] = useState<Record<string, string>>({});
@@ -109,11 +122,49 @@ export default function WhatsAppInboxPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileCaption, setFileCaption] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showTplModal, setShowTplModal] = useState(false);
+  const [tplLoading, setTplLoading] = useState(false);
+  const [tplError, setTplError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<UiTemplate[]>([]);
+  const [tplSelected, setTplSelected] = useState<UiTemplate | null>(null);
+
+  const getInitialHiddenWaids = (): Set<string> => {
+    try {
+      // Evita acceder a sessionStorage en SSR
+      if (typeof window === 'undefined') return new Set();
+
+      const saved = sessionStorage.getItem('wa_hidden_chats');
+      if (!saved) return new Set();
+
+      const parsed: unknown = JSON.parse(saved);
+
+      if (Array.isArray(parsed) && parsed.every((v): v is string => typeof v === 'string')) {
+        return new Set(parsed);
+      }
+
+      // Si el contenido no es un string[], ignóralo
+      return new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  const [hiddenWaids, setHiddenWaids] = useState<Set<string>>(getInitialHiddenWaids);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem('wa_hidden_chats', JSON.stringify(Array.from(hiddenWaids)));
+  }, [hiddenWaids]);
+
+
+  const [filterName, setFilterName] = useState('');
+  const [filterFrom, setFilterFrom] = useState<string>('');
+  const [filterTo, setFilterTo] = useState<string>('');
+  const [filterHours, setFilterHours] = useState<string>('');
+  const [filterWindow, setFilterWindow] = useState<'all' | 'active24' | 'almost' | 'expired'>('all');
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Agrupar por chat (wa_id)
   const threads = useMemo<Thread[]>(() => {
     const map = new Map<string, InboxItem[]>();
     for (const it of inbox) {
@@ -121,28 +172,69 @@ export default function WhatsAppInboxPage() {
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(it);
     }
+
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+
     const list: Thread[] = [];
     for (const [waid, items] of map.entries()) {
       const sorted = items.slice().sort((a, b) => a.timestamp - b.timestamp);
+      const first = sorted[0];
       const last = sorted[sorted.length - 1];
       const name =
         sorted.find((x) => x.name)?.name ??
         sorted.find((x) => x.from)?.from ??
         undefined;
+
+      const lastInbound = sorted.slice().reverse().find((msg) => msg.direction === 'inbound');
+      const lastInboundTs = lastInbound?.timestamp ?? 0;
+
+      const firstTs = first?.timestamp ?? 0;
+      const elapsed = lastInboundTs ? now - lastInboundTs : Number.POSITIVE_INFINITY;
+      const remainingMs = Math.max(0, ONE_DAY - elapsed);
+      const isNew24h = remainingMs > 0;
+      const isAlmostExpired = isNew24h && remainingMs <= TWO_HOURS;
+
       list.push({
         waid,
         name,
         lastTs: last?.timestamp ?? 0,
         lastText: last?.text ?? '',
         items: sorted,
+        firstTs,
+        isNew24h,
+        remainingMs,
+        isAlmostExpired,
       });
     }
     return list.sort((a, b) => b.lastTs - a.lastTs);
   }, [inbox]);
 
-  // Selección inicial y persistencia
+  const filteredThreads = useMemo(() => {
+    const name = filterName.trim().toLowerCase();
+    const fromMs = filterFrom ? new Date(filterFrom).setHours(0, 0, 0, 0) : null;
+    const toMs = filterTo ? new Date(filterTo).setHours(23, 59, 59, 999) : null;
+    const withinHours = filterHours ? Number(filterHours) : null;
+    const now = Date.now();
+
+    return threads.filter((t) => {
+      if (hiddenWaids.has(t.waid)) return false;
+      if (name && !(`${t.name ?? ''} ${t.waid}`.toLowerCase().includes(name))) return false;
+      if (fromMs !== null && t.lastTs < fromMs) return false;
+      if (toMs !== null && t.lastTs > toMs) return false;
+      if (withinHours !== null && withinHours > 0) {
+        if (now - t.lastTs > withinHours * 3600 * 1000) return false;
+      }
+      if (filterWindow === 'active24' && !t.isNew24h) return false;
+      if (filterWindow === 'almost' && !t.isAlmostExpired) return false;
+      if (filterWindow === 'expired' && t.isNew24h) return false;
+      return true;
+    });
+  }, [threads, filterName, filterFrom, filterTo, filterHours, filterWindow, hiddenWaids]);
+
   useEffect(() => {
-    const saved = localStorage.getItem('wa_selected_chat');
+    const saved = sessionStorage.getItem('wa_selected_chat');
     if (saved) {
       setSelected(saved);
       setShowList(false);
@@ -151,10 +243,9 @@ export default function WhatsAppInboxPage() {
 
   useEffect(() => {
     if (!selected && threads.length) setSelected(threads[0].waid);
-    if (selected) localStorage.setItem('wa_selected_chat', selected);
+    if (selected) sessionStorage.setItem('wa_selected_chat', selected);
   }, [threads, selected]);
 
-  // Carga + polling
   useEffect(() => {
     let cancel = false;
     const load = async () => {
@@ -176,7 +267,6 @@ export default function WhatsAppInboxPage() {
     };
   }, []);
 
-  // Autoscroll al final cuando cambian mensajes del chat activo
   const activeItems = useMemo(
     () => threads.find((t) => t.waid === (selected ?? ''))?.items ?? [],
     [threads, selected]
@@ -187,7 +277,6 @@ export default function WhatsAppInboxPage() {
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 9999;
   }, [activeItems.length]);
 
-  // Helpers UI
   const fmtTime = (ts: number) =>
     new Date(ts).toLocaleString(undefined, {
       hour: '2-digit',
@@ -196,6 +285,18 @@ export default function WhatsAppInboxPage() {
       month: '2-digit',
     });
 
+  const fmtDuration = (ms: number) => {
+    const totalMin = Math.max(0, Math.floor(ms / 60000));
+    const d = Math.floor(totalMin / (60 * 24));
+    const h = Math.floor((totalMin % (60 * 24)) / 60);
+    const m = totalMin % 60;
+    const parts: string[] = [];
+    if (d) parts.push(`${d}d`);
+    if (h) parts.push(`${h}h`);
+    if (m || parts.length === 0) parts.push(`${m}m`);
+    return parts.join(' ');
+  };
+
   const lastInboundId = (waid: string) =>
     threads
       .find((t) => t.waid === waid)
@@ -203,7 +304,6 @@ export default function WhatsAppInboxPage() {
       .reverse()
       .find((m) => m.direction === 'inbound' && m.id)?.id;
 
-  // Enviar archivo
   const handleFileUpload = async (waid: string) => {
     if (!selectedFile) return;
 
@@ -227,7 +327,6 @@ export default function WhatsAppInboxPage() {
         throw new Error(errMsg);
       }
 
-      // Limpiar selección
       setSelectedFile(null);
       setFileCaption('');
       if (fileInputRef.current) {
@@ -243,7 +342,6 @@ export default function WhatsAppInboxPage() {
     }
   };
 
-  // Enviar texto
   const handleSend = async (waid: string) => {
     const text = (compose[waid] || '').trim();
     if (!text) return;
@@ -277,7 +375,6 @@ export default function WhatsAppInboxPage() {
         throw new Error(errMsg);
       }
 
-      // Optimista
       setInbox((prev) => [
         {
           id: 'local-' + Date.now(),
@@ -299,6 +396,116 @@ export default function WhatsAppInboxPage() {
     }
   };
 
+  const openTemplatePicker = async () => {
+    try {
+      setTplError(null);
+      setShowTplModal(true);
+      setTplLoading(true);
+
+      const res = await fetch('/api/super-admin/whatsapp', { method: 'GET' });
+      const data = (await res.json()) as { templates?: UiTemplate[] };
+
+      const list = Array.isArray(data.templates)
+        ? data.templates.filter((t) => t.status === 'APPROVED')
+        : [];
+
+      setTemplates(list);
+
+      const prefer =
+        list.find((t) => t.name.toLowerCase() === 'bienvenida') ??
+        list.find((t) => t.name.toLowerCase() === 'hello_world') ??
+        list[0] ??
+        null;
+
+      setTplSelected(prefer);
+    } catch (_e) {
+      setTplError('No se pudieron cargar las plantillas');
+    } finally {
+      setTplLoading(false);
+    }
+  };
+
+  const sendWithTemplateThenText = async (waid: string) => {
+    if (!tplSelected) return;
+    const text = (compose[waid] || '').trim();
+    try {
+      setSending(waid);
+      const replyToId = lastInboundId(waid);
+
+      const now = Date.now();
+      const localTplId = 'local-tpl-' + now;
+      setInbox((prev) => [
+        {
+          id: localTplId,
+          direction: 'outbound',
+          timestamp: now,
+          to: waid,
+          type: 'template',
+          text: `[TPL] ${tplSelected.name}/${tplSelected.langCode}`,
+        },
+        ...prev,
+      ]);
+
+      const res = await fetch('/api/super-admin/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: waid,
+          text,
+          autoSession: true,
+          replyTo: replyToId,
+          sessionTemplate: tplSelected.name,
+          sessionLanguage: tplSelected.langCode,
+        }),
+      });
+
+      const body = (await res.json().catch(() => ({}))) as {
+        templateOpened?: { messages?: { id?: string }[] };
+        textMessage?: unknown;
+        step?: string;
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setInbox((prev) => prev.filter((m) => m.id !== localTplId));
+        const errMsg =
+          (typeof body?.error === 'string' && body.error.trim()) ||
+          `Error enviando WhatsApp (HTTP ${res.status})`;
+        throw new Error(errMsg);
+      }
+
+      const metaTplId = body?.templateOpened?.messages?.[0]?.id;
+      if (metaTplId) {
+        setInbox((prev) =>
+          prev.map((m) => (m.id === localTplId ? { ...m, id: metaTplId } : m))
+        );
+      }
+
+      if (text) {
+        setInbox((prev) => [
+          {
+            id: 'local-' + Date.now(),
+            direction: 'outbound',
+            timestamp: Date.now(),
+            to: waid,
+            type: 'text',
+            text,
+          },
+          ...prev,
+        ]);
+        setCompose((p) => ({ ...p, [waid]: '' }));
+      }
+
+      setShowTplModal(false);
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'No se pudo enviar el WhatsApp');
+    } finally {
+      setSending(null);
+    }
+  };
+
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -309,8 +516,7 @@ export default function WhatsAppInboxPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tamaño (máximo 64MB para WhatsApp)
-      const maxSize = 64 * 1024 * 1024; // 64MB
+      const maxSize = 64 * 1024 * 1024;
       if (file.size > maxSize) {
         alert('El archivo es demasiado grande. El tamaño máximo es 64MB.');
         return;
@@ -327,6 +533,23 @@ export default function WhatsAppInboxPage() {
     }
   };
 
+  const hideConversation = (waid: string) => {
+    const newHidden = new Set(hiddenWaids);
+    newHidden.add(waid);
+    setHiddenWaids(newHidden);
+    sessionStorage.setItem('wa_hidden_chats', JSON.stringify([...newHidden]));
+
+    if (selected === waid) {
+      const remaining = filteredThreads.filter(t => t.waid !== waid);
+      setSelected(remaining[0]?.waid ?? null);
+    }
+  };
+
+  const restoreAllConversations = () => {
+    setHiddenWaids(new Set());
+    sessionStorage.removeItem('wa_hidden_chats');
+  };
+
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
     if (file.type.startsWith('video/')) return <Video className="h-4 w-4" />;
@@ -336,48 +559,159 @@ export default function WhatsAppInboxPage() {
 
   return (
     <div className="flex h-[calc(100vh-80px)] min-h-[560px] w-full overflow-hidden rounded-lg border border-gray-800 bg-[#0B141A]">
-      {/* Sidebar chats (oscuro) */}
       <aside
-        className={`w-full md:w-80 border-r border-gray-800 bg-[#111B21] text-gray-200 ${showList ? 'block' : 'hidden md:block'
-          }`}
+        className={`w-full md:w-80 border-r border-gray-800 bg-[#111B21] text-gray-200 ${showList ? 'block' : 'hidden md:block'}`}
       >
-        <div className="px-4 py-3 text-lg font-semibold text-gray-100">WhatsApp Inbox</div>
-        <div className="max-h-[calc(100%-48px)] overflow-y-auto">
-          {threads.length === 0 && (
-            <div className="p-4 text-sm text-[#8696A0]">Sin conversaciones aún.</div>
-          )}
-          {threads.map((t) => (
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="text-lg font-semibold text-gray-100">WhatsApp Inbox</div>
+          {hiddenWaids.size > 0 && (
             <button
-              key={t.waid}
-              onClick={() => {
-                setSelected(t.waid);
-                setShowList(false);
-              }}
-              className={`block w-full px-4 py-3 text-left transition-colors ${selected === t.waid ? 'bg-[#2A3942]' : 'hover:bg-[#202C33]'
-                }`}
+              onClick={restoreAllConversations}
+              className="text-xs text-emerald-400 hover:text-emerald-300 underline"
+              title={`Restaurar ${hiddenWaids.size} conversación(es) oculta(s)`}
             >
-              <div className="flex items-baseline justify-between">
-                <div className="truncate font-medium text-gray-100">
-                  {t.name ?? t.waid}
-                  <span className="ml-2 text-xs text-[#8696A0]">({t.waid})</span>
-                </div>
-                <div className="ml-2 shrink-0 text-xs text-[#8696A0]">
-                  {t.lastTs ? fmtTime(t.lastTs) : ''}
-                </div>
-              </div>
-              <div className="mt-1 truncate text-sm text-[#8696A0]">
-                {t.lastText ?? '(sin texto)'}
-              </div>
+              Restaurar ({hiddenWaids.size})
             </button>
+          )}
+        </div>
+
+        <div className="px-4 pb-3 pt-1 space-y-2 text-xs text-[#8696A0] border-b border-gray-800">
+          <input
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
+            placeholder="Buscar por nombre o WAID"
+            className="w-full rounded bg-[#202C33] px-3 py-2 text-gray-100 placeholder-[#8696A0] border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              value={filterFrom}
+              onChange={(e) => setFilterFrom(e.target.value)}
+              className="rounded bg-[#202C33] px-2 py-2 text-gray-100 border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              title="Desde (fecha)"
+            />
+            <input
+              type="date"
+              value={filterTo}
+              onChange={(e) => setFilterTo(e.target.value)}
+              className="rounded bg-[#202C33] px-2 py-2 text-gray-100 border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              title="Hasta (fecha)"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              min={0}
+              value={filterHours}
+              onChange={(e) => setFilterHours(e.target.value)}
+              placeholder="Últimas (h)"
+              className="rounded bg-[#202C33] px-2 py-2 text-gray-100 placeholder-[#8696A0] border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              title="Filtrar por últimas N horas"
+            />
+            <select
+              value={filterWindow}
+              onChange={(e) => setFilterWindow(e.target.value as typeof filterWindow)}
+              className="rounded bg-[#202C33] px-2 py-2 text-gray-100 border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              title="Estado de ventana 24h"
+            >
+              <option value="all">Todos</option>
+              <option value="active24">Activos (≤24h)</option>
+              <option value="almost">Falta poco (≤2h)</option>
+              <option value="expired">Expirados (&gt;24h)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="max-h-[calc(100%-180px)] overflow-y-auto">
+          {filteredThreads.length === 0 && (
+            <div className="p-4 text-sm text-[#8696A0]">Sin conversaciones que coincidan con el filtro.</div>
+          )}
+          {filteredThreads.map((t) => (
+            <div
+              key={t.waid}
+              className={`group relative flex w-full transition-colors ${selected === t.waid ? 'bg-[#2A3942]' : 'hover:bg-[#202C33]'}`}
+            >
+              <button
+                onClick={() => {
+                  setSelected(t.waid);
+                  setShowList(false);
+                }}
+                className="flex-1 px-4 py-3 text-left"
+              >
+                <div className="flex items-baseline justify-between pr-8">
+                  <div className="truncate font-medium text-gray-100">
+                    {t.name ?? t.waid}
+                    <span className="ml-2 text-xs text-[#8696A0]">({t.waid})</span>
+                  </div>
+                  <div className="ml-2 shrink-0 text-xs text-[#8696A0]">
+                    {t.lastTs ? fmtTime(t.lastTs) : ''}
+                  </div>
+                </div>
+
+                <div className="mt-1 flex items-center gap-2">
+                  {t.isNew24h ? (
+                    t.isAlmostExpired ? (
+                      <>
+                        <span
+                          className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400"
+                          title={`Inició: ${t.firstTs ? fmtTime(t.firstTs) : ''}`}
+                        >
+                          ⏳ Falta poco
+                        </span>
+                        <span className="text-[11px] text-amber-300">
+                          ¡Corre! te quedan <b>{fmtDuration(t.remainingMs)}</b> ✨
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span
+                          className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
+                          title={`Inició: ${t.firstTs ? fmtTime(t.firstTs) : ''}`}
+                        >
+                          🚀 Activo ≤ 24h
+                        </span>
+                        <span className="text-[11px] text-emerald-300">
+                          Ventana abierta — quedan <b>{fmtDuration(t.remainingMs)}</b> 🙌
+                        </span>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <span className="rounded-full bg-gray-500/20 px-2 py-0.5 text-[10px] font-medium text-gray-400">
+                        🕒 Expirado
+                      </span>
+                      <span className="text-[11px] text-[#8696A0]">
+                        La ventana de 24 h ya cerró.
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-1 truncate text-sm text-[#8696A0]">
+                  {t.lastText ?? '(sin texto)'}
+                </div>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`¿Ocultar conversación con ${t.name ?? t.waid}?`)) {
+                    hideConversation(t.waid);
+                  }
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full p-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                title="Ocultar conversación"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       </aside>
 
-      {/* Chat window (oscuro) */}
-      <section
-        className={`flex min-w-0 flex-1 flex-col ${showList ? 'hidden md:flex' : 'flex'}`}
-      >
-        {/* Header */}
+      <section className={`flex min-w-0 flex-1 flex-col ${showList ? 'hidden md:flex' : 'flex'}`}>
         <div className="flex items-center gap-2 border-b border-gray-800 bg-[#202C33] px-5 py-3 text-gray-100">
           <button
             onClick={() => setShowList(true)}
@@ -394,10 +728,24 @@ export default function WhatsAppInboxPage() {
             <div className="truncate text-xs text-[#8696A0]">
               {selected ? `(${selected})` : 'Selecciona una conversación'}
             </div>
+            {selected && (() => {
+              const t = threads.find(x => x.waid === selected);
+              if (!t) return null;
+              return (
+                <div className="mt-1">
+                  {t.isNew24h ? (
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${t.isAlmostExpired ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
+                      {t.isAlmostExpired ? `⏳ Queda ${fmtDuration(t.remainingMs)}` : `🚀 Activo — ${fmtDuration(t.remainingMs)} restantes`}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-gray-500/20 px-2 py-0.5 text-[10px] font-medium text-gray-400">🕒 Ventana expirada</span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
-        {/* Messages */}
         <div
           ref={scrollRef}
           className="flex-1 space-y-2 overflow-y-auto p-4"
@@ -417,8 +765,6 @@ export default function WhatsAppInboxPage() {
 
           {selected &&
             activeItems.map((m) => {
-              console.log('[UI] msg', { type: m.type, mediaId: m.mediaId, text: m.text, id: m.id });
-
               if (m.direction === 'status') {
                 return (
                   <div
@@ -449,11 +795,8 @@ export default function WhatsAppInboxPage() {
                       : (m.text && <div className="whitespace-pre-wrap">{m.text}</div>)
                     }
 
-
-
                     <div
-                      className={`mt-1 text-right text-[10px] ${isOutbound ? 'text-white/70' : 'text-[#8696A0]'
-                        }`}
+                      className={`mt-1 text-right text-[10px] ${isOutbound ? 'text-white/70' : 'text-[#8696A0]'}`}
                     >
                       {fmtTime(m.timestamp)}
                     </div>
@@ -463,9 +806,7 @@ export default function WhatsAppInboxPage() {
             })}
         </div>
 
-        {/* Composer */}
         <div className="border-t border-gray-800 bg-[#111B21] p-3 space-y-3">
-          {/* Preview del archivo seleccionado */}
           {selectedFile && (
             <div className="bg-[#202C33] rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
@@ -486,7 +827,6 @@ export default function WhatsAppInboxPage() {
                 </button>
               </div>
 
-              {/* Caption para archivos multimedia */}
               {(selectedFile.type.startsWith('image/') ||
                 selectedFile.type.startsWith('video/') ||
                 selectedFile.type.startsWith('document/')) && (
@@ -512,7 +852,6 @@ export default function WhatsAppInboxPage() {
             </div>
           )}
 
-          {/* Input principal */}
           <div className="flex items-end gap-2">
             <input
               type="file"
@@ -551,15 +890,81 @@ export default function WhatsAppInboxPage() {
               disabled={
                 !selected || sending === selected || (!(compose[selected ?? ''] || '').trim() && !selectedFile)
               }
-              onClick={() => selected && handleSend(selected)}
+              onClick={() => {
+                if (!selected) return;
+                const t = threads.find((x) => x.waid === selected);
+                if (t && !t.isNew24h) {
+                  void openTemplatePicker();
+                } else {
+                  handleSend(selected);
+                }
+              }}
               className="rounded-xl bg-emerald-600 px-4 py-2 text-white shadow hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2"
             >
               <Send className="h-4 w-4" />
               {sending === selected ? 'Enviando…' : 'Enviar'}
             </button>
+
           </div>
         </div>
       </section>
+
+      {showTplModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-lg rounded-lg bg-[#111B21] text-gray-100 shadow-lg border border-gray-800">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <h3 className="text-sm font-semibold">Selecciona una plantilla para abrir la conversación</h3>
+              <button onClick={() => setShowTplModal(false)} className="text-[#8696A0] hover:text-gray-200">✕</button>
+            </div>
+
+            <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {tplLoading && <div className="text-sm text-[#8696A0]">Cargando plantillas…</div>}
+              {tplError && <div className="text-sm text-red-400">{tplError}</div>}
+              {!tplLoading && !tplError && templates.length === 0 && (
+                <div className="text-sm text-[#8696A0]">No hay plantillas disponibles.</div>
+              )}
+
+              {!tplLoading && templates.map((tpl) => (
+                <label key={tpl.name + tpl.langCode} className="flex items-start gap-3 rounded-lg bg-[#202C33] p-3 hover:bg-[#2A3942] cursor-pointer">
+                  <input
+                    type="radio"
+                    name="tpl"
+                    checked={tplSelected?.name === tpl.name && tplSelected?.langCode === tpl.langCode}
+                    onChange={() => setTplSelected(tpl)}
+                    className="mt-1"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      {tpl.label} <span className="text-xs text-[#8696A0]">({tpl.langCode})</span>
+                    </div>
+                    {tpl.body && <div className="mt-1 text-xs text-[#cbd5e1] whitespace-pre-wrap">{tpl.body}</div>}
+                    {tpl.example?.length ? (
+                      <div className="mt-1 text-[11px] text-[#94a3b8]">Ejemplo: {tpl.example.join(' · ')}</div>
+                    ) : null}
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-800">
+              <button
+                className="rounded px-4 py-2 bg-[#202C33] hover:bg-[#2A3942] text-[#e5e7eb]"
+                onClick={() => setShowTplModal(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="rounded px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50"
+                disabled={!tplSelected || !selected || sending === selected}
+                onClick={() => selected && sendWithTemplateThenText(selected)}
+              >
+                Usar plantilla y enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
