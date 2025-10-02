@@ -109,20 +109,33 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
   }
   return (
     <>
-      <span className="text-base font-bold text-yellow-400">
-        {mesNombre} {parseInt(day, 10)},
-      </span>{' '}
-      <span className="text-base font-bold text-cyan-400">
-        {hour12}:{minStr} {ampm}
-      </span>
-      {horaFin && (
-        <>
-          <span className="text-base font-bold text-cyan-400">
-            {' '}
-            — {horaFin}
-          </span>
-        </>
-      )}
+      {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
+      <div className="block sm:hidden">
+        <span className="block text-sm font-bold text-yellow-400">
+          {mesNombre} {parseInt(day, 10)},
+        </span>
+        <span className="block text-sm font-bold text-cyan-400">
+          {hour12}:{minStr} {ampm}
+          {horaFin && ` — ${horaFin}`}
+        </span>
+      </div>
+      {/* En desktop: mantener diseño inline original */}
+      <div className="hidden sm:block">
+        <span className="text-base font-bold text-yellow-400">
+          {mesNombre} {parseInt(day, 10)},
+        </span>{' '}
+        <span className="text-base font-bold text-cyan-400">
+          {hour12}:{minStr} {ampm}
+        </span>
+        {horaFin && (
+          <>
+            <span className="text-base font-bold text-cyan-400">
+              {' '}
+              — {horaFin}
+            </span>
+          </>
+        )}
+      </div>
     </>
   );
 }
@@ -1008,18 +1021,159 @@ export function CourseContent({
                               'hover:neon-live-class'
                             )}
                           >
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                            {/* MOBILE: layout vertical y centrado */}
+                            <div className="block w-full sm:hidden">
+                              <div className="flex w-full flex-col items-center gap-2">
+                                {/* Título */}
+                                <div className="mb-1 w-full text-center text-base font-bold text-white">
+                                  {meeting.title}
+                                </div>
+                                {/* Fecha y hora */}
+                                <div className="mb-1 flex w-full flex-col items-center gap-1">
+                                  {formatMeetingDateTimeModern(
+                                    meeting.startDateTime,
+                                    meeting.endDateTime
+                                  )}
+                                </div>
+                                {/* Duración */}
+                                <div className="mb-2 w-full text-center text-sm font-bold text-green-400">
+                                  • Duración:{' '}
+                                  {formatDuration(getDurationMinutes(meeting))}
+                                </div>
+                                {/* Badges */}
+                                <div className="mb-2 flex w-full flex-row items-center justify-center gap-2">
+                                  {isToday && isJoinEnabled && (
+                                    <Badge
+                                      variant="secondary"
+                                      className={badgeHoyClass}
+                                    >
+                                      Hoy
+                                    </Badge>
+                                  )}
+                                  {isToday &&
+                                    !isJoinEnabled &&
+                                    isMeetingEnded && (
+                                      <Badge
+                                        variant="secondary"
+                                        className={badgeFinalizadaClass}
+                                      >
+                                        Hoy
+                                      </Badge>
+                                    )}
+                                </div>
+                                {/* Botón centrado */}
+                                <div className="mt-2 flex w-full justify-center">
+                                  {meeting.joinUrl && (
+                                    <>
+                                      {isNext && !isJoinEnabled && (
+                                        <button
+                                          type="button"
+                                          className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                          disabled={buttonDisabled}
+                                          style={{
+                                            fontFamily:
+                                              'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                            whiteSpace: 'nowrap',
+                                          }}
+                                        >
+                                          {buttonIcon}
+                                          <span className="relative z-10">
+                                            {buttonText}
+                                          </span>
+                                        </button>
+                                      )}
+                                      {isToday &&
+                                        isJoinEnabled &&
+                                        meeting.joinUrl && (
+                                          <a
+                                            href={meeting.joinUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`${buttonClass} ${buttonBg}`}
+                                            tabIndex={
+                                              !isSubscriptionActive ? -1 : 0
+                                            }
+                                            aria-disabled={
+                                              !isSubscriptionActive
+                                            }
+                                            onClick={(e) => {
+                                              if (!isSubscriptionActive)
+                                                e.preventDefault();
+                                            }}
+                                            style={{
+                                              pointerEvents:
+                                                !isSubscriptionActive
+                                                  ? 'none'
+                                                  : undefined,
+                                              opacity: !isSubscriptionActive
+                                                ? 0.6
+                                                : 1,
+                                              fontFamily:
+                                                'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                            }}
+                                          >
+                                            <FaVideo className="size-4" />
+                                            <span className="relative z-10">
+                                              Unirse a la Clase
+                                            </span>
+                                          </a>
+                                        )}
+                                      {isToday &&
+                                        !isJoinEnabled &&
+                                        isMeetingEnded && (
+                                          <button
+                                            type="button"
+                                            className={`${buttonClass} ${buttonBg}`}
+                                            disabled={buttonDisabled}
+                                            style={{
+                                              fontFamily:
+                                                'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                            }}
+                                          >
+                                            {buttonIcon}
+                                            <span className="relative z-10">
+                                              {buttonText}
+                                            </span>
+                                          </button>
+                                        )}
+                                      {!isAvailable && !isNext && !isToday && (
+                                        <button
+                                          type="button"
+                                          className={`${buttonClass} ${buttonBg}`}
+                                          disabled={buttonDisabled}
+                                          style={{
+                                            fontFamily:
+                                              'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                          }}
+                                        >
+                                          {buttonIcon}
+                                          <span className="relative z-10">
+                                            {buttonText}
+                                          </span>
+                                        </button>
+                                      )}
+                                      {!isSubscriptionActive && (
+                                        <div className="mt-2 w-full text-center text-xs font-semibold text-red-600">
+                                          Debes tener una suscripción activa
+                                          para acceder a las clases en vivo.
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {/* DESKTOP: layout horizontal como antes */}
+                            <div className="hidden min-w-0 flex-1 items-center gap-3 sm:flex">
                               <FaVideo
                                 className={cn(
                                   'h-5 w-5 flex-shrink-0 text-cyan-600'
                                 )}
                               />
                               <div>
-                                {/* Título grande y negrita */}
                                 <div className="mb-1 text-lg leading-tight font-bold text-white">
                                   {meeting.title}
                                 </div>
-                                {/* Fecha y hora estilizada debajo del título */}
                                 <div className="mb-1 flex items-center gap-2 text-base font-medium">
                                   {formatMeetingDateTimeModern(
                                     meeting.startDateTime,
@@ -1034,8 +1188,8 @@ export function CourseContent({
                                 </div>
                               </div>
                             </div>
-                            {/* Badges al extremo derecho */}
-                            <div className="mt-3 flex min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex-col sm:items-end">
+                            {/* Badges desktop */}
+                            <div className="mt-3 hidden min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex sm:flex-col sm:items-end">
                               {isToday && isJoinEnabled && (
                                 <Badge
                                   variant="secondary"
@@ -1052,21 +1206,11 @@ export function CourseContent({
                                   Hoy
                                 </Badge>
                               )}
-                              {/* {isNext && (
-                              <Badge
-                                variant="outline"
-                                className="rounded-full border border-yellow-500 bg-yellow-100 px-3 py-1 font-bold text-yellow-700 shadow-sm sm:ml-auto"
-                              >
-                                Próxima Clase
-                              </Badge>
-                            )} */}
-                              {/* Eliminado el Badge de Próxima Clase */}
                             </div>
-                            {/* Botón al fondo, debajo de badges en mobile, a la derecha en desktop */}
-                            <div className="mt-3 flex min-w-fit flex-col sm:mt-0 sm:ml-4">
+                            {/* Botón desktop */}
+                            <div className="mt-3 hidden min-w-fit flex-col sm:mt-0 sm:ml-4 sm:flex">
                               {meeting.joinUrl && (
                                 <>
-                                  {/* Botón para "Próxima Clase" (neón, nunca clickable) */}
                                   {isNext && !isJoinEnabled && (
                                     <button
                                       type="button"
@@ -1084,7 +1228,6 @@ export function CourseContent({
                                       </span>
                                     </button>
                                   )}
-                                  {/* Botón para "Unirse a la Clase en Teams" (verde) */}
                                   {isToday &&
                                     isJoinEnabled &&
                                     meeting.joinUrl && (
@@ -1118,7 +1261,6 @@ export function CourseContent({
                                         </span>
                                       </a>
                                     )}
-                                  {/* Si la clase es hoy pero ya terminó, mostrar botón bloqueado (gris) */}
                                   {isToday &&
                                     !isJoinEnabled &&
                                     isMeetingEnded && (
@@ -1137,7 +1279,6 @@ export function CourseContent({
                                         </span>
                                       </button>
                                     )}
-                                  {/* Botón para "Clase Bloqueada" (azul oscuro) */}
                                   {!isAvailable && !isNext && !isToday && (
                                     <button
                                       type="button"
