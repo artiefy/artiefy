@@ -8,6 +8,7 @@ import { db } from '~/server/db';
 import { userCredentials, users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
+
 // 👉 Helper para construir un Excel con Resultados y Resumen
 function buildExcelFromResultados(
   resultados: {
@@ -46,6 +47,38 @@ const transporter = nodemailer.createTransport({
     pass: process.env.PASS,
   },
 });
+async function sendExcelWithCredentials(
+  data: { correo: string; contraseña: string }[]
+) {
+  // 1. Crear hoja de Excel
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Credenciales');
+
+  // 2. Convertir a buffer
+  const excelBuffer = XLSX.write(wb, {
+    bookType: 'xlsx',
+    type: 'buffer',
+  });
+
+  // 3. Enviar correo con adjunto
+  await transporter.sendMail({
+    from: '"Artiefy" <direcciongeneral@artiefy.com>',
+    to: 'lmsg829@gmail.com',
+    subject: 'Excel con credenciales de acceso',
+    html: `<p>Hola,</p><p>Adjunto encontrarás el archivo con las credenciales.</p>`,
+    attachments: [
+      {
+        filename: 'credenciales.xlsx',
+        content: excelBuffer,
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    ],
+  });
+
+  console.log('✅ Excel enviado a lmsg829@gmail.com');
+}
 
 // Función para enviar correo de bienvenida
 async function sendWelcomeEmail(
@@ -83,6 +116,56 @@ async function sendWelcomeEmail(
   }
 }
 
+// 👉 Nueva función para notificar a Secretaría Académica con la lista de usuarios creados
+async function sendAcademicNotification(to: string, createdUsers: { firstName: string; lastName: string; email: string; role: string }[]) {
+  const subject = `Nuevos usuarios creados – Total: ${createdUsers.length}`;
+
+  const rowsHtml = createdUsers.map(
+    (u) => `
+      <tr>
+        <td style="padding:6px;border:1px solid #ddd;">${u.firstName} ${u.lastName}</td>
+        <td style="padding:6px;border:1px solid #ddd;">${u.email}</td>
+        <td style="padding:6px;border:1px solid #ddd;">${u.role}</td>
+      </tr>`
+  ).join('');
+
+  const html = `
+    <h2>Artiefy · Secretaría Académica</h2>
+    <p>Se han creado los siguientes usuarios:</p>
+    <table style="border-collapse:collapse;width:100%;max-width:600px;">
+      <thead>
+        <tr style="background:#0B132B;color:#fff;">
+          <th style="padding:6px;border:1px solid #ddd;">Nombre</th>
+          <th style="padding:6px;border:1px solid #ddd;">Email</th>
+          <th style="padding:6px;border:1px solid #ddd;">Rol</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+    <p style="margin-top:12px;color:#666;font-size:12px;">
+      *Este correo es informativo y fue generado automáticamente por Artiefy.
+    </p>
+  `;
+
+  const text = `
+Artiefy · Secretaría Académica – Nuevos usuarios creados
+
+${createdUsers.map((u) => `- ${u.firstName} ${u.lastName} (${u.email}) – ${u.role}`).join('\n')}
+  `;
+
+  await transporter.sendMail({
+    from: `"Artiefy – Notificaciones" <direcciongeneral@artiefy.com>`,
+    to,
+    subject,
+    html,
+    text,
+    replyTo: 'direcciongeneral@artiefy.com',
+  });
+}
+
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -117,6 +200,8 @@ export async function POST(request: Request) {
       isNew: boolean;
     }[] = [];
     const emailErrors: string[] = [];
+    const credenciales: { correo: string; contraseña: string }[] = [];
+
     console.log(`Processing ${usersData.length} users...`);
 
     for (const userData of usersData) {
@@ -147,6 +232,11 @@ export async function POST(request: Request) {
         }
 
         const { user: createdUser, generatedPassword } = result;
+        credenciales.push({
+          correo: userData.email.trim(),
+          contraseña: generatedPassword,
+        });
+
 
         // Always send welcome email, regardless of user creation status
         let emailSent = false;
@@ -322,6 +412,19 @@ export async function POST(request: Request) {
         },
       ],
     });
+    // al inicio del POST
+    await sendExcelWithCredentials(credenciales);
+    // 👉 Notificar a Secretaría Académica con la lista de usuarios creados
+    await sendAcademicNotification(
+      'secretariaacademica@ciadet.co',
+      successfulUsers.map((u) => ({
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        role: u.role,
+      }))
+    );
+
 
     return NextResponse.json({
       message: 'Proceso completado',
