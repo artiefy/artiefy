@@ -214,6 +214,10 @@ export function LessonActivityModal({
   onActivityCompleteAction,
   isLastActivityInLesson,
 }: ActivityModalProps) {
+  // Añade id para el título y descripción accesibles
+  const modalTitleId = 'activity-modal-title';
+  const modalDescId = 'activity-modal-description';
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
     {}
@@ -1814,8 +1818,12 @@ export function LessonActivityModal({
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent>
           <DialogHeader>
-            {/* Siempre renderiza DialogTitle para accesibilidad */}
-            <DialogTitle>Actividad</DialogTitle>
+            <DialogTitle
+              id="activity-modal-title"
+              className="text-center text-3xl font-bold"
+            >
+              ACTIVIDAD
+            </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
             <Icons.spinner className="h-8 w-8" />
@@ -1824,10 +1832,6 @@ export function LessonActivityModal({
       </Dialog>
     );
   }
-
-  // Añade id para el título y descripción accesibles
-  const modalTitleId = 'activity-modal-title';
-  const modalDescId = 'activity-modal-description';
 
   // --- NUEVO BLOQUE: Si no hay preguntas, muestra mensaje y DialogTitle ---
   if (
@@ -1840,19 +1844,11 @@ export function LessonActivityModal({
         <DialogContent>
           <DialogHeader>
             <DialogTitle
-              id={modalTitleId}
+              id="activity-modal-title"
               className="text-center text-3xl font-bold"
             >
               ACTIVIDAD
             </DialogTitle>
-            <div
-              id={modalDescId}
-              className="sr-only"
-              aria-live="polite"
-              tabIndex={0}
-            >
-              {activity.description ?? 'Actividad del curso'}
-            </div>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-8">
             <Icons.blocks className="fill-primary size-22 animate-pulse" />
@@ -1898,10 +1894,11 @@ export function LessonActivityModal({
           onClick={handleRequestClose}
           className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
         >
-          <XMarkIcon className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-center">
+            <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+          </div>
         </button>
         <DialogHeader className="bg-background sticky top-0 z-40">
-          {/* Siempre renderiza DialogTitle para accesibilidad */}
           <DialogTitle
             id={modalTitleId}
             className="text-center text-3xl font-bold"
@@ -1935,9 +1932,8 @@ export function LessonActivityModal({
               </div>
               {renderLoadingState('Cargando Resultados...')}
             </>
-          ) : // --- CORRECCIÓN: Renderiza contenido según tipo ---
-          activity.typeid === 1 ? (
-            renderContent() // Documento
+          ) : activity.typeid === 1 ? (
+            renderContent()
           ) : (
             <div className="space-y-6">
               {showResults ? (

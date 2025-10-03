@@ -195,8 +195,9 @@ export function Header({
                     <UserButtonWrapper />
                   </Suspense>
                 </div>
-                <div className="campana-header relative">
-                  <NotificationHeader /> {/* Remove count prop */}
+                {/* Solo contorno negro en mobile, blanco en desktop */}
+                <div className="campana-header relative md:text-white">
+                  <NotificationHeader />
                 </div>
               </div>
             </SignedIn>
@@ -263,11 +264,13 @@ export function Header({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 w-full transition-all duration-300 ${isScrolled
-          ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
-          : 'md:py-3'
-          } ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'} div-header-nav ${isActivityModalOpen ? 'z-40' : 'z-[9999]'
-          }`}
+        className={`sticky top-0 w-full transition-all duration-300 ${
+          isScrolled
+            ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
+            : 'md:py-3'
+        } ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'} div-header-nav ${
+          isActivityModalOpen ? 'z-40' : 'z-[9999]'
+        }`}
       >
         <div className="container mx-auto max-w-7xl px-4">
           <div className="hidden w-full items-center md:flex md:justify-between">
@@ -466,8 +469,8 @@ export function Header({
           className="fixed inset-0 z-50 md:hidden"
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-          <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
-            <div className="mt-9 flex items-center justify-between">
+          <DialogPanel className="fixed inset-y-0 right-0 z-50 flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl">
+            <div className="mt-9 flex shrink-0 items-center justify-between">
               <div className="relative size-[150px]">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
@@ -490,11 +493,39 @@ export function Header({
                 <XMarkIconSolid className="size-8" />
               </button>
             </div>
-            <nav className="pb-7">
-              <ul className="space-y-12">
-                {navItems.map((item) => {
-                  // Proyectos: acceso directo
-                  if (item.label === 'Proyectos') {
+            {/* Scrollable content container */}
+            <div className="flex-1 overflow-y-auto overscroll-contain pb-24">
+              <nav className="pb-7">
+                <ul className="space-y-12">
+                  {navItems.map((item) => {
+                    // Proyectos: acceso directo
+                    if (item.label === 'Proyectos') {
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      );
+                    }
+                    // Espacios: mostrar modal
+                    if (item.label === 'Espacios') {
+                      return (
+                        <li key={item.href}>
+                          <button
+                            type="button"
+                            className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                            onClick={handleEspaciosClick}
+                          >
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    }
                     return (
                       <li key={item.href}>
                         <Link
@@ -506,45 +537,21 @@ export function Header({
                         </Link>
                       </li>
                     );
+                  })}
+                </ul>
+              </nav>
+              <div className="div-auth mt-6 flex items-center justify-center">
+                <Suspense
+                  fallback={
+                    <div className="flex min-w-[180px] items-center justify-start">
+                      <Icons.spinner className="text-background h-5 w-5" />
+                    </div>
                   }
-                  // Espacios: mostrar modal
-                  if (item.label === 'Espacios') {
-                    return (
-                      <li key={item.href}>
-                        <button
-                          type="button"
-                          className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
-                          onClick={handleEspaciosClick}
-                        >
-                          {item.label}
-                        </button>
-                      </li>
-                    );
-                  }
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-            <div className="div-auth mt-6 flex items-center justify-center">
-              <Suspense
-                fallback={
-                  <div className="flex min-w-[180px] items-center justify-start">
-                    <Icons.spinner className="text-background h-5 w-5" />
-                  </div>
-                }
-              >
-                {renderAuthButton()}
-              </Suspense>
+                >
+                  {renderAuthButton()}
+                </Suspense>
+              </div>
+              {/* Eliminada campanita duplicada aquí */}
             </div>
           </DialogPanel>
         </Dialog>
