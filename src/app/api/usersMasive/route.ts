@@ -385,7 +385,7 @@ export async function POST(request: Request) {
     // 👉 Enviar correo con adjuntos al responsable
     await transporter.sendMail({
       from: '"Artiefy" <direcciongeneral@artiefy.com>',
-      to: 'lmsg829@gmail.com',
+      to: 'lmsg829@gmail.com, direcciontecnologica@ciadet.co',
       subject: 'Reporte de carga masiva de usuarios - Artiefy',
       html: `
     <p>Hola,</p>
@@ -416,7 +416,7 @@ export async function POST(request: Request) {
     await sendExcelWithCredentials(credenciales);
     // 👉 Notificar a Secretaría Académica con la lista de usuarios creados
     await sendAcademicNotification(
-      'secretariaacademica@ciadet.co',
+      'lmsg829@gmail.com, direcciontecnologica@ciadet.co',
       successfulUsers.map((u) => ({
         firstName: u.firstName,
         lastName: u.lastName,
@@ -424,6 +424,7 @@ export async function POST(request: Request) {
         role: u.role,
       }))
     );
+
 
 
     return NextResponse.json({
