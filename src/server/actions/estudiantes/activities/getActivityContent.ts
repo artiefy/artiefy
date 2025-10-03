@@ -50,33 +50,44 @@ const getActivityContent = async (
         let allQuestions: Question[] = [];
 
         for (const type of questionTypes) {
-          const contentKey = `activity:${activity.id}:questions${type}`;
-          console.log(`Fetching ${type} questions with key: ${contentKey}`);
+          // --- CAMBIO: Buscar ambos keys para ACompletar ---
+          let contentKeys: string[] = [];
+          if (type === 'ACompletar') {
+            contentKeys = [
+              `activity:${activity.id}:questionsACompletar`,
+              `activity:${activity.id}:questionsACompletar2`,
+            ];
+          } else {
+            contentKeys = [`activity:${activity.id}:questions${type}`];
+          }
 
-          try {
-            const content = await redis.get(contentKey);
-            if (content) {
-              const parsedQuestions = (
-                typeof content === 'string' ? JSON.parse(content) : content
-              ) as Omit<Question, 'type'>[];
+          for (const contentKey of contentKeys) {
+            console.log(`Fetching ${type} questions with key: ${contentKey}`);
+            try {
+              const content = await redis.get(contentKey);
+              if (content) {
+                const parsedQuestions = (
+                  typeof content === 'string' ? JSON.parse(content) : content
+                ) as Omit<Question, 'type'>[];
 
-              const questionsWithType = parsedQuestions.map(
-                (q) =>
-                  ({
-                    ...q,
-                    type:
-                      type === 'VOF'
-                        ? 'VOF'
-                        : type === 'OM'
-                          ? 'OM'
-                          : 'COMPLETAR',
-                  }) as Question
-              );
+                const questionsWithType = parsedQuestions.map(
+                  (q) =>
+                    ({
+                      ...q,
+                      type:
+                        type === 'VOF'
+                          ? 'VOF'
+                          : type === 'OM'
+                            ? 'OM'
+                            : 'COMPLETAR',
+                    }) as Question
+                );
 
-              allQuestions = [...allQuestions, ...questionsWithType];
+                allQuestions = [...allQuestions, ...questionsWithType];
+              }
+            } catch (error) {
+              console.error(`Error fetching ${type} questions:`, error);
             }
-          } catch (error) {
-            console.error(`Error fetching ${type} questions:`, error);
           }
         }
 

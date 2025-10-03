@@ -214,6 +214,10 @@ export function LessonActivityModal({
   onActivityCompleteAction,
   isLastActivityInLesson,
 }: ActivityModalProps) {
+  // Añade id para el título y descripción accesibles
+  const modalTitleId = 'activity-modal-title';
+  const modalDescId = 'activity-modal-description';
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
     {}
@@ -1814,7 +1818,12 @@ export function LessonActivityModal({
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Actividad</DialogTitle>
+            <DialogTitle
+              id="activity-modal-title"
+              className="text-center text-3xl font-bold"
+            >
+              ACTIVIDAD
+            </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
             <Icons.spinner className="h-8 w-8" />
@@ -1824,9 +1833,39 @@ export function LessonActivityModal({
     );
   }
 
-  // Añade id para el título y descripción accesibles
-  const modalTitleId = 'activity-modal-title';
-  const modalDescId = 'activity-modal-description';
+  // --- NUEVO BLOQUE: Si no hay preguntas, muestra mensaje y DialogTitle ---
+  if (
+    !isLoading &&
+    activity.typeid !== 1 &&
+    (!questions || questions.length === 0)
+  ) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onCloseAction}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle
+              id="activity-modal-title"
+              className="text-center text-3xl font-bold"
+            >
+              ACTIVIDAD
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-8">
+            <Icons.blocks className="fill-primary size-22 animate-pulse" />
+            <p className="mt-6 text-center text-xl text-white">
+              No hay preguntas disponibles para esta actividad.
+            </p>
+            <Button
+              onClick={onCloseAction}
+              className="mt-6 bg-blue-500 text-white"
+            >
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog
@@ -1855,7 +1894,9 @@ export function LessonActivityModal({
           onClick={handleRequestClose}
           className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
         >
-          <XMarkIcon className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-center">
+            <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+          </div>
         </button>
         <DialogHeader className="bg-background sticky top-0 z-40">
           <DialogTitle
@@ -1891,8 +1932,53 @@ export function LessonActivityModal({
               </div>
               {renderLoadingState('Cargando Resultados...')}
             </>
-          ) : (
+          ) : activity.typeid === 1 ? (
             renderContent()
+          ) : (
+            <div className="space-y-6">
+              {showResults ? (
+                renderResults()
+              ) : (
+                <div>
+                  <div className="mb-8 flex flex-col items-center justify-center text-center">
+                    <span className="text-primary text-2xl font-bold">
+                      {getQuestionTypeLabel(currentQuestion?.type ?? '')}
+                    </span>
+                    <span className="mt-2 text-sm text-gray-500">
+                      {/* Corrige el contador para mostrar "1 de N" */}
+                      {questions.length > 0
+                        ? `${currentQuestionIndex + 1} de ${questions.length}`
+                        : 'Sin preguntas'}
+                    </span>
+                  </div>
+                  {renderQuestion()}
+                  <div className="mt-6 flex justify-between">
+                    <button
+                      className="btn-arrow btn-arrow-prev"
+                      disabled={currentQuestionIndex === 0}
+                      onClick={() =>
+                        setCurrentQuestionIndex((prev) => prev - 1)
+                      }
+                    >
+                      <ChevronRightIcon />
+                      <span>Anterior</span>
+                    </button>
+                    <button
+                      className={`btn-arrow ${
+                        isLastQuestion ? 'btn-arrow-success' : ''
+                      }`}
+                      disabled={!canProceedToNext}
+                      onClick={isLastQuestion ? handleFinish : handleNext}
+                    >
+                      <span>
+                        {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
+                      </span>
+                      <ChevronRightIcon />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>
