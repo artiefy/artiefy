@@ -104,3 +104,9 @@ export const env = createEnv({
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,
 });
+
+export const ENV = {
+  N8N_BASE_URL: process.env.N8N_BASE_URL ?? '',
+  N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH ?? '',
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? '',
+};

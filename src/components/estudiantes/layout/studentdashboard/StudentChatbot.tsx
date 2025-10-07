@@ -47,24 +47,24 @@ interface ResizeData {
   handle: string;
 }
 
-interface Curso {
-  id: number;
-  title: string;
-}
-
-// Añadir una nueva interfaz para los datos del curso
+// Define datos de curso recibidos desde IA/n8n (fuertemente tipado)
 interface CourseData {
   id: number;
   title: string;
   modalidad?: string;
-  modalidadId?: number; // <-- Añade modalidadId para identificar la modalidad
+  modalidadId?: number;
 }
 
 // Tipos fuertes para la respuesta de n8n
 interface N8nPayload {
   mensaje_inicial?: string;
-  cursos?: Curso[];
-  pregunta_final?: string;
+  mensaje?: string;
+  courses?: CourseData[];
+  courseDescription?: string;
+  courseId?: number;
+  projectPrompt?: boolean;
+  intent?: string;
+  conversationId?: string | number;
 }
 interface N8nApiResponse {
   prompt: string;
@@ -179,23 +179,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   // Añade los estados necesarios para el flujo n8n
   const [n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
-  const [showFinalQuestion, setShowFinalQuestion] = useState(false);
-  const [showCourseList, setShowCourseList] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<CourseData | null>(null);
-  const [selectedCourseDescription, setSelectedCourseDescription] =
-    useState<string>('');
-  const [showCreateProjectButtons, setShowCreateProjectButtons] =
-    useState(false);
 
   // Añade una línea para "usar" los estados y evitar el warning de ESLint
 
-  void [
-    showFinalQuestion,
-    showCourseList,
-    selectedCourse,
-    selectedCourseDescription,
-    showCreateProjectButtons,
-  ];
+  void [n8nCourses];
 
   useEffect(() => {
     // Solo se ejecuta en el cliente
@@ -293,38 +280,41 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   >([]);
   const pendingUserSaves = useRef<{ text: string; sender?: string }[]>([]);
 
-  // Helper: intenta guardar mensaje bot ahora o encola.
-  const queueOrSaveBotMessage = (text: string, coursesData?: CourseData[]) => {
-    const currentChatId = chatModeRef.current.idChat;
-    if (currentChatId && currentChatId < 1000000000000) {
-      // Save immediately
-      void saveMessages('bot', currentChatId, [
-        {
-          text,
-          sender: 'bot',
-          sender_id: 'bot',
-          coursesData:
-            coursesData && coursesData.length > 0 ? coursesData : undefined,
-        },
-      ]);
-      return;
-    }
-    // Encolar
-    pendingBotSaves.current.push({ text, coursesData });
-  };
+  // Helper: intenta guardar mensaje bot ahora o encola. (memoizado)
+  const queueOrSaveBotMessage = useCallback(
+    (text: string, coursesData?: CourseData[]) => {
+      const currentChatId = chatModeRef.current.idChat;
+      if (currentChatId && currentChatId < 1000000000000) {
+        void saveMessages('bot', currentChatId, [
+          {
+            text,
+            sender: 'bot',
+            sender_id: 'bot',
+            coursesData:
+              coursesData && coursesData.length > 0 ? coursesData : undefined,
+          },
+        ]);
+        return;
+      }
+      pendingBotSaves.current.push({ text, coursesData });
+    },
+    [] // Quitar user?.id ya que no se usa dentro de la función
+  );
 
-  // Helper: intenta guardar mensaje usuario ahora o encola.
-  const queueOrSaveUserMessage = (text: string, sender = 'user') => {
-    const currentChatId = chatModeRef.current.idChat;
-    if (currentChatId && currentChatId < 1000000000000) {
-      void saveMessages(user?.id ?? '', currentChatId, [
-        { text, sender, sender_id: user?.id ?? '' },
-      ]);
-      return;
-    }
-    // Encolar
-    pendingUserSaves.current.push({ text, sender });
-  };
+  // Helper: intenta guardar mensaje usuario ahora o encola. (memoizado)
+  const queueOrSaveUserMessage = useCallback(
+    (text: string, sender = 'user') => {
+      const currentChatId = chatModeRef.current.idChat;
+      if (currentChatId && currentChatId < 1000000000000) {
+        void saveMessages(user?.id ?? '', currentChatId, [
+          { text, sender, sender_id: user?.id ?? '' },
+        ]);
+        return;
+      }
+      pendingUserSaves.current.push({ text, sender });
+    },
+    [user?.id] // Mantener user?.id aquí porque sí se usa
+  );
 
   // Effect: cuando se obtiene un chatId persistido, vaciar colas
   useEffect(() => {
@@ -377,34 +367,183 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const isN8nApiResponse = (x: unknown): x is N8nApiResponse =>
     typeof x === 'object' && x !== null && 'n8nData' in x;
 
-  // ----------------------- ADDED: Type guards for external data -----------------------
-  /**
-   * Valida un objeto de curso que proviene de n8n / iahome
-   */
-  function isCourseRaw(x: unknown): x is {
-    id: number;
-    title: string;
-    modalidad?: string;
-    modalidadId?: number;
-  } {
-    // basic shape check
+  // Valida un curso con forma CourseData
+  function isCourseData(x: unknown): x is CourseData {
     if (typeof x !== 'object' || x === null) return false;
     const anyX = x as Record<string, unknown>;
     return typeof anyX.id === 'number' && typeof anyX.title === 'string';
   }
 
-  /**
-   * Valida una posible respuesta de /api/iahome
-   */
+  // NUEVO: Valida respuesta de /api/iahome
   function isIahomeResponse(
     x: unknown
   ): x is { response?: string; courses?: unknown[] } {
     if (typeof x !== 'object' || x === null) return false;
     const anyX = x as Record<string, unknown>;
-    return 'response' in anyX || 'courses' in anyX;
+    const hasResponse =
+      !('response' in anyX) ||
+      typeof anyX.response === 'string' ||
+      typeof anyX.response === 'undefined';
+    const hasCourses =
+      !('courses' in anyX) ||
+      Array.isArray(anyX.courses) ||
+      typeof anyX.courses === 'undefined';
+    return hasResponse && hasCourses;
   }
 
-  // Modificado: handleBotResponse ahora acepta opciones y solo usa n8n si useN8n === true
+  // MOVER AQUÍ: función local para manejar el payload normalizado de n8n (antes de handleBotResponse)
+  const handleN8nData = useCallback(
+    async (data: N8nPayload, query: string) => {
+      const initMsg = data.mensaje_inicial;
+      const genericMsg = data.mensaje;
+
+      if (typeof initMsg === 'string' && initMsg.trim() !== '') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + Math.random(), text: initMsg, sender: 'bot' },
+        ]);
+        queueOrSaveBotMessage(initMsg);
+      } else if (typeof genericMsg === 'string' && genericMsg.trim() !== '') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + Math.random(), text: genericMsg, sender: 'bot' },
+        ]);
+        queueOrSaveBotMessage(genericMsg);
+      }
+
+      if (Array.isArray(data.courses) && data.courses.length) {
+        // NUEVO: Validar que los cursos existan en la BD
+        try {
+          const courseIds = data.courses
+            .filter(isCourseData)
+            .map((c) => c.id)
+            .join(',');
+
+          const validationRes = await fetch('/api/courses/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseIds: courseIds }),
+          });
+
+          const validationData = (await validationRes.json()) as {
+            validIds: number[];
+          };
+          const validCourseIds = validationData.validIds || [];
+
+          // Filtrar solo los cursos que existen en la BD
+          const coursesData: CourseData[] = data.courses
+            .filter(isCourseData)
+            .filter((c) => validCourseIds.includes(c.id))
+            .map((c) => ({
+              id: c.id,
+              title: c.title,
+              modalidadId: c.modalidadId,
+              modalidad: c.modalidad,
+            }));
+
+          if (coursesData.length > 0) {
+            setN8nCourses(coursesData);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                text: 'Cursos encontrados:',
+                sender: 'bot',
+                coursesData,
+              },
+            ]);
+            queueOrSaveBotMessage('Cursos encontrados:', coursesData);
+
+            const shouldOpenProject =
+              Boolean(data.projectPrompt) ||
+              (typeof data.intent === 'string' &&
+                /idea|intenci[óo]n|proyecto/.test(data.intent)) ||
+              /como ser|quiero|mi idea|proyecto/i.test(query);
+
+            if (shouldOpenProject) {
+              const intro =
+                'Ahora, si quieres, definamos el planteamiento, objetivos y actividades de tu proyecto.';
+              setMessages((prev) => [
+                ...prev,
+                { id: Date.now() + Math.random(), text: intro, sender: 'bot' },
+              ]);
+              queueOrSaveBotMessage(intro);
+              window.dispatchEvent(
+                new CustomEvent('open-modal-planteamiento', {
+                  detail: { text: '' },
+                })
+              );
+            }
+          } else {
+            // Si no hay cursos válidos, mostrar mensaje de búsqueda alternativa
+            const fallbackMsg = `No encontré cursos específicos para "${query}" en nuestra plataforma actual. Te sugiero buscar cursos relacionados o contactar con nuestro equipo para más información.`;
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                text: fallbackMsg,
+                sender: 'bot',
+              },
+            ]);
+            queueOrSaveBotMessage(fallbackMsg);
+          }
+        } catch (validationError) {
+          console.error('Error validating courses:', validationError);
+          // Fallback: mostrar cursos sin validación (comportamiento anterior)
+          const coursesData: CourseData[] = data.courses
+            .filter(isCourseData)
+            .map((c) => ({
+              id: c.id,
+              title: c.title,
+              modalidadId: c.modalidadId,
+              modalidad: c.modalidad,
+            }));
+          setN8nCourses(coursesData);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + Math.random(),
+              text: 'Cursos encontrados:',
+              sender: 'bot',
+              coursesData,
+            },
+          ]);
+          queueOrSaveBotMessage('Cursos encontrados:', coursesData);
+        }
+      }
+
+      const courseDesc = data.courseDescription;
+      if (typeof courseDesc === 'string' && courseDesc.trim() !== '') {
+        const descMsg = data.mensaje ?? 'Aquí tienes la información del curso:';
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + Math.random(), text: descMsg, sender: 'bot' },
+          { id: Date.now() + Math.random(), text: courseDesc, sender: 'bot' },
+        ]);
+        queueOrSaveBotMessage(descMsg);
+        queueOrSaveBotMessage(courseDesc);
+      }
+
+      if (data.projectPrompt) {
+        const intro =
+          data.mensaje ??
+          'Perfecto, vamos a crear tu proyecto. Abriré el asistente de Planteamiento.';
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + Math.random(), text: intro, sender: 'bot' },
+        ]);
+        queueOrSaveBotMessage(intro);
+        window.dispatchEvent(
+          new CustomEvent('open-modal-planteamiento', {
+            detail: { text: data.mensaje ?? '' },
+          })
+        );
+      }
+    },
+    [queueOrSaveBotMessage, setMessages, setN8nCourses]
+  );
+
+  // Modificado: handleBotResponse ahora consume Agent IA (sin botones sí/no)
   const handleBotResponse = useCallback(
     async (query: string, options?: { useN8n?: boolean }) => {
       const useN8n = options?.useN8n === true;
@@ -414,45 +553,93 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       setProcessingQuery(true);
       setIsLoading(true);
 
+      // NUEVO: mensaje temporal para feedback visual
+      const loadingMessageId = Date.now() + Math.random();
+      setMessages((prev) => [
+        ...prev,
+        { id: loadingMessageId, text: 'Pensando...', sender: 'bot' },
+      ]);
+
       try {
         if (useN8n) {
+          const conversationId = chatModeRef.current.idChat ?? undefined;
+          const messageHistory = messages.map((m) => ({
+            sender: m.sender,
+            text: m.text,
+          }));
           const result = await fetch('/api/ia-cursos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: query }),
+            body: JSON.stringify({
+              prompt: query,
+              conversationId,
+              messageHistory,
+            }),
           });
           if (!result.ok) throw new Error(`HTTP ${result.status}`);
-          const text = await result.text();
-          if (!text) throw new Error('Respuesta vacía del servidor');
 
-          let parsed: unknown;
-          try {
-            parsed = JSON.parse(text);
-          } catch (_err) {
-            // Cambia err a _err
-            console.error('JSON parse error n8n:', _err);
-            throw new Error('Respuesta inválida de n8n');
+          // CAMBIO: usa result.json() en lugar de .text() + JSON.parse
+          const parsed: unknown = await result.json();
+
+          // 1) Intentar extraer directamente
+          const extracted = extractN8nPayload(parsed);
+          if (extracted) {
+            handleN8nData(extracted, query);
+            setIdea({ selected: false, idea: '' });
+            return;
           }
 
+          // 2) Si cumple la forma { prompt, n8nData }, tipar y usar n8nData correctamente
           if (isN8nApiResponse(parsed)) {
-            const n8nResponse = parsed.n8nData;
+            const api: N8nApiResponse = parsed;
+            const n8nData: N8nPayload = (api.n8nData ?? {}) as N8nPayload;
 
-            // Guardar cursos para el flujo de botones
-            if (
-              Array.isArray(n8nResponse.cursos) &&
-              n8nResponse.cursos.length
+            const maybePayload = extractN8nPayload({ n8nData });
+            if (maybePayload) {
+              handleN8nData(maybePayload, query);
+              setIdea({ selected: false, idea: '' });
+              return;
+            }
+
+            // Mensaje inicial o general
+            const initMsg = n8nData.mensaje_inicial;
+            const genericMsg = n8nData.mensaje;
+            if (typeof initMsg === 'string' && initMsg.trim() !== '') {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + Math.random(),
+                  text: initMsg,
+                  sender: 'bot',
+                },
+              ]);
+              queueOrSaveBotMessage(initMsg);
+            } else if (
+              typeof genericMsg === 'string' &&
+              genericMsg.trim() !== ''
             ) {
-              const coursesData: CourseData[] = n8nResponse.cursos
-                .filter(isCourseRaw)
-                .map((c: Curso) => ({
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + Math.random(),
+                  text: genericMsg,
+                  sender: 'bot',
+                },
+              ]);
+              queueOrSaveBotMessage(genericMsg);
+            }
+
+            // Lista de cursos
+            if (Array.isArray(n8nData.courses) && n8nData.courses.length) {
+              const coursesData: CourseData[] = n8nData.courses
+                .filter(isCourseData)
+                .map((c) => ({
                   id: c.id,
                   title: c.title,
-                  modalidad: (c as CourseData).modalidad,
-                  modalidadId: (c as CourseData).modalidadId,
+                  modalidadId: c.modalidadId,
+                  modalidad: c.modalidad,
                 }));
               setN8nCourses(coursesData);
-
-              // --- ADICIÓN: insertar mensaje que contiene coursesData para renderizar las tarjetas ---
               setMessages((prev) => [
                 ...prev,
                 {
@@ -462,49 +649,76 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   coursesData,
                 },
               ]);
-              // Guardar en BD junto con los datos de cursos
               queueOrSaveBotMessage('Cursos encontrados:', coursesData);
-              // -------------------------------------------------------------------------------
-            } else {
-              setN8nCourses([]);
+
+              const shouldOpenProject =
+                Boolean(n8nData.projectPrompt) ||
+                (typeof n8nData.intent === 'string' &&
+                  /idea|intenci[óo]n|proyecto/.test(n8nData.intent)) ||
+                /como ser|quiero|mi idea|proyecto/i.test(query);
+
+              if (shouldOpenProject) {
+                const intro =
+                  'Ahora, si quieres, definamos el planteamiento, objetivos y actividades de tu proyecto.';
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    text: intro,
+                    sender: 'bot',
+                  },
+                ]);
+                queueOrSaveBotMessage(intro);
+                window.dispatchEvent(
+                  new CustomEvent('open-modal-planteamiento', {
+                    detail: { text: '' },
+                  })
+                );
+              }
             }
 
-            // Mostrar intro y pregunta final
-            const introText =
-              n8nResponse.mensaje_inicial ??
-              'He encontrado estos cursos que podrían interesarte:';
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now() + Math.random(),
-                text: introText,
-                sender: 'bot',
-              },
-            ]);
-            queueOrSaveBotMessage(introText);
-
-            // Pregunta final con botones Sí/No
-            if (typeof n8nResponse.pregunta_final === 'string') {
-              setShowFinalQuestion(true);
+            // Descripción de curso puntual (usa variable local)
+            const courseDesc = n8nData.courseDescription;
+            if (typeof courseDesc === 'string' && courseDesc.trim() !== '') {
+              const descMsg =
+                n8nData.mensaje ?? 'Aquí tienes la información del curso:';
               setMessages((prev) => [
                 ...prev,
                 {
                   id: Date.now() + Math.random(),
-                  text: n8nResponse.pregunta_final ?? '',
+                  text: descMsg,
                   sender: 'bot',
-                  buttons: [
-                    { label: 'Sí', action: 'final_yes' },
-                    { label: 'No', action: 'final_no' },
-                  ],
+                },
+                {
+                  id: Date.now() + Math.random(),
+                  text: courseDesc,
+                  sender: 'bot',
                 },
               ]);
-              queueOrSaveBotMessage(n8nResponse.pregunta_final ?? '');
+              queueOrSaveBotMessage(descMsg);
+              queueOrSaveBotMessage(courseDesc);
+            }
+
+            if (n8nData.projectPrompt) {
+              const intro =
+                n8nData.mensaje ??
+                'Perfecto, vamos a crear tu proyecto. Abriré el asistente de Planteamiento.';
+              setMessages((prev) => [
+                ...prev,
+                { id: Date.now() + Math.random(), text: intro, sender: 'bot' },
+              ]);
+              queueOrSaveBotMessage(intro);
+              window.dispatchEvent(
+                new CustomEvent('open-modal-planteamiento', {
+                  detail: { text: n8nData.mensaje ?? '' },
+                })
+              );
             }
             setIdea({ selected: false, idea: '' });
             return;
           }
 
-          // fallback n8n
+          // Fallback n8n
           const fallbackText =
             typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
           setMessages((prev) => [
@@ -580,7 +794,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           // si hay courses retornados por iahome, filtramos y mostramos
           if (Array.isArray(dataObj.courses) && dataObj.courses.length > 0) {
             const coursesData: CourseData[] = dataObj.courses
-              .filter(isCourseRaw)
+              .filter(isCourseData)
               .map((c) => ({
                 id: c.id,
                 title: c.title,
@@ -610,13 +824,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         ]);
         queueOrSaveBotMessage(errorMessage);
       } finally {
+        // NUEVO: eliminar el mensaje "Pensando..."
+        setMessages((prev) => prev.filter((m) => m.id !== loadingMessageId));
         setIsLoading(false);
         setProcessingQuery(false);
         searchRequestInProgress.current = false;
         onSearchComplete?.();
       }
     },
-    [processingQuery, onSearchComplete]
+    [
+      processingQuery,
+      onSearchComplete,
+      messages,
+      handleN8nData,
+      queueOrSaveBotMessage,
+    ] // Ahora handleN8nData ya está definido antes
   );
 
   // useEffect para manejar búsquedas desde StudentDetails
@@ -850,6 +1072,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       sender: 'user' as const,
     };
 
+    // NUEVO: abrir el chat por seguridad antes de agregar mensajes
+    setIsOpen(true);
+
     queueOrSaveUserMessage(trimmedInput, 'user');
     setMessages((prev) => [...prev, newUserMessage]);
     setInputText('');
@@ -898,10 +1123,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   );
 
   // Manejo de botones (creación, idea, soporte, flujo final_yes/no, selección/creación de proyecto)
-  const handleBotButtonClick = async (action: string) => {
-    // Guardar la acción del usuario siempre que sea una acción "usuario"
-    // (ej: new_project, new_idea, final_yes, final_no, select_course_X, create_project_X)
-    // Guardar label representativa:
+  const handleBotButtonClick = (action: string) => {
     if (action === 'new_project') {
       queueOrSaveUserMessage('📚 Crear Proyecto');
       if (!isSignedIn) {
@@ -911,7 +1133,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       }
       return;
     }
-
     if (action === 'new_idea') {
       queueOrSaveUserMessage('💬 Nueva Idea');
       setIdea({ selected: true, idea: '' });
@@ -919,58 +1140,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         ...prev,
         { id: Date.now(), text: '¡Cuéntame tu nueva idea!', sender: 'bot' },
       ]);
-      // Solo activa n8n cuando el usuario envía la idea (ver handleSendMessage)
+      // NUEVO: enfocar de inmediato el input para escribir la idea
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
-
     if (action === 'contact_support') {
       queueOrSaveUserMessage('🛠 Soporte Técnico');
       toast.info('Redirigiendo a soporte técnico');
-      return;
-    }
-
-    if (action === 'final_yes') {
-      queueOrSaveUserMessage('Sí');
-      setShowFinalQuestion(false);
-      setShowCourseList(true);
-      // Mostrar lista de cursos como botones (persistir este mensaje)
-      const messagePayload = {
-        id: Date.now() + Math.random(),
-        text: 'Selecciona un curso para ver la descripción:',
-        sender: 'bot',
-        buttons: n8nCourses.map((c: CourseData) => ({
-          label: c.title,
-          action: `select_course_${c.id}`,
-        })),
-      };
-      setMessages((prev) => [...prev, messagePayload]);
-      // Guardar cursos también si quieres (podemos adjuntar coursesData vacío aquí,
-      // la lista principal ya fue guardada como "Cursos encontrados:")
-      queueOrSaveBotMessage('Selecciona un curso para ver la descripción:');
-      return;
-    }
-
-    if (action === 'final_no') {
-      queueOrSaveUserMessage('No');
-      setShowFinalQuestion(false);
-      setShowCourseList(false);
-      setSelectedCourse(null);
-      setSelectedCourseDescription('');
-      setShowCreateProjectButtons(false);
-      // Volver a los botones iniciales (persistir bot reset)
-      const resetBot = {
-        id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-        sender: 'bot',
-        buttons: [
-          { label: '📚 Crear Proyecto', action: 'new_project' },
-          { label: '💬 Nueva Idea', action: 'new_idea' },
-          { label: '🛠 Soporte Técnico', action: 'contact_support' },
-        ],
-      };
-      setMessages([resetBot]);
-      queueOrSaveBotMessage(resetBot.text);
-      setIdea({ selected: false, idea: '' });
       return;
     }
 
@@ -978,66 +1154,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const idStr = action.replace('select_course_', '');
       const courseIdNum = parseInt(idStr, 10);
       if (Number.isNaN(courseIdNum)) return;
-
-      // Guardar la selección del usuario (si tenemos título, guardarlo)
-      const selected = n8nCourses.find((c) => c.id === courseIdNum);
-      queueOrSaveUserMessage(
-        selected
-          ? `Seleccionó curso: ${selected.title}`
-          : `Seleccionó curso id ${courseIdNum}`
-      );
-
-      setSelectedCourse(selected ?? null);
-      setShowCourseList(false);
-      setShowCreateProjectButtons(false);
-
-      try {
-        const res = await fetch(`/api/courses/${courseIdNum}`);
-        if (!res.ok) throw new Error('No se pudo obtener el curso');
-        const courseUnknown = (await res.json()) as unknown;
-        let description = 'Sin descripción disponible.';
-        if (typeof courseUnknown === 'object' && courseUnknown !== null) {
-          const anyCourse = courseUnknown as Record<string, unknown>;
-          if (typeof anyCourse.description === 'string') {
-            description = anyCourse.description;
-          }
-        }
-        setSelectedCourseDescription(description);
-        setShowCreateProjectButtons(true);
-        // mostrar y persistir descripción y pregunta siguiente
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: `Descripción del curso: ${description}`,
-            sender: 'bot',
-          },
-          {
-            id: Date.now() + 1,
-            text: '¿Quieres crear un proyecto de este curso?',
-            sender: 'bot',
-            buttons: [
-              { label: 'Sí', action: `create_project_${courseIdNum}` },
-              { label: 'No', action: 'final_no' },
-            ],
-          },
-        ]);
-        // Persistir descripción y pregunta en BD
-        queueOrSaveBotMessage(`Descripción del curso: ${description}`);
-        queueOrSaveBotMessage('¿Quieres crear un proyecto de este curso?');
-      } catch (_err) {
-        setSelectedCourseDescription('Sin descripción disponible.');
-        setShowCreateProjectButtons(false);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: 'No se pudo cargar la descripción del curso',
-            sender: 'bot',
-          },
-        ]);
-        queueOrSaveBotMessage('No se pudo cargar la descripción del curso');
-      }
+      queueOrSaveUserMessage(`Seleccionó curso id ${courseIdNum}`);
+      router.push(`/estudiantes/cursos/${courseIdNum}`);
       return;
     }
 
@@ -1045,9 +1163,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const idStr = action.replace('create_project_', '');
       const courseIdNum = parseInt(idStr, 10);
       if (Number.isNaN(courseIdNum)) return;
-      // Guardar la decisión del usuario
       queueOrSaveUserMessage(`Crear proyecto para curso ${courseIdNum}`);
-      // Abrir modal / navegar
       router.push(`/proyectos?courseId=${courseIdNum}`);
       return;
     }
@@ -1361,240 +1477,295 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   // Renderiza el TooltipProvider en el nivel superior del componente
   return (
-    <Tooltip.Provider>
-      <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
-        {isAlwaysVisible && (
-          <div className="fixed right-6 bottom-6 z-50">
-            <button
-              className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
-              onMouseEnter={() => {
-                setIsHovered(true);
-                show();
-              }}
-              onMouseLeave={() => setIsHovered(false)}
-              onClick={handleClick}
-            >
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
-              <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-                <div className="relative">
-                  <MessageCircle
-                    className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
-                  />
-                  {isHovered && (
-                    <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
-                  )}
-                </div>
-              </div>
-              <div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                style={{
-                  background:
-                    'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+    <>
+      <Tooltip.Provider>
+        <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
+          {isAlwaysVisible && (
+            <div className="fixed right-6 bottom-6 z-50">
+              <button
+                className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+                onMouseEnter={() => {
+                  setIsHovered(true);
+                  show();
                 }}
-              />
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
-            </button>
-
-            {isDesktop && (
-              <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
-                <div className="relative">
-                  <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
-                    Asistente IA
-                  </div>
-                  <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
-                    Asistente IA
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
-                    Asistente IA
-                  </div>
-                  <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
-                  <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
-                  <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {isOpen && (
-          <div
-            className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'}`}
-            ref={chatContainerRef}
-            style={{ zIndex: 110000 }}
-          >
-            <ResizableBox
-              width={dimensions.width}
-              height={dimensions.height}
-              onResize={handleResize}
-              minConstraints={
-                isDesktop
-                  ? [500, window.innerHeight]
-                  : [window.innerWidth, window.innerHeight]
-              }
-              maxConstraints={[
-                isDesktop
-                  ? Math.min(window.innerWidth, window.innerWidth - 20)
-                  : window.innerWidth,
-                isDesktop ? window.innerHeight : window.innerHeight,
-              ]}
-              resizeHandles={isDesktop ? ['sw'] : []}
-              className="chat-resizable"
-            >
-              <div
-                className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'rounded-lg border border-gray-200' : ''} bg-white`}
+                onMouseLeave={() => setIsHovered(false)}
+                onClick={handleClick}
               >
-                <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
-                  <Image
-                    src="/artiefy-logo2.svg"
-                    alt="Artiefy Logo Background"
-                    width={300}
-                    height={100}
-                    className="w-4/5"
-                    priority
-                  />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
+                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
+                  <div className="relative">
+                    <MessageCircle
+                      className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                    />
+                    {isHovered && (
+                      <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
+                    )}
+                  </div>
                 </div>
+                <div
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                  style={{
+                    background:
+                      'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
+              </button>
 
-                {/* Header */}
-                <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
-                  <div className="flex items-start justify-between">
-                    <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+              {isDesktop && (
+                <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
+                  <div className="relative">
+                    <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
+                      Asistente IA
+                    </div>
+                    <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
+                      Asistente IA
+                    </div>
+                    <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
+                      Asistente IA
+                    </div>
+                    <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
+                    <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
+                    <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-                    <div className="-ml-6 flex flex-1 flex-col items-center">
-                      <h2 className="mt-1 text-lg font-semibold text-gray-800">
-                        Artie IA
-                      </h2>
-                      <div className="flex items-center gap-2">
-                        <em className="text-sm font-semibold text-gray-600">
-                          {user?.fullName}
-                        </em>
-                        <div className="relative inline-flex">
-                          <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
-                          <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+          {isOpen && (
+            <div
+              className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'}`}
+              ref={chatContainerRef}
+              style={{ zIndex: 110000 }}
+            >
+              <ResizableBox
+                width={dimensions.width}
+                height={dimensions.height}
+                onResize={handleResize}
+                minConstraints={
+                  isDesktop
+                    ? [500, window.innerHeight]
+                    : [window.innerWidth, window.innerHeight]
+                }
+                maxConstraints={[
+                  isDesktop
+                    ? Math.min(window.innerWidth, window.innerWidth - 20)
+                    : window.innerWidth,
+                  isDesktop ? window.innerHeight : window.innerHeight,
+                ]}
+                resizeHandles={isDesktop ? ['sw'] : []}
+                className="chat-resizable"
+              >
+                <div
+                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'rounded-lg border border-gray-200' : ''} bg-white`}
+                >
+                  <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
+                    <Image
+                      src="/artiefy-logo2.svg"
+                      alt="Artiefy Logo Background"
+                      width={300}
+                      height={100}
+                      className="w-4/5"
+                      priority
+                    />
+                  </div>
+
+                  {/* Header */}
+                  <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
+                    <div className="flex items-start justify-between">
+                      <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+
+                      <div className="-ml-6 flex flex-1 flex-col items-center">
+                        <h2 className="mt-1 text-lg font-semibold text-gray-800">
+                          Artie IA
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <em className="text-sm font-semibold text-gray-600">
+                            {user?.fullName}
+                          </em>
+                          <div className="relative inline-flex">
+                            <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
+                            <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex">
-                      <button
-                        className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
-                        aria-label="Minimizar chatbot"
-                      >
-                        {!isChatPage &&
-                          (chatMode.status ? (
-                            <GoArrowLeft
-                              className="text-xl text-gray-500"
-                              onClick={() => {
-                                setChatMode({
-                                  idChat: null,
-                                  status: true,
-                                  curso_title: '',
-                                });
-                                setShowChatList(true);
-                              }}
-                            />
-                          ) : null)}
-                      </button>
+                      <div className="flex">
+                        <button
+                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          aria-label="Minimizar chatbot"
+                        >
+                          {!isChatPage &&
+                            (chatMode.status ? (
+                              <GoArrowLeft
+                                className="text-xl text-gray-500"
+                                onClick={() => {
+                                  setChatMode({
+                                    idChat: null,
+                                    status: true,
+                                    curso_title: '',
+                                  });
+                                  setShowChatList(true);
+                                }}
+                              />
+                            ) : null)}
+                        </button>
 
-                      <button
-                        onClick={handleDeleteHistory}
-                        className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
-                        aria-label="Borrar historial"
-                        title="Borrar historial"
-                      >
-                        <TrashIcon className="text-xl text-red-500" />
-                      </button>
+                        <button
+                          onClick={handleDeleteHistory}
+                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          aria-label="Borrar historial"
+                          title="Borrar historial"
+                        >
+                          <TrashIcon className="text-xl text-red-500" />
+                        </button>
 
-                      <button
-                        onClick={() => setIsOpen(false)}
-                        className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
-                        aria-label="Cerrar chatbot"
-                      >
-                        <IoMdClose className="text-xl text-gray-500" />
-                      </button>
+                        <button
+                          onClick={() => setIsOpen(false)}
+                          className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          aria-label="Cerrar chatbot"
+                        >
+                          <IoMdClose className="text-xl text-gray-500" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {chatMode.status && !isSignedIn ? (
+                    <ChatMessages
+                      idea={idea}
+                      setIdea={setIdea}
+                      setShowChatList={setShowChatList}
+                      courseId={courseId}
+                      isEnrolled={isEnrolled}
+                      courseTitle={courseTitle}
+                      messages={messages}
+                      setMessages={setMessages}
+                      chatMode={chatMode}
+                      setChatMode={setChatMode}
+                      inputText={inputText}
+                      setInputText={setInputText}
+                      handleSendMessage={handleSendMessage}
+                      isLoading={isLoading}
+                      messagesEndRef={
+                        messagesEndRef as React.RefObject<HTMLDivElement>
+                      }
+                      isSignedIn={isSignedIn}
+                      inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                      renderMessage={renderMessage}
+                      onDeleteHistory={handleDeleteHistory}
+                      onBotButtonClick={handleBotButtonClick}
+                    />
+                  ) : chatMode.status && isSignedIn && chatMode.idChat ? (
+                    <ChatMessages
+                      idea={idea}
+                      setIdea={setIdea}
+                      setShowChatList={setShowChatList}
+                      courseId={courseId}
+                      isEnrolled={isEnrolled}
+                      courseTitle={courseTitle}
+                      messages={messages}
+                      setMessages={setMessages}
+                      chatMode={chatMode}
+                      setChatMode={setChatMode}
+                      inputText={inputText}
+                      setInputText={setInputText}
+                      handleSendMessage={handleSendMessage}
+                      isLoading={isLoading}
+                      messagesEndRef={
+                        messagesEndRef as React.RefObject<HTMLDivElement>
+                      }
+                      isSignedIn={isSignedIn}
+                      inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                      renderMessage={renderMessage}
+                      onDeleteHistory={handleDeleteHistory}
+                      onBotButtonClick={handleBotButtonClick}
+                    />
+                  ) : (
+                    chatMode.status &&
+                    isSignedIn &&
+                    !chatMode.idChat && (
+                      <ChatList
+                        setChatMode={setChatMode}
+                        setShowChatList={setShowChatList}
+                      />
+                    )
+                  )}
                 </div>
 
-                {chatMode.status && !isSignedIn ? (
-                  <ChatMessages
-                    idea={idea}
-                    setIdea={setIdea}
-                    setShowChatList={setShowChatList}
-                    courseId={courseId}
-                    isEnrolled={isEnrolled}
-                    courseTitle={courseTitle}
-                    messages={messages}
-                    setMessages={setMessages}
-                    chatMode={chatMode}
-                    setChatMode={setChatMode}
-                    inputText={inputText}
-                    setInputText={setInputText}
-                    handleSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                    messagesEndRef={
-                      messagesEndRef as React.RefObject<HTMLDivElement>
-                    }
-                    isSignedIn={isSignedIn}
-                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                    renderMessage={renderMessage}
-                    onDeleteHistory={handleDeleteHistory}
-                    onBotButtonClick={handleBotButtonClick}
-                  />
-                ) : chatMode.status && isSignedIn && chatMode.idChat ? (
-                  <ChatMessages
-                    idea={idea}
-                    setIdea={setIdea}
-                    setShowChatList={setShowChatList}
-                    courseId={courseId}
-                    isEnrolled={isEnrolled}
-                    courseTitle={courseTitle}
-                    messages={messages}
-                    setMessages={setMessages}
-                    chatMode={chatMode}
-                    setChatMode={setChatMode}
-                    inputText={inputText}
-                    setInputText={setInputText}
-                    handleSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                    messagesEndRef={
-                      messagesEndRef as React.RefObject<HTMLDivElement>
-                    }
-                    isSignedIn={isSignedIn}
-                    inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                    renderMessage={renderMessage}
-                    onDeleteHistory={handleDeleteHistory}
-                    onBotButtonClick={handleBotButtonClick}
-                  />
-                ) : (
-                  chatMode.status &&
-                  isSignedIn &&
-                  !chatMode.idChat && (
-                    <ChatList
-                      setChatMode={setChatMode}
-                      setShowChatList={setShowChatList}
-                    />
-                  )
+                {chatMode.status && isSignedIn && showChatList && (
+                  <button
+                    className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
+                    onClick={() => newChatMessage()}
+                  >
+                    <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
+                      +
+                    </span>
+
+                    <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF3EE] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
+                  </button>
                 )}
-              </div>
-
-              {chatMode.status && isSignedIn && showChatList && (
-                <button
-                  className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
-                  onClick={() => newChatMessage()}
-                >
-                  <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
-                    +
-                  </span>
-
-                  <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF3EE] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
-                </button>
-              )}
-            </ResizableBox>
-          </div>
-        )}
-      </div>
-    </Tooltip.Provider>
+              </ResizableBox>
+            </div>
+          )}
+        </div>
+      </Tooltip.Provider>
+      <style jsx global>{`
+        .chat-resizable input,
+        .chat-resizable textarea {
+          color: #111 !important;
+        }
+      `}</style>
+    </>
   );
 };
 
 export default StudentChatbot;
+
+// NUEVO: extrae un N8nPayload desde varias formas ({output}, {n8nData}, payload directo)
+function extractN8nPayload(x: unknown): N8nPayload | null {
+  if (typeof x !== 'object' || x === null) return null;
+  const anyX = x as Record<string, unknown>;
+  // { n8nData: {...} } o { n8nData: { output: '...' } }
+  if ('n8nData' in anyX) {
+    const nd = anyX.n8nData;
+    if (
+      nd &&
+      typeof nd === 'object' &&
+      'output' in (nd as Record<string, unknown>) &&
+      typeof (nd as Record<string, unknown>).output === 'string'
+    ) {
+      try {
+        return JSON.parse((nd as Record<string, string>).output) as N8nPayload;
+      } catch {
+        return null;
+      }
+    }
+    if (nd && typeof nd === 'object') return nd as N8nPayload;
+  }
+  // { output: '...' }
+  if ('output' in anyX && typeof anyX.output === 'string') {
+    try {
+      return JSON.parse(anyX.output) as N8nPayload;
+    } catch {
+      return null;
+    }
+  }
+  // payload directo con claves esperadas
+  const keys = Object.keys(anyX);
+  if (
+    keys.some((k) =>
+      [
+        'mensaje',
+        'mensaje_inicial',
+        'courses',
+        'courseDescription',
+        'projectPrompt',
+      ].includes(k)
+    )
+  ) {
+    return anyX as unknown as N8nPayload;
+  }
+  return null;
+}

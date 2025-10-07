@@ -1,6 +1,6 @@
 'use server';
 
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -204,3 +204,38 @@ export async function getAllCourses(): Promise<Course[]> {
 export async function preloadAllCourses(): Promise<void> {
   await getAllCourses();
 }
+
+// Utilidad opcional para listar cursos activos (sirve como fallback/local testing).
+export interface BasicCourse {
+  id: number;
+  title: string;
+  description: string | null;
+  modalidad?: string;
+  modalidadId?: number | null;
+}
+
+export async function getAllActiveCourses(limit = 5): Promise<BasicCourse[]> {
+  const rows = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      modalidadId: courses.modalidadesid,
+      modalidadName: modalidades.name,
+    })
+    .from(courses)
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .where(or(eq(courses.isActive, true), isNull(courses.isActive)))
+    .orderBy(sql`${courses.updatedAt} DESC`)
+    .limit(Math.min(Math.max(limit, 1), 50));
+
+  return rows.map((c) => ({
+    id: c.id,
+    title: c.title ?? '',
+    description: c.description ?? '',
+    modalidad: c.modalidadName ?? undefined,
+    modalidadId: c.modalidadId ?? undefined,
+  }));
+}
+
+export default getAllCourses;

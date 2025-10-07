@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { like, or, type SQL } from 'drizzle-orm';
+import { ilike, or, type SQL } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
@@ -35,46 +35,69 @@ export async function POST(request: Request) {
 
     const data = (await response.json()) as ApiResponse;
 
-    if (
-      !data?.result ||
-      !Array.isArray(data.result) ||
-      data.result.length === 0
-    ) {
-      return NextResponse.json({
-        response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta buscar con otros términos.`,
-        courses: [],
-      });
-    }
-
     // 2. Buscar cursos en la base de datos local usando los títulos sugeridos
-    const titleConditions: SQL[] = data.result.map((course) =>
-      like(courses.title, `%${course.title}%`)
-    );
+    let localCourses: { id: number; title: string }[] = [];
+    if (data?.result && Array.isArray(data.result) && data.result.length > 0) {
+      const titleConditions: SQL[] = data.result.map((course) =>
+        ilike(courses.title, `%${course.title}%`)
+      );
 
-    const localCourses = await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-      })
-      .from(courses)
-      .where(or(...titleConditions))
-      .limit(5);
+      localCourses = await db
+        .select({
+          id: courses.id,
+          title: courses.title,
+        })
+        .from(courses)
+        .where(or(...titleConditions))
+        .limit(5);
+    }
 
+    // 3. Si no hay coincidencias exactas, buscar por palabras clave en título y descripción
     if (!localCourses.length) {
+      const keywords = prompt
+        .toLowerCase()
+        .split(' ')
+        .filter((w) => w.length > 3);
+      if (keywords.length > 0) {
+        // Filtra para evitar undefined en el array de condiciones
+        const keywordConditions: SQL[] = keywords
+          .map((kw) =>
+            kw
+              ? or(
+                  ilike(courses.title, `%${kw}%`),
+                  ilike(courses.description, `%${kw}%`)
+                )
+              : undefined
+          )
+          .filter(Boolean) as SQL[];
+        if (keywordConditions.length > 0) {
+          localCourses = await db
+            .select({
+              id: courses.id,
+              title: courses.title,
+            })
+            .from(courses)
+            .where(or(...keywordConditions))
+            .limit(5);
+        }
+      }
+    }
+
+    // 4. Formatear respuesta con los IDs locales
+    if (localCourses.length > 0) {
+      const formattedResponse = `He encontrado estos cursos que podrían interesarte:\n\n${localCourses
+        .map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
+        .join('\n\n')}`;
       return NextResponse.json({
-        response: `No encontré cursos relacionados con "${prompt}" en nuestra plataforma. Por favor, intenta con otros términos.`,
-        courses: [],
+        response: formattedResponse,
+        courses: localCourses,
       });
     }
 
-    // 3. Formatear respuesta con los IDs locales
-    const formattedResponse = `He encontrado estos cursos que podrían interesarte:\n\n${localCourses
-      .map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
-      .join('\n\n')}`;
-
+    // 5. Si aún no hay cursos, responde con mensaje claro pero sin inventar cursos
     return NextResponse.json({
-      response: formattedResponse,
-      courses: localCourses,
+      response: `No encontré cursos relacionados con "${prompt}" en nuestra plataforma. Por favor, intenta con otros términos o revisa la oferta actual de cursos.`,
+      courses: [],
     });
   } catch (error) {
     console.error('Search Error:', error);
