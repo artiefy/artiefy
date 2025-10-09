@@ -2,12 +2,11 @@
 // By Jean
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { ArrowRightCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { TrashIcon } from '@heroicons/react/24/solid';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
 import { GoArrowLeft } from 'react-icons/go';
@@ -17,7 +16,6 @@ import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import { Card } from '~/components/estudiantes/ui/card';
 import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
@@ -65,48 +63,41 @@ interface N8nPayload {
   projectPrompt?: boolean;
   intent?: string;
   conversationId?: string | number;
-}
-interface N8nApiResponse {
-  prompt: string;
-  n8nData: N8nPayload;
+  // NUEVO: posibles campos del borrador de proyecto
+  projectName?: string;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivoGeneral?: string;
+  objetivosEspecificos?: string[];
+  actividades?: (string | { descripcion: string })[];
+  categoryId?: number;
+  typeProject?: string;
+  pregunta_final?: string;
 }
 
-// Añade la interfaz para los botones y actualiza el tipo de mensaje
-interface ChatButton {
-  label: string;
-  action: string;
+interface N8nApiResponse {
+  n8nData?: N8nPayload;
+  prompt?: string;
 }
-interface ChatMessage {
+
+interface ProjectDraft {
+  projectName: string;
+  planteamiento: string;
+  justificacion: string;
+  objetivoGeneral: string;
+  objetivosEspecificos: string[];
+  actividades: { descripcion: string }[];
+  categoryId?: number;
+  typeProject?: string;
+}
+
+// Tipos
+export interface ChatMessage {
   id: number;
   text: string;
-  sender: string;
-  buttons?: ChatButton[];
+  sender: 'bot' | 'user';
+  buttons?: { label: string; action: string }[];
   coursesData?: CourseData[];
-}
-
-// Hook para obtener descripciones de modalidades
-function useModalidadDescriptions() {
-  const [modalidadMap, setModalidadMap] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    async function fetchModalidades() {
-      try {
-        const res = await fetch('/api/modalidades');
-        const data: { name: string; description: string | null }[] =
-          await res.json();
-        const map: Record<string, string> = {};
-        for (const m of data) {
-          map[m.name] = m.description ?? '';
-        }
-        setModalidadMap(map);
-      } catch {
-        setModalidadMap({});
-      }
-    }
-    fetchModalidades();
-  }, []);
-
-  return modalidadMap;
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -141,7 +132,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     height: 500,
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null); // <-- Soluciona el error inputRef
+  const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const searchRequestInProgress = useRef(false);
 
@@ -174,11 +165,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const ideaRef = useRef(idea);
 
-  // Usa el hook aquí para obtener el mapa de descripciones
-  const modalidadDescriptions = useModalidadDescriptions();
-
   // Añade los estados necesarios para el flujo n8n
   const [n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
+  const [pendingProjectDraft, setPendingProjectDraft] =
+    useState<ProjectDraft | null>(null);
 
   // Añade una línea para "usar" los estados y evitar el warning de ESLint
 
@@ -363,9 +353,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     flush().catch((e) => console.error('Error flushing queues:', e));
   }, [chatMode.idChat /* eslint-disable-line react-hooks/exhaustive-deps */]);
 
-  // Type guards
-  const isN8nApiResponse = (x: unknown): x is N8nApiResponse =>
-    typeof x === 'object' && x !== null && 'n8nData' in x;
+  // Type guards - Corregir unsafe member access
+  const isN8nApiResponse = (x: unknown): x is N8nApiResponse => {
+    if (typeof x !== 'object' || x === null) return false;
+    const obj = x as Record<string, unknown>;
+    return 'n8nData' in obj || 'prompt' in obj;
+  };
 
   // Valida un curso con forma CourseData
   function isCourseData(x: unknown): x is CourseData {
@@ -539,13 +532,88 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           })
         );
       }
+
+      // NUEVO: detectar borrador de proyecto y ofrecer guardar
+      const hasDraftFields =
+        Boolean(data.projectName) ||
+        Boolean(data.planteamiento) ||
+        Boolean(data.justificacion) ||
+        Boolean(data.objetivoGeneral) ||
+        (Array.isArray(data.objetivosEspecificos) &&
+          data.objetivosEspecificos.length > 0) ||
+        (Array.isArray(data.actividades) && data.actividades.length > 0);
+
+      if (data.projectPrompt || hasDraftFields) {
+        // Normalizar actividades
+        const acts =
+          (data.actividades ?? [])
+            .map((a) =>
+              typeof a === 'string'
+                ? { descripcion: a }
+                : a &&
+                    typeof a === 'object' &&
+                    'descripcion' in a &&
+                    typeof (a as { descripcion?: unknown }).descripcion ===
+                      'string'
+                  ? { descripcion: (a as { descripcion: string }).descripcion }
+                  : null
+            )
+            .filter((x): x is { descripcion: string } => Boolean(x)) ?? [];
+
+        const draft: ProjectDraft = {
+          projectName: data.projectName?.trim() ?? `Proyecto basado en tu idea`,
+          planteamiento: data.planteamiento?.trim() ?? '',
+          justificacion: data.justificacion?.trim() ?? '',
+          objetivoGeneral: data.objetivoGeneral?.trim() ?? '',
+          objetivosEspecificos: (data.objetivosEspecificos ?? []).filter(
+            (t) => typeof t === 'string' && t.trim() !== ''
+          ),
+          actividades: acts,
+          categoryId: data.categoryId,
+          typeProject: data.typeProject ?? 'AI-Assistant',
+        };
+
+        setPendingProjectDraft(draft);
+
+        const resumen =
+          `Propuesta de proyecto:\n` +
+          `• Título: ${draft.projectName}\n` +
+          (draft.planteamiento
+            ? `• Planteamiento: ${draft.planteamiento}\n`
+            : '') +
+          (draft.justificacion
+            ? `• Justificación: ${draft.justificacion}\n`
+            : '') +
+          (draft.objetivoGeneral
+            ? `• Objetivo general: ${draft.objetivoGeneral}\n`
+            : '') +
+          (draft.objetivosEspecificos.length
+            ? `• Objetivos específicos:\n  - ${draft.objetivosEspecificos.join('\n  - ')}\n`
+            : '') +
+          (draft.actividades.length
+            ? `• Actividades:\n  - ${draft.actividades.map((a) => a.descripcion).join('\n  - ')}`
+            : '');
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + Math.random(),
+            text: resumen,
+            sender: 'bot',
+            buttons: [
+              { label: '💾 Guardar proyecto', action: 'save_project_draft' },
+            ],
+          },
+        ]);
+        queueOrSaveBotMessage(resumen);
+      }
     },
     [queueOrSaveBotMessage, setMessages, setN8nCourses]
   );
 
   // Modificado: handleBotResponse ahora consume Agent IA (sin botones sí/no)
   const handleBotResponse = useCallback(
-    async (query: string, options?: { useN8n?: boolean }) => {
+    async (query: string, options?: { useN8n?: boolean }): Promise<void> => {
       const useN8n = options?.useN8n === true;
       if (processingQuery || searchRequestInProgress.current) return;
 
@@ -555,9 +623,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
       // NUEVO: mensaje temporal para feedback visual
       const loadingMessageId = Date.now() + Math.random();
+      // marcamos un mensaje de carga usando texto vacío -> renderMessage lo mostrará como loader
       setMessages((prev) => [
         ...prev,
-        { id: loadingMessageId, text: 'Pensando...', sender: 'bot' },
+        { id: loadingMessageId, text: '', sender: 'bot' },
       ]);
 
       try {
@@ -567,169 +636,167 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             sender: m.sender,
             text: m.text,
           }));
-          const result = await fetch('/api/ia-cursos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt: query,
-              conversationId,
-              messageHistory,
-            }),
-          });
-          if (!result.ok) throw new Error(`HTTP ${result.status}`);
 
-          // CAMBIO: usa result.json() en lugar de .text() + JSON.parse
-          const parsed: unknown = await result.json();
+          let n8nSuccess = false;
 
-          // 1) Intentar extraer directamente
-          const extracted = extractN8nPayload(parsed);
-          if (extracted) {
-            handleN8nData(extracted, query);
-            setIdea({ selected: false, idea: '' });
-            return;
+          try {
+            const result = await fetch('/api/ia-cursos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt: query,
+                conversationId,
+                messageHistory,
+              }),
+            });
+
+            if (result.ok) {
+              // CAMBIO: usa result.json() en lugar de .text() + JSON.parse
+              const parsed: unknown = await result.json();
+
+              // DEBUG: Agregamos log para ver la respuesta completa
+              console.log('Respuesta completa de /api/ia-cursos:', parsed);
+
+              // SOLUCIÓN: Manejar correctamente el formato { prompt, n8nData }
+              if (
+                typeof parsed === 'object' &&
+                parsed !== null &&
+                'n8nData' in parsed
+              ) {
+                const apiResponse = parsed as {
+                  prompt?: string;
+                  n8nData?: N8nPayload;
+                };
+
+                if (apiResponse.n8nData) {
+                  // Usar directamente n8nData que ya viene normalizado de la API
+                  await handleN8nData(apiResponse.n8nData, query);
+                  setIdea({ selected: false, idea: '' });
+                  n8nSuccess = true;
+                } else {
+                  console.warn(
+                    'La respuesta contiene n8nData pero está vacío:',
+                    apiResponse
+                  );
+                }
+              } else {
+                // Intentar el proceso anterior como fallback
+                const extracted = extractN8nPayload(parsed);
+                if (extracted) {
+                  await handleN8nData(extracted, query);
+                  setIdea({ selected: false, idea: '' });
+                  n8nSuccess = true;
+                } else if (isN8nApiResponse(parsed)) {
+                  const api: N8nApiResponse = parsed;
+                  const n8nData: N8nPayload = (api.n8nData ?? {}) as N8nPayload;
+
+                  const maybePayload = extractN8nPayload({ n8nData });
+                  if (maybePayload) {
+                    await handleN8nData(maybePayload, query);
+                    setIdea({ selected: false, idea: '' });
+                    n8nSuccess = true;
+                  } else {
+                    // Fallback para respuestas de n8n sin estructura esperada
+                    const initMsg = n8nData.mensaje_inicial;
+                    const genericMsg = n8nData.mensaje;
+
+                    if (typeof initMsg === 'string' && initMsg.trim() !== '') {
+                      setMessages((prev) => [
+                        ...prev,
+                        {
+                          id: Date.now() + Math.random(),
+                          text: initMsg,
+                          sender: 'bot',
+                        },
+                      ]);
+                      queueOrSaveBotMessage(initMsg);
+                      n8nSuccess = true;
+                    } else if (
+                      typeof genericMsg === 'string' &&
+                      genericMsg.trim() !== ''
+                    ) {
+                      setMessages((prev) => [
+                        ...prev,
+                        {
+                          id: Date.now() + Math.random(),
+                          text: genericMsg,
+                          sender: 'bot',
+                        },
+                      ]);
+                      queueOrSaveBotMessage(genericMsg);
+                      n8nSuccess = true;
+                    }
+                  }
+                }
+              }
+            }
+          } catch (n8nError) {
+            console.warn('N8N no disponible, usando fallback local:', n8nError);
           }
 
-          // 2) Si cumple la forma { prompt, n8nData }, tipar y usar n8nData correctamente
-          if (isN8nApiResponse(parsed)) {
-            const api: N8nApiResponse = parsed;
-            const n8nData: N8nPayload = (api.n8nData ?? {}) as N8nPayload;
+          // Si n8n falla, usar búsqueda local como fallback
+          if (!n8nSuccess) {
+            console.log('🔄 N8N falló, usando búsqueda local como fallback');
+            const res = await fetch('/api/iahome', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: query }),
+            });
 
-            const maybePayload = extractN8nPayload({ n8nData });
-            if (maybePayload) {
-              handleN8nData(maybePayload, query);
-              setIdea({ selected: false, idea: '' });
-              return;
-            }
+            if (res.ok) {
+              const dataUnknown: unknown = await res.json();
 
-            // Mensaje inicial o general
-            const initMsg = n8nData.mensaje_inicial;
-            const genericMsg = n8nData.mensaje;
-            if (typeof initMsg === 'string' && initMsg.trim() !== '') {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now() + Math.random(),
-                  text: initMsg,
-                  sender: 'bot',
-                },
-              ]);
-              queueOrSaveBotMessage(initMsg);
-            } else if (
-              typeof genericMsg === 'string' &&
-              genericMsg.trim() !== ''
-            ) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now() + Math.random(),
-                  text: genericMsg,
-                  sender: 'bot',
-                },
-              ]);
-              queueOrSaveBotMessage(genericMsg);
-            }
+              if (isIahomeResponse(dataUnknown)) {
+                const dataObj = dataUnknown as {
+                  response?: unknown;
+                  courses?: unknown[];
+                };
+                const responseText =
+                  typeof dataObj.response === 'string'
+                    ? dataObj.response
+                    : 'No encontré resultados específicos, pero puedo ayudarte con información general.';
 
-            // Lista de cursos
-            if (Array.isArray(n8nData.courses) && n8nData.courses.length) {
-              const coursesData: CourseData[] = n8nData.courses
-                .filter(isCourseData)
-                .map((c) => ({
-                  id: c.id,
-                  title: c.title,
-                  modalidadId: c.modalidadId,
-                  modalidad: c.modalidad,
-                }));
-              setN8nCourses(coursesData);
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now() + Math.random(),
-                  text: 'Cursos encontrados:',
-                  sender: 'bot',
-                  coursesData,
-                },
-              ]);
-              queueOrSaveBotMessage('Cursos encontrados:', coursesData);
-
-              const shouldOpenProject =
-                Boolean(n8nData.projectPrompt) ||
-                (typeof n8nData.intent === 'string' &&
-                  /idea|intenci[óo]n|proyecto/.test(n8nData.intent)) ||
-                /como ser|quiero|mi idea|proyecto/i.test(query);
-
-              if (shouldOpenProject) {
-                const intro =
-                  'Ahora, si quieres, definamos el planteamiento, objetivos y actividades de tu proyecto.';
                 setMessages((prev) => [
                   ...prev,
                   {
                     id: Date.now() + Math.random(),
-                    text: intro,
+                    text: responseText,
                     sender: 'bot',
                   },
                 ]);
-                queueOrSaveBotMessage(intro);
-                window.dispatchEvent(
-                  new CustomEvent('open-modal-planteamiento', {
-                    detail: { text: '' },
-                  })
-                );
+                queueOrSaveBotMessage(responseText);
+
+                // si hay courses retornados por iahome, filtramos y mostramos
+                if (
+                  Array.isArray(dataObj.courses) &&
+                  dataObj.courses.length > 0
+                ) {
+                  const coursesData: CourseData[] = dataObj.courses
+                    .filter(isCourseData)
+                    .map((c) => ({
+                      id: c.id,
+                      title: c.title,
+                    }));
+                  if (coursesData.length) {
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now() + Math.random(),
+                        text: 'Cursos encontrados:',
+                        sender: 'bot',
+                        coursesData,
+                      },
+                    ]);
+                    queueOrSaveBotMessage('Cursos encontrados:', coursesData);
+                  }
+                }
               }
+            } else {
+              throw new Error('Tanto n8n como búsqueda local fallaron');
             }
-
-            // Descripción de curso puntual (usa variable local)
-            const courseDesc = n8nData.courseDescription;
-            if (typeof courseDesc === 'string' && courseDesc.trim() !== '') {
-              const descMsg =
-                n8nData.mensaje ?? 'Aquí tienes la información del curso:';
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now() + Math.random(),
-                  text: descMsg,
-                  sender: 'bot',
-                },
-                {
-                  id: Date.now() + Math.random(),
-                  text: courseDesc,
-                  sender: 'bot',
-                },
-              ]);
-              queueOrSaveBotMessage(descMsg);
-              queueOrSaveBotMessage(courseDesc);
-            }
-
-            if (n8nData.projectPrompt) {
-              const intro =
-                n8nData.mensaje ??
-                'Perfecto, vamos a crear tu proyecto. Abriré el asistente de Planteamiento.';
-              setMessages((prev) => [
-                ...prev,
-                { id: Date.now() + Math.random(), text: intro, sender: 'bot' },
-              ]);
-              queueOrSaveBotMessage(intro);
-              window.dispatchEvent(
-                new CustomEvent('open-modal-planteamiento', {
-                  detail: { text: n8nData.mensaje ?? '' },
-                })
-              );
-            }
-            setIdea({ selected: false, idea: '' });
-            return;
           }
 
-          // Fallback n8n
-          const fallbackText =
-            typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + Math.random(),
-              text: fallbackText,
-              sender: 'bot',
-            },
-          ]);
-          queueOrSaveBotMessage(fallbackText);
+          setIdea({ selected: false, idea: '' });
           return;
         } else {
           // flujo local (iahome) para búsquedas normales
@@ -817,7 +884,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       } catch (error) {
         console.error('Error getting bot response:', error);
         const errorMessage =
-          'Lo siento, ocurrió un error al procesar tu solicitud.';
+          'Lo siento, estoy teniendo dificultades técnicas. Puedes intentar reformular tu pregunta o contactar soporte si el problema persiste.';
         setMessages((prev) => [
           ...prev,
           { id: Date.now() + Math.random(), text: errorMessage, sender: 'bot' },
@@ -836,16 +903,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       processingQuery,
       onSearchComplete,
       messages,
-      handleN8nData,
       queueOrSaveBotMessage,
-    ] // Ahora handleN8nData ya está definido antes
+      handleN8nData,
+    ]
   );
 
   // useEffect para manejar búsquedas desde StudentDetails
   useEffect(() => {
     const handleCreateNewChatWithSearch = (
       event: CustomEvent<{ query: string }>
-    ) => {
+    ): void => {
       const query = event.detail.query;
       if (!query) return;
 
@@ -1079,11 +1146,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     setMessages((prev) => [...prev, newUserMessage]);
     setInputText('');
 
+    // CAMBIO: Siempre usar n8n para consultas de chat, solo usar iahome para búsquedas específicas
     if (ideaRef.current.selected) {
       setIdea({ selected: false, idea: trimmedInput });
       await handleBotResponse(trimmedInput, { useN8n: true });
     } else {
-      await handleBotResponse(trimmedInput, { useN8n: false });
+      // CAMBIO: Para consultas generales también usar n8n
+      await handleBotResponse(trimmedInput, { useN8n: true });
     }
   };
 
@@ -1168,103 +1237,231 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       return;
     }
 
+    if (action === 'save_project_draft') {
+      if (!pendingProjectDraft) {
+        toast.error('No hay borrador disponible para guardar.');
+        return;
+      }
+      if (!isSignedIn) {
+        toast.info('Inicia sesión para guardar tu proyecto.');
+        router.push('/sign-in');
+        return;
+      }
+
+      const draft = pendingProjectDraft;
+      // Mapear a la forma que espera /api/projects (ProjectData)
+      const payload = {
+        name: draft.projectName || 'Proyecto sin título',
+        planteamiento: draft.planteamiento || '',
+        justificacion: draft.justificacion || '',
+        objetivo_general: draft.objetivoGeneral || '',
+        objetivos_especificos: draft.objetivosEspecificos.map((t, i) => ({
+          id: `obj_${i + 1}`,
+          title: t,
+        })),
+        actividades: draft.actividades.map((a) => ({
+          descripcion: a.descripcion,
+          meses: [],
+        })),
+        type_project: draft.typeProject ?? 'AI-Assistant',
+        categoryId: Number.isFinite(draft.categoryId) ? draft.categoryId! : 1,
+        isPublic: false,
+        // Opcionales de cronograma; el backend los acepta opcionalmente:
+        // fechaInicio, fechaFin, tipoVisualizacion, horasPorDia, totalHoras, tiempoEstimado, diasEstimados, diasNecesarios
+      };
+
+      setIsLoading(true);
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(
+              (err as { error?: string })?.error ?? 'Error creando el proyecto'
+            );
+          }
+          return res.json() as Promise<{ id?: number }>;
+        })
+        .then((data: { id?: number }) => {
+          toast.success('Proyecto guardado correctamente.');
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + Math.random(),
+              text: '✅ Tu proyecto fue creado. Puedes continuar desarrollándolo en la sección de proyectos.',
+              sender: 'bot',
+              buttons: data?.id
+                ? [
+                    {
+                      label: '🔎 Ver proyecto',
+                      action: `open_project_${data.id}`,
+                    },
+                  ]
+                : undefined,
+            },
+          ]);
+          setPendingProjectDraft(null);
+        })
+        .catch((e) => {
+          console.error(e);
+          toast.error('No se pudo guardar el proyecto.');
+        })
+        .finally(() => setIsLoading(false));
+
+      return;
+    }
+
+    if (action.startsWith('open_project_')) {
+      const idStr = action.replace('open_project_', '');
+      const pid = parseInt(idStr, 10);
+      if (!Number.isNaN(pid)) {
+        router.push(`/proyectos/DetallesProyectos/${pid}`);
+      }
+      return;
+    }
+
     console.log('Acción de botón no gestionada:', action);
   };
 
-  // Modifica renderMessage para mostrar el flujo especial
+  // Modifica la función parseN8nCoursesMessage para aceptar el formato { message: { text: ... } }
+  // function parseN8nCoursesMessage(message: string | { text?: string }): {
+  //   mensaje_inicial?: string;
+  //   mensaje?: string;
+  //   courses?: { id: number; title: string; modalidad?: string; modalidadId?: number }[];
+  //   pregunta_final?: string;
+  //   intent?: string;
+  // } | null {
+  //   let text = '';
+  //   if (typeof message === 'string') {
+  //     text = message;
+  //   } else if (message && typeof message === 'object' && typeof message.text === 'string') {
+  //     text = message.text;
+  //   }
+  //   try {
+  //     const obj = JSON.parse(text) as {
+  //       mensaje_inicial?: string;
+  //       mensaje?: string;
+  //       courses?: { id: number; title: string; modalidad?: string; modalidadId?: number }[];
+  //       pregunta_final?: string;
+  //       intent?: string;
+  //     };
+  //     // Solo retorna si es un objeto y tiene al menos mensaje o courses
+  //     if (
+  //       obj &&
+  //       (typeof obj.mensaje_inicial === 'string' ||
+  //         typeof obj.mensaje === 'string' ||
+  //         (Array.isArray(obj.courses) && obj.courses.length > 0))
+  //     ) {
+  //       return obj;
+  //     }
+  //   } catch {
+  //     // No es JSON válido
+  //   }
+  //   return null;
+  // }
+
+  // Modifica renderMessage para mostrar la modalidad real desde la BD (relación cursos-modalidades)
   const renderMessage = (message: ChatMessage, _idx?: number) => {
+    // Mensaje del bot en formato JSON (bienvenida, cursos, etc)
     if (
       message.sender === 'bot' &&
-      'coursesData' in message &&
-      message.coursesData
+      typeof message.text === 'string' &&
+      message.text.trim().startsWith('{')
     ) {
-      return (
-        <div className="flex flex-col space-y-4">
-          <p className="font-medium text-gray-800">{message.text}</p>
-          <div className="grid gap-4">
-            {message.coursesData.map((course) => {
-              const modalidad =
-                typeof course.modalidad === 'string' ? course.modalidad : '';
-              const modalidadDesc =
-                modalidad &&
-                Object.prototype.hasOwnProperty.call(
-                  modalidadDescriptions,
-                  modalidad
-                )
-                  ? modalidadDescriptions[modalidad]
-                  : '';
-
-              return (
-                <Card
-                  key={course.id}
-                  className="text-primary overflow-hidden rounded-lg bg-gray-800 transition-all hover:scale-[1.02]"
-                >
-                  <div className="flex flex-col px-4 py-3">
-                    <h4 className="mb-2 text-base font-bold tracking-wide text-white">
-                      {course.title}
-                    </h4>
-                    <Link
-                      href={`/estudiantes/cursos/${course.id}`}
-                      className="group/button inline-flex h-10 items-center justify-center rounded-md border border-cyan-400 bg-cyan-500/10 px-4 text-cyan-300 shadow-md backdrop-blur-sm transition-all duration-200 ease-in-out hover:bg-cyan-400/20 active:scale-95"
-                    >
-                      <span className="font-semibold tracking-wide">
-                        Ir al curso
-                      </span>
-                      <ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5 text-cyan-300" />
-                    </Link>
-                    {modalidad && (
-                      <div className="mt-2">
-                        {modalidadDesc ? (
-                          <Tooltip.Root>
-                            <Tooltip.Trigger asChild>
-                              <span>
-                                <Badge
-                                  variant="destructive"
-                                  className="cursor-pointer border-none bg-red-600 text-white"
-                                >
-                                  {modalidad}
-                                </Badge>
-                              </span>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                              <Tooltip.Content
-                                side="bottom"
-                                align="center"
-                                sideOffset={8}
-                                className="z-[99999] rounded border border-gray-200 bg-white px-3 py-2 text-xs text-black shadow-lg"
-                              >
-                                {modalidadDesc}
-                                <Tooltip.Arrow className="fill-white" />
-                              </Tooltip.Content>
-                            </Tooltip.Portal>
-                          </Tooltip.Root>
-                        ) : (
-                          <Badge
-                            variant="destructive"
-                            className="border-none bg-red-600 text-white"
-                          >
-                            {modalidad}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
+      let json: N8nPayload | null = null;
+      try {
+        const parsed = JSON.parse(message.text) as unknown;
+        if (
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          'message' in parsed &&
+          typeof (parsed as { message?: unknown }).message === 'object' &&
+          (parsed as { message?: { text?: unknown } }).message &&
+          typeof (parsed as { message: { text?: unknown } }).message.text ===
+            'string' &&
+          (parsed as { message: { text: string } }).message.text
+            .trim()
+            .startsWith('{')
+        ) {
+          json = JSON.parse(
+            (parsed as { message: { text: string } }).message.text
+          ) as N8nPayload;
+        } else {
+          json = parsed as N8nPayload;
+        }
+      } catch {
+        json = null;
+      }
+      // Burbuja estilizada para bienvenida del agente IA y otros mensajes
+      if (
+        json &&
+        typeof json.mensaje === 'string' &&
+        typeof json.intent === 'string'
+      ) {
+        return (
+          <div className="agent-response flex flex-col items-start space-y-2">
+            <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+              <p className="font-semibold text-white">{json.mensaje}</p>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
+      // Tarjetas para cursos de embedding del flujo n8n
+      if (json && Array.isArray(json.courses) && json.courses.length > 0) {
+        return (
+          <div className="agent-response flex flex-col items-start space-y-2">
+            {typeof json.mensaje_inicial === 'string' && (
+              <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+                <p className="font-semibold text-white">
+                  {json.mensaje_inicial}
+                </p>
+              </div>
+            )}
+            <CoursesCardsWithModalidad
+              courses={json.courses}
+              coursesData={message.coursesData}
+            />
+            {typeof json.pregunta_final === 'string' && (
+              <div className="mt-2 max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+                <p className="font-semibold text-white">
+                  {json.pregunta_final}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }
     }
 
-    // El resto del renderMessage existente (mantiene compatibilidad original)
+    // Mensajes del bot en texto plano (incluye bienvenida, idea, no encontrado, etc)
     if (message.sender === 'bot') {
+      // Si es el mensaje de bienvenida, idea, o "no encontrado", pon fondo
+      const isWelcome =
+        message.text ===
+        '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
+      const isIdea = message.text === '¡Cuéntame tu nueva idea!';
+      const isNoFound =
+        message.text.startsWith('No encontré cursos relacionados') ||
+        message.text.startsWith('No encontré resultados.') ||
+        message.text.startsWith('No encontré cursos específicos');
+
+      if (isWelcome || isIdea || isNoFound) {
+        return (
+          <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+            <p className="font-semibold text-white">{message.text}</p>
+          </div>
+        );
+      }
+
       const parts = message.text.split('\n\n');
       const introText = parts[0];
       const courseTexts = parts.slice(1);
 
       const courses = courseTexts
-        .map((text) => {
+        .map((text: string) => {
           const regex = /^(\d+)\.\s+(.*?)\s+\|\s+(\d+)$/;
           const match = regex.exec(text);
           if (!match) return null;
@@ -1280,10 +1477,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         );
 
       if (courses.length === 0) {
+        // Para cualquier otro mensaje del bot, pon también el fondo
         return (
-          <div className="flex flex-col space-y-4">
-            <div className="space-y-3">
-              {message.text.split('\n').map((line, index) => {
+          <div className="agent-response flex flex-col space-y-4">
+            <div className="">
+              {message.text.split('\n').map((line: string, index: number) => {
                 if (
                   /^(Carreras|Diplomados|Cursos|Financiación)/i.test(
                     line.trim()
@@ -1292,27 +1490,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   return (
                     <h4
                       key={index}
-                      className="text-base font-semibold text-cyan-700"
+                      className="text-base font-semibold text-white"
                     >
                       {line}
                     </h4>
                   );
                 }
-
                 if (/\$\d[\d.]*\s?COP/.test(line)) {
                   return (
-                    <p key={index} className="text-gray-800">
-                      <span className="font-medium text-cyan-600">{line}</span>
+                    <p key={index} className="text-white">
+                      <span className="font-medium text-cyan-300">{line}</span>
                     </p>
                   );
                 }
-
                 if (line.trim() === '') {
                   return <div key={index} className="h-2" />;
                 }
-
                 return (
-                  <p key={index} className="leading-relaxed text-gray-700">
+                  <p key={index} className="leading-relaxed text-white">
                     {line}
                   </p>
                 );
@@ -1324,29 +1519,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
       return (
         <div className="flex flex-col space-y-4">
-          <p className="font-medium text-gray-800">{introText}</p>
+          <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+            <p className="font-medium text-white">{introText}</p>
+          </div>
           <div className="grid gap-4">
-            {courses.map((course) => (
-              <Card
-                key={course.id}
-                className="text-primary overflow-hidden rounded-lg bg-gray-800 transition-all hover:scale-[1.02]"
-              >
-                <div className="flex items-center justify-between px-4 py-3">
-                  <h4 className="text-base font-bold tracking-wide text-white">
-                    {course.number}. {course.title}
-                  </h4>
-                  <Link
-                    href={`/estudiantes/cursos/${course.id}`}
-                    className="group/button inline-flex h-12 items-center rounded-md border border-cyan-400 bg-cyan-500/10 px-4 text-cyan-300 shadow-md backdrop-blur-sm transition-all duration-300 ease-in-out hover:bg-cyan-400/20"
-                  >
-                    <span className="font-semibold tracking-wide">
-                      Ver Curso
-                    </span>
-                    <ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 transition-transform duration-300 ease-in-out group-hover/button:translate-x-1" />
-                  </Link>
-                </div>
-              </Card>
-            ))}
+            <CoursesCardsWithModalidad
+              courses={courses.map((c) => ({ id: c.id, title: c.title }))}
+              coursesData={message.coursesData}
+            />
             <button
               className="group relative mt-3 w-full overflow-hidden rounded-lg border border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-cyan-500/50"
               onClick={() => {
@@ -1362,6 +1542,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       );
     }
 
+    // Mensaje del usuario (sin fondo especial)
     return (
       <div className="flex flex-col space-y-4">
         <p className="font-medium whitespace-pre-line text-gray-800">
@@ -1371,9 +1552,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           <div className="mt-2 flex flex-wrap gap-2">
             {message.buttons
               .filter(
-                (btn) => !(btn.action === 'contact_support' && !isSignedIn)
+                (btn: { label: string; action: string }) =>
+                  !(btn.action === 'contact_support' && !isSignedIn)
               )
-              .map((btn) => (
+              .map((btn: { label: string; action: string }) => (
                 <button
                   key={btn.action}
                   className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
@@ -1481,7 +1663,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       <Tooltip.Provider>
         <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
           {isAlwaysVisible && (
-            <div className="fixed right-6 bottom-6 z-50">
+            <div className="fixed right-6 bottom-6 z-[100001] md:z-50">
               <button
                 className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
                 onMouseEnter={() => {
@@ -1535,9 +1717,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
           {isOpen && (
             <div
-              className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'}`}
+              className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
               ref={chatContainerRef}
-              style={{ zIndex: 110000 }}
+              // style={{ zIndex: 110000 }} // Elimina style y usa la clase z-[100001]
             >
               <ResizableBox
                 width={dimensions.width}
@@ -1560,22 +1742,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 <div
                   className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'rounded-lg border border-gray-200' : ''} bg-white`}
                 >
-                  <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
-                    <Image
-                      src="/artiefy-logo2.svg"
-                      alt="Artiefy Logo Background"
-                      width={300}
-                      height={100}
-                      className="w-4/5"
-                      priority
-                    />
-                  </div>
-
                   {/* Header */}
                   <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
                     <div className="flex items-start justify-between">
                       <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
-
                       <div className="-ml-6 flex flex-1 flex-col items-center">
                         <h2 className="mt-1 text-lg font-semibold text-gray-800">
                           Artie IA
@@ -1632,6 +1802,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     </div>
                   </div>
 
+                  {/* Componente ChatMessages con tipos corregidos usando type assertion */}
                   {chatMode.status && !isSignedIn ? (
                     <ChatMessages
                       idea={idea}
@@ -1640,8 +1811,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                       courseId={courseId}
                       isEnrolled={isEnrolled}
                       courseTitle={courseTitle}
-                      messages={messages}
-                      setMessages={setMessages}
+                      messages={
+                        messages as {
+                          id: number;
+                          text: string;
+                          sender: string;
+                          coursesData?: { id: number; title: string }[];
+                        }[]
+                      }
+                      setMessages={
+                        setMessages as React.Dispatch<
+                          React.SetStateAction<
+                            { id: number; text: string; sender: string }[]
+                          >
+                        >
+                      }
                       chatMode={chatMode}
                       setChatMode={setChatMode}
                       inputText={inputText}
@@ -1653,7 +1837,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                       }
                       isSignedIn={isSignedIn}
                       inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                      renderMessage={renderMessage}
+                      renderMessage={
+                        renderMessage as (
+                          message: {
+                            id: number;
+                            text: string;
+                            sender: string;
+                            coursesData?: { id: number; title: string }[];
+                          },
+                          idx: number
+                        ) => React.ReactNode
+                      }
                       onDeleteHistory={handleDeleteHistory}
                       onBotButtonClick={handleBotButtonClick}
                     />
@@ -1665,8 +1859,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                       courseId={courseId}
                       isEnrolled={isEnrolled}
                       courseTitle={courseTitle}
-                      messages={messages}
-                      setMessages={setMessages}
+                      messages={
+                        messages as {
+                          id: number;
+                          text: string;
+                          sender: string;
+                          coursesData?: { id: number; title: string }[];
+                        }[]
+                      }
+                      setMessages={
+                        setMessages as React.Dispatch<
+                          React.SetStateAction<
+                            { id: number; text: string; sender: string }[]
+                          >
+                        >
+                      }
                       chatMode={chatMode}
                       setChatMode={setChatMode}
                       inputText={inputText}
@@ -1678,7 +1885,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                       }
                       isSignedIn={isSignedIn}
                       inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                      renderMessage={renderMessage}
+                      renderMessage={
+                        renderMessage as (
+                          message: {
+                            id: number;
+                            text: string;
+                            sender: string;
+                            coursesData?: { id: number; title: string }[];
+                          },
+                          idx: number
+                        ) => React.ReactNode
+                      }
                       onDeleteHistory={handleDeleteHistory}
                       onBotButtonClick={handleBotButtonClick}
                     />
@@ -1723,11 +1940,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 export default StudentChatbot;
 
-// NUEVO: extrae un N8nPayload desde varias formas ({output}, {n8nData}, payload directo)
+// Mueve extractN8nPayload aquí para evitar error TS2304
 function extractN8nPayload(x: unknown): N8nPayload | null {
   if (typeof x !== 'object' || x === null) return null;
   const anyX = x as Record<string, unknown>;
-  // { n8nData: {...} } o { n8nData: { output: '...' } }
   if ('n8nData' in anyX) {
     const nd = anyX.n8nData;
     if (
@@ -1744,7 +1960,6 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
     }
     if (nd && typeof nd === 'object') return nd as N8nPayload;
   }
-  // { output: '...' }
   if ('output' in anyX && typeof anyX.output === 'string') {
     try {
       return JSON.parse(anyX.output) as N8nPayload;
@@ -1752,7 +1967,6 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
       return null;
     }
   }
-  // payload directo con claves esperadas
   const keys = Object.keys(anyX);
   if (
     keys.some((k) =>
@@ -1768,4 +1982,131 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
     return anyX as unknown as N8nPayload;
   }
   return null;
+}
+
+// Utilidad para obtener todas las modalidades de la BD (usando la API)
+let modalidadesCache: Record<number, string> | null = null;
+async function fetchModalidades(): Promise<Record<number, string>> {
+  if (modalidadesCache) return modalidadesCache;
+  try {
+    const res = await fetch('/api/modalidades');
+    if (!res.ok) return {};
+    const arr = (await res.json()) as { id: number; name: string }[];
+    const map: Record<number, string> = {};
+    arr.forEach((m) => {
+      if (typeof m.id === 'number' && typeof m.name === 'string') {
+        map[m.id] = m.name;
+      }
+    });
+    modalidadesCache = map;
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+// Custom hook para obtener modalidades reales de la BD
+function useModalidadesBD(modalidadIds: number[] | undefined) {
+  const [modalidadesState, setModalidadesState] = useState<
+    Record<number, string>
+  >({});
+
+  useEffect(() => {
+    if (!modalidadIds || modalidadIds.length === 0) return;
+    fetchModalidades().then((modalidadesMap: Record<number, string>) => {
+      const newState: Record<number, string> = {};
+      modalidadIds.forEach((id) => {
+        if (id && typeof modalidadesMap[id] === 'string') {
+          newState[id] = modalidadesMap[id];
+        }
+      });
+      if (Object.keys(newState).length > 0) {
+        setModalidadesState((prev) => ({ ...prev, ...newState }));
+      }
+    });
+  }, [modalidadIds]);
+
+  return modalidadesState;
+}
+
+// Nuevo componente para renderizar las tarjetas de cursos con modalidad real
+function CoursesCardsWithModalidad({
+  courses,
+  coursesData,
+}: {
+  courses: CourseData[];
+  coursesData?: CourseData[];
+}) {
+  // Modalidades correctas desde BD si existen en coursesData
+  const bdModalidades = new Map<number, string>();
+  if (Array.isArray(coursesData)) {
+    coursesData.forEach((c) => {
+      if (typeof c.id === 'number') {
+        if (typeof c.modalidad === 'string') {
+          bdModalidades.set(c.id, c.modalidad);
+        } else if (
+          c.modalidad &&
+          typeof c.modalidad === 'object' &&
+          'name' in c.modalidad &&
+          typeof (c.modalidad as { name: unknown }).name === 'string'
+        ) {
+          bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
+        }
+      }
+    });
+  }
+
+  const modalidadIds = courses
+    ?.map((course) => course.modalidadId)
+    .filter((id): id is number => typeof id === 'number');
+  const modalidadesState = useModalidadesBD(modalidadIds);
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-3">
+      {courses.map((course) => {
+        let modalidadReal = bdModalidades.get(course.id);
+        if (!modalidadReal && typeof course.modalidadId === 'number') {
+          modalidadReal ??= modalidadesState[course.modalidadId];
+          modalidadReal ??= course.modalidad;
+          modalidadReal ??= 'N/A';
+        } else if (!modalidadReal) {
+          modalidadReal ??= course.modalidad;
+          modalidadReal ??= 'N/A';
+        }
+        return (
+          // Usar Card como contenedor único (evita bordes dobles) y aplicar fondo
+          <Card
+            key={course.id}
+            className="text-primary max-w-[260px] min-w-[220px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
+          >
+            <div className="flex flex-col items-start px-4 py-3">
+              <h4 className="mb-1 font-bold text-white">{course.title}</h4>
+              <span className="mb-2 text-xs font-semibold text-[#2ecc71]">
+                Modalidad: {modalidadReal}
+              </span>
+              <Link
+                href={`/estudiantes/cursos/${course.id}`}
+                className="group/button relative mt-auto inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white bg-[#01142B] p-2 text-sm font-semibold text-[#3AF4EF] transition hover:bg-[#00A5C0] active:scale-95"
+              >
+                <span className="font-bold">Ir al curso</span>
+                <svg
+                  className="animate-bounce-right ml-2 h-5 w-5 text-[#3AF4EF]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
 }

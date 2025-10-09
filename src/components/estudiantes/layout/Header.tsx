@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
@@ -46,6 +47,7 @@ export function Header({
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
+  const pathname = usePathname();
   const navItems = [
     { href: '/', label: 'Inicio' },
     { href: '/estudiantes', label: 'Cursos' },
@@ -293,13 +295,19 @@ export function Header({
                 <div className="div-header-nav flex gap-24">
                   {navItems.map((item) => {
                     const extraClass = `div-header-${item.label.toLowerCase()}`;
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/' && pathname.startsWith(item.href));
+                    const activeClass = isActive
+                      ? 'border-b-2 border-orange-500 text-orange-500'
+                      : '';
                     // Proyectos: acceso directo
                     if (item.label === 'Proyectos') {
                       return (
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
+                          className={`text-lg font-light tracking-wide whitespace-nowrap transition-colors active:scale-95 ${extraClass} ${isActive ? activeClass : 'text-white hover:text-orange-500'}`}
                         >
                           {item.label}
                         </Link>
@@ -311,7 +319,7 @@ export function Header({
                         <button
                           key={item.href}
                           type="button"
-                          className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none`}
+                          className={`text-lg font-light tracking-wide whitespace-nowrap transition-colors active:scale-95 ${extraClass} cursor-pointer border-0 bg-transparent outline-none ${isActive ? activeClass : 'text-white hover:text-orange-500'}`}
                           onClick={handleEspaciosClick}
                         >
                           {item.label}
@@ -322,7 +330,7 @@ export function Header({
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
+                        className={`text-lg font-light tracking-wide whitespace-nowrap transition-colors active:scale-95 ${extraClass} ${isActive ? activeClass : 'text-white hover:text-orange-500'}`}
                       >
                         {item.label}
                       </Link>
@@ -466,10 +474,10 @@ export function Header({
           as="div"
           open={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-50 md:hidden"
+          className="fixed inset-0 z-[99999] md:hidden" // z-index alto para estar por encima de todo
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-          <DialogPanel className="fixed inset-y-0 right-0 z-50 flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl">
+          <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl">
             <div className="mt-9 flex shrink-0 items-center justify-between">
               <div className="relative size-[150px]">
                 <Link href="/estudiantes">
@@ -498,16 +506,23 @@ export function Header({
               <nav className="pb-7">
                 <ul className="space-y-12">
                   {navItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/' && pathname.startsWith(item.href));
+                    // Subrayado solo bajo el texto, no todo el ancho
+                    const activeClass = isActive
+                      ? 'text-orange-500 after:block after:h-0.5 after:bg-orange-500 after:w-full after:mx-auto after:mt-1 after:rounded-full'
+                      : '';
                     // Proyectos: acceso directo
                     if (item.label === 'Proyectos') {
                       return (
                         <li key={item.href}>
                           <Link
                             href={item.href}
-                            className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                            className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                             onClick={() => setMobileMenuOpen(false)}
                           >
-                            {item.label}
+                            <span className="relative">{item.label}</span>
                           </Link>
                         </li>
                       );
@@ -518,10 +533,10 @@ export function Header({
                         <li key={item.href}>
                           <button
                             type="button"
-                            className="block w-full cursor-pointer border-0 bg-transparent text-left text-lg text-gray-900 transition-colors outline-none hover:text-orange-500 active:scale-95"
+                            className={`mx-auto block w-fit cursor-pointer border-0 bg-transparent text-left text-lg transition-colors outline-none active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                             onClick={handleEspaciosClick}
                           >
-                            {item.label}
+                            <span className="relative">{item.label}</span>
                           </button>
                         </li>
                       );
@@ -530,10 +545,10 @@ export function Header({
                       <li key={item.href}>
                         <Link
                           href={item.href}
-                          className="block text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                          className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          {item.label}
+                          <span className="relative">{item.label}</span>
                         </Link>
                       </li>
                     );

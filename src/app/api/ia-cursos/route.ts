@@ -6,6 +6,8 @@ export async function POST(req: Request) {
       messageHistory?: { sender: string; text: string }[];
     };
 
+    console.log('📨 Recibido en /api/ia-cursos:', { prompt, conversationId });
+
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt requerido' }), {
         status: 400,
@@ -45,42 +47,148 @@ export async function POST(req: Request) {
       console.warn('Error buscando cursos en BD:', dbError);
     }
 
-    const baseUrl = process.env.N8N_BASE_URL;
-    const webhookPath = process.env.N8N_WEBHOOK_PATH;
-    if (!baseUrl || !webhookPath) {
-      console.error('N8N_BASE_URL / N8N_WEBHOOK_PATH no configurados');
-      return new Response(JSON.stringify({ error: 'Config n8n faltante' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    // NUEVO: Detectar entorno y usar webhook correspondiente
+    const isLocal =
+      process.env.NODE_ENV === 'development' ||
+      process.env.NEXT_PUBLIC_BASE_URL?.includes('localhost');
+
+    let n8nWebhookUrl: string;
+    if (isLocal) {
+      n8nWebhookUrl = process.env.N8N_WEBHOOK_LOCAL ?? '';
+      console.log('🔧 Usando webhook local de n8n');
+    } else {
+      n8nWebhookUrl = process.env.N8N_WEBHOOK_PROD ?? '';
+      console.log('🚀 Usando webhook de producción de n8n');
     }
 
-    const n8nWebhookUrl = `${baseUrl.replace(/\/+$/, '')}/webhook/${webhookPath.replace(/^\/+/, '')}`;
+    if (!n8nWebhookUrl) {
+      console.error(
+        '❌ Webhook de n8n no configurado para el entorno:',
+        isLocal ? 'local' : 'producción'
+      );
+      console.error('Variables disponibles:', {
+        N8N_WEBHOOK_LOCAL: process.env.N8N_WEBHOOK_LOCAL ? '✅' : '❌',
+        N8N_WEBHOOK_PROD: process.env.N8N_WEBHOOK_PROD ? '✅' : '❌',
+        NODE_ENV: process.env.NODE_ENV,
+        BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+      });
+      return new Response(
+        JSON.stringify({ error: 'Config webhook n8n faltante' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
-    console.log('Prompt recibido:', prompt);
-    console.log('Cursos reales encontrados:', availableCourses.length);
+    console.log('📡 Enviando a n8n:', {
+      url: n8nWebhookUrl,
+      prompt,
+      cursosEncontrados: availableCourses.length,
+      payload: {
+        chatInput: prompt,
+        sessionId:
+          conversationId && String(conversationId).trim() !== ''
+            ? String(conversationId)
+            : `session-${Date.now()}`,
+        // NUEVO: Debug del tipo de sessionId
+        sessionIdType: typeof conversationId,
+        sessionIdValue: conversationId,
+        messageHistory: messageHistory?.length ?? 0,
+        availableCourses: availableCourses.map((c) => ({
+          id: c.id,
+          title: c.title,
+        })),
+      },
+    });
 
     const n8nRes = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chatInput: prompt, // Cambiado de 'prompt' a 'chatInput' para que coincida con el flujo
-        conversationId,
+        chatInput: prompt,
+        sessionId:
+          conversationId && String(conversationId).trim() !== ''
+            ? String(conversationId)
+            : `session-${Date.now()}`, // <-- Generar un ID único si no existe
         messageHistory,
-        availableCourses, // Enviar cursos reales encontrados
+        availableCourses,
       }),
+    });
+
+    console.log('📨 Respuesta de n8n:', {
+      status: n8nRes.status,
+      ok: n8nRes.ok,
+      url: n8nWebhookUrl, // NUEVO: Log del URL para debug
+      headers: Object.fromEntries(n8nRes.headers.entries()),
     });
 
     if (!n8nRes.ok) {
       const errText = await n8nRes.text().catch(() => '');
-      console.error('Error en n8n:', errText);
-      return new Response(JSON.stringify({ error: 'Error llamando a n8n' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
+      console.error('❌ Error en n8n:', {
+        status: n8nRes.status,
+        statusText: n8nRes.statusText,
+        body: errText,
+        url: n8nWebhookUrl, // NUEVO: Log del URL en error
       });
+
+      // NUEVO: Instrucciones más detalladas para activar n8n
+      if (n8nRes.status === 404 && errText.includes('not registered')) {
+        console.error('🔧 PASOS PARA ACTIVAR N8N:');
+        console.error('1. Abre http://localhost:5678 en tu navegador');
+        console.error('2. Busca el workflow "My workflow 9"');
+        console.error('3. Haz clic en el workflow para abrirlo');
+        console.error(
+          '4. Verifica que el nodo Webhook esté configurado correctamente'
+        );
+        console.error('5. Activa el workflow (toggle debe estar en ON/verde)');
+        console.error(
+          '6. Haz clic en "Execute Workflow" o "Save" para registrar el webhook'
+        );
+        console.error('7. Intenta de nuevo en el chatbot');
+
+        return new Response(
+          JSON.stringify({
+            error: 'Workflow de n8n no está activo',
+            details:
+              'El webhook no está registrado. Activa el workflow en n8n.',
+            instructions: [
+              '1. Abre http://localhost:5678',
+              '2. Busca "My workflow 9"',
+              '3. Activa el workflow (toggle ON)',
+              '4. Haz clic en "Execute Workflow"',
+              '5. Intenta de nuevo',
+            ],
+            webhookUrl: n8nWebhookUrl,
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: 'Error llamando a n8n',
+          details: `${n8nRes.status}: ${errText}`,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const raw: unknown = await n8nRes.json();
+    console.log('✅ Datos recibidos de n8n:', raw);
+
+    // NUEVO: Log más detallado para ver estructura exacta
+    try {
+      console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
+    } catch (e) {
+      console.log('No se pudo stringificar la estructura completa');
+    }
 
     interface CourseData {
       id: number;
@@ -96,6 +204,16 @@ export async function POST(req: Request) {
       courseId?: number;
       projectPrompt?: boolean;
       intent?: string;
+
+      // NUEVO: posibles campos del borrador de proyecto
+      projectName?: string;
+      planteamiento?: string;
+      justificacion?: string;
+      objetivoGeneral?: string;
+      objetivosEspecificos?: string[];
+      actividades?: (string | { descripcion: string })[];
+      categoryId?: number;
+      typeProject?: string;
     }
 
     const getStr = (
@@ -160,6 +278,81 @@ export async function POST(req: Request) {
       const intent = getStr(obj, 'intent');
       if (intent) payload.intent = intent;
 
+      // NUEVO: mapear campos de borrador de proyecto con alias tolerantes
+      const str = (k: string) =>
+        typeof obj[k] === 'string' ? (obj[k] as string) : undefined;
+      const num = (k: string) =>
+        typeof obj[k] === 'number' ? (obj[k] as number) : undefined;
+      const arr = (k: string) =>
+        Array.isArray(obj[k]) ? (obj[k] as unknown[]) : undefined;
+
+      payload.projectName =
+        str('projectName') ??
+        str('project_name') ??
+        str('nombreProyecto') ??
+        str('tituloProyecto');
+
+      payload.planteamiento =
+        str('planteamiento') ??
+        str('problemStatement') ??
+        str('project_description') ??
+        str('descripcionProyecto');
+
+      payload.justificacion = str('justificacion') ?? str('justification');
+
+      payload.objetivoGeneral =
+        str('objetivoGeneral') ??
+        str('objetivo_general') ??
+        str('generalObjective');
+
+      const objEsps =
+        arr('objetivosEspecificos') ??
+        arr('objetivos_especificos') ??
+        arr('specificObjectives') ??
+        arr('objectives');
+
+      if (objEsps) {
+        payload.objetivosEspecificos = objEsps
+          .map((o) =>
+            typeof o === 'string'
+              ? o
+              : typeof o === 'object' &&
+                  o &&
+                  'title' in o &&
+                  typeof (o as { title?: unknown }).title === 'string'
+                ? (o as { title: string }).title
+                : undefined
+          )
+          .filter((x): x is string => typeof x === 'string' && x.trim() !== '');
+      }
+
+      const acts = arr('actividades') ?? arr('tasks');
+      if (acts) {
+        payload.actividades = acts
+          .map((a) =>
+            typeof a === 'string'
+              ? a
+              : typeof a === 'object' &&
+                  a &&
+                  'descripcion' in a &&
+                  typeof (a as { descripcion?: unknown }).descripcion ===
+                    'string'
+                ? { descripcion: (a as { descripcion: string }).descripcion }
+                : typeof a === 'object' &&
+                    a &&
+                    'task_name' in a &&
+                    typeof (a as { task_name?: unknown }).task_name === 'string'
+                  ? { descripcion: (a as { task_name: string }).task_name }
+                  : undefined
+          )
+          .filter((x): x is string | { descripcion: string } => Boolean(x));
+      }
+
+      payload.categoryId =
+        num('categoryId') ?? num('categoriaId') ?? num('category');
+      payload.typeProject =
+        str('typeProject') ?? str('project_type') ?? str('tipoProyecto');
+
       return payload;
     };
 
@@ -201,7 +394,38 @@ export async function POST(req: Request) {
 
     const normalized = toN8nPayload(raw);
 
-    console.log('Respuesta de n8n:', raw);
+    // NUEVO: Asegurar que siempre haya algún texto para mostrar
+    if (normalized && !normalized.mensaje && !normalized.mensaje_inicial) {
+      if (typeof raw === 'object' && raw !== null) {
+        // Intentar extraer mensaje del objeto raw si está disponible
+        const anyRaw = raw as Record<string, unknown>;
+        if (typeof anyRaw.message === 'string') {
+          normalized.mensaje = anyRaw.message;
+        } else if (typeof anyRaw.text === 'string') {
+          normalized.mensaje = anyRaw.text;
+        } else if (
+          raw &&
+          typeof raw === 'object' &&
+          'output' in (raw as object)
+        ) {
+          const output = (raw as Record<string, unknown>).output;
+          if (typeof output === 'string') {
+            normalized.mensaje = output;
+          }
+        }
+      }
+
+      // Si aún no hay mensaje, poner uno genérico
+      if (!normalized.mensaje && !normalized.mensaje_inicial) {
+        normalized.mensaje =
+          'He procesado tu consulta. ¿Puedo ayudarte con algo más?';
+      }
+    }
+
+    console.log('📤 Enviando respuesta normalizada:', {
+      prompt,
+      n8nData: normalized ?? {},
+    });
 
     // Siempre responde con objeto seguro
     return new Response(JSON.stringify({ prompt, n8nData: normalized ?? {} }), {
@@ -209,10 +433,16 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Error en ia-cursos:', err);
-    return new Response(JSON.stringify({ error: 'Error llamando a n8n' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('💥 Error en ia-cursos:', err);
+    return new Response(
+      JSON.stringify({
+        error: 'Error llamando a n8n',
+        details: err instanceof Error ? err.message : 'Error desconocido',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

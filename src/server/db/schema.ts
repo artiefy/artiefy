@@ -1397,9 +1397,9 @@ export const waMessages = pgTable(
     tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
     raw: jsonb('raw'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-          mediaId: text('media_id'),
-  mediaType: text('media_type'),
-  fileName: text('file_name'),
+    mediaId: text('media_id'),
+    mediaType: text('media_type'),
+    fileName: text('file_name'),
   },
   // Cambia el objeto por un array para evitar el warning deprecado
   (t) => [
@@ -1407,3 +1407,12 @@ export const waMessages = pgTable(
     uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
   ]
 );
+
+// Tabla requerida por n8n para Chat Memory
+export const n8nChatHistories = pgTable('n8n_chat_histories', {
+  id: serial('id').primaryKey(),
+  session_id: varchar('session_id', { length: 255 }).notNull(),
+  role: varchar('role', { length: 50 }).notNull(), // 'user' | 'assistant'
+  content: text('content').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});

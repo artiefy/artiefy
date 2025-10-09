@@ -40,6 +40,7 @@
     "@mantine/core": "^8.3.2",
     "@mantine/dropzone": "^8.3.2",
     "@mux/mux-player-react": "^3.6.0",
+    "@n8n/chat": "^0.60.0",
     "@neondatabase/serverless": "^1.0.1",
     "@plaiceholder/next": "^3.0.0",
     "@plaiceholder/tailwindcss": "^3.0.0",
