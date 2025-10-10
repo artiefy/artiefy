@@ -334,11 +334,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 <BsPersonCircle className="mt-2 text-xl text-gray-500" />
               )}
               <div
-                className={`${
+                className={
                   message.sender === 'user'
-                    ? 'bg-secondary text-white'
-                    : 'bg-gray-300 text-gray-800'
-                }`}
+                    ? 'bg-secondary rounded-2xl px-4 py-3 text-white shadow-lg'
+                    : 'bg-background rounded-2xl px-4 py-3 text-white shadow-lg'
+                }
               >
                 {renderMessage(message, idx)}
                 {/* Renderizar botones si existen */}
