@@ -303,74 +303,75 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
       {/* Messages */}
       <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
-        {messages.map((message, idx) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.sender === 'user' ? 'justify-end' : 'justify-start'
-            } mb-4`}
-          >
+        {messages.map((message, idx) =>
+          // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
+          message.sender === 'bot' && message.text === '' ? null : (
             <div
-              className={`flex max-w-[80%] items-start space-x-2 ${
-                message.sender === 'user'
-                  ? 'flex-row-reverse space-x-reverse'
-                  : 'flex-row'
-              }`}
+              key={message.id}
+              className={`flex ${
+                message.sender === 'user' ? 'justify-end' : 'justify-start'
+              } mb-4`}
             >
-              {/* Loader: si el mensaje es del bot y el texto está vacío, solo muestra los dots sin el chip */}
-              {message.sender === 'bot' &&
-              message.text === '' ? null : message.sender === 'bot' ? (
-                <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
-              ) : user?.imageUrl ? (
-                <Image
-                  src={user.imageUrl ?? '/default-avatar.png'}
-                  alt={user.fullName ?? 'User'}
-                  width={24}
-                  height={24}
-                  className="mt-2 rounded-full"
-                  priority
-                />
-              ) : (
-                <BsPersonCircle className="mt-2 text-xl text-gray-500" />
-              )}
               <div
-                className={
+                className={`flex max-w-[80%] items-start space-x-2 ${
                   message.sender === 'user'
-                    ? 'bg-secondary rounded-2xl px-4 py-3 text-white shadow-lg'
-                    : 'bg-background rounded-2xl px-4 py-3 text-white shadow-lg'
-                }
+                    ? 'flex-row-reverse space-x-reverse'
+                    : 'flex-row'
+                }`}
               >
-                {renderMessage(message, idx)}
-                {/* Renderizar botones si existen */}
-                {message.sender === 'bot' && message.buttons && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {message.buttons
-                        .filter(
-                          (btn) =>
-                            !(btn.action === 'contact_support' && !isSignedIn)
-                        )
-                        .map((btn) => (
-                          <button
-                            key={btn.action}
-                            className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                            onClick={() => handleLocalButton(btn.action)}
-                            type="button"
-                          >
-                            {btn.label}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
+                {message.sender === 'bot' ? (
+                  <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
+                ) : user?.imageUrl ? (
+                  <Image
+                    src={user.imageUrl ?? '/default-avatar.png'}
+                    alt={user.fullName ?? 'User'}
+                    width={24}
+                    height={24}
+                    className="mt-2 rounded-full"
+                    priority
+                  />
+                ) : (
+                  <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                 )}
+                <div
+                  className={
+                    message.sender === 'user'
+                      ? 'bg-secondary rounded-2xl px-4 py-3 text-white shadow-lg'
+                      : 'bg-background rounded-2xl px-4 py-3 text-white shadow-lg'
+                  }
+                >
+                  {renderMessage(message, idx)}
+                  {/* Renderizar botones si existen */}
+                  {message.sender === 'bot' && message.buttons && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {message.buttons
+                          .filter(
+                            (btn) =>
+                              !(btn.action === 'contact_support' && !isSignedIn)
+                          )
+                          .map((btn) => (
+                            <button
+                              key={btn.action}
+                              className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
+                              onClick={() => handleLocalButton(btn.action)}
+                              type="button"
+                            >
+                              {btn.label}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {/* Loader: solo muestra los dots, sin el chip */}
+          )
+        )}
+        {/* Loader: solo muestra los dots, sin ningún div rounded */}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="rounded-lg bg-gray-100 p-3">
+            <div>
               <div className="loader">
                 <div className="circle">
                   <div className="dot" />

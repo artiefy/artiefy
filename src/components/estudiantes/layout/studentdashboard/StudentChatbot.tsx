@@ -1402,18 +1402,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         typeof json.mensaje === 'string' &&
         typeof json.intent === 'string'
       ) {
+        // Solo el div de fondo debajo de las letras, sin el div extra
         return (
-          <div className="agent-response flex flex-col items-start space-y-2">
-            <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
-              <p className="font-semibold text-white">{json.mensaje}</p>
-            </div>
+          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+            <p className="font-semibold text-white">{json.mensaje}</p>
           </div>
         );
       }
       // Tarjetas para cursos de embedding del flujo n8n
       if (json && Array.isArray(json.courses) && json.courses.length > 0) {
         return (
-          <div className="agent-response flex flex-col items-start space-y-2">
+          <>
             {typeof json.mensaje_inicial === 'string' && (
               <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
                 <p className="font-semibold text-white">
@@ -1432,7 +1431,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 </p>
               </div>
             )}
-          </div>
+          </>
         );
       }
     }
@@ -1944,7 +1943,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                       +
                     </span>
 
-                    <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF3EE] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
+                    <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF4EF] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
                   </button>
                 )}
               </ResizableBox>
@@ -2101,7 +2100,7 @@ function CoursesCardsWithModalidad({
           // Usar Card como contenedor único (evita bordes dobles) y aplicar fondo
           <Card
             key={course.id}
-            className="text-primary max-w-[260px] min-w-[220px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
+            className="text-primary max-w-[260px] min-w-[300px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
           >
             <div className="flex flex-col items-start px-4 py-3">
               <h4 className="mb-1 font-bold text-white">{course.title}</h4>
@@ -2110,9 +2109,9 @@ function CoursesCardsWithModalidad({
               </span>
               <Link
                 href={`/estudiantes/cursos/${course.id}`}
-                className="group/button relative mt-auto inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white bg-[#01142B] p-2 text-sm font-semibold text-[#3AF4EF] transition hover:bg-[#00A5C0] active:scale-95"
+                className="group/button relative mt-auto inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white bg-[#01142B] p-2 text-sm font-semibold text-[#3AF4EF] transition hover:bg-gray-600 active:scale-95"
               >
-                <span className="font-bold">Ir al curso</span>
+                <span className="font-bold">Ir al Curso</span>
                 <svg
                   className="animate-bounce-right ml-2 h-5 w-5 text-[#3AF4EF]"
                   fill="none"
