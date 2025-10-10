@@ -63,7 +63,8 @@ export async function POST(request: Request) {
 
     // Si no hay cursos, responde con mensaje claro pero sin inventar cursos
     return NextResponse.json({
-      response: `No encontré cursos relacionados con "${prompt}" en nuestra plataforma. Por favor, intenta con otros términos o revisa la oferta actual de cursos.`,
+      response:
+        'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.',
       courses: [],
     });
   } catch (error) {

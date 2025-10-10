@@ -469,7 +469,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             }
           } else {
             // Si no hay cursos válidos, mostrar mensaje de búsqueda alternativa
-            const fallbackMsg = `No encontré cursos específicos para "${query}" en nuestra plataforma actual. Te sugiero buscar cursos relacionados o contactar con nuestro equipo para más información.`;
+            const fallbackMsg =
+              'Lo siento, estoy teniendo dificultades técnicas. Puedes intentar reformular tu pregunta o contactar soporte si el problema persiste.';
             setMessages((prev) => [
               ...prev,
               {
@@ -1414,7 +1415,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return (
           <div className="agent-response flex flex-col items-start space-y-2">
             {typeof json.mensaje_inicial === 'string' && (
-              <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+              <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
                 <p className="font-semibold text-white">
                   {json.mensaje_inicial}
                 </p>
@@ -1425,7 +1426,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               coursesData={message.coursesData}
             />
             {typeof json.pregunta_final === 'string' && (
-              <div className="mt-2 max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+              <div className="bg-background mt-2 max-w-[90%] rounded-2xl px-4 py-3 shadow">
                 <p className="font-semibold text-white">
                   {json.pregunta_final}
                 </p>
@@ -1438,20 +1439,43 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
     // Mensajes del bot en texto plano (incluye bienvenida, idea, no encontrado, etc)
     if (message.sender === 'bot') {
-      // Si es el mensaje de bienvenida, idea, o "no encontrado", pon fondo
-      const isWelcome =
-        message.text ===
-        '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
-      const isIdea = message.text === '¡Cuéntame tu nueva idea!';
-      const isNoFound =
-        message.text.startsWith('No encontré cursos relacionados') ||
-        message.text.startsWith('No encontré resultados.') ||
-        message.text.startsWith('No encontré cursos específicos');
+      // Detecta el mensaje de error genérico y aplica fondo especial
+      let msgText = message.text;
+      if (
+        typeof msgText === 'string' &&
+        (msgText.startsWith('No encontré cursos relacionados con ') ||
+          msgText ===
+            'No encontramos cursos relacionados en nuestra plataforma. Por favor, intenta con otros términos o revisa la oferta actual de cursos.' ||
+          msgText ===
+            'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.')
+      ) {
+        msgText =
+          'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.';
+      }
 
-      if (isWelcome || isIdea || isNoFound) {
+      const isNoCursosMsg =
+        typeof msgText === 'string' &&
+        (msgText.startsWith('No encontré cursos relacionados') ||
+          msgText.startsWith('No encontramos cursos relacionados') ||
+          msgText ===
+            'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.');
+
+      // Detecta el mensaje de error técnico
+      const isTechnicalError =
+        msgText ===
+        'Lo siento, estoy teniendo dificultades técnicas. Puedes intentar reformular tu pregunta o contactar soporte si el problema persiste.';
+
+      // Detecta bienvenida e idea
+      const isWelcome =
+        msgText ===
+        '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
+      const isIdea = msgText === '¡Cuéntame tu nueva idea!';
+
+      // Unifica todos los casos que deben tener fondo especial
+      if (isWelcome || isIdea || isNoCursosMsg || isTechnicalError) {
         return (
-          <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
-            <p className="font-semibold text-white">{message.text}</p>
+          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+            <p className="font-semibold text-white">{msgText}</p>
           </div>
         );
       }
@@ -1519,7 +1543,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
       return (
         <div className="flex flex-col space-y-4">
-          <div className="max-w-[90%] rounded-2xl bg-[#0b2433] px-4 py-3 shadow">
+          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
             <p className="font-medium text-white">{introText}</p>
           </div>
           <div className="grid gap-4">

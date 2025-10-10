@@ -317,7 +317,9 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   : 'flex-row'
               }`}
             >
-              {message.sender === 'bot' ? (
+              {/* Loader: si el mensaje es del bot y el texto está vacío, solo muestra los dots sin el chip */}
+              {message.sender === 'bot' &&
+              message.text === '' ? null : message.sender === 'bot' ? (
                 <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
               ) : user?.imageUrl ? (
                 <Image
@@ -332,7 +334,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 <BsPersonCircle className="mt-2 text-xl text-gray-500" />
               )}
               <div
-                className={`rounded-lg p-3 ${
+                className={`${
                   message.sender === 'user'
                     ? 'bg-secondary text-white'
                     : 'bg-gray-300 text-gray-800'
@@ -340,7 +342,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
               >
                 {renderMessage(message, idx)}
                 {/* Renderizar botones si existen */}
-
                 {message.sender === 'bot' && message.buttons && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -366,6 +367,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
             </div>
           </div>
         ))}
+        {/* Loader: solo muestra los dots, sin el chip */}
         {isLoading && (
           <div className="flex justify-start">
             <div className="rounded-lg bg-gray-100 p-3">
