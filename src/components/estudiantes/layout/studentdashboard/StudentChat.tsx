@@ -159,6 +159,9 @@ export const ChatMessages: React.FC<ChatProps> = ({
       }
     }
 
+    // Añade el flag isMounted para evitar actualizar estado si el componente se desmonta
+    let isMounted = true;
+
     const fetchMessages = async () => {
       let chats: {
         messages: { id: number; message: string; sender: string }[];
@@ -218,9 +221,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
             (msg) => msg.sender === 'bot' && msg.text === botMessage.text
           );
 
-          setMessages(
-            alreadyHasBot ? loadedMessages : [botMessage, ...loadedMessages]
-          );
+          if (isMounted) {
+            setMessages(
+              alreadyHasBot ? loadedMessages : [botMessage, ...loadedMessages]
+            );
+          }
         }
         // Creamos una conversación si no existe, luego de 2 mensajes enviados por el usuario
         else {
@@ -251,14 +256,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
                     : 'Sin título'),
               });
 
-              setChatMode({
-                idChat: courseId,
-                status: true,
-                curso_title: '',
-              });
+              if (isMounted) {
+                setChatMode({
+                  idChat: courseId,
+                  status: true,
+                  curso_title: '',
+                });
+              }
             }
-          } else {
-            console.log('Pero no entra para el if de crear conversación');
           }
         }
       } catch (error) {
@@ -267,6 +272,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
     };
 
     void fetchMessages();
+
+    return () => {
+      isMounted = false;
+    };
   }, [
     conversation,
     courseId,

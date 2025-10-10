@@ -1,6 +1,6 @@
 'use client';
 // By Jean
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -175,13 +175,52 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   void [n8nCourses];
 
   useEffect(() => {
+    let isMounted = true;
+    // Set initial dimensions based on window size
+    const initialDimensions = {
+      width:
+        typeof window !== 'undefined' && window.innerWidth < 768
+          ? window.innerWidth
+          : 500,
+      height: window.innerHeight,
+    };
+    if (isMounted) setDimensions(initialDimensions);
+
+    // Add resize handler
+    const handleResize = () => {
+      if (!isMounted) return;
+      const isMobile = window.innerWidth < 768;
+      setDimensions({
+        width: isMobile ? window.innerWidth : 500,
+        height: window.innerHeight,
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+    }
+    return () => {
+      isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
     // Solo se ejecuta en el cliente
     setIsDesktop(window.innerWidth > 768);
 
-    // Si quieres que se actualice al redimensionar:
-    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    const handleResize = () => {
+      if (!isMounted) return;
+      setIsDesktop(window.innerWidth > 768);
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -424,7 +463,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           const validCourseIds = validationData.validIds || [];
 
           // Filtrar solo los cursos que existen en la BD
-          const coursesData: CourseData[] = data.courses
+          let coursesData: CourseData[] = data.courses
             .filter(isCourseData)
             .filter((c) => validCourseIds.includes(c.id))
             .map((c) => ({
@@ -433,6 +472,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               modalidadId: c.modalidadId,
               modalidad: c.modalidad,
             }));
+
+          // Limita el array a máximo 5 cursos
+          if (coursesData.length > 2) {
+            coursesData = coursesData.slice(0, 2);
+          }
 
           if (coursesData.length > 0) {
             setN8nCourses(coursesData);
@@ -1097,6 +1141,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [showChat]);
 
   useEffect(() => {
+    let isMounted = true;
     // Set initial dimensions based on window size
     const initialDimensions = {
       width:
@@ -1105,10 +1150,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           : 500,
       height: window.innerHeight,
     };
-    setDimensions(initialDimensions);
+    if (isMounted) setDimensions(initialDimensions);
 
     // Add resize handler
     const handleResize = () => {
+      if (!isMounted) return;
       const isMobile = window.innerWidth < 768;
       setDimensions({
         width: isMobile ? window.innerWidth : 500,
@@ -1118,8 +1164,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
     }
+    return () => {
+      isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
   }, []);
 
   const scrollToBottom = () => {
@@ -1411,6 +1462,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       }
       // Tarjetas para cursos de embedding del flujo n8n
       if (json && Array.isArray(json.courses) && json.courses.length > 0) {
+        // Limita el número de cursos a 5 para evitar freeze/tildado
+        const safeCourses = json.courses.slice(0, 2);
         return (
           <>
             {typeof json.mensaje_inicial === 'string' && (
@@ -1421,7 +1474,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               </div>
             )}
             <CoursesCardsWithModalidad
-              courses={json.courses}
+              courses={safeCourses}
               coursesData={message.coursesData}
             />
             {typeof json.pregunta_final === 'string' && (
@@ -2007,129 +2060,74 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
   return null;
 }
 
-// Utilidad para obtener todas las modalidades de la BD (usando la API)
-let modalidadesCache: Record<number, string> | null = null;
-async function fetchModalidades(): Promise<Record<number, string>> {
-  if (modalidadesCache) return modalidadesCache;
-  try {
-    const res = await fetch('/api/modalidades');
-    if (!res.ok) return {};
-    const arr = (await res.json()) as { id: number; name: string }[];
-    const map: Record<number, string> = {};
-    arr.forEach((m) => {
-      if (typeof m.id === 'number' && typeof m.name === 'string') {
-        map[m.id] = m.name;
-      }
-    });
-    modalidadesCache = map;
-    return map;
-  } catch {
-    return {};
-  }
-}
-
-// Custom hook para obtener modalidades reales de la BD
-function useModalidadesBD(modalidadIds: number[] | undefined) {
-  const [modalidadesState, setModalidadesState] = useState<
-    Record<number, string>
-  >({});
-
-  useEffect(() => {
-    if (!modalidadIds || modalidadIds.length === 0) return;
-    fetchModalidades().then((modalidadesMap: Record<number, string>) => {
-      const newState: Record<number, string> = {};
-      modalidadIds.forEach((id) => {
-        if (id && typeof modalidadesMap[id] === 'string') {
-          newState[id] = modalidadesMap[id];
+// Nuevo componente para renderizar las tarjetas de cursos con modalidad real
+const CoursesCardsWithModalidad = React.memo(
+  ({
+    courses,
+    coursesData,
+  }: {
+    courses: CourseData[];
+    coursesData?: CourseData[];
+  }) => {
+    // Modalidades correctas desde BD si existen en coursesData (n8n ya las incluye)
+    const bdModalidades = new Map<number, string>();
+    if (Array.isArray(coursesData)) {
+      coursesData.forEach((c) => {
+        if (typeof c.id === 'number') {
+          if (typeof c.modalidad === 'string') {
+            bdModalidades.set(c.id, c.modalidad);
+          } else if (
+            c.modalidad &&
+            typeof c.modalidad === 'object' &&
+            'name' in c.modalidad &&
+            typeof (c.modalidad as { name: unknown }).name === 'string'
+          ) {
+            bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
+          }
         }
       });
-      if (Object.keys(newState).length > 0) {
-        setModalidadesState((prev) => ({ ...prev, ...newState }));
-      }
-    });
-  }, [modalidadIds]);
+    }
 
-  return modalidadesState;
-}
-
-// Nuevo componente para renderizar las tarjetas de cursos con modalidad real
-function CoursesCardsWithModalidad({
-  courses,
-  coursesData,
-}: {
-  courses: CourseData[];
-  coursesData?: CourseData[];
-}) {
-  // Modalidades correctas desde BD si existen en coursesData
-  const bdModalidades = new Map<number, string>();
-  if (Array.isArray(coursesData)) {
-    coursesData.forEach((c) => {
-      if (typeof c.id === 'number') {
-        if (typeof c.modalidad === 'string') {
-          bdModalidades.set(c.id, c.modalidad);
-        } else if (
-          c.modalidad &&
-          typeof c.modalidad === 'object' &&
-          'name' in c.modalidad &&
-          typeof (c.modalidad as { name: unknown }).name === 'string'
-        ) {
-          bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
-        }
-      }
-    });
-  }
-
-  const modalidadIds = courses
-    ?.map((course) => course.modalidadId)
-    .filter((id): id is number => typeof id === 'number');
-  const modalidadesState = useModalidadesBD(modalidadIds);
-
-  return (
-    <div className="mt-2 flex flex-wrap gap-3">
-      {courses.map((course) => {
-        let modalidadReal = bdModalidades.get(course.id);
-        if (!modalidadReal && typeof course.modalidadId === 'number') {
-          modalidadReal ??= modalidadesState[course.modalidadId];
-          modalidadReal ??= course.modalidad;
-          modalidadReal ??= 'N/A';
-        } else if (!modalidadReal) {
-          modalidadReal ??= course.modalidad;
-          modalidadReal ??= 'N/A';
-        }
-        return (
-          // Usar Card como contenedor único (evita bordes dobles) y aplicar fondo
-          <Card
-            key={course.id}
-            className="text-primary max-w-[260px] min-w-[300px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
-          >
-            <div className="flex flex-col items-start px-4 py-3">
-              <h4 className="mb-1 font-bold text-white">{course.title}</h4>
-              <span className="mb-2 text-xs font-semibold text-[#2ecc71]">
-                Modalidad: {modalidadReal}
-              </span>
-              <Link
-                href={`/estudiantes/cursos/${course.id}`}
-                className="group/button relative mt-auto inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white bg-[#01142B] p-2 text-sm font-semibold text-[#3AF4EF] transition hover:bg-gray-600 active:scale-95"
-              >
-                <span className="font-bold">Ir al Curso</span>
-                <svg
-                  className="animate-bounce-right ml-2 h-5 w-5 text-[#3AF4EF]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
+    return (
+      <div className="mt-2 flex flex-wrap gap-3">
+        {courses.slice(0, 2).map((course) => {
+          // Limita a 2 en el render
+          const modalidadReal =
+            bdModalidades.get(course.id) ?? course.modalidad ?? 'N/A';
+          return (
+            <Card
+              key={course.id}
+              className="text-primary max-w-[260px] min-w-[300px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
+            >
+              <div className="flex flex-col items-start px-4 py-3">
+                <h4 className="mb-1 font-bold text-white">{course.title}</h4>
+                <span className="mb-2 text-xs font-semibold text-[#2ecc71]">
+                  Modalidad: {modalidadReal}
+                </span>
+                <Link
+                  href={`/estudiantes/cursos/${course.id}`}
+                  className="group/button relative mt-auto inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white bg-[#01142B] p-2 text-sm font-semibold text-[#3AF4EF] transition hover:bg-gray-600 active:scale-95"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </Link>
-            </div>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
+                  <span className="font-bold">Ir al Curso</span>
+                  <svg
+                    className="animate-bounce-right ml-2 h-5 w-5 text-[#3AF4EF]"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </Link>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }
+);
