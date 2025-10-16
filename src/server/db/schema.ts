@@ -1397,9 +1397,9 @@ export const waMessages = pgTable(
     tsMs: bigint('ts_ms', { mode: 'number' }).notNull(),
     raw: jsonb('raw'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-          mediaId: text('media_id'),
-  mediaType: text('media_type'),
-  fileName: text('file_name'),
+    mediaId: text('media_id'),
+    mediaType: text('media_type'),
+    fileName: text('file_name'),
   },
   // Cambia el objeto por un array para evitar el warning deprecado
   (t) => [
@@ -1407,3 +1407,37 @@ export const waMessages = pgTable(
     uniqueIndex('wa_messages_meta_unique').on(t.metaMessageId),
   ]
 );
+
+
+// =========================
+// Etiquetas para WhatsApp
+// =========================
+export const waTags = pgTable(
+  'wa_tags',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 64 }).notNull(),
+    color: varchar('color', { length: 16 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('wa_tags_name_unique').on(t.name)]
+);
+
+/**
+ * Relación N:M entre WAID (conversación) y etiqueta.
+ * Usamos waid directamente para NO tocar nada de tu modelo actual.
+ */
+export const waConversationTags = pgTable(
+  'wa_conversation_tags',
+  {
+    waid: varchar('waid', { length: 32 }).notNull(),
+    tagId: integer('tag_id').notNull().references(() => waTags.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.waid, t.tagId] }),
+    index('wa_ct_w_idx').on(t.waid),
+    index('wa_ct_t_idx').on(t.tagId),
+  ]
+);
+

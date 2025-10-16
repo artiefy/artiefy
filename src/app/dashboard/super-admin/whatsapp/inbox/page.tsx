@@ -35,6 +35,12 @@ interface UiTemplate {
   status: string;
 }
 
+interface Tag {
+  id: number;
+  name: string;
+  color?: string;
+}
+
 interface Thread {
   waid: string;
   name?: string | null;
@@ -46,6 +52,43 @@ interface Thread {
   remainingMs: number;
   isAlmostExpired: boolean;
 }
+
+
+/* ========= Helpers de tipado para respuestas JSON ========= */
+interface ApiError { error: string }
+
+interface CreateTagOk { tag: Tag }
+type CreateTagResp = CreateTagOk | ApiError;
+
+interface TagsOk { tags: Tag[] }
+type TagsResp = TagsOk | ApiError;
+
+interface AssignedOk { assignedTagIds: number[] }
+type AssignedResp = AssignedOk | ApiError;
+
+function isApiError(x: unknown): x is ApiError {
+  return typeof x === 'object'
+    && x !== null
+    && 'error' in x
+    && typeof (x as Record<string, unknown>).error === 'string';
+}
+function isCreateTagOk(x: unknown): x is CreateTagOk {
+  if (typeof x !== 'object' || x === null) return false;
+  if (!('tag' in x)) return false;
+  const tag = (x as Record<string, unknown>).tag;
+  return typeof tag === 'string' || (typeof tag === 'object' && tag !== null);
+}
+function isTagsOk(x: unknown): x is TagsOk {
+  if (typeof x !== 'object' || x === null) return false;
+  const tags = (x as Record<string, unknown>).tags;
+  if (!Array.isArray(tags)) return false;
+  return true;
+}
+
+function isAssignedOk(x: unknown): x is AssignedOk {
+  return typeof x === 'object' && x !== null && Array.isArray((x as Record<string, unknown>).assignedTagIds);
+}
+/* ========================================================== */
 
 function MediaMessage({ item }: { item: InboxItem }) {
   if (!item.mediaId) {
@@ -113,6 +156,66 @@ function MediaMessage({ item }: { item: InboxItem }) {
   }
 }
 
+function CreateQuickTag({ onCreated }: { onCreated: (t: Tag) => void }) {
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('#22c55e');
+  const [saving, setSaving] = useState(false);
+
+  const create = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const r = await fetch('/api/super-admin/whatsapp/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), color }),
+      });
+      const j = (await r.json()) as unknown as CreateTagResp;
+      if (!r.ok) {
+        const msg = isApiError(j) ? j.error ?? 'Error creando etiqueta' : 'Error creando etiqueta';
+        throw new Error(msg ?? 'Error creando etiqueta');
+      }
+      if (isCreateTagOk(j)) onCreated(j.tag);
+      setName('');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'No se pudo crear la etiqueta');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            void create();
+          }
+        }}
+        placeholder="Nueva etiqueta"
+        className="flex-1 rounded bg-[#2A3942] px-3 py-2 text-sm text-gray-100 placeholder-[#8696A0] border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+      />
+      <input
+        type="color"
+        value={color}
+        onChange={(e) => setColor(e.target.value)}
+        className="h-9 w-10 rounded border-0 bg-transparent cursor-pointer"
+        title="Color"
+      />
+      <button
+        onClick={create}
+        disabled={saving || !name.trim()}
+        className="rounded bg-emerald-600 px-3 py-2 text-sm text-white disabled:opacity-50 hover:bg-emerald-500"
+      >
+        {saving ? '...' : 'Crear'}
+      </button>
+    </div>
+  );
+}
+
 export default function WhatsAppInboxPage() {
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [compose, setCompose] = useState<Record<string, string>>({});
@@ -127,22 +230,21 @@ export default function WhatsAppInboxPage() {
   const [tplError, setTplError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<UiTemplate[]>([]);
   const [tplSelected, setTplSelected] = useState<UiTemplate | null>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [assignedTagIds, setAssignedTagIds] = useState<number[]>([]);
+  const [tagFilter, setTagFilter] = useState<number | 'ALL'>('ALL');
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tagAssignmentsCache, setTagAssignmentsCache] = useState<Record<string, number[]>>({});
 
   const getInitialHiddenWaids = (): Set<string> => {
     try {
-      // Evita acceder a sessionStorage en SSR
       if (typeof window === 'undefined') return new Set();
-
       const saved = sessionStorage.getItem('wa_hidden_chats');
       if (!saved) return new Set();
-
       const parsed: unknown = JSON.parse(saved);
-
       if (Array.isArray(parsed) && parsed.every((v): v is string => typeof v === 'string')) {
         return new Set(parsed);
       }
-
-      // Si el contenido no es un string[], ignóralo
       return new Set();
     } catch {
       return new Set();
@@ -150,11 +252,11 @@ export default function WhatsAppInboxPage() {
   };
 
   const [hiddenWaids, setHiddenWaids] = useState<Set<string>>(getInitialHiddenWaids);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     sessionStorage.setItem('wa_hidden_chats', JSON.stringify(Array.from(hiddenWaids)));
   }, [hiddenWaids]);
-
 
   const [filterName, setFilterName] = useState('');
   const [filterFrom, setFilterFrom] = useState<string>('');
@@ -211,6 +313,41 @@ export default function WhatsAppInboxPage() {
     return list.sort((a, b) => b.lastTs - a.lastTs);
   }, [inbox]);
 
+  /* === Fix deps: memorizamos la lista de waids para el efecto de precarga === */
+  const waidsKey = useMemo(() => threads.map(t => t.waid).sort().join(','), [threads]);
+
+  // Pre-cargar/actualizar asignaciones de etiquetas para TODOS los hilos.
+  useEffect(() => {
+    if (!waidsKey) return;
+    let cancel = false;
+
+    (async () => {
+      const waids = waidsKey.split(',').filter(Boolean);
+      for (const waid of waids) {
+        // si ya está en cache, saltar
+        if ((tagAssignmentsCache[waid] ?? undefined) !== undefined) continue;
+
+        try {
+          const r = await fetch(`/api/super-admin/whatsapp/inbox/tags?waid=${encodeURIComponent(waid)}`, { cache: 'no-store' });
+          const j = (await r.json()) as unknown as AssignedResp;
+          const ids = isAssignedOk(j) ? j.assignedTagIds : [];
+          if (!cancel) {
+            setTagAssignmentsCache(prev => ({ ...prev, [waid]: ids }));
+          }
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(`wa_tagmap_${waid}`, JSON.stringify(ids));
+          }
+        } catch {
+          if (!cancel) {
+            setTagAssignmentsCache(prev => ({ ...prev, [waid]: [] }));
+          }
+        }
+      }
+    })();
+
+    return () => { cancel = true; };
+  }, [waidsKey, tagAssignmentsCache]);
+
   const filteredThreads = useMemo(() => {
     const name = filterName.trim().toLowerCase();
     const fromMs = filterFrom ? new Date(filterFrom).setHours(0, 0, 0, 0) : null;
@@ -229,9 +366,27 @@ export default function WhatsAppInboxPage() {
       if (filterWindow === 'active24' && !t.isNew24h) return false;
       if (filterWindow === 'almost' && !t.isAlmostExpired) return false;
       if (filterWindow === 'expired' && t.isNew24h) return false;
+
+      // Filtro por etiqueta
+      if (tagFilter !== 'ALL') {
+        let ids = tagAssignmentsCache[t.waid];
+
+        // fallback al cache de sessionStorage mientras llega la precarga
+        if (ids === undefined && typeof window !== 'undefined') {
+          try {
+            const raw = sessionStorage.getItem(`wa_tagmap_${t.waid}`);
+            if (raw) ids = JSON.parse(raw) as number[];
+          } catch { /* ignore */ }
+        }
+
+        if (!Array.isArray(ids) || !ids.includes(tagFilter as number)) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [threads, filterName, filterFrom, filterTo, filterHours, filterWindow, hiddenWaids]);
+  }, [threads, filterName, filterFrom, filterTo, filterHours, filterWindow, hiddenWaids, tagFilter, tagAssignmentsCache]);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('wa_selected_chat');
@@ -259,13 +414,46 @@ export default function WhatsAppInboxPage() {
         if (!cancel) setInbox([]);
       }
     };
-    load();
+    void load();
     const iv = setInterval(load, 4000);
     return () => {
       cancel = true;
       clearInterval(iv);
     };
   }, []);
+
+  // Cargar todas las etiquetas una vez
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const r = await fetch('/api/super-admin/whatsapp/tags', { cache: 'no-store' });
+        const j = (await r.json()) as unknown as TagsResp;
+        if (isTagsOk(j)) setAllTags(j.tags);
+        else setAllTags([]);
+      } catch {
+        setAllTags([]);
+      }
+    };
+    void loadTags();
+  }, []);
+
+  // Cargar etiquetas asignadas cuando cambia la conversación seleccionada
+  useEffect(() => {
+    const loadAssigned = async (waid: string) => {
+      try {
+        const r = await fetch(`/api/super-admin/whatsapp/inbox/tags?waid=${encodeURIComponent(waid)}`, { cache: 'no-store' });
+        const j = (await r.json()) as unknown as AssignedResp;
+        const ids = isAssignedOk(j) ? j.assignedTagIds : [];
+        setAssignedTagIds(ids);
+        // Actualizar cache
+        setTagAssignmentsCache(prev => ({ ...prev, [waid]: ids }));
+      } catch {
+        setAssignedTagIds([]);
+      }
+    };
+    if (selected) void loadAssigned(selected);
+    else setAssignedTagIds([]);
+  }, [selected]);
 
   const activeItems = useMemo(
     () => threads.find((t) => t.waid === (selected ?? ''))?.items ?? [],
@@ -322,9 +510,9 @@ export default function WhatsAppInboxPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        const errMsg = (errorData as { error?: string })?.error ?? 'Error enviando archivo';
-        throw new Error(errMsg);
+        const errorData = (await res.json().catch(() => ({}))) as ApiError | Record<string, unknown>;
+        const errMsg = isApiError(errorData) ? errorData.error ?? 'Error enviando archivo' : 'Error enviando archivo';
+        throw new Error(errMsg ?? 'Error enviando archivo');
       }
 
       setSelectedFile(null);
@@ -470,7 +658,7 @@ export default function WhatsAppInboxPage() {
       if (!res.ok) {
         setInbox((prev) => prev.filter((m) => m.id !== localTplId));
         const errMsg =
-          (typeof body?.error === 'string' && body.error.trim()) ||
+          (typeof body?.error === 'string' && body.error.trim()) ??
           `Error enviando WhatsApp (HTTP ${res.status})`;
         throw new Error(errMsg);
       }
@@ -509,7 +697,7 @@ export default function WhatsAppInboxPage() {
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend(waid);
+      void handleSend(waid);
     }
   };
 
@@ -620,6 +808,23 @@ export default function WhatsAppInboxPage() {
               <option value="expired">Expirados (&gt;24h)</option>
             </select>
           </div>
+
+          <select
+            value={tagFilter === 'ALL' ? 'ALL' : String(tagFilter)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setTagFilter(v === 'ALL' ? 'ALL' : Number(v));
+            }}
+            className="w-full rounded bg-[#202C33] px-2 py-2 text-gray-100 border-0 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+            title="Filtrar por etiqueta"
+          >
+            <option value="ALL">Todas las etiquetas</option>
+            {allTags.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="max-h-[calc(100%-180px)] overflow-y-auto">
@@ -686,6 +891,28 @@ export default function WhatsAppInboxPage() {
                     </>
                   )}
                 </div>
+                {/* Chips de etiquetas asignadas a la conversación */}
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(tagAssignmentsCache[t.waid] ?? []).map((id) => {
+                    const tag = allTags.find((x) => x.id === id);
+                    if (!tag) return null;
+                    return (
+                      <span
+                        key={`${t.waid}-tag-${id}`}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]"
+                        style={{
+                          background: (tag.color ?? '#202C33') + '20',
+                          color: tag.color ?? '#cbd5e1',
+                          border: '1px solid ' + (tag.color ?? '#334155'),
+                        }}
+                      >
+                        ● {tag.name}
+                      </span>
+                    );
+                  })}
+                </div>
+
+
 
                 <div className="mt-1 truncate text-sm text-[#8696A0]">
                   {t.lastText ?? '(sin texto)'}
@@ -728,6 +955,37 @@ export default function WhatsAppInboxPage() {
             <div className="truncate text-xs text-[#8696A0]">
               {selected ? `(${selected})` : 'Selecciona una conversación'}
             </div>
+            {selected && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                {assignedTagIds.length === 0 && (
+                  <span className="text-[11px] text-[#8696A0]">Sin etiquetas</span>
+                )}
+                {assignedTagIds.map((id) => {
+                  const t = allTags.find((x) => x.id === id);
+                  if (!t) return null;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
+                      style={{
+                        background: (t.color ?? '#202C33') + '20',
+                        color: t.color ?? '#cbd5e1',
+                        border: '1px solid ' + (t.color ?? '#334155'),
+                      }}
+                    >
+                      ● {t.name}
+                    </span>
+                  );
+                })}
+                <button
+                  onClick={() => setShowTagModal(true)}
+                  className="rounded border border-emerald-700/40 bg-emerald-600/10 px-2 py-0.5 text-xs text-emerald-300 hover:bg-emerald-600/20"
+                >
+                  Etiquetas…
+                </button>
+              </div>
+            )}
+
             {selected && (() => {
               const t = threads.find(x => x.waid === selected);
               if (!t) return null;
@@ -896,7 +1154,7 @@ export default function WhatsAppInboxPage() {
                 if (t && !t.isNew24h) {
                   void openTemplatePicker();
                 } else {
-                  handleSend(selected);
+                  void handleSend(selected);
                 }
               }}
               className="rounded-xl bg-emerald-600 px-4 py-2 text-white shadow hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2"
@@ -904,7 +1162,6 @@ export default function WhatsAppInboxPage() {
               <Send className="h-4 w-4" />
               {sending === selected ? 'Enviando…' : 'Enviar'}
             </button>
-
           </div>
         </div>
       </section>
@@ -965,6 +1222,88 @@ export default function WhatsAppInboxPage() {
         </div>
       )}
 
+      {showTagModal && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-lg bg-[#111B21] text-gray-100 shadow-lg border border-gray-800">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <h3 className="text-sm font-semibold">Etiquetas para {selected}</h3>
+              <button onClick={() => setShowTagModal(false)} className="text-[#8696A0] hover:text-gray-200">✕</button>
+            </div>
+
+            <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              <div className="text-xs text-[#94a3b8]">Marca/desmarca para asignar o quitar.</div>
+
+              {allTags.length === 0 && (
+                <div className="text-sm text-[#8696A0]">No hay etiquetas aún.</div>
+              )}
+
+              {allTags.map((t) => {
+                const checked = assignedTagIds.includes(t.id);
+                return (
+                  <label key={t.id} className="flex items-center gap-3 rounded-lg bg-[#202C33] p-3 hover:bg-[#2A3942] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={async (e) => {
+                        try {
+                          if (e.target.checked) {
+                            await fetch('/api/super-admin/whatsapp/inbox/tags', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ waid: selected, tagId: t.id }),
+                            });
+                            const newIds = [...new Set([...assignedTagIds, t.id])];
+                            setAssignedTagIds(newIds);
+                            setTagAssignmentsCache(prev => ({ ...prev, [selected]: newIds }));
+                          } else {
+                            await fetch('/api/super-admin/whatsapp/inbox/tags', {
+                              method: 'DELETE',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ waid: selected, tagId: t.id }),
+                            });
+                            const newIds = assignedTagIds.filter((x) => x !== t.id);
+                            setAssignedTagIds(newIds);
+                            setTagAssignmentsCache(prev => ({ ...prev, [selected]: newIds }));
+                          }
+                        } catch {
+                          alert('No se pudo actualizar la etiqueta');
+                        }
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        <span
+                          className="inline-block h-3 w-3 rounded-full"
+                          style={{ background: t.color ?? '#22c55e' }}
+                        />
+                        {t.name}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+
+              <div className="mt-4 rounded-lg bg-[#202C33] p-3">
+                <div className="text-xs text-[#94a3b8] mb-2">Crear nueva etiqueta:</div>
+                <CreateQuickTag
+                  onCreated={(tag) => {
+                    setAllTags((prev) => [...prev, tag]);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-800">
+              <button
+                className="rounded px-4 py-2 bg-emerald-600 hover:bg-emerald-500"
+                onClick={() => setShowTagModal(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -39,6 +39,8 @@ const studentSchema = z.object({
   enrolledInCourse: z.boolean().optional(),
   inscripcionOrigen: z.enum(['formulario', 'artiefy']).optional(),
   carteraStatus: z.enum(['activo', 'inactivo', 'no verificado']).optional(),
+  userInscriptionDetails: z.record(z.string(), z.string()).optional(),
+
 });
 
 const courseSchema = z.object({
@@ -80,6 +82,8 @@ interface Student {
   nivelNombre?: string | null;
   purchaseDate?: string | null;
   customFields?: Record<string, string>;
+  userInscriptionDetails?: Record<string, string>;
+
 
   // ➕ nuevos
   isNew?: boolean;
@@ -983,6 +987,9 @@ export default function EnrolledUsersPage() {
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
     {}
   );
+  const [columnFiltersMulti, setColumnFiltersMulti] = useState<Record<string, string[]>>(
+    {}
+  );
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   // Opciones únicas de programas
@@ -1226,6 +1233,22 @@ export default function EnrolledUsersPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
+  // Cerrar dropdowns de multiselect al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutsideMulti(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+
+      // No cerrar si se hace clic dentro de un dropdown multiselect
+      if (target.closest('[id^="multi-"]')) return;
+
+      // Cerrar todos los dropdowns si se hace clic fuera
+      document.querySelectorAll('[id^="multi-"]').forEach((el) => {
+        el.classList.add('hidden');
+      });
+    }
+    document.addEventListener('mousedown', handleClickOutsideMulti);
+    return () => document.removeEventListener('mousedown', handleClickOutsideMulti);
+  }, []);
 
   async function fetchPagosUsuarioPrograma(userId: string, programId: string): Promise<Pago[]> {
     const res = await fetch(
@@ -1437,6 +1460,19 @@ export default function EnrolledUsersPage() {
   const existingRecord = Boolean(carteraInfo?.programaPrice); // true si ya hay precio guardado
   const userId = currentUser?.id; // o currentUser?.document si prefieres
   const programaId = userPrograms?.[0]?.id; // tomamos el primer programa
+  const [bulkSelectOpen, setBulkSelectOpen] = useState(false);
+  const handleBulkSelect = (mode: 'visible' | 'all') => {
+    setSelectedStudents((prev) => {
+      const ids =
+        mode === 'all'
+          ? sortedStudents.map((s) => s.id)      // ✅ TODOS los filtrados (incluye no visibles)
+          : displayedStudents.map((s) => s.id);  // ✅ SOLO visibles
+      const set = new Set(prev);
+      ids.forEach((id) => set.add(id));
+      return Array.from(set);
+    });
+    setBulkSelectOpen(false);
+  };
 
 
 
@@ -1867,9 +1903,9 @@ export default function EnrolledUsersPage() {
             enrolledInCourseLabel,
             nivelNombre: s.nivelNombre ?? 'No definido',
             planType: s.planType ?? undefined,
-            customFields: s.customFields
+            userInscriptionDetails: s.userInscriptionDetails
               ? Object.fromEntries(
-                Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
+                Object.entries(s.userInscriptionDetails).map(([k, v]) => [k, String(v)])
               )
               : undefined,
             inscripcionOrigen: s.inscripcionOrigen ?? 'artiefy',
@@ -1890,16 +1926,25 @@ export default function EnrolledUsersPage() {
         }
       });
 
-      // Generar dinámicamente las columnas de customFields
-      const dynamicCustomColumns = Array.from(allCustomKeys).map((key) => ({
-        id: `customFields.${key}`,
+      // NUEVO: detectar las claves de userInscriptionDetails
+      const allUIDKeys = new Set<string>();
+      studentsFilteredByRole.forEach((student) => {
+        if (student.userInscriptionDetails) {
+          Object.keys(student.userInscriptionDetails).forEach((key) => allUIDKeys.add(key));
+        }
+      });
+
+      // Generar dinámicamente las columnas de userInscriptionDetails
+      const dynamicUIDColumns = Array.from(allUIDKeys).map((key) => ({
+        id: `userInscriptionDetails.${key}`,
         label: key,
         defaultVisible: true,
-        type: 'text' as ColumnType,
+        type: 'text' as const,
       }));
+      // ✅ Usar SOLO las columnas dinámicas de userInscriptionDetails
 
-      // Agregamos al state las columnas dinámicas
-      setDynamicColumns(dynamicCustomColumns);
+
+      setDynamicColumns(dynamicUIDColumns);
     } catch (err) {
       console.error('Error fetching data:', err);
     }
@@ -2046,22 +2091,19 @@ export default function EnrolledUsersPage() {
             : true
         )
 
-
-        // Filtros por columnas dinámicas (incluye customFields)
-        .filter((student) =>
-          Object.entries(columnFilters).every(([key, value]) => {
+        // Filtros por columnas dinámicas (incluye customFields) - AHORA CON MULTISELECT
+        .filter((student) => {
+          // Filtros de texto (columnFilters)
+          const passesTextFilters = Object.entries(columnFilters ?? {}).every(([key, value]) => {
             if (!value) return true;
 
-            const studentValue = key.startsWith('customFields.')
-              ? student.customFields?.[key.split('.')[1]]
+            const studentValue = key.startsWith('userInscriptionDetails.')
+              ? student.userInscriptionDetails?.[key.split('.')[1]]
               : student[key as keyof Student];
 
             // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
             if (key === 'carteraStatus') {
-              // base que viene guardada en el alumno
               const base = safeToString(studentValue);
-
-              // estado UI derivado solo si es el alumno actualmente abierto y hay pagos en memoria
               let ui = base;
               if (student.id === currentUserId) {
                 const hoy = new Date();
@@ -2097,9 +2139,53 @@ export default function EnrolledUsersPage() {
 
             const safeStudentValue = safeToString(studentValue);
             return safeStudentValue.toLowerCase().includes(value.toLowerCase());
+          });
 
-          })
-        )
+          const passesMultiFilters = Object.entries(columnFiltersMulti).every(([key, selectedValues]) => {
+            if (!selectedValues || selectedValues.length === 0) return true;
+
+            const studentValue = key.startsWith('userInscriptionDetails.')
+              ? student.userInscriptionDetails?.[key.split('.')[1]]
+              : student[key as keyof Student];
+
+            const safeStudentValue = safeToString(studentValue);
+
+            // Si es carteraStatus, usar la lógica derivada
+            if (key === 'carteraStatus') {
+              const base = safeToString(studentValue);
+              let ui = base;
+              if (student.id === currentUserId) {
+                const hoy = new Date();
+                const y = hoy.getFullYear();
+                const m = hoy.getMonth();
+
+                const pagosMes = (editablePagos ?? []).filter((p) => {
+                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+                });
+
+                if (pagosMes.length > 0) {
+                  const ultimo = [...pagosMes].sort(
+                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+                  )[pagosMes.length - 1];
+
+                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                    ui = 'no verificado';
+                  }
+                }
+              }
+
+              return selectedValues.some(v => ui.toLowerCase().includes(v.toLowerCase()));
+            }
+
+            return selectedValues.some(v =>
+              safeStudentValue.toLowerCase().includes(v.toLowerCase())
+            );
+          });
+
+          return passesTextFilters && passesMultiFilters;
+        })
 
         // Filtros generales (nombre, email, estado, fechas)
         .filter((s) =>
@@ -2278,10 +2364,10 @@ export default function EnrolledUsersPage() {
 
     const updatedStudent = { ...student };
 
-    if (field.startsWith('customFields.')) {
+    if (field.startsWith('userInscriptionDetails.')) {
       const key = field.split('.')[1];
-      updatedStudent.customFields = {
-        ...updatedStudent.customFields,
+      updatedStudent.userInscriptionDetails = {
+        ...updatedStudent.userInscriptionDetails,
         [key]: value,
       };
     } else {
@@ -2313,7 +2399,7 @@ export default function EnrolledUsersPage() {
           .toISOString()
           .split('T')[0]
         : null,
-      customFields: updatedStudent.customFields ?? {},
+      userInscriptionDetails: updatedStudent.userInscriptionDetails ?? {},
     };
 
     console.log('📤 [updateStudentField] Payload completo:', JSON.stringify(payload, null, 2));
@@ -2642,6 +2728,26 @@ export default function EnrolledUsersPage() {
           <h2 className="mb-2 text-xl font-semibold">
             Seleccionar Estudiantes
           </h2>
+          <div className="mb-2 flex items-center gap-3 text-xs sm:text-sm text-gray-300">
+            <span>
+              Seleccionados: <strong>{selectedStudents.length}</strong> / {sortedStudents.length}
+            </span>
+            <span className="opacity-70">
+              (Visibles: {displayedStudents.length})
+            </span>
+            {selectedStudents.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedStudents([])}
+                className="rounded bg-gray-700 px-2 py-1 text-xs hover:bg-gray-600"
+                title="Limpiar selección"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+
+
           <div
             className="max-h-[60vh] w-full overflow-auto rounded-lg border border-gray-700"
             onScroll={handleScroll}
@@ -2655,27 +2761,22 @@ export default function EnrolledUsersPage() {
                       type="checkbox"
                       checked={
                         displayedStudents.length > 0 &&
-                        displayedStudents.every((s) =>
-                          selectedStudents.includes(s.id)
-                        )
+                        displayedStudents.every((s) => selectedStudents.includes(s.id))
                       }
-                      onChange={(e) =>
-                        setSelectedStudents(
-                          e.target.checked
-                            ? Array.from(
-                              new Set([
-                                ...selectedStudents,
-                                ...displayedStudents.map((s) => s.id),
-                              ])
-                            )
-                            : selectedStudents.filter(
-                              (id) =>
-                                !displayedStudents.some((s) => s.id === id)
-                            )
-                        )
-                      }
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // ✨ Abrir modal para elegir "visibles" o "todos"
+                          setBulkSelectOpen(true);
+                        } else {
+                          // ✅ Mantiene el comportamiento actual: deselecciona SOLO lo visible
+                          setSelectedStudents((prev) =>
+                            prev.filter((id) => !displayedStudents.some((s) => s.id === id))
+                          );
+                        }
+                      }}
                       className="rounded border-white/20"
                     />
+
                   </th>
                   {totalColumns
                     .filter((col) => visibleColumns.includes(col.id))
@@ -2687,23 +2788,86 @@ export default function EnrolledUsersPage() {
                         <div className="space-y-1">
                           <div className="truncate">{col.label}</div>
                           {col.type === 'select' ? (
-                            <select
-                              value={columnFilters[col.id] || ''}
-                              onChange={(e) =>
-                                setColumnFilters((prev) => ({
-                                  ...prev,
-                                  [col.id]: e.target.value,
-                                }))
-                              }
-                              className="w-full rounded bg-gray-700 p-1 text-xs sm:text-sm"
-                            >
-                              <option value="">Todos</option>
-                              {col.options?.map((opt) => (
-                                <option key={opt} value={opt}>
-                                  {opt}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              {/* Input que muestra chips seleccionados */}
+                              <div
+                                onClick={(e) => {
+                                  const elem = document.getElementById(`multi-${col.id}`);
+                                  if (!elem) return;
+
+                                  const isHidden = elem.classList.contains('hidden');
+
+                                  // Cerrar todos los demás dropdowns
+                                  document.querySelectorAll('[id^="multi-"]').forEach((el) => {
+                                    if (el.id !== `multi-${col.id}`) el.classList.add('hidden');
+                                  });
+
+                                  if (isHidden) {
+                                    // Posicionar el dropdown justo debajo del input
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    elem.style.top = `${rect.bottom + 4}px`;
+                                    elem.style.left = `${rect.left}px`;
+                                    elem.style.width = `${rect.width}px`;
+                                    elem.classList.remove('hidden');
+                                  } else {
+                                    elem.classList.add('hidden');
+                                  }
+                                }}
+                                className="flex min-h-[32px] w-full cursor-pointer flex-wrap items-center gap-1 rounded bg-gray-700 px-2 py-1 text-xs sm:text-sm"
+                              >
+                                {(columnFiltersMulti[col.id] || []).length === 0 && (
+                                  <span className="text-gray-400">Todos</span>
+                                )}
+                                {(columnFiltersMulti[col.id] || []).map((val) => (
+                                  <span
+                                    key={val}
+                                    className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-0.5 text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setColumnFiltersMulti((prev) => ({
+                                        ...prev,
+                                        [col.id]: (prev[col.id] || []).filter((v) => v !== val),
+                                      }));
+                                    }}
+                                  >
+                                    {val}
+                                    <span className="cursor-pointer">×</span>
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* Dropdown de opciones - AHORA CON POSITION FIXED */}
+                              <div
+                                id={`multi-${col.id}`}
+                                className="fixed z-[60] hidden max-h-64 overflow-auto rounded border border-gray-600 bg-gray-800 shadow-2xl"
+                                style={{ minWidth: '200px' }}
+                              >
+                                {col.options?.map((opt) => {
+                                  const isSelected = (columnFiltersMulti[col.id] || []).includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => {
+                                        setColumnFiltersMulti((prev) => {
+                                          const current = prev[col.id] || [];
+                                          return {
+                                            ...prev,
+                                            [col.id]: isSelected
+                                              ? current.filter((v) => v !== opt)
+                                              : [...current, opt],
+                                          };
+                                        });
+                                      }}
+                                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-gray-700 sm:text-sm"
+                                    >
+                                      <span>{opt}</span>
+                                      {isSelected && <span>✓</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           ) : (
                             <input
                               type={col.type}
@@ -2746,13 +2910,11 @@ export default function EnrolledUsersPage() {
                       .filter((col) => visibleColumns.includes(col.id))
                       .map((col) => {
                         let raw = '';
-                        if (col.id.startsWith('customFields.')) {
+                        if (col.id.startsWith('userInscriptionDetails.')) {
                           const key = col.id.split('.')[1];
-                          raw = student.customFields?.[key] ?? '';
+                          raw = student.userInscriptionDetails?.[key] ?? '';
                         } else {
-                          raw = safeToString(
-                            student[col.id as keyof Student] ?? ''
-                          );
+                          raw = safeToString(student[col.id as keyof Student] ?? '');
                         }
                         if (col.type === 'date' && raw) {
                           const d = new Date(raw);
@@ -4560,6 +4722,69 @@ export default function EnrolledUsersPage() {
           </div>
         )}
       </div>
+      {bulkSelectOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Fondo */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setBulkSelectOpen(false)}
+          />
+
+          {/* Caja */}
+          <div className="relative mx-4 w-full max-w-md rounded-2xl border border-white/10 bg-neutral-900 p-5 shadow-2xl">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Seleccionar estudiantes</h3>
+              <p className="mt-1 text-sm text-neutral-300">
+                ¿Quieres seleccionar <strong>todos los filtrados</strong> o solo los <strong>visibles</strong>?
+              </p>
+            </div>
+
+            {/* Resumen de cantidades */}
+            <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-neutral-300">
+              <div className="rounded-lg border border-white/10 p-3">
+                <div className="opacity-75">Visibles</div>
+                <div className="text-base font-semibold">{displayedStudents.length}</div>
+              </div>
+              <div className="rounded-lg border border-white/10 p-3">
+                <div className="opacity-75">Filtrados (total)</div>
+                <div className="text-base font-semibold">{sortedStudents.length}</div>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setBulkSelectOpen(false)}
+                className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkSelect('visible')}
+                className="rounded-xl bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700"
+                title={`Seleccionar solo los visibles (${displayedStudents.length})`}
+              >
+                Solo visibles ({displayedStudents.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkSelect('all')}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90"
+                title={`Seleccionar todos los filtrados (${sortedStudents.length})`}
+              >
+                Todos los filtrados ({sortedStudents.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Vista previa de comprobante */}
       {receiptPreview.open && receiptPreview.url && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">

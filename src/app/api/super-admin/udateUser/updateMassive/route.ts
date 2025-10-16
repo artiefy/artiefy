@@ -9,8 +9,75 @@ import {
   enrollmentPrograms,
   enrollments,
   userCustomFields,
-  users,
+  userInscriptionDetails,
+  users
 } from '~/server/db/schema';
+
+// Convierte valores desconocidos a string de forma segura, sin violar no-base-to-string
+const coerceToString = (v: unknown): string | null => {
+  if (v == null) return null;
+
+  switch (typeof v) {
+    case "string":
+      return v;
+
+    case "number":
+    case "boolean":
+      return String(v);
+
+    case "bigint":
+      return v.toString();
+
+    case "symbol":
+      return v.description ?? v.toString();
+
+    case "function":
+      // Evita stringificar la función completa
+      return v.name || "[function]";
+
+    case "object":
+      if (Array.isArray(v)) {
+        // CSV legible de elementos simples; objetos se serializan
+        return v
+          .map((x) =>
+            typeof x === "string" || typeof x === "number" || typeof x === "boolean"
+              ? String(x)
+              : (() => {
+                try {
+                  return JSON.stringify(x);
+                } catch {
+                  return "";
+                }
+              })()
+          )
+          .filter(Boolean)
+          .join(",");
+      } else {
+        const obj = v as Record<string, unknown>;
+        // Adapta a tus estructuras comunes { value, label } | { id, name }
+        if (typeof obj.value === "string") return obj.value;
+        if (typeof obj.id === "string" || typeof obj.id === "number") return String(obj.id);
+        if (typeof obj.name === "string") return obj.name;
+
+        try {
+          return JSON.stringify(obj);
+        } catch {
+          return null;
+        }
+      }
+
+    default:
+      return null; // Sin fallback a String(v) para no violar la regla
+  }
+};
+
+// Type guard seguro para acceder a `fields.sede` sin `any`
+const hasSede = (x: unknown): x is { sede?: unknown } =>
+  typeof x === 'object' && x !== null && 'sede' in x;
+
+
+
+
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
@@ -162,6 +229,86 @@ export async function PATCH(req: Request) {
 
       await db.update(users).set(userUpdateFields).where(eq(users.id, userId));
       console.log(`✅ DB users actualizado para ${userId}`);
+      // ✅ Actualizar sede si viene en fields (con conversión segura)
+      // ✅ Actualizar sede si viene en fields (sin `any`, con type guard)
+      {
+        const sedeStr = coerceToString(hasSede(fields) ? fields.sede : null);
+        if (sedeStr && sedeStr.trim() !== "") {
+          await db
+            .update(userInscriptionDetails)
+            .set({
+              sede: sedeStr.trim(),
+              updatedAt: new Date(),
+            })
+            .where(eq(userInscriptionDetails.userId, userId));
+        }
+      }
+
+
+
+      // ✅ Manejo de sede (soporta 'customFields.sede')
+      const sedeValue =
+        (fields['customFields.sede'] as string) ??
+        (fields.sede as string);
+
+      if (sedeValue) {
+        const existing = await db
+          .select()
+          .from(userInscriptionDetails)
+          .where(eq(userInscriptionDetails.userId, userId))
+          .limit(1);
+
+        if (existing.length > 0) {
+          // ✅ Actualizar sede si ya existe el registro
+          await db
+            .update(userInscriptionDetails)
+            .set({
+              sede: sedeValue,
+              updatedAt: new Date(),
+            })
+            .where(eq(userInscriptionDetails.userId, userId));
+          console.log(`🏢 Sede actualizada para usuario ${userId}:`, sedeValue);
+        } else {
+          // 🧩 Buscar datos del usuario en 'users'
+          const [userData] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+          if (!userData) {
+            console.warn(`⚠️ No se encontró usuario ${userId} en 'users'.`);
+          } else {
+            // 🆕 Crear registro completo usando datos del usuario
+            await db.insert(userInscriptionDetails).values({
+              userId,
+              identificacionTipo: 'CC',
+              identificacionNumero: 'N/A',
+              nivelEducacion: 'N/A',
+              tieneAcudiente: 'No',
+              acudienteNombre: userData.name ?? null,
+              acudienteContacto: userData.phone ?? null,
+              acudienteEmail: userData.email ?? null,
+              programa: 'N/A',
+              fechaInicio: userData.createdAt
+                ? new Date(userData.createdAt).toISOString()
+                : new Date().toISOString(),
+              comercial: null,
+              sede: sedeValue,
+              horario: 'N/A',
+              pagoInscripcion: 'No',
+              pagoCuota1: 'No',
+              modalidad: 'Presencial',
+              numeroCuotas: '0',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            console.log(`🆕 Registro creado en user_inscription_details con sede: ${sedeValue}`);
+          }
+        }
+      }
+
+
 
       // Custom fields
       for (const [key, value] of Object.entries(customFields)) {
