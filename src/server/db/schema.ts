@@ -1441,3 +1441,11 @@ export const waConversationTags = pgTable(
   ]
 );
 
+// Tabla requerida por n8n para Chat Memory
+export const n8nChatHistories = pgTable('n8n_chat_histories', {
+  id: serial('id').primaryKey(),
+  session_id: varchar('session_id', { length: 255 }).notNull(),
+  role: varchar('role', { length: 50 }).notNull(), // 'user' | 'assistant'
+  content: text('content').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});

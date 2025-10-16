@@ -6,6 +6,8 @@ import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_EMBEDDING_MODEL =
+  process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small'; // <-- cambiado || por ??
 
 interface OpenAIEmbeddingResponse {
   data: { embedding: number[] }[];
@@ -18,9 +20,22 @@ interface RequestBody {
 
 export async function POST(req: NextRequest) {
   try {
-    const { courseId, text }: RequestBody = await req.json();
+    if (!OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OPENAI_API_KEY no configurada' },
+        { status: 400 }
+      );
+    }
 
-    // 1. Generar el embedding usando OpenAI
+    const { courseId, text }: RequestBody = await req.json();
+    if (!courseId || !text?.trim()) {
+      return NextResponse.json(
+        { error: 'courseId y text son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    // 1. Generar el embedding usando OpenAI (modelo desde .env)
     const embeddingRes = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
@@ -29,18 +44,23 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         input: text,
-        model: 'text-embedding-ada-002',
+        model: OPENAI_EMBEDDING_MODEL,
       }),
     });
+
+    if (!embeddingRes.ok) {
+      const errText = await embeddingRes.text().catch(() => '');
+      return NextResponse.json(
+        { error: 'No se pudo generar el embedding', details: errText },
+        { status: 500 }
+      );
+    }
 
     const embeddingData: OpenAIEmbeddingResponse = await embeddingRes.json();
     const embedding = embeddingData?.data?.[0]?.embedding;
 
     if (!embedding) {
-      return NextResponse.json(
-        { error: 'No se pudo generar el embedding' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Embedding vacío' }, { status: 500 });
     }
 
     // 2. Guardar el embedding en la base de datos

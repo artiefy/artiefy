@@ -58,14 +58,6 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     }
 
-    // Prevent admin and educador from accessing student routes (but allow super-admin)
-    if (
-      req.url.includes('/estudiantes') &&
-      ['admin', 'educador'].includes(role as string)
-    ) {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
-
     // Check protected student routes (classes, programs, courses with ID)
     if (routeMatchers.protectedStudent(req)) {
       if (!userId) {

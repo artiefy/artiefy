@@ -44,6 +44,7 @@ interface ProgramQueryResult {
       instructor: string;
       createdAt: Date | null; // <-- agrega estos campos
       updatedAt: Date | null; // <-- agrega estos campos
+      rating: number | null; // <-- add this
       creator: {
         id: string;
         name: string;
@@ -84,6 +85,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
                 instructor: true,
                 createdAt: true, // <-- agrega esto
                 updatedAt: true, // <-- agrega esto
+                rating: true, // <-- add this
                 isActive: true,
               },
               with: {
@@ -181,7 +183,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
                 createdAt: materia.curso.createdAt ?? null,
                 updatedAt: materia.curso.updatedAt ?? null,
                 creatorId: materia.curso.creatorId,
-                rating: 0,
+                rating: materia.curso.rating ?? 0,
                 modalidadesid: 1,
                 nivelid: 1,
                 modalidad: materia.curso.modalidad ?? undefined,

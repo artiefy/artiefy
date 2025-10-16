@@ -1,3 +1,5 @@
+import React from 'react'; // <-- Agrega este import
+
 import { FaArrowRight } from 'react-icons/fa';
 
 interface ModalPlanteamientoProps {
@@ -15,13 +17,44 @@ const ModalPlanteamiento: React.FC<ModalPlanteamientoProps> = ({
   texto,
   setTexto,
 }) => {
-  if (!isOpen) return null;
+  // NUEVO: permitir apertura externa vía evento global
+  const [forcedOpen, setForcedOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ text?: string }>;
+      if (ce?.detail?.text && typeof ce.detail.text === 'string') {
+        try {
+          setTexto(ce.detail.text);
+        } catch {
+          // ignore
+        }
+      }
+      setForcedOpen(true);
+    };
+    window.addEventListener(
+      'open-modal-planteamiento',
+      handler as EventListener
+    );
+    return () =>
+      window.removeEventListener(
+        'open-modal-planteamiento',
+        handler as EventListener
+      );
+  }, [setTexto]);
+
+  const actuallyOpen = isOpen || forcedOpen;
+
+  if (!actuallyOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 transition-all duration-300 sm:p-4"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          setForcedOpen(false);
+          onClose();
+        }
       }}
     >
       <div className="relative h-auto max-h-[95vh] w-full max-w-xs overflow-y-auto rounded-2xl bg-[#0F2940] p-3 shadow-2xl transition-all duration-300 sm:max-w-lg sm:p-6 md:max-w-2xl lg:max-w-4xl">
@@ -50,8 +83,11 @@ const ModalPlanteamiento: React.FC<ModalPlanteamientoProps> = ({
           {/* Botón Cancelar */}
           <div className="flex justify-center">
             <button
-              onClick={onClose}
-              className="w-full rounded-lg bg-red-600 px-6 py-2 font-bold text-white shadow transition-colors duration-200 hover:bg-red-700 sm:w-auto hover:underline"
+              onClick={() => {
+                setForcedOpen(false);
+                onClose();
+              }}
+              className="w-full rounded-lg bg-red-600 px-6 py-2 font-bold text-white shadow transition-colors duration-200 hover:bg-red-700 hover:underline sm:w-auto"
             >
               Cancelar
             </button>
@@ -59,7 +95,11 @@ const ModalPlanteamiento: React.FC<ModalPlanteamientoProps> = ({
           {/* Botón Justificación */}
           <button
             className="group flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 font-bold text-white shadow transition-all duration-200 hover:bg-cyan-700 hover:underline sm:w-auto"
-            onClick={onConfirm}
+            onClick={() => {
+              onConfirm();
+              // conserva el modal abierto controlado por el padre; si era forzado, se cierra
+              if (forcedOpen) setForcedOpen(false);
+            }}
           >
             Justificación
             <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
