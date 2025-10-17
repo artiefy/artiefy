@@ -1493,13 +1493,6 @@ export default function EnrolledUsersPage() {
       body: JSON.stringify({ userId, programaId, price }),
     });
 
-    setEditablePagos((prev) =>
-      prev.map((p, idx) =>
-        idx < 12
-          ? { ...p, valor: Math.round(price / 12) } // solo cuotas 1..12
-          : p                                       // no tocar especiales
-      )
-    );
 
   };
 
