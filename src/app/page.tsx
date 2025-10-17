@@ -31,6 +31,7 @@ export default function HomePage() {
       coverImageKey: string;
     }[]
   >([]);
+  const [mounted, setMounted] = useState(false);
 
   const handleSearchComplete = useCallback(() => {
     setShowChatbot(false);
@@ -80,7 +81,7 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    // Solo se ejecuta en el cliente
+    setMounted(true);
   }, []);
 
   return (
@@ -134,7 +135,7 @@ export default function HomePage() {
           </section>
         </main>
       </div>
-      {!isSignedIn && (
+      {!isSignedIn && mounted && (
         <>
           <div className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-32 sm:bottom-20 sm:translate-x-0">
             {/* Triángulo tipo burbuja */}

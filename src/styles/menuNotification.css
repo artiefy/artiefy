@@ -123,4 +123,12 @@
   .mobile-notification-button:hover .notification-icon {
     color: #3af4ef;
   }
+
+  /* Cambia el color del texto de las notificaciones en móvil a color claro */
+  .notification-options .notification-item,
+  .notification-options .notification-title,
+  .notification-options .notification-description,
+  .notification-options .notification-time {
+    color: #3af4ef !important;
+  }
 }

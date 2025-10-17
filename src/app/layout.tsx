@@ -135,7 +135,10 @@ export default async function RootLayout({
           {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
         </Script>
 
-        <body className="bg-background text-primary font-sans">
+        <body
+          className="bg-background text-primary font-sans"
+          suppressHydrationWarning
+        >
           {/* Meta Pixel noscript fallback */}
           <noscript>
             <img

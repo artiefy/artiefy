@@ -186,7 +186,7 @@ export async function POST(req: Request) {
     // NUEVO: Log más detallado para ver estructura exacta
     try {
       console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
-    } catch (e) {
+    } catch (_e) {
       console.log('No se pudo stringificar la estructura completa');
       void e;
     }
@@ -361,36 +361,65 @@ export async function POST(req: Request) {
       if (!data || typeof data !== 'object') return null;
       const anyData = data as Record<string, unknown>;
 
+      // Caso n8nData.output
       if (
         typeof (anyData as { n8nData?: unknown }).n8nData === 'object' &&
         (anyData as { n8nData?: unknown }).n8nData !== null
       ) {
         const nd = (anyData as { n8nData: Record<string, unknown> }).n8nData;
         if (typeof (nd as { output?: unknown }).output === 'string') {
+          const output = (nd as { output: string }).output;
+          if (output === null || output === 'null') {
+            // Si output es null, responde con mensaje claro
+            return {
+              mensaje:
+                'No se encontraron cursos. Intenta con otra idea o revisa la oferta actual.',
+            };
+          }
           try {
-            const parsed = JSON.parse(
-              (nd as { output: string }).output
-            ) as Record<string, unknown>;
-            return pickPayload(parsed);
+            return pickPayload(
+              JSON.parse(output as string) as Record<string, unknown>
+            );
           } catch {
-            return null;
+            return { mensaje: output };
           }
         }
-        return pickPayload(nd);
+        // Si output es null (no string), responde con mensaje claro
+        if ((nd as { output?: unknown }).output === null) {
+          return {
+            mensaje:
+              'No se encontraron cursos. Intenta con otra idea o revisa la oferta actual.',
+          };
+        }
+        return pickPayload(nd as Record<string, unknown>);
       }
 
+      // Caso output directo
       if (typeof (anyData as { output?: unknown }).output === 'string') {
+        const output = (anyData as { output: string }).output;
+        if (output === null || output === 'null') {
+          return {
+            mensaje:
+              'No se encontraron cursos. Intenta con otra idea o revisa la oferta actual.',
+          };
+        }
         try {
-          const parsed = JSON.parse(
-            (anyData as { output: string }).output
-          ) as Record<string, unknown>;
-          return pickPayload(parsed);
+          return pickPayload(
+            JSON.parse(output as string) as Record<string, unknown>
+          );
         } catch {
-          return null;
+          return { mensaje: output };
         }
       }
+      if ((anyData as { output?: unknown }).output === null) {
+        return {
+          mensaje:
+            'No se encontraron cursos. Intenta con otra idea o revisa la oferta actual.',
+        };
+      }
 
-      return pickPayload(anyData);
+      // Si no hay output, intenta normalizar el objeto
+      return pickPayload(anyData as Record<string, unknown>);
     };
 
     const normalized = toN8nPayload(raw);

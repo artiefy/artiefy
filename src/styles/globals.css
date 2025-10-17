@@ -534,4 +534,54 @@
     fill: #000 !important;
     stroke: #000 !important;
   }
+
+  /* Asegurar que el popover del UserButton de Clerk quede encima del header en mobile */
+  /* Cubrimos varias posibles clases/variantes que Clerk puede generar */
+  .cl-userButtonPopoverCard,
+  .cl-userButtonPopover,
+  .cl-user-button-popover,
+  .cl-userButton-popover,
+  .cl-popover,
+  .cl-popover-card {
+    z-index: 999999 !important;
+  }
+
+  /* También por si el popover está anidado dentro del root */
+  .cl-userButton-root [data-testid='user-button-popover'],
+  .cl-userButton-root .cl-popover {
+    z-index: 999999 !important;
+  }
+
+  /* Forzar z-index alto para los modales/panels de UserProfile / administrar cuenta */
+  .cl-userProfileModal,
+  .cl-user-profile-modal,
+  .cl-userProfile,
+  .cl-user-profile,
+  .cl-userProfileDialog,
+  .cl-modal,
+  .cl-dialog,
+  .cl-overlay,
+  [data-clerk-modal],
+  [data-clerk-dialog],
+  [data-testid='user-profile-modal'],
+  [role='dialog'][data-clerk],
+  [aria-modal='true'][data-clerk] {
+    z-index: 1000000 !important;
+    position: relative !important;
+  }
+
+  /* Backdrop y contenido: cobertura extra por si Clerk usa otras clases/atributos */
+  .cl-modal-backdrop,
+  .cl-modalBackdrop,
+  .cl-userprofile-backdrop,
+  [data-testid='clerk-modal-backdrop'],
+  [data-testid='clerk-modal'],
+  .cl-modal-content,
+  .cl-modalContent,
+  .cl-userprofile-content,
+  [data-testid='clerk-modal-content'] {
+    z-index: 1000001 !important;
+    position: fixed !important;
+    inset: 0 !important;
+  }
 }

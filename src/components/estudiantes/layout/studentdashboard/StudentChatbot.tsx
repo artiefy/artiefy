@@ -429,18 +429,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const initMsg = data.mensaje_inicial;
       const genericMsg = data.mensaje;
 
-      if (typeof initMsg === 'string' && initMsg.trim() !== '') {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + Math.random(), text: initMsg, sender: 'bot' },
-        ]);
-        queueOrSaveBotMessage(initMsg);
-      } else if (typeof genericMsg === 'string' && genericMsg.trim() !== '') {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + Math.random(), text: genericMsg, sender: 'bot' },
-        ]);
-        queueOrSaveBotMessage(genericMsg);
+      // Si la respuesta incluye cursos, NO añadimos mensaje_inicial aquí
+      // porque se enviará dentro del payload JSON unificado (evita duplicados en UI).
+      if (!(Array.isArray(data.courses) && data.courses.length)) {
+        if (typeof initMsg === 'string' && initMsg.trim() !== '') {
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now() + Math.random(), text: initMsg, sender: 'bot' },
+          ]);
+          queueOrSaveBotMessage(initMsg);
+        } else if (typeof genericMsg === 'string' && genericMsg.trim() !== '') {
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now() + Math.random(), text: genericMsg, sender: 'bot' },
+          ]);
+          queueOrSaveBotMessage(genericMsg);
+        }
       }
 
       if (Array.isArray(data.courses) && data.courses.length) {
@@ -457,64 +461,136 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             body: JSON.stringify({ courseIds: courseIds }),
           });
 
-          const validationData = (await validationRes.json()) as {
-            validIds: number[];
-          };
-          const validCourseIds = validationData.validIds || [];
+          // Obtener listado de modalidades del backend para usar el nombre oficial
+          const modalidadMap = new Map<number, string>();
+          try {
+            const modRes = await fetch('/api/modalidades');
+            if (modRes.ok) {
+              const modList = (await modRes.json()) as {
+                id: number;
+                name: string;
+              }[];
+              modList.forEach((m) => {
+                if (typeof m.id === 'number' && typeof m.name === 'string') {
+                  modalidadMap.set(m.id, m.name);
+                }
+              });
+            } else {
+              console.warn(
+                'No se pudo cargar /api/modalidades, seguir sin nombres desde BD'
+              );
+            }
+          } catch (modErr) {
+            console.warn('Error al obtener modalidades:', modErr);
+          }
 
-          // Filtrar solo los cursos que existen en la BD
-          let coursesData: CourseData[] = data.courses
-            .filter(isCourseData)
-            .filter((c) => validCourseIds.includes(c.id))
-            .map((c) => ({
+          // Si la validación responde OK, extraer validIds; si no, fallback a usar data.courses
+          let validCourseIds: number[] = [];
+          if (validationRes.ok) {
+            const validationData = (await validationRes.json()) as {
+              validIds?: number[];
+            };
+            validCourseIds = validationData.validIds ?? [];
+          } else {
+            console.warn(
+              'Course validation endpoint returned non-ok, will use agent courses as fallback'
+            );
+            validCourseIds = [];
+          }
+
+          // Filtrar solo los cursos que existen en la BD si tenemos valid ids,
+          // si la validación no devolvió ids, usamos directamente los cursos del agente.
+          let coursesData: CourseData[] = [];
+          if (validCourseIds.length > 0) {
+            coursesData = data.courses
+              .filter(isCourseData)
+              .filter((c) => validCourseIds.includes(c.id))
+              .map((c) => ({
+                id: c.id,
+                title: c.title,
+                modalidadId: c.modalidadId,
+                // PRIORIDAD: nombre desde BD si existe modalidadId y está en el mapa;
+                // fallback a la modalidad que traiga el agente solo si no hay valor en BD.
+                modalidad:
+                  typeof c.modalidadId === 'number' &&
+                  modalidadMap.has(c.modalidadId)
+                    ? modalidadMap.get(c.modalidadId)
+                    : typeof c.modalidad === 'string' &&
+                        c.modalidad.trim() !== ''
+                      ? c.modalidad
+                      : undefined,
+              }));
+          } else {
+            // Fallback: usa los cursos del agente enriquecidos si es posible con modalidadMap
+            coursesData = data.courses.filter(isCourseData).map((c) => ({
               id: c.id,
               title: c.title,
               modalidadId: c.modalidadId,
-              modalidad: c.modalidad,
+              modalidad:
+                typeof c.modalidadId === 'number' &&
+                modalidadMap.has(c.modalidadId)
+                  ? modalidadMap.get(c.modalidadId)
+                  : typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
+                    ? c.modalidad
+                    : undefined,
             }));
+          }
 
-          // Limita el array a máximo 5 cursos
-          if (coursesData.length > 2) {
-            coursesData = coursesData.slice(0, 2);
+          // Limita el array a máximo 5 cursos (ajustar si quieres otro límite)
+          if (coursesData.length > 5) {
+            coursesData = coursesData.slice(0, 5);
           }
 
           if (coursesData.length > 0) {
+            // UNIFICAR: crear payload igual al del Agent IA para que el frontend muestre exactamente lo mismo
+            const payloadForFront: Partial<N8nPayload> = {
+              mensaje_inicial:
+                data.mensaje_inicial ??
+                'Aquí tienes algunos cursos que podrían ser útiles en tu formación.',
+              courses: coursesData,
+              // Garantizar pregunta_final siempre presente con fallback significativo
+              pregunta_final:
+                data.pregunta_final ??
+                '¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?',
+              intent: data.intent ?? 'course_search',
+            };
+
+            const textPayload = JSON.stringify(payloadForFront, null, 2);
+
+            // Añadir un único mensaje que contiene el JSON string (igual al Agent IA)
             setN8nCourses(coursesData);
             setMessages((prev) => [
               ...prev,
               {
                 id: Date.now() + Math.random(),
-                text: 'Cursos encontrados:',
+                text: textPayload,
                 sender: 'bot',
                 coursesData,
               },
             ]);
-            queueOrSaveBotMessage('Cursos encontrados:', coursesData);
+            // Guardar en cola/BD: textPayload + coursesData (saveMessages insertará courses_data)
+            queueOrSaveBotMessage(textPayload, coursesData);
 
+            // NO insertar mensaje adicional "Cursos encontrados:" ni intro automático.
+            // Si el agent indica explícitamente projectPrompt, abrir modal sin alterar la conversación mostrada:
             const shouldOpenProject =
               Boolean(data.projectPrompt) ||
               (typeof data.intent === 'string' &&
                 /idea|intenci[óo]n|proyecto/.test(data.intent)) ||
               /como ser|quiero|mi idea|proyecto/i.test(query);
 
-            if (shouldOpenProject) {
-              const intro =
-                'Ahora, si quieres, definamos el planteamiento, objetivos y actividades de tu proyecto.';
-              setMessages((prev) => [
-                ...prev,
-                { id: Date.now() + Math.random(), text: intro, sender: 'bot' },
-              ]);
-              queueOrSaveBotMessage(intro);
+            if (shouldOpenProject && data.projectPrompt) {
+              // solo disparar evento para abrir el modal, no añadir texto extra al chat
               window.dispatchEvent(
                 new CustomEvent('open-modal-planteamiento', {
-                  detail: { text: '' },
+                  detail: { text: data.mensaje ?? '' },
                 })
               );
             }
           } else {
-            // Si no hay cursos válidos, mostrar mensaje de búsqueda alternativa
+            // Si realmente no hay cursos válidos, mostrar fallback amigable sin mensaje técnico
             const fallbackMsg =
-              'Lo siento, estoy teniendo dificultades técnicas. Puedes intentar reformular tu pregunta o contactar soporte si el problema persiste.';
+              'No encontré cursos relacionados en nuestra plataforma. Intenta con otros términos o puedo ayudarte a crear un proyecto desde tu idea.';
             setMessages((prev) => [
               ...prev,
               {
@@ -527,26 +603,65 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           }
         } catch (validationError) {
           console.error('Error validating courses:', validationError);
-          // Fallback: mostrar cursos sin validación (comportamiento anterior)
+          // Fallback: usar los cursos del agente sin validación y enviarlos como único mensaje JSON
+          // Obtener modalidades para enriquecimiento (intentar, pero no bloquear)
+          const modalidadMap = new Map<number, string>();
+          try {
+            const modRes = await fetch('/api/modalidades');
+            if (modRes.ok) {
+              const modList = (await modRes.json()) as {
+                id: number;
+                name: string;
+              }[];
+              modList.forEach((m) => {
+                if (typeof m.id === 'number' && typeof m.name === 'string') {
+                  modalidadMap.set(m.id, m.name);
+                }
+              });
+            }
+          } catch (modErr) {
+            console.warn('Error al obtener modalidades en fallback:', modErr);
+          }
+
           const coursesData: CourseData[] = data.courses
             .filter(isCourseData)
             .map((c) => ({
               id: c.id,
               title: c.title,
               modalidadId: c.modalidadId,
-              modalidad: c.modalidad,
+              modalidad:
+                typeof c.modalidadId === 'number' &&
+                modalidadMap.has(c.modalidadId)
+                  ? modalidadMap.get(c.modalidadId)
+                  : typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
+                    ? c.modalidad
+                    : undefined,
             }));
+
+          const payloadForFront: Partial<N8nPayload> = {
+            mensaje_inicial:
+              data.mensaje_inicial ??
+              'Aquí tienes algunos cursos que podrían ser útiles en tu formación.',
+            courses: coursesData,
+            pregunta_final:
+              data.pregunta_final ??
+              '¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?',
+            intent: data.intent ?? 'course_search',
+          };
+
+          const textPayload = JSON.stringify(payloadForFront, null, 2);
+
           setN8nCourses(coursesData);
           setMessages((prev) => [
             ...prev,
             {
               id: Date.now() + Math.random(),
-              text: 'Cursos encontrados:',
+              text: textPayload,
               sender: 'bot',
               coursesData,
             },
           ]);
-          queueOrSaveBotMessage('Cursos encontrados:', coursesData);
+          queueOrSaveBotMessage(textPayload, coursesData);
         }
       }
 
@@ -1417,82 +1532,208 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   // Modifica renderMessage para mostrar la modalidad real desde la BD (relación cursos-modalidades)
   const renderMessage = (message: ChatMessage, _idx?: number) => {
-    // Mensaje del bot en formato JSON (bienvenida, cursos, etc)
+    let textToShow: string = message.text;
+
+    // Si message.text es un objeto con campo text, úsalo
     if (
-      message.sender === 'bot' &&
-      typeof message.text === 'string' &&
-      message.text.trim().startsWith('{')
+      typeof message.text === 'object' &&
+      message.text !== null &&
+      'text' in message.text &&
+      typeof (message.text as { text: unknown }).text === 'string'
     ) {
-      let json: N8nPayload | null = null;
+      textToShow = (message.text as { text: string }).text;
+    }
+
+    // Si message.text es un objeto con campo message.text, úsalo (caso doble anidado)
+    if (
+      typeof message.text === 'object' &&
+      message.text !== null &&
+      'message' in message.text &&
+      typeof (message.text as { message?: unknown }).message === 'object' &&
+      (message.text as { message: { text?: unknown } }).message !== null &&
+      'text' in (message.text as { message: { text?: unknown } }).message &&
+      typeof (
+        (message.text as { message: { text?: unknown } }).message as {
+          text?: unknown;
+        }
+      ).text === 'string'
+    ) {
+      textToShow = (message.text as { message: { text: string } }).message.text;
+    }
+
+    // NUEVO: Detectar bloque de "Aquí tienes la descripción del curso que solicitaste:"
+    if (
+      typeof textToShow === 'string' &&
+      textToShow.includes(
+        'Aquí tienes la descripción del curso que solicitaste'
+      )
+    ) {
       try {
-        const parsed = JSON.parse(message.text) as unknown;
-        if (
-          typeof parsed === 'object' &&
-          parsed !== null &&
-          'message' in parsed &&
-          typeof (parsed as { message?: unknown }).message === 'object' &&
-          (parsed as { message?: { text?: unknown } }).message &&
-          typeof (parsed as { message: { text?: unknown } }).message.text ===
-            'string' &&
-          (parsed as { message: { text: string } }).message.text
-            .trim()
-            .startsWith('{')
-        ) {
-          json = JSON.parse(
-            (parsed as { message: { text: string } }).message.text
-          ) as N8nPayload;
-        } else {
-          json = parsed as N8nPayload;
+        // Extraer título y descripción markdown-like: **Título:** ... **Descripción:** ...
+        const titleMatch = /\*\*\s*Título\s*:\s*\*\*\s*(.+)/i.exec(textToShow);
+        const descMatch = /\*\*\s*Descripción\s*:\s*\*\*\s*([\s\S]+)/i.exec(
+          textToShow
+        );
+
+        const title = titleMatch ? titleMatch[1].trim() : undefined;
+        const description = descMatch ? descMatch[1].trim() : undefined;
+
+        // Si no se detectaron con los prefijos, como fallback intentar con líneas que empiezan por "Título:" / "Descripción:"
+        const titleFallback =
+          title ??
+          (() => {
+            const m = /Título\s*:\s*(.+)/i.exec(textToShow);
+            return m ? m[1].trim() : undefined;
+          })();
+        const descriptionFallback =
+          description ??
+          (() => {
+            const m = /Descripción\s*:\s*([\s\S]+)/i.exec(textToShow);
+            return m ? m[1].trim() : undefined;
+          })();
+
+        // Render estilizado conservando los colores existentes
+        if (titleFallback || descriptionFallback) {
+          return (
+            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-4 shadow">
+              {titleFallback && (
+                <h3 className="mb-2 text-xl leading-tight font-extrabold text-white">
+                  {titleFallback}
+                </h3>
+              )}
+              {descriptionFallback && (
+                <p className="leading-relaxed text-white">
+                  {descriptionFallback}
+                </p>
+              )}
+              {/* Mantener posible pregunta final si viene después del bloque */}
+              {/\?$/m.test(textToShow) && (
+                <p className="mt-3 font-semibold text-white">
+                  {/* extraer la última línea interrogativa si existe */}
+                  {(() => {
+                    const qMatch = /([^\n?]+\?.*)$/m.exec(textToShow);
+                    return qMatch ? qMatch[0].trim() : '';
+                  })()}
+                </p>
+              )}
+            </div>
+          );
         }
       } catch {
-        json = null;
-      }
-      // Burbuja estilizada para bienvenida del agente IA y otros mensajes
-      if (
-        json &&
-        typeof json.mensaje === 'string' &&
-        typeof json.intent === 'string'
-      ) {
-        // Solo el div de fondo debajo de las letras, sin el div extra
-        return (
-          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
-            <p className="font-semibold text-white">{json.mensaje}</p>
-          </div>
-        );
-      }
-      // Tarjetas para cursos de embedding del flujo n8n
-      if (json && Array.isArray(json.courses) && json.courses.length > 0) {
-        // Limita el número de cursos a 5 para evitar freeze/tildado
-        const safeCourses = json.courses.slice(0, 2);
-        return (
-          <>
-            {typeof json.mensaje_inicial === 'string' && (
-              <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
-                <p className="font-semibold text-white">
-                  {json.mensaje_inicial}
-                </p>
-              </div>
-            )}
-            <CoursesCardsWithModalidad
-              courses={safeCourses}
-              coursesData={message.coursesData}
-            />
-            {typeof json.pregunta_final === 'string' && (
-              <div className="bg-background mt-2 max-w-[90%] rounded-2xl px-4 py-3 shadow">
-                <p className="font-semibold text-white">
-                  {json.pregunta_final}
-                </p>
-              </div>
-            )}
-          </>
-        );
+        // Si falla el parsing, continuar el flujo normal sin romper la UI
       }
     }
 
-    // Mensajes del bot en texto plano (incluye bienvenida, idea, no encontrado, etc)
+    // NUEVO: Si el texto es un JSON con mensaje_inicial, courses y pregunta_final, renderiza como texto plano
+    if (
+      typeof textToShow === 'string' &&
+      textToShow.trim().startsWith('{') &&
+      (textToShow.includes('"mensaje_inicial"') ||
+        textToShow.includes('"courses"'))
+    ) {
+      try {
+        // Define un tipo seguro para el objeto parseado
+        interface ParsedAgentResponse {
+          mensaje_inicial?: string;
+          courses?: {
+            id: number;
+            title: string;
+            modalidad?: string;
+            modalidadId?: number;
+          }[];
+          pregunta_final?: string;
+        }
+        const parsed: unknown = JSON.parse(textToShow);
+
+        // Type guard para validar el objeto
+        function isParsedAgentResponse(
+          obj: unknown
+        ): obj is ParsedAgentResponse {
+          return (
+            typeof obj === 'object' &&
+            obj !== null &&
+            ('mensaje_inicial' in obj ||
+              'courses' in obj ||
+              'pregunta_final' in obj)
+          );
+        }
+
+        if (isParsedAgentResponse(parsed)) {
+          // Usa CoursesCardsWithModalidad para renderizar las tarjetas con botón "Ir al Curso"
+          const coursesForCards = Array.isArray(parsed.courses)
+            ? (parsed.courses as CourseData[])
+            : [];
+
+          // Evita mostrar mensaje_inicial dos veces: solo lo mostramos si hay cursos, y nunca repetido
+          // Si el mensaje anterior era igual, no lo mostramos de nuevo
+          // Solo mostramos mensaje_inicial una vez por bloque de cursos
+          return (
+            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+              {/* Solo mostrar mensaje_inicial si hay cursos y no es igual al mensaje anterior */}
+              {typeof parsed.mensaje_inicial === 'string' && (
+                <p className="mb-2 font-semibold text-white">
+                  {parsed.mensaje_inicial}
+                </p>
+              )}
+
+              {coursesForCards.length > 0 && (
+                <div className="mb-2">
+                  <CoursesCardsWithModalidad
+                    courses={coursesForCards}
+                    // Siempre pasar coursesData (enriquecido con modalidad real de BD)
+                    coursesData={
+                      (message.coursesData && message.coursesData.length > 0
+                        ? message.coursesData
+                        : coursesForCards) as CourseData[]
+                    }
+                  />
+                </div>
+              )}
+
+              {typeof parsed.pregunta_final === 'string' && (
+                <p className="font-semibold text-white">
+                  {parsed.pregunta_final}
+                </p>
+              )}
+            </div>
+          );
+        }
+      } catch {
+        // Si no es JSON válido, sigue el flujo normal
+      }
+    }
+
+    // Solo intenta parsear JSON si parece JSON y contiene "mensaje"
+    if (
+      typeof textToShow === 'string' &&
+      textToShow.trim().startsWith('{') &&
+      textToShow.includes('"mensaje"')
+    ) {
+      try {
+        const parsed: unknown = JSON.parse(textToShow);
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          'mensaje' in parsed &&
+          typeof (parsed as { mensaje?: unknown }).mensaje === 'string'
+        ) {
+          return (
+            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+              <p className="font-semibold text-white">
+                {(parsed as { mensaje: string }).mensaje}
+              </p>
+            </div>
+          );
+        }
+      } catch {
+        // Si no es JSON válido, sigue el flujo normal
+      }
+    }
+
+    // Si es texto plano (como ahora), muestra la burbuja normal
     if (message.sender === 'bot') {
       // Detecta el mensaje de error genérico y aplica fondo especial
-      let msgText = message.text;
+      let msgText = textToShow;
       if (
         typeof msgText === 'string' &&
         (msgText.startsWith('No encontré cursos relacionados con ') ||
@@ -1989,7 +2230,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                 {chatMode.status && isSignedIn && showChatList && (
                   <button
-                    className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF3EE] shadow-[0_0_0_2px_#3AF3EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
+                    className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF4EE] shadow-[0_0_0_2px_#3AF4EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
                     onClick={() => newChatMessage()}
                   >
                     <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
@@ -2028,19 +2269,23 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
       'output' in (nd as Record<string, unknown>) &&
       typeof (nd as Record<string, unknown>).output === 'string'
     ) {
+      const output = (nd as Record<string, string>).output;
       try {
-        return JSON.parse((nd as Record<string, string>).output) as N8nPayload;
+        // Si output es JSON, parsea normalmente
+        return JSON.parse(output) as N8nPayload;
       } catch {
-        return null;
+        // Si output es texto plano, devuélvelo como { mensaje: output }
+        return { mensaje: output };
       }
     }
     if (nd && typeof nd === 'object') return nd as N8nPayload;
   }
   if ('output' in anyX && typeof anyX.output === 'string') {
+    const output = anyX.output;
     try {
-      return JSON.parse(anyX.output) as N8nPayload;
+      return JSON.parse(output) as N8nPayload;
     } catch {
-      return null;
+      return { mensaje: output };
     }
   }
   const keys = Object.keys(anyX);
@@ -2074,15 +2319,9 @@ const CoursesCardsWithModalidad = React.memo(
     if (Array.isArray(coursesData)) {
       coursesData.forEach((c) => {
         if (typeof c.id === 'number') {
-          if (typeof c.modalidad === 'string') {
+          // Usar modalidad como string (preferido, ya enriquecido en handleN8nData)
+          if (typeof c.modalidad === 'string' && c.modalidad.trim() !== '') {
             bdModalidades.set(c.id, c.modalidad);
-          } else if (
-            c.modalidad &&
-            typeof c.modalidad === 'object' &&
-            'name' in c.modalidad &&
-            typeof (c.modalidad as { name: unknown }).name === 'string'
-          ) {
-            bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
           }
         }
       });
@@ -2090,8 +2329,9 @@ const CoursesCardsWithModalidad = React.memo(
 
     return (
       <div className="mt-2 flex flex-wrap gap-3">
-        {courses.slice(0, 2).map((course) => {
-          // Limita a 2 en el render
+        {/* Mostrar hasta 5 cursos */}
+        {courses.slice(0, 5).map((course) => {
+          // Modalidad real: siempre la de BD si está en coursesData, si no la que venga en course
           const modalidadReal =
             bdModalidades.get(course.id) ?? course.modalidad ?? 'N/A';
           return (

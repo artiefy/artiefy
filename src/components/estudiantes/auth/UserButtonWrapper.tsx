@@ -135,11 +135,26 @@ export function UserButtonWrapper() {
     <div className="flex items-center">
       <UserButton
         showName
+        userProfileMode="modal"
+        userProfileProps={{
+          appearance: {
+            elements: {
+              // Forzar backdrop y contenido del modal con z-index muy alto en mobile
+              modalBackdrop: 'z-[1000000] fixed inset-0',
+              modalContent: 'z-[1000001] relative',
+            },
+          },
+        }}
         appearance={{
           elements: {
             rootBox: 'flex items-center justify-end',
             userButtonTrigger: 'focus:shadow-none',
-            userButtonPopoverCard: 'z-[100]',
+            // Asegurar que el popover del UserButton quede por encima del header en mobile
+            userButtonPopoverCard: 'z-[999999] md:z-[100]',
+            // Agregar variantes adicionales por si Clerk usa otros keys
+            popoverBox: 'z-[999999] md:z-[100]',
+            popoverLayer: 'z-[999999] md:z-[100]',
+            userProfileModal: 'z-[999999] md:z-[100]',
             userProfilePageLabel: 'whitespace-nowrap', // Aplica la clase aquí si Clerk lo soporta
           },
         }}
