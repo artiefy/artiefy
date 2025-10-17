@@ -1558,58 +1558,95 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         }
       ).text === 'string'
     ) {
-      textToShow = (message.text as { message: { text: string } }).message.text;
+      const nested = (
+        (message.text as { message: { text?: unknown } }).message as {
+          text?: unknown;
+        }
+      ).text;
+      if (typeof nested === 'string') {
+        textToShow = nested;
+      }
     }
 
-    // NUEVO: Detectar bloque de "Aquí tienes la descripción del curso que solicitaste:"
+    // NUEVO: Detectar bloque de "Aquí tienes la descripción del curso que solicitaste:" o títulos en **bold**
     if (
       typeof textToShow === 'string' &&
-      textToShow.includes(
+      (textToShow.includes(
         'Aquí tienes la descripción del curso que solicitaste'
-      )
+      ) ||
+        /\*\*.+?\*\*/.test(textToShow))
     ) {
       try {
-        // Extraer título y descripción markdown-like: **Título:** ... **Descripción:** ...
+        // 1) Caso explícito con "**Título:**" / "**Descripción:**" (compatibilidad previa)
         const titleMatch = /\*\*\s*Título\s*:\s*\*\*\s*(.+)/i.exec(textToShow);
         const descMatch = /\*\*\s*Descripción\s*:\s*\*\*\s*([\s\S]+)/i.exec(
           textToShow
         );
 
-        const title = titleMatch ? titleMatch[1].trim() : undefined;
-        const description = descMatch ? descMatch[1].trim() : undefined;
+        let title = titleMatch ? titleMatch[1].trim() : undefined;
+        let description = descMatch ? descMatch[1].trim() : undefined;
 
-        // Si no se detectaron con los prefijos, como fallback intentar con líneas que empiezan por "Título:" / "Descripción:"
-        const titleFallback =
-          title ??
-          (() => {
-            const m = /Título\s*:\s*(.+)/i.exec(textToShow);
-            return m ? m[1].trim() : undefined;
-          })();
-        const descriptionFallback =
-          description ??
-          (() => {
-            const m = /Descripción\s*:\s*([\s\S]+)/i.exec(textToShow);
-            return m ? m[1].trim() : undefined;
-          })();
+        // 2) Fallback: detectar primer bloque en negrita inline: "El curso **Título** ..."
+        if (!title) {
+          const boldInline = /\*\*(.+?)\*\*/.exec(textToShow);
+          if (boldInline) {
+            title = boldInline[1].trim();
+            // Extraer la descripción: quitar el bloque **title** y cualquier encabezado inicial
+            // quitar frases como "El curso", "El módulo", y el encabezado "Aquí tienes..."
+            description = textToShow
+              .replace(boldInline[0], '') // quitar **Title**
+              .replace(
+                /Aquí tienes la descripción del curso que solicitaste[:\s]*/i,
+                ''
+              )
+              .replace(/^(El curso|El módulo|Curso)\s*[:,-]?\s*/i, '')
+              .trim();
+            // Si la descripción empieza con ":" o "-" quitarlo
+            description = description.replace(/^[:\-\s]+/, '').trim();
+          }
+        }
 
-        // Render estilizado conservando los colores existentes
-        if (titleFallback || descriptionFallback) {
+        // 3) Si aún no hay descripción pero el texto contiene la frase completa,
+        //    intentar extraer después de la frase "Aquí tienes la descripción..."
+        if (!description && textToShow.includes('Aquí tienes la descripción')) {
+          const afterPhrase = textToShow.split(
+            'Aquí tienes la descripción del curso que solicitaste:'
+          )[1];
+          if (afterPhrase) description = afterPhrase.trim();
+        }
+
+        // 4) Otros fallback: buscar primera línea larga como descripción
+        if (!description) {
+          const lines = textToShow
+            .split(/\n{1,}/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+          // si bold encontrado, quitar la línea que contiene el título
+          if (title) {
+            const filtered = lines.filter((l) => !l.includes(title));
+            if (filtered.length > 0) description = filtered.join('\n\n');
+          } else if (lines.length > 1) {
+            description = lines.slice(1).join('\n\n');
+          } else {
+            description = lines[0] ?? '';
+          }
+        }
+
+        // Render estilizado conservando los colores actuales
+        if (title || description) {
           return (
             <div className="bg-background max-w-[90%] rounded-2xl px-4 py-4 shadow">
-              {titleFallback && (
+              {title && (
                 <h3 className="mb-2 text-xl leading-tight font-extrabold text-white">
-                  {titleFallback}
+                  {title}
                 </h3>
               )}
-              {descriptionFallback && (
-                <p className="leading-relaxed text-white">
-                  {descriptionFallback}
-                </p>
+              {description && (
+                <p className="leading-relaxed text-white">{description}</p>
               )}
               {/* Mantener posible pregunta final si viene después del bloque */}
               {/\?$/m.test(textToShow) && (
                 <p className="mt-3 font-semibold text-white">
-                  {/* extraer la última línea interrogativa si existe */}
                   {(() => {
                     const qMatch = /([^\n?]+\?.*)$/m.exec(textToShow);
                     return qMatch ? qMatch[0].trim() : '';
