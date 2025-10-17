@@ -53,6 +53,7 @@ export const ModalScheduleMeeting = ({
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [customTitles, setCustomTitles] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const firstDayOfWeek = useMemo(() => {
     if (!date) return '';
@@ -105,6 +106,8 @@ export const ModalScheduleMeeting = ({
 
   const handleSubmit = async () => {
     setFormError(null); // Limpiar error previo
+    setIsLoading(true); // Activar carga
+
 
     // Validaciones
     if (!title.trim()) {
@@ -188,6 +191,8 @@ export const ModalScheduleMeeting = ({
     } catch (error) {
       console.error('Error al crear clases:', error);
       alert('Ocurrió un error al crear las clases.');
+    } finally {
+      setIsLoading(false); // Desactivar carga
     }
   };
 
@@ -288,13 +293,12 @@ export const ModalScheduleMeeting = ({
                   key={day}
                   type="button"
                   disabled={day === firstDayOfWeek}
-                  className={`rounded border px-3 py-1 text-sm ${
-                    selectedDays.includes(day)
-                      ? day === firstDayOfWeek
-                        ? 'cursor-not-allowed bg-gray-400 text-white'
-                        : 'bg-white text-black'
-                      : 'border-gray-500 bg-transparent text-white'
-                  }`}
+                  className={`rounded border px-3 py-1 text-sm ${selectedDays.includes(day)
+                    ? day === firstDayOfWeek
+                      ? 'cursor-not-allowed bg-gray-400 text-white'
+                      : 'bg-white text-black'
+                    : 'border-gray-500 bg-transparent text-white'
+                    }`}
                   onClick={() => toggleDay(day)}
                 >
                   {day.slice(0, 3)}
@@ -339,8 +343,8 @@ export const ModalScheduleMeeting = ({
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!selectedDays.length}>
-            Crear clases
+          <Button onClick={handleSubmit} disabled={!selectedDays.length || isLoading}>
+            {isLoading ? 'Creando clases...' : 'Crear clases'}
           </Button>
         </DialogFooter>
       </DialogContent>
