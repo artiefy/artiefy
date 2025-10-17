@@ -548,7 +548,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 data.mensaje_inicial ??
                 'Aquí tienes algunos cursos que podrían ser útiles en tu formación.',
               courses: coursesData,
-              pregunta_final: data.pregunta_final ?? data.pregunta_final,
+              // Garantizar pregunta_final siempre presente con fallback significativo
+              pregunta_final:
+                data.pregunta_final ??
+                '¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?',
               intent: data.intent ?? 'course_search',
             };
 
@@ -640,7 +643,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               data.mensaje_inicial ??
               'Aquí tienes algunos cursos que podrían ser útiles en tu formación.',
             courses: coursesData,
-            pregunta_final: data.pregunta_final ?? data.pregunta_final,
+            pregunta_final:
+              data.pregunta_final ??
+              '¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?',
             intent: data.intent ?? 'course_search',
           };
 
