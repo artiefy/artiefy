@@ -1561,6 +1561,69 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       textToShow = (message.text as { message: { text: string } }).message.text;
     }
 
+    // NUEVO: Detectar bloque de "Aquí tienes la descripción del curso que solicitaste:"
+    if (
+      typeof textToShow === 'string' &&
+      textToShow.includes(
+        'Aquí tienes la descripción del curso que solicitaste'
+      )
+    ) {
+      try {
+        // Extraer título y descripción markdown-like: **Título:** ... **Descripción:** ...
+        const titleMatch = /\*\*\s*Título\s*:\s*\*\*\s*(.+)/i.exec(textToShow);
+        const descMatch = /\*\*\s*Descripción\s*:\s*\*\*\s*([\s\S]+)/i.exec(
+          textToShow
+        );
+
+        const title = titleMatch ? titleMatch[1].trim() : undefined;
+        const description = descMatch ? descMatch[1].trim() : undefined;
+
+        // Si no se detectaron con los prefijos, como fallback intentar con líneas que empiezan por "Título:" / "Descripción:"
+        const titleFallback =
+          title ??
+          (() => {
+            const m = /Título\s*:\s*(.+)/i.exec(textToShow);
+            return m ? m[1].trim() : undefined;
+          })();
+        const descriptionFallback =
+          description ??
+          (() => {
+            const m = /Descripción\s*:\s*([\s\S]+)/i.exec(textToShow);
+            return m ? m[1].trim() : undefined;
+          })();
+
+        // Render estilizado conservando los colores existentes
+        if (titleFallback || descriptionFallback) {
+          return (
+            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-4 shadow">
+              {titleFallback && (
+                <h3 className="mb-2 text-xl leading-tight font-extrabold text-white">
+                  {titleFallback}
+                </h3>
+              )}
+              {descriptionFallback && (
+                <p className="leading-relaxed text-white">
+                  {descriptionFallback}
+                </p>
+              )}
+              {/* Mantener posible pregunta final si viene después del bloque */}
+              {/\?$/m.test(textToShow) && (
+                <p className="mt-3 font-semibold text-white">
+                  {/* extraer la última línea interrogativa si existe */}
+                  {(() => {
+                    const qMatch = /([^\n?]+\?.*)$/m.exec(textToShow);
+                    return qMatch ? qMatch[0].trim() : '';
+                  })()}
+                </p>
+              )}
+            </div>
+          );
+        }
+      } catch {
+        // Si falla el parsing, continuar el flujo normal sin romper la UI
+      }
+    }
+
     // NUEVO: Si el texto es un JSON con mensaje_inicial, courses y pregunta_final, renderiza como texto plano
     if (
       typeof textToShow === 'string' &&
