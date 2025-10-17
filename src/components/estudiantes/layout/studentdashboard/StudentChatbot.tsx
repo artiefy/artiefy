@@ -429,18 +429,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const initMsg = data.mensaje_inicial;
       const genericMsg = data.mensaje;
 
-      if (typeof initMsg === 'string' && initMsg.trim() !== '') {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + Math.random(), text: initMsg, sender: 'bot' },
-        ]);
-        queueOrSaveBotMessage(initMsg);
-      } else if (typeof genericMsg === 'string' && genericMsg.trim() !== '') {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + Math.random(), text: genericMsg, sender: 'bot' },
-        ]);
-        queueOrSaveBotMessage(genericMsg);
+      // Si la respuesta incluye cursos, NO añadimos mensaje_inicial aquí
+      // porque se enviará dentro del payload JSON unificado (evita duplicados en UI).
+      if (!(Array.isArray(data.courses) && data.courses.length)) {
+        if (typeof initMsg === 'string' && initMsg.trim() !== '') {
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now() + Math.random(), text: initMsg, sender: 'bot' },
+          ]);
+          queueOrSaveBotMessage(initMsg);
+        } else if (typeof genericMsg === 'string' && genericMsg.trim() !== '') {
+          setMessages((prev) => [
+            ...prev,
+            { id: Date.now() + Math.random(), text: genericMsg, sender: 'bot' },
+          ]);
+          queueOrSaveBotMessage(genericMsg);
+        }
       }
 
       if (Array.isArray(data.courses) && data.courses.length) {
@@ -505,25 +509,29 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 id: c.id,
                 title: c.title,
                 modalidadId: c.modalidadId,
-                // Preferir modalidad ya presente; sino mapear modalidadId a nombre desde el endpoint
+                // PRIORIDAD: nombre desde BD si existe modalidadId y está en el mapa;
+                // fallback a la modalidad que traiga el agente solo si no hay valor en BD.
                 modalidad:
-                  typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
-                    ? c.modalidad
-                    : typeof c.modalidadId === 'number'
-                      ? (modalidadMap.get(c.modalidadId) ?? undefined)
+                  typeof c.modalidadId === 'number' &&
+                  modalidadMap.has(c.modalidadId)
+                    ? modalidadMap.get(c.modalidadId)
+                    : typeof c.modalidad === 'string' &&
+                        c.modalidad.trim() !== ''
+                      ? c.modalidad
                       : undefined,
               }));
           } else {
-            // Usa los cursos devueltos por el agente como fallback (no inventar nada)
+            // Fallback: usa los cursos del agente enriquecidos si es posible con modalidadMap
             coursesData = data.courses.filter(isCourseData).map((c) => ({
               id: c.id,
               title: c.title,
               modalidadId: c.modalidadId,
               modalidad:
-                typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
-                  ? c.modalidad
-                  : typeof c.modalidadId === 'number'
-                    ? (modalidadMap.get(c.modalidadId) ?? undefined)
+                typeof c.modalidadId === 'number' &&
+                modalidadMap.has(c.modalidadId)
+                  ? modalidadMap.get(c.modalidadId)
+                  : typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
+                    ? c.modalidad
                     : undefined,
             }));
           }
@@ -619,10 +627,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               title: c.title,
               modalidadId: c.modalidadId,
               modalidad:
-                typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
-                  ? c.modalidad
-                  : typeof c.modalidadId === 'number'
-                    ? (modalidadMap.get(c.modalidadId) ?? undefined)
+                typeof c.modalidadId === 'number' &&
+                modalidadMap.has(c.modalidadId)
+                  ? modalidadMap.get(c.modalidadId)
+                  : typeof c.modalidad === 'string' && c.modalidad.trim() !== ''
+                    ? c.modalidad
                     : undefined,
             }));
 
@@ -1587,8 +1596,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             ? (parsed.courses as CourseData[])
             : [];
 
+          // Evita mostrar mensaje_inicial dos veces: solo lo mostramos si hay cursos, y nunca repetido
+          // Si el mensaje anterior era igual, no lo mostramos de nuevo
+          // Solo mostramos mensaje_inicial una vez por bloque de cursos
           return (
             <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+              {/* Solo mostrar mensaje_inicial si hay cursos y no es igual al mensaje anterior */}
               {typeof parsed.mensaje_inicial === 'string' && (
                 <p className="mb-2 font-semibold text-white">
                   {parsed.mensaje_inicial}
@@ -1599,8 +1612,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 <div className="mb-2">
                   <CoursesCardsWithModalidad
                     courses={coursesForCards}
-                    // Si el mensaje guardado incluye coursesData en DB lo preferimos,
-                    // si no, enviamos los mismos courses para mostrar modalidad si viene.
+                    // Siempre pasar coursesData (enriquecido con modalidad real de BD)
                     coursesData={
                       (message.coursesData && message.coursesData.length > 0
                         ? message.coursesData
@@ -2239,15 +2251,8 @@ const CoursesCardsWithModalidad = React.memo(
     if (Array.isArray(coursesData)) {
       coursesData.forEach((c) => {
         if (typeof c.id === 'number') {
-          // Usar modalidad.name si existe, si no modalidad como string
-          if (
-            c.modalidad &&
-            typeof c.modalidad === 'object' &&
-            'name' in c.modalidad &&
-            typeof (c.modalidad as { name: unknown }).name === 'string'
-          ) {
-            bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
-          } else if (typeof c.modalidad === 'string') {
+          // Usar modalidad como string (preferido, ya enriquecido en handleN8nData)
+          if (typeof c.modalidad === 'string' && c.modalidad.trim() !== '') {
             bdModalidades.set(c.id, c.modalidad);
           }
         }
@@ -2258,6 +2263,7 @@ const CoursesCardsWithModalidad = React.memo(
       <div className="mt-2 flex flex-wrap gap-3">
         {/* Mostrar hasta 5 cursos */}
         {courses.slice(0, 5).map((course) => {
+          // Modalidad real: siempre la de BD si está en coursesData, si no la que venga en course
           const modalidadReal =
             bdModalidades.get(course.id) ?? course.modalidad ?? 'N/A';
           return (
