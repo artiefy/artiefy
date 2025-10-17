@@ -186,7 +186,7 @@ export async function POST(req: Request) {
     // NUEVO: Log más detallado para ver estructura exacta
     try {
       console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
-    } catch (e) {
+    } catch (_e) {
       console.log('No se pudo stringificar la estructura completa');
     }
 
@@ -366,30 +366,31 @@ export async function POST(req: Request) {
       ) {
         const nd = (anyData as { n8nData: Record<string, unknown> }).n8nData;
         if (typeof (nd as { output?: unknown }).output === 'string') {
+          const output = (nd as { output: string }).output;
           try {
-            const parsed = JSON.parse(
-              (nd as { output: string }).output
-            ) as Record<string, unknown>;
-            return pickPayload(parsed);
+            return pickPayload(
+              JSON.parse(output as string) as Record<string, unknown>
+            ); // <-- type assertion
           } catch {
-            return null;
+            // Si output es texto plano, devuélvelo como { mensaje: output }
+            return { mensaje: output };
           }
         }
-        return pickPayload(nd);
+        return pickPayload(nd as Record<string, unknown>); // <-- type assertion
       }
 
       if (typeof (anyData as { output?: unknown }).output === 'string') {
+        const output = (anyData as { output: string }).output;
         try {
-          const parsed = JSON.parse(
-            (anyData as { output: string }).output
-          ) as Record<string, unknown>;
-          return pickPayload(parsed);
+          return pickPayload(
+            JSON.parse(output as string) as Record<string, unknown>
+          ); // <-- type assertion
         } catch {
-          return null;
+          return { mensaje: output };
         }
       }
 
-      return pickPayload(anyData);
+      return pickPayload(anyData as Record<string, unknown>); // <-- type assertion
     };
 
     const normalized = toN8nPayload(raw);

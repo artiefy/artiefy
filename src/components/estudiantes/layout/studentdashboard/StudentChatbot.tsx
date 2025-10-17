@@ -1417,82 +1417,66 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   // Modifica renderMessage para mostrar la modalidad real desde la BD (relación cursos-modalidades)
   const renderMessage = (message: ChatMessage, _idx?: number) => {
-    // Mensaje del bot en formato JSON (bienvenida, cursos, etc)
+    let textToShow: string = message.text;
+
+    // Si message.text es un objeto con campo text, úsalo
     if (
-      message.sender === 'bot' &&
-      typeof message.text === 'string' &&
-      message.text.trim().startsWith('{')
+      typeof message.text === 'object' &&
+      message.text !== null &&
+      'text' in message.text &&
+      typeof (message.text as { text: unknown }).text === 'string'
     ) {
-      let json: N8nPayload | null = null;
+      textToShow = (message.text as { text: string }).text;
+    }
+
+    // Si message.text es un objeto con campo message.text, úsalo (caso doble anidado)
+    if (
+      typeof message.text === 'object' &&
+      message.text !== null &&
+      'message' in message.text &&
+      typeof (message.text as { message?: unknown }).message === 'object' &&
+      (message.text as { message: { text?: unknown } }).message !== null &&
+      'text' in (message.text as { message: { text?: unknown } }).message &&
+      typeof (
+        (message.text as { message: { text?: unknown } }).message as {
+          text?: unknown;
+        }
+      ).text === 'string'
+    ) {
+      textToShow = (message.text as { message: { text: string } }).message.text;
+    }
+
+    // Solo intenta parsear JSON si parece JSON y contiene "mensaje"
+    if (
+      typeof textToShow === 'string' &&
+      textToShow.trim().startsWith('{') &&
+      textToShow.includes('"mensaje"')
+    ) {
       try {
-        const parsed = JSON.parse(message.text) as unknown;
+        const parsed: unknown = JSON.parse(textToShow);
         if (
+          parsed &&
           typeof parsed === 'object' &&
-          parsed !== null &&
-          'message' in parsed &&
-          typeof (parsed as { message?: unknown }).message === 'object' &&
-          (parsed as { message?: { text?: unknown } }).message &&
-          typeof (parsed as { message: { text?: unknown } }).message.text ===
-            'string' &&
-          (parsed as { message: { text: string } }).message.text
-            .trim()
-            .startsWith('{')
+          'mensaje' in parsed &&
+          typeof (parsed as { mensaje?: unknown }).mensaje === 'string'
         ) {
-          json = JSON.parse(
-            (parsed as { message: { text: string } }).message.text
-          ) as N8nPayload;
-        } else {
-          json = parsed as N8nPayload;
+          return (
+            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+              <p className="font-semibold text-white">
+                {(parsed as { mensaje: string }).mensaje}
+              </p>
+            </div>
+          );
         }
       } catch {
-        json = null;
-      }
-      // Burbuja estilizada para bienvenida del agente IA y otros mensajes
-      if (
-        json &&
-        typeof json.mensaje === 'string' &&
-        typeof json.intent === 'string'
-      ) {
-        // Solo el div de fondo debajo de las letras, sin el div extra
-        return (
-          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
-            <p className="font-semibold text-white">{json.mensaje}</p>
-          </div>
-        );
-      }
-      // Tarjetas para cursos de embedding del flujo n8n
-      if (json && Array.isArray(json.courses) && json.courses.length > 0) {
-        // Limita el número de cursos a 5 para evitar freeze/tildado
-        const safeCourses = json.courses.slice(0, 2);
-        return (
-          <>
-            {typeof json.mensaje_inicial === 'string' && (
-              <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
-                <p className="font-semibold text-white">
-                  {json.mensaje_inicial}
-                </p>
-              </div>
-            )}
-            <CoursesCardsWithModalidad
-              courses={safeCourses}
-              coursesData={message.coursesData}
-            />
-            {typeof json.pregunta_final === 'string' && (
-              <div className="bg-background mt-2 max-w-[90%] rounded-2xl px-4 py-3 shadow">
-                <p className="font-semibold text-white">
-                  {json.pregunta_final}
-                </p>
-              </div>
-            )}
-          </>
-        );
+        // Si no es JSON válido, sigue el flujo normal
       }
     }
 
-    // Mensajes del bot en texto plano (incluye bienvenida, idea, no encontrado, etc)
+    // Si es texto plano (como ahora), muestra la burbuja normal
     if (message.sender === 'bot') {
       // Detecta el mensaje de error genérico y aplica fondo especial
-      let msgText = message.text;
+      let msgText = textToShow;
       if (
         typeof msgText === 'string' &&
         (msgText.startsWith('No encontré cursos relacionados con ') ||
@@ -2028,19 +2012,23 @@ function extractN8nPayload(x: unknown): N8nPayload | null {
       'output' in (nd as Record<string, unknown>) &&
       typeof (nd as Record<string, unknown>).output === 'string'
     ) {
+      const output = (nd as Record<string, string>).output;
       try {
-        return JSON.parse((nd as Record<string, string>).output) as N8nPayload;
+        // Si output es JSON, parsea normalmente
+        return JSON.parse(output) as N8nPayload;
       } catch {
-        return null;
+        // Si output es texto plano, devuélvelo como { mensaje: output }
+        return { mensaje: output };
       }
     }
     if (nd && typeof nd === 'object') return nd as N8nPayload;
   }
   if ('output' in anyX && typeof anyX.output === 'string') {
+    const output = anyX.output;
     try {
-      return JSON.parse(anyX.output) as N8nPayload;
+      return JSON.parse(output) as N8nPayload;
     } catch {
-      return null;
+      return { mensaje: output };
     }
   }
   const keys = Object.keys(anyX);
@@ -2074,15 +2062,16 @@ const CoursesCardsWithModalidad = React.memo(
     if (Array.isArray(coursesData)) {
       coursesData.forEach((c) => {
         if (typeof c.id === 'number') {
-          if (typeof c.modalidad === 'string') {
-            bdModalidades.set(c.id, c.modalidad);
-          } else if (
+          // Usar modalidad.name si existe, si no modalidad como string
+          if (
             c.modalidad &&
             typeof c.modalidad === 'object' &&
             'name' in c.modalidad &&
             typeof (c.modalidad as { name: unknown }).name === 'string'
           ) {
             bdModalidades.set(c.id, (c.modalidad as { name: string }).name);
+          } else if (typeof c.modalidad === 'string') {
+            bdModalidades.set(c.id, c.modalidad);
           }
         }
       });
@@ -2090,8 +2079,8 @@ const CoursesCardsWithModalidad = React.memo(
 
     return (
       <div className="mt-2 flex flex-wrap gap-3">
-        {courses.slice(0, 2).map((course) => {
-          // Limita a 2 en el render
+        {/* Mostrar hasta 5 cursos */}
+        {courses.slice(0, 5).map((course) => {
           const modalidadReal =
             bdModalidades.get(course.id) ?? course.modalidad ?? 'N/A';
           return (
