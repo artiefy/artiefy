@@ -841,10 +841,6 @@ export default function EnrolledUsersPage() {
   }
 
 
-
-  // Al finalizar openCarteraModal, cuando ya tengas pagosUsuarioPrograma:
-
-  // === GUARDAR UNA SOLA CUOTA ===
   async function savePagoRow(index: number) {
     if (!carteraUserId) {
       alert('Falta userId');
@@ -877,7 +873,7 @@ export default function EnrolledUsersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: carteraUserId,
-            programId: currentProgramId ? Number(currentProgramId) : null, // 👈 soporta null
+            programId: currentProgramId ? Number(currentProgramId) : null,
             index,
             concepto,
             nro_pago,
@@ -894,22 +890,35 @@ export default function EnrolledUsersPage() {
         const data: unknown = await res.json().catch(() => ({}));
         const msg = isErrorResponse(data) ? data.error : 'No se pudo guardar.';
         alert(msg);
-
         return;
       }
+
+      // 👇 CAMBIO: Guardar el estado actual de fechas autocompletadas
+      const currentFechas = editablePagos.map(p => p.fecha);
 
       const pagosRefrescados = await fetchPagosUsuarioPrograma(
         carteraUserId,
         String(currentProgramId)
       );
-      setEditablePagos(mapPagosToEditable(pagosRefrescados));
+
+      const pagosActualizados = mapPagosToEditable(pagosRefrescados);
+
+      // 👇 NUEVO: Restaurar las fechas autocompletadas que no están en el backend
+      const pagosMerged = pagosActualizados.map((p, idx) => {
+        // Si la fecha está vacía en el backend pero la teníamos autocompletada, mantenerla
+        if (!p.fecha && currentFechas[idx]) {
+          return { ...p, fecha: currentFechas[idx] };
+        }
+        return p;
+      });
+
+      setEditablePagos(pagosMerged);
       alert('✅ Guardado');
     } catch (e) {
       console.error(e);
       alert('Error de red al guardar.');
     }
   }
-
   const onReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (
@@ -1484,13 +1493,6 @@ export default function EnrolledUsersPage() {
       body: JSON.stringify({ userId, programaId, price }),
     });
 
-    setEditablePagos((prev) =>
-      prev.map((p, idx) =>
-        idx < 12
-          ? { ...p, valor: Math.round(price / 12) } // solo cuotas 1..12
-          : p                                       // no tocar especiales
-      )
-    );
 
   };
 
@@ -1567,7 +1569,7 @@ export default function EnrolledUsersPage() {
 
 
 
-        // Abrir modal
+        // Resetear el flag para permitir autocompletado en la próxima apertura
         setShowCarteraModal(true);
         return;
       }
@@ -1822,37 +1824,42 @@ export default function EnrolledUsersPage() {
       alert(msg);
     }
   };
-
   useEffect(() => {
-    const norm = mapPagosToEditable(carteraInfo?.pagosUsuarioPrograma ?? []);
+    // Solo ejecutar cuando hay datos de pagos
+    if (!carteraInfo?.pagosUsuarioPrograma) return;
+
+    const norm = mapPagosToEditable(carteraInfo.pagosUsuarioPrograma);
     const baseIndex = norm.findIndex(
       (r) => typeof r?.fecha === 'string' && r.fecha.trim() !== ''
     );
 
+    // Si no hay ninguna fecha, solo mapear
     if (baseIndex === -1) {
       setEditablePagos(norm);
       return;
     }
 
     const baseISO = norm[baseIndex]!.fecha as string;
+
+    // Autocompletar fechas vacías mes a mes
     const filled = norm.map((r, i) => {
       const hasFecha = typeof r.fecha === 'string' && r.fecha.trim() !== '';
-      if (hasFecha) return r;
-      // solo autocompleta cuotas
-      return i <= 11
-        ? { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) }
-        : r;
+      if (hasFecha) return r; // Ya tiene fecha, mantenerla
+
+      // Solo autocompleta cuotas 0..11 que estén vacías
+      if (i <= 11) {
+        return { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
+      }
+
+      return r; // Especiales sin tocar
     });
 
     setEditablePagos(filled);
   }, [
-    showCarteraModal,
     carteraInfo?.pagosUsuarioPrograma,
     addMonthsKeepingDay,
     mapPagosToEditable,
   ]);
-
-  // Save visible columns to localStorage
   useEffect(() => {
     localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
@@ -3842,8 +3849,22 @@ export default function EnrolledUsersPage() {
 
               {/* TABLA DE PAGOS */}
               <div className="p-4 sm:p-6">
-                <h4 className="mb-3 text-base font-semibold">
-                  Detalle de pagos
+                <h4 className="mb-3 text-base font-semibold flex items-center justify-between">
+                  <span>Detalle de pagos</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    Valor restante a pagar:{' '}
+                    <strong className="text-red-600 dark:text-red-400">
+                      {formatCOP(
+                        price -
+                        editablePagos
+                          .slice(0, 12)
+                          .reduce((sum, p) => {
+                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                            return sum + (Number.isFinite(v) ? v : 0);
+                          }, 0)
+                      )}
+                    </strong>
+                  </span>
                 </h4>
                 <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
                   <table className="min-w-full border-collapse text-sm">
@@ -4171,11 +4192,15 @@ export default function EnrolledUsersPage() {
                               VALOR PAGADO
                             </span>
                             <span className="font-semibold text-green-700 dark:text-green-400">
-                              {new Intl.NumberFormat('es-CO', {
-                                style: 'currency',
-                                currency: 'COP',
-                                maximumFractionDigits: 0,
-                              }).format(carteraInfo?.totalPagado ?? 0)}
+                              {formatCOP(
+
+                                editablePagos
+                                  .slice(0, 12)
+                                  .reduce((sum, p) => {
+                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                                    return sum + (Number.isFinite(v) ? v : 0);
+                                  }, 0)
+                              )}
                             </span>
                           </div>
                         </td>
@@ -4189,11 +4214,15 @@ export default function EnrolledUsersPage() {
                               DEUDA RESTANTE
                             </span>
                             <span className="font-semibold text-red-700 dark:text-red-400">
-                              {new Intl.NumberFormat('es-CO', {
-                                style: 'currency',
-                                currency: 'COP',
-                                maximumFractionDigits: 0,
-                              }).format(carteraInfo?.deuda ?? 0)}
+                              {formatCOP(
+                                price -
+                                editablePagos
+                                  .slice(0, 12)
+                                  .reduce((sum, p) => {
+                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                                    return sum + (Number.isFinite(v) ? v : 0);
+                                  }, 0)
+                              )}
                             </span>
 
                           </div>
