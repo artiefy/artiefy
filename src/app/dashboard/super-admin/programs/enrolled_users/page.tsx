@@ -3856,8 +3856,22 @@ export default function EnrolledUsersPage() {
 
               {/* TABLA DE PAGOS */}
               <div className="p-4 sm:p-6">
-                <h4 className="mb-3 text-base font-semibold">
-                  Detalle de pagos
+                <h4 className="mb-3 text-base font-semibold flex items-center justify-between">
+                  <span>Detalle de pagos</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    Valor restante a pagar:{' '}
+                    <strong className="text-red-600 dark:text-red-400">
+                      {formatCOP(
+                        price -
+                        editablePagos
+                          .slice(0, 12)
+                          .reduce((sum, p) => {
+                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                            return sum + (Number.isFinite(v) ? v : 0);
+                          }, 0)
+                      )}
+                    </strong>
+                  </span>
                 </h4>
                 <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
                   <table className="min-w-full border-collapse text-sm">
@@ -4185,11 +4199,15 @@ export default function EnrolledUsersPage() {
                               VALOR PAGADO
                             </span>
                             <span className="font-semibold text-green-700 dark:text-green-400">
-                              {new Intl.NumberFormat('es-CO', {
-                                style: 'currency',
-                                currency: 'COP',
-                                maximumFractionDigits: 0,
-                              }).format(carteraInfo?.totalPagado ?? 0)}
+                              {formatCOP(
+
+                                editablePagos
+                                  .slice(0, 12)
+                                  .reduce((sum, p) => {
+                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                                    return sum + (Number.isFinite(v) ? v : 0);
+                                  }, 0)
+                              )}
                             </span>
                           </div>
                         </td>
@@ -4203,11 +4221,15 @@ export default function EnrolledUsersPage() {
                               DEUDA RESTANTE
                             </span>
                             <span className="font-semibold text-red-700 dark:text-red-400">
-                              {new Intl.NumberFormat('es-CO', {
-                                style: 'currency',
-                                currency: 'COP',
-                                maximumFractionDigits: 0,
-                              }).format(carteraInfo?.deuda ?? 0)}
+                              {formatCOP(
+                                price -
+                                editablePagos
+                                  .slice(0, 12)
+                                  .reduce((sum, p) => {
+                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                                    return sum + (Number.isFinite(v) ? v : 0);
+                                  }, 0)
+                              )}
                             </span>
 
                           </div>
