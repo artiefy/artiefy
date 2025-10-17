@@ -186,9 +186,8 @@ export async function POST(req: Request) {
     // NUEVO: Log más detallado para ver estructura exacta
     try {
       console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
-    } catch (_e) {
-      console.log('No se pudo stringificar la estructura completa');
-      void e;
+    } catch (e) {
+      console.log('No se pudo stringificar la estructura completa', e);
     }
 
     interface CourseData {
