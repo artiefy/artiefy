@@ -188,6 +188,7 @@ export async function POST(req: Request) {
       console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
     } catch (e) {
       console.log('No se pudo stringificar la estructura completa');
+      void e;
     }
 
     interface CourseData {
@@ -317,9 +318,9 @@ export async function POST(req: Request) {
             typeof o === 'string'
               ? o
               : typeof o === 'object' &&
-                  o &&
-                  'title' in o &&
-                  typeof (o as { title?: unknown }).title === 'string'
+                o &&
+                'title' in o &&
+                typeof (o as { title?: unknown }).title === 'string'
                 ? (o as { title: string }).title
                 : undefined
           )
@@ -333,15 +334,15 @@ export async function POST(req: Request) {
             typeof a === 'string'
               ? a
               : typeof a === 'object' &&
-                  a &&
-                  'descripcion' in a &&
-                  typeof (a as { descripcion?: unknown }).descripcion ===
-                    'string'
+                a &&
+                'descripcion' in a &&
+                typeof (a as { descripcion?: unknown }).descripcion ===
+                'string'
                 ? { descripcion: (a as { descripcion: string }).descripcion }
                 : typeof a === 'object' &&
-                    a &&
-                    'task_name' in a &&
-                    typeof (a as { task_name?: unknown }).task_name === 'string'
+                  a &&
+                  'task_name' in a &&
+                  typeof (a as { task_name?: unknown }).task_name === 'string'
                   ? { descripcion: (a as { task_name: string }).task_name }
                   : undefined
           )

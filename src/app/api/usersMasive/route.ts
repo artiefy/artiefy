@@ -219,6 +219,22 @@ function getClerkErrorMessage(error: unknown): string {
   return 'Error desconocido';
 }
 
+// 👉 Buscar usuario existente en Clerk por email (para sincronizar con BD)
+async function getClerkUserByEmail(email: string): Promise<{ id: string } | null> {
+  const apiKey = process.env.CLERK_SECRET_KEY;
+  if (!apiKey) throw new Error('Falta CLERK_SECRET_KEY en variables de entorno');
+
+  const res = await fetch(
+    `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
+    { method: 'GET', headers: { Authorization: `Bearer ${apiKey}` } }
+  );
+
+  if (!res.ok) throw new Error(`Clerk lookup failed (${res.status})`);
+  const usersArr = (await res.json()) as { id: string }[];
+  return Array.isArray(usersArr) && usersArr.length > 0 ? usersArr[0] : null;
+}
+
+
 // 👉 Delay entre requests para evitar rate limits
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -343,10 +359,76 @@ export async function POST(request: Request) {
         }
 
         if (!result?.user) {
-          console.log(`User ${email} already exists, skipping creation`);
-          resultados.push({ email, estado: 'YA_EXISTE' });
-          continue;
+          // Ya existe en Clerk → sincronizar/crear en BD si hiciera falta
+          step = 'syncExistingUserFromClerk';
+          try {
+            const clerkUser = await getClerkUserByEmail(email);
+
+            if (!clerkUser) {
+              resultados.push({
+                email,
+                estado: 'ERROR',
+                detalle: 'No se pudo obtener el usuario existente en Clerk por email',
+              });
+              continue;
+            }
+
+            // Upsert en BD usando el id de Clerk
+            await db.transaction(async (tx) => {
+              await tx
+                .insert(users)
+                .values({
+                  id: clerkUser.id,
+                  name: `${firstName} ${lastName}`,
+                  email,
+                  role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  planType: 'Premium',
+                  subscriptionEndDate: new Date(formattedEndDate),
+                })
+                .onConflictDoUpdate({
+                  target: users.email,
+                  set: {
+                    name: `${firstName} ${lastName}`,
+                    updatedAt: new Date(),
+                    planType: 'Premium',
+                    subscriptionEndDate: new Date(formattedEndDate),
+                  },
+                });
+
+              // Nota: no tocamos userCredentials aquí porque no hay password generado.
+              // Si necesitas crearlo vacío o con placeholder, avísame y lo agrego.
+            });
+
+            successfulUsers.push({
+              id: clerkUser.id,
+              firstName,
+              lastName,
+              email,
+              role,
+              status: 'activo',
+              isNew: false,
+            });
+
+            console.log(`ℹ️ User ${email} ya existía en Clerk; sincronizado/actualizado en BD`);
+            resultados.push({
+              email,
+              estado: 'GUARDADO',
+              detalle: 'YA_EXISTIA_EN_CLERK_SYNC_BD',
+            });
+            continue;
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : 'Error DB';
+            resultados.push({
+              email,
+              estado: 'ERROR',
+              detalle: `syncExistingUserFromClerk: ${msg}`,
+            });
+            continue;
+          }
         }
+
 
         const { user: createdUser, generatedPassword } = result;
 

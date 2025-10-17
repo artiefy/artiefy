@@ -291,8 +291,6 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  // 👉 Handler que usarás cuando tu upload masivo termine y recibas la respuesta JSON del servidor
-  // 👉 Handler que usarás cuando tu upload masivo termine y recibas la respuesta JSON del servidor
   interface FinishedFiles {
     jsonBase64?: string;
     jsonMime?: string;
@@ -318,7 +316,6 @@ export default function AdminDashboard() {
     if (!res || typeof res !== 'object') return;
     const data = res as FinishedPayload;
 
-    // Si ya tenías algo como handleMassUserUpload(newUsers) úsalo aquí también si viene en data.users
     if (Array.isArray(data.users) && data.users.length > 0) {
       // handleMassUserUpload(data.users);
     }
