@@ -121,14 +121,6 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const programId = url.searchParams.get('programId');
   const userId = url.searchParams.get('userId');
-  // Usuarios con algún detalle de inscripción (deduplicado)
-  const inscUsers = db
-    .select({
-      userId: userInscriptionDetails.userId,
-    })
-    .from(userInscriptionDetails)
-    .groupBy(userInscriptionDetails.userId)
-    .as('insc_users');
 
   try {
     const latestDates = db
@@ -220,6 +212,25 @@ export async function GET(req: Request) {
       customFieldsMap.get(row.userId)![row.fieldKey] = row.fieldValue;
     }
 
+    // Traer los detalles de inscripción (userInscriptionDetails)
+    const uidRows = await db
+      .select({
+        userId: userInscriptionDetails.userId,
+        fieldKey: userInscriptionDetails.sede, // <-- fixed column name
+        fieldValue: userInscriptionDetails.sede, // <-- replace with actual column name
+      })
+      .from(userInscriptionDetails);
+
+    const userInscriptionDetailsMap = new Map<string, Record<string, string>>();
+    for (const row of uidRows) {
+      if (!userInscriptionDetailsMap.has(row.userId)) {
+        userInscriptionDetailsMap.set(row.userId, {});
+      }
+
+      userInscriptionDetailsMap.get(row.userId)![row.fieldKey] = String(row.fieldValue ?? '');
+    }
+
+
     const students = await db
       .select({
         id: users.id,
@@ -243,15 +254,15 @@ export async function GET(req: Request) {
         enrolledAt: latestEnrollments.enrolledAt,
 
         nivelNombre: sql<string>`(
-      SELECT n.name
-      FROM nivel n
-      JOIN courses c ON c.nivelid = n.id
-      JOIN enrollments e ON e.course_id = c.id
-      WHERE e.user_id = ${users.id}
-      LIMIT 1
-    )`.as('nivelNombre'),
+            SELECT n.name
+            FROM nivel n
+            JOIN courses c ON c.nivelid = n.id
+            JOIN enrollments e ON e.course_id = c.id
+            WHERE e.user_id = ${users.id}
+            LIMIT 1
+          )`.as('nivelNombre'),
 
-        // ➕ NUEVOS CAMPOS CALCULADOS
+        // NUEVOS CAMPOS CALCULADOS
         // NEW = comprado/creado recientemente (7 días) — si no tienes created_at usa purchaseDate
         isNew: sql<boolean>`CASE
       WHEN ${users.purchaseDate} IS NOT NULL
@@ -291,7 +302,6 @@ export async function GET(req: Request) {
         eq(users.id, latestCourseEnrollments.userId)
       )
       .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
-      .leftJoin(inscUsers, eq(users.id, inscUsers.userId)) // 👈 AÑADE ESTE JOIN
       .leftJoin(latestCartera, eq(users.id, latestCartera.userId)) // 👈 para cartera
       .where(
         and(
@@ -302,12 +312,14 @@ export async function GET(req: Request) {
         )
       );
 
-    // Agregar los campos dinámicos a cada estudiante
+    // Agregar los campos dinámicos a cada estudiante (incluye userInscriptionDetails)
     const enrichedStudents = students.map((student) => ({
       ...student,
       programTitles: programsMap.get(student.id) ?? [],
-      customFields: customFieldsMap.get(student.id) ?? {},
+      customFields: customFieldsMap.get(student.id) ?? {}, // si aún lo usas en otros lados
+      userInscriptionDetails: userInscriptionDetailsMap.get(student.id) ?? {},
     }));
+
 
     const coursesList = await db
       .select({

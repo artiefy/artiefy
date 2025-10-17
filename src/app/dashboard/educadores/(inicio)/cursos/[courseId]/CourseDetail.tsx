@@ -12,17 +12,6 @@ import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
@@ -447,43 +436,55 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const handleEnrollAndRedirect = async () => {
     if (!user?.id || !courseIdNumber) {
       toast.error('Usuario no autenticado o curso inválido');
+      console.warn('[NAV] Aborto: userId o courseId inválidos', {
+        userId: user?.id,
+        courseIdNumber,
+      });
       return;
     }
+
+    const target = `/estudiantes/cursos/${courseIdNumber}`;
+    console.log('[NAV] Iniciando matrícula + redirección', { courseIdNumber, target, at: new Date().toISOString() });
 
     try {
       const res = await fetch('/api/enrollments/educatorsEnroll', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId: String(courseIdNumber),
-          userIds: [user.id], // 🔁 Aquí sí tienes acceso
+          userIds: [user.id],
           planType: 'Premium',
         }),
       });
 
       if (!res.ok) {
-        const responseData: unknown = await res.json();
-
+        const data = await res.json().catch(() => ({} as unknown));
         const errorMessage =
-          typeof responseData === 'object' &&
-          responseData !== null &&
-          'error' in responseData &&
-          typeof (responseData as { error?: unknown }).error === 'string'
-            ? (responseData as { error: string }).error
-            : 'Error al matricular';
+          (typeof (data as { error?: unknown })?.error === 'string' && (data as { error: string }).error) ||
+          `Error al matricular (HTTP ${res.status})`;
 
+        console.error('[NAV] Matrícula falló. NO se navega.', {
+          status: res.status,
+          errorMessage,
+          data,
+        });
         toast.error(errorMessage);
-      } else {
-        toast.success('Matriculado correctamente');
-        router.push(`/estudiantes/cursos/${courseIdNumber}`);
+        return;
       }
-    } catch (error) {
-      console.error('Error al matricular:', error);
+
+      // Matrícula OK -> Redirigir
+      console.log('[NAV] Matrícula OK. Llamando router.push()', { target, at: new Date().toISOString() });
+      toast.success(`Matriculado correctamente. Redirigiendo a ${target}…`);
+      router.push(target);
+
+      // Si este log aparece, la función sí llegó a ejecutar el push.
+      console.log('[NAV] router.push() invocado ✅');
+    } catch (err) {
+      console.error('[NAV] Excepción durante matrícula/redirección', err);
       toast.error('Error al matricular al curso');
     }
   };
+
 
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
@@ -629,10 +630,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const videos: VideoIdxItem[] =
           isRecord(raw) &&
-          Array.isArray((raw as Record<string, unknown>).videos)
+            Array.isArray((raw as Record<string, unknown>).videos)
             ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-                isVideoIdxItem
-              )
+              isVideoIdxItem
+            )
             : [];
 
         setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
@@ -923,50 +924,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Verificar si hay un error o hay curso
   if (!course) return <div>No se encontró el curso.</div>;
 
-  // Función para manejar la eliminación del curso
-  const handleDelete = async () => {
-    if (!course) return;
-    try {
-      // Primero intentamos eliminar la imagen de S3
-      if (course.coverImageKey) {
-        const responseAws = await fetch('/api/upload', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            key: course.coverImageKey,
-          }),
-        });
-
-        if (!responseAws.ok) {
-          console.error('Error al eliminar la imagen de S3');
-        }
-      }
-
-      // Luego eliminamos el curso
-      const response = await fetch(
-        `/api/educadores/courses?courseId=${course.id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error al eliminar el curso`);
-      }
-
-      toast('Curso eliminado', {
-        description: 'El curso se ha eliminado con éxito.',
-      });
-      router.push('/dashboard/super-admin/cursos');
-    } catch (error) {
-      console.error('Error:', error);
-      toast('Error', {
-        description: 'No se pudo eliminar el curso completamente',
-      });
-    }
-  };
 
   // Verificar si hay un error
   if (error) {
@@ -1203,11 +1160,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
-                    } `}
+                    className={`size-8 border ${selectedColor === '#FFFFFF'
+                      ? 'border-black'
+                      : 'border-white'
+                      } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -1248,31 +1204,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Estadisticas
                   </Link>
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Eliminar</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará
-                        permanentemente el curso
-                        <span className="font-bold"> {course.title}</span> y
-                        todos los datos asociados a este.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete()}
-                        className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             </div>
             {/* Right Column - Information */}
@@ -1283,9 +1214,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Curso:
                   </h2>
@@ -1295,9 +1225,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Categoría:
                   </h2>
@@ -1311,25 +1240,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1346,9 +1272,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     educador:
                   </h2>
@@ -1389,9 +1314,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Nivel:
                   </h2>
@@ -1404,9 +1328,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Modalidad:
                   </h2>
@@ -1419,9 +1342,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1450,19 +1372,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${
-                      course.isActive
-                        ? 'border-green-500 text-green-500'
-                        : 'border-red-500 text-red-500'
-                    } bg-background hover:bg-black/70`}
+                    className={`ml-1 w-fit border ${course.isActive
+                      ? 'border-green-500 text-green-500'
+                      : 'border-red-500 text-red-500'
+                      } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>

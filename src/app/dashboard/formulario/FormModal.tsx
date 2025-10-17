@@ -1,10 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo,useState } from 'react';
 
 import Image from 'next/image';
 
 import { Dialog } from '@headlessui/react';
+
+// Fecha completa en español con día + mes en letras + año. Si es inválida, devuelve el original.
+// Ej: "2025-03-15" -> "15 de marzo de 2025"
+function formatMonthEs(dateStr: string) {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 
 function formatBytes(bytes: number) {
@@ -274,6 +287,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
   // Opciones dinámicas
   const [dateOptions, setDateOptions] = useState<string[]>([]);
+  // Opciones etiquetadas: value = fecha original, label = "mes año" en español
+  const dateOptionsLabeled = useMemo(
+    () => dateOptions.map(d => ({ value: d, label: formatMonthEs(d) })),
+    [dateOptions]
+  );
+
   const [commercialOptions, setCommercialOptions] = useState<string[]>([]);
   const [programTitles, setProgramTitles] = useState<string[]>([]);
 
@@ -430,11 +449,17 @@ export default function FormModal({ isOpen, onClose }: Props) {
     label: string;
     value: string;
     onChange: (v: string) => void;
-    options: string[];
+    // acepta strings o {value,label}
+    options: (string | { value: string; label: string })[];
     placeholder?: string;
     disabled?: boolean;
     error?: string;
   }) {
+    const toVal = (opt: string | { value: string; label: string }) =>
+      typeof opt === 'string' ? opt : opt.value;
+    const toLabel = (opt: string | { value: string; label: string }) =>
+      typeof opt === 'string' ? opt : opt.label;
+
     return (
       <label className="flex flex-col text-white">
         <span className="mb-1">{label}</span>
@@ -446,16 +471,21 @@ export default function FormModal({ isOpen, onClose }: Props) {
           className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:opacity-60 ${error ? 'border border-red-500' : ''}`}
         >
           <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
+          {options.map((opt) => {
+            const val = toVal(opt);
+            const lab = toLabel(opt);
+            return (
+              <option key={val} value={val}>
+                {lab}
+              </option>
+            );
+          })}
         </select>
         {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
       </label>
     );
   }
+
 
   // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
   function sanitizeValueByKey(key: keyof Fields, value: string) {
@@ -925,9 +955,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
                       value={fields.fechaInicio}
                       onChange={(v) => handleChange('fechaInicio', v)}
                       placeholder="Selecciona una fecha"
-                      options={dateOptions}
+                      options={dateOptionsLabeled}  // sigue mostrando "15 de marzo de 2025"
                       error={errors.fechaInicio}
                     />
+
+
 
                     <FieldSelect
                       label="Comercial*"
