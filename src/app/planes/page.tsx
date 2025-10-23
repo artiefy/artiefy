@@ -83,6 +83,10 @@ const PlansPage: React.FC = () => {
 
   const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
 
+  // Función para sobreescribir el precio COP mostrado de algunos planes
+  const getDisplayCopPrice = (plan: Plan) =>
+    plan.name === 'Pro' ? 99900 : plan.name === 'Premium' ? 124900 : plan.price;
+
   return (
     <div className="bg-background min-h-screen">
       <Header />
@@ -157,7 +161,7 @@ const PlansPage: React.FC = () => {
                       </div>
                       <div className="m-4 flex flex-col items-center">
                         <span className="text-background text-4xl font-extrabold">
-                          ${plan.price.toLocaleString('es-CO')}
+                          ${getDisplayCopPrice(plan).toLocaleString('es-CO')}
                           <span className="text-lg font-normal">/mes</span>
                         </span>
                         <span className="w-full text-center text-2xl font-extrabold text-gray-600">

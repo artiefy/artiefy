@@ -81,7 +81,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/34420_1756117550544/node",
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/17028_1761198343702/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -117,6 +117,7 @@
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.colorDecorators": true,
   "tailwindCSS.lint.recommendedVariantOrder": "warning",
+   "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
   // Search and Performance
   "search.exclude": {
     "/node_modules": true,

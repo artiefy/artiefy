@@ -37,6 +37,7 @@ interface ProjectData {
   tiempoEstimado?: number; // NUEVO
   diasEstimados?: number; // NUEVO
   diasNecesarios?: number; // NUEVO
+  draft?: boolean; // Permitir marcar el objeto como borrador sin romper tipos
 }
 
 const respondWithError = (message: string, status: number) =>
@@ -73,6 +74,12 @@ export async function POST(req: Request) {
       console.error('No autorizado: No se encontró userId en Clerk');
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
+
+    // Detectar draft=true en query string
+    const url = new URL(req.url);
+    const isDraft =
+      url.searchParams.get('draft') === '1' ||
+      url.searchParams.get('draft') === 'true';
 
     let body: Partial<ProjectData> = {};
     let coverImageKey: string | null = null;
@@ -116,19 +123,30 @@ export async function POST(req: Request) {
       }
     }
 
-    // Validar campos requeridos según el schema
-    if (
-      !body.name ||
-      !body.planteamiento ||
-      !body.justificacion ||
-      !body.objetivo_general ||
-      !body.type_project ||
-      !body.categoryId
-    ) {
-      return NextResponse.json(
-        { error: 'Faltan campos requeridos para crear el proyecto' },
-        { status: 400 }
-      );
+    // Si es un guardado parcial (draft), no exigir todos los campos:
+    if (!isDraft) {
+      // Validar campos requeridos según el schema para creación final
+      if (
+        !body.name ||
+        !body.planteamiento ||
+        !body.justificacion ||
+        !body.objetivo_general ||
+        !body.type_project ||
+        !body.categoryId
+      ) {
+        return NextResponse.json(
+          { error: 'Faltan campos requeridos para crear el proyecto' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Si es draft, rellenar valores por defecto para permitir persistir parcial
+      body.name = body.name ?? `Borrador - ${userId} - ${Date.now()}`;
+      body.planteamiento = body.planteamiento ?? '';
+      body.justificacion = body.justificacion ?? '';
+      body.objetivo_general = body.objetivo_general ?? '';
+      body.type_project = body.type_project ?? 'AI-Assistant';
+      body.categoryId = body.categoryId ?? 1;
     }
 
     // Procesar objetivos_especificos y actividades de forma segura
@@ -207,10 +225,15 @@ export async function POST(req: Request) {
     };
 
     console.log(
-      'Datos finales del proyecto a crear:',
+      'Datos finales del proyecto a crear: (draft=' + isDraft + ')',
       JSON.stringify(projectData, null, 2)
     );
 
+    // Marcar si es borrador en el objeto tipado y llamar createProject sin usar `any`.
+    if (typeof isDraft === 'boolean') {
+      projectData.draft = isDraft;
+    }
+    // Llamada segura tipada
     const result = await createProject(projectData);
 
     return NextResponse.json({
