@@ -318,9 +318,8 @@ function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
 export async function POST(request: NextRequest) {
     try {
         // auth robusto
-        const authMaybe = auth();
-        const isPromise = authMaybe != null && typeof authMaybe === 'object' && 'then' in authMaybe && typeof (authMaybe as { then?: unknown }).then === 'function'; const authResult = isPromise ? await authMaybe : authMaybe;
-        const userId: string | null = authResult?.userId ?? null;
+        const authResult = await auth();
+        const userId: string | null = (authResult as any)?.userId ?? null;
 
         // fallback DEV
         const headerUserId = request.headers.get('x-user-id');
