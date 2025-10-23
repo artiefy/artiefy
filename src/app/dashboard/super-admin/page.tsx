@@ -18,11 +18,12 @@ import {
 import SunEditor from 'suneditor-react';
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
-import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
+import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
-import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
+import BulkUploadUsers from './components/BulkUploadUsers';
+import BulkUploadUsersV2 from './components/BulkUploadUsersV2';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
 
@@ -311,6 +312,55 @@ export default function AdminDashboard() {
     files?: FinishedFiles;
     summary?: FinishedSummary;
   }
+
+  // 🔹 NUEVO handler SOLO para BulkUploadUsersV2 (no toca handleUsersMasiveFinished)
+  const handleUsersMasiveFinishedV2 = (res: unknown) => {
+    // Estructura igual a la respuesta del API v2
+    if (!res || typeof res !== 'object') return;
+
+    const data = res as {
+      users?: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        isNew?: boolean
+      }[];
+      summary?: {
+        guardados?: number;
+        yaExiste?: number;
+        errores?: number;
+        omitidosPorCompatibilidad?: number;
+      };
+      resultados?: {
+        email: string;
+        estado: string;
+        detalle?: string;
+      }[];
+    };
+    const usersFromPayload = Array.isArray(data.users) ? data.users : [];
+
+    if (usersFromPayload.length > 0) {
+      setUsers(prev => [
+        ...usersFromPayload.map(u => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          role: 'estudiante',
+          status: 'activo',
+          isNew: true,
+        })),
+        ...prev,
+      ]);
+
+      showNotification?.(`Se crearon/actualizaron ${usersFromPayload.length} usuarios`, 'success');
+    }
+
+    // NO tocamos tu lógica de descargas ni files aquí,
+    // si la necesitas, puedes copiar lo de tu handleUsersMasiveFinished original.
+  };
+
 
   const handleUsersMasiveFinished = (res: unknown) => {
     if (!res || typeof res !== 'object') return;
@@ -1871,6 +1921,9 @@ export default function AdminDashboard() {
             onUsersUploaded={handleMassUserUpload}
             onFinished={handleUsersMasiveFinished}
           />
+          {/* 🔹 NUEVO botón (V2) — mantiene el botón anterior funcionando */}
+          <BulkUploadUsersV2 onFinished={handleUsersMasiveFinishedV2} />
+
         </div>
 
         <div className="mt-6">

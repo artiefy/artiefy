@@ -8,75 +8,8 @@ import { db } from '~/server/db';
 import {
   enrollmentPrograms,
   enrollments,
-  userCustomFields,
-  userInscriptionDetails,
   users
 } from '~/server/db/schema';
-
-// Convierte valores desconocidos a string de forma segura, sin violar no-base-to-string
-const coerceToString = (v: unknown): string | null => {
-  if (v == null) return null;
-
-  switch (typeof v) {
-    case "string":
-      return v;
-
-    case "number":
-    case "boolean":
-      return String(v);
-
-    case "bigint":
-      return v.toString();
-
-    case "symbol":
-      return v.description ?? v.toString();
-
-    case "function":
-      // Evita stringificar la función completa
-      return v.name || "[function]";
-
-    case "object":
-      if (Array.isArray(v)) {
-        // CSV legible de elementos simples; objetos se serializan
-        return v
-          .map((x) =>
-            typeof x === "string" || typeof x === "number" || typeof x === "boolean"
-              ? String(x)
-              : (() => {
-                try {
-                  return JSON.stringify(x);
-                } catch {
-                  return "";
-                }
-              })()
-          )
-          .filter(Boolean)
-          .join(",");
-      } else {
-        const obj = v as Record<string, unknown>;
-        // Adapta a tus estructuras comunes { value, label } | { id, name }
-        if (typeof obj.value === "string") return obj.value;
-        if (typeof obj.id === "string" || typeof obj.id === "number") return String(obj.id);
-        if (typeof obj.name === "string") return obj.name;
-
-        try {
-          return JSON.stringify(obj);
-        } catch {
-          return null;
-        }
-      }
-
-    default:
-      return null; // Sin fallback a String(v) para no violar la regla
-  }
-};
-
-// Type guard seguro para acceder a `fields.sede` sin `any`
-const hasSede = (x: unknown): x is { sede?: unknown } =>
-  typeof x === 'object' && x !== null && 'sede' in x;
-
-
-
 
 
 const updateSchema = z.object({
@@ -102,41 +35,51 @@ export async function PATCH(req: Request) {
     console.log('➡️ userIds:', userIds);
     console.log('➡️ fields:', fields);
 
+    // Claves reservadas que NO se mandan tal cual a DB (las procesamos con lógica específica)
+    const RESERVED_KEYS = new Set([
+      'programId',
+      'courseId',
+      'name',
+      'permissions',
+      'status', // la mapeamos a subscriptionStatus
+    ]);
+
+    // Columnas fecha conocidas (conversión a Date)
+    const DATE_KEYS = new Set([
+      'birthDate',
+      'purchaseDate',
+      'subscriptionEndDate',
+      'fechaInicio',
+      'createdAt',
+      'updatedAt',
+    ]);
+
     for (const userId of userIds) {
       console.log(`\n🔄 Procesando usuario: ${userId}`);
 
-      // Desestructuramos y usamos const para que no dé prefer-const
+      // Extraemos campos de Clerk / negocio
       const {
         name,
         role,
         status,
         permissions,
-        phone,
-        address,
-        city,
-        country,
-        birthDate,
         planType,
-        purchaseDate,
         subscriptionEndDate,
         programId,
         courseId,
-        ...customFields
-      } = fields;
+      } = fields as Record<string, unknown>;
 
+      // Derivar firstName / lastName si viene name
       let firstName: string | undefined;
       let lastName: string | undefined;
-
-      // Si hay solo name, dividirlo
       if (typeof name === 'string' && name.trim() !== '') {
-        const split = name.trim().split(' ');
-        firstName = split[0];
-        lastName = split.slice(1).join(' ') || '';
-        console.log(
-          `✂️ Dividido name -> firstName: "${firstName}", lastName: "${lastName}"`
-        );
+        const parts = name.trim().split(/\s+/);
+        firstName = parts[0];
+        lastName = parts.slice(1).join(' ') || '';
+        console.log(`✂️ name -> firstName="${firstName}", lastName="${lastName}"`);
       }
 
+      // === Clerk ===
       const client = await clerkClient();
       let userExistsInClerk = true;
       let existingMetadata: Record<string, unknown> = {};
@@ -150,10 +93,7 @@ export async function PATCH(req: Request) {
           userExistsInClerk = false;
         } else {
           console.error('❌ Clerk err:', err);
-          return NextResponse.json(
-            { error: 'Error con Clerk' },
-            { status: 500 }
-          );
+          return NextResponse.json({ error: 'Error con Clerk' }, { status: 500 });
         }
       }
 
@@ -164,9 +104,10 @@ export async function PATCH(req: Request) {
             ? status.toLowerCase()
             : 'active';
 
-      const endDateIso = subscriptionEndDate
-        ? new Date(subscriptionEndDate as string).toISOString().split('T')[0]
-        : null;
+      const endDateIso =
+        typeof subscriptionEndDate === 'string' && subscriptionEndDate
+          ? new Date(subscriptionEndDate).toISOString().split('T')[0]
+          : null;
 
       const newMetadata = {
         ...existingMetadata,
@@ -179,11 +120,7 @@ export async function PATCH(req: Request) {
       };
 
       if (userExistsInClerk) {
-        console.log(`🛠 Actualizando Clerk user ${userId} con`, {
-          firstName,
-          lastName,
-          publicMetadata: newMetadata,
-        });
+        console.log(`🛠 Actualizando Clerk user ${userId}...`);
         await client.users.updateUser(userId, {
           firstName,
           lastName,
@@ -191,17 +128,19 @@ export async function PATCH(req: Request) {
         });
       }
 
-      // SET dinámico para DB
+      // === DB: UPDATE DINÁMICO SOLO EN `users` ===
       const validPlanTypes = ['none', 'Pro', 'Premium', 'Enterprise'];
       const resolvedPlanType =
         typeof planType === 'string' && validPlanTypes.includes(planType)
           ? planType
-          : 'Premium';
+          : planType === undefined
+            ? undefined
+            : 'Premium';
 
-      const userUpdateFields: Record<string, unknown> = {
-        updatedAt: new Date(),
-      };
+      // Construimos el SET a partir de `fields` sin listar columnas manualmente.
+      const userUpdateFields: Record<string, unknown> = { updatedAt: new Date() };
 
+      // name → name; si no viene, y derivamos first/last, componemos name
       if (typeof name === 'string') {
         userUpdateFields.name = name;
       } else if (firstName || lastName) {
@@ -209,122 +148,33 @@ export async function PATCH(req: Request) {
       }
 
       if (typeof role === 'string') userUpdateFields.role = role;
-      if (typeof status === 'string')
-        userUpdateFields.subscriptionStatus = status;
-      if (planType !== undefined) userUpdateFields.planType = resolvedPlanType;
-      if (typeof phone === 'string') userUpdateFields.phone = phone;
-      if (typeof address === 'string') userUpdateFields.address = address;
-      if (typeof city === 'string') userUpdateFields.city = city;
-      if (typeof country === 'string') userUpdateFields.country = country;
-      if (birthDate !== undefined)
-        userUpdateFields.birthDate = new Date(birthDate as string);
-      if (purchaseDate !== undefined)
-        userUpdateFields.purchaseDate = new Date(purchaseDate as string);
-      if (subscriptionEndDate !== undefined)
-        userUpdateFields.subscriptionEndDate = new Date(
-          subscriptionEndDate as string
-        );
+      if (typeof status === 'string') userUpdateFields.subscriptionStatus = status;
+      if (resolvedPlanType !== undefined) userUpdateFields.planType = resolvedPlanType;
 
-      console.log(`🚀 Campos SET para UPDATE en DB:`, userUpdateFields);
+      for (const [key, value] of Object.entries(fields as Record<string, unknown>)) {
+        if (RESERVED_KEYS.has(key)) continue; // programId, courseId, etc. ya tratados
+        if (key === 'subscriptionEndDate') {
+          userUpdateFields.subscriptionEndDate =
+            value != null
+              ? new Date(value instanceof Date ? value : (typeof value === 'string' ? value : JSON.stringify(value)))
+              : null;
+          continue;
+        }
+        if (DATE_KEYS.has(key)) {
+          userUpdateFields[key] = value != null
+            ? new Date(value instanceof Date ? value : (typeof value === 'string' ? value : JSON.stringify(value)))
+            : null;
+          continue;
+        }
+        // Caso general (cualquier columna dinámica de `users`)
+        userUpdateFields[key] = value as unknown;
+      }
+      console.log('🚀 SET (users):', userUpdateFields);
 
       await db.update(users).set(userUpdateFields).where(eq(users.id, userId));
       console.log(`✅ DB users actualizado para ${userId}`);
-      // ✅ Actualizar sede si viene en fields (con conversión segura)
-      // ✅ Actualizar sede si viene en fields (sin `any`, con type guard)
-      {
-        const sedeStr = coerceToString(hasSede(fields) ? fields.sede : null);
-        if (sedeStr && sedeStr.trim() !== "") {
-          await db
-            .update(userInscriptionDetails)
-            .set({
-              sede: sedeStr.trim(),
-              updatedAt: new Date(),
-            })
-            .where(eq(userInscriptionDetails.userId, userId));
-        }
-      }
 
-
-
-      // ✅ Manejo de sede (soporta 'customFields.sede')
-      const sedeValue =
-        (fields['customFields.sede'] as string) ??
-        (fields.sede as string);
-
-      if (sedeValue) {
-        const existing = await db
-          .select()
-          .from(userInscriptionDetails)
-          .where(eq(userInscriptionDetails.userId, userId))
-          .limit(1);
-
-        if (existing.length > 0) {
-          // ✅ Actualizar sede si ya existe el registro
-          await db
-            .update(userInscriptionDetails)
-            .set({
-              sede: sedeValue,
-              updatedAt: new Date(),
-            })
-            .where(eq(userInscriptionDetails.userId, userId));
-          console.log(`🏢 Sede actualizada para usuario ${userId}:`, sedeValue);
-        } else {
-          // 🧩 Buscar datos del usuario en 'users'
-          const [userData] = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, userId))
-            .limit(1);
-
-          if (!userData) {
-            console.warn(`⚠️ No se encontró usuario ${userId} en 'users'.`);
-          } else {
-            // 🆕 Crear registro completo usando datos del usuario
-            await db.insert(userInscriptionDetails).values({
-              userId,
-              identificacionTipo: 'CC',
-              identificacionNumero: 'N/A',
-              nivelEducacion: 'N/A',
-              tieneAcudiente: 'No',
-              acudienteNombre: userData.name ?? null,
-              acudienteContacto: userData.phone ?? null,
-              acudienteEmail: userData.email ?? null,
-              programa: 'N/A',
-              fechaInicio: userData.createdAt
-                ? new Date(userData.createdAt).toISOString()
-                : new Date().toISOString(),
-              comercial: null,
-              sede: sedeValue,
-              horario: 'N/A',
-              pagoInscripcion: 'No',
-              pagoCuota1: 'No',
-              modalidad: 'Presencial',
-              numeroCuotas: '0',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-            console.log(`🆕 Registro creado en user_inscription_details con sede: ${sedeValue}`);
-          }
-        }
-      }
-
-
-
-      // Custom fields
-      for (const [key, value] of Object.entries(customFields)) {
-        await db
-          .insert(userCustomFields)
-          .values({
-            userId,
-            fieldKey: key,
-            fieldValue: String(value),
-          })
-          .onConflictDoUpdate({
-            target: [userCustomFields.userId, userCustomFields.fieldKey],
-            set: { fieldValue: String(value), updatedAt: new Date() },
-          });
-      }
-
+      // === Matriculación opcional (se mantiene como estaba) ===
       if (programId != null) {
         await db.insert(enrollmentPrograms).values({
           userId,
@@ -347,7 +197,7 @@ export async function PATCH(req: Request) {
           .limit(1);
 
         if (exists.length === 0) {
-          console.log(`➕ Inscribiendo en nuevo curso`);
+          console.log('➕ Inscribiendo en nuevo curso');
           await db.insert(enrollments).values({
             userId,
             courseId: courseId as number,
@@ -356,7 +206,7 @@ export async function PATCH(req: Request) {
           });
         }
 
-        console.log(`🔄 Actualizando Clerk metadata por inscripción en curso`);
+        console.log('🔄 Sync Clerk metadata por inscripción en curso');
         await client.users.updateUserMetadata(userId, {
           publicMetadata: {
             planType: 'Premium',
@@ -370,22 +220,20 @@ export async function PATCH(req: Request) {
           .set({
             planType: 'Premium',
             subscriptionStatus: 'active',
-            subscriptionEndDate: subscriptionEndDate
-              ? new Date(subscriptionEndDate as string)
-              : null,
+            subscriptionEndDate:
+              typeof subscriptionEndDate === 'string'
+                ? new Date(subscriptionEndDate)
+                : null,
           })
           .where(eq(users.id, userId));
       }
 
-      console.log(`✅ Usuario ${userId} actualizado completamente`);
+      console.log(`✅ Usuario ${userId} actualizado completamente (solo users.*)`);
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('❌ Error en updateMassive:', err);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

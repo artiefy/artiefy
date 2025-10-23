@@ -12,8 +12,6 @@ import {
   pagos,
   programas,
   userCartera,
-  userCustomFields,
-  userInscriptionDetails,
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
@@ -195,40 +193,6 @@ export async function GET(req: Request) {
       )
       .as('latest_course_enrollments');
 
-    // Traer los campos dinámicos
-    const customFields = await db
-      .select({
-        userId: userCustomFields.userId,
-        fieldKey: userCustomFields.fieldKey,
-        fieldValue: userCustomFields.fieldValue,
-      })
-      .from(userCustomFields);
-
-    const customFieldsMap = new Map<string, Record<string, string>>();
-    for (const row of customFields) {
-      if (!customFieldsMap.has(row.userId)) {
-        customFieldsMap.set(row.userId, {});
-      }
-      customFieldsMap.get(row.userId)![row.fieldKey] = row.fieldValue;
-    }
-
-    // Traer los detalles de inscripción (userInscriptionDetails)
-    const uidRows = await db
-      .select({
-        userId: userInscriptionDetails.userId,
-        fieldKey: userInscriptionDetails.sede, // <-- fixed column name
-        fieldValue: userInscriptionDetails.sede, // <-- replace with actual column name
-      })
-      .from(userInscriptionDetails);
-
-    const userInscriptionDetailsMap = new Map<string, Record<string, string>>();
-    for (const row of uidRows) {
-      if (!userInscriptionDetailsMap.has(row.userId)) {
-        userInscriptionDetailsMap.set(row.userId, {});
-      }
-
-      userInscriptionDetailsMap.get(row.userId)![row.fieldKey] = String(row.fieldValue ?? '');
-    }
 
 
     const students = await db
@@ -247,78 +211,61 @@ export async function GET(req: Request) {
         role: users.role,
         purchaseDate: users.purchaseDate,
 
-        // pueden venir en null si no tiene programa/curso
-        programTitle: programas.title,
-        courseTitle: courses.title,
+        // campos que ya estabas usando
+        document: users.document,
+        modalidad: users.modalidad,
+        inscripcionValor: users.inscripcionValor,
+        paymentMethod: users.paymentMethod,
+        cuota1Fecha: users.cuota1Fecha,
+        cuota1Metodo: users.cuota1Metodo,
+        cuota1Valor: users.cuota1Valor,
+        valorPrograma: users.valorPrograma,
+        inscripcionOrigen: users.inscripcionOrigen,
 
-        enrolledAt: latestEnrollments.enrolledAt,
+        // 🆕 campos migrados desde user_inscription_details
+        identificacionTipo: users.identificacionTipo,
+        identificacionNumero: users.identificacionNumero,
+        nivelEducacion: users.nivelEducacion,
+        tieneAcudiente: users.tieneAcudiente,
+        acudienteNombre: users.acudienteNombre,
+        acudienteContacto: users.acudienteContacto,
+        acudienteEmail: users.acudienteEmail,
 
-        nivelNombre: sql<string>`(
-            SELECT n.name
-            FROM nivel n
-            JOIN courses c ON c.nivelid = n.id
-            JOIN enrollments e ON e.course_id = c.id
-            WHERE e.user_id = ${users.id}
-            LIMIT 1
-          )`.as('nivelNombre'),
+        programa: users.programa,
+        fechaInicio: users.fechaInicio,
+        comercial: users.comercial,
+        sede: users.sede,
+        horario: users.horario,
+        numeroCuotas: users.numeroCuotas,
+        pagoInscripcion: users.pagoInscripcion,
+        pagoCuota1: users.pagoCuota1,
 
-        // NUEVOS CAMPOS CALCULADOS
-        // NEW = comprado/creado recientemente (7 días) — si no tienes created_at usa purchaseDate
-        isNew: sql<boolean>`CASE
-      WHEN ${users.purchaseDate} IS NOT NULL
-        AND ${users.purchaseDate} >= NOW() - INTERVAL '7 days'
-      THEN TRUE ELSE FALSE
-    END`,
-
-        // ¿Tiene suscripción activa pero sin ninguna matrícula?
-        isSubOnly: sql<boolean>`CASE
-      WHEN ${users.subscriptionStatus} = 'active'
-        AND ${latestEnrollments.userId} IS NULL
-        AND ${latestCourseEnrollments.userId} IS NULL
-      THEN TRUE ELSE FALSE
-    END`,
-
-        // ¿Está matriculado en al menos un curso?
-        enrolledInCourse: sql<boolean>`CASE
-      WHEN ${latestCourseEnrollments.userId} IS NOT NULL THEN TRUE
-      ELSE FALSE
-    END`,
-
-        carteraStatus: sql<string>`COALESCE(
-  ${latestCartera.status},
-  CASE
-    WHEN ${users.subscriptionEndDate} IS NOT NULL
-     AND ${users.subscriptionEndDate} >= NOW()::date
-    THEN 'activo'     -- ✅ al día
-    ELSE 'inactivo'   -- ❌ vencido / en cartera
-  END
-)`.as('carteraStatus'),
+        // claves S3
+        idDocKey: users.idDocKey,
+        utilityBillKey: users.utilityBillKey,
+        diplomaKey: users.diplomaKey,
+        pagareKey: users.pagareKey,
       })
       .from(users)
+      // ⬇️ dejamos los joins para que el filtro por programId siga funcionando, aunque no traigamos columnas externas
       .leftJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
       .leftJoin(programas, eq(latestEnrollments.programaId, programas.id))
-      .leftJoin(
-        latestCourseEnrollments,
-        eq(users.id, latestCourseEnrollments.userId)
-      )
+      .leftJoin(latestCourseEnrollments, eq(users.id, latestCourseEnrollments.userId))
       .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
-      .leftJoin(latestCartera, eq(users.id, latestCartera.userId)) // 👈 para cartera
+      .leftJoin(latestCartera, eq(users.id, latestCartera.userId))
       .where(
         and(
           eq(users.role, 'estudiante'),
-          // si hay programId, filtra por ese programa; si no, no filtra
           programId ? eq(programas.id, Number(programId)) : sql`true`
-          // ❌ eliminamos el OR que exigía estar inscrito en programa/curso
         )
       );
 
-    // Agregar los campos dinámicos a cada estudiante (incluye userInscriptionDetails)
+
     const enrichedStudents = students.map((student) => ({
       ...student,
       programTitles: programsMap.get(student.id) ?? [],
-      customFields: customFieldsMap.get(student.id) ?? {}, // si aún lo usas en otros lados
-      userInscriptionDetails: userInscriptionDetailsMap.get(student.id) ?? {},
     }));
+
 
 
     const coursesList = await db
@@ -328,10 +275,12 @@ export async function GET(req: Request) {
       })
       .from(courses);
 
-    const enrolledUsers = enrichedStudents.map((s) => ({
-      id: s.id,
-      programTitle: s.programTitle,
+    // Reemplaza tu versión actual por esta:
+    const enrolledUsers = Array.from(programsMap.entries()).map(([id, titles]) => ({
+      id,
+      programTitle: titles[0] ?? null, // ← string | null
     }));
+
 
     // --- PRECIO DEL PROGRAMA Y PAGOS ---
     type PagoRow = typeof pagos.$inferSelect;

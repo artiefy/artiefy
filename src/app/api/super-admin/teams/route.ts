@@ -134,11 +134,12 @@ async function createTeamsEventForDate(params: {
   }
 
   let joinUrl = created.onlineMeeting?.joinUrl ?? '';
-  let meetingId = created.onlineMeeting?.id ?? '';
+  let meetingIdShort = created.onlineMeeting?.id ?? ''; // ID corto para PATCH
+  let meetingIdChat = ''; // ID largo del chat (19:meeting_...)
   const eventId = created.id;
 
-  // 2) Si falta info, expandir
-  if (!joinUrl || !meetingId) {
+  // 2) Si falta info, expandir con $expand
+  if (!joinUrl || !meetingIdShort) {
     const evGet = await fetch(
       `https://graph.microsoft.com/v1.0/users/${userId}/events/${encodeURIComponent(eventId)}?$expand=onlineMeeting`,
       { method: 'GET', headers: { Authorization: `Bearer ${token}` } }
@@ -146,14 +147,32 @@ async function createTeamsEventForDate(params: {
     if (evGet.ok) {
       const evFull = (await evGet.json()) as GraphEventResponse;
       joinUrl = evFull.onlineMeeting?.joinUrl ?? joinUrl;
-      meetingId = evFull.onlineMeeting?.id ?? meetingId;
+      meetingIdShort = evFull.onlineMeeting?.id ?? meetingIdShort;
     } else {
       console.warn('[⚠️ TEAMS] No se pudo expandir onlineMeeting para obtener joinUrl/meetingId');
     }
   }
 
+  if (joinUrl) {
+    try {
+      const match = /\/19%3a(meeting_[^%/]+)%40thread\.v2\//.exec(joinUrl);
+      if (match?.[1]) {
+        meetingIdChat = `19:${decodeURIComponent(match[1])}@thread.v2`;
+        console.log(`✅ [TEAMS] meetingId del chat extraído: ${meetingIdChat}`);
+      }
+    } catch (err) {
+      console.warn('[⚠️ TEAMS] No se pudo extraer meetingId del joinUrl:',
+        err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  // Si no tenemos el ID corto pero sí el del chat, intentar obtenerlo via Graph
+  if (!meetingIdShort && meetingIdChat) {
+    console.warn('[⚠️ TEAMS] No hay ID corto para PATCH, solo tenemos el del chat.');
+  }
+
   // 3) PATCH para coorganizer/grabación (best-effort)
-  if (meetingId) {
+  if (meetingIdShort) {
     const patchBody = {
       allowRecording: true,
       allowTranscription: true,
@@ -161,7 +180,7 @@ async function createTeamsEventForDate(params: {
     };
 
     const patchRes = await fetch(
-      `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/${encodeURIComponent(meetingId)}`,
+      `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/${encodeURIComponent(meetingIdShort)}`,
       {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -172,13 +191,16 @@ async function createTeamsEventForDate(params: {
     if (!patchRes.ok) {
       const errTxt = await patchRes.text();
       console.warn('[⚠️ TEAMS] No se pudo asignar coorganizer o habilitar grabación:', errTxt);
+    } else {
+      console.log(`✅ [TEAMS] Coorganizador asignado y grabación habilitada para meeting ${meetingIdShort}`);
     }
+  } else {
+    console.warn('[⚠️ TEAMS] No se pudo asignar coorganizer porque falta meetingIdShort');
   }
 
-  return { eventId, meetingId, joinUrl };
+  // Retornar el ID del chat (largo) para guardar en BD
+  return { eventId, meetingId: meetingIdChat, joinUrl };
 }
-
-
 
 
 export async function POST(req: Request) {

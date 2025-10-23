@@ -11,7 +11,7 @@ import { createUser } from '~/server/queries/queries';
 // Runtime configuration
 export const runtime = 'nodejs';
 export const maxDuration = 300;
-
+void userCredentials;
 // Utilidades de validación
 const safeTrim = (v?: string | null) => (typeof v === 'string' ? v.trim() : '');
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -42,7 +42,16 @@ interface UserInput {
   lastName: string;
   email: string;
   role?: string;
+  phone?: string;
+  document?: string;
+  [key: string]: string | undefined; // Index signature para permitir campos dinámicos
 }
+
+interface ColumnMapping {
+  excelColumn: string;
+  dbField: string;
+}
+
 
 // Tipos para errores de Clerk
 interface ClerkErrorItem {
@@ -300,6 +309,8 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
+    const mappingsJson = formData.get('mappings');
+    const previewOnly = formData.get('previewOnly') === 'true';
 
     if (!file || !(file instanceof Blob)) {
       return NextResponse.json(
@@ -320,7 +331,54 @@ export async function POST(request: Request) {
     }
 
     const sheet = workbook.Sheets[sheetName];
-    const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
+    const rawData = XLSX.utils.sheet_to_json(sheet);
+
+    if (rawData.length === 0) {
+      return NextResponse.json(
+        { error: 'El archivo Excel está vacío' },
+        { status: 400 }
+      );
+    }
+
+    // Si es solo preview, devolver las columnas detectadas
+    if (previewOnly || !mappingsJson) {
+      const firstRow = rawData[0] as Record<string, unknown>;
+      const detectedColumns = Object.keys(firstRow);
+
+      return NextResponse.json({
+        preview: true,
+        columns: detectedColumns,
+        rowCount: rawData.length,
+        sampleData: rawData.slice(0, 5)
+      });
+    }
+
+    const mappings: ColumnMapping[] = JSON.parse(mappingsJson as string);
+
+    // Mapear datos según las columnas seleccionadas
+    const usersData = rawData.map((row) => {
+      const mappedRow: Record<string, unknown> = {};
+      mappings.forEach(({ excelColumn, dbField }) => {
+        const value = (row as Record<string, unknown>)[excelColumn];
+        // Convertir valores a string y limpiar
+        let stringValue = '';
+        if (value !== null && value !== undefined) {
+          if (typeof value === 'object') {
+            stringValue = JSON.stringify(value);
+          } else if (typeof value === 'string') {
+            stringValue = value;
+          } else if (typeof value === 'number' || typeof value === 'boolean') {
+            stringValue = String(value);
+          } else {
+            // Para cualquier otro tipo, intentar convertirlo a string de forma segura
+            stringValue = JSON.stringify(value);
+          }
+          stringValue = stringValue.trim();
+        }
+        mappedRow[dbField] = stringValue;
+      });
+      return mappedRow;
+    }) as UserInput[];
 
     if (usersData.length === 0) {
       return NextResponse.json(
@@ -358,7 +416,26 @@ export async function POST(request: Request) {
       const lastName = safeTrim(userData.lastName);
       const email = safeTrim(userData.email).toLowerCase();
       const role = safeTrim(userData.role) || 'estudiante';
+      const phone = safeTrim(userData.phone);
+      const documentNumber = safeTrim(userData.document ?? userData.identificacionNumero);
 
+      // Log ÚNICO para debug (eliminamos duplicación)
+      console.log(`[${i + 1}/${usersData.length}] 📝 Sanitizado ${email}:`, {
+        firstName,
+        lastName,
+        phone: phone || 'SIN TELÉFONO',
+        document: documentNumber || 'SIN DOCUMENTO',
+        role
+      });
+
+      // Log para debug
+      console.log(`📝 Datos sanitizados para ${email}:`, {
+        firstName,
+        lastName,
+        phone,
+        documentNumber,
+        role
+      });
       // Validación de campos obligatorios
       if (!firstName || !lastName || !email) {
         resultados.push({
@@ -482,12 +559,36 @@ export async function POST(request: Request) {
           });
           continue;
         }
+        // Guardar/actualizar en base de datos (sin transacciones)
+        step = 'dbUpsertUser';
 
-        // Guardar/actualizar en base de datos
-        step = 'dbTransaction';
-        await db.transaction(async (tx) => {
-          // Upsert en tabla users
-          await tx
+        // Verificar si el usuario ya existe en la BD
+        const existingUser = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (existingUser.length > 0) {
+          // Usuario existe, actualizar sin tocar el id
+          await db
+            .update(users)
+            .set({
+              name: `${firstName} ${lastName}`,
+              role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+              updatedAt: new Date(),
+              planType: 'Premium',
+              subscriptionEndDate: new Date(formattedEndDate),
+              phone: phone || null,
+              identificacionNumero: documentNumber || null,
+              document: documentNumber || null,
+            })
+            .where(eq(users.id, existingUser[0].id));
+
+          console.log(`✅ Usuario actualizado: ${email} | Teléfono: ${phone || 'N/A'} | Documento: ${documentNumber || 'N/A'}`);
+        } else {
+          // Usuario nuevo, insertar
+          await db
             .insert(users)
             .values({
               id: clerkUser.id,
@@ -498,46 +599,13 @@ export async function POST(request: Request) {
               updatedAt: new Date(),
               planType: 'Premium',
               subscriptionEndDate: new Date(formattedEndDate),
-            })
-            .onConflictDoUpdate({
-              target: users.email,
-              set: {
-                name: `${firstName} ${lastName}`,
-                updatedAt: new Date(),
-                planType: 'Premium',
-                subscriptionEndDate: new Date(formattedEndDate),
-              },
+              phone: phone || null,
+              identificacionNumero: documentNumber || null,
+              document: documentNumber || null,
             });
 
-          // Guardar credenciales solo si es nuevo y tenemos password
-          if (isNewInClerk && generatedPassword) {
-            step = 'userCredentialsUpsert';
-            const existingCredentials = await tx
-              .select()
-              .from(userCredentials)
-              .where(eq(userCredentials.userId, clerkUser.id))
-              .limit(1);
-
-            if (existingCredentials.length > 0) {
-              await tx
-                .update(userCredentials)
-                .set({
-                  password: generatedPassword,
-                  clerkUserId: clerkUser.id,
-                  email,
-                })
-                .where(eq(userCredentials.userId, clerkUser.id));
-            } else {
-              await tx.insert(userCredentials).values({
-                userId: clerkUser.id,
-                password: generatedPassword,
-                clerkUserId: clerkUser.id,
-                email,
-              });
-            }
-          }
-        });
-
+          console.log(`✅ Usuario insertado en BD: ${email} - phone: ${phone}, doc: ${documentNumber}`);
+        }
         // Registrar resultado
         successfulUsers.push({
           id: clerkUser.id,
@@ -694,12 +762,16 @@ export function GET() {
         lastName: 'Pérez',
         email: 'juan.perez@example.com',
         role: 'estudiante',
+        phone: '3001234567',
+        document: '1234567890',
       },
       {
         firstName: 'María',
         lastName: 'González',
         email: 'maria.gonzalez@example.com',
         role: 'educador',
+        phone: '3009876543',
+        document: '0987654321',
       },
     ];
 
@@ -728,6 +800,16 @@ export function GET() {
         Campo: 'role',
         Descripción: 'Rol: estudiante, educador, admin, super-admin',
         Ejemplo: 'estudiante',
+      },
+      {
+        Campo: 'phone',
+        Descripción: 'Teléfono del usuario (opcional)',
+        Ejemplo: '3001234567',
+      },
+      {
+        Campo: 'document',
+        Descripción: 'Documento de identificación (opcional)',
+        Ejemplo: '1234567890',
       },
     ];
     const wsInstructions = XLSX.utils.json_to_sheet(instructions);
