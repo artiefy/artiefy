@@ -89,6 +89,7 @@ interface ProjectDraft {
   actividades: { descripcion: string }[];
   categoryId?: number;
   typeProject?: string;
+  projectStep?: string; // optional: paso actual del asistente (evita uso de `any`)
 }
 
 // Tipos
@@ -166,85 +167,256 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const ideaRef = useRef(idea);
 
   // Añade los estados necesarios para el flujo n8n
-  const [n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
+  const [_n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
   const [pendingProjectDraft, setPendingProjectDraft] =
     useState<ProjectDraft | null>(null);
 
-  // Añade una línea para "usar" los estados y evitar el warning de ESLint
+  // Añade estado para id del borrador guardado en servidor
+  const [draftId, setDraftId] = useState<number | null>(null);
 
-  void [n8nCourses];
+  // NUEVO: guardar último payload de n8n que contiene campos de borrador
+  // prefijo "_" para evitar warning de variable asignada pero no usada
+  const [_lastN8nProjectPayload, setLastN8nProjectPayload] =
+    useState<N8nPayload | null>(null);
 
+  // NUEVO: helper para guardar un campo específico (acción por botón)
+  const saveDraftField = useCallback(
+    async (fieldAction: string) => {
+      if (!pendingProjectDraft && !_lastN8nProjectPayload) {
+        toast.error('No hay borrador disponible para guardar.');
+        return;
+      }
+
+      const source = pendingProjectDraft ?? {
+        projectName: _lastN8nProjectPayload?.projectName ?? '',
+        planteamiento: _lastN8nProjectPayload?.planteamiento ?? '',
+        justificacion: _lastN8nProjectPayload?.justificacion ?? '',
+        objetivoGeneral: _lastN8nProjectPayload?.objetivoGeneral ?? '',
+        objetivosEspecificos:
+          _lastN8nProjectPayload?.objetivosEspecificos ?? [],
+        actividades: (_lastN8nProjectPayload?.actividades ?? [])
+          .map((a) =>
+            typeof a === 'string'
+              ? { descripcion: a }
+              : a && typeof a === 'object' && 'descripcion' in a
+                ? { descripcion: (a as { descripcion: string }).descripcion }
+                : null
+          )
+          .filter(Boolean) as { descripcion: string }[],
+        categoryId: _lastN8nProjectPayload?.categoryId,
+        typeProject: _lastN8nProjectPayload?.typeProject,
+      };
+
+      const newDraft: Record<string, unknown> = {
+        projectName: source.projectName ?? '',
+        planteamiento: source.planteamiento ?? '',
+        justificacion: source.justificacion ?? '',
+        objetivoGeneral: source.objetivoGeneral ?? '',
+        objetivosEspecificos: Array.isArray(source.objetivosEspecificos)
+          ? source.objetivosEspecificos
+          : [],
+        actividades: Array.isArray(source.actividades)
+          ? source.actividades
+          : [],
+        categoryId: source.categoryId ?? undefined,
+        typeProject: source.typeProject ?? 'AI-Assistant',
+      };
+
+      const projectStep = (() => {
+        switch (fieldAction) {
+          case 'save_field_projectName':
+            return 'titulo';
+          case 'save_field_planteamiento':
+            return 'planteamiento';
+          case 'save_field_justificacion':
+            return 'justificacion';
+          case 'save_field_objetivoGeneral':
+            return 'objetivo_general';
+          case 'save_field_objetivosEspecificos':
+            return 'objetivos_especificos';
+          case 'save_field_actividades':
+            return 'actividades';
+          default:
+            return 'partial_from_agent';
+        }
+      })();
+
+      setIsLoading(true);
+      try {
+        let res: Response;
+        if (draftId) {
+          res = await fetch('/api/projects/drafts', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: draftId, data: newDraft, projectStep }),
+          });
+        } else {
+          res = await fetch('/api/projects/drafts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: newDraft, projectStep }),
+          });
+        }
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => null);
+          let errorMsg = 'Error creando/actualizando borrador';
+          if (
+            errBody &&
+            typeof errBody === 'object' &&
+            'error' in errBody &&
+            typeof (errBody as Record<string, unknown>).error === 'string'
+          ) {
+            errorMsg = (errBody as Record<string, unknown>).error as string;
+          }
+          console.error(
+            'Error guardando borrador (field):',
+            res.status,
+            errorMsg
+          );
+          toast.error(errorMsg);
+          return;
+        }
+
+        const created = (await res.json()) as {
+          id?: number;
+          updated_at?: string;
+        };
+        if (created?.id) setDraftId(Number(created.id));
+
+        setPendingProjectDraft((prev) => {
+          const merged: ProjectDraft = {
+            projectName:
+              typeof prev?.projectName === 'string'
+                ? prev.projectName
+                : typeof newDraft.projectName === 'string'
+                  ? newDraft.projectName
+                  : '',
+            planteamiento:
+              typeof prev?.planteamiento === 'string'
+                ? prev.planteamiento
+                : typeof newDraft.planteamiento === 'string'
+                  ? newDraft.planteamiento
+                  : '',
+            justificacion:
+              typeof prev?.justificacion === 'string'
+                ? prev.justificacion
+                : typeof newDraft.justificacion === 'string'
+                  ? newDraft.justificacion
+                  : '',
+            objetivoGeneral:
+              typeof prev?.objetivoGeneral === 'string'
+                ? prev.objetivoGeneral
+                : typeof newDraft.objetivoGeneral === 'string'
+                  ? newDraft.objetivoGeneral
+                  : '',
+            objetivosEspecificos: Array.isArray(prev?.objetivosEspecificos)
+              ? prev.objetivosEspecificos.map((x) => String(x))
+              : Array.isArray(newDraft.objetivosEspecificos)
+                ? (newDraft.objetivosEspecificos as string[]).map((x) =>
+                    String(x)
+                  )
+                : [],
+            actividades: Array.isArray(prev?.actividades)
+              ? prev.actividades
+              : Array.isArray(newDraft.actividades)
+                ? (newDraft.actividades as { descripcion: string }[])
+                : [],
+            categoryId:
+              typeof prev?.categoryId === 'number'
+                ? prev.categoryId
+                : typeof newDraft.categoryId === 'number'
+                  ? (newDraft.categoryId as number)
+                  : undefined,
+            typeProject:
+              typeof prev?.typeProject === 'string'
+                ? prev.typeProject
+                : typeof newDraft.typeProject === 'string'
+                  ? (newDraft.typeProject as string)
+                  : undefined,
+            projectStep:
+              typeof prev?.projectStep === 'string'
+                ? prev.projectStep
+                : typeof newDraft.projectStep === 'string'
+                  ? (newDraft.projectStep as string)
+                  : undefined,
+          };
+          return merged;
+        });
+
+        toast.success('Borrador guardado');
+      } catch (err) {
+        console.error('Save draft field error:', err);
+        toast.error('No se pudo guardar el borrador');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [draftId, _lastN8nProjectPayload, pendingProjectDraft]
+  );
+
+  // Autosave: cuando pendingProjectDraft cambie, crea/actualiza draft en backend (debounce)
   useEffect(() => {
-    let isMounted = true;
-    // Set initial dimensions based on window size
-    const initialDimensions = {
-      width:
-        typeof window !== 'undefined' && window.innerWidth < 768
-          ? window.innerWidth
-          : 500,
-      height: window.innerHeight,
-    };
-    if (isMounted) setDimensions(initialDimensions);
+    if (!pendingProjectDraft) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    // Add resize handler
-    const handleResize = () => {
-      if (!isMounted) return;
-      const isMobile = window.innerWidth < 768;
-      setDimensions({
-        width: isMobile ? window.innerWidth : 500,
-        height: window.innerHeight,
-      });
-    };
+    const saveDraft = async () => {
+      try {
+        const payload = {
+          data: pendingProjectDraft,
+          projectStep: pendingProjectDraft.projectStep ?? 'partial_from_agent',
+        };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-    }
-    return () => {
-      isMounted = false;
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', handleResize);
+        // Si ya existe draftId → PATCH, si no → POST
+        if (draftId) {
+          const res = await fetch('/api/projects/drafts', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: draftId,
+              data: payload.data,
+              projectStep: payload.projectStep,
+            }),
+          });
+          if (!res.ok) throw new Error('Error actualizando borrador');
+          await res.json(); // no necesitamos el body aquí
+          if (!cancelled) {
+            toast.success('Borrador actualizado');
+          }
+        } else {
+          const res = await fetch('/api/projects/drafts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error('Error creando borrador');
+          const created = (await res.json()) as { id?: number };
+          if (!cancelled) {
+            if (created?.id) setDraftId(Number(created.id));
+            toast.success('Borrador guardado');
+          }
+        }
+      } catch (err) {
+        console.error('Autosave draft error:', err);
+        if (!cancelled) toast.error('No se pudo guardar el borrador');
       }
     };
-  }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    // Solo se ejecuta en el cliente
-    setIsDesktop(window.innerWidth > 768);
-
-    const handleResize = () => {
-      if (!isMounted) return;
-      setIsDesktop(window.innerWidth > 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      isMounted = false;
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    ideaRef.current = idea;
-  }, [idea]);
-
-  useEffect(() => {
-    const handleNewIdea = () => {
-      setIdea({ selected: true, idea: '' });
-    };
-
-    window.addEventListener('new-idea', handleNewIdea);
+    // Debounce 1s para evitar muchas llamadas
+    timer = setTimeout(() => {
+      void saveDraft();
+    }, 1000);
 
     return () => {
-      window.removeEventListener('new-idea', handleNewIdea);
+      cancelled = true;
+      if (timer) clearTimeout(timer);
     };
-  }, []);
-
-  useEffect(() => {
-    chatModeRef.current = chatMode;
-  }, [chatMode]);
+  }, [pendingProjectDraft, draftId]);
 
   const pathname = usePathname();
-  const safePathname = pathname ?? ''; // Usa safePathname en vez de pathname donde sea necesario
+  // Prefer nullish coalescing operator for safePathname
+  const safePathname = pathname ?? '';
   const isChatPage = safePathname === '/';
 
   const newChatMessage = () => {
@@ -262,7 +434,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         ],
       },
     ]);
-
     setInputText('');
     setIsOpen(true);
     initialSearchDone.current = false;
@@ -271,11 +442,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     if (inputRef.current) {
       inputRef.current.focus();
     }
-
     if (ideaRef.current.selected) {
       setIdea({ selected: false, idea: '' });
     }
-
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = 0;
     }
@@ -292,14 +461,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
     getOrCreateConversation({
       senderId: user?.id ?? '',
-      cursoId: courseId ?? +Math.round(Math.random() * 100 + 1),
-      title: courseTitle ?? 'Nuevo Chat ' + resultado,
+      cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
+      title: courseTitle ?? `Nuevo Chat ${resultado}`,
     })
       .then((response) => {
         setChatMode({ idChat: response.id, status: true, curso_title: '' });
       })
-      .catch((error) => {
-        console.error('Error creando nuevo chat:', error);
+      .catch((err) => {
+        let errorMsg = 'Error creando el proyecto';
+        if (
+          err &&
+          typeof err === 'object' &&
+          'error' in err &&
+          typeof (err as Record<string, unknown>).error === 'string'
+        ) {
+          errorMsg = (err as Record<string, unknown>).error as string;
+        }
+        console.error(errorMsg);
+        toast.error(errorMsg);
+        return;
       });
   };
 
@@ -704,6 +884,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         (Array.isArray(data.actividades) && data.actividades.length > 0);
 
       if (data.projectPrompt || hasDraftFields) {
+        // Guardar payload original para acciones de guardado manual
+        setLastN8nProjectPayload(data);
+
         // Normalizar actividades
         const acts =
           (data.actividades ?? [])
@@ -733,7 +916,54 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           typeProject: data.typeProject ?? 'AI-Assistant',
         };
 
+        // Guardar en estado para autosave y acciones manuales
         setPendingProjectDraft(draft);
+
+        // Construir botones por campo detectado
+        const fieldButtons: { label: string; action: string }[] = [];
+
+        if (draft.projectName && draft.projectName.trim() !== '') {
+          fieldButtons.push({
+            label: '💾 Guardar título',
+            action: 'save_field_projectName',
+          });
+        }
+        if (draft.planteamiento && draft.planteamiento.trim() !== '') {
+          fieldButtons.push({
+            label: '💾 Guardar planteamiento',
+            action: 'save_field_planteamiento',
+          });
+        }
+        if (draft.justificacion && draft.justificacion.trim() !== '') {
+          fieldButtons.push({
+            label: '💾 Guardar justificación',
+            action: 'save_field_justificacion',
+          });
+        }
+        if (draft.objetivoGeneral && draft.objetivoGeneral.trim() !== '') {
+          fieldButtons.push({
+            label: '💾 Guardar objetivo',
+            action: 'save_field_objetivoGeneral',
+          });
+        }
+        if (draft.objetivosEspecificos?.length) {
+          fieldButtons.push({
+            label: '💾 Guardar objetivos específicos',
+            action: 'save_field_objetivosEspecificos',
+          });
+        }
+        if (draft.actividades?.length) {
+          fieldButtons.push({
+            label: '💾 Guardar actividades',
+            action: 'save_field_actividades',
+          });
+        }
+
+        // Siempre añadir opción de guardar todo (como antes)
+        fieldButtons.push({
+          label: '💾 Guardar todo',
+          action: 'save_project_draft',
+        });
 
         const resumen =
           `Propuesta de proyecto:\n` +
@@ -760,9 +990,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             id: Date.now() + Math.random(),
             text: resumen,
             sender: 'bot',
-            buttons: [
-              { label: '💾 Guardar proyecto', action: 'save_project_draft' },
-            ],
+            buttons: fieldButtons,
           },
         ]);
         queueOrSaveBotMessage(resumen);
@@ -792,10 +1020,37 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       try {
         if (useN8n) {
           const conversationId = chatModeRef.current.idChat ?? undefined;
-          const messageHistory = messages.map((m) => ({
-            sender: m.sender,
-            text: m.text,
-          }));
+
+          // Construir messageHistory limpio para el agente n8n:
+          // - eliminar saludo inicial estándar para evitar que el agent vuelva a saludar
+          // - mapear roles: 'bot' -> 'assistant', 'user' -> 'user'
+          // - limitar a últimas 12 entradas (ajustable)
+          const RAW_WELCOME =
+            '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
+          const MAX_HISTORY = 12;
+          const messageHistory = messages
+            .filter(Boolean)
+            .map((m) => {
+              let text = '';
+              if (typeof m.text === 'string') {
+                text = m.text;
+              } else if (
+                typeof m.text === 'object' &&
+                m.text !== null &&
+                'text' in (m.text as Record<string, unknown>) &&
+                typeof (m.text as Record<string, unknown>).text === 'string'
+              ) {
+                text = (m.text as Record<string, string>).text;
+              }
+              return { role: m.sender === 'bot' ? 'assistant' : 'user', text };
+            })
+            .filter(
+              (x) => x && typeof x.text === 'string' && x.text.trim() !== ''
+            )
+            // eliminar las entradas que son exactamente el saludo inicial
+            .filter((x) => x.text.trim() !== RAW_WELCOME)
+            // mantener solo últimas MAX_HISTORY entradas
+            .slice(Math.max(0, messages.length - MAX_HISTORY));
 
           let n8nSuccess = false;
 
@@ -806,6 +1061,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               body: JSON.stringify({
                 prompt: query,
                 conversationId,
+                // enviar el arreglo mapeado (role/text) que espera el agente
                 messageHistory,
               }),
             });
@@ -1125,7 +1381,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         if (user?.id) {
           getOrCreateConversation({
             senderId: user.id,
-            cursoId: courseId ?? +Math.round(Math.random() * 100 + 1),
+            cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
             title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
           })
             .then((response) => {
@@ -1288,6 +1544,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     };
   }, []);
 
+  // Detectar si estamos en desktop y actualizar al redimensionar
+  useEffect(() => {
+    const checkDesktop = () => {
+      // breakpoint >= 768 (md)
+      const desktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+      setIsDesktop(desktop);
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
   const scrollToBottom = () => {
     void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -1433,12 +1701,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         type_project: draft.typeProject ?? 'AI-Assistant',
         categoryId: Number.isFinite(draft.categoryId) ? draft.categoryId! : 1,
         isPublic: false,
+        // Indicar que es un borrador parcial y desde qué paso viene
+        projectStep: 'partial_from_agent',
+        draft: true,
         // Opcionales de cronograma; el backend los acepta opcionalmente:
         // fechaInicio, fechaFin, tipoVisualizacion, horasPorDia, totalHoras, tiempoEstimado, diasEstimados, diasNecesarios
       };
 
       setIsLoading(true);
-      fetch('/api/projects', {
+      fetch('/api/projects?draft=true', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1446,13 +1717,23 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         .then(async (res) => {
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(
-              (err as { error?: string })?.error ?? 'Error creando el proyecto'
-            );
+            let errorMsg = 'Error creando el proyecto';
+            if (
+              err &&
+              typeof err === 'object' &&
+              'error' in err &&
+              typeof (err as Record<string, unknown>).error === 'string'
+            ) {
+              errorMsg = (err as Record<string, unknown>).error as string;
+            }
+            console.error(errorMsg);
+            toast.error(errorMsg);
+            return;
           }
           return res.json() as Promise<{ id?: number }>;
         })
-        .then((data: { id?: number }) => {
+        .then((data) => {
+          if (!data) return;
           toast.success('Proyecto guardado correctamente.');
           setMessages((prev) => [
             ...prev,
@@ -1460,7 +1741,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               id: Date.now() + Math.random(),
               text: '✅ Tu proyecto fue creado. Puedes continuar desarrollándolo en la sección de proyectos.',
               sender: 'bot',
-              buttons: data?.id
+              buttons: data.id
                 ? [
                     {
                       label: '🔎 Ver proyecto',
@@ -1487,6 +1768,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       if (!Number.isNaN(pid)) {
         router.push(`/proyectos/DetallesProyectos/${pid}`);
       }
+      return;
+    }
+
+    if (action.startsWith('save_field_')) {
+      void saveDraftField(action);
       return;
     }
 
@@ -1538,30 +1824,36 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     if (
       typeof message.text === 'object' &&
       message.text !== null &&
-      'text' in message.text &&
-      typeof (message.text as { text: unknown }).text === 'string'
+      'text' in (message.text as Record<string, unknown>) &&
+      typeof (message.text as Record<string, unknown>).text === 'string'
     ) {
-      textToShow = (message.text as { text: string }).text;
+      textToShow = (message.text as Record<string, string>).text;
     }
 
     // Si message.text es un objeto con campo message.text, úsalo (caso doble anidado)
     if (
       typeof message.text === 'object' &&
       message.text !== null &&
-      'message' in message.text &&
-      typeof (message.text as { message?: unknown }).message === 'object' &&
-      (message.text as { message: { text?: unknown } }).message !== null &&
-      'text' in (message.text as { message: { text?: unknown } }).message &&
+      'message' in (message.text as Record<string, unknown>) &&
+      typeof (message.text as Record<string, unknown>).message === 'object' &&
+      (message.text as { message: unknown }).message !== null &&
+      'text' in
+        ((message.text as { message: unknown }).message as Record<
+          string,
+          unknown
+        >) &&
       typeof (
-        (message.text as { message: { text?: unknown } }).message as {
-          text?: unknown;
-        }
+        (message.text as { message: unknown }).message as Record<
+          string,
+          unknown
+        >
       ).text === 'string'
     ) {
       const nested = (
-        (message.text as { message: { text?: unknown } }).message as {
-          text?: unknown;
-        }
+        (message.text as { message: unknown }).message as Record<
+          string,
+          unknown
+        >
       ).text;
       if (typeof nested === 'string') {
         textToShow = nested;
@@ -1702,7 +1994,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             : [];
 
           // Evita mostrar mensaje_inicial dos veces: solo lo mostramos si hay cursos, y nunca repetido
-          // Si el mensaje anterior era igual, no lo mostramos de nuevo
           // Solo mostramos mensaje_inicial una vez por bloque de cursos
           return (
             <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
@@ -1719,9 +2010,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     courses={coursesForCards}
                     // Siempre pasar coursesData (enriquecido con modalidad real de BD)
                     coursesData={
-                      (message.coursesData && message.coursesData.length > 0
+                      (message.coursesData?.length ?? 0) > 0
                         ? message.coursesData
-                        : coursesForCards) as CourseData[]
+                        : coursesForCards
                     }
                   />
                 </div>
@@ -2071,9 +2362,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
           {isOpen && (
             <div
-              className={`fixed ${isDesktop ? 'right-0 bottom-0' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
+              className={`fixed ${isDesktop ? 'right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
               ref={chatContainerRef}
-              // style={{ zIndex: 110000 }} // Elimina style y usa la clase z-[100001]
+              style={
+                isDesktop
+                  ? { right: 0, bottom: 0, left: 'auto', top: 'auto' }
+                  : undefined
+              }
             >
               <ResizableBox
                 width={dimensions.width}
@@ -2091,10 +2386,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   isDesktop ? window.innerHeight : window.innerHeight,
                 ]}
                 resizeHandles={isDesktop ? ['sw'] : []}
-                className="chat-resizable"
+                className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
               >
                 <div
-                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'rounded-lg border border-gray-200' : ''} bg-white`}
+                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-200' : ''} bg-white`}
                 >
                   {/* Header */}
                   <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
@@ -2368,7 +2663,7 @@ const CoursesCardsWithModalidad = React.memo(
       <div className="mt-2 flex flex-wrap gap-3">
         {/* Mostrar hasta 5 cursos */}
         {courses.slice(0, 5).map((course) => {
-          // Modalidad real: siempre la de BD si está en coursesData, si no la que venga en course
+          // Modalidad real: siempre la de BD si está en coursesData, si no la que traiga en course
           const modalidadReal =
             bdModalidades.get(course.id) ?? course.modalidad ?? 'N/A';
           return (

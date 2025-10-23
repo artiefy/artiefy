@@ -1408,7 +1408,6 @@ export const waMessages = pgTable(
   ]
 );
 
-
 // =========================
 // Etiquetas para WhatsApp
 // =========================
@@ -1431,7 +1430,9 @@ export const waConversationTags = pgTable(
   'wa_conversation_tags',
   {
     waid: varchar('waid', { length: 32 }).notNull(),
-    tagId: integer('tag_id').notNull().references(() => waTags.id, { onDelete: 'cascade' }),
+    tagId: integer('tag_id')
+      .notNull()
+      .references(() => waTags.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
@@ -1448,4 +1449,16 @@ export const n8nChatHistories = pgTable('n8n_chat_histories', {
   role: varchar('role', { length: 50 }).notNull(), // 'user' | 'assistant'
   content: text('content').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Tabla para borradores de proyectos
+export const project_drafts = pgTable('project_drafts', {
+  id: serial('id').primaryKey(),
+  user_id: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  data: jsonb('data').notNull(), // JSON con el borrador parcial
+  project_step: text('project_step'), // e.g. 'problema', 'objetivos_especificos'
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

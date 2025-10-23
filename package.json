@@ -89,7 +89,7 @@
     "lru-cache": "^11.2.2",
     "lucide-react": "^0.544.0",
     "multer": "^2.0.2",
-    "next": "^15.5.4",
+    "next": "^15.5.6",
     "next-nprogress-bar": "^2.4.7",
     "next-seo": "^6.8.0",
     "next-themes": "^0.4.6",
@@ -183,8 +183,8 @@
     "initVersion": "7.39.3"
   },
   "engines": {
-    "node": ">=18 <23",
-    "npm": ">=9 <12"
+    "node": ">=18 <25",
+    "npm": ">=9 <15"
   },
-  "packageManager": "npm@11.6.1"
+  "packageManager": "npm@11.6.2"
 }
