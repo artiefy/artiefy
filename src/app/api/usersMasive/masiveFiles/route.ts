@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth as clerkAuth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import * as XLSX from 'xlsx';
 
@@ -317,9 +317,10 @@ function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
 
 export async function POST(request: NextRequest) {
     try {
-        // auth robusto
-        const authResult = await auth();
-        const userId: string | null = (authResult as any)?.userId ?? null;
+        // auth robusto (tipado con Clerk)
+        const authData = await clerkAuth();
+        const userId: string | null = authData?.userId ?? null;
+
 
         // fallback DEV
         const headerUserId = request.headers.get('x-user-id');
