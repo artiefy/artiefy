@@ -12,13 +12,13 @@ const PLAN_IDENTIFIERS = {
 function getPlanAmount(planName: string): string {
   switch (planName) {
     case 'Pro':
-      return '99800.00';
+      return '99900.00'; // Cambiado a 99,900 COP
     case 'Premium':
-      return '149800.00';
+      return '124900.00'; // Cambiado a 124,900 COP
     case 'Enterprise':
       return '200000.00';
     default:
-      return '99800.00'; // Default en caso de un plan desconocido
+      return '99900.00'; // Default actualizado a Pro
   }
 }
 
