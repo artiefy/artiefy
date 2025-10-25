@@ -270,6 +270,7 @@ export default async function MyCoursesStudent() {
                             <Button asChild className="h-8 px-2">
                               <Link
                                 href={`/estudiantes/cursos/${course.id}`}
+                                prefetch={false} // <-- Añade esto para evitar prefetching que puede causar problemas de navegación
                                 className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 active:scale-95"
                               >
                                 <p className="text-sm font-bold">Continuar</p>
@@ -320,6 +321,7 @@ export default async function MyCoursesStudent() {
                           <Button asChild className="mt-2 shrink-0 sm:mt-6">
                             <Link
                               href={`/estudiantes/cursos/${course.id}`}
+                              prefetch={false} // <-- Añade esto también aquí
                               className="group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
                             >
                               <p className="font-bold">Continuar</p>

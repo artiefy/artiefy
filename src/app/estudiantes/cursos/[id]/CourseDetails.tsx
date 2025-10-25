@@ -41,11 +41,12 @@ export default function CourseDetails({
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!initialCourse.isActive) {
+    // Solo redirige si el curso está explícitamente inactivo
+    if (initialCourse.isActive === false) {
       toast.error('Curso no disponible', {
         description: 'Este curso no está disponible actualmente.',
         duration: 2000,
-        id: 'course-unavailable', // Previene toasts duplicados
+        id: 'course-unavailable',
       });
       router.replace('/estudiantes');
     }
