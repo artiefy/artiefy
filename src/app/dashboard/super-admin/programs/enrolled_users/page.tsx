@@ -12,50 +12,99 @@ import { z } from 'zod';
 
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
 
+// helpers
+const numNullOpt = z.preprocess(
+  (v) => (v == null || v === '' ? null : v),
+  z.coerce.number().nullable().optional()
+);
+const strNullOpt = z.preprocess(
+  (v) => {
+    if (v == null) return null;
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    return null; // Evita stringificar objetos
+  },
+  z.string().nullable().optional()
+);
+
 const studentSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
-  phone: z.string().nullable(),
-  address: z.string().nullable(),
-  country: z.string().nullable(),
-  city: z.string().nullable(),
-  birthDate: z.string().nullable(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  birthDate: z.string().nullable().optional(),
   subscriptionStatus: z.string(),
-  subscriptionEndDate: z.string().nullable(),
+  subscriptionEndDate: z.string().nullable().optional(),
   role: z.string().optional(),
   planType: z.string().nullable().optional(),
+
   programTitle: z.string().nullish(),
   programTitles: z.array(z.string()).optional(),
   courseTitle: z.string().nullish(),
   courseTitles: z.array(z.string()).optional(),
   nivelNombre: z.string().nullable().optional(),
   purchaseDate: z.string().nullable().optional(),
-  customFields: z.record(z.string(), z.string()).optional(),
 
-  // ➕ NUEVOS CAMPOS DEL BACKEND
+  // ➕ CAMBIOS: ahora vienen del back desde users.*
+  document: strNullOpt,
+  modalidad: strNullOpt,
+  inscripcionValor: numNullOpt,
+  paymentMethod: strNullOpt,
+  cuota1Fecha: strNullOpt,
+  cuota1Metodo: strNullOpt,
+  cuota1Valor: numNullOpt,
+  valorPrograma: numNullOpt,
+
+  identificacionTipo: strNullOpt,
+  identificacionNumero: strNullOpt,
+  nivelEducacion: strNullOpt,
+  tieneAcudiente: strNullOpt,
+  acudienteNombre: strNullOpt,
+  acudienteContacto: strNullOpt,
+  acudienteEmail: strNullOpt,
+
+  programa: strNullOpt,
+  fechaInicio: strNullOpt,
+  comercial: strNullOpt,
+  sede: strNullOpt,
+  horario: strNullOpt,
+  numeroCuotas: strNullOpt,
+  pagoInscripcion: strNullOpt,
+  pagoCuota1: strNullOpt,
+
+  idDocKey: strNullOpt,
+  utilityBillKey: strNullOpt,
+  diplomaKey: strNullOpt,
+  pagareKey: strNullOpt,
+
+  // flags del back
   isNew: z.boolean().optional(),
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
-  inscripcionOrigen: z.enum(['formulario', 'artiefy']).optional(),
-  carteraStatus: z.enum(['activo', 'inactivo', 'no verificado']).optional(),
-  userInscriptionDetails: z.record(z.string(), z.string()).optional(),
 
-});
+  // ⚠️ ⚠️ SOLO UNA clave inscripcionOrigen (con normalización)
+  inscripcionOrigen: z.preprocess(
+    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    z.enum(['formulario', 'artiefy']).optional()
+  ),
 
-const courseSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-});
+  // carteraStatus derivado o desde back (normalizado)
+  carteraStatus: z.preprocess(
+    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    z.enum(['activo', 'inactivo', 'no verificado']).optional()
+  ),
+  userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
 
-// después
+}).passthrough(); // 👈 MUY IMPORTANTE
+
+const courseSchema = z.object({ id: z.string(), title: z.string() });
+
 const enrolledUserSchema = z.object({
   id: z.string(),
-  programTitle: z.string().nullish(), // acepta null o undefined
-});
-
-const errorResponseSchema = z.object({
-  error: z.string(),
+  programTitle: z.string().nullish(),
 });
 
 const apiResponseSchema = z.object({
@@ -63,6 +112,12 @@ const apiResponseSchema = z.object({
   courses: z.array(courseSchema),
   enrolledUsers: z.array(enrolledUserSchema),
 });
+
+const errorResponseSchema = z.object({
+  error: z.string(),
+});
+
+
 
 interface Student {
   id: string;
@@ -76,32 +131,54 @@ interface Student {
   subscriptionStatus: string;
   subscriptionEndDate: string | null;
   role?: string;
-  planType?: string;
-  programTitle?: string;
+  planType?: string | null;
+  programTitle?: string | null;
   programTitles?: string[];
+  courseTitle?: string | null;
   nivelNombre?: string | null;
   purchaseDate?: string | null;
-  customFields?: Record<string, string>;
-  userInscriptionDetails?: Record<string, string>;
 
+  // 🔽 campos que ahora trae users.*
+  document?: string | null;
+  modalidad?: string | null;
+  inscripcionValor?: number | null;
+  paymentMethod?: string | null;
+  cuota1Fecha?: string | null;
+  cuota1Metodo?: string | null;
+  cuota1Valor?: number | null;
+  valorPrograma?: number | null;
 
-  // ➕ nuevos
+  identificacionTipo?: string | null;
+  identificacionNumero?: string | null;
+  nivelEducacion?: string | null;
+  tieneAcudiente?: string | null;
+  acudienteNombre?: string | null;
+  acudienteContacto?: string | null;
+  acudienteEmail?: string | null;
+
+  programa?: string | null;
+  fechaInicio?: string | null;
+  comercial?: string | null;
+  sede?: string | null;
+  horario?: string | null;
+  numeroCuotas?: string | null;
+  pagoInscripcion?: string | null;
+  pagoCuota1?: string | null;
+
+  idDocKey?: string | null;
+  utilityBillKey?: string | null;
+  diplomaKey?: string | null;
+  pagareKey?: string | null;
+
+  // flags/extra UI
   isNew?: boolean;
   isSubOnly?: boolean;
   enrolledInCourse?: boolean;
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
+  userInscriptionDetails?: Record<string, unknown>;
 
-  // ➕ CAMPOS PARA CARTERA Y PAGOS
-  document?: string;
-  modalidad?: string;
-  inscripcionValor?: number;
-  paymentMethod?: string;
-  cuota1Fecha?: string;
-  cuota1Metodo?: string;
-  cuota1Valor?: number;
-  valorPrograma?: number;
 }
 
 interface CreateUserResponse {
@@ -149,101 +226,69 @@ interface Column {
 }
 
 const allColumns: Column[] = [
+  // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
   { id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
   { id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
   { id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
   { id: 'country', label: 'País', defaultVisible: false, type: 'text' },
   { id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
-  {
-    id: 'birthDate',
-    label: 'Fecha de nacimiento',
-    defaultVisible: false,
-    type: 'date',
-  },
-  {
-    id: 'subscriptionStatus',
-    label: 'Estado',
-    defaultVisible: true,
-    type: 'select',
-    options: ['active', 'inactive'],
-  },
-  {
-    id: 'purchaseDate',
-    label: 'Fecha de compra',
-    defaultVisible: true,
-    type: 'date',
-  },
+  { id: 'birthDate', label: 'Fecha de nacimiento', defaultVisible: false, type: 'date' },
 
-  {
-    id: 'subscriptionEndDate',
-    label: 'Fin Suscripción',
-    defaultVisible: true,
-    type: 'date',
-  },
-  {
-    id: 'carteraStatus',
-    label: 'Cartera',
-    defaultVisible: true,
-    type: 'select',
-    options: ['activo', 'inactivo', 'No verificado'],
-  },
-  {
-    id: 'inscripcionOrigen',
-    label: 'Origen',
-    defaultVisible: true,
-    type: 'select',
-    options: ['formulario', 'artiefy'],
-  },
-  {
-    id: 'programTitle',
-    label: 'Programa',
-    defaultVisible: true,
-    type: 'select', // sin options aquí
-  },
-  {
-    id: 'courseTitle',
-    label: 'Último curso',
-    defaultVisible: true,
-    type: 'select',
-  },
-  {
-    id: 'nivelNombre',
-    label: 'Nivel de educación',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'role',
-    label: 'Rol',
-    defaultVisible: false,
-    type: 'select', // ✅ CAMBIA a 'select'
-    options: ['estudiante', 'educador', 'admin', 'super-admin'], // ✅ AÑADE opciones
-  },
-  {
-    id: 'planType',
-    label: 'Plan',
-    defaultVisible: false,
-    type: 'select', // ✅ CAMBIA a 'select'
-    options: ['none', 'Pro', 'Premium', 'Enterprise'], // ✅ AÑADE opciones
-  },
+  // Estado / fechas
+  { id: 'subscriptionStatus', label: 'Estado', defaultVisible: true, type: 'select', options: ['active', 'inactive'] },
+  { id: 'purchaseDate', label: 'Fecha de compra', defaultVisible: true, type: 'date' },
+  { id: 'subscriptionEndDate', label: 'Fin Suscripción', defaultVisible: true, type: 'date' },
 
-  // ➕ NUEVA COLUMNA
-  {
-    id: 'enrolledInCourseLabel',
-    label: '¿En curso?',
-    defaultVisible: true,
-    type: 'select',
-    options: ['Sí', 'No'],
-  },
+  // Cartera / origen
+  { id: 'carteraStatus', label: 'Cartera', defaultVisible: true, type: 'select', options: ['activo', 'inactivo', 'No verificado'] },
+  { id: 'inscripcionOrigen', label: 'Origen', defaultVisible: true, type: 'select', options: ['formulario', 'artiefy'] },
 
-  {
-    id: 'nivelNombre',
-    label: 'Nivel de educación',
-    defaultVisible: false,
-    type: 'text',
-  },
+  // Programa / curso
+  { id: 'programTitle', label: 'Programa', defaultVisible: true, type: 'select' },
+  { id: 'courseTitle', label: 'Último curso', defaultVisible: true, type: 'select' },
+
+  // Rol / plan
+  { id: 'role', label: 'Rol', defaultVisible: false, type: 'select', options: ['estudiante', 'educador', 'admin', 'super-admin'] },
+  { id: 'planType', label: 'Plan', defaultVisible: false, type: 'select', options: ['none', 'Pro', 'Premium', 'Enterprise'] },
+
+  // Indicadores
+  { id: 'enrolledInCourseLabel', label: '¿En curso?', defaultVisible: true, type: 'select', options: ['Sí', 'No'] },
+  { id: 'nivelNombre', label: 'Nivel de educación', defaultVisible: false, type: 'text' },
+
+  // 🔽 AHORA todo desde users.* (ocultas por defecto para no romper layouts)
+  { id: 'document', label: 'Documento', defaultVisible: false, type: 'text' },
+  { id: 'modalidad', label: 'Modalidad', defaultVisible: false, type: 'select', options: ['virtual', 'presencial', 'híbrida'] },
+  { id: 'inscripcionValor', label: 'Inscripción (valor)', defaultVisible: false, type: 'text' },
+  { id: 'paymentMethod', label: 'Método pago inscripción', defaultVisible: false, type: 'text' },
+  { id: 'cuota1Fecha', label: 'Cuota 1 (fecha)', defaultVisible: false, type: 'date' },
+  { id: 'cuota1Metodo', label: 'Cuota 1 (método)', defaultVisible: false, type: 'text' },
+  { id: 'cuota1Valor', label: 'Cuota 1 (valor)', defaultVisible: false, type: 'text' },
+  { id: 'valorPrograma', label: 'Valor Programa', defaultVisible: false, type: 'text' },
+
+  { id: 'identificacionTipo', label: 'Identificación (tipo)', defaultVisible: false, type: 'text' },
+  { id: 'identificacionNumero', label: 'Identificación (número)', defaultVisible: false, type: 'text' },
+  { id: 'nivelEducacion', label: 'Nivel educación', defaultVisible: false, type: 'text' },
+  { id: 'tieneAcudiente', label: '¿Tiene acudiente?', defaultVisible: false, type: 'text' },
+  { id: 'acudienteNombre', label: 'Acudiente nombre', defaultVisible: false, type: 'text' },
+  { id: 'acudienteContacto', label: 'Acudiente contacto', defaultVisible: false, type: 'text' },
+  { id: 'acudienteEmail', label: 'Acudiente email', defaultVisible: false, type: 'text' },
+
+  { id: 'programa', label: 'Programa (texto)', defaultVisible: false, type: 'text' },
+  { id: 'fechaInicio', label: 'Fecha inicio', defaultVisible: false, type: 'date' },
+  { id: 'comercial', label: 'Comercial', defaultVisible: false, type: 'text' },
+  { id: 'sede', label: 'Sede', defaultVisible: false, type: 'text' },
+  { id: 'horario', label: 'Horario', defaultVisible: false, type: 'text' },
+  { id: 'numeroCuotas', label: 'N° cuotas', defaultVisible: false, type: 'text' },
+  { id: 'pagoInscripcion', label: 'Pago inscripción', defaultVisible: false, type: 'text' },
+  { id: 'pagoCuota1', label: 'Pago cuota 1', defaultVisible: false, type: 'text' },
+
+  { id: 'idDocKey', label: 'ID Doc key', defaultVisible: false, type: 'text' },
+  { id: 'utilityBillKey', label: 'Factura servicios key', defaultVisible: false, type: 'text' },
+  { id: 'diplomaKey', label: 'Diploma key', defaultVisible: false, type: 'text' },
+  { id: 'pagareKey', label: 'Pagaré key', defaultVisible: false, type: 'text' },
 ];
+
 
 // Helper function for safe string conversion
 function safeToString(value: unknown): string {
@@ -253,7 +298,37 @@ function safeToString(value: unknown): string {
     return value.toString();
   return JSON.stringify(value);
 }
+function getByPath(obj: Record<string, unknown>, path: string): unknown {
+  if (!obj || !path) return '';
+  return path.split('.').reduce<unknown>((acc, k) => {
+    if (acc && typeof acc === 'object' && acc !== null && k in acc) {
+      return (acc as Record<string, unknown>)[k];
+    }
+    return '';
+  }, obj);
+}
+// Humaniza una key si quieres (UserName -> User Name). Si no, devuelve tal cual.
+function humanizeKey(k: string): string {
+  return k
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
 
+// Valor seguro para cualquier columna (incluye "userInscriptionDetails.X")
+function getValueForColumn(student: Student, colId: string): unknown {
+  if (colId.startsWith('userInscriptionDetails.')) {
+    const key = colId.split('.')[1] ?? '';
+    return student.userInscriptionDetails?.[key] ?? '';
+  }
+  // Soporta colId anidado (a.b.c). Si no está anidado, lee directo.
+  const studentRecord = student as unknown as Record<string, unknown>;
+  const direct = studentRecord[colId];
+  if (direct !== undefined) return direct;
+  return getByPath(studentRecord, colId);
+}
 // comprueba si un objeto tiene { error: string }
 function isErrorResponse(x: unknown): x is { error: string } {
   return (
@@ -660,7 +735,8 @@ export default function EnrolledUsersPage() {
       const slots: Pago[] = Array.from({ length: 15 }, () => ({} as Pago));
 
       for (const raw of pagosFromApi ?? []) {
-        const p = asRec(raw);
+        const p = asRec(raw) as Record<string, unknown>;
+
 
         const conceptoUC = getStr(p, 'concepto').toUpperCase().trim();
 
@@ -1166,6 +1242,27 @@ export default function EnrolledUsersPage() {
     planType?: string;             // opcional
   }
 
+  function shouldMarkNoVerificado(arr: Pago[] = []): boolean {
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = hoy.getMonth();
+
+    const pagosMes = arr.filter((p) => {
+      const f = p?.fecha ? new Date(String(p.fecha)) : null;
+      const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+      return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+    });
+
+    if (pagosMes.length === 0) return false;
+
+    const ultimo = [...pagosMes].sort(
+      (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+    )[pagosMes.length - 1];
+
+    return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
+  }
+
+
   // Ahora el estado usa exactamente CarteraInfo
   const [carteraInfo, setCarteraInfo] = useState<CarteraInfo>({
     programaPrice: 0,
@@ -1465,7 +1562,8 @@ export default function EnrolledUsersPage() {
   const [showCarteraModal, setShowCarteraModal] = useState(false);
   const [carteraUserId, setCarteraUserId] = useState<string | null>(null);
   const [carteraReceipt, setCarteraReceipt] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputPagoRef = useRef<HTMLInputElement>(null);
+  const fileInputCarteraRef = useRef<HTMLInputElement>(null);
   const existingRecord = Boolean(carteraInfo?.programaPrice); // true si ya hay precio guardado
   const userId = currentUser?.id; // o currentUser?.document si prefieres
   const programaId = userPrograms?.[0]?.id; // tomamos el primer programa
@@ -1630,37 +1728,6 @@ export default function EnrolledUsersPage() {
               : 0;
         return sum + (Number.isFinite(v) ? v : 0);
       }, 0);
-      // 👇 NUEVO: decide si el estado de cartera debe ser "no verificado" según la regla
-      function shouldMarkNoVerificado(arr: Pago[]): boolean {
-        if (!Array.isArray(arr) || arr.length === 0) return false;
-
-        const hoy = new Date();
-        const y = hoy.getFullYear();
-        const m = hoy.getMonth();
-
-        // pagos del MES actual con valor > 0 y fecha válida
-        const pagosMes = arr.filter((p) => {
-          const f = p?.fecha ? new Date(String(p.fecha)) : null;
-          const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-          return (
-            f && !isNaN(f.getTime()) &&
-            f.getFullYear() === y &&
-            f.getMonth() === m &&
-            v > 0
-          );
-        });
-
-        if (pagosMes.length === 0) return false;
-
-        // último por fecha
-        const ultimo = [...pagosMes].sort(
-          (a, b) =>
-            new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
-        )[pagosMes.length - 1];
-
-        // condición: tiene recibo y está no verificado
-        return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
-      }
 
 
       // ➕ NUEVO: total pagado SOLO por las 12 cuotas (excluye los 3 especiales)
@@ -1881,77 +1948,98 @@ export default function EnrolledUsersPage() {
           .map((u) => [u.id, u.programTitle!])
       );
 
-      const studentsFilteredByRole = data.students
+      const studentsFilteredByRole: Student[] = data.students
         .filter((s) => s.role === 'estudiante')
         .map((s) => {
-          // 1) ¿Tiene suscripción activa pero sin ninguna matrícula? => NOW
           const showNOW = !!s.isSubOnly;
 
-          // 2) ¿Está en algún curso? (para la nueva columna)
-          const enrolledInCourseLabel: 'Sí' | 'No' = s.enrolledInCourse
-            ? 'Sí'
-            : 'No';
+          const enrolledInCourseLabel: 'Sí' | 'No' = s.enrolledInCourse ? 'Sí' : 'No';
 
-          // 3) Etiqueta NEW en el nombre (si aplica)
           const displayName = s.isNew ? `${s.name} (NEW)` : s.name;
-          const computedByDate =
-            s.subscriptionEndDate &&
-              new Date(s.subscriptionEndDate) >= new Date()
-              ? 'activo' // al día
-              : 'inactivo'; // en cartera
 
-          return {
+          const computedByDate: 'activo' | 'inactivo' =
+            s.subscriptionEndDate && new Date(s.subscriptionEndDate) >= new Date()
+              ? 'activo'
+              : 'inactivo';
+
+          const obj: Student = {
             ...s,
             name: displayName,
-            programTitle: showNOW
-              ? 'NOW'
-              : (enrolledMap.get(s.id) ?? 'No inscrito'),
+            programTitle: showNOW ? 'NOW' : (enrolledMap.get(s.id) ?? 'No inscrito'),
             courseTitle: showNOW ? 'NOW' : (s.courseTitle ?? 'Sin curso'),
             enrolledInCourseLabel,
             nivelNombre: s.nivelNombre ?? 'No definido',
             planType: s.planType ?? undefined,
-            userInscriptionDetails: s.userInscriptionDetails
-              ? Object.fromEntries(
-                Object.entries(s.userInscriptionDetails).map(([k, v]) => [k, String(v)])
-              )
-              : undefined,
-            inscripcionOrigen: s.inscripcionOrigen ?? 'artiefy',
-            carteraStatus: s.carteraStatus ?? computedByDate, // 👈 añade esto
+            inscripcionOrigen: (s.inscripcionOrigen ?? 'artiefy') as 'formulario' | 'artiefy',
+            carteraStatus: (s.carteraStatus ?? computedByDate) as 'activo' | 'inactivo' | 'no verificado',
+            // Aseguramos que subscriptionEndDate sea string o null (no undefined)
+            subscriptionEndDate:
+              typeof s.subscriptionEndDate === 'string' && s.subscriptionEndDate.trim() !== ''
+                ? s.subscriptionEndDate
+                : Object.prototype.toString.call(s.subscriptionEndDate) === '[object Date]'
+                  ? (s.subscriptionEndDate as unknown as Date).toISOString()
+                  : s.subscriptionEndDate != null
+                    ? String(s.subscriptionEndDate)
+                    : null,
+            userInscriptionDetails: s.userInscriptionDetails,
           };
+
+          return obj;
         });
 
-      setStudents(studentsFilteredByRole);
+      setStudents(studentsFilteredByRole as Student[]);
+
       setAvailableCourses(data.courses);
 
-      // NUEVO: detectar las claves de los campos personalizados
-      const allCustomKeys = new Set<string>();
-      studentsFilteredByRole.forEach((student) => {
-        if (student.customFields) {
-          Object.keys(student.customFields).forEach((key) =>
-            allCustomKeys.add(key)
-          );
-        }
-      });
-
-      // NUEVO: detectar las claves de userInscriptionDetails
+      // ✅ 1) Columnas dinámicas desde userInscriptionDetails.*
       const allUIDKeys = new Set<string>();
-      studentsFilteredByRole.forEach((student) => {
-        if (student.userInscriptionDetails) {
-          Object.keys(student.userInscriptionDetails).forEach((key) => allUIDKeys.add(key));
+      for (const s of studentsFilteredByRole) {
+        const uid = (s as Student).userInscriptionDetails;
+        if (uid && typeof uid === 'object') {
+          Object.keys(uid).forEach((k) => allUIDKeys.add(k));
         }
-      });
-
-      // Generar dinámicamente las columnas de userInscriptionDetails
-      const dynamicUIDColumns = Array.from(allUIDKeys).map((key) => ({
+      }
+      const dynamicUIDColumns: Column[] = Array.from(allUIDKeys).map((key) => ({
         id: `userInscriptionDetails.${key}`,
-        label: key,
+        label: humanizeKey(String(key)),
         defaultVisible: true,
-        type: 'text' as const,
+        type: 'text',
       }));
-      // ✅ Usar SOLO las columnas dinámicas de userInscriptionDetails
+
+      // ✅ 2) Columnas dinámicas desde users.* (todas las keys del usuario que no estén ya en allColumns)
+      const knownIds = new Set(allColumns.map((c) => c.id));
+      const dynamicUserKeys = new Set<string>();
+
+      for (const student of studentsFilteredByRole as Student[]) {
+        // Recolecta claves top-level del objeto usuario
+        const studentKeys = Object.keys(student as unknown as Record<string, unknown>);
+        studentKeys.forEach((k) => {
+          if (
+            !knownIds.has(k) &&                  // no duplicar las ya definidas
+            k !== 'userInscriptionDetails' &&    // ya lo tratamos arriba
+            k !== 'programTitles' &&
+            k !== 'courseTitles' &&
+            k !== 'enrolledInCourseLabel' &&
+            k !== 'isNew' &&
+            k !== 'isSubOnly' &&
+            k !== 'enrolledInCourse'
+          ) {
+            dynamicUserKeys.add(k);
+          }
+        });
+      }
+
+      const dynamicUserColumns: Column[] = Array.from(dynamicUserKeys).map((key) => ({
+        id: key,
+        label: humanizeKey(key),
+        defaultVisible: true,     // ponlo visible por defecto si quieres verlos ya
+        type: 'text',
+      }));
+
+      // ✅ 3) Unimos ambas fuentes dinámicas
+      setDynamicColumns([...dynamicUserColumns, ...dynamicUIDColumns]);
 
 
-      setDynamicColumns(dynamicUIDColumns);
     } catch (err) {
       console.error('Error fetching data:', err);
     }
@@ -2104,9 +2192,8 @@ export default function EnrolledUsersPage() {
           const passesTextFilters = Object.entries(columnFilters ?? {}).every(([key, value]) => {
             if (!value) return true;
 
-            const studentValue = key.startsWith('userInscriptionDetails.')
-              ? student.userInscriptionDetails?.[key.split('.')[1]]
-              : student[key as keyof Student];
+            const studentValue = getValueForColumn(student, key);
+
 
             // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
             if (key === 'carteraStatus') {
@@ -2151,10 +2238,7 @@ export default function EnrolledUsersPage() {
           const passesMultiFilters = Object.entries(columnFiltersMulti).every(([key, selectedValues]) => {
             if (!selectedValues || selectedValues.length === 0) return true;
 
-            const studentValue = key.startsWith('userInscriptionDetails.')
-              ? student.userInscriptionDetails?.[key.split('.')[1]]
-              : student[key as keyof Student];
-
+            const studentValue = getValueForColumn(student, key);
             const safeStudentValue = safeToString(studentValue);
 
             // Si es carteraStatus, usar la lógica derivada
@@ -2362,52 +2446,98 @@ export default function EnrolledUsersPage() {
     value: string
   ) => {
     console.log('🔧 [updateStudentField] Iniciando actualización:', { userId, field, value });
-
     const student = students.find((s) => s.id === userId);
     if (!student) {
       console.error('❌ [updateStudentField] Estudiante no encontrado:', userId);
       return;
     }
-
     const updatedStudent = { ...student };
-
+    // Asigna directamente sobre el student (todo viene de users.*)
+    if (field in updatedStudent) {
+      (updatedStudent as Record<string, unknown>)[field] = value;
+    }
+    // Soporte edición en tabla para dinámicos
     if (field.startsWith('userInscriptionDetails.')) {
-      const key = field.split('.')[1];
+      const k = field.split('.')[1] ?? '';
       updatedStudent.userInscriptionDetails = {
-        ...updatedStudent.userInscriptionDetails,
-        [key]: value,
+        ...(updatedStudent.userInscriptionDetails ?? {}),
+        [k]: value,
       };
-    } else {
-      if (field in updatedStudent) {
-        (updatedStudent as Record<string, unknown>)[field] = value;
-      }
+    } else if (!(field in updatedStudent)) {
+      (updatedStudent as Record<string, unknown>)[field] = value;
     }
 
-    const [firstName, ...lastNameParts] = updatedStudent.name.split(' ');
-    const lastName = lastNameParts.join(' ');
+    const nameParts = String(updatedStudent.name ?? '').trim().split(/\s+/).filter(Boolean);
+    const firstNameVal = nameParts.length > 0 ? nameParts[0] : '';
+    const lastNameVal = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
     const payload: Record<string, unknown> = {
       userId: updatedStudent.id,
-      firstName: firstName || '',
-      lastName,
-      email: updatedStudent.email, // 📧 CRÍTICO: Siempre incluir el email
+      firstName: firstNameVal,
+      lastName: lastNameVal,
+      email: updatedStudent.email, // siempre incluir
       role: updatedStudent.role ?? 'estudiante',
       status: updatedStudent.subscriptionStatus,
       permissions: [],
+
+      // datos básicos
       phone: updatedStudent.phone,
       address: updatedStudent.address,
       city: updatedStudent.city,
       country: updatedStudent.country,
       birthDate: updatedStudent.birthDate,
+
+      // plan / fechas
       planType: updatedStudent.planType,
       purchaseDate: updatedStudent.purchaseDate,
       subscriptionEndDate: updatedStudent.subscriptionEndDate
-        ? new Date(updatedStudent.subscriptionEndDate)
-          .toISOString()
-          .split('T')[0]
+        ? new Date(updatedStudent.subscriptionEndDate).toISOString().split('T')[0]
         : null,
-      userInscriptionDetails: updatedStudent.userInscriptionDetails ?? {},
+
+      // 🔽 AHORA los de inscripción (users.*)
+      document: updatedStudent.document,
+      modalidad: updatedStudent.modalidad,
+      inscripcionValor: updatedStudent.inscripcionValor,
+      paymentMethod: updatedStudent.paymentMethod,
+      cuota1Fecha: updatedStudent.cuota1Fecha,
+      cuota1Metodo: updatedStudent.cuota1Metodo,
+      cuota1Valor: updatedStudent.cuota1Valor,
+      valorPrograma: updatedStudent.valorPrograma,
+
+      identificacionTipo: updatedStudent.identificacionTipo,
+      identificacionNumero: updatedStudent.identificacionNumero,
+      nivelEducacion: updatedStudent.nivelEducacion,
+      tieneAcudiente: updatedStudent.tieneAcudiente,
+      acudienteNombre: updatedStudent.acudienteNombre,
+      acudienteContacto: updatedStudent.acudienteContacto,
+      acudienteEmail: updatedStudent.acudienteEmail,
+
+      programa: updatedStudent.programa,
+      fechaInicio: updatedStudent.fechaInicio,
+      comercial: updatedStudent.comercial,
+      sede: updatedStudent.sede,
+      horario: updatedStudent.horario,
+      numeroCuotas: updatedStudent.numeroCuotas,
+      pagoInscripcion: updatedStudent.pagoInscripcion,
+      pagoCuota1: updatedStudent.pagoCuota1,
+
+      idDocKey: updatedStudent.idDocKey,
+      utilityBillKey: updatedStudent.utilityBillKey,
+      diplomaKey: updatedStudent.diplomaKey,
+      pagareKey: updatedStudent.pagareKey,
     };
+    // Inyectar dinámicos en el payload
+
+
+    // Mantén la lógica de programTitle / courseTitle tal cual
+    if (field === 'programTitle') {
+      const prog = programs.find((p) => p.title === value);
+      if (prog) payload.programId = Number(prog.id);
+    }
+    if (field === 'courseTitle') {
+      const curso = availableCourses.find((c) => c.title === value);
+      if (curso) payload.courseId = Number(curso.id);
+    }
 
     console.log('📤 [updateStudentField] Payload completo:', JSON.stringify(payload, null, 2));
     console.log('📧 [updateStudentField] Email en payload:', payload.email);
@@ -2916,17 +3046,10 @@ export default function EnrolledUsersPage() {
                     {totalColumns
                       .filter((col) => visibleColumns.includes(col.id))
                       .map((col) => {
-                        let raw = '';
-                        if (col.id.startsWith('userInscriptionDetails.')) {
-                          const key = col.id.split('.')[1];
-                          raw = student.userInscriptionDetails?.[key] ?? '';
-                        } else {
-                          raw = safeToString(student[col.id as keyof Student] ?? '');
-                        }
+                        let raw = safeToString(getValueForColumn(student, col.id));
                         if (col.type === 'date' && raw) {
                           const d = new Date(raw);
-                          if (!isNaN(d.getTime()))
-                            raw = d.toISOString().split('T')[0];
+                          if (!isNaN(d.getTime())) raw = d.toISOString().split('T')[0];
                         }
                         if (col.id === 'programTitle') {
                           return (
@@ -4032,8 +4155,9 @@ export default function EnrolledUsersPage() {
                                   type="button"
                                   onClick={() => {
                                     setPendingRowForReceipt(idx);
-                                    fileInputRef.current?.click();
+                                    fileInputPagoRef.current?.click();
                                   }}
+
                                   className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                                   title="Subir comprobante"
                                 >
@@ -4373,7 +4497,7 @@ export default function EnrolledUsersPage() {
                                         type="button"
                                         onClick={() => {
                                           setPendingRowForReceipt(idxBase);
-                                          fileInputRef.current?.click();
+                                          fileInputPagoRef.current?.click();
                                         }}
                                         className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
                                       >
@@ -4382,20 +4506,15 @@ export default function EnrolledUsersPage() {
 
                                       {editablePagos[idxBase]?.receiptUrl && (
                                         <a
-                                          href={
-                                            editablePagos[idxBase]
-                                              .receiptUrl as string
-                                          }
+                                          href={editablePagos[idxBase].receiptUrl as string}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="ml-1 text-xs underline"
-                                          title={
-                                            editablePagos[idxBase]
-                                              ?.receiptName ?? 'Comprobante'
-                                          }
+                                          title={editablePagos[idxBase]?.receiptName ?? 'Comprobante'}
                                         >
-                                          Versosa
+                                          Ver
                                         </a>
+
                                       )}
                                     </div>
                                   </div>
@@ -4410,12 +4529,13 @@ export default function EnrolledUsersPage() {
 
                   {/* input global para subir comprobantes */}
                   <input
-                    ref={fileInputRef}
+                    ref={fileInputPagoRef}
                     type="file"
                     accept="application/pdf,image/png,image/jpeg"
                     className="hidden"
                     onChange={onReceiptChange}
                   />
+
                 </div>
                 {/* Acciones de cartera (cuando NO está al día) */}
                 {currentUser.carteraStatus !== 'activo' && (
@@ -4433,27 +4553,25 @@ export default function EnrolledUsersPage() {
                       </label>
 
                       <input
-                        ref={fileInputRef}
+                        ref={fileInputCarteraRef}
                         id="carteraReceipt"
                         type="file"
                         accept="application/pdf,image/png,image/jpeg"
                         className="hidden"
                         onChange={(e) => {
                           const f = e.target.files?.[0] ?? null;
-                          setCarteraReceipt(f); // 👈 igual que antes
+                          setCarteraReceipt(f);
                           if (f && pendingRowForReceipt !== null) {
-                            // si vino desde un botón "Subir comprobante" por fila, subimos de una:
-                            uploadCarteraReceipt().then(() =>
-                              setPendingRowForReceipt(null)
-                            );
+                            uploadCarteraReceipt().then(() => setPendingRowForReceipt(null));
                           }
                         }}
                       />
 
+
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => fileInputCarteraRef.current?.click()}
                           className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
                         >
                           Elegir archivo

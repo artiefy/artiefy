@@ -16,6 +16,7 @@ interface ModalScheduleMeetingProps {
   onClose: () => void;
   onMeetingsCreated: (meetings: ScheduledMeeting[]) => void;
   courseId: number;
+  defaultCoHostEmail?: string; // <- NUEVO
 }
 
 export interface ScheduledMeeting {
@@ -44,6 +45,7 @@ export const ModalScheduleMeeting = ({
   onClose,
   onMeetingsCreated,
   courseId,
+  defaultCoHostEmail = 'educadorsoftwarem@ponao.com.co',
 }: ModalScheduleMeetingProps) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -54,8 +56,7 @@ export const ModalScheduleMeeting = ({
   const [customTitles, setCustomTitles] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const firstDayOfWeek = useMemo(() => {
+  const [coHostEmail, setCoHostEmail] = useState(defaultCoHostEmail); const firstDayOfWeek = useMemo(() => {
     if (!date) return '';
     const [year, month, day] = date.split('-').map(Number);
     const localDate = new Date(year, month - 1, day);
@@ -180,6 +181,7 @@ export const ModalScheduleMeeting = ({
             expandedTitles.length > 0
               ? expandedTitles.map((t) => t.trim()).filter(Boolean)
               : undefined,
+          coHostEmail: coHostEmail.trim() || undefined,
         }),
       });
 
@@ -331,6 +333,22 @@ export const ModalScheduleMeeting = ({
                 />
               </div>
             ))}
+          </div>
+          {/* Email del coanfitrión */}
+          <div className="flex flex-col space-y-1">
+            <label className="text-sm font-medium text-white">
+              Email del coanfitrión
+            </label>
+            <input
+              type="email"
+              placeholder="email@ejemplo.com"
+              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              value={coHostEmail}
+              onChange={(e) => setCoHostEmail(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Este correo recibirá permisos de coorganizador en todas las clases.
+            </p>
           </div>
         </div>
         {formError && (

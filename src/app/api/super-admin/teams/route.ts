@@ -15,8 +15,42 @@ interface GraphAttendee {
   type?: 'required' | 'optional';
 }
 
+// ==========================================
+// ✅ FUNCIONES DE VALIDACIÓN
+// ==========================================
+
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+async function verifyUserExists(token: string, email: string): Promise<boolean> {
+  console.log(`🔍 [VERIFY USER] Verificando existencia de: ${email}`);
+  try {
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(email)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    console.log(`📊 [VERIFY USER] Status: ${response.status} para ${email}`);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`❌ [VERIFY USER] Error response:`, errorBody);
+    }
+
+    return response.ok;
+  } catch (error) {
+    console.error(`❌ [VERIFY USER] Exception:`, error);
+    return false;
+  }
+}
 
 async function getGraphToken() {
+  console.log('🔐 [TOKEN] Iniciando obtención de token...');
   const tenant = process.env.NEXT_PUBLIC_TENANT_ID!;
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID!;
   const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET!;
@@ -28,6 +62,7 @@ async function getGraphToken() {
   params.append('client_secret', clientSecret);
   params.append('scope', 'https://graph.microsoft.com/.default');
 
+  console.log('📤 [TOKEN] Enviando request a Microsoft...');
   const res = await fetch(
     'https://login.microsoftonline.com/060f4acf-9732-441b-80f7-425de7381dd1/oauth2/v2.0/token',
     {
@@ -39,15 +74,15 @@ async function getGraphToken() {
 
   const data = (await res.json()) as TokenResponse;
   if (!res.ok) {
+    console.error('❌ [TOKEN] Error:', data.error_description ?? data.error);
     throw new Error(
       `[Token] Error al obtener token: ${data.error_description ?? data.error}`
     );
   }
 
-  console.log('[TOKEN OK]', data.access_token);
+  console.log('✅ [TOKEN] Token obtenido exitosamente');
   return data.access_token;
 }
-
 
 // convierte Date a string local sin "Z"
 function formatLocalDate(date: Date): string {
@@ -61,16 +96,15 @@ function formatLocalDate(date: Date): string {
 
 // "YYYY-MM-DDTHH:mm:00" interpretado como hora local Bogotá
 function parseBogotaLocalToUTC(dateStr: string): Date {
-  // truco simple y robusto: explícita la zona -05:00
   return new Date(`${dateStr}-05:00`);
 }
-
 
 function generateClassDates(
   startDate: Date,
   daysOfWeek: string[],
   totalCount: number
 ): Date[] {
+  console.log(`📅 [DATES] Generando ${totalCount} fechas desde ${startDate.toISOString()}`);
   const result: Date[] = [];
   const targetDays = daysOfWeek.map((d) => d.toLowerCase());
 
@@ -79,32 +113,60 @@ function generateClassDates(
     timeZone: 'America/Bogota',
   });
 
-  const current = new Date(startDate); // cursor
+  const current = new Date(startDate);
 
   while (result.length < totalCount) {
     const weekday = weekdayFmt.format(current).toLowerCase();
     if (targetDays.includes(weekday)) {
       result.push(new Date(current));
+      console.log(`  ✓ Fecha ${result.length}: ${current.toISOString()} (${weekday})`);
     }
     current.setDate(current.getDate() + 1);
   }
 
+  console.log(`✅ [DATES] ${result.length} fechas generadas`);
   return result;
 }
 
-// Crea un evento de Teams para una fecha concreta y devuelve joinUrl y meetingId
+// ==========================================
+// ✅ FUNCIÓN MEJORADA PARA CREAR EVENTOS
+// ==========================================
+
 async function createTeamsEventForDate(params: {
   token: string;
-  userId: string; // propietario del calendario (GUID)
+  userId: string;
   subject: string;
-  startLocal: string; // "YYYY-MM-DDTHH:mm:00" hora local
-  endLocal: string;   // "YYYY-MM-DDTHH:mm:00" hora local
+  startLocal: string;
+  endLocal: string;
   attendees: { emailAddress: { address: string; name?: string }, type?: 'required' | 'optional' }[];
   coHostUpn: string;
 }) {
   const { token, userId, subject, startLocal, endLocal, attendees, coHostUpn } = params;
 
+  console.log('\n🎯 [CREATE EVENT] Iniciando creación de evento...');
+  console.log(`   📌 Subject: ${subject}`);
+  console.log(`   📌 Start: ${startLocal}`);
+  console.log(`   📌 End: ${endLocal}`);
+  console.log(`   📌 Co-Host: ${coHostUpn}`);
+  console.log(`   📌 Attendees: ${attendees.length}`);
+
+  // ✅ VALIDAR EMAIL DEL CO-HOST
+  if (!isValidEmail(coHostUpn)) {
+    console.error(`❌ [CREATE EVENT] Email inválido: ${coHostUpn}`);
+    throw new Error(`Email inválido: ${coHostUpn}`);
+  }
+
+  // ✅ VERIFICAR QUE EL USUARIO EXISTE EN AZURE AD
+  const userExists = await verifyUserExists(token, coHostUpn);
+  if (!userExists) {
+    console.error(`❌ [CREATE EVENT] Usuario no encontrado en Azure AD: ${coHostUpn}`);
+    throw new Error(`Usuario no encontrado en Azure AD: ${coHostUpn}`);
+  }
+
+  console.log(`✅ [CREATE EVENT] Usuario verificado en Azure AD: ${coHostUpn}`);
+
   // 1) Crear el evento con Teams habilitado
+  console.log('📤 [CREATE EVENT] Creando evento en calendario...');
   const createRes = await fetch(`https://graph.microsoft.com/v1.0/users/${userId}/events`, {
     method: 'POST',
     headers: {
@@ -130,15 +192,20 @@ async function createTeamsEventForDate(params: {
   const created = (await createRes.json()) as GraphEventResponse;
 
   if (!createRes.ok || !created?.id) {
+    console.error('❌ [CREATE EVENT] Error al crear evento:', created?.error?.message);
     throw new Error(`[Teams] Error creando evento: ${created?.error?.message ?? 'Desconocido'}`);
   }
 
+  console.log(`✅ [CREATE EVENT] Evento creado con ID: ${created.id}`);
+
   let joinUrl = created.onlineMeeting?.joinUrl ?? '';
-  let meetingId = created.onlineMeeting?.id ?? '';
+  let meetingIdShort = created.onlineMeeting?.id ?? '';
+  let meetingIdChat = '';
   const eventId = created.id;
 
-  // 2) Si falta info, expandir
-  if (!joinUrl || !meetingId) {
+  // 2) Si falta info, expandir con $expand
+  if (!joinUrl || !meetingIdShort) {
+    console.log('🔍 [CREATE EVENT] Expandiendo información de reunión...');
     const evGet = await fetch(
       `https://graph.microsoft.com/v1.0/users/${userId}/events/${encodeURIComponent(eventId)}?$expand=onlineMeeting`,
       { method: 'GET', headers: { Authorization: `Bearer ${token}` } }
@@ -146,22 +213,51 @@ async function createTeamsEventForDate(params: {
     if (evGet.ok) {
       const evFull = (await evGet.json()) as GraphEventResponse;
       joinUrl = evFull.onlineMeeting?.joinUrl ?? joinUrl;
-      meetingId = evFull.onlineMeeting?.id ?? meetingId;
+      meetingIdShort = evFull.onlineMeeting?.id ?? meetingIdShort;
+      console.log(`✅ [CREATE EVENT] Información expandida obtenida`);
     } else {
-      console.warn('[⚠️ TEAMS] No se pudo expandir onlineMeeting para obtener joinUrl/meetingId');
+      console.warn('[⚠️ CREATE EVENT] No se pudo expandir onlineMeeting');
     }
   }
 
-  // 3) PATCH para coorganizer/grabación (best-effort)
-  if (meetingId) {
+  if (joinUrl) {
+    try {
+      const match = /\/19%3a(meeting_[^%/]+)%40thread\.v2\//.exec(joinUrl);
+      if (match?.[1]) {
+        meetingIdChat = `19:${decodeURIComponent(match[1])}@thread.v2`;
+        console.log(`✅ [CREATE EVENT] MeetingId del chat: ${meetingIdChat}`);
+      }
+    } catch (err) {
+      console.warn('[⚠️ CREATE EVENT] No se pudo extraer meetingId:', err);
+    }
+  }
+
+  console.log(`📊 [CREATE EVENT] Estado actual:`, {
+    joinUrl: joinUrl ? 'OK' : 'MISSING',
+    meetingIdShort: meetingIdShort ? 'OK' : 'MISSING',
+    meetingIdChat: meetingIdChat ? 'OK' : 'MISSING',
+  });
+
+  // 3) PATCH para coorganizer/grabación
+  if (meetingIdShort) {
     const patchBody = {
       allowRecording: true,
       allowTranscription: true,
-      participants: { attendees: [{ upn: coHostUpn, role: 'coorganizer' }] },
+      participants: {
+        attendees: [
+          {
+            upn: coHostUpn,
+            role: 'coorganizer'
+          }
+        ]
+      }
     };
 
+    console.log('🔄 [PATCH] Asignando co-organizador...');
+    console.log('📋 [PATCH] Body:', JSON.stringify(patchBody, null, 2));
+
     const patchRes = await fetch(
-      `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/${encodeURIComponent(meetingId)}`,
+      `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/${encodeURIComponent(meetingIdShort)}`,
       {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -169,21 +265,39 @@ async function createTeamsEventForDate(params: {
       }
     );
 
+    console.log(`📊 [PATCH] Response status: ${patchRes.status}`);
+
     if (!patchRes.ok) {
-      const errTxt = await patchRes.text();
-      console.warn('[⚠️ TEAMS] No se pudo asignar coorganizer o habilitar grabación:', errTxt);
+      const errText = await patchRes.text();
+      console.error('❌ [PATCH] Error completo:', {
+        status: patchRes.status,
+        statusText: patchRes.statusText,
+        body: errText,
+        coHostUpn,
+        meetingIdShort
+      });
+
+      console.warn(`⚠️ [PATCH] No se pudo asignar co-organizador. El evento se creó pero sin permisos.`);
+    } else {
+      console.log(`✅ [PATCH] Co-organizador ${coHostUpn} asignado correctamente`);
     }
+  } else {
+    console.warn('[⚠️ PATCH] No se pudo asignar coorganizer porque falta meetingIdShort');
   }
 
-  return { eventId, meetingId, joinUrl };
+  console.log('✅ [CREATE EVENT] Evento completado exitosamente\n');
+  return { eventId, meetingId: meetingIdChat, joinUrl };
 }
 
-
-
+// ==========================================
+// ✅ ENDPOINT POST PRINCIPAL
+// ==========================================
 
 export async function POST(req: Request) {
   try {
-    console.log('🔵 [START] Iniciando función POST');
+    console.log('\n\n🔵 ====================================');
+    console.log('🔵 [START] POST /api/super-admin/teams');
+    console.log('🔵 ====================================\n');
 
     interface CreateMeetingRequest {
       courseId: number;
@@ -193,10 +307,10 @@ export async function POST(req: Request) {
       repeatCount: number;
       daysOfWeek: string[];
       customTitles?: string[];
-      coHostEmail?: string; // 👈 NUEVO
-
+      coHostEmail?: string;
     }
 
+    const body = (await req.json()) as CreateMeetingRequest;
     const {
       courseId,
       title,
@@ -205,34 +319,67 @@ export async function POST(req: Request) {
       repeatCount,
       daysOfWeek,
       customTitles,
-      coHostEmail, // 👈 NUEVO
+      coHostEmail,
+    } = body;
 
-    } = (await req.json()) as CreateMeetingRequest;
+    console.log('📥 [REQUEST] Datos recibidos:');
+    console.log('   - courseId:', courseId);
+    console.log('   - title:', title);
+    console.log('   - startDateTime:', startDateTime);
+    console.log('   - durationMinutes:', durationMinutes);
+    console.log('   - repeatCount:', repeatCount);
+    console.log('   - daysOfWeek:', daysOfWeek);
+    console.log('   - customTitles:', customTitles?.length ?? 0);
+    console.log('   - coHostEmail:', coHostEmail ?? 'no proporcionado');
 
-    console.log('🕒 startDateTime recibido:', startDateTime);
+    // ✅ VALIDAR Y NORMALIZAR EMAIL DEL CO-HOST
+    const coHostUpn = (coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co').toLowerCase();
+    console.log(`\n📧 [VALIDATION] Co-host email: ${coHostUpn}`);
 
+    if (!isValidEmail(coHostUpn)) {
+      console.error(`❌ [VALIDATION] Email inválido: ${coHostUpn}`);
+      return NextResponse.json(
+        { error: `Email inválido para co-organizador: ${coHostUpn}` },
+        { status: 400 }
+      );
+    }
+
+    console.log('✅ [VALIDATION] Email tiene formato válido');
+
+    // ✅ VALIDAR FECHA
     const firstStartDate = new Date(startDateTime);
     if (isNaN(firstStartDate.getTime())) {
+      console.error(`❌ [VALIDATION] Fecha inválida: ${startDateTime}`);
       throw new Error(
         `[Fecha inválida] El campo 'startDateTime' no es una fecha válida: ${startDateTime}`
       );
     }
 
-    console.log('📥 Request recibido con:', {
-      courseId,
-      title,
-      startDateTime,
-      durationMinutes,
-      repeatCount,
-      daysOfWeek,
-      customTitles,
-    });
+    console.log(`✅ [VALIDATION] Fecha válida: ${firstStartDate.toISOString()}`);
 
-    console.log('🟡 [TOKEN] Solicitando token de Microsoft Graph...');
+    // ✅ OBTENER TOKEN
     const token = await getGraphToken();
 
+    // ✅ VERIFICAR QUE EL CO-HOST EXISTE EN AZURE AD
+    console.log('\n🔍 [VERIFICATION] Verificando co-host en Azure AD...');
+    const coHostExists = await verifyUserExists(token, coHostUpn);
 
-    console.log('🟡 [BD] Consultando estudiantes matriculados...');
+    if (!coHostExists) {
+      console.error(`❌ [VERIFICATION] Usuario no encontrado: ${coHostUpn}`);
+      return NextResponse.json(
+        {
+          error: `El usuario ${coHostUpn} no existe en Azure AD. Por favor verifica el correo.`,
+          suggestion: 'Asegúrate de que el correo pertenece a tu organización Microsoft 365.',
+          testedEmail: coHostUpn
+        },
+        { status: 404 }
+      );
+    }
+
+    console.log(`✅ [VERIFICATION] Co-host existe en Azure AD: ${coHostUpn}`);
+
+    // ✅ CONSULTAR ESTUDIANTES
+    console.log('\n🔍 [DATABASE] Consultando estudiantes matriculados...');
     const enrolledStudents = await db.query.enrollments.findMany({
       where: (enr, { eq }) => eq(enr.courseId, courseId),
       with: {
@@ -241,7 +388,7 @@ export async function POST(req: Request) {
         },
       },
     });
-    console.log('✅ Estudiantes encontrados:', enrolledStudents.length);
+    console.log(`✅ [DATABASE] Estudiantes encontrados: ${enrolledStudents.length}`);
 
     const attendees: GraphAttendee[] = enrolledStudents.map((enr) => ({
       emailAddress: {
@@ -251,37 +398,35 @@ export async function POST(req: Request) {
       type: 'required' as const,
     }));
 
-    // ➕ Asegurar que el cohost reciba invitación (aparece en su calendario)
-    const coHostUpn = (coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co').toLowerCase();
-    if (coHostUpn && !attendees.some(a => a.emailAddress.address.toLowerCase() === coHostUpn)) {
+    // ➕ Asegurar que el cohost reciba invitación
+    if (!attendees.some(a => a.emailAddress.address.toLowerCase() === coHostUpn)) {
+      console.log(`📧 [ATTENDEES] Agregando co-host a lista de asistentes: ${coHostUpn}`);
       attendees.push({
         emailAddress: { address: coHostUpn, name: coHostUpn },
         type: 'required' as const,
       });
+    } else {
+      console.log(`✅ [ATTENDEES] Co-host ya está en lista de estudiantes`);
     }
 
-
     const totalClasses = repeatCount * daysOfWeek.length;
+    console.log(`\n📊 [CALCULATION] Total de clases a crear: ${totalClasses}`);
+
     const classDates = generateClassDates(
       firstStartDate,
       daysOfWeek,
       totalClasses
     );
 
-    console.log(`📅 Generadas ${classDates.length} fechas de clase:`);
-    classDates.forEach((d, i) => {
-      console.log(`→ Clase ${i + 1}: ${d.toISOString()}`);
-    });
-
     if (customTitles && customTitles.length !== totalClasses) {
       console.warn(
-        `[⚠️ Advertencia] Se esperaban ${totalClasses} títulos pero llegaron ${customTitles.length}`
+        `⚠️ [WARNING] Se esperaban ${totalClasses} títulos pero llegaron ${customTitles.length}`
       );
     }
 
-    console.log('🟡 [MAPPING + TEAMS] Creando una reunión por cada clase y preparando para guardar...');
+    console.log('\n🔄 [CREATION] Iniciando creación de eventos en Teams...');
 
-    const userIdOwner = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417'; // mismo owner del calendario
+    const userIdOwner = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
     const meetings: {
       courseId: number;
       title: string;
@@ -304,49 +449,46 @@ export async function POST(req: Request) {
           ? `${title} (${customTitles[index]!.trim()})`
           : `${title} (Clase ${index + 1})`;
 
-      // Crear evento individual en Teams para esta clase
-      const created = await createTeamsEventForDate({
-        token,
-        userId: userIdOwner,
-        subject: displayTitle,
-        startLocal,
-        endLocal,
-        attendees,    // los mismos asistentes para cada clase
-        coHostUpn,    // coorganizer
-      });
+      console.log(`\n📝 [CREATION] Clase ${index + 1}/${classDates.length}: ${displayTitle}`);
 
-      // Convertir a UTC correcto para almacenar
-      const startUTC = parseBogotaLocalToUTC(startLocal);
-      const endUTC = parseBogotaLocalToUTC(endLocal);
+      try {
+        const created = await createTeamsEventForDate({
+          token,
+          userId: userIdOwner,
+          subject: displayTitle,
+          startLocal,
+          endLocal,
+          attendees,
+          coHostUpn,
+        });
 
-      meetings.push({
-        courseId: Number(courseId),
-        title: displayTitle,
-        startDateTime: startUTC,
-        endDateTime: endUTC,
-        joinUrl: created.joinUrl ?? '',
-        weekNumber: Math.floor(index / daysOfWeek.length) + 1,
-        meetingId: created.meetingId ?? '',
-      });
+        const startUTC = parseBogotaLocalToUTC(startLocal);
+        const endUTC = parseBogotaLocalToUTC(endLocal);
 
-      console.log(`✅ Clase ${index + 1}: creada en Teams ->`, {
-        meetingId: created.meetingId,
-        joinUrl: created.joinUrl,
-        start: startLocal,
-        end: endLocal,
-      });
+        meetings.push({
+          courseId: Number(courseId),
+          title: displayTitle,
+          startDateTime: startUTC,
+          endDateTime: endUTC,
+          joinUrl: created.joinUrl ?? '',
+          weekNumber: Math.floor(index / daysOfWeek.length) + 1,
+          meetingId: created.meetingId ?? '',
+        });
+
+        console.log(`✅ [CREATION] Clase ${index + 1} creada exitosamente`);
+      } catch (error) {
+        console.error(`❌ [CREATION] Error en clase ${index + 1}:`, error);
+        throw error;
+      }
     }
 
-    console.log('[🗃️ Reuniones preparadas para insertar]:', meetings);
+    console.log(`\n✅ [CREATION] Todas las clases creadas: ${meetings.length}`);
 
-
-
-
-    console.log('🟡 [BD] Insertando reuniones en la base de datos...');
+    console.log('\n💾 [DATABASE] Insertando reuniones en BD...');
     await db.insert(classMeetings).values(meetings);
-    console.log('[✅ BD] Reuniones insertadas:', meetings.length);
+    console.log('✅ [DATABASE] Reuniones insertadas correctamente');
 
-    console.log('📧 [EMAIL] Preparando notificación...');
+    console.log('\n📧 [EMAIL] Preparando notificación...');
     const toRecipients = enrolledStudents.map((enr) => ({
       emailAddress: {
         address: enr.user.email,
@@ -354,44 +496,26 @@ export async function POST(req: Request) {
       },
     }));
 
-    const _diasUnicos = [
-      ...new Set(
-        classDates.map((date) =>
-          date.toLocaleDateString('es-CO', { weekday: 'long' })
-        )
-      ),
-    ].join(', ');
-
-
-    // Usar los meetings (uno por clase) para listar fecha/hora y link individual
     const clasesListadoHTML = meetings
       .map((m, i) => {
         const nombreClase = customTitles?.[i]?.trim() ?? `Clase ${i + 1}`;
-
-        const fechaLocal = new Date(
-          // convertir UTC guardado a string legible local
-          m.startDateTime.getTime() - (5 * 60 * 60 * 1000) // ajustar visual -05 si lo deseas
-        );
-
+        const fechaLocal = new Date(m.startDateTime.getTime() - (5 * 60 * 60 * 1000));
         const fechaStr = fechaLocal.toLocaleDateString('es-CO', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         });
-
         const horaStr = fechaLocal.toLocaleTimeString('es-CO', {
           hour: '2-digit',
           minute: '2-digit',
         });
-
         const link = m.joinUrl ? `<a href="${m.joinUrl}">Unirse</a>` : '(enlace no disponible)';
         return `<li><strong>${nombreClase}</strong>: ${fechaStr} a las ${horaStr} — ${link}</li>`;
       })
       .join('');
 
-
-    console.log('📤 [EMAIL] Enviando correo...');
+    console.log('📤 [EMAIL] Enviando correo a estudiantes...');
     await fetch(
       'https://graph.microsoft.com/v1.0/users/0843f2fa-3e0b-493f-8bb9-84b0aa1b2417/sendMail',
       {
@@ -423,10 +547,25 @@ export async function POST(req: Request) {
     );
     console.log('✅ [EMAIL] Correo enviado correctamente');
 
-    return NextResponse.json({ meetings });
+    console.log('\n🟢 ====================================');
+    console.log('🟢 [SUCCESS] Proceso completado');
+    console.log('🟢 ====================================\n');
+
+    return NextResponse.json({
+      success: true,
+      meetings,
+      totalCreated: meetings.length,
+      coHost: coHostUpn
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error('[❌ Error en el endpoint /teams]', err.message);
+    console.error('\n❌ ====================================');
+    console.error('❌ [ERROR] Error en el endpoint /teams');
+    console.error('❌ ====================================');
+    console.error('Error:', err.message);
+    console.error('Stack:', error);
+    console.error('❌ ====================================\n');
+
     return NextResponse.json(
       { error: err.message ?? 'Error interno' },
       { status: 500 }

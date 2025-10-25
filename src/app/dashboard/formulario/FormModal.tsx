@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo,useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -648,7 +648,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       if (actaGrado) fd.append('actaGrado', actaGrado);
       if (pagare) fd.append('pagare', pagare);
 
-      const res = await fetch('/api/super-admin/form-inscription/', {
+      const res = await fetch('/api/super-admin/form-inscription', {
         method: 'POST',
         body: fd, // ¡sin Content-Type manual!
       });

@@ -20,13 +20,13 @@ import {
 import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
 // Tabla de usuarios (con soporte para Clerk)
+// ... imports y definición anterior
+
 export const users = pgTable(
   'users',
   {
     id: text('id').primaryKey(),
-    role: text('role', {
-      enum: ['estudiante', 'educador', 'admin', 'super-admin'],
-    }).notNull(),
+    role: text('role', { enum: ['estudiante', 'educador', 'admin', 'super-admin'] }).notNull(),
     name: text('name'),
     email: text('email').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -37,20 +37,45 @@ export const users = pgTable(
     address: text('address'),
     age: integer('age'),
     birthDate: date('birth_date'),
-    subscriptionStatus: text('subscription_status')
-      .default('inactive')
-      .notNull(),
-    subscriptionEndDate: timestamp('subscription_end_date', {
-      withTimezone: true,
-      mode: 'date',
-    }),
-    planType: text('plan_type', {
-      enum: ['none', 'Pro', 'Premium', 'Enterprise'], // Actualizar los valores exactos
-    }),
-    purchaseDate: timestamp('purchase_date', {
-      withTimezone: true,
-      mode: 'date',
-    }),
+    subscriptionStatus: text('subscription_status').default('inactive').notNull(),
+    subscriptionEndDate: timestamp('subscription_end_date', { withTimezone: true, mode: 'date' }),
+    planType: text('plan_type', { enum: ['none', 'Pro', 'Premium', 'Enterprise'] }),
+    purchaseDate: timestamp('purchase_date', { withTimezone: true, mode: 'date' }),
+
+    // ➕ Campos que ya estabas usando en la ruta
+    document: text('document'),
+    modalidad: text('modalidad'), // ⚠️ dejar SOLO ESTA definición (no duplicar)
+    inscripcionValor: integer('inscripcion_valor'),
+    paymentMethod: text('payment_method'),
+    cuota1Fecha: date('cuota1_fecha'),
+    cuota1Metodo: text('cuota1_metodo'),
+    cuota1Valor: integer('cuota1_valor'),
+    valorPrograma: integer('valor_programa'),
+    inscripcionOrigen: text('inscripcion_origen'),
+
+    // ➕ Campos migrados desde user_inscription_details (mismos nombres snake_case)
+    identificacionTipo: text('identificacion_tipo'),
+    identificacionNumero: text('identificacion_numero'),
+    nivelEducacion: text('nivel_educacion'),
+    tieneAcudiente: text('tiene_acudiente'),
+    acudienteNombre: text('acudiente_nombre'),
+    acudienteContacto: text('acudiente_contacto'),
+    acudienteEmail: text('acudiente_email'),
+
+    programa: text('programa'),
+    fechaInicio: text('fecha_inicio'), // si luego quieres date: cambia a date('fecha_inicio')
+    comercial: text('comercial'),
+    sede: text('sede'),
+    horario: text('horario'),
+    numeroCuotas: text('numero_cuotas'),
+    pagoInscripcion: text('pago_inscripcion'),
+    pagoCuota1: text('pago_cuota1'),
+
+    // Claves S3 (documentos subidos)
+    idDocKey: text('id_doc_key'),
+    utilityBillKey: text('utility_bill_key'),
+    diplomaKey: text('diploma_key'),
+    pagareKey: text('pagare_key'),
   },
   (table) => [unique('users_email_role_unique').on(table.email, table.role)]
 );

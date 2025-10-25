@@ -50,7 +50,6 @@ export interface MassiveUserUpdateInput {
   customFields?: Record<string, string>;
 }
 
-type UserRole = 'admin' | 'educador' | 'super-admin' | 'estudiante';
 
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
@@ -591,31 +590,78 @@ export async function deleteProgram(programId: number): Promise<void> {
 
 export { };
 
+// Añade/actualiza el tipo para incluir TODOS los users.* que manejas en la UI
 export interface FullUserUpdateInput {
   userId: string;
-  firstName: string;
-  lastName: string;
-  email: string; // 📧 Campo de email (requerido)
-  role: string;
-  status: string;
-  permissions: string[];
+
+  // básicos
+  firstName?: string;
+  lastName?: string;
+  role?: 'admin' | 'educador' | 'super-admin' | 'estudiante';
+  status?: 'active' | 'inactive' | 'activo' | 'inactivo' | 'no verificado';
+  email?: string;
+  permissions?: string[];
+
+  // contacto / perfil
   phone?: string | null;
   address?: string | null;
   city?: string | null;
   country?: string | null;
-  birthDate?: string | null;
-  planType?: string | null;
-  purchaseDate?: string | null;
-  subscriptionEndDate?: string | null;
+  birthDate?: string | Date | null;
+
+  // plan / fechas
+  planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise' | null;
+  purchaseDate?: string | Date | null;
+  subscriptionEndDate?: string | Date | null;
+
+  // ====== users.* (inscripción / cartera) ======
+  document?: string | null;
+  modalidad?: string | null;
+  inscripcionValor?: number | string | null;
+  paymentMethod?: string | null;
+
+  cuota1Fecha?: string | Date | null;
+  cuota1Metodo?: string | null;
+  cuota1Valor?: number | string | null;
+
+  valorPrograma?: number | string | null;
+
+  identificacionTipo?: string | null;
+  identificacionNumero?: string | null;
+  nivelEducacion?: string | null;
+  tieneAcudiente?: string | null;
+  acudienteNombre?: string | null;
+  acudienteContacto?: string | null;
+  acudienteEmail?: string | null;
+
+  programa?: string | null;
+  fechaInicio?: string | Date | null;
+  comercial?: string | null;
+  sede?: string | null;
+  horario?: string | null;
+  numeroCuotas?: string | null;
+  pagoInscripcion?: string | null;
+  pagoCuota1?: string | null;
+
+  idDocKey?: string | null;
+  utilityBillKey?: string | null;
+  diplomaKey?: string | null;
+  pagareKey?: string | null;
+  inscripcionOrigen?: string | null;
+  carteraStatus?: string | null;
+  // matriculas
+  programId?: number | null;
+  courseId?: number | null;
+
+  // campos personalizados extra (si los sigues usando)
   customFields?: Record<string, string>;
-  programId?: number;
-  courseId?: number;
 }
 
-function formatDateForClerk(date?: string | null): string | null {
+
+function formatDateForClerk(date?: string | Date | null): string | null {
   if (!date) return null;
 
-  const baseDate = new Date(date);
+  const baseDate = date instanceof Date ? new Date(date) : new Date(String(date));
   if (isNaN(baseDate.getTime())) return null;
 
   // Obtener hora actual
@@ -644,7 +690,50 @@ export async function updateFullUser(
     purchaseDate,
     subscriptionEndDate,
     customFields,
+
+    // ====== users.* (inscripción / cartera) ======
+    document,
+    modalidad,
+
+    inscripcionValor,
+    paymentMethod,
+
+    cuota1Fecha,
+    cuota1Metodo,
+    cuota1Valor,
+
+    valorPrograma,
+
+    identificacionTipo,
+    identificacionNumero,
+    nivelEducacion,
+    tieneAcudiente,
+    acudienteNombre,
+    acudienteContacto,
+    acudienteEmail,
+
+    programa,
+    fechaInicio,
+    comercial,
+    sede,
+    horario,
+    numeroCuotas,
+    pagoInscripcion,
+    pagoCuota1,
+
+    idDocKey,
+    utilityBillKey,
+    diplomaKey,
+    pagareKey,
+
+    inscripcionOrigen,
+    carteraStatus,
+
+    // matriculas
+    programId,
+    courseId,
   } = input;
+
 
   const client = await clerkClient();
   let userExistsInClerk = true;
@@ -677,18 +766,44 @@ export async function updateFullUser(
   const formattedEndDate = formatDateForClerk(subscriptionEndDate);
 
 
+  // Normalizadores seguros (no rompen null/undefined)
+  const toNumOrNull = (v: unknown): number | null => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+    if (typeof v === 'string') {
+      const n = Number(v.replace(/[^\d.-]/g, ''));
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  };
+
+  const toDateOrNull = (v: unknown): Date | null => {
+    if (v == null || v === '') return null;
+    const d = v instanceof Date ? v : new Date(v as string);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const toLowerEnum = (v: unknown): string | null =>
+    typeof v === 'string' ? v.trim().toLowerCase() : null;
 
   try {
     if (userExistsInClerk) {
       // (opcional) sanear metadata para evitar 422
       const newMetadataRaw = {
         ...existingMetadata,
-        role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+        role: (role ?? 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
         planType: planType ?? 'none',
         subscriptionStatus: normalizedStatus,
         subscriptionEndDate: formattedEndDate ?? null,
         permissions: Array.isArray(permissions) ? permissions : [],
+
+        // opcional, útil para ver datos en el Dashboard de Clerk:
+        inscripcionOrigen: toLowerEnum(inscripcionOrigen),
+        carteraStatus: toLowerEnum(carteraStatus),
+        modalidad: modalidad ?? null,
+        paymentMethod: paymentMethod ?? null,
+        programa: programa ?? null,
       };
+
       const safeMetadata = JSON.parse(JSON.stringify(newMetadataRaw));
 
       // 1) Actualiza nombre
@@ -725,28 +840,72 @@ export async function updateFullUser(
     await db
       .update(users)
       .set({
-        name: `${firstName} ${lastName}`,
-        role: role as UserRole,
-        subscriptionStatus: status,
-        planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(
-          planType ?? ''
-        )
-          ? (planType as 'none' | 'Pro' | 'Premium' | 'Enterprise')
+        // básicos
+        name: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
+        role: role!,
+        subscriptionStatus: status, // guardas "activo / inactivo / no verificado" si así lo usas en tu UI
+        planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType ?? '')
+          ? (planType!)
           : null,
+        email: email,
+
+        // contacto / perfil
         phone: phone ?? null,
         address: address ?? null,
         city: city ?? null,
         country: country ?? null,
-        birthDate: birthDate ? formatDateForClerk(birthDate) : null,
-        purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
-        subscriptionEndDate: formattedEndDate
-          ? new Date(formattedEndDate)
-          : null,
-        updatedAt: new Date(),
-        email: email,
+        birthDate: birthDate ? toDateOrNull(birthDate)?.toISOString() : null,
 
+        // plan / fechas
+        purchaseDate: purchaseDate ? toDateOrNull(purchaseDate) : null,
+        subscriptionEndDate: formattedEndDate ? new Date(formattedEndDate) : null,
+
+        // ====== users.* (inscripción / cartera) ======
+        document: document ?? null,
+        modalidad: modalidad ?? null,
+
+        inscripcionValor: toNumOrNull(inscripcionValor),
+        paymentMethod: paymentMethod ?? null,
+
+        cuota1Fecha: cuota1Fecha ? toDateOrNull(cuota1Fecha)?.toISOString() : null,
+        cuota1Metodo: cuota1Metodo ?? null,
+        cuota1Valor: toNumOrNull(cuota1Valor),
+
+        valorPrograma: toNumOrNull(valorPrograma),
+
+        identificacionTipo: identificacionTipo ?? null,
+        identificacionNumero: identificacionNumero ?? null,
+        nivelEducacion: nivelEducacion ?? null,
+        tieneAcudiente: tieneAcudiente ?? null,
+        acudienteNombre: acudienteNombre ?? null,
+        acudienteContacto: acudienteContacto ?? null,
+        acudienteEmail: acudienteEmail ?? null,
+
+        programa: programa ?? null,
+        fechaInicio: toDateOrNull(fechaInicio)?.toISOString() ?? null,
+        comercial: comercial ?? null,
+        sede: sede ?? null,
+        horario: horario ?? null,
+        numeroCuotas: numeroCuotas ?? null,
+        pagoInscripcion: pagoInscripcion ?? null,
+        pagoCuota1: pagoCuota1 ?? null,
+
+        idDocKey: idDocKey ?? null,
+        utilityBillKey: utilityBillKey ?? null,
+        diplomaKey: diplomaKey ?? null,
+        pagareKey: pagareKey ?? null,
+
+        inscripcionOrigen: ((): 'formulario' | 'artiefy' | null => {
+          const v = toLowerEnum(inscripcionOrigen);
+          if (v === 'formulario' || v === 'artiefy') return v;
+          return null;
+        })(),
+
+        // meta
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+
 
     if (customFields && Object.keys(customFields).length > 0) {
       for (const [key, value] of Object.entries(customFields)) {
@@ -782,39 +941,29 @@ export async function updateFullUser(
       `usuario en programa: userId=${userId}, programaId=${input.programId}`
     );
 
-    if (input.programId != null) {
-      console.log(
-        `📝 Matriculando usuario en programa: userId=${userId}, programaId=${input.programId}`
-      );
+    console.log(`usuario en programa: userId=${userId}, programaId=${programId}`);
+    if (programId != null) {
+      console.log(`📝 Matriculando usuario en programa: userId=${userId}, programaId=${programId}`);
       await db.insert(enrollmentPrograms).values({
         userId,
-        programaId: input.programId,
+        programaId: programId,
         enrolledAt: new Date(),
         completed: false,
       });
     }
 
-    // 2) Matricular en curso
-    if (input.courseId != null) {
-      console.log(
-        `📝 Matriculando usuario en curso: userId=${userId}, courseId=${input.courseId}`
-      );
-      // Evitar duplicados
+
+    if (courseId != null) {
+      console.log(`📝 Matriculando usuario en curso: userId=${userId}, courseId=${courseId}`);
       const exists = await db
         .select()
         .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.userId, userId),
-            eq(enrollments.courseId, input.courseId)
-          )
-        )
+        .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)))
         .limit(1);
-
       if (exists.length === 0) {
         await db.insert(enrollments).values({
           userId,
-          courseId: input.courseId,
+          courseId: courseId,
           enrolledAt: new Date(),
           completed: false,
         });
@@ -826,19 +975,15 @@ export async function updateFullUser(
         .set({
           planType: 'Premium',
           subscriptionStatus: 'active',
-          // Si `subscriptionEndDate` viene como string, pásalo a Date:
-          subscriptionEndDate: subscriptionEndDate
-            ? new Date(subscriptionEndDate)
-            : null,
+          subscriptionEndDate: subscriptionEndDate ? toDateOrNull(subscriptionEndDate) : null,
         })
         .where(eq(users.id, userId))
         .execute();
 
       // 4) Actualiza el metadata en Clerk
       const clerk = await clerkClient();
-      const formattedEndDateStr = input.subscriptionEndDate
-        ? formatDateToClerk(new Date(input.subscriptionEndDate))
-        : null;
+      const formattedEndDateStr = subscriptionEndDate
+        ? formatDateToClerk(new Date(String(subscriptionEndDate))) : null;
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: {
           planType: 'Premium',
@@ -847,6 +992,7 @@ export async function updateFullUser(
         },
       });
     }
+
 
     return true;
   } catch (error) {
@@ -872,13 +1018,21 @@ export async function updateMultipleUsers(
       continue;
     }
 
+    const allowedStatuses = ['active', 'inactive', 'activo', 'inactivo', 'no verificado'] as const;
+    const rawStatus = input.status ?? user.subscriptionStatus ?? 'active';
+    const statusValue = (allowedStatuses.includes(rawStatus as typeof allowedStatuses[number]) ? rawStatus : 'active') as | 'active'
+      | 'inactive'
+      | 'activo'
+      | 'inactivo'
+      | 'no verificado';
+
     const result = await updateFullUser({
       userId,
       firstName: user.name?.split(' ')[0] ?? 'Usuario',
       lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
       email: user.email ?? '', // <-- Add email property from user object
       role: user.role ?? 'estudiante',
-      status: input.status ?? user.subscriptionStatus ?? 'active',
+      status: statusValue,
       permissions: input.permissions ?? [],
       phone: user.phone ?? null,
       address: user.address ?? null,
