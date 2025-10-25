@@ -323,8 +323,54 @@ export default function FormModal({ isOpen, onClose }: Props) {
     setPagare(null);
     setShowSuccess(false); // 👈 vuelve al formulario
   };
+  // Función para subir UN archivo a S3
+  async function uploadFileToS3(file: File, prefix: string) {
+    if (!file) return null;
 
+    console.log(`[UPLOAD] Subiendo ${file.name} a S3...`);
 
+    try {
+      // 1. Obtener URL firmada
+      const response = await fetch('/api/super-admin/get-upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          prefix,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error obteniendo URL de subida');
+
+      const { uploadUrl, fields, key, finalUrl } = await response.json();
+
+      // 2. Subir archivo directo a S3
+      const formData = new FormData();
+      Object.entries(fields as Record<string, string>).forEach(([k, v]) => {
+        formData.append(k, v);
+      });
+      formData.append('file', file);
+
+      const uploadResponse = await fetch(uploadUrl as string, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Error subiendo archivo: ${uploadResponse.statusText}`);
+      }
+
+      console.log(`[UPLOAD] ✓ ${file.name} subido exitosamente`);
+
+      return { key, url: finalUrl, name: file.name };
+    } catch (error) {
+      console.error(`[UPLOAD] Error subiendo ${file.name}:`, error);
+      throw error;
+    }
+  }
+
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const [comprobanteInscripcion, setComprobanteInscripcion] =
     useState<File | null>(null);
@@ -570,12 +616,14 @@ export default function FormModal({ isOpen, onClose }: Props) {
     setSubmitting(true);
     setSubmittedOK(null);
     setSubmitMessage('');
+    setUploadingFiles(true);
 
     // ✅ Validación aquí, no en render
     const v = validate(fields);
     if (Object.keys(v).length > 0) {
       setErrors(v);
       setSubmitting(false);
+      setUploadingFiles(false);
       setSubmittedOK(false);
       setSubmitMessage('Por favor corrige los campos marcados.');
       return;
@@ -584,33 +632,22 @@ export default function FormModal({ isOpen, onClose }: Props) {
     // ✅ Validación condicional del comprobante aquí
     if (fields.pagoInscripcion === 'Sí' && !comprobanteInscripcion) {
       setSubmitting(false);
+      setUploadingFiles(false);
       setSubmittedOK(false);
       setSubmitMessage('Debes adjuntar el comprobante de pago de inscripción.');
       return;
     }
 
-    if (Object.keys(v).length > 0) {
-      setErrors(v);
-      setSubmitting(false);
-      setSubmittedOK(false);
-      setSubmitMessage('Por favor corrige los campos marcados.');
-      return;
-    }
-
-    // … dentro de handleSubmit, después de const v = validate(fields) …
+    // Validaciones de archivos
     const fe: Record<string, string> = {};
-
-    // Requeridos: documento de identidad y pagaré
     if (!docIdentidad) fe.docIdentidad = 'Adjunta el documento de identidad.';
     if (!pagare) fe.pagare = 'Adjunta el pagaré.';
 
-    // (Opcional) Validaciones de tamaño/tipo
     const MAX_MB = 10;
     const check = (f: File | null, key: string) => {
       if (!f) return;
       if (f.size > MAX_MB * 1024 * 1024)
         fe[key] = `Máximo ${MAX_MB}MB por archivo.`;
-      // ejemplo de tipo permitido
       const okType =
         f.type === 'application/pdf' || f.type.startsWith('image/');
       if (!okType) fe[key] = 'Solo PDF o imágenes.';
@@ -619,38 +656,105 @@ export default function FormModal({ isOpen, onClose }: Props) {
     check(actaGrado, 'actaGrado');
     check(reciboServicio, 'reciboServicio');
     check(pagare, 'pagare');
+    check(comprobanteInscripcion, 'comprobanteInscripcion');
 
     setFileErrors(fe);
 
     if (Object.keys(v).length > 0 || Object.keys(fe).length > 0) {
       setErrors(v);
       setSubmitting(false);
+      setUploadingFiles(false);
       setSubmittedOK(false);
       setSubmitMessage('Por favor corrige los campos marcados.');
       return;
     }
 
-
     try {
-      const fd = new FormData();
+      // 🔥 SUBIR TODOS LOS ARCHIVOS A S3 PRIMERO
+      interface FileUploadResult {
+        key: string;
+        url: string;
+        name: string;
+      }
 
-      // Normaliza TODO antes de enviar
+      const fileUploads: Record<string, FileUploadResult> = {};
+      const fileFields = [
+        { file: docIdentidad, name: 'docIdentidad', prefix: 'identidad' },
+        { file: reciboServicio, name: 'reciboServicio', prefix: 'servicio' },
+        { file: actaGrado, name: 'actaGrado', prefix: 'diploma' },
+        { file: pagare, name: 'pagare', prefix: 'pagare' },
+        { file: comprobanteInscripcion, name: 'comprobanteInscripcion', prefix: 'comprobante-inscripcion' },
+      ];
+
+      for (const { file, name, prefix } of fileFields) {
+        if (file && file.size > 0) {
+          try {
+            const uploaded = await uploadFileToS3(file, prefix);
+            if (uploaded) {
+              fileUploads[name] = uploaded;
+            }
+          } catch (err) {
+            console.error(`Error subiendo ${name}:`, err);
+            setSubmitting(false);
+            setUploadingFiles(false);
+            setSubmittedOK(false);
+            setSubmitMessage(`Error subiendo archivo: ${name}. Por favor intenta de nuevo.`);
+            return;
+          }
+        }
+      }
+
+      setUploadingFiles(false);
+
+      // Preparar datos para enviar (sin archivos, solo URLs)
+      const data: Record<string, string | undefined> = {};
+
+      // Campos de texto normalizados
       (Object.entries(fields) as [keyof Fields, string][])
         .map(([k, v]) => [k, sanitizeValueByKey(k, v)])
-        .forEach(([k, v]) => fd.append(String(k), v ?? ''));
+        .forEach(([k, v]) => {
+          data[String(k)] = v ?? '';
+        });
 
-      if (comprobanteInscripcion)
-        fd.append('comprobanteInscripcion', comprobanteInscripcion);
+      // Agregar las URLs/keys de los archivos ya subidos
+      const docId = fileUploads.docIdentidad;
+      if (docId) {
+        data.docIdentidadKey = docId.key;
+        data.docIdentidadUrl = docId.url;
+      }
 
-      // Archivos (si están)
-      if (docIdentidad) fd.append('docIdentidad', docIdentidad);
-      if (reciboServicio) fd.append('reciboServicio', reciboServicio);
-      if (actaGrado) fd.append('actaGrado', actaGrado);
-      if (pagare) fd.append('pagare', pagare);
+      const recibo = fileUploads.reciboServicio;
+      if (recibo) {
+        data.reciboServicioKey = recibo.key;
+        data.reciboServicioUrl = recibo.url;
+      }
 
+      const acta = fileUploads.actaGrado;
+      if (acta) {
+        data.actaGradoKey = acta.key;
+        data.actaGradoUrl = acta.url;
+      }
+
+      const pag = fileUploads.pagare;
+      if (pag) {
+        data.pagareKey = pag.key;
+        data.pagareUrl = pag.url;
+      }
+
+      const comprobante = fileUploads.comprobanteInscripcion;
+      if (comprobante) {
+        data.comprobanteInscripcionKey = comprobante.key;
+        data.comprobanteInscripcionUrl = comprobante.url;
+        data.comprobanteInscripcionName = comprobante.name;
+      }
+
+      console.log('[FORM] Enviando datos (archivos ya en S3)...');
+
+      // Enviar formulario SIN archivos (solo JSON)
       const res = await fetch('/api/super-admin/form-inscription', {
         method: 'POST',
-        body: fd, // ¡sin Content-Type manual!
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
 
       const payload: unknown = await res.json().catch(() => null);
@@ -667,7 +771,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
       const emailSent = hasEmailSent(payload) ? payload.emailSent : false;
 
-
       const successMsg = emailSent
         ? ` ¡Inscripción creada con éxito! Te enviamos tus credenciales a ${fields.email}. Programa: ${programTitle}.`
         : ` ¡Inscripción creada con éxito! Tu cuenta ya existía; no enviamos un nuevo correo. Programa: ${programTitle}.`;
@@ -676,8 +779,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       setSubmitMessage(successMsg);
       setShowSuccess(true);
 
-
-      // Reset de formulario y cierre
+      // Reset de formulario
       setTimeout(() => {
         setFields({ ...defaultFields });
         setErrors({});
@@ -701,6 +803,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       setSubmitMessage(msg);
     } finally {
       setSubmitting(false);
+      setUploadingFiles(false);
       setTimeout(() => setSubmittedOK(null), 4000);
     }
   };
@@ -1075,10 +1178,14 @@ export default function FormModal({ isOpen, onClose }: Props) {
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || uploadingFiles}
                     className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400 disabled:opacity-60"
                   >
-                    {submitting ? 'Enviando…' : 'Enviar Inscripción'}
+                    {uploadingFiles
+                      ? '📤 Subiendo archivos...'
+                      : submitting
+                        ? 'Enviando…'
+                        : 'Enviar Inscripción'}
                   </button>
                 </div>
               </form>

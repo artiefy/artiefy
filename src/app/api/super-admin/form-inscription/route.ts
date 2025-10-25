@@ -250,40 +250,6 @@ const s3 = new S3Client({
   },
 });
 
-async function uploadToS3(file: File | null, prefix: string) {
-  if (!file) return { key: null as string | null, url: null as string | null };
-
-  const arrayBuf = await file.arrayBuffer();
-  const Body = Buffer.from(arrayBuf);
-
-  const ext = file.type?.includes('pdf')
-    ? '.pdf'
-    : file.type?.includes('png')
-      ? '.png'
-      : file.type?.includes('jpeg')
-        ? '.jpg'
-        : '';
-
-  // 👇 guardamos TODO bajo "documents/"
-  const key = `documents/${prefix}/${uuidv4()}${ext}`;
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: BUCKET, // <- usa constante unificada
-      Key: key,
-      Body,
-      ContentType: file.type || 'application/octet-stream',
-      // ACL: 'public-read', // opcional: solo si tu bucket NO tiene política pública ya
-    })
-  );
-
-  const url = `${PUBLIC_BASE_URL}/${key}`;
-  return { key, url };
-}
-
-/* =========================
-   Validación (Zod)
-   ========================= */
 const fieldsSchema = z.object({
   primerNombre: z.string().min(1),
   segundoNombre: z.string().optional().default(''),
@@ -322,30 +288,44 @@ const fieldsSchema = z.object({
 export async function POST(req: Request) {
   console.log('==== [FORM SUBMIT] INICIO ====');
   try {
-    console.log('==== [FORM SUBMIT] INICIO ====');
-    // multipart/form-data
-    const form = await req.formData();
+    // 🔥 CAMBIO: Ahora recibimos JSON, no FormData
+    const data = await req.json();
 
-    // Campos de texto
-    const text: Record<string, string> = {};
-    form.forEach((v, k) => {
-      if (typeof v === 'string') text[k] = v;
-    });
-
-    const fields = fieldsSchema.parse(text);
+    const fields = fieldsSchema.parse(data);
     console.log('[FIELDS PARSED]:', JSON.stringify(fields));
+    // Tipar el objeto data para TypeScript
+    interface FormDataWithFiles {
+      docIdentidadKey?: string;
+      docIdentidadUrl?: string;
+      reciboServicioKey?: string;
+      reciboServicioUrl?: string;
+      actaGradoKey?: string;
+      actaGradoUrl?: string;
+      pagareKey?: string;
+      pagareUrl?: string;
+      comprobanteInscripcionKey?: string;
+      comprobanteInscripcionUrl?: string;
+      comprobanteInscripcionName?: string;
+    }
 
-    // Archivos
-    const docIdentidad = form.get('docIdentidad') as File | null;
-    const reciboServicio = form.get('reciboServicio') as File | null;
-    const actaGrado = form.get('actaGrado') as File | null;
-    const pagare = form.get('pagare') as File | null;
-    const comprobanteInscripcion = form.get(
-      'comprobanteInscripcion'
-    ) as File | null;
+    const fileData = data as FormDataWithFiles;
 
+    // 🔥 CAMBIO: Los archivos YA están en S3, solo recibimos las URLs/keys
+    // 🔥 CAMBIO: Los archivos YA están en S3, solo recibimos las URLs/keys
+    const idDocKey = fileData.docIdentidadKey ?? null;
+    const idDocUrl = fileData.docIdentidadUrl ?? null;
 
+    const utilityBillKey = fileData.reciboServicioKey ?? null;
+    const utilityBillUrl = fileData.reciboServicioUrl ?? null;
 
+    const diplomaKey = fileData.actaGradoKey ?? null;
+    const diplomaUrl = fileData.actaGradoUrl ?? null;
+
+    const pagareKey = fileData.pagareKey ?? null;
+    const pagareUrl = fileData.pagareUrl ?? null;
+
+    const comprobanteInscripcionKey = fileData.comprobanteInscripcionKey ?? null;
+    const comprobanteInscripcionUrl = fileData.comprobanteInscripcionUrl ?? null;
     // 1) Crear SIEMPRE usuario en Clerk (para garantizar que usamos su id)
     console.time('[1] createUser (Clerk)');
     // === Nombres normalizados para Clerk y BD ===
@@ -489,26 +469,6 @@ export async function POST(req: Request) {
       console.log('[CRED] No se generó password (posible reutilización).');
     }
 
-    // 3) Subir archivos a S3 (quedarán en documents/<tipo>/...)
-    const { key: idDocKey, url: idDocUrl } = await uploadToS3(
-      docIdentidad,
-      'identidad'
-    );
-    const { key: utilityBillKey, url: utilityBillUrl } = await uploadToS3(
-      reciboServicio,
-      'servicio'
-    );
-    const { key: diplomaKey, url: diplomaUrl } = await uploadToS3(
-      actaGrado,
-      'diploma'
-    );
-    const { key: pagareKey, url: pagareUrl } = await uploadToS3(
-      pagare,
-      'pagare'
-    );
-    const { key: comprobanteInscripcionKey, url: comprobanteInscripcionUrl } =
-      await uploadToS3(comprobanteInscripcion, 'comprobante-inscripcion');
-
     // 4) Guardar los campos EXTRA en userInscriptionDetails (no duplicar lo que ya está en `users`)
     await db.insert(userInscriptionDetails).values({
       userId,
@@ -621,17 +581,6 @@ export async function POST(req: Request) {
     // Solo registrar el pago si el usuario indicó que ya pagó la inscripción
     console.log('[PAGO] valor de fields.pagoInscripcion =>', fields.pagoInscripcion);
     const pagoInscripcionEsSi = /^s[ií]$/i.test(fields.pagoInscripcion || '');
-    console.log('[PAGO] ¿pagoInscripcionEsSi? =>', pagoInscripcionEsSi);
-
-    // Debug del comprobante
-    console.log('[PAGO] Comprobante (S3):', {
-      comprobanteInscripcionKey,
-      comprobanteInscripcionUrl,
-      hasFile: !!comprobanteInscripcion,
-      fileName: comprobanteInscripcion?.name ?? null,
-      fileType: comprobanteInscripcion?.type ?? null,
-      fileSize: comprobanteInscripcion?.size ?? null,
-    });
 
     if (pagoInscripcionEsSi) {
       try {
@@ -651,7 +600,7 @@ export async function POST(req: Request) {
           // Comprobante subido a S3
           receiptKey: comprobanteInscripcionKey ?? null,
           receiptUrl: comprobanteInscripcionUrl ?? null,
-          receiptName: comprobanteInscripcion?.name ?? null,
+          receiptName: fileData.comprobanteInscripcionName ?? null,
           receiptUploadedAt: hoy,
         };
 
