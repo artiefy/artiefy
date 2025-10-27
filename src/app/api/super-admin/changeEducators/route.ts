@@ -10,11 +10,16 @@ import { courses } from '~/server/db/schema';
 export async function GET() {
   try {
     const educators = await getAllEducators();
-
-    // Transform the data to include only what we need
+    // Define the educator type
+    interface Educator {
+      email?: string;
+      // add other properties as needed
+    }
+    // Transform the data to include email
     const formattedEducators = educators.map((educator) => ({
       id: educator.id,
-      name: educator.name ?? 'Sin nombre', // Use name from users table
+      name: educator.name ?? 'Sin nombre',
+      email: (educator as Educator).email ?? null,
     }));
 
     if (!formattedEducators || formattedEducators.length === 0) {
@@ -25,7 +30,8 @@ export async function GET() {
     }
 
     return NextResponse.json(formattedEducators);
-  } catch {
+  } catch (error) {
+    console.error('Error al obtener educadores:', error);
     return NextResponse.json(
       { error: 'Error al obtener educadores' },
       { status: 500 }
@@ -70,7 +76,8 @@ export async function PUT(req: Request) {
       message: 'Instructor actualizado exitosamente',
       course: result[0],
     });
-  } catch {
+  } catch (error) {
+    console.error('Error al actualizar el instructor:', error);
     return NextResponse.json(
       { error: 'Error al actualizar el instructor' },
       { status: 500 }
