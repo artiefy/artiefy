@@ -108,41 +108,59 @@ export default function CourseDetails({
   }, [userId, user, initialCourse.id, initialCourse.enrollments]);
 
   useEffect(() => {
-    // Siempre llamar el hook, pero solo agregar listeners si es móvil
+    // Mejor detección de swipe para evitar volver al listado cuando el usuario hace scroll
     if (typeof window === 'undefined') return;
 
-    function isMobile() {
-      return window.innerWidth < 768;
+    const isMobile = () => window.innerWidth < 768;
+
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let tracking = false;
+
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      lastX = startX;
+      lastY = startY;
+      // Solo empezar a trackear si el gesto inicia cerca del borde izquierdo (edge swipe)
+      tracking = startX <= 40;
     }
 
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    function handleTouchStart(e: TouchEvent) {
-      touchStartX = e.touches[0].clientX;
+    function onTouchMove(e: TouchEvent) {
+      if (!tracking) return;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
     }
 
-    function handleTouchMove(e: TouchEvent) {
-      touchEndX = e.touches[0].clientX;
-    }
-
-    function handleTouchEnd() {
-      if (touchEndX - touchStartX > 60) {
+    function onTouchEnd() {
+      if (!tracking) return;
+      const dx = lastX - startX;
+      const dy = lastY - startY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      // Requisitos para considerar swipe-back:
+      // - swipe horizontal a la derecha mayor a 80px
+      // - movimiento horizontal claramente mayor que el vertical (factor 1.5)
+      if (dx > 80 && absDx > absDy * 1.5) {
         router.back();
       }
+      tracking = false;
     }
 
     if (isMobile()) {
-      window.addEventListener('touchstart', handleTouchStart);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleTouchEnd);
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd);
     }
 
     return () => {
       if (isMobile()) {
-        window.removeEventListener('touchstart', handleTouchStart);
-        window.removeEventListener('touchmove', handleTouchMove);
-        window.removeEventListener('touchend', handleTouchEnd);
+        window.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
       }
     };
   }, [router]);
