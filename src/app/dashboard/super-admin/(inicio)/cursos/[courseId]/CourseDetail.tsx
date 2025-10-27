@@ -1024,71 +1024,45 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     };
   }
 
-  const WINDOW_MS = 48 * 60 * 60 * 1000; // ±48h
-
   // Fuente base: si el back ya te trajo meetings "poblados", úsalos; si no, usa las del curso
   const baseMeetings: UIMeeting[] = (
     populatedMeetings.length ? populatedMeetings : (course.meetings ?? [])
   ).map(ensureUIMeeting);
-  const occTimes = baseMeetings.map((o) => toMsFlexible(o.startDateTime));
 
-  // Ordena videos por fecha (antiguo → nuevo)
-  const sortedVideos = [...videosRaw].sort((a, b) => {
-    const am = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bm = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return am - bm;
-  });
 
-  // Marcador de ocurrencias ya usadas
-  const usedOcc = baseMeetings.map(() => false);
+  // Emparejamiento ESTRICTO por meetingId (sin ventana temporal)
+  const allowedIds = new Set(
+    baseMeetings.map(m => m.meetingId).filter(Boolean)
+  );
 
-  // Asigna cada video a la ocurrencia más cercana y libre (con pequeño sesgo si el meetingId coincide)
-  for (const v of sortedVideos) {
-    const vMs = v.createdAt ? new Date(v.createdAt).getTime() : Number.NaN;
-    let best = -1;
-    let bestScore = Number.POSITIVE_INFINITY;
-
-    for (let i = 0; i < baseMeetings.length; i++) {
-      if (usedOcc[i]) continue;
-      const start = occTimes[i];
-      if (Number.isNaN(start)) continue;
-
-      // distancia temporal
-      const diff = Number.isNaN(vMs)
-        ? Number.POSITIVE_INFINITY
-        : Math.abs(start - vMs);
-      if (diff > WINDOW_MS) continue; // fuera de ventana, no lo considero
-
-      // sesgo si el meetingId coincide
-      const idMatch =
-        v.meetingId &&
-        baseMeetings[i].meetingId &&
-        baseMeetings[i].meetingId === v.meetingId;
-
-      // score: menor es mejor (resta 5 min si idMatch)
-      const score = diff - (idMatch ? 5 * 60 * 1000 : 0);
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-
-    if (best >= 0) {
-      // Solo asigna si esa ocurrencia aún NO tiene video (p. ej. ya vino del backend)
-      if (!baseMeetings[best].video_key && !baseMeetings[best].videoUrl) {
-        baseMeetings[best].video_key = v.videoKey;
-        baseMeetings[best].videoUrl = `${awsBase}/video_clase/${v.videoKey}`;
-        usedOcc[best] = true; // marcamos usada solo cuando asignamos
-      }
-    }
+  // Dedup por meetingId tomando el más reciente
+  const videosById = new Map<string, VideoIdxItem>();
+  for (const v of videosRaw) {
+    if (!v.meetingId || !allowedIds.has(v.meetingId)) continue;
+    const prev = videosById.get(v.meetingId);
+    const pt = prev?.createdAt ? Date.parse(prev.createdAt) : 0;
+    const ct = v.createdAt ? Date.parse(v.createdAt) : 0;
+    if (!prev || ct >= pt) videosById.set(v.meetingId, v);
   }
 
-  const meetingsForList: UIMeeting[] = [...baseMeetings].sort((a, b) => {
+  // Enriquecer SOLO si falta video y hay match exacto por meetingId
+  const enrichedMeetings: UIMeeting[] = baseMeetings.map((m) => {
+    if ((m.video_key || m.videoUrl) || !m.meetingId) return m;
+    const v = videosById.get(m.meetingId);
+    if (!v) return m;
+    return {
+      ...m,
+      video_key: v.videoKey,
+      videoUrl: `${awsBase}/video_clase/${v.videoKey}`,
+    };
+  });
+
+  const meetingsForList: UIMeeting[] = [...enrichedMeetings].sort((a, b) => {
     const aMs = toMsFlexible(a.startDateTime);
     const bMs = toMsFlexible(b.startDateTime);
     return (aMs || 0) - (bMs || 0);
   });
+
 
   // Renderizar el componente
   return (
