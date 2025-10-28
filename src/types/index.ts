@@ -517,3 +517,12 @@ export interface ClassMeeting {
   video_key?: string | null;
   progress?: number | null;
 }
+
+export interface ClerkUser {
+  id: string;
+  publicMetadata?: {
+    planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
+    [key: string]: unknown;
+  };
+  // Puedes agregar otros campos si los necesitas
+}

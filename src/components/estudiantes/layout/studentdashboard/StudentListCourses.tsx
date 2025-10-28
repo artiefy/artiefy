@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { currentUser } from '@clerk/nextjs/server';
 import {
   ArrowRightCircleIcon,
   CheckCircleIcon,
@@ -27,6 +26,7 @@ import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCou
 
 import StudentPagination from './StudentPagination';
 
+import type { ClerkUser } from '~/types';
 import type { ClassMeeting, Course } from '~/types';
 
 interface CourseListStudentProps {
@@ -36,6 +36,7 @@ interface CourseListStudentProps {
   totalCourses: number;
   category?: string;
   searchTerm?: string;
+  user?: ClerkUser; // <-- Usar tipo seguro
 }
 
 export const revalidate = 3600;
@@ -47,8 +48,8 @@ export default async function StudentListCourses({
   totalCourses,
   category,
   searchTerm,
+  user,
 }: CourseListStudentProps) {
-  const user = await currentUser();
   const userId = user?.id;
 
   // Helper para formatear la fecha en español (con hora y am/pm)
@@ -164,7 +165,12 @@ export default async function StudentListCourses({
   );
 
   const getCourseTypeLabel = (course: Course) => {
-    const userPlanType = user?.publicMetadata?.planType as string;
+    const userPlanType = user?.publicMetadata?.planType as
+      | 'none'
+      | 'Pro'
+      | 'Premium'
+      | 'Enterprise'
+      | undefined;
     const hasActiveSubscription =
       userPlanType === 'Pro' || userPlanType === 'Premium';
 
@@ -419,7 +425,12 @@ export default async function StudentListCourses({
 
   // Modifica getCourseTypeLabel para separar tipo principal y badges "Incluido en"
   const getCourseTypeLabelMobile = (course: Course) => {
-    const userPlanType = user?.publicMetadata?.planType as string;
+    const userPlanType = user?.publicMetadata?.planType as
+      | 'none'
+      | 'Pro'
+      | 'Premium'
+      | 'Enterprise'
+      | undefined;
     const hasActiveSubscription =
       userPlanType === 'Pro' || userPlanType === 'Premium';
 

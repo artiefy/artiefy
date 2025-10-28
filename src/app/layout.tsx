@@ -46,25 +46,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return await getMetadataForRoute();
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const metadata = await getMetadataForRoute();
-  let canonical = 'https://artiefy.com';
-  if (
-    typeof metadata.alternates === 'object' &&
-    metadata.alternates &&
-    'canonical' in metadata.alternates
-  ) {
-    const alt = metadata.alternates.canonical;
-    if (typeof alt === 'string') {
-      canonical = alt;
-    } else if (alt instanceof URL) {
-      canonical = alt.toString();
-    }
-  }
+  const canonical = 'https://artiefy.com';
 
   // Prepare schema data
   const websiteSchema = getWebsiteSchema();

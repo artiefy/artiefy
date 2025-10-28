@@ -105,28 +105,24 @@ async function fetchAllCourses(): Promise<Course[]> {
   return await getAllCourses();
 }
 
-// Agregar estas configuraciones al inicio del archivo, después de los imports
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-
 interface PageProps {
-  searchParams?: {
-    category?: string;
-    query?: string;
-    page?: string;
-  };
+  searchParams?:
+    | { category?: string; query?: string; page?: string }
+    | Promise<{ category?: string; query?: string; page?: string }>;
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  // Await searchParams if it's a Promise (Next.js 16)
+  const params =
+    searchParams instanceof Promise ? await searchParams : (searchParams ?? {});
+
+  const parsedParams: SearchParams = {
+    category: params?.category,
+    query: params?.query,
+    page: params?.page,
+  };
+
   try {
-    const params = searchParams ?? {};
-
-    const parsedParams: SearchParams = {
-      category: params?.category,
-      query: params?.query,
-      page: params?.page,
-    };
-
     const data = await fetchData(parsedParams);
     const allCourses = await fetchAllCourses();
 

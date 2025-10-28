@@ -1266,68 +1266,118 @@ export function CourseHeader({
             >
               {/* Nueva lógica de portada/video */}
               {coverVideoCourseKey ? (
-                <div className="relative h-full w-full">
-                  <video
-                    ref={videoRef}
-                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                    className="h-full w-full cursor-pointer object-cover"
-                    autoPlay
-                    loop
-                    playsInline
-                    controls={false}
-                    muted={isMuted}
-                    preload="auto"
-                    poster={
-                      coverImageKey
-                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                    }
-                    onClick={handleVideoClick}
-                    // Forzar el navegador a usar el tamaño y renderizado óptimo
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
-                    }}
-                  />
-                  {/* Botón de volumen y pantalla completa */}
-                  <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
-                    {/* Botón mute/unmute */}
-                    <button
-                      type="button"
-                      aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
-                      onClick={handleToggleMute}
-                      className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
-                    >
-                      {isMuted ? (
-                        <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                      ) : (
-                        <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                      )}
-                    </button>
-                    {/* Volumen */}
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={videoVolume}
-                      onChange={handleVolumeChange}
-                      className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
-                      title="Volumen"
+                (() => {
+                  // Validar si el archivo es imagen o video
+                  const ext = coverVideoCourseKey
+                    .split('.')
+                    .pop()
+                    ?.toLowerCase();
+                  const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(
+                    ext ?? ''
+                  );
+                  const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(
+                    ext ?? ''
+                  );
+
+                  if (isImage) {
+                    return (
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`.trimEnd()}
+                        alt={course.title}
+                        fill
+                        className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                        priority
+                        sizes="100vw"
+                        placeholder="blur"
+                        blurDataURL={blurDataURL}
+                      />
+                    );
+                  }
+                  if (isVideo) {
+                    return (
+                      <div className="relative h-full w-full">
+                        <video
+                          ref={videoRef}
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+                          className="h-full w-full cursor-pointer object-cover"
+                          autoPlay
+                          loop
+                          playsInline
+                          controls={false}
+                          muted={isMuted}
+                          preload="auto"
+                          poster={
+                            coverImageKey
+                              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                              : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                          }
+                          onClick={handleVideoClick}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            imageRendering: 'auto',
+                          }}
+                        />
+                        {/* Botón de volumen y pantalla completa */}
+                        <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
+                          {/* Botón mute/unmute */}
+                          <button
+                            type="button"
+                            aria-label={
+                              isMuted ? 'Activar sonido' : 'Silenciar'
+                            }
+                            onClick={handleToggleMute}
+                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                          >
+                            {isMuted ? (
+                              <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                            ) : (
+                              <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                            )}
+                          </button>
+                          {/* Volumen */}
+                          <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={videoVolume}
+                            onChange={handleVolumeChange}
+                            className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
+                            title="Volumen"
+                          />
+                          {/* Botón pantalla completa */}
+                          <button
+                            type="button"
+                            aria-label="Pantalla completa"
+                            onClick={handleFullscreenClick}
+                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                          >
+                            <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Si no es imagen ni video, fallback a imagen de portada
+                  return (
+                    <Image
+                      src={
+                        coverImageKey
+                          ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                          : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                      }
+                      alt={course.title}
+                      fill
+                      className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                      priority
+                      sizes="100vw"
+                      placeholder="blur"
+                      blurDataURL={blurDataURL}
                     />
-                    {/* Botón pantalla completa */}
-                    <button
-                      type="button"
-                      aria-label="Pantalla completa"
-                      onClick={handleFullscreenClick}
-                      className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
-                    >
-                      <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
-                    </button>
-                  </div>
-                </div>
+                  );
+                })()
               ) : coverImageKey ? (
                 <Image
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}

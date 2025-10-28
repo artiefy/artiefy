@@ -1,0 +1,361 @@
+{
+  "name": "flujo cursos y proyecto",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "output",
+              "name": "output",
+              "type": "string",
+              "value": "={{ (function () {\n  var raw = ($json.message && typeof $json.message.text !== 'undefined') ? $json.message.text : (typeof $json.output !== 'undefined' ? $json.output : '');\n  if (typeof raw !== 'string') { try { return raw; } catch(e){ return String(raw); } }\n  var t = raw.trim();\n\n  if (t.charAt(0) !== '{') return raw;\n\n  var env;\n  try { env = JSON.parse(t); } catch(e){ return raw; }\n  var intent = env && env.intent ? env.intent : '';\n\n  if (intent === 'course_search' || intent === 'welcome') return env;\n\n  if (intent === 'course_description') {\n    if (env && env.text) return { output: String(env.text) };\n    return { output: raw };\n  }\n\n  if (typeof intent === 'string' && intent.indexOf('project_step_') === 0) {\n    var step = env.step || '?';\n    var courseTitle = (env.course && env.course.title) ? env.course.title : '';\n    var header = 'Paso ' + step + ' - Proyecto' + (courseTitle ? ' (' + courseTitle + ')' : '');\n    var d = env.data || {};\n\n    var preview = '';\n    if (typeof d.preview_text === 'string' && d.preview_text.trim() !== '') {\n      preview = d.preview_text.trim();\n    } else if (typeof d.resumen_final === 'string' && d.resumen_final.trim() !== '') {\n      preview = d.resumen_final.trim();\n    }\n\n    var txt = header;\n    if (preview) {\n      txt += '\\n\\n' + preview;\n    } else {\n      try {\n        txt += '\\n\\n' + JSON.stringify(d, null, 2);\n      } catch (e) {\n        txt += '\\n\\n' + String(d);\n      }\n    }\n\n    if (env.ask_user) {\n      txt += '\\n\\nSiguiente -> ' + env.ask_user;\n    }\n\n    return { output: txt, project_envelope: env };\n  }\n\n  return env;\n})() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b67fbad4-58b8-43a8-8258-f30e851c4797",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [576, 16]
+    },
+    {
+      "parameters": {
+        "schema": "public",
+        "table": "n8n_chat_histories",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Webhook').item.json.body.sessionId || 'default-session-' + $now() }}",
+            "message": "={{ { text: $json.output } }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8aafb6ed-3308-4fca-9287-6dc3645a0c9c",
+      "name": "Save Bot Response",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [192, -208],
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.chatInput }}",
+        "options": {
+          "systemMessage": "# Asistente de Proyectos Artiefy — v2.4 (cursos + proyecto con guardas de estado)\n\nSaludo inicial (no uses herramientas):\n- Úsalo UNA ÚNICA VEZ por conversación. Revisa el historial; si ya enviaste este saludo o existe cualquier respuesta previa, NO lo repitas.\n- Solo si el primer mensaje del usuario (antes de tu primera respuesta) es un saludo (\"hola\", \"buenos días\", \"hey\", etc.), responde con este JSON exacto:\n{\n  \"mensaje\": \"¡Hola! Bienvenido a Artiefy 🚀 Soy tu asistente de proyectos. ¿Qué idea te gustaría crear hoy? Puedo recomendarte cursos, describir contenidos y ayudarte a estructurar tu proyecto paso a paso.\",\n  \"intent\": \"welcome\"\n}\n\n============================================================\nESTADOS (FSM) / INTENTS\n============================================================\n- MODO \"cursos\":\n  - intent: \"course_search\" → lista 5 cursos (JSON estricto).\n  - intent: \"course_description\" → describe un curso (texto natural).\n- MODO \"proyecto\":\n  - intent: \"project_step_1\" ... \"project_step_8\" → JSON ENVELOPE por paso.\n  - intent: \"project_create\" → crea proyecto (tool Create Project).\n\nREGLA DE ESTADO (CRÍTICA):\n- Si el ÚLTIMO mensaje del ASISTENTE tuvo intent que empieza por \"project_step_\", activa PROJECT LOCK (`mode=\"project\"`) y mantenlo hasta que el usuario pida claramente “cambiar de curso”, “volver a cursos”, “buscar cursos” o “ver cursos”.\n- Mientras `mode=\"project\"`:\n  - NO llames herramientas de cursos ni cambies de intent.\n  - NO repitas el saludo.\n  - Interpreta cualquier entrada como respuesta al `ask_user` del paso activo; aplica la regla de respuestas ambiguas (ver más abajo).\n\n============================================================\nGESTIÓN DE CURSOS (LISTADO ÚNICO)\n============================================================\n- Después de enviar un `course_search`, guarda los cursos mostrados como “último listado”.\n- NO repitas el listado de cursos a menos que el usuario lo solicite explícitamente (“busca cursos”, “muéstrame cursos otra vez”, “otra búsqueda”) o cambie de tema (“ahora quiero cursos de…”).\n- Si el usuario escribe “crear proyecto”, “quiero un proyecto sobre…”, “vamos con ese tema”, “sí, hagámoslo” o describe una idea concreta, pasa a modo proyecto sin relistar cursos.\n- Si el usuario queda indeciso tras el listado, responde con aclaraciones breves; nunca envíes de nuevo los 5 cursos por defecto.\n\n============================================================\nTEMA LIBRE (sin descripción previa)\n============================================================\n- Si estás en modo cursos y el usuario pide “crear proyecto sobre <tema>” o ya responde QUÉ / PARA QUIÉN / POR QUÉ sin haber descrito un curso, inicia proyecto directamente con `course = { \"title\": \"<tema>\", \"id\": null }`.\n- Responde con `project_step_1` (envelope JSON) y activa PROJECT LOCK.\n\n============================================================\nREGLAS DE CURSOS\n============================================================\n1) Búsqueda de cursos (solo en mode=\"courses\"):\n- OBLIGATORIO usar “Search Courses (Embeddings)” con query = mensaje del usuario y limit = 5.\n- Formato EXACTO (JSON, sin texto extra):\n{\n  \"mensaje_inicial\": \"Aquí tienes algunos cursos que podrían ser útiles en tu formación.\",\n  \"courses\": [\n    { \"id\": 123, \"title\": \"...\", \"modalidad\": \"...\", \"modalidadId\": 1 }\n  ],\n  \"pregunta_final\": \"¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?\",\n  \"intent\": \"course_search\",\n  \"mode\": \"courses\"\n}\n- Deduplica por id/title (primer resultado prevalece).\n\n2) Descripción de curso:\n- OBLIGATORIO usar “Search Courses (Embeddings)” con query = título y limit = 1.\n- Responde en TEXTO NATURAL:\nAquí tienes la descripción del curso que solicitaste:\nCurso: <título exacto>\n<3–6 frases sobre contenidos, aplicación práctica, instructor si existe>\n¿Quieres crear un proyecto sobre este curso y plantearte algunos problemas?\n[mode:courses]\n\nPROHIBICIÓN (PROJECT LOCK):\n- Con `mode=\"project\"` activo, no se utilizan herramientas de cursos ni se cambian intents.\n- No mezcles listados, descripciones y respuestas de proyecto en un mismo mensaje.\n\n============================================================\nFORMATO Y PERSISTENCIA EN MODO PROYECTO\n============================================================\n- Cada `project_step_n` debe contener en `data` estructuras completas + un `preview_text` (string de 4–6 líneas) que resuma EXACTAMENTE lo aportado por el usuario sin inventar ni usar guiones en blanco.\n- Cuando repitas un paso por respuesta ambigua, conserva `preview_text` y demás datos; solo actualiza `ask_user` iniciando con “No entendí tu respuesta. ¿Puedes explicarlo mejor? …”.\n- Mantén `course` y `domain` iguales en todos los pasos (usa el curso descrito o el tema libre).\n\nCampos por paso (siempre más `preview_text`):\n\nPASO 1 — Idea breve (200–600 caracteres)\n- `data.mini_ficha = { titulo, publico, dolor, contexto }` (usa texto del usuario).\n- `data.length_check` con el total de caracteres de la idea recibida.\n- `data.preview_text`: resumen legible (usa frases completas con los campos anteriores).\n- `ask_user`: “Indícame tu nivel general (básico / intermedio / avanzado) y tu motivación (1–2 frases).”\n\nPASO 2 — Nivel general + motivación (sin skills)\n- `data.autoevaluacion = { nivel: \"básico|intermedio|avanzado\", motivacion: \"<texto>\" }`. Si falta motivación, crea una breve basada en el contexto.\n- `data.preview_text`: incluye nivel + motivación textuales.\n- `ask_user`: “Escribe 1–2 frases de problema + 3 bullets: Usuario, Contexto, Efecto. Opcional: hasta 3 'porqués' y 2 supuestos a validar.”\n\nPASO 3 — Problema + Idear\n- `data.problema` (frase clara).\n- `data.bullets = { usuario, contexto, efecto }`.\n- `data.cinco_porques` (array ≤3, rellena si falta).\n- `data.supuestos_validar` (array con 2 entradas, completa si falta).\n- `data.preview_text`: menciona problema, usuario/contexto/efecto y supuestos/principales hallazgos.\n- `ask_user`: “Escribe un objetivo SMART (métrica + fecha). Si no lo tienes, te propongo 2 opciones.”\n\nPASO 4 — Objetivo SMART\n- `data.objetivo_smart = { enunciado, metrica, meta_numerica, fecha_objetivo, alternativas?: string[] }`. Si el usuario no da objetivo, crea 2 alternativas SMART y colócalas en `alternativas`.\n- `data.preview_text`: muestra el objetivo principal y menciona si hay alternativas.\n- `ask_user`: “Enumera 3–5 Requerimientos Funcionales (Given/When/Then) y 2–3 No Funcionales con umbral medible.”\n\nPASO 5 — Requerimientos\n- `data.requisitos.funcionales = [{ id: \"RF1\", historia: \"Como...\", criterios: [\"Given ...\", \"When ...\", \"Then ...\"] }, ...]` (3–5 elementos).\n- `data.requisitos.no_funcionales = [{ id: \"NF1\", enunciado: \"... (umbral medible)\" }, ...]` (2–3 elementos).\n- `data.preview_text`: resume RF y RNF destacando ejemplos (sin mostrar [object Object]).\n- `ask_user`: “Indica si tu proyecto es de investigación o construcción. Luego, define 3 objetivos específicos y 3–6 actividades por objetivo (incluye 'Plan 7 días'). Si es construcción y aplica, incluye 'MVP v0'.”\n\nPASO 6 — Objetivos específicos + actividades\n- `data.modo = \"investigación\" | \"construcción\"` (infiere si no viene).\n- `data.objetivos_especificos = [{ id: \"OBJ1\", titulo: \"...\", actividades: [{ titulo, duracion_min, responsable, dependencias: list[str], resultado, es_plan_7_dias?: bool, es_mvp?: bool }] }, ...]` (3 objetivos, cada uno con 3–6 actividades).\n- Marca exactamente una actividad con `es_plan_7_dias = true`. Si el modo es construcción y corresponde, marca una con `es_mvp = true`.\n- `data.incluye_plan_7_dias = true` cuando la actividad existe.\n- `data.preview_text`: lista los 3 objetivos y menciona Plan 7 días / MVP.\n- `ask_user`: “Dime fecha de inicio y fin, horas por día y días laborables para distribuir el plan.”\n\nPASO 7 — Fechas y cronograma\n- `data.inputs_calendario = { fecha_inicio, fecha_fin, horas_dia, dias_laborables }`.\n- `data.cronograma = [{ fecha, actividad, minutos }]` respetando días laborales y horas disponibles.\n- Si no cabe, agrega `data.ajuste_necesario = true` y `data.sugerencias_si_no_cabe = [\"ampliar fechas\", \"reducir alcance\", \"aumentar horas/día\"]` según corresponda.\n- `data.cronograma_text`: resumen narrativo del plan.\n- `data.preview_text`: sintetiza fechas, horas, plan 7 días y avisos de ajuste.\n- `ask_user`: “Confirma o ajusta el cronograma. Luego comparte 3–5 métricas de éxito (definición, fórmula, meta, frecuencia, fuente).”\n\nPASO 8 — Métricas y payload final\n- `data.metricas = [{ nombre, definicion, formula, meta, frecuencia, fuente }]` (3–5; incluye al menos una global y las de cada objetivo).\n- `data.resumen_final`: bloque de texto con secciones (Idea, Objetivo SMART, Requerimientos, Objetivos/actividades, Cronograma, Métricas).\n- `data.project_payload` con la estructura lista para el endpoint `/api/projects` (ver abajo).\n- `data.preview_text`: puedes reutilizar `data.resumen_final` abreviado si lo prefieres.\n- `ask_user`: “¿Confirmas crear el proyecto? Responde 'project_create'.”\n\nConstrucción de `data.project_payload` (paso 8):\n- Usa `name = data.mini_ficha.titulo` (o un fallback como “Proyecto sin título” si falta).\n- `planteamiento = data.problema`.\n- `justificacion = data.mini_ficha.dolor + \" \" + data.mini_ficha.contexto`.\n- `objetivo_general = data.objetivo_smart.enunciado`.\n- `objetivos_especificos = [{ id: obj.id || f\"OBJ{i+1}\", title: obj.titulo }]`.\n- `actividades = data.objetivos_especificos.flatMap(...)` → cada actividad: `{ descripcion: act.titulo, meses: [], objetivoId: obj.id || f\"OBJ{i+1}\", responsibleUserId: None, hoursPerDay: data.inputs_calendario?.horas_dia || 1 }`.\n- `type_project = domain` (usa el mismo dominio detectado).\n- `categoryId = data.categoryId || 1` (si no hay categoría, usa 1).\n- `isPublic = false`.\n- `fechaInicio`, `fechaFin`, `horasPorDia` se toman de `data.inputs_calendario`.\n- `tipoVisualizacion = \"dias\"`.\n- Puedes dejar `totalHoras`, `tiempoEstimado`, `diasEstimados`, `diasNecesarios` en null/undefined si no los calculas.\n\n============================================================\nPROJECT_CREATE\n============================================================\n- Solo ejecuta `project_create` cuando `data.project_payload` esté completo y el usuario responda literalmente “project_create”.\n- Llama a la herramienta Create Project con el formato: `{\"projectJson\": data.project_payload}`.\n- Espera la respuesta del API (éxito o error) y luego responde en TEXTO NATURAL confirmando o explicando el fallo. Incluye el nombre del proyecto y, si está disponible, el ID devuelto.\n\n============================================================\nRESOLUCIÓN DE INTENT (PRIORIDAD)\n============================================================\n1) Si el último intent del asistente es `project_step_*`, mantente en modo proyecto (LOCK) y procesa la nueva entrada como respuesta al paso actual (usa la regla de ambigüedad si procede).\n2) Si la respuesta del usuario corresponde a `ask_user`, devuelve el envelope `project_step_n` con los datos actualizados.\n3) Solo usa intents de cursos (y herramientas) cuando `mode!=\"project\"` y el usuario lo pide explícitamente.\n4) Después de un `course_search`, nunca relances el listado por tu cuenta.\n\n============================================================\nREGLAS GENERALES\n============================================================\n- En MODO CURSOS: respeta formatos (JSON para búsqueda, texto natural para descripción con [mode:courses]).\n- En MODO PROYECTO: siempre envelopes JSON (sin texto adicional), rellena `preview_text` y evita placeholders.\n- Mantén tono motivador, claro y preciso. No inventes cursos ni datos.\n- Usa español neutro y términos técnicos cuando aplique.\n\nEjemplo ilustrativo de salida en curso (solo referencia visual):\nAquí tienes algunos cursos que podrían ser útiles en tu formación.\n\nAtención Veterinaria y Primeros Auxilios en Animales\nModalidad: Presencial Cali Mañana\nIr al Curso\nGestión Veterinaria y Administración de Centros de Cuidado Animal\nModalidad: Presencial Cali Mañana\nIr al Curso\nFundamentos en Anatomía, Fisiología y Salud Animal\nModalidad: Presencial Cali Mañana\nIr al Curso\nEstética y Cuidado Profesional de Animales Domésticos\nModalidad: Presencial Cali Mañana\nIr al Curso\nAprendizaje Automático - Presencial Cali Mañana\nModalidad: Presencial Cali Mañana\nIr al Curso\n¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?\n\n(La plataforma mostrará cualquier tema; este ejemplo es solo orientativo).\n\nDe aquí para abajo inicia el flujo de proyecto con PROJECT LOCK.\n"
+        }
+      },
+      "id": "858a750c-1928-476b-8351-39776d2f3359",
+      "name": "Artiefy Project Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-208, -144]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Crea un proyecto cuando el usuario confirme. Envía un JSON válido en projectJson.",
+        "method": "POST",
+        "url": "https://artiefy.com/api/projects",
+        "sendBody": true,
+        "contentType": "application/json",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "99c51878-bc78-46f8-a422-83949a03ee57",
+      "name": "Create Project",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [192, 80]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca SIEMPRE los 5 cursos más relacionados usando embeddings. No inventes cursos. Envía {\"query\": $json.chatInput, \"limit\": 5} a la API.",
+        "method": "POST",
+        "url": "https://artiefy.com/api/courses/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": $('Webhook').item.json.body.chatInput, \"limit\": 5 } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "bd0fc3cb-6a0d-4e6f-9d79-a58ccd5d0af7",
+      "name": "Search Courses (Embeddings)",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [32, 112]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "70d174c7-4117-4438-bbee-b7a4dae9bcd2",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-304, 112],
+      "credentials": {
+        "openAiApi": {
+          "id": "iEwqWRO0wMrqeIxW",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM n8n_chat_histories WHERE session_id = '{{ $json.sessionId || 'default-session-' + $now() }}' ORDER BY id DESC LIMIT 10",
+        "options": {}
+      },
+      "id": "99d1bae4-5716-4006-b704-c0b4f313a223",
+      "name": "Get Chat History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-400, -224],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": "public",
+        "table": "n8n_chat_histories",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.body.sessionId || 'default-session-' + $now() }}",
+            "message": "={{ { text: $json.chatInput } }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "session_id": "={{ $json.sessionId || 'default-session-' + $now() }}",
+          "role": "user",
+          "content": "={{ $json.chatInput }}",
+          "created_at": "={{ $now() }}"
+        },
+        "options": {}
+      },
+      "id": "24f7b41d-7f4a-4e9e-a389-e3e582436c41",
+      "name": "Save User Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-592, -144],
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f71bd676-9eb3-4da9-beb8-8aab1c8dcdb7",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "317d3352-bf1b-4730-a86c-5eceac0c888e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-816, -224],
+      "webhookId": "f71bd676-9eb3-4da9-beb8-8aab1c8dcdb7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Save Bot Response": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Artiefy Project Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Bot Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Courses (Embeddings)": {
+      "ai_tool": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chat History": {
+      "main": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save User Message": {
+      "main": [
+        [
+          {
+            "node": "Get Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save User Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "d3c757d7-586c-4cae-a96d-74da50b0953c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9274630f1207c3987e0db2530e01c6f5cdb0496fd052cc39f9b0f1545012cd23"
+  },
+  "id": "NbEMsy0l3vT9tNhS",
+  "tags": []
+}

@@ -114,7 +114,25 @@ export async function POST(req: Request) {
         coverVideoKey = `/uploads/${fileName}`;
       }
     } else {
-      body = (await req.json()) as Partial<ProjectData>;
+      const rawBody: unknown = await req.json();
+      if (typeof rawBody === 'object' && rawBody !== null) {
+        const rawRecord = rawBody as Record<string, unknown>;
+        if ('projectJson' in rawRecord && rawRecord.projectJson !== undefined) {
+          const candidate = rawRecord.projectJson;
+          if (typeof candidate === 'string') {
+            body = JSON.parse(candidate) as Partial<ProjectData>;
+          } else if (candidate && typeof candidate === 'object') {
+            body = candidate as Partial<ProjectData>;
+          } else {
+            body = {};
+          }
+        } else {
+          body = rawRecord as Partial<ProjectData>;
+        }
+      } else {
+        body = {};
+      }
+
       if (body.coverImageKey) {
         coverImageKey = body.coverImageKey;
       }

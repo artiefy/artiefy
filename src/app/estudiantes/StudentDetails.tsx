@@ -312,7 +312,7 @@ export default function StudentDetails({
                         className="object-cover"
                         priority={index === currentSlide}
                         sizes="100vw"
-                        quality={100}
+                        quality={100} // <-- quality 100 is now allowed in config
                       />
                     </div>
                     <div className="text-primary absolute inset-0 flex items-center justify-start p-4">

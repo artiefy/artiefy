@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 
 import sharp from 'sharp';
 
-export const dynamic = 'force-dynamic';
-
 const TIMEOUT = 10000; // Reducido a 10 segundos
 const MAX_RETRIES = 2;
 

@@ -33,13 +33,21 @@ export async function POST(req: NextRequest) {
     }
 
     const auth = getAuthConfig();
+    // Mapear el id del producto al id fijo del plan
+    let agradecimientoPlanId = 1; // Pro por defecto
+    if (product.name.toLowerCase().includes('premium')) {
+      agradecimientoPlanId = 2;
+    } else if (product.name.toLowerCase().includes('enterprise')) {
+      agradecimientoPlanId = 3;
+    }
+
     const formData: FormData = createFormData(
       auth,
       product,
       body.buyerEmail,
       body.buyerFullName,
       body.telephone,
-      `${env.NEXT_PUBLIC_BASE_URL}/gracias?type=plan&from=payu`, // Añade from=payu
+      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-plan/${agradecimientoPlanId}?from=payu`, // Usa id fijo
       'plan' // Specify payment type as plan
     );
 
