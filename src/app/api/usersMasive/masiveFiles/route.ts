@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
 import { enrollmentPrograms, pagos, programas, users } from '~/server/db/schema';
-import { createUser } from '~/server/queries/queries';
+import { createUser, updateUserInClerk } from '~/server/queries/queries';
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -1128,6 +1128,26 @@ export async function POST(request: NextRequest) {
                     resultados.push({ email, estado: 'GUARDADO' });
                     console.log(`[MASIVE][ROW ${processed}] user insertado`, { id: userIdToUse });
                 }
+
+                // ✅ Asegurar metadata en Clerk para TODOS (creados o existentes)
+                try {
+                    // Usa la misma fecha de suscripción que metiste en BD
+                    const subEndIso = subscriptionEnd.toISOString(); // p.ej. "2025-11-27T19:29:25.000Z"
+
+                    await updateUserInClerk({
+                        userId: userIdToUse,
+                        firstName,
+                        lastName,
+                        role: 'estudiante',
+                        status: 'active',
+                        planType: 'Premium',
+                        permissions: [],                 // si luego quieres scopes, aquí
+                        subscriptionEndDate: subEndIso,  // tu helper la convierte al "YYYY-MM-DD HH:mm:ss"
+                    });
+                } catch (e) {
+                    console.warn(`[MASIVE][ROW ${processed}] No se pudo actualizar metadata en Clerk`, e);
+                }
+
                 // === NUEVO: asegurar existencia en Clerk y migrar id local->Clerk si aplica ===
                 try {
                     // 1) Si todavía no tenemos clerkUser, reintentar: buscar por email y si no existe, crearlo.
