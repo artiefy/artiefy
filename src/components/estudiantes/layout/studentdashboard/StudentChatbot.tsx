@@ -92,6 +92,19 @@ interface ProjectDraft {
   projectStep?: string; // optional: paso actual del asistente (evita uso de `any`)
 }
 
+interface ProjectEnvelope {
+  version?: string;
+  mode?: string;
+  step?: number;
+  domain?: string;
+  course?: { id?: number | string | null; title?: string | null };
+  data?: Record<string, unknown>;
+  next_step?: number | null;
+  ask_user?: string;
+  intent?: string;
+  notes?: string;
+}
+
 // Tipos
 export interface ChatMessage {
   id: number;
@@ -149,6 +162,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     status: boolean;
     curso_title: string;
   }>({ idChat: null, status: true, curso_title: '' });
+  const conversationOwnerRef = useRef<string>('');
 
   // Saber si el chatlist esta abierto
   const [showChatList, setShowChatList] = useState(false);
@@ -165,6 +179,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const { show } = useExtras();
 
   const ideaRef = useRef(idea);
+  useEffect(() => {
+    conversationOwnerRef.current = user?.id ?? '';
+  }, [user?.id]);
 
   // Añade los estados necesarios para el flujo n8n
   const [_n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
@@ -178,6 +195,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   // prefijo "_" para evitar warning de variable asignada pero no usada
   const [_lastN8nProjectPayload, setLastN8nProjectPayload] =
     useState<N8nPayload | null>(null);
+  const [_projectEnvelopes, setProjectEnvelopes] = useState<
+    Record<number, ProjectEnvelope>
+  >({});
+  const [_projectPayload, setProjectPayload] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   // NUEVO: helper para guardar un campo específico (acción por botón)
   const saveDraftField = useCallback(
@@ -459,8 +483,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const minuto = String(fecha.getMinutes()).padStart(2, '0');
     const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
 
+    if (!user?.id) return;
+
     getOrCreateConversation({
-      senderId: user?.id ?? '',
+      senderId: user.id,
       cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
       title: courseTitle ?? `Nuevo Chat ${resultado}`,
     })
@@ -493,8 +519,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const queueOrSaveBotMessage = useCallback(
     (text: string, coursesData?: CourseData[]) => {
       const currentChatId = chatModeRef.current.idChat;
+      const ownerId = conversationOwnerRef.current;
+      if (!ownerId) {
+        return;
+      }
       if (currentChatId && currentChatId < 1000000000000) {
-        void saveMessages('bot', currentChatId, [
+        void saveMessages(ownerId, currentChatId, [
           {
             text,
             sender: 'bot',
@@ -507,22 +537,26 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       }
       pendingBotSaves.current.push({ text, coursesData });
     },
-    [] // Quitar user?.id ya que no se usa dentro de la función
+    [] // sin dependencias: usa refs para owner y chatId
   );
 
   // Helper: intenta guardar mensaje usuario ahora o encola. (memoizado)
   const queueOrSaveUserMessage = useCallback(
     (text: string, sender = 'user') => {
       const currentChatId = chatModeRef.current.idChat;
+      const ownerId = conversationOwnerRef.current;
+      if (!ownerId) {
+        return;
+      }
       if (currentChatId && currentChatId < 1000000000000) {
-        void saveMessages(user?.id ?? '', currentChatId, [
-          { text, sender, sender_id: user?.id ?? '' },
+        void saveMessages(ownerId, currentChatId, [
+          { text, sender, sender_id: ownerId },
         ]);
         return;
       }
       pendingUserSaves.current.push({ text, sender });
     },
-    [user?.id] // Mantener user?.id aquí porque sí se usa
+    [] // owner se obtiene de conversationOwnerRef
   );
 
   // Effect: cuando se obtiene un chatId persistido, vaciar colas
@@ -530,16 +564,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const flush = async () => {
       const currentChatId = chatModeRef.current.idChat;
       if (!currentChatId || currentChatId >= 1000000000000) return;
+      const ownerId = conversationOwnerRef.current;
+      if (!ownerId) return;
 
       // Flush user saves
       if (pendingUserSaves.current.length > 0) {
         for (const item of pendingUserSaves.current) {
           try {
-            await saveMessages(user?.id ?? '', currentChatId, [
+            await saveMessages(ownerId, currentChatId, [
               {
                 text: item.text,
                 sender: item.sender ?? 'user',
-                sender_id: user?.id ?? '',
+                sender_id: ownerId,
               },
             ]);
           } catch (err) {
@@ -553,7 +589,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       if (pendingBotSaves.current.length > 0) {
         for (const item of pendingBotSaves.current) {
           try {
-            await saveMessages('bot', currentChatId, [
+            await saveMessages(ownerId, currentChatId, [
               {
                 text: item.text,
                 sender: 'bot',
@@ -570,7 +606,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     };
 
     flush().catch((e) => console.error('Error flushing queues:', e));
-  }, [chatMode.idChat /* eslint-disable-line react-hooks/exhaustive-deps */]);
+  }, [chatMode.idChat]);
 
   // Type guards - Corregir unsafe member access
   const isN8nApiResponse = (x: unknown): x is N8nApiResponse => {
@@ -999,6 +1035,38 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     [queueOrSaveBotMessage, setMessages, setN8nCourses]
   );
 
+  const handleProjectEnvelopeData = useCallback(
+    (envelope: ProjectEnvelope | null | undefined) => {
+      if (envelope?.mode !== 'project') return;
+
+      const stepKey =
+        typeof envelope.step === 'number' && envelope.step > 0
+          ? envelope.step
+          : -1;
+      setProjectEnvelopes((prev) => ({
+        ...prev,
+        [stepKey]: envelope,
+      }));
+
+      const dataSection = envelope.data;
+      if (
+        dataSection &&
+        typeof dataSection === 'object' &&
+        'project_payload' in dataSection
+      ) {
+        const payload = (
+          dataSection as {
+            project_payload?: unknown;
+          }
+        ).project_payload;
+        if (payload && typeof payload === 'object') {
+          setProjectPayload(payload as Record<string, unknown>);
+        }
+      }
+    },
+    []
+  );
+
   // Modificado: handleBotResponse ahora consume Agent IA (sin botones sí/no)
   const handleBotResponse = useCallback(
     async (query: string, options?: { useN8n?: boolean }): Promise<void> => {
@@ -1073,74 +1141,126 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               // DEBUG: Agregamos log para ver la respuesta completa
               console.log('Respuesta completa de /api/ia-cursos:', parsed);
 
-              // SOLUCIÓN: Manejar correctamente el formato { prompt, n8nData }
               if (
+                parsed &&
                 typeof parsed === 'object' &&
-                parsed !== null &&
-                'n8nData' in parsed
+                (typeof (parsed as { output?: unknown }).output === 'string' ||
+                  ((parsed as { project_envelope?: unknown })
+                    .project_envelope &&
+                    typeof (parsed as { project_envelope?: unknown })
+                      .project_envelope === 'object'))
               ) {
-                const apiResponse = parsed as {
-                  prompt?: string;
-                  n8nData?: N8nPayload;
-                };
+                const maybeOutput = (parsed as { output?: unknown }).output;
+                const displayOutput = (() => {
+                  if (typeof maybeOutput === 'string') return maybeOutput;
+                  try {
+                    return JSON.stringify(maybeOutput);
+                  } catch {
+                    return String(maybeOutput);
+                  }
+                })();
 
-                if (apiResponse.n8nData) {
-                  // Usar directamente n8nData que ya viene normalizado de la API
-                  await handleN8nData(apiResponse.n8nData, query);
-                  setIdea({ selected: false, idea: '' });
-                  n8nSuccess = true;
-                } else {
-                  console.warn(
-                    'La respuesta contiene n8nData pero está vacío:',
-                    apiResponse
-                  );
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    text: displayOutput,
+                    sender: 'bot',
+                  },
+                ]);
+                queueOrSaveBotMessage(displayOutput);
+
+                const maybeEnvelope = (
+                  parsed as {
+                    project_envelope?: unknown;
+                  }
+                ).project_envelope;
+                if (
+                  maybeEnvelope &&
+                  typeof maybeEnvelope === 'object' &&
+                  maybeEnvelope !== null
+                ) {
+                  handleProjectEnvelopeData(maybeEnvelope as ProjectEnvelope);
                 }
-              } else {
-                // Intentar el proceso anterior como fallback
-                const extracted = extractN8nPayload(parsed);
-                if (extracted) {
-                  await handleN8nData(extracted, query);
-                  setIdea({ selected: false, idea: '' });
-                  n8nSuccess = true;
-                } else if (isN8nApiResponse(parsed)) {
-                  const api: N8nApiResponse = parsed;
-                  const n8nData: N8nPayload = (api.n8nData ?? {}) as N8nPayload;
 
-                  const maybePayload = extractN8nPayload({ n8nData });
-                  if (maybePayload) {
-                    await handleN8nData(maybePayload, query);
+                setIdea({ selected: false, idea: '' });
+                n8nSuccess = true;
+              }
+
+              if (!n8nSuccess) {
+                // SOLUCIÓN: Manejar correctamente el formato { prompt, n8nData }
+                if (
+                  typeof parsed === 'object' &&
+                  parsed !== null &&
+                  'n8nData' in parsed
+                ) {
+                  const apiResponse = parsed as {
+                    prompt?: string;
+                    n8nData?: N8nPayload;
+                  };
+
+                  if (apiResponse.n8nData) {
+                    // Usar directamente n8nData que ya viene normalizado de la API
+                    await handleN8nData(apiResponse.n8nData, query);
                     setIdea({ selected: false, idea: '' });
                     n8nSuccess = true;
                   } else {
-                    // Fallback para respuestas de n8n sin estructura esperada
-                    const initMsg = n8nData.mensaje_inicial;
-                    const genericMsg = n8nData.mensaje;
+                    console.warn(
+                      'La respuesta contiene n8nData pero está vacío:',
+                      apiResponse
+                    );
+                  }
+                } else {
+                  // Intentar el proceso anterior como fallback
+                  const extracted = extractN8nPayload(parsed);
+                  if (extracted) {
+                    await handleN8nData(extracted, query);
+                    setIdea({ selected: false, idea: '' });
+                    n8nSuccess = true;
+                  } else if (isN8nApiResponse(parsed)) {
+                    const api: N8nApiResponse = parsed;
+                    const n8nData: N8nPayload = (api.n8nData ??
+                      {}) as N8nPayload;
 
-                    if (typeof initMsg === 'string' && initMsg.trim() !== '') {
-                      setMessages((prev) => [
-                        ...prev,
-                        {
-                          id: Date.now() + Math.random(),
-                          text: initMsg,
-                          sender: 'bot',
-                        },
-                      ]);
-                      queueOrSaveBotMessage(initMsg);
+                    const maybePayload = extractN8nPayload({ n8nData });
+                    if (maybePayload) {
+                      await handleN8nData(maybePayload, query);
+                      setIdea({ selected: false, idea: '' });
                       n8nSuccess = true;
-                    } else if (
-                      typeof genericMsg === 'string' &&
-                      genericMsg.trim() !== ''
-                    ) {
-                      setMessages((prev) => [
-                        ...prev,
-                        {
-                          id: Date.now() + Math.random(),
-                          text: genericMsg,
-                          sender: 'bot',
-                        },
-                      ]);
-                      queueOrSaveBotMessage(genericMsg);
-                      n8nSuccess = true;
+                    } else {
+                      // Fallback para respuestas de n8n sin estructura esperada
+                      const initMsg = n8nData.mensaje_inicial;
+                      const genericMsg = n8nData.mensaje;
+
+                      if (
+                        typeof initMsg === 'string' &&
+                        initMsg.trim() !== ''
+                      ) {
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            id: Date.now() + Math.random(),
+                            text: initMsg,
+                            sender: 'bot',
+                          },
+                        ]);
+                        queueOrSaveBotMessage(initMsg);
+                        n8nSuccess = true;
+                      } else if (
+                        typeof genericMsg === 'string' &&
+                        genericMsg.trim() !== ''
+                      ) {
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            id: Date.now() + Math.random(),
+                            text: genericMsg,
+                            sender: 'bot',
+                          },
+                        ]);
+                        queueOrSaveBotMessage(genericMsg);
+                        n8nSuccess = true;
+                      }
                     }
                   }
                 }
@@ -1321,6 +1441,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       messages,
       queueOrSaveBotMessage,
       handleN8nData,
+      handleProjectEnvelopeData,
     ]
   );
 
