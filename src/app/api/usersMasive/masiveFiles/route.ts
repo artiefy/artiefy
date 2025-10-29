@@ -1129,24 +1129,35 @@ export async function POST(request: NextRequest) {
                     console.log(`[MASIVE][ROW ${processed}] user insertado`, { id: userIdToUse });
                 }
 
-                // ✅ Asegurar metadata en Clerk para TODOS (creados o existentes)
                 try {
-                    // Usa la misma fecha de suscripción que metiste en BD
-                    const subEndIso = subscriptionEnd.toISOString(); // p.ej. "2025-11-27T19:29:25.000Z"
+                    const subEndIso = subscriptionEnd.toISOString();
 
-                    await updateUserInClerk({
+                    const ok = await updateUserInClerk({
                         userId: userIdToUse,
                         firstName,
                         lastName,
                         role: 'estudiante',
                         status: 'active',
                         planType: 'Premium',
-                        permissions: [],                 // si luego quieres scopes, aquí
-                        subscriptionEndDate: subEndIso,  // tu helper la convierte al "YYYY-MM-DD HH:mm:ss"
+                        permissions: [],
+                        subscriptionEndDate: subEndIso,
                     });
+
+                    // 🔁 Fallback solo si falló el SDK
+                    if (!ok && clerkUser?.id) {
+                        const endStr = formatDateTime(subscriptionEnd);
+                        await setClerkMetadata(clerkUser.id, {
+                            role: 'estudiante',
+                            planType: 'Premium',
+                            mustChangePassword: true,
+                            subscriptionStatus: 'active',
+                            subscriptionEndDate: endStr,
+                        });
+                    }
                 } catch (e) {
                     console.warn(`[MASIVE][ROW ${processed}] No se pudo actualizar metadata en Clerk`, e);
                 }
+
 
                 // === NUEVO: asegurar existencia en Clerk y migrar id local->Clerk si aplica ===
                 try {
@@ -1193,24 +1204,7 @@ export async function POST(request: NextRequest) {
                 } catch (err) {
                     console.warn(`[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`, err);
                 }
-                // === NUEVO: forzar metadata en Clerk para TODOS (creados o existentes)
-                try {
-                    if (clerkUser?.id) {
-                        // Usa la misma fecha calculada para BD, pero en formato 'YYYY-MM-DD HH:mm:ss'
-                        const endStr = formatDateTime(subscriptionEnd);
-                        await setClerkMetadata(clerkUser.id, {
-                            role: 'estudiante',
-                            planType: 'Premium',
-                            mustChangePassword: true,
-                            subscriptionStatus: 'active',
-                            subscriptionEndDate: endStr, // ej: '2025-11-27 19:29:25'
-                        });
-                    } else {
-                        console.warn(`[MASIVE][ROW ${processed}] No hay clerkUser; no se pudo actualizar metadata en Clerk`);
-                    }
-                } catch (e) {
-                    console.warn(`[MASIVE][ROW ${processed}] Error actualizando metadata en Clerk:`, (e as Error)?.message ?? e);
-                }
+
 
                 // Enviar bienvenida SOLO si se creó en Clerk y tenemos password generado
                 if (isNewInClerk && generatedPassword) {

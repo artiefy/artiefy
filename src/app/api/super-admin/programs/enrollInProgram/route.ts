@@ -105,10 +105,11 @@ export async function POST(request: Request) {
             publicMetadata: {
               ...prev,
               role: 'estudiante',
-              planType: 'Premium',
+              planType, // ⬅ usa el planType del body
               mustChangePassword: true,
               subscriptionStatus: 'active',
-              subscriptionEndDate: formattedDate, // asegúrate que sea string tipo 'YYYY-MM-DD HH:mm:ss' o ISO
+              status: 'active',                // ⬅ compat
+              subscriptionEndDate: formattedDate,
             },
           });
 
