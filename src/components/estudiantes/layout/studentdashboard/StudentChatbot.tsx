@@ -168,6 +168,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [showChatList, setShowChatList] = useState(false);
 
   const chatModeRef = useRef(chatMode);
+  useEffect(() => {
+    chatModeRef.current = chatMode;
+  }, [chatMode]);
 
   const [idea, setIdea] = useState<{ selected: boolean; idea: string }>({
     selected: false,
