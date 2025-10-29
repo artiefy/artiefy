@@ -98,8 +98,8 @@ type UIMeeting = ScheduledMeeting & {
 interface Educator {
   id: string;
   name: string;
+  email?: string;
 }
-
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
   if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
@@ -961,8 +961,202 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (isUpdating) {
     return <FullscreenLoader />;
   }
+  const EducatorsList: React.FC<{
+    educators: Educator[];
+    course: Course;
+    onSelectEducator: (id: string) => void;
+    selectedInstructor: string;
+    onSaveChange: () => void;
+    isUpdating: boolean;
+  }> = ({
+    educators,
+    course,
+    onSelectEducator,
+    selectedInstructor,
+    onSaveChange,
+    isUpdating,
+  }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const [searchTerm, setSearchTerm] = useState('');
+      const currentEducator = educators.find((e) => e.id === course.instructor);
+      const displayEducator = educators.find(
+        (e) => e.id === (selectedInstructor || course.instructor)
+      );
+      void currentEducator;
 
-  // --- Helpers locales ---
+      // Filtrar educadores por búsqueda
+      const filteredEducators = educators.filter((educator) =>
+        educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        educator.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      // Función para copiar al portapapeles
+      const copyToClipboard = (text: string, type: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success(`${type} copiado al portapapeles`);
+      };
+
+      return (
+        <div className="flex flex-col gap-3">
+          {/* Dropdown personalizado */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="border-primary bg-background text-primary w-full rounded-md border p-3 text-left text-sm transition-colors hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="font-medium">{displayEducator?.name ?? 'Sin nombre'}</p>
+                  {displayEducator?.email && (
+                    <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
+                      <span>✉️</span>
+                      <span>{displayEducator.email}</span>
+                    </p>
+                  )}
+                  {!displayEducator?.email && (
+                    <p className="text-primary/50 mt-1 text-xs italic">
+                      Sin correo disponible
+                    </p>
+                  )}
+                </div>
+                <svg
+                  className={`h-5 w-5 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Lista desplegable */}
+            {isOpen && (
+              <>
+                {/* Overlay para cerrar al hacer clic afuera */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsOpen(false)}
+                />
+
+                <div className="bg-background border-primary absolute z-20 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
+                  {/* Campo de búsqueda */}
+                  <div className="border-primary/10 border-b p-2">
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre o correo..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border-primary/30 bg-background text-primary placeholder:text-primary/50 w-full rounded border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {/* Lista de educadores */}
+                  <div className="max-h-60 overflow-auto">
+                    {filteredEducators.length > 0 ? (
+                      filteredEducators.map((educator) => (
+                        <div
+                          key={educator.id}
+                          className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 ${educator.id === (selectedInstructor || course.instructor)
+                            ? 'bg-primary/20'
+                            : ''
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelectEducator(educator.id);
+                                setIsOpen(false);
+                                setSearchTerm('');
+                              }}
+                              className="text-primary flex-1 text-left"
+                            >
+                              <p className="font-medium text-sm">{educator.name}</p>
+                              {educator.email ? (
+                                <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
+                                  <span>✉️</span>
+                                  <span>{educator.email}</span>
+                                </p>
+                              ) : (
+                                <p className="text-primary/50 mt-1 text-xs italic">
+                                  Sin correo
+                                </p>
+                              )}
+                            </button>
+
+                            {/* Botones de copiar */}
+                            <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(educator.name ?? '', 'Nombre');
+                                }}
+                                className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
+                                title="Copiar nombre"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                              {educator.email && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(educator.email ?? '', 'Correo');
+                                  }}
+                                  className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
+                                  title="Copiar correo"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-primary/50 p-4 text-center text-sm">
+                        No se encontraron educadores
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Botón de guardado */}
+          {selectedInstructor && selectedInstructor !== course.instructor && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSaveChange}
+              className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">💾</span>
+                  Guardar cambio de educador
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      );
+    };
   const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(
     /\/+$/,
     ''
@@ -1024,71 +1218,45 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     };
   }
 
-  const WINDOW_MS = 48 * 60 * 60 * 1000; // ±48h
-
   // Fuente base: si el back ya te trajo meetings "poblados", úsalos; si no, usa las del curso
   const baseMeetings: UIMeeting[] = (
     populatedMeetings.length ? populatedMeetings : (course.meetings ?? [])
   ).map(ensureUIMeeting);
-  const occTimes = baseMeetings.map((o) => toMsFlexible(o.startDateTime));
 
-  // Ordena videos por fecha (antiguo → nuevo)
-  const sortedVideos = [...videosRaw].sort((a, b) => {
-    const am = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bm = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return am - bm;
-  });
 
-  // Marcador de ocurrencias ya usadas
-  const usedOcc = baseMeetings.map(() => false);
+  // Emparejamiento ESTRICTO por meetingId (sin ventana temporal)
+  const allowedIds = new Set(
+    baseMeetings.map(m => m.meetingId).filter(Boolean)
+  );
 
-  // Asigna cada video a la ocurrencia más cercana y libre (con pequeño sesgo si el meetingId coincide)
-  for (const v of sortedVideos) {
-    const vMs = v.createdAt ? new Date(v.createdAt).getTime() : Number.NaN;
-    let best = -1;
-    let bestScore = Number.POSITIVE_INFINITY;
-
-    for (let i = 0; i < baseMeetings.length; i++) {
-      if (usedOcc[i]) continue;
-      const start = occTimes[i];
-      if (Number.isNaN(start)) continue;
-
-      // distancia temporal
-      const diff = Number.isNaN(vMs)
-        ? Number.POSITIVE_INFINITY
-        : Math.abs(start - vMs);
-      if (diff > WINDOW_MS) continue; // fuera de ventana, no lo considero
-
-      // sesgo si el meetingId coincide
-      const idMatch =
-        v.meetingId &&
-        baseMeetings[i].meetingId &&
-        baseMeetings[i].meetingId === v.meetingId;
-
-      // score: menor es mejor (resta 5 min si idMatch)
-      const score = diff - (idMatch ? 5 * 60 * 1000 : 0);
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-
-    if (best >= 0) {
-      // Solo asigna si esa ocurrencia aún NO tiene video (p. ej. ya vino del backend)
-      if (!baseMeetings[best].video_key && !baseMeetings[best].videoUrl) {
-        baseMeetings[best].video_key = v.videoKey;
-        baseMeetings[best].videoUrl = `${awsBase}/video_clase/${v.videoKey}`;
-        usedOcc[best] = true; // marcamos usada solo cuando asignamos
-      }
-    }
+  // Dedup por meetingId tomando el más reciente
+  const videosById = new Map<string, VideoIdxItem>();
+  for (const v of videosRaw) {
+    if (!v.meetingId || !allowedIds.has(v.meetingId)) continue;
+    const prev = videosById.get(v.meetingId);
+    const pt = prev?.createdAt ? Date.parse(prev.createdAt) : 0;
+    const ct = v.createdAt ? Date.parse(v.createdAt) : 0;
+    if (!prev || ct >= pt) videosById.set(v.meetingId, v);
   }
 
-  const meetingsForList: UIMeeting[] = [...baseMeetings].sort((a, b) => {
+  // Enriquecer SOLO si falta video y hay match exacto por meetingId
+  const enrichedMeetings: UIMeeting[] = baseMeetings.map((m) => {
+    if ((m.video_key || m.videoUrl) || !m.meetingId) return m;
+    const v = videosById.get(m.meetingId);
+    if (!v) return m;
+    return {
+      ...m,
+      video_key: v.videoKey,
+      videoUrl: `${awsBase}/video_clase/${v.videoKey}`,
+    };
+  });
+
+  const meetingsForList: UIMeeting[] = [...enrichedMeetings].sort((a, b) => {
     const aMs = toMsFlexible(a.startDateTime);
     const bMs = toMsFlexible(b.startDateTime);
     return (aMs || 0) - (bMs || 0);
   });
+
 
   // Renderizar el componente
   return (
@@ -1280,104 +1448,97 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2">
+              <div className="space-y-6">
+                {/* Educador - Sección destacada */}
+                <div className="rounded-lg border border-primary/20 bg-background/50 p-4 backdrop-blur-sm">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    className={`mb-3 text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                       }`}
                   >
-                    Educador:
+                    👨‍🏫 Educador Asignado
                   </h2>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      value={selectedInstructor || course.instructor} // Use current instructor as fallback
-                      onChange={(e) => setSelectedInstructor(e.target.value)}
-                      className="border-primary bg-background text-primary w-full rounded-md border p-2 text-sm"
-                    >
-                      <option value={course.instructor}>
-                        {course.instructorName ??
-                          educators.find((e) => e.id === course.instructor)
-                            ?.name ??
-                          'Sin nombre'}
-                      </option>
-                      {educators
-                        .filter((ed) => ed.id !== course.instructor)
-                        .map((educator) => (
-                          <option key={educator.id} value={educator.id}>
-                            {educator.name}
-                          </option>
-                        ))}
-                    </select>
+                  <EducatorsList
+                    educators={educators}
+                    course={course}
+                    onSelectEducator={setSelectedInstructor}
+                    selectedInstructor={selectedInstructor}
+                    onSaveChange={handleChangeInstructor}
+                    isUpdating={isUpdating}
+                  />
+                </div>
 
-                    {selectedInstructor &&
-                      selectedInstructor !== course.instructor && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleChangeInstructor}
-                          className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
-                          disabled={isUpdating}
-                        >
-                          Guardar cambio
-                        </Button>
-                      )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
-                  >
-                    Nivel:
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
-                    {course.nivelid}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
-                  >
-                    Modalidad:
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
-                    {course.modalidadesid}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
-                  >
-                    Tipos de curso:
-                  </h2>
-                  {course.courseTypes && course.courseTypes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {course.courseTypes.map((type) => (
-                        <Badge
-                          key={type.id}
-                          variant="outline"
-                          className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                        >
-                          {type.name}
-                        </Badge>
-                      ))}
+                {/* Grid de información del curso */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* Nivel */}
+                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-xl">📊</span>
+                      <h2
+                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                          }`}
+                      >
+                        Nivel
+                      </h2>
                     </div>
-                  ) : (
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
                     >
-                      No especificado
+                      {course.nivelid}
                     </Badge>
-                  )}
+                  </div>
+
+                  {/* Modalidad */}
+                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-xl">🎯</span>
+                      <h2
+                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                          }`}
+                      >
+                        Modalidad
+                      </h2>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
+                    >
+                      {course.modalidadesid}
+                    </Badge>
+                  </div>
+
+                  {/* Tipos de curso */}
+                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50 sm:col-span-2 lg:col-span-1">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-xl">🏷️</span>
+                      <h2
+                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                          }`}
+                      >
+                        Tipos de Curso
+                      </h2>
+                    </div>
+                    {course.courseTypes && course.courseTypes.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {course.courseTypes.map((type) => (
+                          <Badge
+                            key={type.id}
+                            variant="outline"
+                            className="border-primary bg-background text-primary hover:bg-black/70"
+                          >
+                            {type.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="border-primary bg-background text-primary w-full justify-center py-2 text-sm opacity-50"
+                      >
+                        No especificado
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

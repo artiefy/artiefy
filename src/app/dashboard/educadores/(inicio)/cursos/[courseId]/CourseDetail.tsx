@@ -87,6 +87,8 @@ type UIMeeting = ScheduledMeeting & {
 interface Educator {
   id: string;
   name: string;
+  email?: string;
+
 }
 
 // Función para obtener el contraste de un color

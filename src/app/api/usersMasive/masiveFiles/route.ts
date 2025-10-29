@@ -1,12 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth as clerkAuth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { auth as clerkAuth } from '@clerk/nextjs/server';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
+import { enrollmentPrograms, pagos, programas, users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'direcciongeneral@artiefy.com',
+        pass: process.env.PASS!,
+    },
+});
+
+async function sendWelcomeEmail(to: string, fullName: string, password: string): Promise<void> {
+    await transporter.sendMail({
+        from: '"Artiefy" <direcciongeneral@artiefy.com>',
+        to,
+        subject: '🎨 Bienvenido a Artiefy - Tus credenciales de acceso',
+        replyTo: 'direcciongeneral@artiefy.com',
+        html: `
+      <h2>¡Hola ${fullName}!</h2>
+      <p>Tu cuenta ha sido creada en <b>Artiefy</b>. Estas son tus credenciales provisionales:</p>
+      <ul>
+        <li><b>Email:</b> ${to}</li>
+        <li><b>Contraseña temporal:</b> ${password}</li>
+      </ul>
+      <p>Por seguridad, cámbiala en tu primer inicio de sesión.</p>
+      <p><a href="https://artiefy.com/" target="_blank" rel="noopener noreferrer">Ingresar a Artiefy</a></p>
+      <hr/>
+      <small>Este correo fue generado automáticamente.</small>
+    `,
+    });
+}
+
 
 // === Runtime ===
 export const runtime = 'nodejs';
@@ -14,9 +45,24 @@ export const maxDuration = 300;
 
 // ====== Tipos ======
 type ResultadoEstado = 'GUARDADO' | 'YA_EXISTE' | 'ERROR';
-interface RowResultado { email: string; estado: ResultadoEstado; detalle?: string }
-interface ClerkUser { id: string }
-interface ColumnMapping { excelColumn: string; dbField: string }
+interface RowResultado {
+    email: string;
+    estado: ResultadoEstado;
+    detalle?: string;
+}
+interface ClerkUser {
+    id: string;
+}
+interface ColumnMapping {
+    excelColumn: string;
+    dbField: string;
+}
+interface CuotaDet {
+    nroPago: number;
+    fecha?: string | null;
+    metodo?: string | null;
+    valor?: number | null;
+}
 
 const safeTrim = (v?: unknown): string => {
     if (typeof v === 'string') return v.trim();
@@ -34,10 +80,102 @@ const safeTrim = (v?: unknown): string => {
     return '';
 };
 
-const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/** Calcula similitud entre dos strings (0-1, donde 1 es idéntico) */
+function stringSimilarity(str1: string, str2: string): number {
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
+
+    if (s1 === s2) return 1;
+    if (s1.length < 2 || s2.length < 2) return 0;
+
+    // Levenshtein simplificado
+    const longer = s1.length > s2.length ? s1 : s2;
+    const shorter = s1.length > s2.length ? s2 : s1;
+
+    if (longer.length === 0) return 1;
+
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
+
+function levenshteinDistance(str1: string, str2: string): number {
+    const matrix: number[][] = [];
+
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+
+    return matrix[str2.length][str1.length];
+}
+
+/** Busca el programa más similar por nombre */
+async function findSimilarProgram(programName: string): Promise<number | null> {
+    if (!programName?.trim()) return null;
+
+    const allPrograms = await db.select().from(programas);
+
+    if (allPrograms.length === 0) return null;
+
+    let bestMatch = allPrograms[0];
+    let bestScore = 0;
+
+    for (const program of allPrograms) {
+        const score = stringSimilarity(programName, program.title);
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = program;
+        }
+    }
+
+    // Solo retornar si la similitud es al menos 40%
+    if (bestScore >= 0.4) {
+        console.log(`[PROGRAM_MATCH] "${programName}" → "${bestMatch.title}" (${(bestScore * 100).toFixed(1)}%)`);
+        return bestMatch.id;
+    }
+
+    console.warn(`[PROGRAM_MATCH] No se encontró programa similar a "${programName}" (mejor score: ${(bestScore * 100).toFixed(1)}%)`);
+    return null;
+}
+
+async function getLastUserProgramaId(userId: string): Promise<number | null> {
+    const last = await db
+        .select({ programaId: enrollmentPrograms.programaId, enrolledAt: enrollmentPrograms.enrolledAt })
+        .from(enrollmentPrograms)
+        .where(eq(enrollmentPrograms.userId, userId))
+        .orderBy(desc(enrollmentPrograms.enrolledAt))
+        .limit(1);
+    return last.length ? last[0].programaId : null;
+}
+
+/** Date -> 'YYYY-MM-DD' */
+const toYMD = (d: Date): string => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
 
 /** Excel serial o string -> 'YYYY-MM-DD' (para columnas date() de Drizzle) */
 function excelToDateString(input: unknown): string | null {
@@ -52,10 +190,46 @@ function excelToDateString(input: unknown): string | null {
         return `${yyyy}-${mm}-${dd}`;
     }
 
+    if (input instanceof Date && !Number.isNaN(input.getTime())) {
+        const yyyy = input.getFullYear();
+        const mm = String(input.getMonth() + 1).padStart(2, '0');
+        const dd = String(input.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
     const raw = safeTrim(input);
     if (!raw) return null;
 
-    const tryParse = new Date(raw);
+    // 1º intento: parse nativo
+    let tryParse = new Date(raw);
+    if (!Number.isNaN(tryParse.getTime())) {
+        const yyyy = tryParse.getFullYear();
+        const mm = String(tryParse.getMonth() + 1).padStart(2, '0');
+        const dd = String(tryParse.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // 2º intento: meses en español (e.g. "06 Junio 2025")
+    const esToEn: Record<string, string> = {
+        enero: 'january',
+        febrero: 'february',
+        marzo: 'march',
+        abril: 'april',
+        mayo: 'may',
+        junio: 'june',
+        julio: 'july',
+        agosto: 'august',
+        septiembre: 'september',
+        setiembre: 'september',
+        octubre: 'october',
+        noviembre: 'november',
+        diciembre: 'december',
+    };
+    let lowered = raw.toLowerCase().replace(/\b(de|del)\b/g, ' ');
+    for (const [es, en] of Object.entries(esToEn)) {
+        lowered = lowered.replace(new RegExp(`\\b${es}\\b`, 'g'), en);
+    }
+    tryParse = new Date(lowered);
     if (!Number.isNaN(tryParse.getTime())) {
         const yyyy = tryParse.getFullYear();
         const mm = String(tryParse.getMonth() + 1).padStart(2, '0');
@@ -66,6 +240,151 @@ function excelToDateString(input: unknown): string | null {
     return null;
 }
 
+// ================== Helpers cuotas ==================
+const CUOTA_RE = /^cuota\s*(\d+)\s*(fecha|m[eé]todo|metodo|valor)$/i;
+
+const normalizeKey = (k: string) =>
+    String(k)
+        .toLowerCase()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\.\d+$/, '') // <- quita .1, .2, ...
+        .trim();
+
+const toIntMoney = (v: unknown): number | null => {
+    const raw = safeTrim(v);
+    if (!raw) return null;
+    const cleaned = raw.replace(/[^\d-]/g, '');
+    if (!cleaned) return null;
+    const n = Number.parseInt(cleaned, 10);
+    return Number.isFinite(n) ? n : null;
+};
+
+function extractCuotas(row: Record<string, unknown>): CuotaDet[] {
+    const buckets = new Map<number, { fecha?: string | null; metodo?: string | null; valor?: number | null }>();
+
+    const getNextIndexFor = (field: 'valor' | 'fecha' | 'metodo') => {
+        let n = 1;
+        while (buckets.has(n) && (buckets.get(n) as Record<string, unknown>)?.[field] != null) n += 1; return n;
+    };
+    const getFirstMissingInExisting = (field: 'fecha' | 'metodo') => {
+        const entries = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
+        for (const [n, b] of entries) {
+            if ((b as Record<string, unknown>)[field] == null) return n;
+        }
+        return null;
+    };
+
+    for (const [rawKey, rawVal] of Object.entries(row)) {
+        const key = normalizeKey(String(rawKey));
+
+        // "primera cuota" => cuota 1 (valor)
+        if (key === 'primera cuota') {
+            if (!buckets.has(1)) buckets.set(1, {});
+            buckets.get(1)!.valor = toIntMoney(rawVal);
+            continue;
+        }
+
+        // "cuota2" o "cuota 2" (valor)
+        let m =
+            (/^cuota\s*(\d+)$/i.exec(key)) ??
+            (/^cuota(\d+)$/i.exec(key));
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.valor = toIntMoney(rawVal);
+            continue;
+        }
+
+        // "fecha2" / "fecha 2"  -> fecha de cuota N
+        m = (/^fecha\s*(\d+)$/i.exec(key)) ?? (/^fecha(\d+)$/i.exec(key));
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.fecha = excelToDateString(rawVal);
+            continue;
+        }
+
+        // "metodo de pago2" / "método de pago2"
+        m = /^m[eé]todo de pago\s*(\d+)$/i.exec(key);
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
+            continue;
+        }
+
+        // Compatibilidad: "cuota 3 valor" / "cuota3 valor"
+        m = (/^cuota\s*(\d+)\s*valor$/i.exec(key)) ?? (/^cuota(\d+)\s*valor$/i.exec(key));
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.valor = toIntMoney(rawVal);
+            continue;
+        }
+
+        // "cuota 3 fecha" / "cuota3 fecha"
+        m = (/^cuota\s*(\d+)\s*fecha$/i.exec(key)) ?? (/^cuota(\d+)\s*fecha$/i.exec(key));
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.fecha = excelToDateString(rawVal);
+            continue;
+        }
+
+        // "cuota 3 metodo" / "cuota3 método"
+        m = (/^cuota\s*(\d+)\s*m[eé]todo$/i.exec(key)) ?? (/^cuota(\d+)\s*m[eé]todo$/i.exec(key));
+        if (m) {
+            const n = Number(m[1]);
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
+            continue;
+        }
+
+        // Columnas duplicadas "cuota", "cuota.1"… sin número (pandas)
+        if (key === 'cuota') {
+            const n = getNextIndexFor('valor');
+            if (!buckets.has(n)) buckets.set(n, {});
+            buckets.get(n)!.valor = toIntMoney(rawVal);
+            continue;
+        }
+
+        // Columnas duplicadas "fecha" sin número → asigna a la primera cuota que no tenga fecha
+        if (key === 'fecha') {
+            const target = getFirstMissingInExisting('fecha') ?? getNextIndexFor('fecha');
+            if (!buckets.has(target)) buckets.set(target, {});
+            buckets.get(target)!.fecha = excelToDateString(rawVal);
+            continue;
+        }
+
+        // Columnas duplicadas "metodo de pago" sin número → asigna a la primera cuota sin método
+        if (key === 'metodo de pago') {
+            const target = getFirstMissingInExisting('metodo') ?? getNextIndexFor('metodo');
+            if (!buckets.has(target)) buckets.set(target, {});
+            buckets.get(target)!.metodo = safeTrim(rawVal) || null;
+            continue;
+        }
+
+        // Compatibilidad genérica con el patrón CUOTA_RE
+        m = CUOTA_RE.exec(key);
+        if (m) {
+            const n = Number(m[1]);
+            const field = m[2].toLowerCase();
+            if (!buckets.has(n)) buckets.set(n, {});
+            const b = buckets.get(n)!;
+            if (field.startsWith('m')) b.metodo = safeTrim(rawVal) || null;
+            else if (field === 'fecha') b.fecha = excelToDateString(rawVal);
+            else if (field === 'valor') b.valor = toIntMoney(rawVal);
+            continue;
+        }
+    }
+
+    return Array.from(buckets.entries())
+        .map(([n, b]) => ({ nroPago: n, ...b }))
+        .filter((c) => c.nroPago > 0 && (c.fecha ?? c.metodo ?? (c.valor ?? 0) > 0));
+}
+
+
 /** Excel serial o string -> Date (para columnas timestamp() de Drizzle) */
 function excelToDateObject(input: unknown): Date | null {
     if (input == null) return null;
@@ -73,11 +392,78 @@ function excelToDateObject(input: unknown): Date | null {
         const epoch = new Date(Date.UTC(1899, 11, 30));
         return new Date(epoch.getTime() + input * 24 * 60 * 60 * 1000);
     }
+    if (input instanceof Date && !Number.isNaN(input.getTime())) return input;
     const raw = safeTrim(input);
     if (!raw) return null;
     const d = new Date(raw);
     return Number.isNaN(d.getTime()) ? null : d;
 }
+/** YYYY-MM-DD HH:mm:ss (hora local del servidor) */
+function formatDateTime(dt: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+}
+
+// ↑ Colócalo ARRIBA de setClerkMetadata (una sola vez en el archivo)
+function readPublicMetadata(input: unknown): Record<string, unknown> {
+    if (typeof input === 'object' && input !== null && 'public_metadata' in input) {
+        const pm = (input as { public_metadata?: unknown }).public_metadata;
+        if (pm && typeof pm === 'object') return pm as Record<string, unknown>;
+    }
+    return {};
+}
+
+async function setClerkMetadata(
+    clerkUserId: string,
+    meta: {
+        role?: string;
+        planType?: string;
+        mustChangePassword?: boolean;
+        subscriptionStatus?: string;
+        subscriptionEndDate?: string; // 'YYYY-MM-DD HH:mm:ss'
+    }
+): Promise<void> {
+    const key = process.env.CLERK_SECRET_KEY;
+    if (!key) throw new Error('Falta CLERK_SECRET_KEY');
+
+    // 1) Leer metadata actual para MERGE
+    const getRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!getRes.ok) {
+        const t = await getRes.text().catch(() => '');
+        throw new Error(`Clerk GET user failed (${getRes.status}): ${t}`);
+    }
+    const currentJson: unknown = await getRes.json();
+    const prevPublic: Record<string, unknown> = readPublicMetadata(currentJson);
+
+    // 2) Preparar actualización (merge sin borrar llaves previas)
+    const updates: Record<string, unknown> = {
+        ...prevPublic,
+        ...(meta.role != null ? { role: meta.role } : {}),
+        ...(meta.planType != null ? { planType: meta.planType } : {}),
+        ...(meta.mustChangePassword != null ? { mustChangePassword: meta.mustChangePassword } : {}),
+        ...(meta.subscriptionStatus != null ? { subscriptionStatus: meta.subscriptionStatus } : {}),
+        ...(meta.subscriptionEndDate != null ? { subscriptionEndDate: meta.subscriptionEndDate } : {}),
+    };
+
+    // 3) PATCH
+    const patchRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
+        method: 'PATCH',
+        headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ public_metadata: updates }),
+    });
+
+    if (!patchRes.ok) {
+        const text = await patchRes.text().catch(() => '');
+        throw new Error(`Clerk metadata update failed (${patchRes.status}): ${text}`);
+    }
+}
+
 
 // ====== Clerk helpers ======
 async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
@@ -108,7 +494,7 @@ async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
     return arr.length ? arr[0] : null;
 }
 
-
+// ================== Excel parse helpers ==================
 
 // Sinónimos para detectar encabezados aunque estén "raros"
 const HEADER_SYNONYMS = new Map<string, string>([
@@ -200,8 +586,9 @@ function extractObjectsFromSheet(sheet: XLSX.WorkSheet) {
         const score = row.reduce((acc: number, cell: unknown) => {
             const norm = normalizeHeaderCell(cell).toLowerCase();
             const isWord = /[a-záéíóúñ]/i.test(norm) && norm.length <= 50;
-            const isKey = ['nombre', 'nombres', 'apellido', 'apellidos', 'correo', 'email', 'teléfono', 'telefono', 'identificación', 'identificacion']
-                .some((k) => norm.includes(k));
+            const isKey = ['nombre', 'nombres', 'apellido', 'apellidos', 'correo', 'email', 'teléfono', 'telefono', 'identificación', 'identificacion'].some((k) =>
+                norm.includes(k),
+            );
             return acc + (isWord ? 1 : 0) + (isKey ? 2 : 0);
         }, 0);
 
@@ -247,7 +634,7 @@ function extractObjectsFromSheet(sheet: XLSX.WorkSheet) {
     return { headersRowIndex, headers, objects };
 }
 
-/** Genera mappings automáticos para tus 2 formatos y variantes */
+/** Genera mappings automáticos */
 function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
     const lc = detectedColumns.map((c) => c.trim().toLowerCase());
     const find = (...names: string[]) => {
@@ -312,15 +699,11 @@ function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
     }
     return mappings;
 }
-
-
-
 export async function POST(request: NextRequest) {
     try {
         // auth robusto (tipado con Clerk)
         const authData = await clerkAuth();
         const userId: string | null = authData?.userId ?? null;
-
 
         // fallback DEV
         const headerUserId = request.headers.get('x-user-id');
@@ -330,27 +713,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
         }
 
-        // saca tu fila; si no existe, usa Clerk para name/email
-        const meArr = await db.select().from(users).where(eq(users.id, effectiveUserId)).limit(1);
-        let me = meArr[0] ?? null;
-
-        if (!me) {
-            const cu = await currentUser().catch(() => null);
-            me = {
-                id: effectiveUserId,
-                role: 'estudiante',
-                email: cu?.emailAddresses?.[0]?.emailAddress ?? null,
-                name: [cu?.firstName, cu?.lastName].filter(Boolean).join(' ') || null,
-            } as typeof users.$inferSelect;
-        }
-
         const form = await request.formData();
         const file = form.get('file');
         const mappingsJson = form.get('mappings');
         const previewOnly = form.get('previewOnly') === 'true';
         // Filas editadas/eliminadas desde el front (opcional)
         const rowsJson = form.get('rowsJson');
-
 
         if (!file || !(file instanceof Blob)) {
             return NextResponse.json({ error: 'Archivo no válido' }, { status: 400 });
@@ -370,34 +738,41 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Excel vacío' }, { status: 400 });
         }
 
-        // 🔁 NUEVO: no filtramos por "Comercial/Asesor". Mostramos todo.
+        console.log('[MASIVE] Hoja:', sheetName);
+        console.log('[MASIVE] headersRowIndex:', headersRowIndex);
+        console.log('[MASIVE] headers[0..15]:', headers.slice(0, 15));
+        console.log('[MASIVE] total rows detectadas:', objects.length);
+
+        // No filtramos por “Comercial/Asesor”
         const rowsPorUsuario = objects;
 
         // Filas SIN nombre → fuera
-        const hasName = (o: Record<string, unknown>) => !!safeTrim(o.Nombres ?? o.Nombre ?? '');
+        const hasName = (o: Record<string, unknown>) =>
+            !!safeTrim((o as Record<string, unknown>).Nombres ?? (o as Record<string, unknown>).Nombre ?? '');
         const allowedRows = rowsPorUsuario.filter(hasName);
 
         const omitidosPorSinNombre = rowsPorUsuario.length - allowedRows.length;
-        // Si el cliente envió filas editadas, usamos esas filas en lugar de re-leer del Excel
+
+        // Si el cliente envió filas editadas, usamos esas filas
         let rowsToProcess: Record<string, unknown>[] = allowedRows;
         let omitidosPorCliente = 0;
 
         if (rowsJson && typeof rowsJson === 'string') {
             try {
                 const clientRows = JSON.parse(rowsJson) as Record<string, unknown>[];
-                // Aseguramos que también tengan nombre
                 rowsToProcess = (clientRows || []).filter(hasName);
-                // Cuántas quitó explícitamente el cliente (aprox)
                 omitidosPorCliente = Math.max(allowedRows.length - rowsToProcess.length, 0);
             } catch {
-                // si no se puede parsear, seguimos con allowedRows
+                // seguimos con allowedRows
             }
         }
 
+        console.log('[MASIVE] rowsAllowed:', allowedRows.length, 'rowsToProcess:', rowsToProcess.length);
 
         // Preview
         if (previewOnly) {
             const autoMappings = autoDetectMappings(headers);
+            console.log('[MASIVE][PREVIEW] autoMappings:', autoMappings);
             return NextResponse.json({
                 preview: true,
                 columns: headers,
@@ -406,20 +781,20 @@ export async function POST(request: NextRequest) {
                 rowCount: allowedRows.length,
                 rowsTotal: objects.length,
                 rowsAllowed: allowedRows.length,
-                sampleData: allowedRows, // TODAS las filas permitidas (no solo 5)
+                sampleData: allowedRows,
             });
         }
 
-        // Parse mappings (desde el front)
-        const mappings: ColumnMapping[] = mappingsJson && typeof mappingsJson === 'string'
-            ? (JSON.parse(mappingsJson) as ColumnMapping[])
-            : [];
-
+        // Parse mappings recibidos del front
+        const mappings: ColumnMapping[] =
+            mappingsJson && typeof mappingsJson === 'string' ? (JSON.parse(mappingsJson) as ColumnMapping[]) : [];
         const get = (row: Record<string, unknown>, dbField: string) => {
             const map = mappings.find((m) => m.dbField === dbField);
             if (map?.excelColumn) return safeTrim(row[map.excelColumn]);
             return '';
         };
+
+        console.log('[MASIVE] mappings filtrados:', mappings);
 
         const resultados: RowResultado[] = [];
         const createdOrSynced: {
@@ -432,17 +807,46 @@ export async function POST(request: NextRequest) {
 
         let processed = 0;
 
+        // helper para loggear sólo columnas de cuotas/fechas/metodos
+        const pickCuotaLike = (row: Record<string, unknown>) => {
+            const out: Record<string, unknown> = {};
+            for (const [k, v] of Object.entries(row)) {
+                const kk = String(k).toLowerCase();
+                if (
+                    kk.includes('cuota') ||
+                    kk === 'cuota' ||
+                    /^cuota\s*\d+/.test(kk) ||
+                    kk.startsWith('fecha') ||
+                    kk.includes('método') ||
+                    kk.includes('metodo') ||
+                    kk.includes('metodo de pago') ||
+                    kk.includes('método de pago') ||
+                    kk.includes('primera cuota')
+                ) {
+                    out[k] = v;
+                }
+            }
+            return out;
+        };
+
         for (const row of rowsToProcess) {
             processed++;
             if (processed % 10 === 0) await delay(700);
 
             const firstName = String(get(row, 'firstName') ?? '');
             const lastName = String(get(row, 'lastName') ?? '');
-            const email = String(get(row, 'email') ?? '').toLowerCase();
+            let email = String(get(row, 'email') ?? '').toLowerCase();
+            // Fallback: si "Correo electrónico" viene vacío, usa el del acudiente/empresa
+            if (!email) {
+                email = safeTrim(
+                    (row as Record<string, unknown>)['Correo de contacto acudiente o empresa'] ??
+                    (row as Record<string, unknown>).acudiente_email ??
+                    ''
+                ).toLowerCase();
+            }
             const phone = String(get(row, 'phone') ?? '');
             const document = String(get(row, 'document') ?? '');
 
-            // seguridad extra: si no hay nombre, omite sin marcar error
             if (!firstName) continue;
 
             if (!lastName || !email) {
@@ -451,63 +855,170 @@ export async function POST(request: NextRequest) {
                     estado: 'ERROR',
                     detalle: 'Campos obligatorios faltantes (firstName, lastName, email)',
                 });
+                console.warn(`[MASIVE][ROW ${processed}] faltan obligatorios`, { firstName, lastName, email });
                 continue;
             }
             if (!isValidEmail(email)) {
                 resultados.push({ email, estado: 'ERROR', detalle: 'Email inválido' });
+                console.warn(`[MASIVE][ROW ${processed}] email inválido:`, email);
                 continue;
             }
 
             // opcionales
-            const address = safeTrim(row['Dirección'] ?? row.Direccion ?? get(row, 'address'));
-            const country = safeTrim(row['País de residencia'] ?? row['Pais de residencia'] ?? get(row, 'country'));
-            const city = safeTrim(row['Ciudad de residencia'] ?? row.ciudad ?? get(row, 'city'));
-            const birthDateStr = excelToDateString(row['Fecha de nacimiento'] ?? get(row, 'birthDate'));
+            const address = safeTrim(
+                (row as Record<string, unknown>)['Dirección'] ?? (row as Record<string, unknown>).Direccion ?? get(row, 'address')
+            );
+            const country = safeTrim(
+                (row as Record<string, unknown>)['País de residencia'] ??
+                (row as Record<string, unknown>)['Pais de residencia'] ??
+                get(row, 'country')
+            );
+            const city = safeTrim(
+                (row as Record<string, unknown>)['Ciudad de residencia'] ??
+                (row as Record<string, unknown>).ciudad ??
+                get(row, 'city')
+            );
+            const birthDateStr = excelToDateString(
+                (row as Record<string, unknown>)['Fecha de nacimiento'] ?? get(row, 'birthDate')
+            );
 
-            const nivelEducacion = safeTrim(row['Nivel de educación'] ?? row['Nivel Educación'] ?? get(row, 'nivelEducacion'));
-            const programa = safeTrim(row.Programa ?? get(row, 'programa'));
-            const fechaInicioStr = excelToDateString(row['Fecha de inicio'] ?? row['FECHA PRIMERA CUOTA'] ?? get(row, 'fechaInicio'));
-            const comercial = safeTrim(row.Comercial ?? row.Asesor ?? get(row, 'comercial'));
-            const sede = safeTrim(row.Sede ?? get(row, 'sede'));
-            const horario = safeTrim(row.Horario ?? get(row, 'horario'));
+            const nivelEducacion = safeTrim(
+                (row as Record<string, unknown>)['Nivel de educación'] ??
+                (row as Record<string, unknown>)['Nivel Educación'] ??
+                get(row, 'nivelEducacion')
+            );
+            const programa = safeTrim((row as Record<string, unknown>).Programa ?? get(row, 'programa'));
+            let selectedProgramaId: number | null = null;
 
-            const numeroCuotas = safeTrim(row['Número de cuotas'] ?? row['Numero de cuotas'] ?? get(row, 'numeroCuotas'));
-            const pagoInscripcion = safeTrim(row['Pago de inscripción'] ?? row['pago de inscripción'] ?? get(row, 'pagoInscripcion'));
-            const pagoCuota1 = safeTrim(row['Pago cuota 1'] ?? get(row, 'pagoCuota1'));
-            const valorProgramaRaw = safeTrim(row['valor del programa'] ?? row['Valor del programa'] ?? get(row, 'valorPrograma'));
+            // ✔️ Resolver el programa lo más pronto posible (antes de guardar pagos)
+            if (programa?.trim()) {
+                selectedProgramaId = await findSimilarProgram(programa);
+            }
+
+            const fechaInicioStr = excelToDateString(
+                (row as Record<string, unknown>)['Fecha de inicio'] ??
+                (row as Record<string, unknown>)['FECHA PRIMERA CUOTA'] ??
+                get(row, 'fechaInicio')
+            );
+            const comercial = safeTrim(
+                (row as Record<string, unknown>).Comercial ?? (row as Record<string, unknown>).Asesor ?? get(row, 'comercial')
+            );
+            const sede = safeTrim((row as Record<string, unknown>).Sede ?? get(row, 'sede'));
+            const horario = safeTrim((row as Record<string, unknown>).Horario ?? get(row, 'horario'));
+
+            const numeroCuotas = safeTrim(
+                (row as Record<string, unknown>)['Número de cuotas'] ??
+                (row as Record<string, unknown>)['Numero de cuotas'] ??
+                get(row, 'numeroCuotas')
+            );
+            const pagoInscripcion = safeTrim(
+                (row as Record<string, unknown>)['Pago de inscripción'] ??
+                (row as Record<string, unknown>)['pago de inscripción'] ??
+                get(row, 'pagoInscripcion')
+            );
+            const pagoCuota1 = safeTrim((row as Record<string, unknown>)['Pago cuota 1'] ?? get(row, 'pagoCuota1'));
+            const valorProgramaRaw = safeTrim(
+                (row as Record<string, unknown>)['valor del programa'] ??
+                (row as Record<string, unknown>)['Valor del programa'] ??
+                get(row, 'valorPrograma')
+            );
             const valorPrograma =
                 valorProgramaRaw && !Number.isNaN(Number(valorProgramaRaw)) ? Number(valorProgramaRaw) : null;
 
             const inscripcionValorRaw = safeTrim(
-                row['Valor inscripción'] ??
-                row['Inscripción valor'] ??
-                row['inscripcion valor'] ??
-                row.inscripcion_valor ??
-                get(row, 'inscripcionValor'),
+                (row as Record<string, unknown>)['Valor inscripción'] ??
+                (row as Record<string, unknown>)['Inscripción valor'] ??
+                (row as Record<string, unknown>)['inscripcion valor'] ??
+                (row as Record<string, unknown>).inscripcion_valor ??
+                get(row, 'inscripcionValor')
             );
             const inscripcionValor =
-                inscripcionValorRaw && !Number.isNaN(Number(inscripcionValorRaw)) ? Number(inscripcionValorRaw) : null;
+                inscripcionValorRaw && !Number.isNaN(Number(inscripcionValorRaw))
+                    ? Number(inscripcionValorRaw)
+                    : null;
 
-            const paymentMethod = safeTrim(row['Método de pago'] ?? row['payment method'] ?? get(row, 'paymentMethod'));
-            const cuota1FechaStr = excelToDateString(row['Cuota1 fecha'] ?? row['CUOTA 1 FECHA'] ?? get(row, 'cuota1Fecha'));
-            const cuota1Metodo = safeTrim(row['Cuota1 método'] ?? row['CUOTA 1 MÉTODO'] ?? row['CUOTA 1 METODO'] ?? get(row, 'cuota1Metodo'));
-            const cuota1ValorRaw = safeTrim(row['Cuota1 valor'] ?? row['CUOTA 1 VALOR'] ?? get(row, 'cuota1Valor'));
+            const paymentMethod = safeTrim(
+                (row as Record<string, unknown>)['Método de pago'] ??
+                (row as Record<string, unknown>)['payment method'] ??
+                get(row, 'paymentMethod')
+            );
+            const cuota1FechaStr = excelToDateString(
+                (row as Record<string, unknown>)['Cuota1 fecha'] ??
+                (row as Record<string, unknown>)['CUOTA 1 FECHA'] ??
+                get(row, 'cuota1Fecha')
+            );
+            const cuota1Metodo = safeTrim(
+                (row as Record<string, unknown>)['Cuota1 método'] ??
+                (row as Record<string, unknown>)['CUOTA 1 MÉTODO'] ??
+                (row as Record<string, unknown>)['CUOTA 1 METODO'] ??
+                get(row, 'cuota1Metodo')
+            );
+            const cuota1ValorRaw = safeTrim(
+                (row as Record<string, unknown>)['Cuota1 valor'] ??
+                (row as Record<string, unknown>)['CUOTA 1 VALOR'] ??
+                get(row, 'cuota1Valor')
+            );
             const cuota1Valor =
                 cuota1ValorRaw && !Number.isNaN(Number(cuota1ValorRaw)) ? Number(cuota1ValorRaw) : null;
 
-            const inscripcionOrigen = safeTrim(row['Origen de inscripción'] ?? row.inscripcion_origen ?? get(row, 'inscripcionOrigen'));
-            const purchaseDateDate = excelToDateObject(row['Fecha de compra'] ?? row['purchase date'] ?? get(row, 'purchaseDate'));
+            const inscripcionOrigen = safeTrim(
+                (row as Record<string, unknown>)['Origen de inscripción'] ??
+                (row as Record<string, unknown>).inscripcion_origen ??
+                get(row, 'inscripcionOrigen')
+            );
+            const purchaseDateDate = excelToDateObject(
+                (row as Record<string, unknown>)['Fecha de compra'] ??
+                (row as Record<string, unknown>)['purchase date'] ??
+                get(row, 'purchaseDate')
+            );
 
-            const identificacionTipo = safeTrim(row['Tipo de identificación'] ?? row.identificacion_tipo ?? get(row, 'identificacionTipo'));
+            const identificacionTipo = safeTrim(
+                (row as Record<string, unknown>)['Tipo de identificación'] ??
+                (row as Record<string, unknown>).identificacion_tipo ??
+                get(row, 'identificacionTipo')
+            );
             const identificacionNumero =
-                safeTrim(row['Número identificación'] ?? row['Numero identificación'] ?? row.identificacion_numero ?? get(row, 'identificacionNumero')) || document;
-            const tieneAcudiente = safeTrim(row['Tiene acudiente'] ?? row.tiene_acudiente ?? get(row, 'tieneAcudiente'));
-            const acudienteNombre = safeTrim(row['Acudiente nombre'] ?? row.acudiente_nombre ?? get(row, 'acudienteNombre'));
-            const acudienteContacto = safeTrim(row['Acudiente contacto'] ?? row.acudiente_contacto ?? get(row, 'acudienteContacto'));
-            const acudienteEmail = safeTrim(row['Acudiente email'] ?? row.acudiente_email ?? get(row, 'acudienteEmail'));
+                safeTrim(
+                    (row as Record<string, unknown>)['Número identificación'] ??
+                    (row as Record<string, unknown>)['Numero identificación'] ??
+                    (row as Record<string, unknown>).identificacion_numero ??
+                    get(row, 'identificacionNumero')
+                ) || document;
+            const tieneAcudiente = safeTrim(
+                (row as Record<string, unknown>)['Tiene acudiente'] ??
+                (row as Record<string, unknown>).tiene_acudiente ??
+                get(row, 'tieneAcudiente')
+            );
+            const acudienteNombre = safeTrim(
+                (row as Record<string, unknown>)['Acudiente nombre'] ??
+                (row as Record<string, unknown>).acudiente_nombre ??
+                get(row, 'acudienteNombre')
+            );
+            const acudienteContacto = safeTrim(
+                (row as Record<string, unknown>)['Acudiente contacto'] ??
+                (row as Record<string, unknown>).acudiente_contacto ??
+                get(row, 'acudienteContacto')
+            );
+            const acudienteEmail = safeTrim(
+                (row as Record<string, unknown>)['Acudiente email'] ??
+                (row as Record<string, unknown>).acudiente_email ??
+                get(row, 'acudienteEmail')
+            );
+
+            console.log(`[MASIVE][ROW ${processed}] base`, {
+                firstName,
+                lastName,
+                email,
+                programa,
+                numeroCuotas,
+                valorPrograma,
+                inscripcionValor,
+            });
+
+            console.log(`[MASIVE][ROW ${processed}] cuota-like fields crudos`, pickCuotaLike(row));
 
             try {
-                // 1) Clerk
+                // 1) Clerk (tolerante cuota agotada)
                 let isNewInClerk = false;
                 let clerkUser: ClerkUser | null = null;
                 let generatedPassword: string | null = null;
@@ -517,16 +1028,24 @@ export async function POST(request: NextRequest) {
                     if (created && typeof created === 'object' && 'user' in created) {
                         isNewInClerk = true;
                         clerkUser = created.user as ClerkUser;
-                        generatedPassword = 'generatedPassword' in created ? (created.generatedPassword as string) : null;
+                        generatedPassword =
+                            'generatedPassword' in created
+                                ? ((created as Record<string, unknown>).generatedPassword as string)
+                                : null;
                     } else {
                         clerkUser = await getClerkUserByEmail(email);
                     }
                 } catch (err) {
                     const msg = (err as Error)?.message ?? '';
-                    const probablyExists =
-                        /already\s*exist|identifier.*in\s*use|email.*taken|409|422/i.test(msg);
+                    const quotaExceeded = /user[_\s-]*quota[_\s-]*exceeded|status:\s*403|^\s*403\s*$/i.test(msg);
+                    const probablyExists = /already\s*exist|identifier.*in\s*use|email.*taken|409|422/i.test(msg);
+
+                    console.warn(`[MASIVE][ROW ${processed}] Clerk error:`, msg);
+
                     if (probablyExists) {
                         clerkUser = await getClerkUserByEmail(email);
+                    } else if (quotaExceeded) {
+                        clerkUser = null; // seguimos modo local
                     } else {
                         resultados.push({
                             email,
@@ -537,21 +1056,8 @@ export async function POST(request: NextRequest) {
                     }
                 }
 
-                if (!clerkUser) {
-                    resultados.push({
-                        email,
-                        estado: 'ERROR',
-                        detalle: 'No se pudo obtener/crear usuario en Clerk',
-                    });
-                    continue;
-                }
-
-                // 2) Upsert en BD
-                const existing = await db
-                    .select()
-                    .from(users)
-                    .where(eq(users.email, email))
-                    .limit(1);
+                // 2) Upsert en BD (tabla users) → aunque no haya clerkUser, seguimos con id local
+                const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
                 const subscriptionEnd = new Date();
                 subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
@@ -602,6 +1108,8 @@ export async function POST(request: NextRequest) {
                     acudienteEmail: acudienteEmail || null,
                 };
 
+                let userIdToUse = existing.length > 0 ? existing[0].id : (clerkUser?.id ?? `local:${email}`);
+
                 if (existing.length > 0) {
                     await db.update(users).set(baseSet).where(eq(users.id, existing[0].id));
                     resultados.push({
@@ -609,26 +1117,308 @@ export async function POST(request: NextRequest) {
                         estado: 'YA_EXISTE',
                         detalle: 'Actualizado en BD (ya existía)',
                     });
+                    console.log(`[MASIVE][ROW ${processed}] user actualizado`, { id: existing[0].id });
                 } else {
                     await db.insert(users).values({
-                        id: clerkUser.id,
+                        id: userIdToUse,
                         email,
                         createdAt: new Date(),
                         ...baseSet,
                     });
-
                     resultados.push({ email, estado: 'GUARDADO' });
+                    console.log(`[MASIVE][ROW ${processed}] user insertado`, { id: userIdToUse });
+                }
+                // === NUEVO: asegurar existencia en Clerk y migrar id local->Clerk si aplica ===
+                try {
+                    // 1) Si todavía no tenemos clerkUser, reintentar: buscar por email y si no existe, crearlo.
+                    if (!clerkUser) {
+                        let fetched = await getClerkUserByEmail(email);
+                        if (!fetched) {
+                            try {
+                                const created = await createUser(firstName, lastName, email, 'estudiante', 'active');
+                                if (created && typeof created === 'object' && 'user' in created) {
+                                    fetched = created.user as ClerkUser;
+                                }
+                            } catch (err) {
+                                console.warn(`[MASIVE][ROW ${processed}] No se pudo crear usuario en Clerk (post-upsert BD):`, (err as Error)?.message ?? err);
+                            }
+                        }
+                        clerkUser = fetched;
+                    }
+
+                    // 2) Si el usuario ya EXISTÍA en BD con id "local:..." y ahora ya tenemos clerkUser,
+                    //    migrar el PK y las referencias (pagos, enrollmentPrograms) en una transacción segura.
+                    if (existing.length > 0 && clerkUser && existing[0].id?.startsWith?.('local:') && existing[0].id !== clerkUser.id) {
+                        const oldId = existing[0].id;
+                        const newId = clerkUser.id;
+
+                        // Evitar colisión si ya hubiese un user con ese newId en BD.
+                        const clash = await db.select().from(users).where(eq(users.id, newId)).limit(1);
+                        if (clash.length === 0) {
+                            await db.transaction(async (tx) => {
+                                // mover hijos primero
+                                await tx.update(pagos).set({ userId: newId }).where(eq(pagos.userId, oldId));
+                                await tx.update(enrollmentPrograms).set({ userId: newId }).where(eq(enrollmentPrograms.userId, oldId));
+                                // ahora actualizar el PK en users
+                                await tx.update(users).set({ id: newId }).where(eq(users.id, oldId));
+                            });
+                            console.log(`[MASIVE][ROW ${processed}] Migrado userId local -> Clerk`, { oldId, newId });
+                            // A partir de aquí, todos los inserts/updates deben usar el nuevo id
+                            userIdToUse = newId;
+
+                        } else {
+                            console.warn(`[MASIVE][ROW ${processed}] No se migra id local->Clerk: ya existe un usuario con id Clerk en BD`, { newId });
+                        }
+                    }
+                } catch (err) {
+                    console.warn(`[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`, err);
+                }
+                // === NUEVO: forzar metadata en Clerk para TODOS (creados o existentes)
+                try {
+                    if (clerkUser?.id) {
+                        // Usa la misma fecha calculada para BD, pero en formato 'YYYY-MM-DD HH:mm:ss'
+                        const endStr = formatDateTime(subscriptionEnd);
+                        await setClerkMetadata(clerkUser.id, {
+                            role: 'estudiante',
+                            planType: 'Premium',
+                            mustChangePassword: true,
+                            subscriptionStatus: 'active',
+                            subscriptionEndDate: endStr, // ej: '2025-11-27 19:29:25'
+                        });
+                    } else {
+                        console.warn(`[MASIVE][ROW ${processed}] No hay clerkUser; no se pudo actualizar metadata en Clerk`);
+                    }
+                } catch (e) {
+                    console.warn(`[MASIVE][ROW ${processed}] Error actualizando metadata en Clerk:`, (e as Error)?.message ?? e);
+                }
+
+                // Enviar bienvenida SOLO si se creó en Clerk y tenemos password generado
+                if (isNewInClerk && generatedPassword) {
+                    try {
+                        await sendWelcomeEmail(email, `${firstName} ${lastName}`.trim(), generatedPassword);
+                        console.log(`[MASIVE][ROW ${processed}] Email de bienvenida enviado a ${email}`);
+                    } catch (err) {
+                        console.warn(
+                            `[MASIVE][ROW ${processed}] Error al enviar bienvenida a ${email}:`,
+                            (err as Error)?.message ?? err
+                        );
+                    }
+                }
+
+
+
+                // 3) ➕ Guardar cuotas en `pagos` (normalizado: 1 fila por cuota)
+                const cuotasDet = extractCuotas(row);
+                console.log(`[MASIVE][ROW ${processed}] cuotasDet extraídas`, cuotasDet);
+
+                const cuotasRows = cuotasDet
+                    .map<CuotaDet>((c) => ({
+                        nroPago: c.nroPago,
+                        // si la fecha vino vacía en la cuota, usamos fallback: cuota1Fecha -> fechaInicio -> hoy
+                        fecha: c.fecha ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date()),
+                        metodo: (c.metodo ?? paymentMethod) || 'No especificado',
+                        valor: c.valor ?? null,
+                    }))
+                    // Pagos requiere: fecha, metodo y valor (NOT NULL). Solo insertamos si hay valor y fecha.
+                    .filter((c) => c.valor !== null && c.valor !== undefined && c.fecha);
+
+                console.log(`[MASIVE][ROW ${processed}] cuotasRows (a insertar)`, cuotasRows);
+
+                if (cuotasRows.length > 0) {
+                    // Determinar a qué programa amarrar los pagos
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // ✅ Backfill de CUOTAS viejas sin programa (ANTES de insertar nuevas)
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
+                    const nros = cuotasRows.map((c) => c.nroPago);
+
+                    // Borramos SOLO cuotas del mismo programa o las que quedaron sin programa
+                    await db
+                        .delete(pagos)
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                inArray(pagos.nroPago, nros),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
+
+                    await db.insert(pagos).values(
+                        cuotasRows.map((c) => ({
+                            userId: userIdToUse,
+                            programaId: programaIdForPagos,
+                            concepto: 'cuota' as const,
+                            nroPago: c.nroPago,
+                            fecha: c.fecha!,
+                            metodo: (c.metodo ?? 'No especificado') as string,
+                            valor: c.valor!,
+                        }))
+                    );
+                } else {
+                    console.warn(
+                        `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
+                    );
+                }
+
+                if (inscripcionValor !== null && inscripcionValor !== undefined) {
+                    const insFechaStr =
+                        (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
+
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // ✅ Backfill de INSCRIPCIONES viejas sin programa
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
+                    await db
+                        .delete(pagos)
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                eq(pagos.nroPago, 0),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
+
+                    await db.insert(pagos).values({
+                        userId: userIdToUse,
+                        programaId: programaIdForPagos,
+                        concepto: 'inscripción' as const,
+                        nroPago: 0,
+                        fecha: insFechaStr,
+                        metodo: paymentMethod || 'No especificado',
+                        valor: inscripcionValor,
+                    });
+                }
+                else {
+                    console.warn(
+                        `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
+                    );
+                }
+
+                if (inscripcionValor !== null && inscripcionValor !== undefined) {
+                    const insFechaStr =
+                        (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
+
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // Backfill de pagos viejos sin programa (si ya existían y quedaron en NULL)
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
+                    await db
+                        .delete(pagos)
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                eq(pagos.nroPago, 0),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
+
+                    await db.insert(pagos).values({
+                        userId: userIdToUse,
+                        programaId: programaIdForPagos,
+                        concepto: 'inscripción' as const,
+                        nroPago: 0,
+                        fecha: insFechaStr,
+                        metodo: paymentMethod || 'No especificado',
+                        valor: inscripcionValor,
+                    });
+                }
+
+                // 5) ➕ Matricular al programa (si viene el nombre del programa)
+                if (programa?.trim()) {
+                    try {
+                        const programaId = await findSimilarProgram(programa);
+
+
+                        if (programaId) {
+                            // Verificar si ya está matriculado
+                            const existingEnrollment = await db
+                                .select()
+                                .from(enrollmentPrograms)
+                                .where(
+                                    and(
+                                        eq(enrollmentPrograms.userId, userIdToUse),
+                                        eq(enrollmentPrograms.programaId, programaId)
+                                    )
+                                )
+                                .limit(1);
+
+                            if (existingEnrollment.length === 0) {
+                                // Matricular al programa
+                                await db.insert(enrollmentPrograms).values({
+                                    userId: userIdToUse,
+                                    programaId: programaId,
+                                    enrolledAt: new Date(),
+                                    completed: false,
+                                });
+
+                                console.log(`[MASIVE][ROW ${processed}] Matriculado en programa`, {
+                                    programaId,
+                                    programa,
+                                });
+                            } else {
+                                console.log(`[MASIVE][ROW ${processed}] Ya estaba matriculado en el programa`, {
+                                    programaId,
+                                    programa,
+                                });
+                            }
+                        } else {
+                            console.warn(`[MASIVE][ROW ${processed}] No se encontró programa similar a "${programa}"`);
+                        }
+                    } catch (err) {
+                        console.error(`[MASIVE][ROW ${processed}] Error al matricular en programa:`, err);
+                        // No detener el proceso, solo loggear el error
+                    }
                 }
 
                 createdOrSynced.push({
-                    id: clerkUser.id,
+                    id: userIdToUse,
                     email,
                     firstName,
                     lastName,
-                    isNew: isNewInClerk,
+                    isNew: !!clerkUser && existing.length === 0,
                 });
                 void generatedPassword;
             } catch (err) {
+                console.error(`[MASIVE][ROW ${processed}] ERROR al guardar usuario/pagos`, err);
                 resultados.push({
                     email,
                     estado: 'ERROR',
@@ -642,9 +1432,10 @@ export async function POST(request: NextRequest) {
             guardados: resultados.filter((r) => r.estado === 'GUARDADO').length,
             yaExiste: resultados.filter((r) => r.estado === 'YA_EXISTE').length,
             errores: resultados.filter((r) => r.estado === 'ERROR').length,
-            // solo los que se eliminaron por estar sin nombre
             omitidosPorCompatibilidad: omitidosPorSinNombre + omitidosPorCliente,
         };
+
+        console.log('[MASIVE] summary:', summary);
 
         return NextResponse.json({
             message: 'OK',
@@ -653,15 +1444,17 @@ export async function POST(request: NextRequest) {
             users: createdOrSynced,
         });
     } catch (error) {
+        console.error('[MASIVE] ERROR general', error);
         return NextResponse.json(
             {
                 error: 'Error al procesar archivo',
                 detalle: (error as Error)?.message ?? 'Error desconocido',
             },
-            { status: 500 },
+            { status: 500 }
         );
     }
 }
+
 
 // ====== GET: plantilla ======
 export function GET() {
@@ -700,6 +1493,14 @@ export function GET() {
                 'Acudiente nombre': '',
                 'Acudiente contacto': '',
                 'Acudiente email': '',
+
+                // Ejemplos de cuotas adicionales:
+                'Cuota 2 fecha': '2025-04-01',
+                'Cuota 2 método': 'Transferencia',
+                'Cuota 2 valor': 300000,
+                'Cuota 3 fecha': '2025-05-01',
+                'Cuota 3 método': 'Tarjeta',
+                'Cuota 3 valor': 300000,
             },
         ];
 
@@ -711,15 +1512,11 @@ export function GET() {
 
         return new NextResponse(buffer, {
             headers: {
-                'Content-Type':
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition': 'attachment; filename=plantilla_usuarios_v2.xlsx',
             },
         });
     } catch {
-        return NextResponse.json(
-            { error: 'No se pudo generar la plantilla' },
-            { status: 500 },
-        );
+        return NextResponse.json({ error: 'No se pudo generar la plantilla' }, { status: 500 });
     }
 }

@@ -265,6 +265,7 @@ export async function getAllEducators(query?: string) {
       .select({
         id: users.id,
         name: users.name,
+        email: users.email, // ⬅️ AGREGADO: traer el email desde la BD
       })
       .from(users)
       .where(eq(users.role, 'educador'));

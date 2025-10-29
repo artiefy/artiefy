@@ -10,7 +10,7 @@ const BATCH_SIZE = 100;
 
 export async function GET() {
   try {
-    const allPrograms = await db.select().from(programas).execute();
+    const allPrograms = await db.select().from(programas);
     // Use a Set to filter out duplicate titles more efficiently
     const uniquePrograms = Array.from(
       new Map(allPrograms.map((program) => [program.title, program])).values()
@@ -98,13 +98,21 @@ export async function POST(request: Request) {
       await Promise.all(
         newUsers.map(async (userId) => {
           const client = await clerkClient();
+          const user = await client.users.getUser(userId);
+          const prev = (user.publicMetadata ?? {}) as Record<string, unknown>;
+
           await client.users.updateUser(userId, {
             publicMetadata: {
+              ...prev,
+              role: 'estudiante',
+              planType: 'Premium',
+              mustChangePassword: true,
               subscriptionStatus: 'active',
-              subscriptionEndDate: formattedDate,
-              planType: planType,
+              subscriptionEndDate: formattedDate, // asegúrate que sea string tipo 'YYYY-MM-DD HH:mm:ss' o ISO
             },
           });
+
+
         })
       );
 
