@@ -100,11 +100,14 @@ export async function POST(request: Request) {
           const client = await clerkClient();
           await client.users.updateUser(userId, {
             publicMetadata: {
+              role: 'estudiante',
+              planType: 'Premium',
+              mustChangePassword: true,
               subscriptionStatus: 'active',
               subscriptionEndDate: formattedDate,
-              planType: planType,
             },
           });
+
         })
       );
 

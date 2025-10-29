@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth as clerkAuth } from '@clerk/nextjs/server';
-import { and, desc,eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
@@ -397,6 +397,48 @@ function excelToDateObject(input: unknown): Date | null {
     if (!raw) return null;
     const d = new Date(raw);
     return Number.isNaN(d.getTime()) ? null : d;
+}
+/** YYYY-MM-DD HH:mm:ss (hora local del servidor) */
+function formatDateTime(dt: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+}
+
+/** Actualiza metadata pública en Clerk para un user dado */
+async function setClerkMetadata(
+    clerkUserId: string,
+    meta: {
+        role?: string;
+        planType?: string;
+        mustChangePassword?: boolean;
+        subscriptionStatus?: string;
+        subscriptionEndDate?: string; // 'YYYY-MM-DD HH:mm:ss'
+    }
+): Promise<void> {
+    const key = process.env.CLERK_SECRET_KEY;
+    if (!key) throw new Error('Falta CLERK_SECRET_KEY');
+
+    const res = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
+        method: 'PATCH',
+        headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            public_metadata: {
+                ...(meta.role != null ? { role: meta.role } : {}),
+                ...(meta.planType != null ? { planType: meta.planType } : {}),
+                ...(meta.mustChangePassword != null ? { mustChangePassword: meta.mustChangePassword } : {}),
+                ...(meta.subscriptionStatus != null ? { subscriptionStatus: meta.subscriptionStatus } : {}),
+                ...(meta.subscriptionEndDate != null ? { subscriptionEndDate: meta.subscriptionEndDate } : {}),
+            },
+        }),
+    });
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Clerk metadata update failed (${res.status}): ${text}`);
+    }
 }
 
 // ====== Clerk helpers ======
@@ -1107,6 +1149,25 @@ export async function POST(request: NextRequest) {
                 } catch (err) {
                     console.warn(`[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`, err);
                 }
+                // === NUEVO: forzar metadata en Clerk para TODOS (creados o existentes)
+                try {
+                    if (clerkUser?.id) {
+                        // Usa la misma fecha calculada para BD, pero en formato 'YYYY-MM-DD HH:mm:ss'
+                        const endStr = formatDateTime(subscriptionEnd);
+                        await setClerkMetadata(clerkUser.id, {
+                            role: 'estudiante',
+                            planType: 'Premium',
+                            mustChangePassword: true,
+                            subscriptionStatus: 'active',
+                            subscriptionEndDate: endStr, // ej: '2025-11-27 19:29:25'
+                        });
+                    } else {
+                        console.warn(`[MASIVE][ROW ${processed}] No hay clerkUser; no se pudo actualizar metadata en Clerk`);
+                    }
+                } catch (e) {
+                    console.warn(`[MASIVE][ROW ${processed}] Error actualizando metadata en Clerk:`, (e as Error)?.message ?? e);
+                }
+
                 // Enviar bienvenida SOLO si se creó en Clerk y tenemos password generado
                 if (isNewInClerk && generatedPassword) {
                     try {
