@@ -403,6 +403,16 @@ function formatDateTime(dt: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
 }
+
+// ↑ Colócalo ARRIBA de setClerkMetadata (una sola vez en el archivo)
+function readPublicMetadata(input: unknown): Record<string, unknown> {
+    if (typeof input === 'object' && input !== null && 'public_metadata' in input) {
+        const pm = (input as { public_metadata?: unknown }).public_metadata;
+        if (pm && typeof pm === 'object') return pm as Record<string, unknown>;
+    }
+    return {};
+}
+
 async function setClerkMetadata(
     clerkUserId: string,
     meta: {
@@ -425,8 +435,8 @@ async function setClerkMetadata(
         const t = await getRes.text().catch(() => '');
         throw new Error(`Clerk GET user failed (${getRes.status}): ${t}`);
     }
-    const current = await getRes.json();
-    const prevPublic: Record<string, unknown> = (current?.public_metadata ?? {}) as Record<string, unknown>;
+    const currentJson: unknown = await getRes.json();
+    const prevPublic: Record<string, unknown> = readPublicMetadata(currentJson);
 
     // 2) Preparar actualización (merge sin borrar llaves previas)
     const updates: Record<string, unknown> = {
