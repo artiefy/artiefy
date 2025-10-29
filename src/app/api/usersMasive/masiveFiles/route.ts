@@ -177,66 +177,94 @@ const toYMD = (d: Date): string => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
-/** Excel serial o string -> 'YYYY-MM-DD' (para columnas date() de Drizzle) */
 function excelToDateString(input: unknown): string | null {
     if (input == null) return null;
 
-    if (typeof input === 'number' && !Number.isNaN(input)) {
+    // A) Serial de Excel
+    if (typeof input === 'number' && Number.isFinite(input)) {
         const epoch = new Date(Date.UTC(1899, 11, 30));
-        const date = new Date(epoch.getTime() + input * 24 * 60 * 60 * 1000);
-        const yyyy = date.getUTCFullYear();
-        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(date.getUTCDate()).padStart(2, '0');
+        const d = new Date(epoch.getTime() + input * 86400000);
+        if (Number.isNaN(d.getTime())) return null;
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    if (input instanceof Date && !Number.isNaN(input.getTime())) {
+    // B) Objeto Date
+    if (input instanceof Date && Number.isFinite(input.getTime())) {
         const yyyy = input.getFullYear();
         const mm = String(input.getMonth() + 1).padStart(2, '0');
         const dd = String(input.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     }
 
+    // C) Texto
     const raw = safeTrim(input);
     if (!raw) return null;
 
-    // 1º intento: parse nativo
-    let tryParse = new Date(raw);
-    if (!Number.isNaN(tryParse.getTime())) {
-        const yyyy = tryParse.getFullYear();
-        const mm = String(tryParse.getMonth() + 1).padStart(2, '0');
-        const dd = String(tryParse.getDate()).padStart(2, '0');
+    // C1) dd/mm/yyyy o dd-mm-yyyy
+    {
+        const m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(raw);
+        if (m) {
+            const d = Number(m[1]), M = Number(m[2]), y = Number(m[3]!.length === 2 ? `20${m[3]}` : m[3]);
+            if (y >= 1900 && M >= 1 && M <= 12 && d >= 1 && d <= 31) {
+                const mm = String(M).padStart(2, '0');
+                const dd = String(d).padStart(2, '0');
+                return `${y}-${mm}-${dd}`;
+            }
+        }
+    }
+
+    // C2) "25 de Octubre 2025" / "25 Octubre 2025" / "Octubre 25, 2025"
+    {
+        const meses: Record<string, number> = {
+            enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+            julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12
+        };
+        const norm = raw
+            .toLowerCase()
+            .replace(/\bdel?\b/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+
+        // "25 octubre 2025"
+        let m = /^(\d{1,2})\s+([a-záéíóúñ]+)\s+(\d{4})$/i.exec(norm);
+        if (m) {
+            const d = Number(m[1]);
+            const mes = meses[m[2]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
+            const y = Number(m[3]);
+            if (mes && d >= 1 && d <= 31) {
+                const mm = String(mes).padStart(2, '0');
+                const dd = String(d).padStart(2, '0');
+                return `${y}-${mm}-${dd}`;
+            }
+        }
+
+        // "octubre 25 2025" o "octubre 25, 2025"
+        m = /^([a-záéíóúñ]+)\s+(\d{1,2})(?:,)?\s+(\d{4})$/i.exec(norm);
+        if (m) {
+            const mes = meses[m[1]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
+            const d = Number(m[2]);
+            const y = Number(m[3]);
+            if (mes && d >= 1 && d <= 31) {
+                const mm = String(mes).padStart(2, '0');
+                const dd = String(d).padStart(2, '0');
+                return `${y}-${mm}-${dd}`;
+            }
+        }
+    }
+
+    // C3) Último intento: Date nativo (solo si válido)
+    const tentative = new Date(raw);
+    if (!Number.isNaN(tentative.getTime())) {
+        const yyyy = tentative.getFullYear();
+        const mm = String(tentative.getMonth() + 1).padStart(2, '0');
+        const dd = String(tentative.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // 2º intento: meses en español (e.g. "06 Junio 2025")
-    const esToEn: Record<string, string> = {
-        enero: 'january',
-        febrero: 'february',
-        marzo: 'march',
-        abril: 'april',
-        mayo: 'may',
-        junio: 'june',
-        julio: 'july',
-        agosto: 'august',
-        septiembre: 'september',
-        setiembre: 'september',
-        octubre: 'october',
-        noviembre: 'november',
-        diciembre: 'december',
-    };
-    let lowered = raw.toLowerCase().replace(/\b(de|del)\b/g, ' ');
-    for (const [es, en] of Object.entries(esToEn)) {
-        lowered = lowered.replace(new RegExp(`\\b${es}\\b`, 'g'), en);
-    }
-    tryParse = new Date(lowered);
-    if (!Number.isNaN(tryParse.getTime())) {
-        const yyyy = tryParse.getFullYear();
-        const mm = String(tryParse.getMonth() + 1).padStart(2, '0');
-        const dd = String(tryParse.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-    }
-
+    // No se pudo parsear
     return null;
 }
 
@@ -878,7 +906,7 @@ export async function POST(request: NextRequest) {
                 (row as Record<string, unknown>).ciudad ??
                 get(row, 'city')
             );
-            const birthDateStr = excelToDateString(
+            const birthDateStrRaw = excelToDateString(
                 (row as Record<string, unknown>)['Fecha de nacimiento'] ?? get(row, 'birthDate')
             );
 
@@ -947,6 +975,7 @@ export async function POST(request: NextRequest) {
                 (row as Record<string, unknown>)['CUOTA 1 FECHA'] ??
                 get(row, 'cuota1Fecha')
             );
+
             const cuota1Metodo = safeTrim(
                 (row as Record<string, unknown>)['Cuota1 método'] ??
                 (row as Record<string, unknown>)['CUOTA 1 MÉTODO'] ??
@@ -1061,6 +1090,11 @@ export async function POST(request: NextRequest) {
 
                 const subscriptionEnd = new Date();
                 subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+                const toYMDorNull = (s?: string | null) =>
+                    s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+                const fechaInicioYMD = toYMDorNull(fechaInicioStr);
+                const cuota1FechaYMD = toYMDorNull(cuota1FechaStr);
+
 
                 const baseSet = {
                     name: `${firstName} ${lastName}`,
@@ -1076,14 +1110,14 @@ export async function POST(request: NextRequest) {
                     address: address || null,
                     country: country || null,
                     city: city || null,
-                    birthDate: birthDateStr,
+                    birthDate: toYMDorNull(birthDateStrRaw),
 
                     identificacionTipo: identificacionTipo || null,
                     identificacionNumero: identificacionNumero || null,
                     nivelEducacion: nivelEducacion || null,
 
                     programa: programa || null,
-                    fechaInicio: fechaInicioStr ?? null,
+                    fechaInicio: fechaInicioYMD ?? null,
                     comercial: comercial || null,
                     sede: sede || null,
                     horario: horario || null,
@@ -1095,7 +1129,7 @@ export async function POST(request: NextRequest) {
                     valorPrograma: valorPrograma ?? null,
                     inscripcionValor: inscripcionValor ?? null,
                     paymentMethod: paymentMethod || null,
-                    cuota1Fecha: cuota1FechaStr,
+                    cuota1Fecha: cuota1FechaYMD,
                     cuota1Metodo: cuota1Metodo || null,
                     cuota1Valor: cuota1Valor ?? null,
                     inscripcionOrigen: inscripcionOrigen || null,
@@ -1229,7 +1263,7 @@ export async function POST(request: NextRequest) {
                     .map<CuotaDet>((c) => ({
                         nroPago: c.nroPago,
                         // si la fecha vino vacía en la cuota, usamos fallback: cuota1Fecha -> fechaInicio -> hoy
-                        fecha: c.fecha ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date()),
+                        fecha: c.fecha ?? cuota1FechaYMD ?? fechaInicioYMD ?? toYMD(new Date()),
                         metodo: (c.metodo ?? paymentMethod) || 'No especificado',
                         valor: c.valor ?? null,
                     }))
@@ -1328,53 +1362,7 @@ export async function POST(request: NextRequest) {
                         valor: inscripcionValor,
                     });
                 }
-                else {
-                    console.warn(
-                        `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
-                    );
-                }
 
-                if (inscripcionValor !== null && inscripcionValor !== undefined) {
-                    const insFechaStr =
-                        (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
-
-                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
-
-                    // Backfill de pagos viejos sin programa (si ya existían y quedaron en NULL)
-                    if (programaIdForPagos !== null) {
-                        await db
-                            .update(pagos)
-                            .set({ programaId: programaIdForPagos })
-                            .where(and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'cuota'),
-                                isNull(pagos.programaId)
-                            ));
-                    }
-
-                    await db
-                        .delete(pagos)
-                        .where(
-                            and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'inscripción'),
-                                eq(pagos.nroPago, 0),
-                                programaIdForPagos !== null
-                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
-                                    : isNull(pagos.programaId)
-                            )
-                        );
-
-                    await db.insert(pagos).values({
-                        userId: userIdToUse,
-                        programaId: programaIdForPagos,
-                        concepto: 'inscripción' as const,
-                        nroPago: 0,
-                        fecha: insFechaStr,
-                        metodo: paymentMethod || 'No especificado',
-                        valor: inscripcionValor,
-                    });
-                }
 
                 // 5) ➕ Matricular al programa (si viene el nombre del programa)
                 if (programa?.trim()) {
