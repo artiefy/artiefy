@@ -10,7 +10,7 @@ const BATCH_SIZE = 100;
 
 export async function GET() {
   try {
-    const allPrograms = await db.select().from(programas).execute();
+    const allPrograms = await db.select().from(programas);
     // Use a Set to filter out duplicate titles more efficiently
     const uniquePrograms = Array.from(
       new Map(allPrograms.map((program) => [program.title, program])).values()

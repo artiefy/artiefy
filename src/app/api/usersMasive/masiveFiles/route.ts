@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth as clerkAuth } from '@clerk/nextjs/server';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc,eq, inArray, isNull, or } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
@@ -134,7 +134,7 @@ function levenshteinDistance(str1: string, str2: string): number {
 async function findSimilarProgram(programName: string): Promise<number | null> {
     if (!programName?.trim()) return null;
 
-    const allPrograms = await db.select().from(programas).execute();
+    const allPrograms = await db.select().from(programas);
 
     if (allPrograms.length === 0) return null;
 
@@ -157,6 +157,16 @@ async function findSimilarProgram(programName: string): Promise<number | null> {
 
     console.warn(`[PROGRAM_MATCH] No se encontró programa similar a "${programName}" (mejor score: ${(bestScore * 100).toFixed(1)}%)`);
     return null;
+}
+
+async function getLastUserProgramaId(userId: string): Promise<number | null> {
+    const last = await db
+        .select({ programaId: enrollmentPrograms.programaId, enrolledAt: enrollmentPrograms.enrolledAt })
+        .from(enrollmentPrograms)
+        .where(eq(enrollmentPrograms.userId, userId))
+        .orderBy(desc(enrollmentPrograms.enrolledAt))
+        .limit(1);
+    return last.length ? last[0].programaId : null;
 }
 
 /** Date -> 'YYYY-MM-DD' */
@@ -812,6 +822,13 @@ export async function POST(request: NextRequest) {
                 get(row, 'nivelEducacion')
             );
             const programa = safeTrim((row as Record<string, unknown>).Programa ?? get(row, 'programa'));
+            let selectedProgramaId: number | null = null;
+
+            // ✔️ Resolver el programa lo más pronto posible (antes de guardar pagos)
+            if (programa?.trim()) {
+                selectedProgramaId = await findSimilarProgram(programa);
+            }
+
             const fechaInicioStr = excelToDateString(
                 (row as Record<string, unknown>)['Fecha de inicio'] ??
                 (row as Record<string, unknown>)['FECHA PRIMERA CUOTA'] ??
@@ -1025,7 +1042,7 @@ export async function POST(request: NextRequest) {
                     acudienteEmail: acudienteEmail || null,
                 };
 
-                const userIdToUse = existing.length > 0 ? existing[0].id : (clerkUser?.id ?? `local:${email}`);
+                let userIdToUse = existing.length > 0 ? existing[0].id : (clerkUser?.id ?? `local:${email}`);
 
                 if (existing.length > 0) {
                     await db.update(users).set(baseSet).where(eq(users.id, existing[0].id));
@@ -1080,6 +1097,9 @@ export async function POST(request: NextRequest) {
                                 await tx.update(users).set({ id: newId }).where(eq(users.id, oldId));
                             });
                             console.log(`[MASIVE][ROW ${processed}] Migrado userId local -> Clerk`, { oldId, newId });
+                            // A partir de aquí, todos los inserts/updates deben usar el nuevo id
+                            userIdToUse = newId;
+
                         } else {
                             console.warn(`[MASIVE][ROW ${processed}] No se migra id local->Clerk: ya existe un usuario con id Clerk en BD`, { newId });
                         }
@@ -1120,58 +1140,148 @@ export async function POST(request: NextRequest) {
                 console.log(`[MASIVE][ROW ${processed}] cuotasRows (a insertar)`, cuotasRows);
 
                 if (cuotasRows.length > 0) {
+                    // Determinar a qué programa amarrar los pagos
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // ✅ Backfill de CUOTAS viejas sin programa (ANTES de insertar nuevas)
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
                     const nros = cuotasRows.map((c) => c.nroPago);
+
+                    // Borramos SOLO cuotas del mismo programa o las que quedaron sin programa
                     await db
                         .delete(pagos)
-                        .where(and(eq(pagos.userId, userIdToUse), eq(pagos.concepto, 'cuota'), inArray(pagos.nroPago, nros)));
-                    console.log(`[MASIVE][ROW ${processed}] DELETE pagos cuota nros:`, nros);
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                inArray(pagos.nroPago, nros),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
 
                     await db.insert(pagos).values(
                         cuotasRows.map((c) => ({
                             userId: userIdToUse,
-                            programaId: null,
-                            concepto: 'cuota',
+                            programaId: programaIdForPagos,
+                            concepto: 'cuota' as const,
                             nroPago: c.nroPago,
-                            fecha: c.fecha!, // 'YYYY-MM-DD'
+                            fecha: c.fecha!,
                             metodo: (c.metodo ?? 'No especificado') as string,
                             valor: c.valor!,
                         }))
                     );
-                    console.log(`[MASIVE][ROW ${processed}] INSERT pagos cuota:`, cuotasRows.length);
                 } else {
                     console.warn(
                         `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
                     );
                 }
 
-                // 4) ➕ Guardar inscripción (concepto='inscripción', nroPago=0) si viene valor
                 if (inscripcionValor !== null && inscripcionValor !== undefined) {
                     const insFechaStr =
                         (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
 
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // ✅ Backfill de INSCRIPCIONES viejas sin programa
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
                     await db
                         .delete(pagos)
-                        .where(and(eq(pagos.userId, userIdToUse), eq(pagos.concepto, 'inscripción'), eq(pagos.nroPago, 0)));
-                    console.log(`[MASIVE][ROW ${processed}] DELETE pago inscripción (nroPago=0)`);
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                eq(pagos.nroPago, 0),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
 
                     await db.insert(pagos).values({
                         userId: userIdToUse,
-                        programaId: null,
-                        concepto: 'inscripción',
+                        programaId: programaIdForPagos,
+                        concepto: 'inscripción' as const,
                         nroPago: 0,
                         fecha: insFechaStr,
                         metodo: paymentMethod || 'No especificado',
                         valor: inscripcionValor,
                     });
-                    console.log(`[MASIVE][ROW ${processed}] INSERT pago inscripción`, {
+                }
+                else {
+                    console.warn(
+                        `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
+                    );
+                }
+
+                if (inscripcionValor !== null && inscripcionValor !== undefined) {
+                    const insFechaStr =
+                        (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
+
+                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+                    // Backfill de pagos viejos sin programa (si ya existían y quedaron en NULL)
+                    if (programaIdForPagos !== null) {
+                        await db
+                            .update(pagos)
+                            .set({ programaId: programaIdForPagos })
+                            .where(and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'cuota'),
+                                isNull(pagos.programaId)
+                            ));
+                    }
+
+                    await db
+                        .delete(pagos)
+                        .where(
+                            and(
+                                eq(pagos.userId, userIdToUse),
+                                eq(pagos.concepto, 'inscripción'),
+                                eq(pagos.nroPago, 0),
+                                programaIdForPagos !== null
+                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
+                                    : isNull(pagos.programaId)
+                            )
+                        );
+
+                    await db.insert(pagos).values({
+                        userId: userIdToUse,
+                        programaId: programaIdForPagos,
+                        concepto: 'inscripción' as const,
+                        nroPago: 0,
                         fecha: insFechaStr,
+                        metodo: paymentMethod || 'No especificado',
                         valor: inscripcionValor,
                     });
                 }
+
                 // 5) ➕ Matricular al programa (si viene el nombre del programa)
                 if (programa?.trim()) {
                     try {
                         const programaId = await findSimilarProgram(programa);
+
 
                         if (programaId) {
                             // Verificar si ya está matriculado
