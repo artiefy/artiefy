@@ -403,8 +403,6 @@ function formatDateTime(dt: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
 }
-
-/** Actualiza metadata pública en Clerk para un user dado */
 async function setClerkMetadata(
     clerkUserId: string,
     meta: {
@@ -418,28 +416,44 @@ async function setClerkMetadata(
     const key = process.env.CLERK_SECRET_KEY;
     if (!key) throw new Error('Falta CLERK_SECRET_KEY');
 
-    const res = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
+    // 1) Leer metadata actual para MERGE
+    const getRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!getRes.ok) {
+        const t = await getRes.text().catch(() => '');
+        throw new Error(`Clerk GET user failed (${getRes.status}): ${t}`);
+    }
+    const current = await getRes.json();
+    const prevPublic: Record<string, unknown> = (current?.public_metadata ?? {}) as Record<string, unknown>;
+
+    // 2) Preparar actualización (merge sin borrar llaves previas)
+    const updates: Record<string, unknown> = {
+        ...prevPublic,
+        ...(meta.role != null ? { role: meta.role } : {}),
+        ...(meta.planType != null ? { planType: meta.planType } : {}),
+        ...(meta.mustChangePassword != null ? { mustChangePassword: meta.mustChangePassword } : {}),
+        ...(meta.subscriptionStatus != null ? { subscriptionStatus: meta.subscriptionStatus } : {}),
+        ...(meta.subscriptionEndDate != null ? { subscriptionEndDate: meta.subscriptionEndDate } : {}),
+    };
+
+    // 3) PATCH
+    const patchRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
         method: 'PATCH',
         headers: {
             Authorization: `Bearer ${key}`,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            public_metadata: {
-                ...(meta.role != null ? { role: meta.role } : {}),
-                ...(meta.planType != null ? { planType: meta.planType } : {}),
-                ...(meta.mustChangePassword != null ? { mustChangePassword: meta.mustChangePassword } : {}),
-                ...(meta.subscriptionStatus != null ? { subscriptionStatus: meta.subscriptionStatus } : {}),
-                ...(meta.subscriptionEndDate != null ? { subscriptionEndDate: meta.subscriptionEndDate } : {}),
-            },
-        }),
+        body: JSON.stringify({ public_metadata: updates }),
     });
 
-    if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Clerk metadata update failed (${res.status}): ${text}`);
+    if (!patchRes.ok) {
+        const text = await patchRes.text().catch(() => '');
+        throw new Error(`Clerk metadata update failed (${patchRes.status}): ${text}`);
     }
 }
+
 
 // ====== Clerk helpers ======
 async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
