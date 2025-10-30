@@ -136,18 +136,6 @@ export default function StudentDetails({
       setLastSearchQuery(query);
       setShowChatbot(true); // Asegurar que esté abierto
       setChatbotKey((prev) => prev + 1);
-
-      console.log('🚀 Disparando evento create-new-chat-with-search');
-      // Disparar evento para crear nuevo chat con la búsqueda
-      setTimeout(() => {
-        // Asegurar nuevamente que esté abierto
-        setShowChatbot(true);
-        window.dispatchEvent(
-          new CustomEvent('create-new-chat-with-search', {
-            detail: { query },
-          })
-        );
-      }, 100);
     };
 
     window.addEventListener(

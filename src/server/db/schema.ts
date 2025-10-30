@@ -26,7 +26,9 @@ export const users = pgTable(
   'users',
   {
     id: text('id').primaryKey(),
-    role: text('role', { enum: ['estudiante', 'educador', 'admin', 'super-admin'] }).notNull(),
+    role: text('role', {
+      enum: ['estudiante', 'educador', 'admin', 'super-admin'],
+    }).notNull(),
     name: text('name'),
     email: text('email').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -37,10 +39,20 @@ export const users = pgTable(
     address: text('address'),
     age: integer('age'),
     birthDate: date('birth_date'),
-    subscriptionStatus: text('subscription_status').default('inactive').notNull(),
-    subscriptionEndDate: timestamp('subscription_end_date', { withTimezone: true, mode: 'date' }),
-    planType: text('plan_type', { enum: ['none', 'Pro', 'Premium', 'Enterprise'] }),
-    purchaseDate: timestamp('purchase_date', { withTimezone: true, mode: 'date' }),
+    subscriptionStatus: text('subscription_status')
+      .default('inactive')
+      .notNull(),
+    subscriptionEndDate: timestamp('subscription_end_date', {
+      withTimezone: true,
+      mode: 'date',
+    }),
+    planType: text('plan_type', {
+      enum: ['none', 'Pro', 'Premium', 'Enterprise'],
+    }),
+    purchaseDate: timestamp('purchase_date', {
+      withTimezone: true,
+      mode: 'date',
+    }),
 
     // ➕ Campos que ya estabas usando en la ruta
     document: text('document'),
@@ -128,6 +140,7 @@ export const courses = pgTable('courses', {
   is_featured: boolean('is_featured').default(false),
   // 👉 Agrega la columna embedding para pgvector (usa 1536 dimensiones para OpenAI)
   embedding: vector('embedding', { dimensions: 1536 }),
+  metaPixelId: text('meta_pixel_id'), // Pixel Meta/Facebook dinámico por curso
 });
 
 // Tabla de tipos de actividades
@@ -518,6 +531,7 @@ export const courseTypes = pgTable('course_types', {
     false
   ),
   price: integer('price'),
+  metaPixelId: text('meta_pixel_id'), // Pixel Meta/Facebook dinámico por plan
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

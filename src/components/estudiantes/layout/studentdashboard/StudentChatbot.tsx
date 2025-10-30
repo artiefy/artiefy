@@ -185,6 +185,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   useEffect(() => {
     conversationOwnerRef.current = user?.id ?? '';
   }, [user?.id]);
+  useEffect(() => {
+    ideaRef.current = idea;
+  }, [idea]);
 
   // Añade los estados necesarios para el flujo n8n
   const [_n8nCourses, setN8nCourses] = useState<CourseData[]>([]);
@@ -1453,26 +1456,40 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const handleCreateNewChatWithSearch = (
       event: CustomEvent<{ query: string }>
     ): void => {
-      const query = event.detail.query;
-      if (!query) return;
+      const rawQuery = event.detail.query ?? '';
+      const trimmedQuery = rawQuery.trim();
+      if (!trimmedQuery) return;
 
       const tempChatId = Date.now();
 
       setChatMode({ idChat: tempChatId, status: true, curso_title: '' });
       setShowChatList(false);
+      pendingBotSaves.current = [];
+      pendingUserSaves.current = [];
+      setPendingProjectDraft(null);
+      setLastN8nProjectPayload(null);
+      setProjectEnvelopes({});
+      setProjectPayload(null);
 
+      const now = Date.now();
       setMessages([
         {
-          id: Date.now(),
-          text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+          id: now,
+          text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
           sender: 'bot',
           buttons: [
-            { label: '📚 Crear Proyecto', action: 'new_project' },
-            { label: '💬 Nueva Idea', action: 'new_idea' },
-            { label: '🛠 Soporte Técnico', action: 'contact_support' },
+            { label: '🤖 Crear Proyecto', action: 'new_project' },
+            { label: '💡 Nueva Idea', action: 'new_idea' },
+            { label: '🛠️ Soporte Técnico', action: 'contact_support' },
           ],
         },
+        {
+          id: now + 1,
+          text: '¡Cuéntame tu nueva idea!',
+          sender: 'bot',
+        },
       ]);
+      setIdea({ selected: true, idea: '' });
 
       setInputText('');
       setIsOpen(true);
@@ -1481,17 +1498,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('force-open-chatbot'));
+        setTimeout(() => inputRef.current?.focus(), 0);
       }, 50);
 
       setTimeout(() => {
         const newUserMessage = {
           id: Date.now(),
-          text: query,
+          text: trimmedQuery,
           sender: 'user' as const,
         };
+        queueOrSaveUserMessage(trimmedQuery, 'user');
         setMessages((prev) => [...prev, newUserMessage]);
-
-        void handleBotResponse(query, { useN8n: false });
+        setIdea({ selected: false, idea: trimmedQuery });
+        void handleBotResponse(trimmedQuery, { useN8n: true });
 
         const timestamp = Date.now();
         const fecha = new Date(timestamp);
@@ -1506,7 +1525,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           getOrCreateConversation({
             senderId: user.id,
             cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
-            title: `Búsqueda: ${query.substring(0, 30)}... - ${resultado}`,
+            title: `Búsqueda: ${trimmedQuery.substring(0, 30)}... - ${resultado}`,
           })
             .then((response) => {
               setChatMode({
@@ -1533,7 +1552,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         handleCreateNewChatWithSearch as EventListener
       );
     };
-  }, [handleBotResponse, onSearchComplete, courseId, user?.id]);
+  }, [
+    handleBotResponse,
+    onSearchComplete,
+    courseId,
+    user?.id,
+    queueOrSaveUserMessage,
+  ]);
 
   useEffect(() => {
     const handleEnrollmentMessage = (event: Event) => {
@@ -1583,7 +1608,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   }, [messages]);
 
   useEffect(() => {
-    const handleInitialSearch = async () => {
+    const handleInitialSearch = () => {
       if (
         !initialSearchQuery?.trim() ||
         !isSignedIn ||
@@ -1591,32 +1616,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         processingQuery ||
         searchRequestInProgress.current ||
         initialSearchDone.current
-      )
+      ) {
         return;
+      }
 
       initialSearchDone.current = true;
       setIsOpen(true);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: initialSearchQuery.trim(),
-          sender: 'user',
-        },
-      ]);
-
-      await handleBotResponse(initialSearchQuery.trim(), { useN8n: false });
+      window.dispatchEvent(
+        new CustomEvent('create-new-chat-with-search', {
+          detail: { query: initialSearchQuery.trim() },
+        })
+      );
     };
 
-    void handleInitialSearch();
-  }, [
-    initialSearchQuery,
-    isSignedIn,
-    showChat,
-    handleBotResponse,
-    processingQuery,
-  ]);
+    handleInitialSearch();
+  }, [initialSearchQuery, isSignedIn, showChat, processingQuery]);
 
   useEffect(() => {
     return () => {

@@ -53,6 +53,7 @@ export interface CourseType {
   requiredSubscriptionLevel: SubscriptionLevel;
   isPurchasableIndividually: boolean | null;
   price?: number | null;
+  metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por plan
 }
 
 // Keep the full Course interface for other uses
@@ -73,6 +74,7 @@ export interface Course extends BaseCourse {
   individualPrice: number | null; // Change from optional to required but nullable
   requiresProgram: boolean;
   isActive: boolean;
+  metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por curso
 }
 
 // Add new interface for course materias

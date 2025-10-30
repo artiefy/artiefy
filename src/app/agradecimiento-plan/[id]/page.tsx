@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
+import { getCourseTypeById } from '~/server/queries/courseTypes';
+
 export default function AgradecimientoPlanPage({
   params,
 }: {
@@ -14,17 +16,20 @@ export default function AgradecimientoPlanPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
+  const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
+  const planId = params.id;
 
   useEffect(() => {
     if (searchParams && searchParams.get('from') === 'payu') {
       setShowModal(true);
+      // Consultar el pixel dinámico
+      getCourseTypeById(planId).then((plan) => {
+        setMetaPixelId(plan?.metaPixelId ?? null);
+      });
     } else {
       router.replace('/');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const planId = params.id;
+  }, [planId, searchParams, router]);
 
   const handleContinue = () => {
     router.replace('/estudiantes');
@@ -34,28 +39,30 @@ export default function AgradecimientoPlanPage({
 
   return (
     <>
-      {/* Pixel de Facebook personalizado para el plan */}
-      <Script id={`meta-pixel-plan-${planId}`} strategy="afterInteractive">
-        {`
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '967037655459857');
-          fbq('track', 'Purchase', {planId: '${planId}'});
-        `}
-      </Script>
+      {/* Pixel de Facebook personalizado para el plan (dinámico) */}
+      {metaPixelId && (
+        <Script id={`meta-pixel-plan-${planId}`} strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${metaPixelId}');
+            fbq('track', 'Purchase', {planId: '${planId}'});
+          `}
+        </Script>
+      )}
       <noscript>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"
           style={{ display: 'none' }}
-          src={`https://www.facebook.com/tr?id=967037655459857&ev=Purchase&noscript=1&planId=${planId}`}
+          src={`https://www.facebook.com/tr?id=${metaPixelId ?? '967037655459857'}&ev=Purchase&noscript=1&planId=${planId}`}
           alt=""
         />
       </noscript>
