@@ -102,19 +102,40 @@ export async function POST(req: Request) {
       },
     });
 
-    const n8nRes = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chatInput: prompt,
-        sessionId:
-          conversationId && String(conversationId).trim() !== ''
-            ? String(conversationId)
-            : `session-${Date.now()}`, // <-- Generar un ID único si no existe
-        messageHistory,
-        availableCourses,
-      }),
-    });
+    let n8nRes: Response;
+    try {
+      n8nRes = await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatInput: prompt,
+          sessionId:
+            conversationId && String(conversationId).trim() !== ''
+              ? String(conversationId)
+              : `session-${Date.now()}`, // <-- Generar un ID único si no existe
+          messageHistory,
+          availableCourses,
+        }),
+      });
+    } catch (err) {
+      console.error('?? Error de red al llamar a n8n:', err);
+      return new Response(
+        JSON.stringify({
+          prompt,
+          n8nData: {
+            intent: 'n8n_unavailable',
+            mensaje:
+              'Estamos teniendo problemas para conectar con el motor IA. Inténtalo de nuevo en unos minutos o contacta al soporte si el problema continúa.',
+            courses: [],
+            error: err instanceof Error ? err.message : 'network_error',
+          },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     console.log('📨 Respuesta de n8n:', {
       status: n8nRes.status,
@@ -170,11 +191,17 @@ export async function POST(req: Request) {
 
       return new Response(
         JSON.stringify({
-          error: 'Error llamando a n8n',
-          details: `${n8nRes.status}: ${errText}`,
+          prompt,
+          n8nData: {
+            intent: 'n8n_unavailable',
+            mensaje:
+              'Estamos teniendo problemas para conectar con el motor IA. Inténtalo de nuevo en unos minutos o contacta al soporte si el problema continúa.',
+            courses: [],
+            error: `${n8nRes.status}: ${errText}`,
+          },
         }),
         {
-          status: 500,
+          status: 200,
           headers: { 'Content-Type': 'application/json' },
         }
       );
@@ -317,9 +344,9 @@ export async function POST(req: Request) {
             typeof o === 'string'
               ? o
               : typeof o === 'object' &&
-                o &&
-                'title' in o &&
-                typeof (o as { title?: unknown }).title === 'string'
+                  o &&
+                  'title' in o &&
+                  typeof (o as { title?: unknown }).title === 'string'
                 ? (o as { title: string }).title
                 : undefined
           )
@@ -333,15 +360,15 @@ export async function POST(req: Request) {
             typeof a === 'string'
               ? a
               : typeof a === 'object' &&
-                a &&
-                'descripcion' in a &&
-                typeof (a as { descripcion?: unknown }).descripcion ===
-                'string'
+                  a &&
+                  'descripcion' in a &&
+                  typeof (a as { descripcion?: unknown }).descripcion ===
+                    'string'
                 ? { descripcion: (a as { descripcion: string }).descripcion }
                 : typeof a === 'object' &&
-                  a &&
-                  'task_name' in a &&
-                  typeof (a as { task_name?: unknown }).task_name === 'string'
+                    a &&
+                    'task_name' in a &&
+                    typeof (a as { task_name?: unknown }).task_name === 'string'
                   ? { descripcion: (a as { task_name: string }).task_name }
                   : undefined
           )

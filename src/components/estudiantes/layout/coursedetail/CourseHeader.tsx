@@ -1638,7 +1638,7 @@ export function CourseHeader({
                     <h3 className="text-base font-extrabold text-white sm:text-lg">
                       {course.instructorName ?? 'Instructor no encontrado'}
                     </h3>
-                    <em className="text-sm font-bold text-cyan-300 sm:text-base">
+                    <em className="mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
                       Educador
                     </em>
                   </div>
@@ -1723,7 +1723,7 @@ export function CourseHeader({
             {course.courseTypeId === 4 &&
               course.individualPrice &&
               !isEnrolled && (
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex w-full flex-col items-center justify-center gap-4">
                   {!isSignedIn ? (
                     <SignInButton mode="modal">
                       <button className="btn">
@@ -1773,7 +1773,7 @@ export function CourseHeader({
                 </div>
               )}
           </div>
-          {renderTopEnrollmentButton()}
+          {/* Eliminado el botón extra arriba a la izquierda */}
           {/* Course description y botones responsivos */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="prose flex-1">

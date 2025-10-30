@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { sql } from 'drizzle-orm';
+import { inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const existingCourses = await db
       .select({ id: courses.id })
       .from(courses)
-      .where(sql`${courses.id} = ANY(${ids})`);
+      .where(inArray(courses.id, ids));
 
     const validIds = existingCourses.map((course) => course.id);
 
