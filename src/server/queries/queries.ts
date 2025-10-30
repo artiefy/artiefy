@@ -1,7 +1,7 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { desc, eq, inArray,sql } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -75,9 +75,9 @@ export async function getAdminUsers(query?: string) {
   const clerkIds = allUsers.map((u) => u.id);
   const dbPhones = clerkIds.length
     ? await db
-        .select({ id: users.id, phone: users.phone })
-        .from(users)
-        .where(inArray(users.id, clerkIds))
+      .select({ id: users.id, phone: users.phone })
+      .from(users)
+      .where(inArray(users.id, clerkIds))
     : [];
   const phoneById = new Map<string, string>(
     dbPhones.map((r) => [r.id, (r.phone ?? '').trim()])
@@ -106,9 +106,11 @@ export async function getAdminUsers(query?: string) {
         : 'estudiante';
 
     const status =
-      typeof u.publicMetadata?.status === 'string'
-        ? (u.publicMetadata.status as string)
-        : 'activo';
+      typeof u.publicMetadata?.subscriptionStatus === 'string'
+        ? (u.publicMetadata.subscriptionStatus as string)
+        : (typeof u.publicMetadata?.status === 'string'
+          ? (u.publicMetadata.status as string)
+          : 'activo');
 
     return {
       id: u.id,
@@ -124,10 +126,10 @@ export async function getAdminUsers(query?: string) {
 
   const filtered = query
     ? simplified.filter((user) =>
-        `${user.firstName} ${user.lastName} ${user.email}`
-          .toLowerCase()
-          .includes(query.toLowerCase())
-      )
+      `${user.firstName} ${user.lastName} ${user.email}`
+        .toLowerCase()
+        .includes(query.toLowerCase())
+    )
     : simplified;
 
   console.table(
@@ -164,6 +166,7 @@ export async function setRoleWrapper({
     await client.users.updateUser(id, {
       publicMetadata: newMetadata,
     });
+
 
     // Update in database
     await db
@@ -330,11 +333,11 @@ export async function createUser(
     // 2) Normalizar email (Clerk trata emails case-insensitive, pero mejor en minúsculas)
     const emailNormalized = (email ?? '').trim().toLowerCase();
 
-// dentro de createUser(...)
-const takeFirst = (s?: string) => {
-  const first = (s ?? '').split(' ').find(p => p.trim().length > 0);
-  return first ?? '';
-};
+    // dentro de createUser(...)
+    const takeFirst = (s?: string) => {
+      const first = (s ?? '').split(' ').find(p => p.trim().length > 0);
+      return first ?? '';
+    };
 
     const normalize = (s: string) =>
       s
@@ -371,22 +374,22 @@ const takeFirst = (s?: string) => {
       });
 
       return { user: newUser, generatedPassword };
-   } catch (error: unknown) {
-  if (isClerkApiError(error)) {
-    console.error(
-      '[CLERK 422] createUser errors:',
-      JSON.stringify(error.errors, null, 2)
-    );
+    } catch (error: unknown) {
+      if (isClerkApiError(error)) {
+        console.error(
+          '[CLERK 422] createUser errors:',
+          JSON.stringify(error.errors, null, 2)
+        );
 
-    const emailExists = error.errors.some(
-      (e) => e.code === 'form_identifier_exists' && e.meta?.paramName === 'email_address'
-    );
-    if (emailExists) {
-      return null;
+        const emailExists = error.errors.some(
+          (e) => e.code === 'form_identifier_exists' && e.meta?.paramName === 'email_address'
+        );
+        if (emailExists) {
+          return null;
+        }
+      }
+      throw error;
     }
-  }
-  throw error;
-}
 
   } catch (error) {
     console.error('Error al crear usuario:', error);
@@ -403,13 +406,14 @@ export async function updateUserStatus(id: string, status: string) {
     // 1. Leer el usuario para obtener sus metadatos públicos actuales
     const user = await client.users.getUser(id);
 
-    // 2. Fusionar los metadatos existentes con el nuevo estado
     const newMetadata = {
       ...user.publicMetadata,
-      status: status, // Actualizar/añadir solo la clave 'status'
+      subscriptionStatus: status,
+      status,
     };
 
-    // 3. Escribir el objeto completo de metadatos de vuelta a Clerk
+
+    // 3. Escribir el objeto de metadatos completo y actualizado
     await client.users.updateUser(id, {
       publicMetadata: newMetadata,
     });
@@ -450,11 +454,12 @@ export async function updateMultipleUserStatus(
     for (const id of userIds) {
       const existingMetadata = metadataMap.get(id) ?? {};
 
-      // Fusionar los metadatos existentes con el nuevo estado.
       const newMetadata = {
         ...existingMetadata,
-        status: status,
+        subscriptionStatus: status,
+        status,
       };
+
 
       // Escribir el objeto de metadatos completo y actualizado en Clerk.
       await client.users.updateUser(id, {
@@ -798,17 +803,19 @@ export async function updateUserInClerk({
     }
 
     const newMetadata = {
-      ...user.publicMetadata,
-      role: (role || 'estudiante') as
-        | 'admin'
-        | 'educador'
-        | 'super-admin'
-        | 'estudiante',
-      planType: planType ?? 'none',
+      ...(user.publicMetadata ?? {}),
+      role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+      // normaliza planType a uno permitido
+      planType: (planType && ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType))
+        ? planType
+        : 'none',
+      // escribe ambas: compat para UIs viejas y nuevas
       subscriptionStatus: normalizedStatus,
+      status: normalizedStatus,
       subscriptionEndDate: formattedEndDate,
       permissions: Array.isArray(permissions) ? permissions : [],
     };
+
 
     await client.users.updateUser(userId, {
       firstName,
@@ -828,7 +835,7 @@ export async function updateUserInClerk({
         subscriptionStatus: normalizedStatus,
         planType:
           planType &&
-          ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+            ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
             ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
             : 'none',
         subscriptionEndDate: formattedEndDate
@@ -894,4 +901,4 @@ export async function getInstructorNameById(id: string): Promise<string> {
     return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
   }
 }
-export {};
+export { };
