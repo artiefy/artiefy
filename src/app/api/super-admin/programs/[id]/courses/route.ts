@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
-
 import { getCoursesByProgramId } from '~/server/actions/superAdmin/program/getCoursesByProgramId';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id; // Correctly accessing 'id'
+    const { id } = await params;
+
     const courses = await getCoursesByProgramId(id);
-    // Change here: Return empty array instead of 404 when no courses found
+
+    // 👇 si no hay cursos, devuelve array vacío en vez de 404 (como decías en el comentario)
     if (!courses || courses.length === 0) {
-      return NextResponse.json([]); // Returning an empty array
+      return NextResponse.json([]);
     }
+
     return NextResponse.json(courses);
   } catch (error) {
-    console.error('Error fetching courses:', error);
+    console.error('Error fetching courses by program id:', error);
     return NextResponse.json(
       { error: 'Error fetching courses' },
       { status: 500 }

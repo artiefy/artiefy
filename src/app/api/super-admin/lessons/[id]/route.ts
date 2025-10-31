@@ -12,14 +12,19 @@ const bodySchema = z.object({
   orderIndex: z.number().int().positive(),
 });
 
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const lessonId = Number(ctx.params.id);
+    const params = await ctx.params;
+    const lessonId = Number(params.id);
+
     if (!lessonId || Number.isNaN(lessonId)) {
       return NextResponse.json(
         { error: 'ID de lección inválido' },
@@ -50,10 +55,12 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
     }
 
     // Preparar respuesta con recursos como array si están en formato string
-    const resourceNames =
-      typeof lesson.resourceNames === 'string'
-        ? lesson.resourceNames.split(',').map((name) => name.trim())
-        : [lesson.resourceNames];
+    let resourceNames: string[] = [];
+    if (typeof lesson.resourceNames === 'string') {
+      resourceNames = lesson.resourceNames.split(',').map((name) => name.trim());
+    } else if (Array.isArray(lesson.resourceNames)) {
+      resourceNames = lesson.resourceNames;
+    }
 
     const response = {
       ...lesson,
