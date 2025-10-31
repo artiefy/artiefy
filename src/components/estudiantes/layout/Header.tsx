@@ -1,6 +1,5 @@
 'use client';
-
-import { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,12 +9,15 @@ import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 
+import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import { NotificationHeader } from './NotificationHeader';
+
+import type { Course } from '~/types';
 
 import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';
@@ -31,6 +33,30 @@ export function Header({
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  // Debounce para evitar demasiadas llamadas
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setPreviewCourses([]);
+      setShowPreview(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        const { searchCoursesPreview } = await import(
+          '~/server/actions/estudiantes/courses/searchCoursesPreview'
+        );
+        const results = await searchCoursesPreview(searchQuery);
+        setPreviewCourses(results);
+        setShowPreview(true);
+      } catch (_err) {
+        setPreviewCourses([]);
+        setShowPreview(false);
+      }
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
@@ -360,14 +386,15 @@ export function Header({
                   </Link>
                 </div>
                 <div className="flex flex-1 justify-center gap-6">
-                  <form onSubmit={handleSearch} className="w-[700px]">
-                    <div className="header-search-container">
+                  <form onSubmit={handleSearch} className="relative w-[700px]">
+                    <div className="header-search-container relative">
                       <input
                         type="search"
                         placeholder="Buscar..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="header-input border-primary"
+                        autoComplete="off"
                       />
                       <svg
                         viewBox="0 0 24 24"
@@ -376,6 +403,19 @@ export function Header({
                       >
                         <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
                       </svg>
+                      {/* Preview de cursos debajo del input */}
+                      {showPreview && previewCourses.length > 0 && (
+                        <div className="z-50 w-full">
+                          <Suspense fallback={null}>
+                            <CourseSearchPreview
+                              courses={previewCourses}
+                              onSelectCourse={(courseId: number) => {
+                                window.location.href = `/estudiantes/cursos/${courseId}`;
+                              }}
+                            />
+                          </Suspense>
+                        </div>
+                      )}
                     </div>
                   </form>
                 </div>

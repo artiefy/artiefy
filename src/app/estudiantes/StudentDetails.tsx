@@ -1,12 +1,18 @@
 'use client';
-
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
 
+import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -20,7 +26,8 @@ import {
   CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { type Course, type Program } from '~/types';
+
+import type { Course, Program } from '~/types';
 
 import '~/styles/ia.css';
 import '~/styles/searchBar.css';
@@ -54,6 +61,30 @@ export default function StudentDetails({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
+  const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  // Debounce para evitar demasiadas llamadas
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setPreviewCourses([]);
+      setShowPreview(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        const { searchCoursesPreview } = await import(
+          '~/server/actions/estudiantes/courses/searchCoursesPreview'
+        );
+        const results = await searchCoursesPreview(searchQuery);
+        setPreviewCourses(results);
+        setShowPreview(true);
+      } catch (_err) {
+        setPreviewCourses([]);
+        setShowPreview(false);
+      }
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
   const [_text, setText] = useState(''); // índice del mensaje
   const [index, setIndex] = useState(0); // índice del mensaje
   const [subIndex, setSubIndex] = useState(0); // índice de la letra
@@ -250,9 +281,9 @@ export default function StudentDetails({
 
               <form
                 onSubmit={handleSearch}
-                className="flex w-full flex-col items-center space-y-2"
+                className="relative flex w-full flex-col items-center space-y-2"
               >
-                <div className="header-search-container">
+                <div className="header-search-container relative">
                   <input
                     required
                     className={`header-input border-primary ${
@@ -266,6 +297,7 @@ export default function StudentDetails({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     disabled={searchBarDisabled}
+                    autoComplete="off"
                   />
                   <svg
                     viewBox="0 0 24 24"
@@ -280,6 +312,19 @@ export default function StudentDetails({
                   >
                     <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
                   </svg>
+                  {/* Preview de cursos debajo del input */}
+                  {showPreview && previewCourses.length > 0 && (
+                    <div className="z-50 w-full">
+                      <Suspense fallback={null}>
+                        <CourseSearchPreview
+                          courses={previewCourses}
+                          onSelectCourse={(courseId: number) => {
+                            window.location.href = `/estudiantes/cursos/${courseId}`;
+                          }}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
                 </div>
               </form>
             </div>
