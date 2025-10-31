@@ -141,18 +141,9 @@ export function Header({
     });
     window.dispatchEvent(searchEvent);
 
-    // Also open chatbot with the search query so the n8n agent continues the flow
-    try {
-      window.dispatchEvent(
-        new CustomEvent('create-new-chat-with-search', {
-          detail: { query: searchQuery.trim() },
-        })
-      );
-    } catch (e) {
-      // ignore if CustomEvent isn't supported in some envs
-
-      console.warn('Cannot dispatch create-new-chat-with-search event', e);
-    }
+    // Nota: no disparar aquí el evento 'create-new-chat-with-search' para evitar duplicados.
+    // El componente `StudentChatbot` ya reaccionará al evento `artiefy-search` y gestionará la creación
+    // de la conversación y la llamada a n8n.
 
     // Clear the search input
     setSearchQuery('');
