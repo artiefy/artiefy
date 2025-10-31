@@ -65,10 +65,20 @@ interface ProgramQueryResult {
   }[];
 }
 
-export const getProgramById = async (id: string): Promise<Program | null> => {
+export const getProgramById = async (
+  id: string | number | undefined
+): Promise<Program | null> => {
   try {
+    // Sanitize and validate the id to avoid passing NaN to the DB driver
+    const parsedId =
+      typeof id === 'number' ? id : parseInt(String(id ?? ''), 10);
+    if (!Number.isFinite(parsedId) || Number.isNaN(parsedId)) {
+      console.warn('getProgramById called with invalid id:', id);
+      return null;
+    }
+
     const program = (await db.query.programas.findFirst({
-      where: eq(programas.id, parseInt(id, 10)),
+      where: eq(programas.id, parsedId),
       with: {
         category: true,
         materias: {
