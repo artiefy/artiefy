@@ -141,6 +141,19 @@ export function Header({
     });
     window.dispatchEvent(searchEvent);
 
+    // Also open chatbot with the search query so the n8n agent continues the flow
+    try {
+      window.dispatchEvent(
+        new CustomEvent('create-new-chat-with-search', {
+          detail: { query: searchQuery.trim() },
+        })
+      );
+    } catch (e) {
+      // ignore if CustomEvent isn't supported in some envs
+
+      console.warn('Cannot dispatch create-new-chat-with-search event', e);
+    }
+
     // Clear the search input
     setSearchQuery('');
     setSearchInProgress(false);

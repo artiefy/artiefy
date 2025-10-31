@@ -117,6 +117,17 @@ export default function StudentDetails({
       console.log('📤 Disparando evento artiefy-search');
       window.dispatchEvent(searchEvent);
 
+      // Also open chatbot with the search query so the n8n agent continues the flow
+      try {
+        window.dispatchEvent(
+          new CustomEvent('create-new-chat-with-search', {
+            detail: { query: searchQuery.trim() },
+          })
+        );
+      } catch (err) {
+        console.warn('Cannot dispatch create-new-chat-with-search event', err);
+      }
+
       // Clear the search input
       setSearchQuery('');
       setSearchInProgress(false);
