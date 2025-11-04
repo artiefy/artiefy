@@ -17,6 +17,7 @@ export interface EnrolledCourse {
   title: string;
   instructorName: string;
   coverImageKey: string | null;
+  // progress is the averaged progress across the course lessons (0-100)
   progress: number;
   rating: number;
   category: {
@@ -26,6 +27,11 @@ export interface EnrolledCourse {
   firstLessonId?: number | null;
   continueLessonId?: number | null; // where the student should continue
   continueLessonNumber?: number | null; // 1-based index for display
+  continueLessonTitle?: string | null;
+  // Last unlocked lesson (prefers the lesson with highest orderIndex that is unlocked)
+  lastUnlockedLessonId?: number | null;
+  lastUnlockedLessonTitle?: string | null;
+  lastUnlockedLessonNumber?: number | null;
 }
 
 export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
@@ -53,23 +59,50 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           where: eq(lessons.courseId, enrollment.courseId),
         });
 
-        // Get progress for all lessons in this course
-        const lessonsProgress = await db.query.userLessonsProgress.findMany({
+        // Get progress for all lessons belonging to this user
+        const allLessonsProgress = await db.query.userLessonsProgress.findMany({
           where: eq(userLessonsProgress.userId, user.id),
         });
 
-        // Calculate overall course progress
+        // Create a map of progress by lessonId for quick lookup
+        const progressByLessonId = new Map<
+          number,
+          (typeof allLessonsProgress)[number]
+        >();
+        for (const p of allLessonsProgress) {
+          progressByLessonId.set(p.lessonId, p);
+        }
+
+        // Calculate overall course progress as average of lesson.progress values
         const totalLessons = courseLessons.length;
-        const completedLessons = lessonsProgress.filter(
-          (progress) =>
-            progress.isCompleted &&
-            courseLessons.some((lesson) => lesson.id === progress.lessonId)
-        ).length;
+        const sumProgress = courseLessons.reduce((acc, lesson) => {
+          const p = progressByLessonId.get(lesson.id);
+          return acc + (p?.progress ?? 0);
+        }, 0);
 
         const progress =
-          totalLessons > 0
-            ? Math.round((completedLessons / totalLessons) * 100)
-            : 0;
+          totalLessons > 0 ? Math.round(sumProgress / totalLessons) : 0;
+
+        // Determine last unlocked lesson: look for lessons that have a progress entry with isLocked === false
+        // and pick the one with the highest orderIndex (using sortLessons to ensure orderIndex is considered)
+        const sortedCourseLessons = sortLessons(courseLessons);
+
+        const unlockedLessons = sortedCourseLessons.filter((lesson) => {
+          const p = progressByLessonId.get(lesson.id);
+          return p ? p.isLocked === false : false;
+        });
+
+        let lastUnlockedLessonId: number | null = null;
+        let lastUnlockedLessonTitle: string | null = null;
+        let lastUnlockedLessonNumber: number | null = null;
+
+        if (unlockedLessons.length > 0) {
+          const last = unlockedLessons[unlockedLessons.length - 1];
+          lastUnlockedLessonId = last.id;
+          lastUnlockedLessonTitle = last.title;
+          lastUnlockedLessonNumber =
+            sortedCourseLessons.findIndex((l) => l.id === last.id) + 1;
+        }
 
         // Fetch instructor name
         const instructor = await db.query.users.findFirst({
@@ -80,16 +113,11 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           ? `${instructor.name}`
           : 'Unknown Instructor';
 
-        // Order lessons reliably and determine where the student should continue
-        const sortedCourseLessons = sortLessons(courseLessons);
-
-        const firstIncompleteIndex = sortedCourseLessons.findIndex(
-          (lesson) =>
-            !lessonsProgress.some(
-              (progress) =>
-                progress.lessonId === lesson.id && progress.isCompleted
-            )
-        );
+        // Order lessons reliably and determine where the student should continue (first incomplete)
+        const firstIncompleteIndex = sortedCourseLessons.findIndex((lesson) => {
+          const p = progressByLessonId.get(lesson.id);
+          return !p?.isCompleted;
+        });
 
         const continueLessonId =
           firstIncompleteIndex !== -1
@@ -103,6 +131,13 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
             ? firstIncompleteIndex + 1
             : sortedCourseLessons.length > 0
               ? sortedCourseLessons.length
+              : null;
+
+        const continueLessonTitle =
+          firstIncompleteIndex !== -1
+            ? sortedCourseLessons[firstIncompleteIndex].title
+            : sortedCourseLessons.length > 0
+              ? sortedCourseLessons[sortedCourseLessons.length - 1].title
               : null;
 
         const firstLessonId =
@@ -123,6 +158,10 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           firstLessonId,
           continueLessonId,
           continueLessonNumber,
+          continueLessonTitle,
+          lastUnlockedLessonId,
+          lastUnlockedLessonTitle,
+          lastUnlockedLessonNumber,
         };
       })
     );

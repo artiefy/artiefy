@@ -120,17 +120,38 @@ export default function MyCoursesPreview() {
                     />
                     {/* Compute target lesson: prefer continueLessonId, fallback to firstLessonId */}
                     {(() => {
+                      // Prefer lastUnlockedLesson, then continueLesson, then firstLesson
                       const targetLessonId =
-                        course.continueLessonId ?? course.firstLessonId ?? null;
+                        course.lastUnlockedLessonId ??
+                        course.continueLessonId ??
+                        course.firstLessonId ??
+                        null;
                       const targetLessonNumber =
-                        course.continueLessonNumber ?? 1;
+                        course.lastUnlockedLessonNumber ??
+                        course.continueLessonNumber ??
+                        1;
+                      const targetLessonTitle =
+                        course.lastUnlockedLessonTitle ??
+                        course.continueLessonTitle ??
+                        null;
+
                       if (!targetLessonId) return null;
                       return (
                         <Link
                           href={`/estudiantes/cursos/${course.id}/lecciones/${targetLessonId}`}
-                          className="bg-primary/90 text-background hover:bg-primary absolute top-3 right-3 z-20 rounded px-3 py-1 text-xs font-medium backdrop-blur-sm"
+                          className="bg-primary/90 hover:bg-primary absolute top-3 right-3 z-20 rounded px-3 py-2 backdrop-blur-sm"
                         >
-                          Seguir: Clase {targetLessonNumber}
+                          <div className="font-semibold whitespace-nowrap text-gray-800">
+                            Seguir: Clase {targetLessonNumber}
+                          </div>
+                          {targetLessonTitle && (
+                            <div
+                              title={targetLessonTitle}
+                              className="mt-1 max-w-[160px] truncate text-[11px] font-bold text-black"
+                            >
+                              {targetLessonTitle}
+                            </div>
+                          )}
                         </Link>
                       );
                     })()}
