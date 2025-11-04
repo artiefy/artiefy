@@ -39,6 +39,66 @@ async function sendWelcomeEmail(to: string, fullName: string, password: string):
 }
 
 
+interface PendingEmail {
+    email: string;
+    fullName: string;
+    password: string;
+}
+
+// Enviar correos por lotes con delays
+async function sendWelcomeEmailsBatch(
+    emailQueue: PendingEmail[],
+    emailErrors: string[]
+): Promise<void> {
+    console.log(`📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`);
+
+    for (let i = 0; i < emailQueue.length; i++) {
+        const { email, fullName, password } = emailQueue[i];
+
+        // Delay entre cada correo (3 segundos)
+        if (i > 0) {
+            await delay(3000);
+        }
+
+        // Delay más largo cada 10 correos (30 segundos)
+        if (i > 0 && i % 10 === 0) {
+            console.log(`⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`);
+            await delay(30000);
+        }
+
+        console.log(`📤 Enviando correo ${i + 1}/${emailQueue.length} a ${email}`);
+
+        try {
+            let emailSent = false;
+
+            // Intentar enviar hasta 3 veces
+            for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+                if (attempts > 0) {
+                    console.log(`⏳ Reintento ${attempts} para ${email}`);
+                    await delay(2000);
+                }
+
+                try {
+                    await sendWelcomeEmail(email, fullName, password);
+                    emailSent = true;
+                } catch (err) {
+                    if (attempts === 2) throw err;
+                }
+            }
+
+            if (!emailSent) {
+                emailErrors.push(email);
+                console.error(`❌ No se pudo enviar email a ${email} después de 3 intentos`);
+            }
+        } catch (error) {
+            emailErrors.push(email);
+            console.error(`❌ Error crítico enviando a ${email}:`, error);
+        }
+    }
+
+    console.log(`✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`);
+}
+
 // === Runtime ===
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -134,15 +194,44 @@ function levenshteinDistance(str1: string, str2: string): number {
 async function findSimilarProgram(programName: string): Promise<number | null> {
     if (!programName?.trim()) return null;
 
+    // ✅ NUEVO: Mapeo directo de Ciclos (Florencia) → Bachillerato (BD)
+    const cicloMap: Record<string, string> = {
+        'ciclo 3': 'Bachillerato - Ciclo III',
+        'ciclo 4': 'Bachillerato - Ciclo IV',
+        'ciclo 5': 'Bachillerato - Ciclo V',
+        'ciclo 6': 'Bachillerato - Ciclo VI',
+        'ciclo3': 'Bachillerato - Ciclo III',
+        'ciclo4': 'Bachillerato - Ciclo IV',
+        'ciclo5': 'Bachillerato - Ciclo V',
+        'ciclo6': 'Bachillerato - Ciclo VI',
+        'ciclo iii': 'Bachillerato - Ciclo III',
+        'ciclo iv': 'Bachillerato - Ciclo IV',
+        'ciclo v': 'Bachillerato - Ciclo V',
+        'ciclo vi': 'Bachillerato - Ciclo VI',
+    };
+
+    const normalized = programName.toLowerCase().trim();
+    const mapped = cicloMap[normalized];
+
     const allPrograms = await db.select().from(programas);
 
     if (allPrograms.length === 0) return null;
 
+    // Si hay mapeo directo, buscar por título exacto
+    if (mapped) {
+        const exact = allPrograms.find(p => p.title === mapped);
+        if (exact) {
+            console.log(`[PROGRAM_MATCH] "${programName}" → "${exact.title}" (mapeo directo)`);
+            return exact.id;
+        }
+    }
+
+    // Fallback: búsqueda por similitud
     let bestMatch = allPrograms[0];
     let bestScore = 0;
 
     for (const program of allPrograms) {
-        const score = stringSimilarity(programName, program.title);
+        const score = stringSimilarity(mapped || programName, program.title);
         if (score > bestScore) {
             bestScore = score;
             bestMatch = program;
@@ -288,6 +377,7 @@ const toIntMoney = (v: unknown): number | null => {
     return Number.isFinite(n) ? n : null;
 };
 
+
 function extractCuotas(row: Record<string, unknown>): CuotaDet[] {
     const buckets = new Map<number, { fecha?: string | null; metodo?: string | null; valor?: number | null }>();
 
@@ -302,6 +392,29 @@ function extractCuotas(row: Record<string, unknown>): CuotaDet[] {
         }
         return null;
     };
+
+    // ✅ NUEVO: Pre-procesamiento para detectar patrón Florencia (cuota X | FECHA | CUOTA Y | FECHA)
+    const allKeys = Object.keys(row);
+    const cuotaPattern: number[] = [];
+
+    for (let i = 0; i < allKeys.length; i++) {
+        const key = normalizeKey(allKeys[i]);
+        const nextKey = i + 1 < allKeys.length ? normalizeKey(allKeys[i + 1]) : '';
+
+        // Detectar "cuota N" seguido de "fecha" → formato Florencia
+        const m = /^cuota\s*(\d+)$/i.exec(key);
+        if (m && nextKey === 'fecha') {
+            const cuotaNum = Number(m[1]);
+            cuotaPattern.push(cuotaNum);
+
+            // Asignar valor y fecha inmediatamente
+            if (!buckets.has(cuotaNum)) buckets.set(cuotaNum, {});
+            buckets.get(cuotaNum)!.valor = toIntMoney(row[allKeys[i]]);
+            buckets.get(cuotaNum)!.fecha = excelToDateString(row[allKeys[i + 1]]);
+
+            console.log(`[CUOTA_PATTERN] Detectado patrón Florencia: Cuota ${cuotaNum} | FECHA`);
+        }
+    }
 
     for (const [rawKey, rawVal] of Object.entries(row)) {
         const key = normalizeKey(String(rawKey));
@@ -413,6 +526,9 @@ function extractCuotas(row: Record<string, unknown>): CuotaDet[] {
 }
 
 
+
+
+
 /** Excel serial o string -> Date (para columnas timestamp() de Drizzle) */
 function excelToDateObject(input: unknown): Date | null {
     if (input == null) return null;
@@ -522,9 +638,6 @@ async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
     return arr.length ? arr[0] : null;
 }
 
-// ================== Excel parse helpers ==================
-
-// Sinónimos para detectar encabezados aunque estén "raros"
 const HEADER_SYNONYMS = new Map<string, string>([
     ['nombres', 'Nombres'],
     ['nombre', 'Nombres'],
@@ -588,6 +701,12 @@ const HEADER_SYNONYMS = new Map<string, string>([
     ['inscripcion_origen', 'Origen de inscripción'],
     ['fecha de compra', 'Fecha de compra'],
     ['purchase date', 'Fecha de compra'],
+
+    // ✅ NUEVO: Sinónimos para acudiente (formato Florencia)
+    ['acudiente o empresa', 'Tiene acudiente'],
+    ['nombre de acudiente o empresa', 'Acudiente nombre'],
+    ['numero de contacto acudiente o empresa', 'Acudiente contacto'],
+    ['correo de contacto acudiente o empresa', 'Acudiente email'],
 ]);
 
 function normalizeHeaderCell(v: unknown): string {
@@ -833,6 +952,9 @@ export async function POST(request: NextRequest) {
             isNew: boolean;
         }[] = [];
 
+        const emailQueue: PendingEmail[] = [];
+        const emailErrors: string[] = [];
+
         let processed = 0;
 
         // helper para loggear sólo columnas de cuotas/fechas/metodos
@@ -1034,6 +1156,20 @@ export async function POST(request: NextRequest) {
                 get(row, 'acudienteEmail')
             );
 
+            // ✅ NUEVO: Fallback para formato Florencia (si campos estándar vienen vacíos)
+            const tieneAcudienteFinal = tieneAcudiente || safeTrim(
+                (row as Record<string, unknown>)['Acudiente o empresa']
+            );
+            const acudienteNombreFinal = acudienteNombre || safeTrim(
+                (row as Record<string, unknown>)['Nombre de Acudiente o empresa']
+            );
+            const acudienteContactoFinal = acudienteContacto || safeTrim(
+                (row as Record<string, unknown>)['Numero de contacto Acudiente o empresa']
+            );
+            const acudienteEmailFinal = acudienteEmail || safeTrim(
+                (row as Record<string, unknown>)['Correo de contacto acudiente o empresa']
+            );
+
             console.log(`[MASIVE][ROW ${processed}] base`, {
                 firstName,
                 lastName,
@@ -1136,11 +1272,13 @@ export async function POST(request: NextRequest) {
 
                     purchaseDate: purchaseDateDate,
 
-                    tieneAcudiente: tieneAcudiente || null,
-                    acudienteNombre: acudienteNombre || null,
-                    acudienteContacto: acudienteContacto || null,
-                    acudienteEmail: acudienteEmail || null,
+                    // ✅ NUEVO: Usar valores finales con fallback
+                    tieneAcudiente: tieneAcudienteFinal || null,
+                    acudienteNombre: acudienteNombreFinal || null,
+                    acudienteContacto: acudienteContactoFinal || null,
+                    acudienteEmail: acudienteEmailFinal || null,
                 };
+
 
                 let userIdToUse = existing.length > 0 ? existing[0].id : (clerkUser?.id ?? `local:${email}`);
 
@@ -1239,20 +1377,15 @@ export async function POST(request: NextRequest) {
                     console.warn(`[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`, err);
                 }
 
-
-                // Enviar bienvenida SOLO si se creó en Clerk y tenemos password generado
+                // Acumular correos para envío por lotes (NO enviar aquí)
                 if (isNewInClerk && generatedPassword) {
-                    try {
-                        await sendWelcomeEmail(email, `${firstName} ${lastName}`.trim(), generatedPassword);
-                        console.log(`[MASIVE][ROW ${processed}] Email de bienvenida enviado a ${email}`);
-                    } catch (err) {
-                        console.warn(
-                            `[MASIVE][ROW ${processed}] Error al enviar bienvenida a ${email}:`,
-                            (err as Error)?.message ?? err
-                        );
-                    }
+                    emailQueue.push({
+                        email,
+                        fullName: `${firstName} ${lastName}`.trim(),
+                        password: generatedPassword,
+                    });
+                    console.log(`[MASIVE][ROW ${processed}] Correo agregado a cola para ${email}`);
                 }
-
 
 
                 // 3) ➕ Guardar cuotas en `pagos` (normalizado: 1 fila por cuota)
@@ -1434,10 +1567,18 @@ export async function POST(request: NextRequest) {
             guardados: resultados.filter((r) => r.estado === 'GUARDADO').length,
             yaExiste: resultados.filter((r) => r.estado === 'YA_EXISTE').length,
             errores: resultados.filter((r) => r.estado === 'ERROR').length,
+            emailErrors: emailErrors.length,
             omitidosPorCompatibilidad: omitidosPorSinNombre + omitidosPorCliente,
         };
 
         console.log('[MASIVE] summary:', summary);
+        // FASE 2: Enviar correos por lotes
+        console.log('✅ Fase 1 completada: Todos los usuarios procesados');
+
+        if (emailQueue.length > 0) {
+            console.log(`\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`);
+            await sendWelcomeEmailsBatch(emailQueue, emailErrors);
+        }
 
         return NextResponse.json({
             message: 'OK',

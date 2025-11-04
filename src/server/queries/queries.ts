@@ -1,19 +1,210 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { desc, eq, inArray, or,sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
+  anunciosUsuarios,
   categories,
+  certificates,
+  chat_messages,
+  conversations,
   courses,
+  coursesTaken,
+  enrollmentPrograms,
+  enrollments,
+  materiaGrades,
   materias,
   modalidades,
   nivel as nivel,
+  notas,
+  notifications,
+  pagos,
+  pagoVerificaciones,
+  parameterGrades,
+  preferences,
   programas,
+  projectActivities,
+  projectActivityDeliveries,
+  projectInvitations,
+  projectParticipationRequests,
+  projects,
+  projectSchedule,
+  projectsTaken,
+  scores,
+  ticketAssignees,
+  ticketComments,
+  tickets,
+  userActivitiesProgress,
+  userCartera,
   userCredentials,
+  userCustomFields,
+  userInscriptionDetails,
+  userLessonsProgress,
+  userProgramPrice,
   users,
+  userTimeTracking,
 } from '~/server/db/schema';
+
+export async function deleteUserWithRelations(userId: string) {
+  try {
+    console.log(`🗑️ Iniciando eliminación de usuario ${userId}...`);
+
+    // ORDEN IMPORTANTE: De hijos a padres para evitar violaciones de FK
+
+    // 1. Eliminar cronogramas de proyectos donde el usuario es responsable de actividades
+    const userActivities = await db
+      .select({ id: projectActivities.id })
+      .from(projectActivities)
+      .where(eq(projectActivities.responsibleUserId, userId));
+
+    if (userActivities.length > 0) {
+      await db.delete(projectSchedule).where(
+        or(...userActivities.map(a => eq(projectSchedule.activityId, a.id)))
+      );
+    }
+
+    // 2. Eliminar entregas de actividades de proyectos
+    await db.delete(projectActivityDeliveries).where(
+      eq(projectActivityDeliveries.userId, userId)
+    );
+
+    // 3. Eliminar actividades de proyectos donde es responsable
+    await db.delete(projectActivities).where(
+      eq(projectActivities.responsibleUserId, userId)
+    );
+
+    // 4. Eliminar solicitudes de participación en proyectos
+    await db.delete(projectParticipationRequests).where(
+      or(
+        eq(projectParticipationRequests.userId, userId),
+        eq(projectParticipationRequests.respondedBy, userId)
+      )
+    );
+
+    // 5. Eliminar invitaciones a proyectos
+    await db.delete(projectInvitations).where(
+      or(
+        eq(projectInvitations.invitedUserId, userId),
+        eq(projectInvitations.invitedByUserId, userId)
+      )
+    );
+
+    // 6. Eliminar proyectos tomados
+    await db.delete(projectsTaken).where(eq(projectsTaken.userId, userId));
+
+    // 7. Eliminar proyectos creados (esto también eliminará objetivos específicos por cascade)
+    await db.delete(projects).where(eq(projects.userId, userId));
+
+    // 8. Eliminar verificaciones de pagos (antes de eliminar pagos)
+    const userPayments = await db
+      .select({ id: pagos.id })
+      .from(pagos)
+      .where(eq(pagos.userId, userId));
+
+    if (userPayments.length > 0) {
+      await db.delete(pagoVerificaciones).where(
+        or(...userPayments.map(p => eq(pagoVerificaciones.pagoId, p.id)))
+      );
+    }
+
+    // 9. Eliminar pagos
+    await db.delete(pagos).where(
+      or(
+        eq(pagos.userId, userId),
+        eq(pagos.receiptVerifiedBy, userId)
+      )
+    );
+
+    // 10. Eliminar precio personalizado de programas
+    await db.delete(userProgramPrice).where(eq(userProgramPrice.userId, userId));
+
+    // 11. Eliminar cartera del usuario
+    await db.delete(userCartera).where(eq(userCartera.userId, userId));
+
+    // 12. Eliminar mensajes de chat
+    await db.delete(chat_messages).where(eq(chat_messages.senderId, userId));
+
+    // 13. Eliminar conversaciones
+    await db.delete(conversations).where(eq(conversations.senderId, userId));
+
+    // 14. Eliminar certificados
+    await db.delete(certificates).where(eq(certificates.userId, userId));
+
+    // 15. Eliminar asignaciones de tickets
+    await db.delete(ticketAssignees).where(eq(ticketAssignees.userId, userId));
+
+    // 16. Eliminar comentarios de tickets
+    await db.delete(ticketComments).where(eq(ticketComments.userId, userId));
+
+    // 17. Eliminar tickets
+    await db.delete(tickets).where(eq(tickets.creatorId, userId));
+
+    // 18. Eliminar notificaciones
+    await db.delete(notifications).where(eq(notifications.userId, userId));
+
+    // 19. Eliminar campos personalizados
+    await db.delete(userCustomFields).where(eq(userCustomFields.userId, userId));
+
+    // 20. Eliminar notas de materias
+    await db.delete(notas).where(eq(notas.userId, userId));
+
+    // 21. Eliminar calificaciones de materias
+    await db.delete(materiaGrades).where(eq(materiaGrades.userId, userId));
+
+    // 22. Eliminar calificaciones de parámetros
+    await db.delete(parameterGrades).where(eq(parameterGrades.userId, userId));
+
+    // 23. Eliminar inscripciones a programas
+    await db.delete(enrollmentPrograms).where(eq(enrollmentPrograms.userId, userId));
+
+    // 24. Eliminar progreso de actividades
+    await db.delete(userActivitiesProgress).where(
+      eq(userActivitiesProgress.userId, userId)
+    );
+
+    // 25. Eliminar progreso de lecciones
+    await db.delete(userLessonsProgress).where(
+      eq(userLessonsProgress.userId, userId)
+    );
+
+    // 26. Eliminar tiempo de seguimiento
+    await db.delete(userTimeTracking).where(eq(userTimeTracking.userId, userId));
+
+    // 27. Eliminar anuncios para usuarios específicos
+    await db.delete(anunciosUsuarios).where(eq(anunciosUsuarios.userId, userId));
+
+    // 28. Eliminar inscripciones a cursos
+    await db.delete(enrollments).where(eq(enrollments.userId, userId));
+
+    // 29. Eliminar cursos tomados
+    await db.delete(coursesTaken).where(eq(coursesTaken.userId, userId));
+
+    // 30. Eliminar preferencias
+    await db.delete(preferences).where(eq(preferences.userId, userId));
+
+    // 31. Eliminar puntajes
+    await db.delete(scores).where(eq(scores.userId, userId));
+
+    // 32. Eliminar detalles de inscripción
+    await db.delete(userInscriptionDetails).where(
+      eq(userInscriptionDetails.userId, userId)
+    );
+
+    // 33. Eliminar credenciales
+    await db.delete(userCredentials).where(eq(userCredentials.userId, userId));
+
+    // 34. FINALMENTE, eliminar el usuario
+    await db.delete(users).where(eq(users.id, userId));
+
+    console.log(`✅ Usuario ${userId} eliminado exitosamente con todas sus relaciones`);
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Error eliminando usuario ${userId}:`, error);
+    throw error;
+  }
+}
 
 // Add this cache object at module level
 const categoryNameCache: Record<number, string> = {};
@@ -226,7 +417,7 @@ export async function deleteUser(id: string) {
     }
 
     // Delete from database
-    await db.delete(users).where(eq(users.id, id));
+    await deleteUserWithRelations(id);
 
     console.log(`DEBUG: Usuario ${id} eliminado correctamente de la BD`);
   } catch (error) {

@@ -12,6 +12,7 @@ import { createUser } from '~/server/queries/queries';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 void userCredentials;
+
 // Utilidades de validación
 const safeTrim = (v?: string | null) => (typeof v === 'string' ? v.trim() : '');
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -44,7 +45,8 @@ interface UserInput {
   role?: string;
   phone?: string;
   document?: string;
-  [key: string]: string | undefined; // Index signature para permitir campos dinámicos
+  identificacionNumero?: string;
+  [key: string]: string | undefined;
 }
 
 interface ColumnMapping {
@@ -52,8 +54,6 @@ interface ColumnMapping {
   dbField: string;
 }
 
-
-// Tipos para errores de Clerk
 interface ClerkErrorItem {
   message?: string;
   longMessage?: string;
@@ -66,7 +66,6 @@ interface ClerkError {
   message?: string;
 }
 
-// Tipos para la respuesta de Clerk
 interface ClerkUser {
   id: string;
 }
@@ -75,10 +74,15 @@ interface ClerkUsersResponse {
   data?: ClerkUser[];
 }
 
-// Tipo para la respuesta de createUser
 interface CreateUserResponse {
   user: ClerkUser;
   generatedPassword: string;
+}
+
+interface PendingEmail {
+  email: string;
+  fullName: string;
+  password: string;
 }
 
 // Configuración de Nodemailer
@@ -89,6 +93,9 @@ const transporter = nodemailer.createTransport({
     pass: process.env.PASS,
   },
 });
+
+// Delay entre requests
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Enviar Excel con credenciales
 async function sendExcelWithCredentials(
@@ -128,7 +135,7 @@ async function sendExcelWithCredentials(
   }
 }
 
-// Enviar correo de bienvenida con reintentos
+// Enviar correo de bienvenida
 async function sendWelcomeEmail(
   to: string,
   username: string,
@@ -163,9 +170,56 @@ async function sendWelcomeEmail(
   }
 }
 
-// Notificar a Secretaría Académica
+// Enviar correos por lotes con delays
+async function sendWelcomeEmailsBatch(
+  emailQueue: PendingEmail[],
+  emailErrors: string[]
+): Promise<void> {
+  console.log(`📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`);
+
+  for (let i = 0; i < emailQueue.length; i++) {
+    const { email, fullName, password } = emailQueue[i];
+
+    // Delay entre cada correo (3 segundos)
+    if (i > 0) {
+      await delay(3000);
+    }
+
+    // Delay más largo cada 10 correos (30 segundos)
+    if (i > 0 && i % 10 === 0) {
+      console.log(`⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`);
+      await delay(30000);
+    }
+
+    console.log(`📤 Enviando correo ${i + 1}/${emailQueue.length} a ${email}`);
+
+    try {
+      let emailSent = false;
+
+      // Intentar enviar hasta 3 veces
+      for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+        if (attempts > 0) {
+          console.log(`⏳ Reintento ${attempts} para ${email}`);
+          await delay(2000);
+        }
+        emailSent = await sendWelcomeEmail(email, fullName, password);
+      }
+
+      if (!emailSent) {
+        emailErrors.push(email);
+        console.error(`❌ No se pudo enviar email a ${email} después de 3 intentos`);
+      }
+    } catch (error) {
+      emailErrors.push(email);
+      console.error(`❌ Error crítico enviando a ${email}:`, error);
+    }
+  }
+
+  console.log(`✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`);
+}
+
+// Notificar a Secretaría Académica y Dirección Tecnológica
 async function sendAcademicNotification(
-  to: string,
   createdUsers: {
     firstName: string;
     lastName: string;
@@ -179,6 +233,11 @@ async function sendAcademicNotification(
   }
 
   try {
+    const recipients = [
+      'secretariaacademica@ciadet.co',
+      'direcciontecnologica@ciadet.co'
+    ];
+
     const subject = `Nuevos usuarios creados – Total: ${createdUsers.length}`;
     const rowsHtml = createdUsers
       .map(
@@ -213,15 +272,17 @@ async function sendAcademicNotification(
 Artiefy · Secretaría Académica – Nuevos usuarios creados
 ${createdUsers.map((u) => `- ${u.firstName} ${u.lastName} (${u.email}) – ${u.role}`).join('\n')}
   `;
+
     await transporter.sendMail({
-      from: `"Artiefy – Notificaciones" <direcciongeneral@artiefy.com>`,
-      to,
+      from: '"Artiefy – Notificaciones" <direcciongeneral@artiefy.com>',
+      to: recipients.join(', '),
       subject,
       html,
       text,
       replyTo: 'direcciongeneral@artiefy.com',
     });
-    console.log('✅ Notificación académica enviada');
+
+    console.log(`✅ Notificación académica enviada a: ${recipients.join(', ')}`);
   } catch (error) {
     console.error('❌ Error enviando notificación académica:', error);
   }
@@ -275,9 +336,8 @@ async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
       throw new Error(`Clerk lookup failed (${res.status}): ${errorText}`);
     }
 
-    const json = await res.json() as ClerkUser[] | ClerkUsersResponse;
+    const json = (await res.json()) as ClerkUser[] | ClerkUsersResponse;
 
-    // Manejar ambos formatos de respuesta de Clerk
     const arr: ClerkUser[] = Array.isArray(json)
       ? json
       : Array.isArray((json as ClerkUsersResponse).data)
@@ -301,9 +361,6 @@ function isCreateUserResponse(result: unknown): result is CreateUserResponse {
     (result as CreateUserResponse).user !== null
   );
 }
-
-// Delay entre requests
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(request: Request) {
   try {
@@ -349,7 +406,7 @@ export async function POST(request: Request) {
         preview: true,
         columns: detectedColumns,
         rowCount: rawData.length,
-        sampleData: rawData.slice(0, 5)
+        sampleData: rawData.slice(0, 5),
       });
     }
 
@@ -360,7 +417,6 @@ export async function POST(request: Request) {
       const mappedRow: Record<string, unknown> = {};
       mappings.forEach(({ excelColumn, dbField }) => {
         const value = (row as Record<string, unknown>)[excelColumn];
-        // Convertir valores a string y limpiar
         let stringValue = '';
         if (value !== null && value !== undefined) {
           if (typeof value === 'object') {
@@ -370,7 +426,6 @@ export async function POST(request: Request) {
           } else if (typeof value === 'number' || typeof value === 'boolean') {
             stringValue = String(value);
           } else {
-            // Para cualquier otro tipo, intentar convertirlo a string de forma segura
             stringValue = JSON.stringify(value);
           }
           stringValue = stringValue.trim();
@@ -405,9 +460,11 @@ export async function POST(request: Request) {
 
     const emailErrors: string[] = [];
     const credenciales: { correo: string; contraseña: string }[] = [];
+    const emailQueue: PendingEmail[] = [];
 
     console.log(`📊 Procesando ${usersData.length} usuarios...`);
 
+    // FASE 1: Procesar usuarios (sin enviar correos individuales)
     for (let i = 0; i < usersData.length; i++) {
       const userData = usersData[i];
 
@@ -417,25 +474,18 @@ export async function POST(request: Request) {
       const email = safeTrim(userData.email).toLowerCase();
       const role = safeTrim(userData.role) || 'estudiante';
       const phone = safeTrim(userData.phone);
-      const documentNumber = safeTrim(userData.document ?? userData.identificacionNumero);
+      const documentNumber = safeTrim(
+        userData.document ?? userData.identificacionNumero
+      );
 
-      // Log ÚNICO para debug (eliminamos duplicación)
-      console.log(`[${i + 1}/${usersData.length}] 📝 Sanitizado ${email}:`, {
+      console.log(`[${i + 1}/${usersData.length}] 📝 Procesando ${email}:`, {
         firstName,
         lastName,
         phone: phone || 'SIN TELÉFONO',
         document: documentNumber || 'SIN DOCUMENTO',
-        role
+        role,
       });
 
-      // Log para debug
-      console.log(`📝 Datos sanitizados para ${email}:`, {
-        firstName,
-        lastName,
-        phone,
-        documentNumber,
-        role
-      });
       // Validación de campos obligatorios
       if (!firstName || !lastName || !email) {
         resultados.push({
@@ -470,11 +520,9 @@ export async function POST(request: Request) {
       let step = 'init';
 
       try {
-        console.log(`[${i + 1}/${usersData.length}] Procesando: ${email}`);
-
-        // Delay cada 10 usuarios para evitar rate limits
+        // Delay cada 10 usuarios para evitar rate limits de Clerk
         if (i > 0 && i % 10 === 0) {
-          console.log('⏳ Pausa de 2s para evitar rate limits...');
+          console.log('⏳ Pausa de 2s para evitar rate limits de Clerk...');
           await delay(2000);
         }
 
@@ -493,25 +541,20 @@ export async function POST(request: Request) {
         let generatedPassword: string | null = null;
 
         try {
-          // Intentar crear usuario en Clerk
           const result = await createUser(firstName, lastName, email, role);
 
           if (isCreateUserResponse(result)) {
-            // Usuario creado exitosamente
             isNewInClerk = true;
             clerkUser = result.user;
             generatedPassword = result.generatedPassword ?? null;
           } else {
-            // Ya existía en Clerk, buscar por email
             clerkUser = await getClerkUserByEmail(email);
           }
-
         } catch (clerkError: unknown) {
           const errorMsg = getClerkErrorMessage(clerkError);
           console.log(`⚠️ Error Clerk para ${email}: ${errorMsg}`);
           const clerkErrObj = clerkError as ClerkError;
 
-          // Verificar si es un error de "ya existe"
           const probablyExists =
             [409, 422].includes(clerkErrObj?.status ?? 0) ||
             /already\s*exist/i.test(errorMsg) ||
@@ -520,24 +563,23 @@ export async function POST(request: Request) {
 
           if (probablyExists) {
             step = 'syncExistingUser';
-            // Buscar usuario existente en Clerk
             clerkUser = await getClerkUserByEmail(email);
 
             if (!clerkUser) {
               resultados.push({
                 email,
                 estado: 'ERROR',
-                detalle: 'El usuario existe en Clerk pero no se pudo obtener su información',
+                detalle:
+                  'El usuario existe en Clerk pero no se pudo obtener su información',
               });
               continue;
             }
           } else {
-            // Error real de Clerk
             if (clerkErrObj?.status === 403) {
               resultados.push({
                 email,
                 estado: 'ERROR',
-                detalle: `Clerk: Acceso denegado (403). Verifica permisos de API`,
+                detalle: 'Clerk: Acceso denegado (403). Verifica permisos de API',
               });
             } else {
               resultados.push({
@@ -550,7 +592,6 @@ export async function POST(request: Request) {
           }
         }
 
-        // Verificar que tenemos un usuario de Clerk
         if (!clerkUser) {
           resultados.push({
             email,
@@ -559,10 +600,9 @@ export async function POST(request: Request) {
           });
           continue;
         }
-        // Guardar/actualizar en base de datos (sin transacciones)
+
         step = 'dbUpsertUser';
 
-        // Verificar si el usuario ya existe en la BD
         const existingUser = await db
           .select()
           .from(users)
@@ -570,7 +610,6 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (existingUser.length > 0) {
-          // Usuario existe, actualizar sin tocar el id
           await db
             .update(users)
             .set({
@@ -585,28 +624,29 @@ export async function POST(request: Request) {
             })
             .where(eq(users.id, existingUser[0].id));
 
-          console.log(`✅ Usuario actualizado: ${email} | Teléfono: ${phone || 'N/A'} | Documento: ${documentNumber || 'N/A'}`);
+          console.log(
+            `✅ Usuario actualizado: ${email} | Teléfono: ${phone || 'N/A'} | Documento: ${documentNumber || 'N/A'}`
+          );
         } else {
-          // Usuario nuevo, insertar
-          await db
-            .insert(users)
-            .values({
-              id: clerkUser.id,
-              name: `${firstName} ${lastName}`,
-              email,
-              role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              planType: 'Premium',
-              subscriptionEndDate: new Date(formattedEndDate),
-              phone: phone || null,
-              identificacionNumero: documentNumber || null,
-              document: documentNumber || null,
-            });
+          await db.insert(users).values({
+            id: clerkUser.id,
+            name: `${firstName} ${lastName}`,
+            email,
+            role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            planType: 'Premium',
+            subscriptionEndDate: new Date(formattedEndDate),
+            phone: phone || null,
+            identificacionNumero: documentNumber || null,
+            document: documentNumber || null,
+          });
 
-          console.log(`✅ Usuario insertado en BD: ${email} - phone: ${phone}, doc: ${documentNumber}`);
+          console.log(
+            `✅ Usuario insertado en BD: ${email} - phone: ${phone}, doc: ${documentNumber}`
+          );
         }
-        // Registrar resultado
+
         successfulUsers.push({
           id: clerkUser.id,
           firstName,
@@ -625,31 +665,18 @@ export async function POST(request: Request) {
             : 'Usuario ya existía en Clerk, sincronizado en BD',
         });
 
-        // Enviar email de bienvenida solo a usuarios nuevos
+        // Agregar a la cola de correos (no enviar todavía)
         if (isNewInClerk && generatedPassword) {
           credenciales.push({ correo: email, contraseña: generatedPassword });
-
-          step = 'sendWelcomeEmail';
-          const fullName = `${firstName} ${lastName}`.trim();
-          let emailSent = false;
-
-          // Intentar enviar hasta 3 veces
-          for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
-            if (attempts > 0) {
-              console.log(`⏳ Reintento ${attempts} de email para ${email}`);
-              await delay(1000);
-            }
-            emailSent = await sendWelcomeEmail(email, fullName, generatedPassword);
-          }
-
-          if (!emailSent) {
-            emailErrors.push(email);
-            console.error(`❌ No se pudo enviar email de bienvenida a ${email}`);
-          }
+          emailQueue.push({
+            email,
+            fullName: `${firstName} ${lastName}`.trim(),
+            password: generatedPassword,
+          });
         }
-
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Error desconocido';
+        const msg =
+          error instanceof Error ? error.message : 'Error desconocido';
         console.error(`❌ Error [${step}] para ${email}:`, msg);
         resultados.push({
           email,
@@ -657,6 +684,14 @@ export async function POST(request: Request) {
           detalle: `${step}: ${msg}`,
         });
       }
+    }
+
+    console.log('✅ Fase 1 completada: Todos los usuarios procesados');
+
+    // FASE 2: Enviar correos por lotes
+    if (emailQueue.length > 0) {
+      console.log(`\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`);
+      await sendWelcomeEmailsBatch(emailQueue, emailErrors);
     }
 
     // Resumen final
@@ -680,7 +715,8 @@ export async function POST(request: Request) {
     const jsonBuffer = Buffer.from(JSON.stringify(payload, null, 2));
     const excelBuffer = buildExcelFromResultados(resultados, summary);
 
-    // Enviar reportes por email (tolerante a fallos)
+    // FASE 3: Enviar reportes por email
+    console.log('\n📨 Fase 3: Enviando reportes...');
     await Promise.allSettled([
       transporter.sendMail({
         from: '"Artiefy" <direcciongeneral@artiefy.com>',
@@ -716,7 +752,6 @@ export async function POST(request: Request) {
       }),
       sendExcelWithCredentials(credenciales),
       sendAcademicNotification(
-        'lmsg829@gmail.com',
         successfulUsers
           .filter((u) => u.isNew)
           .map((u) => ({
@@ -727,6 +762,8 @@ export async function POST(request: Request) {
           }))
       ),
     ]);
+
+    console.log('✅ Proceso completo finalizado');
 
     return NextResponse.json({
       message: 'Proceso completado exitosamente',
@@ -747,7 +784,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: 'Error al procesar el archivo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
+        details: error instanceof Error ? error.message : 'Error desconocido',
       },
       { status: 500 }
     );
@@ -779,7 +816,6 @@ export function GET() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
 
-    // Agregar instrucciones en una segunda hoja
     const instructions = [
       {
         Campo: 'firstName',

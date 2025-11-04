@@ -19,8 +19,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
-// Tabla de usuarios (con soporte para Clerk)
-// ... imports y definición anterior
+
 
 export const users = pgTable(
   'users',
