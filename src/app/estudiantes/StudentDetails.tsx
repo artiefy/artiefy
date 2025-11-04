@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
+import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -329,6 +330,9 @@ export default function StudentDetails({
               </form>
             </div>
 
+            {/* Sección: cursos en los que estoy inscrito - vista previa */}
+            <MyCoursesPreview />
+
             <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
               {/* Carousel grande - Featured Courses */}
               {latestFiveCourses.length > 0 ? (
@@ -496,7 +500,8 @@ export default function StudentDetails({
                       latestTenCourses.map((course) => (
                         <CarouselItem
                           key={course.id}
-                          className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-1/3"
+                          // Show 3 cards + small peek of the 4th on large screens
+                          className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
                         >
                           <div className="relative aspect-[4/3] w-full">
                             <Image
@@ -580,7 +585,8 @@ export default function StudentDetails({
                     {sortedPrograms.map((program) => (
                       <CarouselItem
                         key={program.id}
-                        className="basis-full sm:basis-1/2 lg:basis-1/3"
+                        // Show 3 cards + small peek of the 4th on large screens
+                        className="basis-full sm:basis-1/2 lg:basis-[30%]"
                       >
                         <StudentProgram program={program} />
                       </CarouselItem>

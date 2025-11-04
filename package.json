@@ -183,7 +183,7 @@
     "initVersion": "7.39.3"
   },
   "engines": {
-    "node": "22.x",
+    "node": "22.x || 24.x",
     "npm": "11.x"
   },
   "packageManager": "npm@11.6.2"

@@ -10,6 +10,7 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export interface EnrolledCourse {
   id: number;
@@ -21,6 +22,10 @@ export interface EnrolledCourse {
   category: {
     name: string;
   } | null;
+  // Lesson navigation helpers
+  firstLessonId?: number | null;
+  continueLessonId?: number | null; // where the student should continue
+  continueLessonNumber?: number | null; // 1-based index for display
 }
 
 export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
@@ -75,6 +80,34 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           ? `${instructor.name}`
           : 'Unknown Instructor';
 
+        // Order lessons reliably and determine where the student should continue
+        const sortedCourseLessons = sortLessons(courseLessons);
+
+        const firstIncompleteIndex = sortedCourseLessons.findIndex(
+          (lesson) =>
+            !lessonsProgress.some(
+              (progress) =>
+                progress.lessonId === lesson.id && progress.isCompleted
+            )
+        );
+
+        const continueLessonId =
+          firstIncompleteIndex !== -1
+            ? sortedCourseLessons[firstIncompleteIndex].id
+            : sortedCourseLessons.length > 0
+              ? sortedCourseLessons[sortedCourseLessons.length - 1].id
+              : null;
+
+        const continueLessonNumber =
+          firstIncompleteIndex !== -1
+            ? firstIncompleteIndex + 1
+            : sortedCourseLessons.length > 0
+              ? sortedCourseLessons.length
+              : null;
+
+        const firstLessonId =
+          sortedCourseLessons.length > 0 ? sortedCourseLessons[0].id : null;
+
         return {
           id: enrollment.courseId,
           title: enrollment.course.title,
@@ -87,6 +120,9 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
                 name: enrollment.course.category.name,
               }
             : null,
+          firstLessonId,
+          continueLessonId,
+          continueLessonNumber,
         };
       })
     );
