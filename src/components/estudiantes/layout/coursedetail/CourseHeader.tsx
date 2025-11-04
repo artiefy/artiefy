@@ -1542,8 +1542,8 @@ export function CourseHeader({
                     <StarIcon
                       key={index}
                       className={`h-4 w-4 sm:h-5 sm:w-5 ${index < Math.floor(course.rating ?? 0)
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
                         }`}
                     />
                   ))}
@@ -1698,7 +1698,6 @@ export function CourseHeader({
                 </div>
               )}
           </div>
-          {renderTopEnrollmentButton()}
           {/* Course description y botones responsivos */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="prose flex-1">
