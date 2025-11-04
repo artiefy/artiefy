@@ -178,3 +178,38 @@
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
+
+/* Responsive adjustments: smaller buttons and text on small screens */
+@media (max-width: 640px) {
+  .btn {
+    min-width: 9rem; /* reducir ancho mínimo */
+    padding: 0 1rem; /* menos padding horizontal */
+    height: 2.6rem; /* altura menor */
+    border-radius: 1.5rem; /* ligeramente más pequeño */
+    font-size: 0.9rem;
+  }
+
+  .btn strong {
+    gap: 0.25rem; /* menos separación entre elementos */
+    font-size: 0.9rem;
+  }
+
+  .btn strong span {
+    font-size: 0.9rem; /* texto más compacto */
+  }
+
+  /* Precio ligeramente más grande que el resto, pero reducido en mobile */
+  .btn strong span:first-child {
+    font-size: 1rem;
+  }
+
+  /* Ajustes para evitar overflow del brillo/estrellas en mobile */
+  #container-stars {
+    border-radius: 1.5rem;
+  }
+
+  /* Evitar transform demasiado grande en hover en mobile */
+  .btn:hover {
+    transform: scale(1.03);
+  }
+}

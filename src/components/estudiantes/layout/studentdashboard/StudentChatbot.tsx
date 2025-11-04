@@ -1452,6 +1452,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   );
 
   // useEffect para manejar búsquedas desde StudentDetails
+  // Guardar el último prompt procesado para evitar bucles infinitos
+  const lastProcessedPromptRef = useRef<string>('');
+
   useEffect(() => {
     const handleCreateNewChatWithSearch = (
       event: CustomEvent<{ query: string }>
@@ -1459,6 +1462,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       const rawQuery = event.detail.query ?? '';
       const trimmedQuery = rawQuery.trim();
       if (!trimmedQuery) return;
+
+      // Si el prompt es igual al último procesado y el chatbot está abierto, no lo proceses de nuevo
+      if (lastProcessedPromptRef.current === trimmedQuery && isOpen) {
+        return;
+      }
+      lastProcessedPromptRef.current = trimmedQuery;
 
       const tempChatId = Date.now();
 
@@ -1558,6 +1567,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     courseId,
     user?.id,
     queueOrSaveUserMessage,
+    isOpen,
   ]);
 
   useEffect(() => {

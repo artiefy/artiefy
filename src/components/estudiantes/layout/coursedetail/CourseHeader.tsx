@@ -1698,7 +1698,7 @@ export function CourseHeader({
                 </div>
               )}
           </div>
-          {/* Eliminado el botón extra arriba a la izquierda */}
+          {renderTopEnrollmentButton()}
           {/* Course description y botones responsivos */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="prose flex-1">
