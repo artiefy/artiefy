@@ -1032,81 +1032,7 @@ export function CourseHeader({
     setLocalIsEnrolled(isEnrolled);
   }, [isEnrolled]);
 
-  // --- Botón de inscripción/cancelación arriba de la descripción ---
-  // Reubica el bloque de inscripción aquí, elimina los duplicados
-  const renderTopEnrollmentButton = () => {
-    if (localIsEnrolled) {
-      return (
-        <div className="mb-0 flex justify-center pt-0 pb-2 sm:mb-0 sm:justify-center sm:pt-0">
-          <div className="flex w-full flex-col items-center sm:w-auto sm:items-center sm:justify-center">
-            <Button
-              className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-              onClick={onUnenrollAction}
-              disabled={isUnenrolling}
-            >
-              {isUnenrolling ? (
-                <Icons.spinner
-                  className="text-white"
-                  style={{ width: '35px', height: '35px' }}
-                />
-              ) : (
-                'Cancelar Suscripción'
-              )}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
-    return (
-      <div className="mb-2 flex justify-center pt-0 sm:mb-2 sm:justify-center sm:pt-0">
-        <div className="flex w-full items-center justify-center sm:w-auto sm:justify-center">
-          {!isSignedIn ? (
-            <SignInButton
-              mode="modal"
-              forceRedirectUrl={`${pathname}?comprar=1`}
-            >
-              <button className="btn">
-                <strong>
-                  <span>{getEnrollButtonText()}</span>
-                </strong>
-                <div id="container-stars">
-                  <div id="stars" />
-                </div>
-                <div id="glow">
-                  <div className="circle" />
-                  <div className="circle" />
-                </div>
-              </button>
-            </SignInButton>
-          ) : (
-            <button
-              className="btn"
-              onClick={handleEnrollClick}
-              disabled={isEnrolling || isEnrollClicked}
-            >
-              <strong>
-                {isEnrolling || isEnrollClicked ? (
-                  <Icons.spinner className="h-6 w-6" />
-                ) : (
-                  <>
-                    <span>{getEnrollButtonText()}</span>
-                  </>
-                )}
-              </strong>
-              <div id="container-stars">
-                <div id="stars" />
-              </div>
-              <div id="glow">
-                <div className="circle" />
-                <div className="circle" />
-              </div>
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
+
 
   // --- NUEVO: Estado para forumId ---
   const [forumId, setForumId] = useState<number | null>(null);
@@ -1615,11 +1541,10 @@ export function CourseHeader({
                   {Array.from({ length: 5 }).map((_, index) => (
                     <StarIcon
                       key={index}
-                      className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                        index < Math.floor(course.rating ?? 0)
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${index < Math.floor(course.rating ?? 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                        }`}
                     />
                   ))}
                   <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
@@ -1773,7 +1698,6 @@ export function CourseHeader({
                 </div>
               )}
           </div>
-          {renderTopEnrollmentButton()}
           {/* Course description y botones responsivos */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="prose flex-1">
@@ -1946,7 +1870,7 @@ export function CourseHeader({
                 selectedProduct={courseProduct}
                 requireAuthOnSubmit={!isSignedIn}
                 redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
-                // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
+              // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
               />
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getCoursesByProgramId } from '~/server/actions/superAdmin/program/getCoursesByProgramId';
 
 export async function GET(

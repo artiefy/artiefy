@@ -41,9 +41,14 @@ export async function GET(
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const id = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id, 10);
+
     if (isNaN(id)) {
       return NextResponse.json({ error: 'ID de la actividad inválido' }, { status: 400 });
     }
