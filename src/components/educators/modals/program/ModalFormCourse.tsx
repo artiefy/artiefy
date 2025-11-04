@@ -144,6 +144,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     file: false,
     nivel: false,
     modalidad: false,
+    courseTypeId: false,
   }); // Estado para los errores
   const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
   const [isUploading, setIsUploading] = useState(false); // Estado para la subida
@@ -317,10 +318,31 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       nivelid: !editingCourseId && !nivelid,
       rating: !editingCourseId && !rating,
       file: !editingCourseId && !file && !currentCoverImageKey,
+      courseTypeId: !editingCourseId && (!selectedCourseType || selectedCourseType.length === 0),
     };
 
     if (Object.values(newErrors).some((value) => value)) {
       console.log('Validation errors:', newErrors);
+      return;
+    }
+
+    if (Object.values(newErrors).some((value) => value)) {
+      console.log('Validation errors:', newErrors);
+
+      // Crear mensaje de errores
+      const missingFields: string[] = [];
+      if (newErrors.title) missingFields.push('Título');
+      if (newErrors.description) missingFields.push('Descripción');
+      if (newErrors.categoryid) missingFields.push('Categoría');
+      if (newErrors.modalidadesid) missingFields.push('Modalidad');
+      if (newErrors.nivelid) missingFields.push('Nivel');
+      if (newErrors.rating) missingFields.push('Rating');
+      if (newErrors.file) missingFields.push('Archivo de portada');
+      if (newErrors.courseTypeId) missingFields.push('Tipo de Curso'); // 👈 NUEVO
+
+      const message = `Por favor completa: ${missingFields.join(', ')}.`;
+      toast.error('Faltan campos obligatorios', { description: message });
+
       return;
     }
 
@@ -792,16 +814,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   value: type.id.toString(),
                   label: type.name,
                 }))}
-                onChange={(selectedOptions) =>
+                onChange={(selectedOptions) => {
                   setSelectedCourseType(
                     selectedOptions.map((opt) => Number(opt.value))
-                  )
-                }
+                  );
+                  setErrors((prev) => ({ ...prev, courseTypeId: false }));
+                }}
                 isMulti // ✅ permite selección múltiple
                 classNamePrefix="react-select"
                 className="mt-1 w-full"
               />
             </div>
+            {errors.courseTypeId && (
+              <p className="text-left text-sm text-red-500">
+                Este campo es obligatorio.
+              </p>
+            )}
             {safeCourseTypeId.includes(4) && (
               <div className="mx-auto flex w-10/12 flex-col gap-2">
                 <label
@@ -875,13 +903,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             Imagen de portada
           </label>
           <div
-            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50'
-                : errors.file
-                  ? 'border-red-500 bg-red-50'
-                  : 'border-gray-300 bg-gray-50'
-            } transition-all duration-300 ease-in-out`}
+            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${isDragging
+              ? 'border-blue-500 bg-blue-50'
+              : errors.file
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-300 bg-gray-50'
+              } transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
