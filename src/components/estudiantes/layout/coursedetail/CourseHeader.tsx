@@ -230,23 +230,6 @@ export function CourseHeader({
     course.progress,
   ]);
 
-  // Add debug log for all conditions
-  // Add debug log with safer type checking
-  useEffect(() => {
-    console.log('Debug Certificate Button Conditions:', {
-      isEnrolled,
-      courseProgress: course.progress,
-      currentFinalGrade,
-      allConditions: {
-        isEnrolled,
-        hasProgress: course.progress === 100,
-        hasPassingGrade: currentFinalGrade >= 3,
-      },
-      shouldShowButton:
-        isEnrolled && course.progress === 100 && currentFinalGrade >= 3,
-    });
-  }, [isEnrolled, course.progress, currentFinalGrade]);
-
   // Add new effect to check program enrollment
   useEffect(() => {
     const checkProgramEnrollment = async () => {
@@ -276,9 +259,9 @@ export function CourseHeader({
 
           if (!isProgramEnrolled && !programToastShown) {
             // Only show toast if we haven't shown it yet
-            setProgramToastShown(true); // Update state to prevent duplicate toasts
+            setProgramToastShown(true);
             toast.warning('Este curso requiere inscripción al programa', {
-              id: 'program-enrollment', // Add an ID to prevent duplicates
+              id: 'program-enrollment',
             });
             router.push(`/estudiantes/programas/${programMateria.programaId}`);
           }
@@ -1032,8 +1015,6 @@ export function CourseHeader({
     setLocalIsEnrolled(isEnrolled);
   }, [isEnrolled]);
 
-
-
   // --- NUEVO: Estado para forumId ---
   const [forumId, setForumId] = useState<number | null>(null);
 
@@ -1490,41 +1471,22 @@ export function CourseHeader({
                   {getCourseTypeLabel()}
                 </div>
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                {/* Ocultar en pantallas pequeñas si no está logueado */}
-                {isSignedIn ?? (
-                  <div className="hidden flex-col sm:flex sm:flex-row sm:items-center">
-                    <div className="flex items-center">
-                      <FaCalendar className="mr-2 text-white" />
-                      <span className="text-xs text-white sm:text-sm">
-                        Creado: {formatDateString(course.createdAt)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaClock className="mr-2 text-white" />
-                      <span className="text-xs text-white sm:text-sm">
-                        Actualizado: {formatDateString(course.updatedAt)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {/* Mostrar en desktop siempre */}
-                {isSignedIn && (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <div className="flex items-center">
-                      <FaCalendar className="mr-2 text-white" />
-                      <span className="text-xs text-white sm:text-sm">
-                        Creado: {formatDateString(course.createdAt)}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <FaClock className="mr-2 text-white" />
-                      <span className="text-xs text-white sm:text-sm">
-                        Actualizado: {formatDateString(course.updatedAt)}
-                      </span>
-                    </div>
-                  </div>
-                )}
+              {/* Fechas: ocultas en pantallas pequeñas si NO está inscrito; en sm+ siempre visibles */}
+              <div
+                className={`${isEnrolled ? 'flex' : 'hidden sm:flex'} flex-col gap-2 sm:flex-row sm:items-center`}
+              >
+                <div className="flex items-center">
+                  <FaCalendar className="mr-2 text-white" />
+                  <span className="text-xs text-white sm:text-sm">
+                    Creado: {formatDateString(course.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <FaClock className="mr-2 text-white" />
+                  <span className="text-xs text-white sm:text-sm">
+                    Actualizado: {formatDateString(course.updatedAt)}
+                  </span>
+                </div>
               </div>
             </div>
             {/* Ocultar número de estudiantes en mobile si no está logueado */}
@@ -1541,10 +1503,11 @@ export function CourseHeader({
                   {Array.from({ length: 5 }).map((_, index) => (
                     <StarIcon
                       key={index}
-                      className={`h-4 w-4 sm:h-5 sm:w-5 ${index < Math.floor(course.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                        }`}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                        index < Math.floor(course.rating ?? 0)
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
                     />
                   ))}
                   <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
@@ -1557,13 +1520,13 @@ export function CourseHeader({
           {/* Course type and instructor info */}
           <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
             <div className="w-full space-y-4">
-              <div className="-mt-5 -mb-7 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
+              <div className="-mt-3 -mb-9 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
                 <div className="flex w-full items-center">
                   <div>
                     <h3 className="text-base font-extrabold text-white sm:text-lg">
                       {course.instructorName ?? 'Instructor no encontrado'}
                     </h3>
-                    <em className="mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
+                    <em className="-mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
                       Educador
                     </em>
                   </div>
@@ -1697,6 +1660,87 @@ export function CourseHeader({
                   )}
                 </div>
               )}
+          </div>
+          {/* Duplicated enrollment button (centered) - mirror the bottom control exactly for consistent visuals */}
+          <div
+            className={`flex justify-center ${localIsEnrolled ? 'mb-4' : 'mb-2'}`}
+          >
+            {/* Escala completa más pequeña en pantallas móviles, restaurada en sm+ */}
+            <div className="relative h-auto origin-center scale-90 transform-gpu sm:scale-100">
+              {localIsEnrolled ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <Button
+                    className="bg-primary text-background hover:bg-primary/90 h-10 w-56 justify-center border-white/20 text-sm font-semibold transition-colors active:scale-95 sm:h-12 sm:w-64 sm:text-lg"
+                    disabled
+                  >
+                    <FaCheck className="mr-2" /> Suscrito Al Curso
+                  </Button>
+                  <Button
+                    className="h-10 w-56 justify-center border-white/20 bg-red-500 text-sm font-semibold hover:bg-red-600 sm:h-12 sm:w-64 sm:text-lg"
+                    onClick={onUnenrollAction}
+                    disabled={isUnenrolling}
+                  >
+                    {isUnenrolling ? (
+                      <Icons.spinner
+                        className="text-white"
+                        style={{ width: '28px', height: '28px' }}
+                      />
+                    ) : (
+                      'Cancelar Suscripción'
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {!isSignedIn ? (
+                    <SignInButton
+                      mode="modal"
+                      forceRedirectUrl={`${pathname}?comprar=1`}
+                    >
+                      <button className="btn h-10 w-56 sm:h-12 sm:w-64">
+                        <strong className="text-sm sm:text-lg">
+                          {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                          <span>{getEnrollButtonText()}</span>
+                        </strong>
+                        <div id="container-stars">
+                          <div id="stars" />
+                        </div>
+                        <div id="glow">
+                          <div className="circle" />
+                          <div className="circle" />
+                        </div>
+                      </button>
+                    </SignInButton>
+                  ) : (
+                    <button
+                      className="btn h-10 w-56 sm:h-12 sm:w-64"
+                      onClick={handleEnrollClick}
+                      disabled={isEnrolling || isEnrollClicked}
+                    >
+                      <strong className="text-sm sm:text-lg">
+                        {isEnrolling || isEnrollClicked ? (
+                          <Icons.spinner className="h-5 w-5" />
+                        ) : (
+                          <>
+                            {getButtonPrice() && (
+                              <span>{getButtonPrice()}</span>
+                            )}
+                            <span>{getEnrollButtonText()}</span>
+                          </>
+                        )}
+                      </strong>
+                      <div id="container-stars">
+                        <div id="stars" />
+                      </div>
+                      <div id="glow">
+                        <div className="circle" />
+                        <div className="circle" />
+                      </div>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           {/* Course description y botones responsivos */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1870,7 +1914,7 @@ export function CourseHeader({
                 selectedProduct={courseProduct}
                 requireAuthOnSubmit={!isSignedIn}
                 redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
-              // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
+                // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
               />
             </div>
           </div>
