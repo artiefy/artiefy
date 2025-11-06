@@ -132,10 +132,11 @@ export default function MyCoursesPreview() {
                 // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
                 className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
               >
-                <div className="group block overflow-hidden rounded-lg bg-[#071827] p-0 shadow-md">
+                <div className="group relative block h-56 w-full overflow-hidden rounded-lg bg-[#071827] shadow-md">
+                  {/* Imagen de fondo con link */}
                   <Link
                     href={`/estudiantes/cursos/${course.id}`}
-                    className="relative block h-56 w-full overflow-hidden rounded-lg bg-gray-900"
+                    className="absolute inset-0 block"
                   >
                     <Image
                       src={getImageUrl(course.coverImageKey)}
@@ -146,85 +147,80 @@ export default function MyCoursesPreview() {
                     />
                     {/* Overlay gradient for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  </Link>
 
-                    {/* Content overlay */}
-                    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-                      {/* Top right: Continue lesson button */}
-                      {(() => {
-                        const targetLessonId =
-                          course.lastUnlockedLessonId ??
-                          course.continueLessonId ??
-                          course.firstLessonId ??
-                          null;
-                        const targetLessonNumber =
-                          course.lastUnlockedLessonNumber ??
-                          course.continueLessonNumber ??
-                          1;
-                        const targetLessonTitle =
-                          course.lastUnlockedLessonTitle ??
-                          course.continueLessonTitle ??
-                          null;
+                  {/* Content overlay */}
+                  <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
+                    {/* Top right: Continue lesson button */}
+                    {(() => {
+                      const targetLessonId =
+                        course.lastUnlockedLessonId ??
+                        course.continueLessonId ??
+                        course.firstLessonId ??
+                        null;
+                      const targetLessonNumber =
+                        course.lastUnlockedLessonNumber ??
+                        course.continueLessonNumber ??
+                        1;
+                      const targetLessonTitle =
+                        course.lastUnlockedLessonTitle ??
+                        course.continueLessonTitle ??
+                        null;
 
-                        if (!targetLessonId) return null;
-                        return (
-                          <div className="flex justify-end">
-                            <a
-                              href={`/estudiantes/cursos/${course.id}/lecciones/${targetLessonId}`}
-                              className="bg-primary/90 hover:bg-primary pointer-events-auto rounded px-3 py-2 backdrop-blur-sm transition-colors"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.location.href = `/estudiantes/cursos/${course.id}/lecciones/${targetLessonId}`;
-                              }}
-                            >
-                              <div className="font-semibold whitespace-nowrap text-gray-800">
-                                Seguir: Clase {targetLessonNumber}
-                              </div>
-                              {targetLessonTitle && (
-                                <div
-                                  title={targetLessonTitle}
-                                  className="mt-1 max-w-[160px] truncate text-[11px] font-bold text-black"
-                                >
-                                  {targetLessonTitle}
-                                </div>
-                              )}
-                            </a>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Bottom: Title, category and progress bar */}
-                      <div className="space-y-2">
-                        <div>
-                          <h4 className="line-clamp-2 text-base font-semibold text-white drop-shadow-lg">
-                            {course.title}
-                          </h4>
-                          <p className="mt-1 text-sm text-gray-200 drop-shadow">
-                            {course.category?.name ?? 'Sin categoría'}
-                          </p>
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="flex w-full items-center gap-3">
-                          <div className="flex-1">
-                            <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-700/50 backdrop-blur-sm">
-                              <div
-                                className="bg-primary absolute top-0 left-0 h-2 rounded-full shadow-inner"
-                                style={{
-                                  width: `${Math.min(Math.max(course.progress ?? 0, 0), 100)}%`,
-                                }}
-                              />
+                      if (!targetLessonId) return null;
+                      return (
+                        <div className="flex justify-end">
+                          <Link
+                            href={`/estudiantes/cursos/${course.id}/lecciones/${targetLessonId}`}
+                            className="bg-primary/90 hover:bg-primary pointer-events-auto rounded px-3 py-2 backdrop-blur-sm transition-colors"
+                          >
+                            <div className="font-semibold whitespace-nowrap text-gray-800">
+                              Seguir: Clase {targetLessonNumber}
                             </div>
+                            {targetLessonTitle && (
+                              <div
+                                title={targetLessonTitle}
+                                className="mt-1 max-w-[160px] truncate text-[11px] font-bold text-black"
+                              >
+                                {targetLessonTitle}
+                              </div>
+                            )}
+                          </Link>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Bottom: Title, category and progress bar */}
+                    <div className="space-y-2">
+                      <div>
+                        <h4 className="line-clamp-2 text-base font-semibold text-white drop-shadow-lg">
+                          {course.title}
+                        </h4>
+                        <p className="mt-1 text-sm text-gray-200 drop-shadow">
+                          {course.category?.name ?? 'Sin categoría'}
+                        </p>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="flex w-full items-center gap-3">
+                        <div className="flex-1">
+                          <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-700/50 backdrop-blur-sm">
+                            <div
+                              className="bg-primary absolute top-0 left-0 h-2 rounded-full shadow-inner"
+                              style={{
+                                width: `${Math.min(Math.max(course.progress ?? 0, 0), 100)}%`,
+                              }}
+                            />
                           </div>
-                          <div className="w-12 text-right">
-                            <span className="text-sm font-semibold text-white drop-shadow">
-                              {Math.round(course.progress ?? 0)}%
-                            </span>
-                          </div>
+                        </div>
+                        <div className="w-12 text-right">
+                          <span className="text-sm font-semibold text-white drop-shadow">
+                            {Math.round(course.progress ?? 0)}%
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </div>
               </CarouselItem>
             ))}
