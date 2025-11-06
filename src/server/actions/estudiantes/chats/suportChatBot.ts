@@ -44,18 +44,6 @@ export async function getTicketByUser(userId: string): Promise<{
   };
 }
 
-// Función helper para obtener todos los super-admins
-async function getAllSuperAdmins() {
-  return await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-    })
-    .from(users)
-    .where(eq(users.role, 'super-admin'));
-}
-
 // Garantiza que el usuario exista en la tabla local antes de crear tickets
 async function ensureUserExists(creatorId: string, email?: string) {
   const existingUser = await db.query.users.findFirst({
@@ -130,49 +118,43 @@ function shouldCreateNewTicket(existing: typeof tickets.$inferSelect) {
   return ageMs > TICKET_REUSE_WINDOW_MS;
 }
 
-// Función para asignar ticket a super-admins y enviar correos
+// Función para asignar ticket a admins y enviar correos
 async function assignTicketToSuperAdmins(
   ticketId: number,
   description: string
 ) {
   try {
-    // Obtener todos los super-admins
-    const superAdmins = await getAllSuperAdmins();
-
-    console.log('🔔 Super-admins encontrados:', superAdmins.length);
     console.log(
-      '📋 Lista de super-admins:',
-      superAdmins.map((admin) => ({ id: admin.id, email: admin.email }))
+      `📧 Iniciando asignación automática para ticket #${ticketId}...`
     );
 
-    // Obtener asignaciones adicionales por correo
-    const extraAssignees = await Promise.all(
+    // Solo obtener usuarios de los emails configurados en SUPPORT_AUTO_ASSIGN_EMAILS
+    console.log(
+      '📧 Obteniendo usuarios de correos auto-asignados:',
+      SUPPORT_AUTO_ASSIGN_EMAILS
+    );
+
+    const assignees = await Promise.all(
       SUPPORT_AUTO_ASSIGN_EMAILS.map(async (email) =>
-        getOrCreateUserByEmail(email, 'super-admin')
+        getOrCreateUserByEmail(email, 'admin')
       )
     );
 
-    const combinedAssignees = [...superAdmins, ...extraAssignees];
+    console.log(
+      '✅ Usuarios para asignación automática:',
+      assignees.map((u) => ({ id: u.id, email: u.email, role: u.role }))
+    );
 
-    const assigneesMap = new Map<
-      string,
-      { id: string; email: string | null }
-    >();
-    for (const assignee of combinedAssignees) {
-      if (!assigneesMap.has(assignee.id)) {
-        assigneesMap.set(assignee.id, {
-          id: assignee.id,
-          email: assignee.email ?? null,
-        });
-      }
+    if (assignees.length === 0) {
+      console.warn(
+        '⚠️ No se encontraron usuarios para asignar automáticamente'
+      );
+      return;
     }
 
-    if (assigneesMap.size === 0) {
-      console.warn('⚠️ No se encontraron super-admins para asignar');
-    }
-
+    // Asignar el ticket a cada usuario
     await Promise.all(
-      Array.from(assigneesMap.values()).map(async (admin) => {
+      assignees.map(async (admin) => {
         try {
           await ensureTicketAssignment(ticketId, admin.id);
           console.log(`✅ Ticket asignado a: ${admin.email ?? admin.id}`);
@@ -185,15 +167,18 @@ async function assignTicketToSuperAdmins(
       })
     );
 
+    // Enviar emails solo a los usuarios asignados
     const emailRecipients = new Set<string>();
 
-    for (const admin of assigneesMap.values()) {
+    for (const admin of assignees) {
       if (admin.email) {
         emailRecipients.add(admin.email);
       }
     }
 
-    SUPPORT_AUTO_ASSIGN_EMAILS.forEach((email) => emailRecipients.add(email));
+    console.log(
+      `📨 Enviando emails de notificación a ${emailRecipients.size} destinatarios`
+    );
 
     await Promise.all(
       Array.from(emailRecipients).map(async (email) => {

@@ -19,8 +19,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
-
-
 export const users = pgTable(
   'users',
   {
@@ -937,16 +935,25 @@ export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
   }),
 }));
 
-export const ticketAssignees = pgTable('ticket_assignees', {
-  id: serial('id').primaryKey(),
-  ticketId: integer('ticket_id')
-    .notNull()
-    .references(() => tickets.id, { onDelete: 'cascade' }),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export const ticketAssignees = pgTable(
+  'ticket_assignees',
+  {
+    id: serial('id').primaryKey(),
+    ticketId: integer('ticket_id')
+      .notNull()
+      .references(() => tickets.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('ticket_assignees_ticket_user_unique').on(
+      table.ticketId,
+      table.userId
+    ),
+  ]
+);
 
 export const ticketsRelations = relations(tickets, ({ one, many }) => ({
   creator: one(users, {
