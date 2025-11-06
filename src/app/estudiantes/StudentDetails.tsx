@@ -11,6 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
@@ -21,6 +22,7 @@ import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
   Carousel,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
   CarouselNext,
@@ -64,6 +66,47 @@ export default function StudentDetails({
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [topCoursesApi, setTopCoursesApi] = useState<CarouselApi>();
+  const [programsApi, setProgramsApi] = useState<CarouselApi>();
+  const [canScrollPrevTop, setCanScrollPrevTop] = useState(false);
+  const [canScrollPrevPrograms, setCanScrollPrevPrograms] = useState(false);
+
+  // Monitorear estado del carousel de Top Cursos
+  useEffect(() => {
+    if (!topCoursesApi) return;
+
+    const updateScrollState = () => {
+      setCanScrollPrevTop(topCoursesApi.canScrollPrev());
+    };
+
+    updateScrollState();
+    topCoursesApi.on('scroll', updateScrollState);
+    topCoursesApi.on('select', updateScrollState);
+
+    return () => {
+      topCoursesApi.off('scroll', updateScrollState);
+      topCoursesApi.off('select', updateScrollState);
+    };
+  }, [topCoursesApi]);
+
+  // Monitorear estado del carousel de Programas
+  useEffect(() => {
+    if (!programsApi) return;
+
+    const updateScrollState = () => {
+      setCanScrollPrevPrograms(programsApi.canScrollPrev());
+    };
+
+    updateScrollState();
+    programsApi.on('scroll', updateScrollState);
+    programsApi.on('select', updateScrollState);
+
+    return () => {
+      programsApi.off('scroll', updateScrollState);
+      programsApi.off('select', updateScrollState);
+    };
+  }, [programsApi]);
+
   // Debounce para evitar demasiadas llamadas
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
@@ -486,22 +529,22 @@ export default function StudentDetails({
             </div>
 
             {/* Top Cursos section */}
-            <div className="animation-delay-200 animate-zoom-in relative px-12 sm:px-24">
-              <div className="flex justify-center">
+            <div className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24">
+              <div className="flex justify-center pr-4 sm:pr-0">
                 <StudentGradientText className="mb-6 text-3xl sm:text-5xl">
                   Top Cursos
                 </StudentGradientText>
               </div>
               <div>
-                <Carousel className="w-full">
+                <Carousel className="w-full" setApi={setTopCoursesApi}>
                   {/* Agrega gap-x-4 para más espacio entre los cursos */}
-                  <CarouselContent className="gap-x-4">
+                  <CarouselContent className="gap-x-2">
                     {latestTenCourses.length > 0 ? (
                       latestTenCourses.map((course) => (
                         <CarouselItem
                           key={course.id}
-                          // Show 3 cards + small peek of the 4th on large screens
-                          className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
+                          // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
+                          className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
                         >
                           <div className="relative aspect-[4/3] w-full">
                             <Image
@@ -564,37 +607,89 @@ export default function StudentDetails({
                   </CarouselContent>
                   {latestTenCourses.length > 0 && (
                     <>
-                      <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
-                      <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
+                      <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
+                      <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
                     </>
                   )}
                 </Carousel>
+
+                {/* Flechas funcionales solo en móvil */}
+                {latestTenCourses.length > 0 && (
+                  <>
+                    {canScrollPrevTop && (
+                      <button
+                        onClick={() => topCoursesApi?.scrollPrev()}
+                        className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                        aria-label="Anterior"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                          <IoIosArrowBack className="text-2xl text-white" />
+                        </div>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => topCoursesApi?.scrollNext()}
+                      className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                      aria-label="Siguiente"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <IoIosArrowForward className="text-2xl text-white" />
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Programas section */}
-            <div className="animation-delay-300 animate-zoom-in relative px-12 sm:px-24">
-              <div className="flex justify-center">
+            <div className="animation-delay-300 animate-zoom-in relative pr-0 pl-4 sm:px-24">
+              <div className="flex justify-center pr-4 sm:pr-0">
                 <StudentGradientText className="text-3xl sm:text-5xl">
                   Programas
                 </StudentGradientText>
               </div>
               <div>
-                <Carousel className="w-full">
-                  <CarouselContent className="my-6">
+                <Carousel className="w-full" setApi={setProgramsApi}>
+                  <CarouselContent className="my-6 gap-x-2">
                     {sortedPrograms.map((program) => (
                       <CarouselItem
                         key={program.id}
-                        // Show 3 cards + small peek of the 4th on large screens
-                        className="basis-full sm:basis-1/2 lg:basis-[30%]"
+                        // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
+                        className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
                       >
                         <StudentProgram program={program} />
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
-                  <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
+                  <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
+                  <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
                 </Carousel>
+
+                {/* Flechas funcionales solo en móvil */}
+                {sortedPrograms.length > 0 && (
+                  <>
+                    {canScrollPrevPrograms && (
+                      <button
+                        onClick={() => programsApi?.scrollPrev()}
+                        className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                        aria-label="Anterior"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                          <IoIosArrowBack className="text-2xl text-white" />
+                        </div>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => programsApi?.scrollNext()}
+                      className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                      aria-label="Siguiente"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <IoIosArrowForward className="text-2xl text-white" />
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
