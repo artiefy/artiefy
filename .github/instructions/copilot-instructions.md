@@ -68,14 +68,65 @@ Artiefy is a modern educational platform built with Next.js, TypeScript, and Tai
 - Components: `src/components/`
 - Styles: `src/styles/`
 
-## Reglas Adicionales de Desarrollo
+## Reglas Adicionales de Desarrollo (Next.js 16 y SWR)
 
-- **Framework Base**: Todo el código debe estar basado en React y Next.js, siguiendo las mejores prácticas de componentes y hooks.
-- **Preservación de Funcionalidades**: No modificar ni romper funcionalidades existentes que ya funcionaban correctamente, a menos que el usuario lo solicite explícitamente en el prompt.
-- **Actualizaciones de Next.js**: Recomendar y aplicar mejoras que aprovechen las novedades de Next.js 16, consultando y actualizando el archivo `nextjs16-upgrade-guide-es.md` cuando sea relevante.
-- **TypeScript**: Siempre tener en cuenta el uso de TypeScript y respetar las reglas y configuraciones definidas en el archivo `tsconfig.json`.
-- **ESLint**: Insertar, reparar y refactorizar código siguiendo las reglas y recomendaciones de ESLint definidas en el archivo `eslint.config.mjs`.
-- **Compatibilidad**: Validar que los cambios sean compatibles con la estructura y convenciones del proyecto.
-- **Edición Directa**: Si es posible siempre editar los archivos directamente.
+- **Framework Base**: Todo el código debe estar basado en React y Next.js 16, aprovechando las nuevas APIs y patrones recomendados en la guía `Docs/nextjs16-upgrade-guide-es.md`.
+- **Renderizado por defecto en el servidor**: Prioriza siempre el renderizado de servidor (SSR/SSG/ISR) y el uso de Server Components. El renderizado del cliente solo debe usarse cuando sea estrictamente necesario (interactividad, hooks de estado, SWR, etc.).
+- **Optimización de recursos**: Evita peticiones 200 infinitas y el exceso de data egress en Vercel/Neon. Prefiere cargar datos en el backend y transferirlos al cliente solo cuando sea necesario.
+- **SWR como estándar de datos en cliente**: Cuando se requiera interactividad o refresco en el cliente, usa siempre la librería SWR (`Docs/guia-swr-nextjs.md`) para cache, deduplicación y revalidación. Implementa hooks reutilizables y configura el provider global (`SWRConfig`) en layouts cliente.
+- **API y Backend**: Toda la lógica de datos debe residir en server actions, API routes o Server Components. Los componentes cliente solo deben consumir datos ya preparados o usar SWR para refresco/control local.
+- **Evitar fetch directo en cliente**: No uses `fetch` directo en componentes cliente salvo dentro de SWR o casos justificados. Prefiere siempre la obtención de datos en el backend.
+- **Actualizaciones de Next.js**: Recomienda y aplica mejoras que aprovechen las novedades de Next.js 16 (cache components, proxy, nuevas APIs de caché, etc.), consultando y actualizando el archivo `Docs/nextjs16-upgrade-guide-es.md`.
+- **TypeScript**: Mantén el tipado estricto y aprovecha las utilidades de Next.js 16 para tipos de props, params y searchParams asíncronos.
+- **ESLint**: Refactoriza y valida el código siguiendo las reglas y recomendaciones de ESLint definidas en el archivo `eslint.config.mjs`.
+- **Compatibilidad**: Valida que los cambios sean compatibles con la estructura y convenciones del proyecto.
+- **Edición Directa**: Si es posible, edita los archivos directamente.
+
+### Gestión de variables de entorno (env)
+
+- Siempre que añadas una nueva variable de entorno, agrégala en el esquema de validación de `src/env.ts` usando Zod y en el objeto `runtimeEnv`.
+- Importa siempre el archivo `env.ts` en cualquier archivo de configuración global como `next.config.mjs`/`.ts`/`.js` para validar y acceder a las variables.
+- Ejemplo:
+
+  ```ts
+  // src/env.ts
+  import { createEnv } from '@t3-oss/env-nextjs';
+  import { z } from 'zod';
+  export const env = createEnv({
+    server: {
+      NUEVA_ENV: z.string().min(1),
+      // ...otras envs
+    },
+    runtimeEnv: {
+      NUEVA_ENV: process.env.NUEVA_ENV,
+      // ...otras envs
+    },
+  });
+  ```
+
+  ```js
+  // next.config.mjs
+  import { env } from './src/env.ts';
+  // ...usar env.NUEVA_ENV
+  ```
+
+### Ejemplo de patrón recomendado (SSR + SWR)
+
+```tsx
+// Server Component (por defecto)
+export default async function Page() {
+  const data = await getDataFromServer();
+  return <ClientSection fallbackData={data} />;
+}
+
+// Client Component con SWR
+('use client');
+import useSWR from 'swr';
+
+function ClientSection({ fallbackData }) {
+  const { data, isLoading } = useSWR('/api/data', fetcher, { fallbackData });
+  // ...render
+}
+```
 
 **Nota**: Todas las respuestas y comunicaciones deben darse en español.

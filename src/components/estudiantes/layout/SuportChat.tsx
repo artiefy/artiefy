@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { BsPersonCircle } from 'react-icons/bs';
 import { MdSupportAgent } from 'react-icons/md';
 
+import { formatDateColombia } from '~/lib/formatDate';
 import { getOrCreateSuportChat } from '~/server/actions/estudiantes/chats/suportChatBot';
 
 import type { UserResource } from '@clerk/types';
@@ -55,18 +56,44 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
         if (ticket) {
           console.log('Ticket fetched:', ticket);
+          const historyMessages = ticket.messages
+            ? ticket.messages.map((msg) => ({
+                id: msg.id,
+                text: msg.content,
+                sender: msg.sender === 'user' ? 'user' : 'support',
+              }))
+            : [];
+
           const initialMessages = [
             {
-              id: Date.now(), // ID único para el primer mensaje
+              id: Date.now(),
               text: '¡Hola! ¿En qué puedo ayudarte?',
               sender: 'support',
             },
-            ...ticket.messages.map((msg) => ({
-              id: msg.id,
-              text: msg.content,
-              sender: msg.sender === 'user' ? 'user' : 'support',
-            })),
+            ...historyMessages,
           ];
+
+          const resolvedSource =
+            ticket.continuationOfTicket ??
+            (['solucionado', 'cerrado'].includes(ticket.estado ?? '')
+              ? ticket
+              : null);
+
+          if (resolvedSource) {
+            const resolvedAtRaw =
+              resolvedSource.updatedAt ?? resolvedSource.createdAt;
+            const resolvedAt = resolvedAtRaw
+              ? new Date(resolvedAtRaw)
+              : new Date();
+            const resolvedStatus = resolvedSource.estado ?? 'solucionado';
+            const resolvedTicketId = resolvedSource.id ?? 'N/D';
+
+            initialMessages.push({
+              id: Date.now() + 1,
+              text: `Tu ticket anterior (#${resolvedTicketId}) fue marcado como ${resolvedStatus} el ${formatDateColombia(resolvedAt)}. Si necesitas más ayuda, envía un nuevo mensaje y abriremos otro ticket automáticamente.`,
+              sender: 'support',
+            });
+          }
 
           setMessages(initialMessages);
         } else {

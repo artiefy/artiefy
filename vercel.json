@@ -2,9 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "next build",
-  "devCommand": "next dev --turbopack",
+  "devCommand": "next dev",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "public": true,
   "trailingSlash": false,
   "functions": {

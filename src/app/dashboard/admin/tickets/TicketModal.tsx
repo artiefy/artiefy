@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import Select from 'react-select';
 
 import { Modal } from '~/components/shared/Modal';
+import { formatDateColombia } from '~/lib/formatDate';
 
 export interface Ticket {
   id: string;
@@ -55,6 +56,7 @@ export interface Comment {
   user: {
     name: string;
   };
+  sender: string;
 }
 
 interface TicketModalProps {
@@ -589,11 +591,28 @@ export default function TicketModal({
                         className="rounded-lg border border-gray-700/50 bg-gray-800/50 p-4"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-blue-400">
-                            {comment.user?.name || 'Usuario'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-blue-400">
+                              {comment.user?.name || 'Usuario'}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
+                                comment.sender === 'user'
+                                  ? 'bg-sky-500/20 text-sky-300'
+                                  : comment.sender === 'admin'
+                                    ? 'bg-amber-500/20 text-amber-300'
+                                    : 'bg-purple-500/20 text-purple-200'
+                              }`}
+                            >
+                              {comment.sender === 'user'
+                                ? 'Estudiante'
+                                : comment.sender === 'admin'
+                                  ? 'Admin'
+                                  : 'Soporte'}
+                            </span>
+                          </div>
                           <span className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleString()}
+                            {formatDateColombia(comment.createdAt)}
                           </span>
                         </div>
                         <p className="mt-2 text-sm text-gray-300">

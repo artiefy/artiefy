@@ -64,8 +64,8 @@ export default function MyCoursesPreview() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <CarouselItem
                   key={i}
-                  // Show 3 cards + small peek of the 4th on large screens
-                  className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
+                  // Mobile: smaller cards to show 1.5, tablet: 2 cards, desktop: 3 cards + peek
+                  className="max-w-[220px] basis-auto px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
                 >
                   <div className="block animate-pulse overflow-hidden rounded-lg bg-[#071827] p-0 shadow-md">
                     <div className="h-56 w-full rounded-t-lg bg-gray-800" />
@@ -106,8 +106,8 @@ export default function MyCoursesPreview() {
             {courses.slice(0, 8).map((course) => (
               <CarouselItem
                 key={course.id}
-                // Show 3 cards + small peek of the 4th on large screens
-                className="basis-full px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
+                // Mobile: smaller cards to show 1.5, tablet: 2 cards, desktop: 3 cards + peek
+                className="max-w-[220px] basis-auto px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
               >
                 <div className="group block overflow-hidden rounded-lg bg-[#071827] p-0 shadow-md">
                   <div className="relative h-56 w-full overflow-hidden rounded-t-lg bg-gray-900">

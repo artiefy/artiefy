@@ -16,7 +16,7 @@ interface CreateCommentBody {
 // ========================
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId, sessionClaims } = await auth();
@@ -26,7 +26,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const ticketId = Number(params.id);
+    const { id } = await context.params;
+    const ticketId = Number(id);
     if (isNaN(ticketId)) {
       return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }
@@ -54,7 +55,7 @@ export async function GET(
 // ========================
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata.role;
@@ -64,7 +65,8 @@ export async function POST(
   }
 
   try {
-    const ticketId = Number(params.id);
+    const { id } = await context.params;
+    const ticketId = Number(id);
     if (isNaN(ticketId)) {
       return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }
@@ -84,10 +86,17 @@ export async function POST(
       .values({
         ticketId,
         userId,
+        sender: role === 'super-admin' ? 'admin' : 'admin', // Ambos se marcan como 'admin' en el chatbot
         content,
         createdAt: new Date(),
       })
       .returning();
+
+    // Actualizar la fecha de actualización del ticket cuando hay nuevo comentario
+    await db
+      .update((await import('~/server/db/schema')).tickets)
+      .set({ updatedAt: new Date() })
+      .where(eq((await import('~/server/db/schema')).tickets.id, ticketId));
 
     return NextResponse.json(newComment[0]);
   } catch (error) {

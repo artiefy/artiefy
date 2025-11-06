@@ -175,12 +175,24 @@ const TicketSupportChatbot = () => {
 
   const saveUserMessage = (trimmedInput: string, sender: string) => {
     if (isOpen && isSignedIn && user?.id) {
-      console.log('Guardando mensaje del usuario:', trimmedInput);
-      void SaveTicketMessage(user.id, trimmedInput, sender);
-    } else {
-      console.log(
-        'No está entrando al chat para guardar el mensaje del usuario'
+      console.log('📤 Guardando mensaje del usuario:', {
+        userId: user.id,
+        email: user.primaryEmailAddress?.emailAddress,
+        message: trimmedInput,
+        sender,
+      });
+      void SaveTicketMessage(
+        user.id,
+        trimmedInput,
+        sender,
+        user.primaryEmailAddress?.emailAddress
       );
+    } else {
+      console.error('❌ Falta alguno de estos:', {
+        isOpen,
+        isSignedIn,
+        userId: user?.id,
+      });
     }
   };
 

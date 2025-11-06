@@ -9,6 +9,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
+import { formatDateColombiaShort } from '~/lib/formatDate';
 
 import TicketModal from './TicketModal';
 
@@ -49,7 +50,6 @@ const rawTicketSchema = z.array(
     document_key: z.union([z.string(), z.null()]).optional(),
   })
 );
-
 
 // Types
 
@@ -120,6 +120,7 @@ export default function TicketsPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [sortByIdAsc, setSortByIdAsc] = useState(false); // false = mayor a menor
+  const [sortByUpdatedAtDesc, setSortByUpdatedAtDesc] = useState(true); // true = más recientes arriba
 
   useEffect(() => {
     if (viewTicket?.id) {
@@ -143,7 +144,6 @@ export default function TicketsPage() {
       void fetchComments();
     }
   }, [viewTicket?.id]);
-
 
   function formatElapsedTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
@@ -290,9 +290,16 @@ export default function TicketsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const sortedTickets = [...filteredTickets].sort((a, b) =>
-    sortByIdAsc ? Number(a.id) - Number(b.id) : Number(b.id) - Number(a.id)
-  );
+  const sortedTickets = [...filteredTickets].sort((a, b) => {
+    // Ordenar por updatedAt descendente (más recientes arriba) por defecto
+    if (sortByUpdatedAtDesc) {
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    }
+    // Ordenar por ID si el usuario hizo clic en la columna ID
+    return sortByIdAsc
+      ? Number(a.id) - Number(b.id)
+      : Number(b.id) - Number(a.id);
+  });
 
   const paginatedTickets = (() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -306,16 +313,22 @@ export default function TicketsPage() {
       if (!selectedTicket) return;
       console.log('🧾 Enviando ticket:', data);
 
-      await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
+      const response = await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      toast.success('✅ Ticket creado exitosamente');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'No se pudo actualizar el ticket');
+      }
+
+      toast.success('✅ Ticket actualizado correctamente');
 
       void fetchTickets();
     } catch (error) {
-      toast.error('❌ Error al crear el ticket');
+      toast.error('❌ Error al actualizar el ticket');
 
       console.error(
         'Error updating ticket:',
@@ -443,37 +456,41 @@ export default function TicketsPage() {
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('created')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'created'
-                ? 'border-blue-500 text-blue-500'
-                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-                }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
+                activeTab === 'created'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+              }`}
             >
               Tickets Creados
             </button>
             <button
               onClick={() => setActiveTab('assigned')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'assigned'
-                ? 'border-blue-500 text-blue-500'
-                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-                }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
+                activeTab === 'assigned'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+              }`}
             >
               Tickets Asignados
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'logs'
-                ? 'border-blue-500 text-blue-500'
-                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-                }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
+                activeTab === 'logs'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+              }`}
             >
               Logs
             </button>
             <button
               onClick={() => setActiveTab('chats')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${activeTab === 'chats'
-                ? 'border-blue-500 text-blue-500'
-                : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-                }`}
+              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
+                activeTab === 'chats'
+                  ? 'border-blue-500 text-blue-500'
+                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+              }`}
             >
               Chats
             </button>
@@ -527,10 +544,11 @@ export default function TicketsPage() {
                 }
               }}
               disabled={selectedIds.length === 0}
-              className={`rounded-md border px-4 py-2 text-sm transition ${selectedIds.length === 0
-                ? 'cursor-not-allowed bg-gray-700 text-gray-400'
-                : 'bg-red-600 text-white hover:bg-red-700'
-                }`}
+              className={`rounded-md border px-4 py-2 text-sm transition ${
+                selectedIds.length === 0
+                  ? 'cursor-not-allowed bg-gray-700 text-gray-400'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
             >
               Eliminar Seleccionados
             </button>
@@ -585,14 +603,13 @@ export default function TicketsPage() {
         ) : (
           <div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse">
+              <table className="min-w-full table-auto border-collapse text-xs sm:text-sm">
                 <thead>
                   {/* Filtros */}
-                  <tr className="border-b border-gray-700 bg-gray-900 text-xs text-white sm:text-sm">
-                    <th>
+                  <tr className="border-b border-gray-700 bg-gray-600 text-xs text-white sm:text-sm">
+                    <th className="w-6 px-0.5 py-2 text-center">
                       {' '}
-                      <div className="mt-1 flex items-center gap-2 text-sm text-white">
-                        <span>Mostrar:</span>
+                      <div className="flex items-center justify-center text-xs text-white">
                         <select
                           value={itemsPerPage}
                           onChange={(e) => {
@@ -600,7 +617,7 @@ export default function TicketsPage() {
                             setItemsPerPage(value);
                             setCurrentPage(1); // reiniciar a primera página
                           }}
-                          className="rounded-md border border-gray-600 bg-gray-800 px-2 py-1 text-white"
+                          className="bg-background rounded-md border border-gray-600 px-1 py-1 text-xs text-white"
                         >
                           <option value={10}>10</option>
                           <option value={50}>50</option>
@@ -609,22 +626,23 @@ export default function TicketsPage() {
                         </select>
                       </div>{' '}
                     </th>
-                    <th className="px-4 py-2">
+                    <th className="w-12 px-0.5 py-2">
                       <input
                         type="text"
-                        placeholder="Buscar ID"
+                        placeholder="ID"
                         value={filterId}
                         onChange={(e) => setFilterId(e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 placeholder-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       />
                     </th>
-                    <th className="px-4 py-2">
+                    <th className="min-w-[140px] px-1 py-2">
                       <select
                         value={filterEmail}
                         onChange={(e) => setFilterEmail(e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        title={filterEmail || 'Todos los emails'}
+                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        <option value="">Todos</option>
+                        <option value="">Todos los emails</option>
                         {uniqueUsers.map((user) => (
                           <option key={user} value={user}>
                             {user}
@@ -632,26 +650,34 @@ export default function TicketsPage() {
                         ))}
                       </select>
                     </th>
-                    <th className="px-4 py-2">
+                    <th className="min-w-[110px] px-1 py-2">
                       <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        title={
+                          filterType === 'all' ? 'Todos los tipos' : filterType
+                        }
+                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        <option value="all">Todos</option>
+                        <option value="all">Todos los tipos</option>
                         <option value="bug">Bug</option>
                         <option value="revision">Revisión</option>
                         <option value="logs">Logs</option>
                         <option value="otro">Otro</option>
                       </select>
                     </th>
-                    <th className="px-4 py-2">
+                    <th className="min-w-[120px] px-1 py-2">
                       <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        title={
+                          filterStatus === 'all'
+                            ? 'Todos los estados'
+                            : filterStatus
+                        }
+                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        <option value="all">Todos</option>
+                        <option value="all">Todos los estados</option>
                         <option value="abierto">Abierto</option>
                         <option value="en proceso">En Proceso</option>
                         <option value="en revision">En Revisión</option>
@@ -659,13 +685,14 @@ export default function TicketsPage() {
                         <option value="cerrado">Cerrado</option>
                       </select>
                     </th>
-                    <th className="px-4 py-2">
+                    <th className="min-w-[130px] px-1 py-2">
                       <select
                         value={filterAssignedTo}
                         onChange={(e) => setFilterAssignedTo(e.target.value)}
-                        className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        title={filterAssignedTo || 'Todos los asignados'}
+                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                       >
-                        <option value="">Todos</option>
+                        <option value="">Todos los asignados</option>
                         {uniqueAssignedTo.map((name) => (
                           <option key={name} value={name}>
                             {name}
@@ -676,33 +703,40 @@ export default function TicketsPage() {
                     <th />
                     <th />
                     <th />
+                    <th />
                   </tr>
 
                   {/* Títulos */}
-                  <tr className="border-b border-gray-700 bg-gray-800 text-xs text-gray-300 sm:text-sm">
-                    <th className="px-4 py-2 text-left" />
+                  <tr className="bg-background border-b border-gray-700 text-xs text-gray-300 sm:text-sm">
+                    <th className="w-6 px-0.5 py-2 text-center" />
                     <th
-                      className="cursor-pointer px-4 py-2 text-left"
+                      className="w-12 cursor-pointer px-0.5 py-2 text-left whitespace-nowrap"
                       onClick={() => setSortByIdAsc((prev) => !prev)}
                     >
                       ID {sortByIdAsc ? '↑' : '↓'}
                     </th>
 
-                    <th className="px-4 py-2 text-left">Email</th>
-                    <th className="px-4 py-2 text-left">Tipo</th>
-                    <th className="px-4 py-2 text-left">Estado</th>
-                    <th className="px-4 py-2 text-left">Asignado a</th>
-                    <th className="px-4 py-2 text-left">Fecha de Creación</th>
-                    <th className="px-4 py-2 text-left">Tiempo Transcurrido</th>
+                    <th className="px-1 py-2 text-left">Email</th>
+                    <th className="px-1 py-2 text-left">Tipo</th>
+                    <th className="px-1 py-2 text-left">Estado</th>
+                    <th className="px-1 py-2 text-left">Asignado</th>
+                    <th className="px-1 py-2 text-left">Creación</th>
+                    <th
+                      className="cursor-pointer px-1 py-2 text-left"
+                      onClick={() => setSortByUpdatedAtDesc((prev) => !prev)}
+                    >
+                      Actualización {sortByUpdatedAtDesc ? '↓' : '↑'}
+                    </th>
+                    <th className="px-1 py-2 text-left">Tiempo</th>
 
-                    <th className="px-4 py-2 text-left">Acciones</th>
+                    <th className="px-1 py-2 text-left">Acciones</th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-700/50">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
+                      <td colSpan={6} className="px-2 py-8 text-center">
                         <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
                       </td>
                     </tr>
@@ -710,7 +744,7 @@ export default function TicketsPage() {
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-4 py-8 text-center text-gray-400"
+                        className="px-2 py-8 text-center text-gray-400"
                       >
                         No hay tickets disponibles
                       </td>
@@ -721,62 +755,83 @@ export default function TicketsPage() {
                         key={ticket.id}
                         className="group transition-colors hover:bg-gray-700/50"
                       >
-                        <td className="px-4 py-4">
+                        <td className="w-6 px-0.5 py-2 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(ticket.id)}
                             onChange={() => toggleSelectId(ticket.id)}
-                            className="mr-2"
                           />
                         </td>
-                        <td className="px-4 py-4">#{ticket.id}</td>
-                        <td className="px-4 py-4">{ticket.email}</td>
-                        <td className="px-4 py-4">
+                        <td className="w-12 px-0.5 py-2 whitespace-nowrap">
+                          #{ticket.id}
+                        </td>
+                        <td
+                          className="max-w-[180px] truncate px-1 py-2 whitespace-nowrap"
+                          title={ticket.email}
+                        >
+                          {ticket.email}
+                        </td>
+                        <td className="px-1 py-2 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${ticket.tipo === 'bug'
-                              ? 'bg-red-500/10 text-red-500'
-                              : ticket.tipo === 'revision'
-                                ? 'bg-yellow-500/10 text-yellow-500'
-                                : ticket.tipo === 'logs'
-                                  ? 'bg-purple-500/10 text-purple-500'
-                                  : 'bg-gray-500/10 text-gray-500'
-                              }`}
+                            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                              ticket.tipo === 'bug'
+                                ? 'bg-red-500/10 text-red-500'
+                                : ticket.tipo === 'revision'
+                                  ? 'bg-yellow-500/10 text-yellow-500'
+                                  : ticket.tipo === 'logs'
+                                    ? 'bg-purple-500/10 text-purple-500'
+                                    : 'bg-gray-500/10 text-gray-500'
+                            }`}
                           >
                             {ticket.tipo}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-1 py-2 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${ticket.estado === 'abierto'
-                              ? 'bg-green-500/10 text-green-500'
-                              : ticket.estado === 'en proceso'
-                                ? 'bg-blue-500/10 text-blue-500'
-                                : ticket.estado === 'en revision'
-                                  ? 'bg-yellow-500/10 text-yellow-500'
-                                  : ticket.estado === 'solucionado'
-                                    ? 'bg-purple-500/10 text-purple-500'
-                                    : 'bg-gray-500/10 text-gray-500'
-                              }`}
+                            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                              ticket.estado === 'abierto'
+                                ? 'bg-green-500/10 text-green-500'
+                                : ticket.estado === 'en proceso'
+                                  ? 'bg-blue-500/10 text-blue-500'
+                                  : ticket.estado === 'en revision'
+                                    ? 'bg-yellow-500/10 text-yellow-500'
+                                    : ticket.estado === 'solucionado'
+                                      ? 'bg-purple-500/10 text-purple-500'
+                                      : 'bg-gray-500/10 text-gray-500'
+                            }`}
                           >
                             {ticket.estado}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          {ticket.assignedUsers &&
+                        <td
+                          className="max-w-[150px] truncate px-1 py-2 whitespace-nowrap"
+                          title={
+                            ticket.assignedUsers &&
                             ticket.assignedUsers.length > 0
+                              ? ticket.assignedUsers
+                                  .map((u) => u.name)
+                                  .join(', ')
+                              : 'Sin asignar'
+                          }
+                        >
+                          {ticket.assignedUsers &&
+                          ticket.assignedUsers.length > 0
                             ? ticket.assignedUsers.map((u) => u.name).join(', ')
                             : 'Sin asignar'}
                         </td>
 
-                        <td className="px-4 py-4">
-                          {ticket.createdAt.toLocaleString()}
+                        <td className="px-1 py-2 whitespace-nowrap">
+                          {formatDateColombiaShort(ticket.createdAt)}
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-1 py-2 whitespace-nowrap">
+                          {formatDateColombiaShort(ticket.updatedAt)}
+                        </td>
+                        <td className="px-1 py-2 whitespace-nowrap">
                           {formatElapsedTime(ticket.timeElapsedMs)}
                         </td>
 
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-end gap-1 sm:gap-2">
+                        <td className="px-1 py-2">
+                          <div className="flex items-center justify-start gap-1">
                             <button
                               onClick={() => setViewTicket(ticket)}
                               className="rounded-md p-1 hover:bg-blue-500/10 hover:text-blue-500"
@@ -809,7 +864,7 @@ export default function TicketsPage() {
                 </tbody>
               </table>
               {itemsPerPage !== -1 && (
-                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white">
+                <div className="mt-4 mb-6 flex items-center justify-center gap-2 text-sm text-white">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -885,14 +940,15 @@ export default function TicketsPage() {
                       Tipo
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${viewTicket.tipo === 'bug'
-                        ? 'bg-red-500/10 text-red-400'
-                        : viewTicket.tipo === 'revision'
-                          ? 'bg-yellow-500/10 text-yellow-400'
-                          : viewTicket.tipo === 'logs'
-                            ? 'bg-purple-500/10 text-purple-400'
-                            : 'bg-gray-500/10 text-gray-400'
-                        }`}
+                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
+                        viewTicket.tipo === 'bug'
+                          ? 'bg-red-500/10 text-red-400'
+                          : viewTicket.tipo === 'revision'
+                            ? 'bg-yellow-500/10 text-yellow-400'
+                            : viewTicket.tipo === 'logs'
+                              ? 'bg-purple-500/10 text-purple-400'
+                              : 'bg-gray-500/10 text-gray-400'
+                      }`}
                     >
                       {viewTicket.tipo}
                     </span>
@@ -905,16 +961,17 @@ export default function TicketsPage() {
                       Estado
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${viewTicket.estado === 'abierto'
-                        ? 'bg-green-500/10 text-green-400'
-                        : viewTicket.estado === 'en proceso'
-                          ? 'bg-blue-500/10 text-blue-400'
-                          : viewTicket.estado === 'en revision'
-                            ? 'bg-yellow-500/10 text-yellow-400'
-                            : viewTicket.estado === 'solucionado'
-                              ? 'bg-purple-500/10 text-purple-400'
-                              : 'bg-gray-500/10 text-gray-400'
-                        }`}
+                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
+                        viewTicket.estado === 'abierto'
+                          ? 'bg-green-500/10 text-green-400'
+                          : viewTicket.estado === 'en proceso'
+                            ? 'bg-blue-500/10 text-blue-400'
+                            : viewTicket.estado === 'en revision'
+                              ? 'bg-yellow-500/10 text-yellow-400'
+                              : viewTicket.estado === 'solucionado'
+                                ? 'bg-purple-500/10 text-purple-400'
+                                : 'bg-gray-500/10 text-gray-400'
+                      }`}
                     >
                       {viewTicket.estado}
                     </span>
@@ -926,7 +983,7 @@ export default function TicketsPage() {
                     </h3>
                     <p className="text-lg text-white">
                       {viewTicket.assignedUsers &&
-                        viewTicket.assignedUsers.length > 0
+                      viewTicket.assignedUsers.length > 0
                         ? viewTicket.assignedUsers.map((u) => u.name).join(', ')
                         : 'Sin asignar'}
                     </p>
@@ -1028,7 +1085,9 @@ export default function TicketsPage() {
                                 {comment.user?.name || 'Usuario'}
                               </span>
                               <span className="text-sm text-gray-500">
-                                {new Date(comment.createdAt).toLocaleString()}
+                                {formatDateColombiaShort(
+                                  new Date(comment.createdAt)
+                                )}
                               </span>
                             </div>
                             <p className="mt-2 text-gray-300">
@@ -1057,7 +1116,6 @@ export default function TicketsPage() {
           ticket={selectedTicket}
           onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
         />
-
       </div>
       <ToastContainer position="top-right" autoClose={3000} />
     </>

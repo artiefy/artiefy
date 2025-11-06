@@ -34,7 +34,7 @@ interface UpdateTicketBody {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId, sessionClaims } = await auth();
@@ -44,7 +44,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const ticketId = Number(params.id);
+    const { id } = await context.params;
+    const ticketId = Number(id);
     if (isNaN(ticketId)) {
       return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }
@@ -59,10 +60,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
+    const statusWillChange =
+      typeof body.estado === 'string' &&
+      body.estado.length > 0 &&
+      body.estado !== currentTicket.estado;
+
+    const isResolvingTicket =
+      statusWillChange && ['solucionado', 'cerrado'].includes(body.estado!);
+
     if (body.newComment?.trim()) {
       await db.insert(ticketComments).values({
         ticketId,
         userId,
+        sender: 'admin',
         content: body.newComment.trim(),
         createdAt: new Date(),
       });
@@ -149,6 +159,16 @@ export async function PUT(
       .where(eq(tickets.id, ticketId))
       .returning();
 
+    if (isResolvingTicket) {
+      await db.insert(ticketComments).values({
+        ticketId,
+        userId,
+        sender: 'support',
+        content: `Ticket marcado como ${body.estado} por el equipo de soporte.`,
+        createdAt: new Date(),
+      });
+    }
+
     const comments = await db.query.ticketComments.findMany({
       where: eq(ticketComments.ticketId, ticketId),
       with: { user: true },
@@ -167,7 +187,7 @@ export async function PUT(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId, sessionClaims } = await auth();
@@ -177,7 +197,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const ticketId = Number(params.id);
+    const { id } = await context.params;
+    const ticketId = Number(id);
     if (isNaN(ticketId)) {
       return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
     }

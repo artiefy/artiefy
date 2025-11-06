@@ -2,6 +2,10 @@ import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
 export const env = createEnv({
+  /*
+   * Serverside Environment variables, not available on the client.
+   * Will throw if you access these variables on the client.
+   */
   server: {
     POSTGRES_URL: z.string().url(),
     POSTGRES_URL_NON_POOLING: z.string().url(),
@@ -38,10 +42,17 @@ export const env = createEnv({
     CRON_SECRET: z.string().min(1),
     SKIP_ENV_VALIDATION: z.boolean().default(false),
 
+    N8N_BASE_URL: z.string().url().optional(),
+    N8N_WEBHOOK_PATH: z.string().optional(),
     N8N_LICENSE_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
     N8N_WEBHOOK_ID: z.string().min(1),
   },
+  /*
+   * Environment variables available on the client (and server).
+   *
+   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   */
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
@@ -52,6 +63,12 @@ export const env = createEnv({
     NEXT_PUBLIC_BASE_URL: z.string().url(),
     NEXT_PUBLIC_PAYU_URL: z.string().url(),
   },
+  /*
+   * Due to how Next.js bundles environment variables on Edge and Client,
+   * we need to manually destructure them to make sure all are included in bundle.
+   *
+   * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
+   */
   runtimeEnv: {
     POSTGRES_URL: process.env.POSTGRES_URL,
     POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
@@ -97,6 +114,8 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
 
+    N8N_BASE_URL: process.env.N8N_BASE_URL,
+    N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH,
     N8N_LICENSE_KEY: process.env.N8N_LICENSE_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
@@ -105,8 +124,9 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
 });
 
+// Objeto legacy para compatibilidad con código existente
 export const ENV = {
-  N8N_BASE_URL: process.env.N8N_BASE_URL ?? '',
-  N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH ?? '',
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? '',
+  N8N_BASE_URL: env.N8N_BASE_URL ?? '',
+  N8N_WEBHOOK_PATH: env.N8N_WEBHOOK_PATH ?? '',
+  OPENAI_API_KEY: env.OPENAI_API_KEY,
 };

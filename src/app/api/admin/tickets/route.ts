@@ -14,6 +14,11 @@ import {
   tickets,
   users,
 } from '~/server/db/schema';
+import {
+  ensureTicketAssignment,
+  getOrCreateUserByEmail,
+  SUPPORT_AUTO_ASSIGN_EMAILS,
+} from '~/server/helpers/supportTicketAssignments';
 
 interface CreateTicketBody {
   email: string;
@@ -34,6 +39,39 @@ interface UpdateTicketBody
 }
 
 export const dynamic = 'force-dynamic';
+
+async function notifySupportWatchers(ticketId: number, description: string) {
+  const supportUsers = await Promise.all(
+    SUPPORT_AUTO_ASSIGN_EMAILS.map(async (email) =>
+      getOrCreateUserByEmail(email, 'super-admin')
+    )
+  );
+
+  await Promise.all(
+    supportUsers.map(async (user) => ensureTicketAssignment(ticketId, user.id))
+  );
+
+  const uniqueEmails = new Set(
+    supportUsers
+      .map((user) => user.email)
+      .filter((email): email is string => Boolean(email))
+  );
+
+  await Promise.all(
+    Array.from(uniqueEmails).map(async (email) => {
+      try {
+        await sendTicketEmail({
+          to: email,
+          subject: `🎫 Nuevo Ticket de Soporte #${ticketId}`,
+          html: getNewTicketAssignmentEmail(ticketId, description),
+        });
+        console.log(`✅ Email de soporte enviado a: ${email}`);
+      } catch (error) {
+        console.error(`❌ Error enviando email de soporte a ${email}:`, error);
+      }
+    })
+  );
+}
 
 // ========================
 // GET /api/admin/tickets
@@ -289,6 +327,8 @@ export async function POST(request: Request) {
       console.log('ℹ️ Ticket creado sin asignación');
     }
 
+    await notifySupportWatchers(newTicket[0].id, body.description);
+
     return NextResponse.json(newTicket[0]);
   } catch (error) {
     console.error('❌ Error creando ticket:', error);
@@ -314,37 +354,91 @@ export async function PUT(request: Request) {
     const body = (await request.json()) as UpdateTicketBody;
     const { id, ...updateData } = body;
 
+    const ticketId = typeof id === 'string' ? Number(id) : id;
+
+    if (!Number.isFinite(ticketId)) {
+      return NextResponse.json(
+        { error: 'Ticket id requerido' },
+        { status: 400 }
+      );
+    }
+
+    const currentTicket = await db.query.tickets.findFirst({
+      where: eq(tickets.id, ticketId),
+    });
+
+    if (!currentTicket) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    }
+
+    const statusWillChange =
+      typeof body.estado === 'string' &&
+      body.estado.length > 0 &&
+      body.estado !== currentTicket.estado;
+
+    const isResolvingTicket =
+      statusWillChange && ['solucionado', 'cerrado'].includes(body.estado!);
+
     // 1. Actualizar datos generales del ticket
     const updatedTicket = await db
       .update(tickets)
       .set({
-        email: updateData.email,
-        description: updateData.description,
-        estado: updateData.estado,
-        tipo: updateData.tipo,
-        comments: updateData.comments,
-        coverImageKey: updateData.coverImageKey,
-        videoKey: updateData.videoKey,
-        documentKey: updateData.documentKey,
+        email: updateData.email ?? currentTicket.email,
+        description: updateData.description ?? currentTicket.description,
+        estado: updateData.estado ?? currentTicket.estado,
+        tipo: updateData.tipo ?? currentTicket.tipo,
+        comments: updateData.comments ?? currentTicket.comments,
+        coverImageKey:
+          updateData.coverImageKey === null
+            ? null
+            : (updateData.coverImageKey ?? currentTicket.coverImageKey),
+        videoKey:
+          updateData.videoKey === null
+            ? null
+            : (updateData.videoKey ?? currentTicket.videoKey),
+        documentKey:
+          updateData.documentKey === null
+            ? null
+            : (updateData.documentKey ?? currentTicket.documentKey),
         updatedAt: new Date(),
       })
-      .where(eq(tickets.id, id))
+      .where(eq(tickets.id, ticketId))
       .returning();
 
     // 2. Actualizar asignaciones si se envían
     if (body.assignedToIds) {
       // Eliminar anteriores
-      await db.delete(ticketAssignees).where(eq(ticketAssignees.ticketId, id));
+      await db
+        .delete(ticketAssignees)
+        .where(eq(ticketAssignees.ticketId, ticketId));
 
       // Insertar nuevas
       await Promise.all(
         body.assignedToIds.map((userId) =>
           db.insert(ticketAssignees).values({
-            ticketId: id,
+            ticketId,
             userId,
           })
         )
       );
+    }
+
+    const notificationSummary = statusWillChange
+      ? `Ticket #${ticketId} marcado como ${body.estado}.`
+      : (body.comments?.trim() ??
+        updateData.description?.trim() ??
+        `Ticket #${ticketId} actualizado desde el panel administrativo.`);
+
+    await notifySupportWatchers(ticketId, notificationSummary);
+
+    if (isResolvingTicket) {
+      await db.insert(ticketComments).values({
+        ticketId,
+        userId,
+        sender: 'support',
+        content: `Ticket marcado como ${body.estado} por el equipo de soporte.`,
+        createdAt: new Date(),
+      });
     }
 
     return NextResponse.json(updatedTicket[0]);
