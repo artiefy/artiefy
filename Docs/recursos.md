@@ -349,3 +349,41 @@ Facilita el mantenimiento y la calidad del proyecto a largo plazo.
   --font-display: var(--font-delius);
   --font-table-text: var(--font-lexend);
   }
+
+## Cómo Poner Tu Cuenta De Github En Proyectos de VSCode
+
+### Paso 1. Elimina las configuraciones globales (si no quieres interferencias)
+
+```bash
+git config --global --unset user.name
+git config --global --unset user.email
+```
+
+### Paso 2. Configura el usuario y email para el proyecto actual
+
+```bash
+git config user.name "artiefy"
+git config user.email "artiefy4@gmail.com"
+
+git config user.name "techotaku1"
+git config user.email "jsdg1818@gmail.com"
+```
+
+### Paso 3. Verifica la configuración local
+
+```bash
+git config --local --list
+```
+
+### Paso 4. Confirma qué usuario usa cada proyecto
+
+```bash
+git config user.name
+git config user.email
+```
+
+### Paso 5. Configura el almacenamiento de credenciales (tokens personales)
+
+```bash
+git config credential.helper store
+```
