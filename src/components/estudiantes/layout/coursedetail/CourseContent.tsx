@@ -192,6 +192,55 @@ export function CourseContent({
         )
       : 5;
 
+  // NUEVO: Formato compacto para móviles (Ej: "Vie, Nov 8") usando Intl y fallback
+  const formatMobileDate = (start?: string) => {
+    if (!start) return '';
+    const d = new Date(start);
+    try {
+      const weekday = new Intl.DateTimeFormat('es-ES', {
+        weekday: 'short',
+      })
+        .format(d)
+        .replace('.', ''); // remover punto abreviatura
+      const month = new Intl.DateTimeFormat('es-ES', { month: 'short' })
+        .format(d)
+        .replace('.', '');
+      const day = d.getDate();
+      return `${capitalize(weekday)}, ${capitalize(month)} ${day}`;
+    } catch {
+      return `${d.getFullYear()}/${String(d.getDate()).padStart(2, '0')}/${String(
+        d.getMonth() + 1
+      ).padStart(2, '0')}`;
+    }
+  };
+
+  // Helper para capitalizar abreviaturas (lun -> Lun)
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // NUEVO: Formato rango horario "12:30 p.m. – 5:30 p.m." en es-CO
+  const formatTimeRange = (start?: string, end?: string) => {
+    if (!start || !end) return '';
+    const s = new Date(start);
+    const e = new Date(end);
+    const formatPart = (d: Date) => {
+      // Intl en es-ES devuelve "12:30" y AM/PM puede variar; manualizar sufijo
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const isPM = hours >= 12;
+      const suffix = isPM ? 'p.m.' : 'a.m.';
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${suffix}`;
+    };
+    return `${formatPart(s)} – ${formatPart(e)}`;
+  };
+
+  // NUEVO: Duración en horas redondeada a 1 decimal si no es entera
+  const formatDurationHours = (minutes: number) => {
+    const hours = minutes / 60;
+    if (Number.isInteger(hours)) return `${hours} h`;
+    return `${hours.toFixed(1)} h`;
+  };
+
   // Add toggle functions for sections
   const toggleLiveClasses = useCallback(() => {
     setShowLiveClasses((prev) => !prev);
@@ -905,9 +954,27 @@ export function CourseContent({
               {/* Clases en vivo - Sección con su propio toggle */}
               {upcomingMeetings.length > 0 && (
                 <div className={cn('mb-6')}>
-                  {/* Header with toggle button for live classes */}
-                  <div className="mb-4 flex items-center justify-between">
-                    {/* Título único, eliminar doble título */}
+                  {/* Header con variantes responsive */}
+                  {/* Mobile: título centrado y toggle pequeño sin burbuja */}
+                  <div className="mb-3 flex flex-col items-center sm:hidden">
+                    <h2 className="text-center text-lg font-bold text-white">
+                      Clases en Vivo
+                    </h2>
+                    <button
+                      onClick={toggleLiveClasses}
+                      className="mt-1 flex items-center gap-1 text-xs font-medium text-cyan-200 underline-offset-4 hover:text-cyan-100"
+                    >
+                      <span>{showLiveClasses ? 'Ver menos' : 'Ver más'}</span>
+                      {showLiveClasses ? (
+                        <FaChevronUp className="size-3" />
+                      ) : (
+                        <FaChevronDown className="size-3" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Desktop: distribución original con botón tipo burbuja */}
+                  <div className="mb-4 hidden items-center justify-between sm:flex">
                     <h2 className="text-xl font-bold text-white">
                       Clases en Vivo
                     </h2>
@@ -926,28 +993,61 @@ export function CourseContent({
                     </button>
                   </div>
 
-                  {/* Live classes content - only this gets hidden */}
+                  {/* Live classes content - responsive: "ver menos" muestra solo la siguiente clase */}
                   <div
                     className={cn(
                       'space-y-4 transition-all duration-300',
                       shouldBlurContent &&
-                        'pointer-events-none opacity-100 blur-[2px]',
-                      !showLiveClasses && 'hidden'
+                        'pointer-events-none opacity-100 blur-[2px]'
                     )}
                   >
-                    {/* Filtrar clases en vivo para ocultar las vencidas */}
-                    {liveMeetings
-                      .filter((meeting: ClassMeeting) => {
-                        // Ocultar cualquier clase cuya hora de fin ya pasó (vencida)
-                        if (meeting.endDateTime) {
-                          const now = new Date();
-                          const end = new Date(meeting.endDateTime);
-                          if (now > end) return false;
+                    {(() => {
+                      // 1) Quitar vencidas
+                      const now = new Date();
+                      const upcoming = liveMeetings.filter(
+                        (meeting: ClassMeeting) => {
+                          if (meeting.endDateTime) {
+                            const end = new Date(meeting.endDateTime);
+                            if (now > end) return false;
+                          }
+                          return true;
                         }
-                        return true;
-                      })
-                      // Mostrar todas las futuras (se elimina el filtro de solo próxima clase)
-                      .map((meeting: ClassMeeting) => {
+                      );
+
+                      // 2) Si está en modo "ver menos", dejar solo la próxima clase
+                      let list = upcoming;
+                      if (!showLiveClasses) {
+                        if (typeof nextMeetingId === 'number') {
+                          list = upcoming.filter((m) => m.id === nextMeetingId);
+                        } else {
+                          // fallback por fecha más cercana
+                          const sorted = [...upcoming].sort(
+                            (a, b) =>
+                              new Date(a.startDateTime ?? '').getTime() -
+                              new Date(b.startDateTime ?? '').getTime()
+                          );
+                          list = sorted.length > 0 ? [sorted[0]!] : [];
+                        }
+                      }
+
+                      // 3) Ocultar clases bloqueadas (no disponibles, no hoy y no próxima)
+                      list = list.filter((meeting) => {
+                        const isAvailable = isMeetingAvailable(meeting);
+                        const isNext =
+                          typeof nextMeetingId === 'number' &&
+                          meeting.id === nextMeetingId;
+                        let isToday = false;
+                        if (meeting.startDateTime) {
+                          const d = new Date(meeting.startDateTime);
+                          isToday =
+                            now.getFullYear() === d.getFullYear() &&
+                            now.getMonth() === d.getMonth() &&
+                            now.getDate() === d.getDate();
+                        }
+                        return !(!isAvailable && !isNext && !isToday);
+                      });
+
+                      return list.map((meeting: ClassMeeting) => {
                         const isAvailable = isMeetingAvailable(meeting);
                         const isNext = meeting.id === nextMeetingId;
                         // Determinar si es hoy usando directamente los datos de BD
@@ -1016,53 +1116,55 @@ export function CourseContent({
                           <div
                             key={meeting.id}
                             className={cn(
-                              'relative flex flex-col rounded-lg border-0 p-4 shadow sm:flex-row sm:items-center',
-                              'bg-gray-800',
-                              'hover:neon-live-class'
+                              // Contenedor base: en mobile solo contorno sin brillo
+                              'relative flex flex-col rounded-lg border-0 p-4 sm:flex-row sm:items-center',
+                              'bg-transparent sm:bg-gray-800',
+                              'ring-1 ring-white sm:ring-0',
+                              'shadow-none sm:shadow',
+                              'sm:hover:neon-live-class'
                             )}
                           >
                             {/* MOBILE: layout vertical y centrado */}
                             <div className="block w-full sm:hidden">
-                              <div className="flex w-full flex-col items-center gap-2">
-                                {/* Título */}
-                                <div className="mb-1 w-full text-center text-base font-bold text-white">
-                                  {meeting.title}
-                                </div>
-                                {/* Fecha y hora */}
-                                <div className="mb-1 flex w-full flex-col items-center gap-1">
-                                  {formatMeetingDateTimeModern(
-                                    meeting.startDateTime,
-                                    meeting.endDateTime
-                                  )}
-                                </div>
-                                {/* Duración */}
-                                <div className="mb-2 w-full text-center text-sm font-bold text-green-400">
-                                  • Duración:{' '}
-                                  {formatDuration(getDurationMinutes(meeting))}
-                                </div>
-                                {/* Badges */}
-                                <div className="mb-2 flex w-full flex-row items-center justify-center gap-2">
-                                  {isToday && isJoinEnabled && (
-                                    <Badge
-                                      variant="secondary"
-                                      className={badgeHoyClass}
+                              <div className="flex w-full flex-col items-stretch gap-3">
+                                {/* Header compacto sin fondo, solo texto y chips */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <h3 className="text-base leading-snug font-semibold text-white">
+                                    {meeting.title}
+                                  </h3>
+                                  {isToday && (
+                                    <span
+                                      className={cn(
+                                        'rounded-full px-3 py-1 text-xs font-semibold',
+                                        isJoinEnabled && !isMeetingEnded
+                                          ? 'bg-green-600/90 text-white'
+                                          : 'bg-gray-500/30 text-gray-200'
+                                      )}
                                     >
-                                      Hoy
-                                    </Badge>
+                                      {isMeetingEnded
+                                        ? 'Finalizada'
+                                        : 'Abierta'}
+                                    </span>
                                   )}
-                                  {isToday &&
-                                    !isJoinEnabled &&
-                                    isMeetingEnded && (
-                                      <Badge
-                                        variant="secondary"
-                                        className={badgeFinalizadaClass}
-                                      >
-                                        Hoy
-                                      </Badge>
-                                    )}
                                 </div>
-                                {/* Botón centrado */}
-                                <div className="mt-2 flex w-full justify-center">
+                                {/* Chips fecha+hora en una sola línea y duración */}
+                                <div className="flex flex-nowrap items-center gap-2">
+                                  <span className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-xs font-medium whitespace-nowrap text-cyan-200">
+                                    {formatMobileDate(meeting.startDateTime)} •{' '}
+                                    {formatTimeRange(
+                                      meeting.startDateTime,
+                                      meeting.endDateTime
+                                    )}
+                                  </span>
+                                  <span className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-xs font-medium whitespace-nowrap text-cyan-200">
+                                    Duración:{' '}
+                                    {formatDurationHours(
+                                      getDurationMinutes(meeting)
+                                    )}
+                                  </span>
+                                </div>
+                                {/* Botón */}
+                                <div className="flex w-full justify-center">
                                   {meeting.joinUrl && (
                                     <>
                                       {isNext && !isJoinEnabled && (
@@ -1306,7 +1408,8 @@ export function CourseContent({
                             </div>
                           </div>
                         );
-                      })}
+                      });
+                    })()}
                   </div>
                 </div>
               )}
@@ -1314,8 +1417,27 @@ export function CourseContent({
               {/* Clases Grabadas - Sección con su propio toggle independiente */}
               {recordedMeetings.length > 0 && (
                 <div className="bg-background mb-6 rounded-lg border p-6 shadow-sm">
-                  {/* Header with toggle button for recorded classes */}
-                  <div className="mb-4 flex items-center justify-between">
+                  {/* Header con variantes responsive para grabadas */}
+                  <div className="mb-3 flex flex-col items-center sm:hidden">
+                    <h3 className="text-center text-lg font-bold text-white">
+                      Clases Grabadas
+                    </h3>
+                    <button
+                      onClick={toggleRecordedClasses}
+                      className="mt-1 flex items-center gap-1 text-xs font-medium text-cyan-200 underline-offset-4 hover:text-cyan-100"
+                    >
+                      <span>
+                        {showRecordedClasses ? 'Ver menos' : 'Ver más'}
+                      </span>
+                      {showRecordedClasses ? (
+                        <FaChevronUp className="size-3" />
+                      ) : (
+                        <FaChevronDown className="size-3" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mb-4 hidden items-center justify-between sm:flex">
                     <h3 className="text-xl font-bold text-white">
                       Clases Grabadas
                     </h3>

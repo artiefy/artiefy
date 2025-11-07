@@ -116,7 +116,7 @@ export default function MyCoursesPreview() {
       <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
         <h3 className="text-primary text-2xl font-bold">Seguir viendo</h3>
         <Link
-          href="/estudiantes/mis-cursos"
+          href="/estudiantes/myaccount"
           className="text-sm text-gray-300 underline"
         >
           Ver todos
