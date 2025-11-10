@@ -9,6 +9,7 @@ import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
+import { useTicketMessages } from '~/hooks/useTicketMessages';
 import {
   getTicketWithMessages,
   SaveTicketMessage,
@@ -56,8 +57,16 @@ const TicketSupportChatbot = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTicketId, setCurrentTicketId] = useState<number | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Hook SWR para obtener mensajes en tiempo real
+  const { messages: swrMessages, mutate: mutateMessages } = useTicketMessages(
+    currentTicketId,
+    3000
+  ); // Polling cada 3 segundos
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -104,6 +113,79 @@ const TicketSupportChatbot = () => {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Sincronizar mensajes de SWR con estado local y controlar loader
+  useEffect(() => {
+    if (!swrMessages || !currentTicketId) return;
+
+    // Si hay nuevos mensajes, ocultar loader y mostrar mensajes
+    if (swrMessages.length > prevMessageCount) {
+      setIsLoading(false);
+      setIsTyping(false);
+      const formattedMessages = swrMessages.map((msg) => ({
+        id: msg.id,
+        text: msg.content,
+        sender: msg.sender,
+        createdAt: msg.createdAt,
+      }));
+      // Solo agregar mensaje de bienvenida si no existe
+      const needsWelcomeMessage = !formattedMessages.some(
+        (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+      );
+      if (needsWelcomeMessage) {
+        const welcomeMessage = {
+          id: Date.now(),
+          text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+          sender: 'support' as const,
+          buttons: [
+            { label: '🐛 Reportar Error', action: 'report_bug' },
+            { label: '❓ Pregunta General', action: 'general_question' },
+            { label: '🔧 Problema Técnico', action: 'technical_issue' },
+            { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
+          ],
+        };
+        setMessages([welcomeMessage, ...formattedMessages]);
+      } else {
+        setMessages(formattedMessages);
+      }
+      setPrevMessageCount(swrMessages.length);
+    } else if (prevMessageCount === 0) {
+      // Primera carga
+      const formattedMessages = swrMessages.map((msg) => ({
+        id: msg.id,
+        text: msg.content,
+        sender: msg.sender,
+        createdAt: msg.createdAt,
+      }));
+      const needsWelcomeMessage = !formattedMessages.some(
+        (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+      );
+      if (needsWelcomeMessage) {
+        const welcomeMessage = {
+          id: Date.now(),
+          text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+          sender: 'support' as const,
+          buttons: [
+            { label: '🐛 Reportar Error', action: 'report_bug' },
+            { label: '❓ Pregunta General', action: 'general_question' },
+            { label: '🔧 Problema Técnico', action: 'technical_issue' },
+            { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
+          ],
+        };
+        setMessages([welcomeMessage, ...formattedMessages]);
+      } else if (formattedMessages.length > 0) {
+        setMessages(formattedMessages);
+      }
+      setPrevMessageCount(swrMessages.length);
+    }
+  }, [swrMessages, currentTicketId, prevMessageCount]);
+
+  // Actualizar el contador cuando cambian los mensajes
+  useEffect(() => {
+    if (swrMessages && swrMessages.length > 0) {
+      setPrevMessageCount(swrMessages.length);
+    }
+  }, [swrMessages]);
 
   useEffect(() => {
     const handleChatOpen = (e: CustomEvent<ChatDetail>) => {
@@ -226,7 +308,7 @@ const TicketSupportChatbot = () => {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSignedIn) {
       toast.error('Debes iniciar sesión para enviar tickets');
@@ -242,27 +324,23 @@ const TicketSupportChatbot = () => {
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
+    const messageText = inputText.trim();
     setInputText('');
-    saveUserMessage(inputText.trim(), 'user');
     setIsLoading(true);
 
     try {
-      // Aquí iría la lógica para enviar el ticket al backend
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            text: 'Gracias por reportar el problema. Un administrador revisará tu ticket pronto.',
-            sender: 'support' as const,
-          },
-        ]);
-        setIsLoading(false);
-        saveUserMessage(
-          'Gracias por reportar el problema. Un administrador revisará tu ticket pronto.',
-          'support'
-        );
-      }, 1000);
+      // Guardar el mensaje en el backend
+      saveUserMessage(messageText, 'user');
+
+      // Forzar revalidación de SWR para obtener mensajes actualizados
+      if (currentTicketId) {
+        await mutateMessages();
+      }
+
+      setIsLoading(false);
+
+      // Ya no necesitamos agregar mensaje automático del soporte
+      // porque SWR se encargará de traer actualizaciones
     } catch (error) {
       console.error('Error al enviar el ticket:', error);
       toast.error('Error al enviar el ticket');
@@ -433,6 +511,7 @@ const TicketSupportChatbot = () => {
               isSignedIn={isSignedIn}
               handleSendMessage={handleSendMessage}
               isLoading={isLoading}
+              isTyping={isTyping}
               messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
               inputText={inputText}
               setInputText={setInputText}

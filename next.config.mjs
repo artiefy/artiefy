@@ -36,7 +36,7 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-    qualities: [100, 75], // Default in v16
+    qualities: [100, 75, 85], // Agregar 85 para evitar warnings de imágenes
     maximumRedirects: 3, // Explicit default in v16 for security
     dangerouslyAllowLocalIP: false, // Default security restriction in v16
   },

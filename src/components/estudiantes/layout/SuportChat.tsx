@@ -17,6 +17,7 @@ interface SuportChatProps {
     id: number;
     text: string;
     sender: string;
+    createdAt?: string | Date;
     buttons?: { label: string; action: string }[];
   }[];
   setMessages: React.Dispatch<
@@ -25,6 +26,7 @@ interface SuportChatProps {
         id: number;
         text: string;
         sender: string;
+        createdAt?: string | Date;
         buttons?: { label: string; action: string }[];
       }[]
     >
@@ -34,6 +36,7 @@ interface SuportChatProps {
   isSignedIn?: boolean;
   handleSendMessage: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  isTyping?: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   inputText: string;
   setInputText: (text: string) => void;
@@ -47,6 +50,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
   setMessages,
   messages,
   isLoading,
+  isTyping = false,
   messagesEndRef,
   inputText,
   setInputText,
@@ -133,23 +137,30 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
     void fetchInitialMessages();
   }, [setMessages, user, skipInitialLoad]);
+  // Filtrar el mensaje de asignación automática
+  const filteredMessages = messages.filter(
+    (message) => message.text !== 'Ticket asignado a 1 usuario(s).'
+  );
+
   return (
     <>
-      {/* Messages*/}
+      {/* Mensajes */}
       <div className="support-chat-messages">
-        {messages.map((message) => (
+        {filteredMessages.map((message) => (
           <div key={message.id}>
+            {/* Timestamp arriba de la burbuja */}
+            {message.createdAt && (
+              <div
+                className={`mb-1 flex text-xs text-gray-400 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {formatDateColombia(message.createdAt)}
+              </div>
+            )}
             <div
-              className={`flex ${
-                message.sender === 'user' ? 'justify-end' : 'justify-start'
-              } mb-4`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
             >
               <div
-                className={`flex max-w-[80%] items-start space-x-2 ${
-                  message.sender === 'user'
-                    ? 'flex-row-reverse space-x-reverse'
-                    : 'flex-row'
-                }`}
+                className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}
               >
                 {message.sender === 'support' ? (
                   <MdSupportAgent className="text-secondary mt-2 text-xl" />
@@ -160,17 +171,12 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                     width={24}
                     height={24}
                     className="mt-2 rounded-full"
-                    // Removido el priority ya que estas imágenes se cargan dinámicamente
                   />
                 ) : (
                   <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                 )}
                 <div
-                  className={`rounded-lg p-3 ${
-                    message.sender === 'user'
-                      ? 'bg-secondary text-white'
-                      : 'bg-gray-800 text-white'
-                  }`}
+                  className={`rounded-lg p-3 ${message.sender === 'user' ? 'bg-secondary text-white' : 'bg-gray-800 text-white'}`}
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
                   {message.buttons && message.buttons.length > 0 && (
@@ -191,13 +197,33 @@ export const SuportChat: React.FC<SuportChatProps> = ({
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="rounded-lg bg-gray-100 p-3">
-              <div className="flex space-x-2">
-                <div className="loading-dot" />
-                <div className="loading-dot" />
-                <div className="loading-dot" />
+        {/* Loader animado tipo IA chat: dots con outline */}
+        {(isLoading || isTyping) && (
+          <div className="mb-4 flex justify-start">
+            <div className="flex items-start space-x-2">
+              <MdSupportAgent className="text-secondary mt-2 text-xl" />
+              {/* Loader sin burbuja, fondo transparente o gris claro */}
+              <div
+                style={{
+                  background: '#f5f5f5',
+                  borderRadius: '12px',
+                  padding: '8px',
+                }}
+              >
+                <div className="loader">
+                  <div className="circle">
+                    <div className="dot" />
+                    <div className="outline" />
+                  </div>
+                  <div className="circle">
+                    <div className="dot" />
+                    <div className="outline" />
+                  </div>
+                  <div className="circle">
+                    <div className="dot" />
+                    <div className="outline" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -205,7 +231,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form - Modificado para ser más compacto en móvil */}
+      {/* Input Form - compacto en móvil */}
       <form onSubmit={handleSendMessage} className="support-chat-input">
         <input
           ref={actualInputRef}
