@@ -3,7 +3,11 @@
   "display": "Next.js",
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -14,13 +18,15 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": false,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": [
+        "./src/*"
+      ]
     },
     "plugins": [
       {
@@ -43,5 +49,12 @@
     ".next/dev/types/**/*.ts",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", "build", "dist", ".vercel", "coverage"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "build",
+    "dist",
+    ".vercel",
+    "coverage"
+  ]
 }

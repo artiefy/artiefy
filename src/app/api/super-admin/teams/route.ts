@@ -243,6 +243,7 @@ async function createTeamsEventForDate(params: {
     const patchBody = {
       allowRecording: true,
       allowTranscription: true,
+      recordAutomatically: true, // 👈 ESTA LÍNEA ES LA CLAVE
       participants: {
         attendees: [
           {
