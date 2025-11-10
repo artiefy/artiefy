@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { IoMdClose } from 'react-icons/io';
-import { MdSupportAgent } from 'react-icons/md';
+import { IoClose } from 'react-icons/io5';
+import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
@@ -33,11 +33,29 @@ const TicketSupportChatbot = () => {
   const { showExtras } = useExtras();
   const [isDesktop, setIsDesktop] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' },
+  const [messages, setMessages] = useState<
+    {
+      id: number;
+      text: string;
+      sender: string;
+      buttons?: { label: string; action: string }[];
+    }[]
+  >([
+    {
+      id: 1,
+      text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+      sender: 'support',
+      buttons: [
+        { label: '🐛 Reportar Error', action: 'report_bug' },
+        { label: '❓ Pregunta General', action: 'general_question' },
+        { label: '🔧 Problema Técnico', action: 'technical_issue' },
+        { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
+      ],
+    },
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTicketId, setCurrentTicketId] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,57 +108,63 @@ const TicketSupportChatbot = () => {
   useEffect(() => {
     const handleChatOpen = (e: CustomEvent<ChatDetail>) => {
       const fetchMessages = async () => {
-        const chats: {
-          ticket: { id: number; content: string; sender: string }[];
-        } = { ticket: [] };
-
-        console.log(chats);
         try {
           if (e.detail !== null && user?.id) {
+            setCurrentTicketId(e.detail.id); // Establecer el ID del ticket actual
+
             const ticketData = await getTicketWithMessages(
-              e.detail.id,
-              user.id
+              e.detail.id
+              // No pasar user.id para obtener solo mensajes del ticket específico
             );
 
-            if (ticketData?.ticket) {
-              // Si tienes un array de mensajes, usa ese array aquí
-              // Aquí se asume que los mensajes están en ticketData.ticket.messages
-              console.log('Entro al ticketData.ticket');
-              console.log('Mensajes del ticket:', ticketData);
-              chats.ticket = ticketData.messages.map((msg: TicketMessage) => ({
-                id: msg.id,
-                content: msg.content ?? msg.description ?? '',
-                sender: msg.sender ?? 'user',
-              }));
+            if (ticketData?.ticket && ticketData.messages) {
+              console.log(
+                'Mensajes del ticket cargados:',
+                ticketData.messages.length
+              );
+
+              // Mapear mensajes del ticket desde la BD
+              const loadedMessages = ticketData.messages.map(
+                (msg: TicketMessage) => ({
+                  id: msg.id,
+                  text: msg.content ?? msg.description ?? '',
+                  sender: msg.sender ?? 'user',
+                })
+              );
+
+              // Verificar si necesitamos agregar el mensaje de bienvenida
+              const needsWelcomeMessage = !loadedMessages.some(
+                (m) =>
+                  m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+              );
+
+              if (needsWelcomeMessage) {
+                const welcomeMessage = {
+                  id: Date.now(),
+                  text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+                  sender: 'support' as const,
+                  buttons: [
+                    { label: '🐛 Reportar Error', action: 'report_bug' },
+                    {
+                      label: '❓ Pregunta General',
+                      action: 'general_question',
+                    },
+                    { label: '🔧 Problema Técnico', action: 'technical_issue' },
+                    {
+                      label: '💰 Consulta de Pagos',
+                      action: 'payment_inquiry',
+                    },
+                  ],
+                };
+                setMessages([welcomeMessage, ...loadedMessages]);
+              } else {
+                setMessages(loadedMessages);
+              }
             }
-          }
-
-          const botMessage = {
-            id: 1,
-            text: '¡Hola! ¿En qué puedo ayudarte?',
-            sender: 'support',
-          };
-
-          // Mapear mensajes del ticket
-          const loadedMessages = chats.ticket.map(
-            (msg: { id: number; content: string; sender: string }) => ({
-              id: msg.id,
-              text: msg.content,
-              sender: msg.sender,
-            })
-          );
-
-          // Si el primer mensaje NO es el del bot, lo agregamos al inicio
-          if (
-            loadedMessages.length === 0 ||
-            loadedMessages[0].sender !== 'bot'
-          ) {
-            setMessages([botMessage, ...loadedMessages]);
           } else {
-            setMessages(loadedMessages);
+            // Si no hay detail o es null, estamos creando un nuevo ticket (menú principal)
+            setCurrentTicketId(null);
           }
-
-          console.log('Mensajes: ', messages);
         } catch (error) {
           console.error('Error al obtener los mensajes:', error);
         }
@@ -149,19 +173,25 @@ const TicketSupportChatbot = () => {
       setIsOpen(true);
     };
 
-    // 👇 Ojo con el tipo de evento
     window.addEventListener(
       'support-open-chat',
       handleChatOpen as EventListener
     );
+
+    const handleChatClose = () => {
+      setCurrentTicketId(null);
+    };
+
+    window.addEventListener('support-chat-close', handleChatClose);
 
     return () => {
       window.removeEventListener(
         'support-open-chat',
         handleChatOpen as EventListener
       );
+      window.removeEventListener('support-chat-close', handleChatClose);
     };
-  }, [messages, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -240,6 +270,54 @@ const TicketSupportChatbot = () => {
     }
   };
 
+  const handleBotButtonClick = (action: string) => {
+    if (action === 'report_bug') {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: '🐛 Reportar Error', sender: 'user' },
+        {
+          id: Date.now() + 1,
+          text: 'Por favor, describe el error que encontraste. Incluye todos los detalles posibles como qué estabas haciendo cuando ocurrió el problema.',
+          sender: 'support',
+        },
+      ]);
+    } else if (action === 'general_question') {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: '❓ Pregunta General', sender: 'user' },
+        {
+          id: Date.now() + 1,
+          text: '¡Perfecto! Hazme tu pregunta y te ayudaré con la información que necesites sobre Artiefy.',
+          sender: 'support',
+        },
+      ]);
+    } else if (action === 'technical_issue') {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: '🔧 Problema Técnico', sender: 'user' },
+        {
+          id: Date.now() + 1,
+          text: 'Entiendo que tienes un problema técnico. Describe detalladamente qué está pasando y qué dispositivo/navegador estás usando.',
+          sender: 'support',
+        },
+      ]);
+    } else if (action === 'payment_inquiry') {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: '💰 Consulta de Pagos', sender: 'user' },
+        {
+          id: Date.now() + 1,
+          text: 'Te ayudo con tu consulta de pagos. ¿Tienes algún problema con una transacción, facturación o necesitas información sobre los planes?',
+          sender: 'support',
+        },
+      ]);
+    }
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   const handleClick = () => {
     if (!isSignedIn) {
       const currentUrl = encodeURIComponent(window.location.href);
@@ -302,19 +380,49 @@ const TicketSupportChatbot = () => {
         <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
           <div className="support-chat">
             {/* Header */}
-            <div className="support-chat-header">
-              <div className="flex items-center space-x-2">
-                <MdSupportAgent className="text-secondary text-2xl" />
-                <h2 className="text-lg font-semibold text-gray-800">
-                  Soporte Técnico
-                </h2>
+            <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b p-4">
+                <MdSupportAgent className="text-4xl text-blue-500" />
+                <div className="flex flex-1 flex-col items-center">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Soporte Técnico
+                  </h2>
+                  <div className="mt-1 flex items-center gap-2">
+                    <em className="text-sm font-semibold text-gray-600">
+                      {user?.fullName}
+                    </em>
+                    <div className="relative inline-flex">
+                      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
+                      <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex">
+                  {/* Solo mostrar botón de flecha hacia atrás si NO estamos en el menú principal */}
+                  {currentTicketId !== null && (
+                    <button
+                      className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                      aria-label="Volver atrás"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <MdArrowBack className="text-xl text-gray-500" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      // Cerrar completamente el chatbot
+                      const event = new CustomEvent('chatbot-close');
+                      window.dispatchEvent(event);
+                    }}
+                    className={`${currentTicketId !== null ? 'ml-2' : ''} rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200`}
+                    aria-label="Cerrar chatbot"
+                  >
+                    <IoClose className="text-xl text-gray-500" />
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
-              >
-                <IoMdClose className="text-xl text-gray-500" />
-              </button>
             </div>
 
             <SuportChat
@@ -330,6 +438,8 @@ const TicketSupportChatbot = () => {
               setInputText={setInputText}
               user={user}
               inputRef={inputRef as React.RefObject<HTMLInputElement>}
+              skipInitialLoad={true}
+              onBotButtonClick={handleBotButtonClick}
             />
           </div>
         </div>

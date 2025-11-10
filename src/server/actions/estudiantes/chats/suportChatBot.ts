@@ -1,6 +1,6 @@
 'use server';
 
-import { desc, eq, or } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import {
   getNewTicketAssignmentEmail,
@@ -42,6 +42,88 @@ export async function getTicketByUser(userId: string): Promise<{
     ticket,
     mensajes,
   };
+}
+
+// Lista todos los tickets del usuario, más recientes primero
+export async function getTicketsByUser(
+  userId: string
+): Promise<(typeof tickets.$inferSelect)[]> {
+  const rows = await db
+    .select()
+    .from(tickets)
+    .where(eq(tickets.creatorId, userId))
+    .orderBy(desc(tickets.updatedAt), desc(tickets.createdAt));
+  return rows;
+}
+
+// Devuelve el ticket abierto más reciente (si existe)
+export async function getUserOpenTicket(
+  userId: string
+): Promise<typeof tickets.$inferSelect | undefined> {
+  const list = await getTicketsByUser(userId);
+  const open = list.find(
+    (t) =>
+      (t.estado ?? '').toLowerCase() !== 'cerrado' &&
+      (t.estado ?? '').toLowerCase() !== 'solucionado'
+  );
+  return open;
+}
+
+// Función para crear un ticket completamente nuevo (sin reutilizar)
+export async function createNewTicket({
+  creatorId,
+  email,
+  description,
+}: {
+  description?: string;
+  creatorId: string;
+  email?: string;
+}) {
+  console.log('🆕 Creando ticket completamente nuevo para usuario:', creatorId);
+
+  try {
+    await ensureUserExists(creatorId, email);
+
+    const normalizedDescription =
+      description?.trim() && description.trim() !== ''
+        ? description.trim()
+        : 'Nuevo ticket de soporte';
+
+    const [created] = await db
+      .insert(tickets)
+      .values({
+        creatorId: creatorId,
+        description: normalizedDescription,
+        estado: 'abierto',
+        tipo: 'bug',
+        email: email ?? '',
+        title: normalizedDescription.slice(0, 50) || 'Ticket de Soporte',
+        comments: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    console.log('✅ Nuevo ticket creado exitosamente:', {
+      id: created.id,
+      email: created.email,
+      description: created.description,
+    });
+
+    // Asignar a super-admins y enviar notificaciones
+    await assignTicketToSuperAdmins(
+      created.id,
+      created.description ?? 'Sin descripción'
+    );
+
+    return {
+      ...created,
+      messages: [], // Siempre empezar con mensajes vacíos
+    };
+  } catch (error) {
+    console.error('❌ Error al crear nuevo ticket:', error);
+    throw error;
+  }
 }
 
 // Garantiza que el usuario exista en la tabla local antes de crear tickets
@@ -312,34 +394,35 @@ export async function getTicketWithMessages(
 
   let ticket: typeof tickets.$inferSelect | undefined = undefined;
   let msgs: (typeof ticketComments.$inferSelect)[] = [];
-  const conditions = [];
 
+  // Siempre buscar primero por ticket_id si está disponible
   if (ticket_id !== null) {
-    conditions.push(eq(tickets.id, ticket_id));
-  }
-
-  if (user_id !== undefined && user_id !== null) {
-    conditions.push(eq(tickets.creatorId, user_id));
-  }
-
-  const whereClause =
-    conditions.length === 1 ? conditions[0] : or(...conditions);
-  if (ticket_id !== null || user_id !== null) {
     ticket = await db
       .select()
       .from(tickets)
-      .where(whereClause)
+      .where(eq(tickets.id, ticket_id))
       .limit(1)
       .then((rows) => rows[0]);
+  }
+  // Solo si no hay ticket_id, buscar por user_id
+  else if (user_id) {
+    ticket = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.creatorId, user_id))
+      .orderBy(desc(tickets.createdAt))
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
 
-    if (ticket) {
-      console.log('Ticket found:', ticket);
-      msgs = await db
-        .select()
-        .from(ticketComments)
-        .where(eq(ticketComments.ticketId, ticket.id))
-        .orderBy(ticketComments.id);
-    }
+  // Obtener mensajes solo si encontramos el ticket y coincide con el ticket_id solicitado
+  if (ticket && (!ticket_id || ticket.id === ticket_id)) {
+    console.log('Ticket found:', ticket);
+    msgs = await db
+      .select()
+      .from(ticketComments)
+      .where(eq(ticketComments.ticketId, ticket.id))
+      .orderBy(ticketComments.id);
   }
   return {
     ticket,

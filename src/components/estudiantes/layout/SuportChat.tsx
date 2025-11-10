@@ -13,9 +13,21 @@ import { getOrCreateSuportChat } from '~/server/actions/estudiantes/chats/suport
 import type { UserResource } from '@clerk/types';
 
 interface SuportChatProps {
-  messages: { id: number; text: string; sender: string }[];
+  messages: {
+    id: number;
+    text: string;
+    sender: string;
+    buttons?: { label: string; action: string }[];
+  }[];
   setMessages: React.Dispatch<
-    React.SetStateAction<{ id: number; text: string; sender: string }[]>
+    React.SetStateAction<
+      {
+        id: number;
+        text: string;
+        sender: string;
+        buttons?: { label: string; action: string }[];
+      }[]
+    >
   >;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,6 +39,8 @@ interface SuportChatProps {
   setInputText: (text: string) => void;
   user: UserResource | null | undefined;
   inputRef?: React.RefObject<HTMLInputElement>;
+  skipInitialLoad?: boolean;
+  onBotButtonClick?: (action: string) => void;
 }
 
 export const SuportChat: React.FC<SuportChatProps> = ({
@@ -39,11 +53,15 @@ export const SuportChat: React.FC<SuportChatProps> = ({
   user,
   inputRef,
   handleSendMessage,
+  skipInitialLoad = false,
+  onBotButtonClick,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
 
   useEffect(() => {
+    if (skipInitialLoad) return;
+
     const fetchInitialMessages = async () => {
       if (!user?.id) return;
 
@@ -56,6 +74,13 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
         if (ticket) {
           console.log('Ticket fetched:', ticket);
+
+          const botMessage = {
+            id: Date.now(),
+            text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?\n\n🐛 Reportar Error\n❓ Pregunta General\n🔧 Problema Técnico\n💰 Consulta de Pagos',
+            sender: 'support',
+          };
+
           const historyMessages = ticket.messages
             ? ticket.messages.map((msg) => ({
                 id: msg.id,
@@ -64,14 +89,14 @@ export const SuportChat: React.FC<SuportChatProps> = ({
               }))
             : [];
 
-          const initialMessages = [
-            {
-              id: Date.now(),
-              text: '¡Hola! ¿En qué puedo ayudarte?',
-              sender: 'support',
-            },
-            ...historyMessages,
-          ];
+          // Solo agregar mensaje inicial si no existe en el historial
+          const needsInitialMessage = !historyMessages.some(
+            (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+          );
+
+          const initialMessages = needsInitialMessage
+            ? [botMessage, ...historyMessages]
+            : historyMessages;
 
           const resolvedSource =
             ticket.continuationOfTicket ??
@@ -107,8 +132,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
     };
 
     void fetchInitialMessages();
-  }, [setMessages, user]);
-
+  }, [setMessages, user, skipInitialLoad]);
   return (
     <>
       {/* Messages*/}
@@ -145,10 +169,23 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                   className={`rounded-lg p-3 ${
                     message.sender === 'user'
                       ? 'bg-secondary text-white'
-                      : 'bg-gray-100 text-gray-800'
+                      : 'bg-gray-800 text-white'
                   }`}
                 >
-                  {message.text}
+                  <div className="whitespace-pre-wrap">{message.text}</div>
+                  {message.buttons && message.buttons.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {message.buttons.map((button, index) => (
+                        <button
+                          key={index}
+                          onClick={() => onBotButtonClick?.(button.action)}
+                          className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                        >
+                          {button.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
