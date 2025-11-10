@@ -57,16 +57,22 @@ const TicketSupportChatbot = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTicketId, setCurrentTicketId] = useState<number | null>(null);
+  const [currentTicketStatus, setCurrentTicketStatus] = useState<string | null>(
+    null
+  );
   const [isTyping, setIsTyping] = useState(false);
-  const [prevMessageCount, setPrevMessageCount] = useState(0);
+  // Evitar bucles de render: rastrear último estado sincronizado
+  const lastSyncedCountRef = useRef(0);
+  const lastSyncedLatestIdRef = useRef<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Hook SWR para obtener mensajes en tiempo real
-  const { messages: swrMessages, mutate: mutateMessages } = useTicketMessages(
-    currentTicketId,
-    3000
-  ); // Polling cada 3 segundos
+  const {
+    messages: swrMessages,
+    ticketStatus,
+    mutate: mutateMessages,
+  } = useTicketMessages(currentTicketId, 3000); // Polling cada 3 segundos
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -114,78 +120,63 @@ const TicketSupportChatbot = () => {
     }
   }, [isOpen]);
 
-  // Sincronizar mensajes de SWR con estado local y controlar loader
+  // Sincronizar mensajes de SWR con estado local y controlar loader evitando bucles
   useEffect(() => {
     if (!swrMessages || !currentTicketId) return;
 
-    // Si hay nuevos mensajes, ocultar loader y mostrar mensajes
-    if (swrMessages.length > prevMessageCount) {
-      setIsLoading(false);
-      setIsTyping(false);
-      const formattedMessages = swrMessages.map((msg) => ({
-        id: msg.id,
-        text: msg.content,
-        sender: msg.sender,
-        createdAt: msg.createdAt,
-      }));
-      // Solo agregar mensaje de bienvenida si no existe
-      const needsWelcomeMessage = !formattedMessages.some(
-        (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
-      );
-      if (needsWelcomeMessage) {
-        const welcomeMessage = {
-          id: Date.now(),
-          text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
-          sender: 'support' as const,
-          buttons: [
-            { label: '🐛 Reportar Error', action: 'report_bug' },
-            { label: '❓ Pregunta General', action: 'general_question' },
-            { label: '🔧 Problema Técnico', action: 'technical_issue' },
-            { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
-          ],
-        };
-        setMessages([welcomeMessage, ...formattedMessages]);
-      } else {
-        setMessages(formattedMessages);
-      }
-      setPrevMessageCount(swrMessages.length);
-    } else if (prevMessageCount === 0) {
-      // Primera carga
-      const formattedMessages = swrMessages.map((msg) => ({
-        id: msg.id,
-        text: msg.content,
-        sender: msg.sender,
-        createdAt: msg.createdAt,
-      }));
-      const needsWelcomeMessage = !formattedMessages.some(
-        (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
-      );
-      if (needsWelcomeMessage) {
-        const welcomeMessage = {
-          id: Date.now(),
-          text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
-          sender: 'support' as const,
-          buttons: [
-            { label: '🐛 Reportar Error', action: 'report_bug' },
-            { label: '❓ Pregunta General', action: 'general_question' },
-            { label: '🔧 Problema Técnico', action: 'technical_issue' },
-            { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
-          ],
-        };
-        setMessages([welcomeMessage, ...formattedMessages]);
-      } else if (formattedMessages.length > 0) {
-        setMessages(formattedMessages);
-      }
-      setPrevMessageCount(swrMessages.length);
-    }
-  }, [swrMessages, currentTicketId, prevMessageCount]);
+    const latestId = swrMessages.length
+      ? (swrMessages[swrMessages.length - 1]?.id ?? null)
+      : null;
 
-  // Actualizar el contador cuando cambian los mensajes
-  useEffect(() => {
-    if (swrMessages && swrMessages.length > 0) {
-      setPrevMessageCount(swrMessages.length);
+    // Evitar sets redundantes: si no hay cambios en longitud ni en el último id
+    if (
+      lastSyncedCountRef.current === swrMessages.length &&
+      lastSyncedLatestIdRef.current === latestId
+    ) {
+      return;
     }
-  }, [swrMessages]);
+
+    // Actualizar el estado del ticket desde SWR
+    if (ticketStatus) {
+      setCurrentTicketStatus(ticketStatus);
+    }
+
+    setIsLoading(false);
+    setIsTyping(false);
+
+    const formattedMessages = swrMessages.map((msg) => ({
+      id: msg.id,
+      text: msg.content,
+      sender: msg.sender,
+      createdAt: msg.createdAt,
+    }));
+
+    // Solo agregar mensaje de bienvenida si no existe aún
+    const needsWelcomeMessage = !formattedMessages.some(
+      (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+    );
+
+    if (needsWelcomeMessage) {
+      const welcomeMessage = {
+        id: Date.now(),
+        text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+        sender: 'support' as const,
+        buttons: [
+          { label: '🐛 Reportar Error', action: 'report_bug' },
+          { label: '❓ Pregunta General', action: 'general_question' },
+          { label: '🔧 Problema Técnico', action: 'technical_issue' },
+          { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
+        ],
+      };
+      setMessages([welcomeMessage, ...formattedMessages]);
+    } else {
+      setMessages(formattedMessages);
+    }
+
+    // Actualizar refs de sincronización
+    lastSyncedCountRef.current = swrMessages.length;
+    lastSyncedLatestIdRef.current = latestId;
+  }, [swrMessages, currentTicketId, ticketStatus]);
 
   useEffect(() => {
     const handleChatOpen = (e: CustomEvent<ChatDetail>) => {
@@ -204,6 +195,9 @@ const TicketSupportChatbot = () => {
                 'Mensajes del ticket cargados:',
                 ticketData.messages.length
               );
+
+              // Guardar el estado del ticket
+              setCurrentTicketStatus(ticketData.ticket.estado ?? null);
 
               // Mapear mensajes del ticket desde la BD
               const loadedMessages = ticketData.messages.map(
@@ -242,6 +236,19 @@ const TicketSupportChatbot = () => {
               } else {
                 setMessages(loadedMessages);
               }
+
+              // Marcar como leídos los mensajes de soporte y refrescar listas
+              try {
+                await fetch(`/api/tickets/${e.detail.id}/mark-read`, {
+                  method: 'POST',
+                });
+                // Refrescar SWR de mensajes del ticket
+                await mutateMessages();
+                // Avisar a la lista para que quite el badge "Nuevo"
+                window.dispatchEvent(new Event('chat-updated'));
+              } catch (err) {
+                console.warn('No se pudo marcar como leído el ticket:', err);
+              }
             }
           } else {
             // Si no hay detail o es null, estamos creando un nuevo ticket (menú principal)
@@ -273,7 +280,7 @@ const TicketSupportChatbot = () => {
       );
       window.removeEventListener('support-chat-close', handleChatClose);
     };
-  }, [user?.id]);
+  }, [user?.id, mutateMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -292,18 +299,21 @@ const TicketSupportChatbot = () => {
         email: user.primaryEmailAddress?.emailAddress,
         message: trimmedInput,
         sender,
+        ticketId: currentTicketId,
       });
       void SaveTicketMessage(
         user.id,
         trimmedInput,
         sender,
-        user.primaryEmailAddress?.emailAddress
+        user.primaryEmailAddress?.emailAddress,
+        currentTicketId ?? undefined // Pasar el ticket actual
       );
     } else {
       console.error('❌ Falta alguno de estos:', {
         isOpen,
         isSignedIn,
         userId: user?.id,
+        currentTicketId,
       });
     }
   };
@@ -312,6 +322,17 @@ const TicketSupportChatbot = () => {
     e.preventDefault();
     if (!isSignedIn) {
       toast.error('Debes iniciar sesión para enviar tickets');
+      return;
+    }
+
+    // Verificar si el ticket está cerrado o solucionado
+    if (
+      currentTicketStatus &&
+      ['cerrado', 'solucionado'].includes(currentTicketStatus.toLowerCase())
+    ) {
+      toast.error(
+        'Este ticket ha sido cerrado. No puedes enviar más mensajes hasta que un administrador lo vuelva a abrir.'
+      );
       return;
     }
 
@@ -519,6 +540,7 @@ const TicketSupportChatbot = () => {
               inputRef={inputRef as React.RefObject<HTMLInputElement>}
               skipInitialLoad={true}
               onBotButtonClick={handleBotButtonClick}
+              ticketStatus={currentTicketStatus}
             />
           </div>
         </div>

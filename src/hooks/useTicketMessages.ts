@@ -14,6 +14,7 @@ export interface TicketMessage {
 
 export interface TicketMessagesResponse {
   ticketId: number;
+  ticketStatus?: string;
   messages: TicketMessage[];
   updatedAt: string;
 }
@@ -51,6 +52,7 @@ export function useTicketMessages(
   return {
     messages: data?.messages ?? [],
     ticketId: data?.ticketId,
+    ticketStatus: data?.ticketStatus,
     updatedAt: data?.updatedAt,
     isLoading,
     isError: error,

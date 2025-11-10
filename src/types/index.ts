@@ -494,6 +494,17 @@ export interface Notification {
   metadata?: NotificationMetadata;
 }
 
+// Nuevo tipo para comentarios de tickets
+export interface TicketComment {
+  id: number;
+  ticketId: number;
+  userId: string;
+  content: string;
+  createdAt: string | Date;
+  sender: string;
+  isRead: boolean;
+}
+
 export interface Certificate {
   id: number;
   userId: string;

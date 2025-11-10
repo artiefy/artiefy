@@ -34,6 +34,7 @@ interface Chat {
   createdAt?: string | Date;
   updatedAt?: string | Date;
   status?: string;
+  unreadCount?: number;
 }
 
 const chatTypeConfig = {
@@ -57,7 +58,8 @@ export const ChatList = ({
   activeType = 'chatia',
 }: ChatListProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Solo true en mount inicial
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Nuevo estado para controlar carga inicial
   const [loadingChatId, setLoadingChatId] = useState<number | null>(null);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
@@ -224,7 +226,10 @@ export const ChatList = ({
     if (!user?.id) return;
 
     setShowChatList(true);
-    setIsLoading(true);
+    // Solo mostrar loader en la carga inicial, no en los refrescos periódicos
+    if (isInitialLoad) {
+      setIsLoading(true);
+    }
 
     const fetchChats = async () => {
       try {
@@ -258,6 +263,8 @@ export const ChatList = ({
             createdAt: t.createdAt,
             updatedAt: t.updatedAt,
             status: (t.estado ?? '').toLowerCase(),
+            // Añadimos unread flag si el backend devolvió unreadCount
+            unreadCount: (t as { unreadCount?: number }).unreadCount ?? 0,
           }));
         } else if (activeType === 'projects') {
           // TODO: Implementar cuando tengamos la API de proyectos
@@ -266,6 +273,18 @@ export const ChatList = ({
 
         // Ordenar por fecha de actualización, más recientes primero
         allChats.sort((a, b) => {
+          // Si es de tipo ticket, priorizar los que tienen mensajes sin leer
+          if (activeType === 'tickets') {
+            const aUnread = a.unreadCount ?? 0;
+            const bUnread = b.unreadCount ?? 0;
+
+            // Si uno tiene mensajes sin leer y el otro no, el que tiene sin leer va primero
+            if (aUnread > 0 && bUnread === 0) return -1;
+            if (aUnread === 0 && bUnread > 0) return 1;
+
+            // Si ambos tienen o ambos no tienen sin leer, ordenar por fecha de actualización
+          }
+
           const getTimestamp = (chat: Chat) => {
             const date = chat.updatedAt ?? chat.createdAt;
             if (!date) return 0;
@@ -283,12 +302,36 @@ export const ChatList = ({
         console.error('Error al traer chats:', error);
         setChats([]);
       } finally {
-        setIsLoading(false);
+        if (isInitialLoad) {
+          setIsLoading(false);
+          setIsInitialLoad(false);
+        }
       }
     };
 
     void fetchChats();
-  }, [user?.id, activeType, setShowChatList, refreshKey, statusFilter]);
+  }, [
+    user?.id,
+    activeType,
+    setShowChatList,
+    refreshKey,
+    statusFilter,
+    isInitialLoad,
+  ]);
+
+  // Refresco periódico para tickets: asegura que el badge "Nuevo" reaparezca cuando admins comentan
+  useEffect(() => {
+    if (!user?.id || activeType !== 'tickets') return;
+    const interval = setInterval(() => {
+      setRefreshKey((k) => k + 1);
+    }, 4000); // cada 4s; ajustar si deseas menos/más frecuencia
+    const onFocus = () => setRefreshKey((k) => k + 1);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [user?.id, activeType]);
 
   // Escuchar eventos globales para refrescar la lista cuando se creen/actualicen tickets
   useEffect(() => {
@@ -451,14 +494,21 @@ export const ChatList = ({
                         {chat.title}
                       </div>
                       {chat.type === 'ticket' && (
-                        <span
-                          className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
-                        >
-                          {chat.status
-                            ? chat.status.charAt(0).toUpperCase() +
-                              chat.status.slice(1)
-                            : '—'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
+                          >
+                            {chat.status
+                              ? chat.status.charAt(0).toUpperCase() +
+                                chat.status.slice(1)
+                              : '—'}
+                          </span>
+                          {Number(chat.unreadCount) > 0 && (
+                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                              Nuevo
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                     {/* Fecha y hora de creación/modificación */}

@@ -73,6 +73,7 @@ export async function PUT(
         ticketId,
         userId,
         sender: 'admin',
+        isRead: false,
         content: body.newComment.trim(),
         createdAt: new Date(),
       });
@@ -133,6 +134,7 @@ export async function PUT(
           ticketId,
           userId,
           content: `Ticket asignado a ${body.assignedToIds.length} usuario(s).`,
+          isRead: false,
           createdAt: new Date(),
         });
 
@@ -164,6 +166,7 @@ export async function PUT(
         ticketId,
         userId,
         sender: 'support',
+        isRead: false,
         content: `Ticket marcado como ${body.estado} por el equipo de soporte.`,
         createdAt: new Date(),
       });

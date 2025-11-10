@@ -44,6 +44,7 @@ interface SuportChatProps {
   inputRef?: React.RefObject<HTMLInputElement>;
   skipInitialLoad?: boolean;
   onBotButtonClick?: (action: string) => void;
+  ticketStatus?: string | null;
 }
 
 export const SuportChat: React.FC<SuportChatProps> = ({
@@ -59,9 +60,15 @@ export const SuportChat: React.FC<SuportChatProps> = ({
   handleSendMessage,
   skipInitialLoad = false,
   onBotButtonClick,
+  ticketStatus,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
+
+  const isTicketClosed = Boolean(
+    ticketStatus &&
+      ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
+  );
 
   useEffect(() => {
     if (skipInitialLoad) return;
@@ -144,6 +151,20 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   return (
     <>
+      {/* Banner de ticket cerrado */}
+      {isTicketClosed && (
+        <div className="mb-2 rounded-lg border border-yellow-500 bg-yellow-50 p-3 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🔒</span>
+            <div>
+              <p className="font-semibold text-yellow-800">
+                Este ticket ha sido marcado como {ticketStatus?.toLowerCase()}.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mensajes */}
       <div className="support-chat-messages">
         {filteredMessages.map((message) => (
@@ -197,37 +218,6 @@ export const SuportChat: React.FC<SuportChatProps> = ({
             </div>
           </div>
         ))}
-        {/* Loader animado tipo IA chat: dots con outline */}
-        {(isLoading || isTyping) && (
-          <div className="mb-4 flex justify-start">
-            <div className="flex items-start space-x-2">
-              <MdSupportAgent className="text-secondary mt-2 text-xl" />
-              {/* Loader sin burbuja, fondo transparente o gris claro */}
-              <div
-                style={{
-                  background: '#f5f5f5',
-                  borderRadius: '12px',
-                  padding: '8px',
-                }}
-              >
-                <div className="loader">
-                  <div className="circle">
-                    <div className="dot" />
-                    <div className="outline" />
-                  </div>
-                  <div className="circle">
-                    <div className="dot" />
-                    <div className="outline" />
-                  </div>
-                  <div className="circle">
-                    <div className="dot" />
-                    <div className="outline" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -238,13 +228,18 @@ export const SuportChat: React.FC<SuportChatProps> = ({
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Describe el problema..."
-          className="text-background focus:ring-secondary flex-1 rounded-lg border p-1 text-sm focus:ring-2 focus:outline-none sm:p-2 sm:text-base"
+          placeholder={
+            isTicketClosed
+              ? 'Este ticket está cerrado. Contacta a un administrador para reabrirlo.'
+              : 'Describe el problema...'
+          }
+          disabled={isTicketClosed}
+          className="text-background focus:ring-secondary flex-1 rounded-lg border p-1 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:p-2 sm:text-base"
         />
         <button
           type="submit"
-          disabled={isLoading}
-          className="bg-secondary rounded-lg px-3 py-1 text-sm text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300 sm:px-4 sm:py-2 sm:text-base"
+          disabled={isLoading || isTicketClosed}
+          className="bg-secondary rounded-lg px-3 py-1 text-sm text-white transition-colors hover:bg-[#00A5C0] disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-4 sm:py-2 sm:text-base"
         >
           Enviar
         </button>

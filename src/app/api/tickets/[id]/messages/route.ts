@@ -54,6 +54,7 @@ export async function GET(
         userId: ticketComments.userId,
         userName: users.name,
         userEmail: users.email,
+        isRead: ticketComments.isRead,
       })
       .from(ticketComments)
       .leftJoin(users, eq(ticketComments.userId, users.id))
@@ -62,11 +63,13 @@ export async function GET(
 
     return NextResponse.json({
       ticketId: ticketIdNum,
+      ticketStatus: ticket.estado ?? 'abierto',
       messages: messages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         sender: msg.sender,
         createdAt: msg.createdAt,
+        isRead: (msg as { isRead?: boolean }).isRead ?? false,
         user: {
           id: msg.userId,
           name: msg.userName ?? 'Usuario',

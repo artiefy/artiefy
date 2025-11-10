@@ -88,6 +88,7 @@ export async function POST(
         userId,
         sender: role === 'super-admin' ? 'admin' : 'admin', // Ambos se marcan como 'admin' en el chatbot
         content,
+        isRead: false, // El estudiante no ha leído este mensaje aún
         createdAt: new Date(),
       })
       .returning();

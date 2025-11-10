@@ -1,6 +1,6 @@
 'use server';
 
-import { desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, or } from 'drizzle-orm';
 
 import {
   getNewTicketAssignmentEmail,
@@ -47,13 +47,39 @@ export async function getTicketByUser(userId: string): Promise<{
 // Lista todos los tickets del usuario, más recientes primero
 export async function getTicketsByUser(
   userId: string
-): Promise<(typeof tickets.$inferSelect)[]> {
+): Promise<(typeof tickets.$inferSelect & { unreadCount: number })[]> {
   const rows = await db
     .select()
     .from(tickets)
     .where(eq(tickets.creatorId, userId))
     .orderBy(desc(tickets.updatedAt), desc(tickets.createdAt));
-  return rows;
+
+  // Obtener conteo de mensajes no leídos por ticket (mensajes de soporte Y admin)
+  const unreadRows = (await db
+    .select({ ticketId: ticketComments.ticketId, unread: count() })
+    .from(ticketComments)
+    .where(
+      and(
+        eq(ticketComments.isRead, false),
+        // Contar mensajes de admin O support (no del usuario)
+        or(
+          eq(ticketComments.sender, 'admin'),
+          eq(ticketComments.sender, 'support')
+        )
+      )
+    )
+    .groupBy(ticketComments.ticketId)) as {
+    ticketId: number;
+    unread: number;
+  }[];
+
+  const unreadMap = new Map<number, number>();
+  for (const r of unreadRows) {
+    unreadMap.set(Number(r.ticketId), Number(r.unread ?? 0));
+  }
+
+  // Anexar unreadCount a cada ticket (como property adicional)
+  return rows.map((t) => ({ ...t, unreadCount: unreadMap.get(t.id) ?? 0 }));
 }
 
 // Devuelve el ticket abierto más reciente (si existe)
@@ -434,43 +460,69 @@ export async function SaveTicketMessage(
   userId: string,
   content: string,
   sender: string,
-  userEmail?: string
+  userEmail?: string,
+  ticketId?: number // Nuevo parámetro opcional para especificar el ticket
 ) {
   console.log('💬 SaveTicketMessage llamado:', {
     userId,
     sender,
     userEmail: userEmail ?? 'sin email',
+    ticketId: ticketId ?? 'sin ticketId específico',
     contentLength: content.length,
   });
 
   try {
-    const ticket = await getOrCreateSuportChat({
-      creatorId: userId,
-      email: userEmail ?? '', // Usar el email del usuario si está disponible
-      description: content, // Usar el primer mensaje como descripción inicial
-    });
+    // Si se proporciona ticketId, usarlo directamente
+    let targetTicket;
+    if (ticketId) {
+      // Verificar que el ticket existe y pertenece al usuario
+      const existingTicket = await db
+        .select()
+        .from(tickets)
+        .where(and(eq(tickets.id, ticketId), eq(tickets.creatorId, userId)))
+        .limit(1)
+        .then((rows) => rows[0]);
 
-    if (ticket.id === undefined) {
+      if (!existingTicket) {
+        console.error('❌ Ticket no encontrado o no pertenece al usuario');
+        throw new Error('Ticket no válido');
+      }
+      targetTicket = existingTicket;
+    } else {
+      // Si no se proporciona ticketId, usar el comportamiento anterior (obtener o crear)
+      targetTicket = await getOrCreateSuportChat({
+        creatorId: userId,
+        email: userEmail ?? '',
+        description: content,
+      });
+    }
+
+    if (targetTicket.id === undefined) {
       console.error('❌ No se pudo obtener el ID del ticket');
       throw new Error(
         'No se pudo obtener el ID del ticket para guardar el comentario.'
       );
     }
 
-    console.log('💾 Guardando comentario en ticket:', ticket.id);
+    console.log('💾 Guardando comentario en ticket:', targetTicket.id);
 
     await db.insert(ticketComments).values({
-      ticketId: ticket.id,
+      ticketId: targetTicket.id,
       userId: userId,
       content: content,
       sender: sender,
+      // isRead indica si el DESTINATARIO ha leído el mensaje:
+      // - Si sender='user', el mensaje NO ha sido leído por el admin/soporte → isRead=false
+      // - Si sender='admin' o 'support', el mensaje NO ha sido leído por el usuario → isRead=false
+      // Siempre inicia en false, se marca true cuando el destinatario lo lee
+      isRead: false,
       createdAt: new Date(),
     });
 
     await db
       .update(tickets)
       .set({ updatedAt: new Date() })
-      .where(eq(tickets.id, ticket.id));
+      .where(eq(tickets.id, targetTicket.id));
 
     console.log('✅ Comentario guardado exitosamente');
   } catch (error) {
