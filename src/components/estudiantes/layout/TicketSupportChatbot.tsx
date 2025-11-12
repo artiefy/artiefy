@@ -383,10 +383,31 @@ const TicketSupportChatbot = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Asegurar scroll al abrir el chat de tickets
+  useEffect(() => {
+    if (isOpen) {
+      // dar un tick para que el DOM pinte los mensajes
+      const t = setTimeout(() => scrollToBottom(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
+
   // Ya no es necesario controlar hideButton, la animación depende de showExtras
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      // Preferir el contenedor de mensajes si existe
+      const container = document.querySelector(
+        '.support-chat-messages'
+      ) as HTMLElement | null;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      // fallback silencioso
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const saveUserMessage = async (trimmedInput: string, sender: string) => {
@@ -663,9 +684,10 @@ const TicketSupportChatbot = () => {
 
                   <button
                     onClick={() => {
-                      // Cerrar completamente el chatbot
-                      const event = new CustomEvent('chatbot-close');
-                      window.dispatchEvent(event);
+                      // Cerrar completamente el chatbot de tickets
+                      setIsOpen(false);
+                      // Notificar cierre para resetear estados asociados
+                      window.dispatchEvent(new Event('support-chat-close'));
                     }}
                     className={`${currentTicketId !== null ? 'ml-2' : ''} rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200`}
                     aria-label="Cerrar chatbot"
