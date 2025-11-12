@@ -2849,6 +2849,44 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                         setShowChatList={setShowChatList}
                         activeType="tickets"
                       />
+                    ) : !isSignedIn ? (
+                      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                        <div className="mb-6">
+                          <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                            <svg
+                              className="h-8 w-8 text-black"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="mb-2 text-lg font-semibold text-black">
+                            Acceso restringido
+                          </h3>
+                          <p className="text-muted-foreground mb-6">
+                            Debes iniciar sesión para crear y gestionar tickets
+                            de soporte
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const currentUrl = encodeURIComponent(
+                              window.location.href
+                            );
+                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                          }}
+                          className="bg-background text-primary-foreground hover:bg-primary/90 focus:ring-primary rounded-lg px-6 py-3 font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                        >
+                          Iniciar sesión
+                        </button>
+                      </div>
                     ) : null
                   ) : activeSection === 'projects' ? (
                     chatMode.status && isSignedIn ? (

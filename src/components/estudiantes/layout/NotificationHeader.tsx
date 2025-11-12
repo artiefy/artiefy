@@ -45,12 +45,15 @@ function formatRelativeTime(date: Date) {
 type NotificationType =
   | BaseNotificationType
   | 'participation-request'
-  | 'PROJECT_INVITATION';
+  | 'PROJECT_INVITATION'
+  | 'TICKET_REPLY'
+  | 'TICKET_STATUS_CHANGED';
 
 // Extiende NotificationMetadata para permitir projectId y requestType
 type NotificationMetadata = BaseNotificationMetadata & {
   projectId?: number;
   requestType?: 'participation' | 'resignation';
+  ticketId?: number;
 };
 
 // Extiende Notification para usar los tipos ampliados
@@ -135,6 +138,20 @@ export function NotificationHeader() {
     // Si es notificación de invitación a proyecto, abre el modal de invitaciones
     if (notification.type === 'PROJECT_INVITATION') {
       setModalInvitacionesOpen(true);
+      return;
+    }
+
+    // Si es notificación de respuesta a ticket, abre el chatbot con ese ticket
+    if (
+      (notification.type === 'TICKET_REPLY' ||
+        notification.type === 'TICKET_STATUS_CHANGED') &&
+      notification.metadata?.ticketId !== undefined
+    ) {
+      // Emitir evento para abrir el chatbot con el ticket específico
+      const event = new CustomEvent('open-ticket-chat', {
+        detail: { ticketId: notification.metadata.ticketId },
+      });
+      window.dispatchEvent(event);
       return;
     }
 

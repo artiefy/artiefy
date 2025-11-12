@@ -3,8 +3,13 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
+import {
+  getTicketHistoryEmail,
+  sendTicketEmail,
+} from '~/lib/emails/ticketEmails';
+import { formatDateColombia } from '~/lib/formatDate';
 import { db } from '~/server/db';
-import { ticketComments } from '~/server/db/schema';
+import { notifications, ticketComments, tickets } from '~/server/db/schema';
 
 // Tipos seguros
 interface CreateCommentBody {
@@ -95,9 +100,83 @@ export async function POST(
 
     // Actualizar la fecha de actualización del ticket cuando hay nuevo comentario
     await db
-      .update((await import('~/server/db/schema')).tickets)
+      .update(tickets)
       .set({ updatedAt: new Date() })
-      .where(eq((await import('~/server/db/schema')).tickets.id, ticketId));
+      .where(eq(tickets.id, ticketId));
+
+    // Obtener información del ticket y su creador para enviar email
+    const ticket = await db.query.tickets.findFirst({
+      where: eq(tickets.id, ticketId),
+      with: {
+        creator: true,
+      },
+    });
+
+    if (ticket?.creator?.email) {
+      // Obtener historial completo de comentarios para el email
+      const allComments = await db.query.ticketComments.findMany({
+        where: eq(ticketComments.ticketId, ticketId),
+        with: {
+          user: true,
+        },
+        orderBy: (comments, { asc }) => [asc(comments.createdAt)],
+      });
+
+      // Filtrar mensaje automático de asignación: "Ticket asignado a X usuario(s)."
+      const assignmentNoteRegex = /^Ticket asignado a \d+ usuario\(s\)\.$/;
+      const commentsForEmail = allComments
+        .filter((comment) => !assignmentNoteRegex.test(comment.content))
+        .map((comment) => ({
+          content: comment.content,
+          sender: comment.sender,
+          senderName: comment.user?.name ?? 'Usuario',
+          createdAt: formatDateColombia(comment.createdAt),
+        }));
+
+      // Enviar email al estudiante con el historial
+      const emailHtml = getTicketHistoryEmail(
+        ticketId,
+        'student',
+        ticket.description,
+        ticket.estado,
+        commentsForEmail
+      );
+
+      void sendTicketEmail({
+        to: ticket.creator.email,
+        subject: `📬 Nueva respuesta en tu Ticket #${ticketId}`,
+        html: emailHtml,
+      }).then((result) => {
+        if (result.success) {
+          console.log(
+            `✅ Email de notificación enviado al estudiante: ${ticket.creator.email}`
+          );
+        } else {
+          console.error(`❌ Error enviando email al estudiante:`, result.error);
+        }
+      });
+
+      // Crear notificación en la campanita del estudiante
+      try {
+        await db.insert(notifications).values({
+          userId: ticket.creatorId,
+          type: 'TICKET_REPLY',
+          title: '💬 Nueva respuesta en tu ticket',
+          message: `El administrador ha respondido a tu Ticket #${ticketId}. Haz clic para ver la respuesta.`,
+          isRead: false,
+          isMarked: false,
+          createdAt: new Date(),
+          metadata: {
+            ticketId: ticketId,
+          },
+        });
+        console.log(
+          `✅ Notificación creada para el estudiante: ${ticket.creator.email}`
+        );
+      } catch (notifError) {
+        console.error('❌ Error creando notificación:', notifError);
+      }
+    }
 
     return NextResponse.json(newComment[0]);
   } catch (error) {

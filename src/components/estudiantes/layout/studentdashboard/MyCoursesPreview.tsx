@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { useAuth } from '@clerk/nextjs';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import useSWR from 'swr';
 
 import { type CarouselApi } from '~/components/estudiantes/ui/carousel';
 import {
@@ -19,12 +21,26 @@ import {
 import type { EnrolledCourse } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 
 export default function MyCoursesPreview() {
-  const [courses, setCourses] = useState<EnrolledCourse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { isSignedIn } = useAuth();
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
 
-  useEffect(() => {
+  // SWR para cursos inscritos - solo si está autenticado
+  const fetcher = (url: string) =>
+    fetch(url).then((r) => {
+      if (!r.ok) throw new Error('No se pudo cargar los cursos');
+      return r.json();
+    });
+  const { data, error, isLoading } = useSWR<{ courses?: EnrolledCourse[] }>(
+    isSignedIn ? '/api/enrolled-courses' : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+  const courses = data?.courses ?? [];
+
+  React.useEffect(() => {
     if (!carouselApi) return;
 
     const updateScrollState = () => {
@@ -42,29 +58,6 @@ export default function MyCoursesPreview() {
     };
   }, [carouselApi]);
 
-  useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      try {
-        const res = await fetch('/api/enrolled-courses');
-        if (!res.ok) throw new Error('Failed to fetch');
-        const payload: { courses?: EnrolledCourse[] } = await res.json();
-        if (!mounted) return;
-        setCourses(payload.courses ?? []);
-      } catch (err) {
-        console.error('Error loading enrolled courses:', err);
-        if (mounted) setCourses([]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
   function getImageUrl(coverImageKey: string | null | undefined) {
     if (!coverImageKey || coverImageKey === 'NULL') {
       return 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
@@ -73,8 +66,13 @@ export default function MyCoursesPreview() {
     return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
   }
 
+  // Si no está autenticado, no mostrar nada (ocultar la sección)
+  if (!isSignedIn) {
+    return null;
+  }
+
   // Skeleton while loading
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="mb-8 px-12 sm:px-24">
         <div className="mb-4 flex items-center justify-between">
@@ -104,6 +102,20 @@ export default function MyCoursesPreview() {
             <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
             <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
           </Carousel>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mb-8 px-12 sm:px-24">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-primary text-2xl font-bold">Seguir viendo</h3>
+        </div>
+        <div className="p-6 text-center text-red-400">
+          Error al cargar tus cursos. Por favor, recarga la página o verifica tu
+          conexión.
         </div>
       </section>
     );

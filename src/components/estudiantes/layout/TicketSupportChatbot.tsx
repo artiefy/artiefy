@@ -39,6 +39,7 @@ const TicketSupportChatbot = () => {
       id: number;
       text: string;
       sender: string;
+      createdAt?: string | Date;
       buttons?: { label: string; action: string }[];
     }[]
   >([
@@ -46,6 +47,7 @@ const TicketSupportChatbot = () => {
       id: 1,
       text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
       sender: 'support',
+      createdAt: new Date(),
       buttons: [
         { label: '🐛 Reportar Error', action: 'report_bug' },
         { label: '❓ Pregunta General', action: 'general_question' },
@@ -161,6 +163,7 @@ const TicketSupportChatbot = () => {
         id: Date.now(),
         text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
         sender: 'support' as const,
+        createdAt: new Date(),
         buttons: [
           { label: '🐛 Reportar Error', action: 'report_bug' },
           { label: '❓ Pregunta General', action: 'general_question' },
@@ -201,10 +204,11 @@ const TicketSupportChatbot = () => {
 
               // Mapear mensajes del ticket desde la BD
               const loadedMessages = ticketData.messages.map(
-                (msg: TicketMessage) => ({
+                (msg: TicketMessage & { createdAt?: Date }) => ({
                   id: msg.id,
                   text: msg.content ?? msg.description ?? '',
                   sender: msg.sender ?? 'user',
+                  createdAt: (msg as unknown as { createdAt?: Date }).createdAt,
                 })
               );
 
@@ -219,6 +223,7 @@ const TicketSupportChatbot = () => {
                   id: Date.now(),
                   text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
                   sender: 'support' as const,
+                  createdAt: new Date(),
                   buttons: [
                     { label: '🐛 Reportar Error', action: 'report_bug' },
                     {
@@ -267,6 +272,94 @@ const TicketSupportChatbot = () => {
       handleChatOpen as EventListener
     );
 
+    // Listener para abrir ticket desde notificación de campanita
+    const handleOpenTicketFromNotification = (
+      e: CustomEvent<{ ticketId: number }>
+    ) => {
+      const fetchMessagesFromNotification = async () => {
+        try {
+          if (e.detail?.ticketId && user?.id) {
+            setCurrentTicketId(e.detail.ticketId);
+
+            const ticketData = await getTicketWithMessages(e.detail.ticketId);
+
+            if (ticketData?.ticket && ticketData.messages) {
+              console.log(
+                'Mensajes del ticket cargados desde notificación:',
+                ticketData.messages.length
+              );
+
+              setCurrentTicketStatus(ticketData.ticket.estado ?? null);
+
+              const loadedMessages = ticketData.messages.map((msg) => ({
+                id: msg.id,
+                text: msg.content,
+                sender: msg.sender,
+                createdAt: msg.createdAt,
+              }));
+
+              const needsWelcomeMessage = !loadedMessages.some(
+                (m) =>
+                  m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+              );
+
+              if (needsWelcomeMessage) {
+                const welcomeMessage = {
+                  id: Date.now(),
+                  text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+                  sender: 'support' as const,
+                  createdAt: new Date(),
+                  buttons: [
+                    { label: '🐛 Reportar Error', action: 'report_bug' },
+                    {
+                      label: '❓ Pregunta General',
+                      action: 'general_question',
+                    },
+                    {
+                      label: '🔧 Problema Técnico',
+                      action: 'technical_issue',
+                    },
+                    {
+                      label: '💰 Consulta de Pagos',
+                      action: 'payment_inquiry',
+                    },
+                  ],
+                };
+                setMessages([welcomeMessage, ...loadedMessages]);
+              } else {
+                setMessages(loadedMessages);
+              }
+
+              // Marcar como leídos los mensajes de soporte
+              try {
+                await fetch(`/api/tickets/${e.detail.ticketId}/mark-read`, {
+                  method: 'POST',
+                });
+                await mutateMessages();
+                window.dispatchEvent(new Event('chat-updated'));
+              } catch (err) {
+                console.warn('No se pudo marcar como leído el ticket:', err);
+              }
+
+              // Abrir el chatbot
+              setIsOpen(true);
+            }
+          }
+        } catch (error) {
+          console.error(
+            'Error al obtener los mensajes desde notificación:',
+            error
+          );
+        }
+      };
+      void fetchMessagesFromNotification();
+    };
+
+    window.addEventListener(
+      'open-ticket-chat',
+      handleOpenTicketFromNotification as EventListener
+    );
+
     const handleChatClose = () => {
       setCurrentTicketId(null);
     };
@@ -277,6 +370,10 @@ const TicketSupportChatbot = () => {
       window.removeEventListener(
         'support-open-chat',
         handleChatOpen as EventListener
+      );
+      window.removeEventListener(
+        'open-ticket-chat',
+        handleOpenTicketFromNotification as EventListener
       );
       window.removeEventListener('support-chat-close', handleChatClose);
     };
@@ -292,7 +389,7 @@ const TicketSupportChatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const saveUserMessage = (trimmedInput: string, sender: string) => {
+  const saveUserMessage = async (trimmedInput: string, sender: string) => {
     if (isOpen && isSignedIn && user?.id) {
       console.log('📤 Guardando mensaje del usuario:', {
         userId: user.id,
@@ -301,13 +398,25 @@ const TicketSupportChatbot = () => {
         sender,
         ticketId: currentTicketId,
       });
-      void SaveTicketMessage(
+      const result = await SaveTicketMessage(
         user.id,
         trimmedInput,
         sender,
         user.primaryEmailAddress?.emailAddress,
         currentTicketId ?? undefined // Pasar el ticket actual
       );
+      if (!currentTicketId && result?.ticketId) {
+        setCurrentTicketId(result.ticketId);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            text: `Un administrador tomará este ticket pronto. Ticket #${result.ticketId}`,
+            sender: 'support',
+            createdAt: new Date(),
+          },
+        ]);
+      }
     } else {
       console.error('❌ Falta alguno de estos:', {
         isOpen,
@@ -342,6 +451,7 @@ const TicketSupportChatbot = () => {
       id: messages.length + 1,
       text: inputText,
       sender: 'user' as const,
+      createdAt: new Date(),
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
@@ -351,7 +461,7 @@ const TicketSupportChatbot = () => {
 
     try {
       // Guardar el mensaje en el backend
-      saveUserMessage(messageText, 'user');
+      await saveUserMessage(messageText, 'user');
 
       // Forzar revalidación de SWR para obtener mensajes actualizados
       if (currentTicketId) {
@@ -369,48 +479,75 @@ const TicketSupportChatbot = () => {
     }
   };
 
-  const handleBotButtonClick = (action: string) => {
-    if (action === 'report_bug') {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text: '🐛 Reportar Error', sender: 'user' },
-        {
-          id: Date.now() + 1,
-          text: 'Por favor, describe el error que encontraste. Incluye todos los detalles posibles como qué estabas haciendo cuando ocurrió el problema.',
-          sender: 'support',
-        },
-      ]);
-    } else if (action === 'general_question') {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text: '❓ Pregunta General', sender: 'user' },
-        {
-          id: Date.now() + 1,
-          text: '¡Perfecto! Hazme tu pregunta y te ayudaré con la información que necesites sobre Artiefy.',
-          sender: 'support',
-        },
-      ]);
-    } else if (action === 'technical_issue') {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text: '🔧 Problema Técnico', sender: 'user' },
-        {
-          id: Date.now() + 1,
-          text: 'Entiendo que tienes un problema técnico. Describe detalladamente qué está pasando y qué dispositivo/navegador estás usando.',
-          sender: 'support',
-        },
-      ]);
-    } else if (action === 'payment_inquiry') {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text: '💰 Consulta de Pagos', sender: 'user' },
-        {
-          id: Date.now() + 1,
-          text: 'Te ayudo con tu consulta de pagos. ¿Tienes algún problema con una transacción, facturación o necesitas información sobre los planes?',
-          sender: 'support',
-        },
-      ]);
+  const handleBotButtonClick = async (action: string) => {
+    if (!isSignedIn || !user?.id) return;
+
+    // Definir textos según la acción
+    let userSelectionText = '';
+    let supportReplyText = '';
+    switch (action) {
+      case 'report_bug':
+        userSelectionText = '🐛 Reportar Error';
+        supportReplyText =
+          'Por favor, describe el error que encontraste. Incluye todos los detalles posibles como qué estabas haciendo cuando ocurrió el problema.';
+        break;
+      case 'general_question':
+        userSelectionText = '❓ Pregunta General';
+        supportReplyText =
+          '¡Perfecto! Hazme tu pregunta y te ayudaré con la información que necesites sobre Artiefy.';
+        break;
+      case 'technical_issue':
+        userSelectionText = '🔧 Problema Técnico';
+        supportReplyText =
+          'Entiendo que tienes un problema técnico. Describe detalladamente qué está pasando y qué dispositivo/navegador estás usando.';
+        break;
+      case 'payment_inquiry':
+        userSelectionText = '💰 Consulta de Pagos';
+        supportReplyText =
+          'Te ayudo con tu consulta de pagos. ¿Tienes algún problema con una transacción, facturación o necesitas información sobre los planes?';
+        break;
+      default:
+        return;
     }
+
+    // Mostrar selección del usuario de forma optimista
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: userSelectionText,
+        sender: 'user',
+        createdAt: new Date(),
+      },
+    ]);
+
+    // Guardar selección del usuario (puede crear ticket)
+    const userResult = await SaveTicketMessage(
+      user.id,
+      userSelectionText,
+      'user',
+      user.primaryEmailAddress?.emailAddress,
+      currentTicketId ?? undefined
+    );
+    const ticketIdToUse = currentTicketId ?? userResult?.ticketId ?? null;
+    if (!currentTicketId && ticketIdToUse) {
+      setCurrentTicketId(ticketIdToUse);
+      // Mensaje automático de aviso ya lo agrega saveUserMessage antes; aquí no repetimos.
+    }
+
+    // Guardar respuesta automática como mensaje de soporte en la BD
+    if (ticketIdToUse) {
+      await SaveTicketMessage(
+        user.id, // Se reutiliza el id del usuario como owner del registro
+        supportReplyText,
+        'support',
+        user.primaryEmailAddress?.emailAddress,
+        ticketIdToUse
+      );
+    }
+
+    // Refrescar mensajes desde el servidor para evitar duplicados locales
+    await mutateMessages();
 
     if (inputRef.current) {
       inputRef.current.focus();
@@ -444,37 +581,43 @@ const TicketSupportChatbot = () => {
 
   return (
     <>
-      {isSignedIn &&
-        !hideButton &&
-        (isDesktop ? showAnim && !isOpen : !isOpen) && (
-          <div
-            className="fixed right-25 bottom-24 z-50 translate-x-1/2 sm:right-10 sm:bottom-40 sm:translate-x-0"
-            style={{
-              animationName: isDesktop
-                ? showExtras
-                  ? 'fadeInUp'
-                  : 'fadeOutDown'
-                : undefined,
-              animationDuration: isDesktop
-                ? `${ANIMATION_DURATION}ms`
-                : undefined,
-              animationTimingFunction: isDesktop ? 'ease' : undefined,
-              animationFillMode: isDesktop ? 'forwards' : undefined,
+      {/* Botón de soporte siempre visible, arriba */}
+      {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
+        <div
+          className="fixed top-8 right-8 z-50 sm:top-10 sm:right-10"
+          style={{
+            animationName: isDesktop
+              ? showExtras
+                ? 'fadeInUp'
+                : 'fadeOutDown'
+              : undefined,
+            animationDuration: isDesktop
+              ? `${ANIMATION_DURATION}ms`
+              : undefined,
+            animationTimingFunction: isDesktop ? 'ease' : undefined,
+            animationFillMode: isDesktop ? 'forwards' : undefined,
+          }}
+        >
+          <button
+            onClick={() => {
+              if (!isSignedIn) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                router.push(`/sign-in?redirect_url=${currentUrl}`);
+                return;
+              }
+              handleClick();
             }}
+            className={`relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]`}
           >
-            <button
-              onClick={handleClick}
-              className={`relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]`}
-            >
-              <MdSupportAgent className="text-xl text-white opacity-90" />
-              <span className="hidden font-medium tracking-wide sm:inline">
-                Soporte técnico
-              </span>
-              <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
-            </button>
-          </div>
-        )}
-      {/* Chatbot */}
+            <MdSupportAgent className="text-xl text-white opacity-90" />
+            <span className="hidden font-medium tracking-wide sm:inline">
+              Soporte técnico
+            </span>
+            <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
+          </button>
+        </div>
+      )}
+      {/* Chatbot solo si está logueado */}
       {isOpen && isSignedIn && (
         <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
           <div className="support-chat">

@@ -4,10 +4,17 @@ import { and, count, desc, eq, or } from 'drizzle-orm';
 
 import {
   getNewTicketAssignmentEmail,
+  getTicketHistoryEmail,
   sendTicketEmail,
 } from '~/lib/emails/ticketEmails';
+import { formatDateColombia } from '~/lib/formatDate';
 import { db } from '~/server/db';
-import { ticketComments, tickets, users } from '~/server/db/schema';
+import {
+  ticketAssignees,
+  ticketComments,
+  tickets,
+  users,
+} from '~/server/db/schema';
 import {
   ensureTicketAssignment,
   getOrCreateUserByEmail,
@@ -461,7 +468,7 @@ export async function SaveTicketMessage(
   content: string,
   sender: string,
   userEmail?: string,
-  ticketId?: number // Nuevo parámetro opcional para especificar el ticket
+  ticketId?: number
 ) {
   console.log('💬 SaveTicketMessage llamado:', {
     userId,
@@ -472,59 +479,128 @@ export async function SaveTicketMessage(
   });
 
   try {
-    // Si se proporciona ticketId, usarlo directamente
-    let targetTicket;
+    let targetTicket: typeof tickets.$inferSelect;
     if (ticketId) {
-      // Verificar que el ticket existe y pertenece al usuario
       const existingTicket = await db
         .select()
         .from(tickets)
         .where(and(eq(tickets.id, ticketId), eq(tickets.creatorId, userId)))
         .limit(1)
         .then((rows) => rows[0]);
-
       if (!existingTicket) {
         console.error('❌ Ticket no encontrado o no pertenece al usuario');
         throw new Error('Ticket no válido');
       }
       targetTicket = existingTicket;
     } else {
-      // Si no se proporciona ticketId, usar el comportamiento anterior (obtener o crear)
-      targetTicket = await getOrCreateSuportChat({
+      const createdOrExisting = await getOrCreateSuportChat({
         creatorId: userId,
         email: userEmail ?? '',
         description: content,
       });
+      targetTicket = {
+        id: createdOrExisting.id,
+        creatorId: createdOrExisting.creatorId,
+        description: createdOrExisting.description,
+        estado: createdOrExisting.estado,
+        tipo: createdOrExisting.tipo,
+        email: createdOrExisting.email,
+        title: createdOrExisting.title,
+        comments: createdOrExisting.comments,
+        createdAt: createdOrExisting.createdAt,
+        updatedAt: createdOrExisting.updatedAt,
+      } as typeof tickets.$inferSelect;
     }
 
-    if (targetTicket.id === undefined) {
-      console.error('❌ No se pudo obtener el ID del ticket');
-      throw new Error(
-        'No se pudo obtener el ID del ticket para guardar el comentario.'
-      );
+    if (targetTicket.id == null) {
+      throw new Error('ID de ticket inválido');
     }
 
-    console.log('💾 Guardando comentario en ticket:', targetTicket.id);
-
-    await db.insert(ticketComments).values({
-      ticketId: targetTicket.id,
-      userId: userId,
-      content: content,
-      sender: sender,
-      // isRead indica si el DESTINATARIO ha leído el mensaje:
-      // - Si sender='user', el mensaje NO ha sido leído por el admin/soporte → isRead=false
-      // - Si sender='admin' o 'support', el mensaje NO ha sido leído por el usuario → isRead=false
-      // Siempre inicia en false, se marca true cuando el destinatario lo lee
-      isRead: false,
-      createdAt: new Date(),
-    });
+    const insertedComment = await db
+      .insert(ticketComments)
+      .values({
+        ticketId: targetTicket.id,
+        userId,
+        content,
+        sender,
+        isRead: false,
+        createdAt: new Date(),
+      })
+      .returning();
 
     await db
       .update(tickets)
       .set({ updatedAt: new Date() })
       .where(eq(tickets.id, targetTicket.id));
 
-    console.log('✅ Comentario guardado exitosamente');
+    // Notificar admins asignados si el remitente es el usuario. También retornaremos info adicional.
+    if (sender === 'user') {
+      try {
+        const ticketData = await db.query.tickets.findFirst({
+          where: eq(tickets.id, targetTicket.id),
+        });
+        if (ticketData) {
+          const assignments = await db.query.ticketAssignees.findMany({
+            where: eq(ticketAssignees.ticketId, targetTicket.id),
+            with: { user: true },
+          });
+          if (assignments.length) {
+            const allComments = await db.query.ticketComments.findMany({
+              where: eq(ticketComments.ticketId, targetTicket.id),
+              with: { user: true },
+              orderBy: (comments, { asc }) => [asc(comments.createdAt)],
+            });
+            // Filtrar mensaje automático de asignación: "Ticket asignado a X usuario(s)."
+            const assignmentNoteRegex =
+              /^Ticket asignado a \d+ usuario\(s\)\.$/;
+            const commentsForEmail = allComments
+              .filter((c) => !assignmentNoteRegex.test(c.content))
+              .map((c) => ({
+                content: c.content,
+                sender: c.sender,
+                senderName: c.user?.name ?? 'Usuario',
+                createdAt: formatDateColombia(c.createdAt),
+              }));
+            void Promise.all(
+              assignments
+                .filter((a) => a.user?.email)
+                .map((a) => {
+                  const adminEmail = a.user!.email!;
+                  const html = getTicketHistoryEmail(
+                    targetTicket.id,
+                    'admin',
+                    ticketData.description,
+                    ticketData.estado,
+                    commentsForEmail
+                  );
+                  return sendTicketEmail({
+                    to: adminEmail,
+                    subject: `💬 Nuevo mensaje del estudiante en Ticket #${targetTicket.id}`,
+                    html,
+                  }).then((res) => {
+                    if (res.success) {
+                      console.log(`✅ Email enviado a admin ${adminEmail}`);
+                    } else {
+                      console.error('❌ Error email admin', res.error);
+                    }
+                  });
+                })
+            );
+          } else {
+            console.log('⚠️ Sin admins asignados para notificar');
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error notificando admins:', err);
+      }
+    }
+
+    // Retornar información para que el cliente pueda mostrar mensaje automático y timestamp universal
+    return {
+      ticketId: targetTicket.id,
+      createdAt: insertedComment[0]?.createdAt ?? new Date(),
+      sender,
+    };
   } catch (error) {
     console.error('❌ Error en SaveTicketMessage:', error);
     throw error;
