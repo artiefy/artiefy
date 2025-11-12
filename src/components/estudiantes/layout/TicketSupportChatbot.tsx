@@ -584,7 +584,7 @@ const TicketSupportChatbot = () => {
       {/* Botón de soporte siempre visible, arriba */}
       {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
         <div
-          className="fixed top-8 right-8 z-50 sm:top-10 sm:right-10"
+          className="fixed right-6 bottom-28 z-50 sm:right-6"
           style={{
             animationName: isDesktop
               ? showExtras
@@ -605,7 +605,16 @@ const TicketSupportChatbot = () => {
                 router.push(`/sign-in?redirect_url=${currentUrl}`);
                 return;
               }
-              handleClick();
+              if (user?.id) {
+                window.dispatchEvent(
+                  new CustomEvent('create-new-ticket', {
+                    detail: {
+                      userId: user.id,
+                      email: user.primaryEmailAddress?.emailAddress,
+                    },
+                  })
+                );
+              }
             }}
             className={`relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]`}
           >

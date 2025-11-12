@@ -72,7 +72,7 @@ export const TourComponent = () => {
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
         <div
-          className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-40 sm:bottom-25 sm:translate-x-0"
+          className="fixed right-6 bottom-6 z-10 translate-x-0 sm:right-25 sm:bottom-12 sm:translate-x-0"
           style={{
             animationName: isExiting ? 'fadeOutRight' : 'fadeInRight',
             animationDuration: `${ANIMATION_DURATION}ms`,

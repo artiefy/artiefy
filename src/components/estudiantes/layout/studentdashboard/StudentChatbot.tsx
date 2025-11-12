@@ -153,6 +153,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [processingQuery, setProcessingQuery] = useState(false);
+  const [showLoginNotice, setShowLoginNotice] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: 400,
     height: 500,
@@ -1736,7 +1737,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const handleInitialSearch = () => {
       if (
         !initialSearchQuery?.trim() ||
-        !isSignedIn ||
         !showChat ||
         processingQuery ||
         searchRequestInProgress.current ||
@@ -1745,6 +1745,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return;
       }
 
+      // Si no está autenticado: abrir chat y mostrar aviso para iniciar sesión
+      if (!isSignedIn) {
+        setIsOpen(true);
+        setShowLoginNotice(true);
+        return;
+      }
+
+      // Usuario autenticado: disparar creación de chat con la búsqueda
       initialSearchDone.current = true;
       setIsOpen(true);
       window.dispatchEvent(
@@ -1781,8 +1789,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     if (!showChat) {
       initialSearchDone.current = false;
       setProcessingQuery(false);
+      setShowLoginNotice(false);
     }
   }, [showChat, processingQuery]);
+
+  // Si el usuario inicia sesión, ocultar el aviso
+  useEffect(() => {
+    if (isSignedIn && showLoginNotice) setShowLoginNotice(false);
+  }, [isSignedIn, showLoginNotice]);
 
   useEffect(() => {
     setIsOpen(showChat);
@@ -2841,6 +2855,28 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                     onSectionChange={setActiveSection}
                   />
 
+                  {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
+                  {activeSection === 'chatia' &&
+                    showLoginNotice &&
+                    !isSignedIn && (
+                      <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
+                        <p className="text-sm text-white">
+                          Debes iniciar sesión para seguir la conversación
+                        </p>
+                        <button
+                          onClick={() => {
+                            const currentUrl = encodeURIComponent(
+                              window.location.href
+                            );
+                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                          }}
+                          className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                        >
+                          Iniciar sesión
+                        </button>
+                      </div>
+                    )}
+
                   {/* Contenido basado en la sección activa */}
                   {activeSection === 'tickets' ? (
                     chatMode.status && isSignedIn ? (
@@ -2882,7 +2918,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                             );
                             window.location.href = `/sign-in?redirect_url=${currentUrl}`;
                           }}
-                          className="bg-background text-primary-foreground hover:bg-primary/90 focus:ring-primary rounded-lg px-6 py-3 font-medium transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                          className="bg-background hover:bg-background/90 focus:ring-background rounded-lg px-6 py-3 font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
                         >
                           Iniciar sesión
                         </button>
