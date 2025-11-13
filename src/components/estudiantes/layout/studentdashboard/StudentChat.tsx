@@ -13,6 +13,7 @@ import {
   getConversationWithMessages,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
+import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
 
 // Props for the chat component
 interface ChatProps {
@@ -32,12 +33,14 @@ interface ChatProps {
   chatMode: {
     idChat: number | null;
     status: boolean;
+    type?: 'ticket' | 'chat' | 'project';
   };
   setChatMode: React.Dispatch<
     React.SetStateAction<{
       idChat: number | null;
       status: boolean;
       curso_title: string;
+      type?: 'ticket' | 'chat' | 'project';
     }>
   >;
   setShowChatList: React.Dispatch<React.SetStateAction<boolean>>;
@@ -168,7 +171,22 @@ export const ChatMessages: React.FC<ChatProps> = ({
       } = { messages: [] };
       try {
         if (conversation.id !== null && conversation.id < 1000000000000) {
-          chats = await getConversationWithMessages(conversation.id);
+          // Si es un ticket, usar la función de tickets
+          if (chatMode.type === 'ticket') {
+            const ticketData = await getTicketWithMessages(conversation.id);
+            if (ticketData.ticket && ticketData.messages) {
+              chats = {
+                messages: ticketData.messages.map((msg) => ({
+                  id: msg.id,
+                  message: msg.content,
+                  sender: msg.sender,
+                })),
+              };
+            }
+          } else {
+            // Para chats normales, usar la función existente
+            chats = await getConversationWithMessages(conversation.id);
+          }
         } else {
           console.log('ID temporal o null, no ejecutando consulta SQL');
         }
@@ -204,17 +222,33 @@ export const ChatMessages: React.FC<ChatProps> = ({
           const botMessage = {
             id: -1,
             text:
-              isEnrolled == true
-                ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
-                  courseTitle +
-                  ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
-                : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+              chatMode.type === 'ticket'
+                ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
+                : isEnrolled == true
+                  ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
+                    courseTitle +
+                    ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
+                  : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
             sender: 'bot',
-            buttons: [
-              { label: '📚 Crear Proyecto', action: 'new_project' },
-              { label: '💬 Nueva Idea', action: 'new_idea' },
-              { label: '🛠 Soporte Técnico', action: 'contact_support' },
-            ],
+            buttons:
+              chatMode.type === 'ticket'
+                ? [
+                    { label: '🐛 Reportar Error', action: 'report_bug' },
+                    {
+                      label: '❓ Pregunta General',
+                      action: 'general_question',
+                    },
+                    { label: '🔧 Problema Técnico', action: 'technical_issue' },
+                    {
+                      label: '💰 Consulta de Pagos',
+                      action: 'payment_inquiry',
+                    },
+                  ]
+                : [
+                    { label: '📚 Crear Proyecto', action: 'new_project' },
+                    { label: '💬 Nueva Idea', action: 'new_idea' },
+                    { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                  ],
           };
 
           const alreadyHasBot = loadedMessages.some(
@@ -285,6 +319,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
     setChatMode,
     setMessages,
     user?.id,
+    chatMode.type,
   ]);
 
   return (

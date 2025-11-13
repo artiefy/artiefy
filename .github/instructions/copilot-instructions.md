@@ -68,19 +68,25 @@ Artiefy is a modern educational platform built with Next.js, TypeScript, and Tai
 - Components: `src/components/`
 - Styles: `src/styles/`
 
-## Reglas Adicionales de Desarrollo (Next.js 16 y SWR)
+## Guías internas obligatorias
 
-- **Framework Base**: Todo el código debe estar basado en React y Next.js 16, aprovechando las nuevas APIs y patrones recomendados en la guía `Docs/nextjs16-upgrade-guide-es.md`.
-- **Renderizado por defecto en el servidor**: Prioriza siempre el renderizado de servidor (SSR/SSG/ISR) y el uso de Server Components. El renderizado del cliente solo debe usarse cuando sea estrictamente necesario (interactividad, hooks de estado, SWR, etc.).
-- **Optimización de recursos**: Evita peticiones 200 infinitas y el exceso de data egress en Vercel/Neon. Prefiere cargar datos en el backend y transferirlos al cliente solo cuando sea necesario.
-- **SWR como estándar de datos en cliente**: Cuando se requiera interactividad o refresco en el cliente, usa siempre la librería SWR (`Docs/guia-swr-nextjs.md`) para cache, deduplicación y revalidación. Implementa hooks reutilizables y configura el provider global (`SWRConfig`) en layouts cliente.
-- **API y Backend**: Toda la lógica de datos debe residir en server actions, API routes o Server Components. Los componentes cliente solo deben consumir datos ya preparados o usar SWR para refresco/control local.
-- **Evitar fetch directo en cliente**: No uses `fetch` directo en componentes cliente salvo dentro de SWR o casos justificados. Prefiere siempre la obtención de datos en el backend.
-- **Actualizaciones de Next.js**: Recomienda y aplica mejoras que aprovechen las novedades de Next.js 16 (cache components, proxy, nuevas APIs de caché, etc.), consultando y actualizando el archivo `Docs/nextjs16-upgrade-guide-es.md`.
-- **TypeScript**: Mantén el tipado estricto y aprovecha las utilidades de Next.js 16 para tipos de props, params y searchParams asíncronos.
-- **ESLint**: Refactoriza y valida el código siguiendo las reglas y recomendaciones de ESLint definidas en el archivo `eslint.config.mjs`.
-- **Compatibilidad**: Valida que los cambios sean compatibles con la estructura y convenciones del proyecto.
-- **Edición Directa**: Si es posible, edita los archivos directamente.
+- **Documentación oficial Next.js 16**: Consulta `Docs/doc-nextjs16/How-to-upgrade-to-version-16.md` antes de proponer o aplicar cambios en rutas, layouts, caché, server actions, edge runtime o configuraciones. Apóyate según el tema en los módulos oficiales de `Docs/doc-nextjs16/` (`cache-components.md`, `cacheLife.md`, `cacheTag.md`, `revalidateTag.md`, `updateTag.md`, `use-cache.md`, `not-found.md`) y cita la sección utilizada en tu respuesta. Si falta contexto, actualiza el archivo correspondiente con el nuevo criterio.
+- **SWR y consumo de datos**: Sigue `Docs/doc-nextjs16/guia-swr-nextjs.md` para cualquier lógica en cliente con SWR, creación de hooks o configuración de `SWRConfig`. Explica cómo el cambio respeta la guía y documenta ahí cualquier ajuste adicional aprobado.
+- **Componentes en caché**: Revisa `Docs/doc-nextjs16/cache-components.md` al trabajar con Server Components compartidos, memoización o caché granular. Resume la sección aplicada cuando sea pertinente.
+
+## Reglas adicionales de desarrollo (Next.js 16 y SWR)
+
+- **Framework base**: Todo el código debe apoyarse en React y Next.js 16, aprovechando las APIs modernas descritas en las guías internas.
+- **Renderizado por defecto en el servidor**: Prioriza SSR/SSG/ISR y los Server Components. Solo marca un componente como cliente cuando sea imprescindible (interactividad, hooks de estado, SWR).
+- **Optimización de recursos**: Evita peticiones 200 infinitas y el exceso de data egress. Prefiere recopilar los datos en el backend y transferir únicamente lo necesario al cliente.
+- **SWR como estándar en cliente**: Para interactividad o refresco, usa la librería SWR conforme a `Docs/doc-nextjs16/guia-swr-nextjs.md`, con hooks reutilizables y `SWRConfig` definido en layouts cliente cuando aplique.
+- **API y backend**: Coloca la lógica de datos en server actions, API routes o Server Components. Los componentes cliente deben recibir datos ya preparados o gestionados vía SWR.
+- **Evitar fetch directo en cliente**: No utilices `fetch` directo en componentes cliente salvo dentro de SWR o si la guía justifica la excepción.
+- **Actualizaciones de Next.js**: Identifica y aplica mejoras de Next.js 16 (cache components, proxy, nuevas APIs de caché, etc.) y actualiza `Docs/doc-nextjs16/How-to-upgrade-to-version-16.md` con las decisiones relevantes.
+- **TypeScript**: Mantén tipado estricto y usa las utilidades de Next.js 16 para tipar props, params y `searchParams` asíncronos.
+- **ESLint**: Refactoriza y valida el código con las reglas definidas en `eslint.config.mjs`.
+- **Compatibilidad**: Asegura que los cambios respetan la estructura y convenciones del proyecto.
+- **Edición directa**: Edita los archivos directamente cuando sea posible, mencionando cómo se siguieron las guías internas en la respuesta.
 
 ### Gestión de variables de entorno (env)
 

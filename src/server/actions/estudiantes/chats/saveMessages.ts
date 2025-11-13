@@ -1,7 +1,9 @@
 'use server';
 
+import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
-import { chat_messages } from '~/server/db/schema';
+import { chat_messages, conversations } from '~/server/db/schema';
 
 import { getOrCreateConversation } from './saveChat';
 
@@ -43,4 +45,10 @@ export async function saveMessages(
     }
     await db.insert(chat_messages).values(insertObj);
   }
+
+  // Actualizar el updatedAt de la conversación
+  await db
+    .update(conversations)
+    .set({ updatedAt: new Date() })
+    .where(eq(conversations.id, conversation.id));
 }

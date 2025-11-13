@@ -465,6 +465,7 @@ export type NotificationType =
   | 'TICKET_CREATED'
   | 'TICKET_UPDATED'
   | 'TICKET_ASSIGNED'
+  | 'TICKET_REPLY'
   | 'NEW_COURSE_ADDED'
   | 'ACTIVITY_COMPLETED'
   | 'COURSE_UNENROLLMENT'
@@ -492,6 +493,17 @@ export interface Notification {
   isMarked?: boolean; // <-- nuevo campo
   createdAt: Date;
   metadata?: NotificationMetadata;
+}
+
+// Nuevo tipo para comentarios de tickets
+export interface TicketComment {
+  id: number;
+  ticketId: number;
+  userId: string;
+  content: string;
+  createdAt: string | Date;
+  sender: string;
+  isRead: boolean;
 }
 
 export interface Certificate {

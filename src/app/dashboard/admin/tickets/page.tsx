@@ -9,7 +9,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
-import { formatDateColombiaShort } from '~/lib/formatDate';
+import {
+  formatDateColombiaAdminTicket,
+  formatDateColombiaShort,
+} from '~/lib/formatDate';
 
 import TicketModal from './TicketModal';
 
@@ -47,6 +50,7 @@ const rawTicketSchema = z.array(
     cover_image_key: z.union([z.string(), z.null()]).optional(),
     video_key: z.union([z.string(), z.null()]).optional(),
     document_key: z.union([z.string(), z.null()]).optional(),
+    unread_count: z.number().optional(),
   })
 );
 
@@ -90,6 +94,7 @@ export interface Ticket {
   coverImageKey?: string;
   videoKey?: string;
   documentKey?: string;
+  unreadCount?: number;
 }
 
 // Component
@@ -184,11 +189,13 @@ export default function TicketsPage() {
         creatorEmail: ticket.creator_email ?? '',
         comments: ticket.comments ?? '',
         createdAt: new Date(ticket.created_at),
+        // Usar la fecha UTC enviada por el backend y formatearla en frontend
         updatedAt: new Date(ticket.updated_at),
         timeElapsedMs: ticket.time_elapsed_ms,
         coverImageKey: ticket.cover_image_key ?? '',
         videoKey: ticket.video_key ?? '',
         documentKey: ticket.document_key ?? '',
+        unreadCount: ticket.unread_count ?? 0,
       }));
 
       setTickets(mapped);
@@ -232,6 +239,19 @@ export default function TicketsPage() {
         .filter(Boolean)
     )
   );
+
+  // Función para marcar los mensajes del estudiante como leídos
+  const markTicketAsRead = async (ticketId: string): Promise<void> => {
+    try {
+      await fetch(`/api/admin/tickets/${ticketId}/mark-ticket-read`, {
+        method: 'POST',
+      });
+      // Refrescar la lista de tickets para actualizar el unreadCount
+      void fetchTickets();
+    } catch (error) {
+      console.error('Error marking ticket as read:', error);
+    }
+  };
 
   const handleCreate = async (data: TicketFormData): Promise<void> => {
     try {
@@ -280,6 +300,14 @@ export default function TicketsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const sortedTickets = [...filteredTickets].sort((a, b) => {
+    // Primero, priorizar tickets con mensajes sin leer
+    const aUnread = a.unreadCount ?? 0;
+    const bUnread = b.unreadCount ?? 0;
+
+    if (aUnread > 0 && bUnread === 0) return -1;
+    if (aUnread === 0 && bUnread > 0) return 1;
+
+    // Si ambos tienen o no tienen sin leer, aplicar el ordenamiento seleccionado
     // Ordenar por updatedAt descendente (más recientes arriba) por defecto
     if (sortByUpdatedAtDesc) {
       return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -761,19 +789,26 @@ export default function TicketsPage() {
                           {ticket.email}
                         </td>
                         <td className="px-1 py-2 whitespace-nowrap">
-                          <span
-                            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                              ticket.tipo === 'bug'
-                                ? 'bg-red-500/10 text-red-500'
-                                : ticket.tipo === 'revision'
-                                  ? 'bg-yellow-500/10 text-yellow-500'
-                                  : ticket.tipo === 'logs'
-                                    ? 'bg-purple-500/10 text-purple-500'
-                                    : 'bg-gray-500/10 text-gray-500'
-                            }`}
-                          >
-                            {ticket.tipo}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                                ticket.tipo === 'bug'
+                                  ? 'bg-red-500/10 text-red-500'
+                                  : ticket.tipo === 'revision'
+                                    ? 'bg-yellow-500/10 text-yellow-500'
+                                    : ticket.tipo === 'logs'
+                                      ? 'bg-purple-500/10 text-purple-500'
+                                      : 'bg-gray-500/10 text-gray-500'
+                              }`}
+                            >
+                              {ticket.tipo}
+                            </span>
+                            {ticket.unreadCount && ticket.unreadCount > 0 && (
+                              <span className="inline-flex items-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                                Nuevo
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-1 py-2 whitespace-nowrap">
                           <span
@@ -813,7 +848,7 @@ export default function TicketsPage() {
                           {formatDateColombiaShort(ticket.createdAt)}
                         </td>
                         <td className="px-1 py-2 whitespace-nowrap">
-                          {formatDateColombiaShort(ticket.updatedAt)}
+                          {formatDateColombiaAdminTicket(ticket.updatedAt)}
                         </td>
                         <td className="px-1 py-2 whitespace-nowrap">
                           {formatElapsedTime(ticket.timeElapsedMs)}
@@ -822,7 +857,10 @@ export default function TicketsPage() {
                         <td className="px-1 py-2">
                           <div className="flex items-center justify-start gap-1">
                             <button
-                              onClick={() => setViewTicket(ticket)}
+                              onClick={() => {
+                                void markTicketAsRead(ticket.id);
+                                setViewTicket(ticket);
+                              }}
                               className="rounded-md p-1 hover:bg-blue-500/10 hover:text-blue-500"
                               title="Ver detalles"
                             >
@@ -830,6 +868,7 @@ export default function TicketsPage() {
                             </button>
                             <button
                               onClick={() => {
+                                void markTicketAsRead(ticket.id);
                                 setSelectedTicket(ticket);
                                 setIsModalOpen(true);
                               }}
@@ -1056,7 +1095,7 @@ export default function TicketsPage() {
                 <div className="lg:col-span-2">
                   <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-800/50 p-4">
                     <h3 className="text-lg font-medium text-white">
-                      Historial de Comentarios
+                      Historial de Chat
                     </h3>
                     <div className="max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900/50 p-4">
                       {isLoadingComments ? (

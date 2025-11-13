@@ -9,9 +9,9 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
-import { GoArrowLeft } from 'react-icons/go';
 import { HiMiniCpuChip } from 'react-icons/hi2';
-import { IoMdClose } from 'react-icons/io';
+import { IoClose } from 'react-icons/io5';
+import { MdArrowBack } from 'react-icons/md';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
@@ -19,9 +19,16 @@ import { useExtras } from '~/app/estudiantes/StudentContext';
 import { Card } from '~/components/estudiantes/ui/card';
 import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
+import {
+  createNewTicket,
+  getOrCreateSuportChat,
+  getUserOpenTicket,
+  SaveTicketMessage,
+} from '~/server/actions/estudiantes/chats/suportChatBot';
 
+import { ChatList } from './ChatList';
+import { ChatNavigation } from './ChatNavigation';
 import { ChatMessages } from './StudentChat';
-import { ChatList } from './StudentChatList';
 
 import '~/styles/chatmodal.css';
 import 'react-resizable/css/styles.css';
@@ -35,6 +42,7 @@ interface StudentChatbotProps {
   onSearchComplete?: () => void;
   courseId?: number;
   isEnrolled?: boolean;
+  initialSection?: 'tickets' | 'chatia' | 'projects';
 }
 
 interface ResizeData {
@@ -122,8 +130,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   onSearchComplete,
   courseTitle,
   courseId,
-  isEnrolled, // Añadido para manejar el estado de inscripción
+  isEnrolled,
+  initialSection = 'chatia',
 }) => {
+  const [activeSection, setActiveSection] = useState<
+    'tickets' | 'chatia' | 'projects'
+  >(initialSection);
   const [isOpen, setIsOpen] = useState(showChat);
   const [isDesktop, setIsDesktop] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -141,6 +153,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [processingQuery, setProcessingQuery] = useState(false);
+  const [showLoginNotice, setShowLoginNotice] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: 400,
     height: 500,
@@ -156,16 +169,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const initialSearchDone = useRef(false);
 
-  // Pruebas para varios chats
+  // El estado activeSection ya está definido arriba
+
   const [chatMode, setChatMode] = useState<{
     idChat: number | null;
     status: boolean;
     curso_title: string;
-  }>({ idChat: null, status: true, curso_title: '' });
+    type?: 'ticket' | 'chat' | 'project';
+  }>({ idChat: null, status: true, curso_title: '', type: 'chat' });
   const conversationOwnerRef = useRef<string>('');
 
   // Saber si el chatlist esta abierto
-  const [showChatList, setShowChatList] = useState(false);
+  const [_showChatList, setShowChatList] = useState(false);
 
   const chatModeRef = useRef(chatMode);
   useEffect(() => {
@@ -449,71 +464,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const safePathname = pathname ?? '';
   const isChatPage = safePathname === '/';
 
-  const newChatMessage = () => {
-    setChatMode({ idChat: null, status: true, curso_title: '' });
-    setShowChatList(false);
-    setMessages([
-      {
-        id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-        sender: 'bot',
-        buttons: [
-          { label: '📚 Crear Proyecto', action: 'new_project' },
-          { label: '💬 Nueva Idea', action: 'new_idea' },
-          { label: '🛠 Soporte Técnico', action: 'contact_support' },
-        ],
-      },
-    ]);
-    setInputText('');
-    setIsOpen(true);
-    initialSearchDone.current = false;
-    setProcessingQuery(false);
-    onSearchComplete?.();
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-    if (ideaRef.current.selected) {
-      setIdea({ selected: false, idea: '' });
-    }
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = 0;
-    }
-
-    // Crear conversación en BD
-    const timestamp = Date.now();
-    const fecha = new Date(timestamp);
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const anio = fecha.getFullYear();
-    const hora = String(fecha.getHours()).padStart(2, '0');
-    const minuto = String(fecha.getMinutes()).padStart(2, '0');
-    const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
-
-    if (!user?.id) return;
-
-    getOrCreateConversation({
-      senderId: user.id,
-      cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
-      title: courseTitle ?? `Nuevo Chat ${resultado}`,
-    })
-      .then((response) => {
-        setChatMode({ idChat: response.id, status: true, curso_title: '' });
-      })
-      .catch((err) => {
-        let errorMsg = 'Error creando el proyecto';
-        if (
-          err &&
-          typeof err === 'object' &&
-          'error' in err &&
-          typeof (err as Record<string, unknown>).error === 'string'
-        ) {
-          errorMsg = (err as Record<string, unknown>).error as string;
-        }
-        console.error(errorMsg);
-        toast.error(errorMsg);
-        return;
+  // Efecto para resetear el estado del chat cuando cambie la sección activa
+  useEffect(() => {
+    // Solo resetear si no hay un chat activo (para no interrumpir conversaciones en curso)
+    if (!chatMode.idChat) {
+      setChatMode({
+        idChat: null,
+        status: true,
+        curso_title: '',
+        type:
+          activeSection === 'tickets'
+            ? 'ticket'
+            : activeSection === 'projects'
+              ? 'project'
+              : 'chat',
       });
-  };
+      setShowChatList(true);
+    }
+  }, [activeSection, chatMode.idChat]);
 
   // --- ADICIÓN: colas para guardar mensajes si aún no hay conversation id persistido ---
   const pendingBotSaves = useRef<
@@ -538,7 +506,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             coursesData:
               coursesData && coursesData.length > 0 ? coursesData : undefined,
           },
-        ]);
+        ]).then(() => {
+          // Disparar evento para actualizar la lista de chats
+          window.dispatchEvent(new CustomEvent('chat-updated'));
+        });
         return;
       }
       pendingBotSaves.current.push({ text, coursesData });
@@ -551,18 +522,36 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     (text: string, sender = 'user') => {
       const currentChatId = chatModeRef.current.idChat;
       const ownerId = conversationOwnerRef.current;
+      const currentChatType = chatModeRef.current.type;
+
       if (!ownerId) {
         return;
       }
+
+      // Si es un ticket, usar SaveTicketMessage
+      if (currentChatType === 'ticket') {
+        void SaveTicketMessage(
+          ownerId,
+          text,
+          sender,
+          user?.emailAddresses?.[0]?.emailAddress
+        );
+        return;
+      }
+
+      // Para chats normales, usar la lógica existente
       if (currentChatId && currentChatId < 1000000000000) {
         void saveMessages(ownerId, currentChatId, [
           { text, sender, sender_id: ownerId },
-        ]);
+        ]).then(() => {
+          // Disparar evento para actualizar la lista de chats
+          window.dispatchEvent(new CustomEvent('chat-updated'));
+        });
         return;
       }
       pendingUserSaves.current.push({ text, sender });
     },
-    [] // owner se obtiene de conversationOwnerRef
+    [user?.emailAddresses] // agregar user como dependencia
   );
 
   // Effect: cuando se obtiene un chatId persistido, vaciar colas
@@ -589,6 +578,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           }
         }
         pendingUserSaves.current = [];
+        // Disparar evento para actualizar la lista de chats
+        window.dispatchEvent(new CustomEvent('chat-updated'));
       }
 
       // Flush bot saves
@@ -608,6 +599,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           }
         }
         pendingBotSaves.current = [];
+        // Disparar evento para actualizar la lista de chats
+        window.dispatchEvent(new CustomEvent('chat-updated'));
       }
     };
 
@@ -1605,7 +1598,130 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         handleEnrollmentMessage
       );
     };
-  }, []);
+  }, [user?.emailAddresses]);
+
+  // Event listener para crear nuevo ticket
+  useEffect(() => {
+    const handleCreateNewTicket = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        userId: string;
+        email?: string;
+      }>;
+
+      if (!customEvent.detail.userId) return;
+
+      // En lugar de abrir el chatbot de IA, simplemente cerrar el chat principal y activar el TicketSupportChatbot
+      setIsOpen(false);
+
+      // Preparar para crear un nuevo ticket desde cero en el TicketSupportChatbot
+      window.dispatchEvent(new Event('support-chat-close'));
+      window.dispatchEvent(
+        new CustomEvent('support-open-chat', { detail: { id: null } })
+      );
+
+      // Validar si ya existe un ticket abierto, si sí: avisar y abrir ese
+      const creatorId = customEvent.detail.userId;
+      const email =
+        customEvent.detail.email ?? user?.emailAddresses?.[0]?.emailAddress;
+
+      getUserOpenTicket(creatorId)
+        .then((open) => {
+          if (
+            open &&
+            (open.estado ?? '').toLowerCase() !== 'cerrado' &&
+            (open.estado ?? '').toLowerCase() !== 'solucionado'
+          ) {
+            toast.error(
+              'Tienes un ticket abierto. No puedes crear uno nuevo hasta cerrarlo.'
+            );
+            window.dispatchEvent(
+              new CustomEvent('support-open-chat', { detail: { id: open.id } })
+            );
+            return;
+          }
+
+          // Crear el ticket en BD inmediatamente con descripción mínima para evitar historial anterior
+          const timestamp = Date.now();
+          const fecha = new Date(timestamp);
+          const dia = String(fecha.getDate()).padStart(2, '0');
+          const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+          const anio = fecha.getFullYear();
+          const hora = String(fecha.getHours()).padStart(2, '0');
+          const minuto = String(fecha.getMinutes()).padStart(2, '0');
+          const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
+
+          // Usar la función directa de creación sin getOrCreate para evitar reutilizar tickets
+          createNewTicket({
+            creatorId,
+            email,
+            description: `Nuevo ticket creado desde estudiante el ${resultado}`,
+          })
+            .then((response) => {
+              // Avisar a las listas para que se refresquen
+              window.dispatchEvent(
+                new CustomEvent('ticket-created', {
+                  detail: { id: response.id },
+                })
+              );
+              window.dispatchEvent(new CustomEvent('chat-updated'));
+              // Abrir el ticket en el TicketSupportChatbot
+              window.dispatchEvent(
+                new CustomEvent('support-open-chat', {
+                  detail: { id: response.id },
+                })
+              );
+            })
+            .catch((err) => {
+              console.error(
+                'Error creando el ticket desde el botón principal:',
+                err
+              );
+              toast.error('No se pudo crear el ticket. Intenta nuevamente.');
+            });
+        })
+        .catch((err) => {
+          console.error('Error validando ticket abierto:', err);
+          // Fallback a intentar crear
+          const timestamp = Date.now();
+          const fecha = new Date(timestamp);
+          const dia = String(fecha.getDate()).padStart(2, '0');
+          const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+          const anio = fecha.getFullYear();
+          const hora = String(fecha.getHours()).padStart(2, '0');
+          const minuto = String(fecha.getMinutes()).padStart(2, '0');
+          const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
+          getOrCreateSuportChat({
+            creatorId,
+            email,
+            description: `Nuevo ticket de soporte creado el ${resultado}`,
+          })
+            .then((response) => {
+              window.dispatchEvent(
+                new CustomEvent('ticket-created', {
+                  detail: { id: response.id },
+                })
+              );
+              window.dispatchEvent(new CustomEvent('chat-updated'));
+              // Abrir el ticket en el TicketSupportChatbot
+              window.dispatchEvent(
+                new CustomEvent('support-open-chat', {
+                  detail: { id: response.id },
+                })
+              );
+            })
+            .catch((e) => {
+              console.error('Error creando el ticket (fallback):', e);
+              toast.error('No se pudo crear el ticket. Intenta nuevamente.');
+            });
+        });
+    };
+
+    window.addEventListener('create-new-ticket', handleCreateNewTicket);
+
+    return () => {
+      window.removeEventListener('create-new-ticket', handleCreateNewTicket);
+    };
+  }, [user?.emailAddresses]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -1621,7 +1737,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     const handleInitialSearch = () => {
       if (
         !initialSearchQuery?.trim() ||
-        !isSignedIn ||
         !showChat ||
         processingQuery ||
         searchRequestInProgress.current ||
@@ -1630,6 +1745,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return;
       }
 
+      // Si no está autenticado: abrir chat y mostrar aviso para iniciar sesión
+      if (!isSignedIn) {
+        setIsOpen(true);
+        setShowLoginNotice(true);
+        return;
+      }
+
+      // Usuario autenticado: disparar creación de chat con la búsqueda
       initialSearchDone.current = true;
       setIsOpen(true);
       window.dispatchEvent(
@@ -1648,12 +1771,32 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     };
   }, []);
 
+  // Event listener para cerrar completamente el chatbot
+  useEffect(() => {
+    const handleChatbotClose = () => {
+      setIsOpen(false);
+      setShowChatList(false);
+    };
+
+    window.addEventListener('chatbot-close', handleChatbotClose);
+
+    return () => {
+      window.removeEventListener('chatbot-close', handleChatbotClose);
+    };
+  }, []);
+
   useEffect(() => {
     if (!showChat) {
       initialSearchDone.current = false;
       setProcessingQuery(false);
+      setShowLoginNotice(false);
     }
   }, [showChat, processingQuery]);
+
+  // Si el usuario inicia sesión, ocultar el aviso
+  useEffect(() => {
+    if (isSignedIn && showLoginNotice) setShowLoginNotice(false);
+  }, [isSignedIn, showLoginNotice]);
 
   useEffect(() => {
     setIsOpen(showChat);
@@ -1798,7 +1941,115 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
     if (action === 'contact_support') {
       queueOrSaveUserMessage('🛠 Soporte Técnico');
-      toast.info('Redirigiendo a soporte técnico');
+      // Cerrar el chat de IA y activar el botón de crear nuevo ticket
+      setIsOpen(false);
+      // Disparar el evento para crear un nuevo ticket
+      if (user?.id) {
+        window.dispatchEvent(
+          new CustomEvent('create-new-ticket', {
+            detail: {
+              userId: user.id,
+              email: user.emailAddresses?.[0]?.emailAddress,
+            },
+          })
+        );
+      }
+      return;
+    }
+
+    // Nuevas acciones para tickets de soporte
+    if (action === 'report_bug') {
+      queueOrSaveUserMessage('🐛 Reportar Error');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: 'Por favor, describe el error que encontraste. Incluye todos los detalles posibles como qué estabas haciendo cuando ocurrió el problema.',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    if (action === 'general_question') {
+      queueOrSaveUserMessage('❓ Pregunta General');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: '¡Perfecto! Hazme tu pregunta y te ayudaré con la información que necesites sobre Artiefy.',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    if (action === 'technical_issue') {
+      queueOrSaveUserMessage('🔧 Problema Técnico');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: 'Entiendo que tienes un problema técnico. Describe detalladamente qué está pasando y qué dispositivo/navegador estás usando.',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    if (action === 'payment_inquiry') {
+      queueOrSaveUserMessage('💰 Consulta de Pagos');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: 'Te ayudo con tu consulta de pagos. ¿Tienes algún problema con una transacción, facturación o necesitas información sobre los planes?',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    // Nuevas acciones para proyectos
+    if (action === 'view_projects') {
+      queueOrSaveUserMessage('📊 Ver Mis Proyectos');
+      if (!isSignedIn) {
+        router.push('/sign-in');
+      } else {
+        router.push('/proyectos');
+      }
+      return;
+    }
+
+    if (action === 'project_ideas') {
+      queueOrSaveUserMessage('💡 Ideas de Proyectos');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: '¡Excelente! Puedo ayudarte a generar ideas de proyectos basadas en tus intereses. ¿En qué área te gustaría enfocar tu proyecto?',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    if (action === 'project_tracking') {
+      queueOrSaveUserMessage('🎯 Seguimiento');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: 'Te ayudo con el seguimiento de tus proyectos. ¿Qué aspecto específico quieres revisar o mejorar en tu proyecto?',
+          sender: 'bot',
+        },
+      ]);
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
@@ -2540,8 +2791,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-200' : ''} bg-white`}
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
-                    <div className="flex items-start justify-between">
+                  <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
+                    <div className="flex items-start justify-between border-b p-3">
                       <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
                       <div className="-ml-6 flex flex-1 flex-col items-center">
                         <h2 className="mt-1 text-lg font-semibold text-gray-800">
@@ -2560,12 +2811,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                       <div className="flex">
                         <button
-                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
                           aria-label="Minimizar chatbot"
                         >
                           {!isChatPage &&
                             (chatMode.status ? (
-                              <GoArrowLeft
+                              <MdArrowBack
                                 className="text-xl text-gray-500"
                                 onClick={() => {
                                   setChatMode({
@@ -2590,136 +2841,207 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                         <button
                           onClick={() => setIsOpen(false)}
-                          className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
                           aria-label="Cerrar chatbot"
                         >
-                          <IoMdClose className="text-xl text-gray-500" />
+                          <IoClose className="text-xl text-gray-500" />
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Componente ChatMessages con tipos corregidos usando type assertion */}
-                  {chatMode.status && !isSignedIn ? (
-                    <ChatMessages
-                      idea={idea}
-                      setIdea={setIdea}
-                      setShowChatList={setShowChatList}
-                      courseId={courseId}
-                      isEnrolled={isEnrolled}
-                      courseTitle={courseTitle}
-                      messages={
-                        messages as {
-                          id: number;
-                          text: string;
-                          sender: string;
-                          coursesData?: { id: number; title: string }[];
-                        }[]
-                      }
-                      setMessages={
-                        setMessages as React.Dispatch<
-                          React.SetStateAction<
-                            { id: number; text: string; sender: string }[]
-                          >
+                  <ChatNavigation
+                    activeSection={activeSection}
+                    onSectionChange={setActiveSection}
+                  />
+
+                  {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
+                  {activeSection === 'chatia' &&
+                    showLoginNotice &&
+                    !isSignedIn && (
+                      <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
+                        <p className="text-sm text-white">
+                          Debes iniciar sesión para seguir la conversación
+                        </p>
+                        <button
+                          onClick={() => {
+                            const currentUrl = encodeURIComponent(
+                              window.location.href
+                            );
+                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                          }}
+                          className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
                         >
-                      }
-                      chatMode={chatMode}
-                      setChatMode={setChatMode}
-                      inputText={inputText}
-                      setInputText={setInputText}
-                      handleSendMessage={handleSendMessage}
-                      isLoading={isLoading}
-                      messagesEndRef={
-                        messagesEndRef as React.RefObject<HTMLDivElement>
-                      }
-                      isSignedIn={isSignedIn}
-                      inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                      renderMessage={
-                        renderMessage as (
-                          message: {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          },
-                          idx: number
-                        ) => React.ReactNode
-                      }
-                      onDeleteHistory={handleDeleteHistory}
-                      onBotButtonClick={handleBotButtonClick}
-                    />
-                  ) : chatMode.status && isSignedIn && chatMode.idChat ? (
-                    <ChatMessages
-                      idea={idea}
-                      setIdea={setIdea}
-                      setShowChatList={setShowChatList}
-                      courseId={courseId}
-                      isEnrolled={isEnrolled}
-                      courseTitle={courseTitle}
-                      messages={
-                        messages as {
-                          id: number;
-                          text: string;
-                          sender: string;
-                          coursesData?: { id: number; title: string }[];
-                        }[]
-                      }
-                      setMessages={
-                        setMessages as React.Dispatch<
-                          React.SetStateAction<
-                            { id: number; text: string; sender: string }[]
-                          >
-                        >
-                      }
-                      chatMode={chatMode}
-                      setChatMode={setChatMode}
-                      inputText={inputText}
-                      setInputText={setInputText}
-                      handleSendMessage={handleSendMessage}
-                      isLoading={isLoading}
-                      messagesEndRef={
-                        messagesEndRef as React.RefObject<HTMLDivElement>
-                      }
-                      isSignedIn={isSignedIn}
-                      inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                      renderMessage={
-                        renderMessage as (
-                          message: {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          },
-                          idx: number
-                        ) => React.ReactNode
-                      }
-                      onDeleteHistory={handleDeleteHistory}
-                      onBotButtonClick={handleBotButtonClick}
-                    />
-                  ) : (
-                    chatMode.status &&
-                    isSignedIn &&
-                    !chatMode.idChat && (
+                          Iniciar sesión
+                        </button>
+                      </div>
+                    )}
+
+                  {/* Contenido basado en la sección activa */}
+                  {activeSection === 'tickets' ? (
+                    chatMode.status && isSignedIn ? (
                       <ChatList
                         setChatMode={setChatMode}
                         setShowChatList={setShowChatList}
+                        activeType="tickets"
                       />
+                    ) : !isSignedIn ? (
+                      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                        <div className="mb-6">
+                          <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                            <svg
+                              className="h-8 w-8 text-black"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="mb-2 text-lg font-semibold text-black">
+                            Acceso restringido
+                          </h3>
+                          <p className="text-muted-foreground mb-6">
+                            Debes iniciar sesión para crear y gestionar tickets
+                            de soporte
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const currentUrl = encodeURIComponent(
+                              window.location.href
+                            );
+                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                          }}
+                          className="bg-background hover:bg-background/90 focus:ring-background rounded-lg px-6 py-3 font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                        >
+                          Iniciar sesión
+                        </button>
+                      </div>
+                    ) : null
+                  ) : activeSection === 'projects' ? (
+                    chatMode.status && isSignedIn ? (
+                      <ChatList
+                        setChatMode={setChatMode}
+                        setShowChatList={setShowChatList}
+                        activeType="projects"
+                      />
+                    ) : null
+                  ) : activeSection === 'chatia' ? (
+                    chatMode.status && !isSignedIn ? (
+                      <ChatMessages
+                        idea={idea}
+                        setIdea={setIdea}
+                        setShowChatList={setShowChatList}
+                        courseId={courseId}
+                        isEnrolled={isEnrolled}
+                        courseTitle={courseTitle}
+                        messages={
+                          messages as {
+                            id: number;
+                            text: string;
+                            sender: string;
+                            coursesData?: { id: number; title: string }[];
+                          }[]
+                        }
+                        setMessages={
+                          setMessages as React.Dispatch<
+                            React.SetStateAction<
+                              { id: number; text: string; sender: string }[]
+                            >
+                          >
+                        }
+                        chatMode={chatMode}
+                        setChatMode={setChatMode}
+                        inputText={inputText}
+                        setInputText={setInputText}
+                        handleSendMessage={handleSendMessage}
+                        isLoading={isLoading}
+                        messagesEndRef={
+                          messagesEndRef as React.RefObject<HTMLDivElement>
+                        }
+                        isSignedIn={isSignedIn}
+                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                        renderMessage={
+                          renderMessage as (
+                            message: {
+                              id: number;
+                              text: string;
+                              sender: string;
+                              coursesData?: { id: number; title: string }[];
+                            },
+                            idx: number
+                          ) => React.ReactNode
+                        }
+                        onDeleteHistory={handleDeleteHistory}
+                        onBotButtonClick={handleBotButtonClick}
+                      />
+                    ) : chatMode.status && isSignedIn && chatMode.idChat ? (
+                      <ChatMessages
+                        idea={idea}
+                        setIdea={setIdea}
+                        setShowChatList={setShowChatList}
+                        courseId={courseId}
+                        isEnrolled={isEnrolled}
+                        courseTitle={courseTitle}
+                        messages={
+                          messages as {
+                            id: number;
+                            text: string;
+                            sender: string;
+                            coursesData?: { id: number; title: string }[];
+                          }[]
+                        }
+                        setMessages={
+                          setMessages as React.Dispatch<
+                            React.SetStateAction<
+                              { id: number; text: string; sender: string }[]
+                            >
+                          >
+                        }
+                        chatMode={chatMode}
+                        setChatMode={setChatMode}
+                        inputText={inputText}
+                        setInputText={setInputText}
+                        handleSendMessage={handleSendMessage}
+                        isLoading={isLoading}
+                        messagesEndRef={
+                          messagesEndRef as React.RefObject<HTMLDivElement>
+                        }
+                        isSignedIn={isSignedIn}
+                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                        renderMessage={
+                          renderMessage as (
+                            message: {
+                              id: number;
+                              text: string;
+                              sender: string;
+                              coursesData?: { id: number; title: string }[];
+                            },
+                            idx: number
+                          ) => React.ReactNode
+                        }
+                        onDeleteHistory={handleDeleteHistory}
+                        onBotButtonClick={handleBotButtonClick}
+                      />
+                    ) : (
+                      chatMode.status &&
+                      isSignedIn &&
+                      !chatMode.idChat && (
+                        <ChatList
+                          setChatMode={setChatMode}
+                          setShowChatList={setShowChatList}
+                          activeType="chatia"
+                        />
+                      )
                     )
-                  )}
+                  ) : null}
                 </div>
-
-                {chatMode.status && isSignedIn && showChatList && (
-                  <button
-                    className="group fixed right-[4vh] bottom-32 z-50 h-12 w-12 cursor-pointer overflow-hidden rounded-full bg-[#0f172a] text-[20px] font-semibold text-[#3AF4EE] shadow-[0_0_0_2px_#3AF4EE] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-[#164d4a] active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE] md:right-10 md:bottom-10 md:h-16 md:w-16 md:text-[24px]"
-                    onClick={() => newChatMessage()}
-                  >
-                    <span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
-                      +
-                    </span>
-
-                    <span className="absolute top-1/2 left-1/2 h-[20px] w-[20px] -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-[#3AF4EF] opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[120px] group-hover:w-[120px] group-hover:opacity-100" />
-                  </button>
-                )}
               </ResizableBox>
             </div>
           )}

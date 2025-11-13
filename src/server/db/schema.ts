@@ -477,6 +477,8 @@ export const ticketComments = pgTable('ticket_comments', {
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   sender: text('sender').notNull().default('support'), // Puede ser 'user' o 'admin'
+  // Nuevo campo para marcar si el mensaje fue leído por el destinatario (usuario)
+  isRead: boolean('is_read').notNull().default(false),
 });
 
 //Tabla de parametros

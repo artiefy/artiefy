@@ -577,7 +577,7 @@ export default function TicketModal({
             {ticket && (
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-gray-300">
-                  Historial de Comentarios
+                  Historial de Chat
                 </h3>
                 <div className="max-h-60 space-y-3 overflow-y-auto rounded-lg border border-gray-700/50 bg-gray-800/30 p-4">
                   {isLoadingComments ? (
@@ -585,41 +585,46 @@ export default function TicketModal({
                       <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                     </div>
                   ) : comments.length > 0 ? (
-                    comments.map((comment, index) => (
-                      <div
-                        key={index}
-                        className="rounded-lg border border-gray-700/50 bg-gray-800/50 p-4"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-blue-400">
-                              {comment.user?.name || 'Usuario'}
-                            </span>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
-                                comment.sender === 'user'
-                                  ? 'bg-sky-500/20 text-sky-300'
+                    comments
+                      .filter(
+                        (comment) =>
+                          comment.content !== 'Ticket asignado a 1 usuario(s).'
+                      )
+                      .map((comment, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-gray-700/50 bg-gray-800/50 p-4"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-blue-400">
+                                {comment.user?.name || 'Usuario'}
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
+                                  comment.sender === 'user'
+                                    ? 'bg-sky-500/20 text-sky-300'
+                                    : comment.sender === 'admin'
+                                      ? 'bg-amber-500/20 text-amber-300'
+                                      : 'bg-purple-500/20 text-purple-200'
+                                }`}
+                              >
+                                {comment.sender === 'user'
+                                  ? 'Estudiante'
                                   : comment.sender === 'admin'
-                                    ? 'bg-amber-500/20 text-amber-300'
-                                    : 'bg-purple-500/20 text-purple-200'
-                              }`}
-                            >
-                              {comment.sender === 'user'
-                                ? 'Estudiante'
-                                : comment.sender === 'admin'
-                                  ? 'Admin'
-                                  : 'Soporte'}
+                                    ? 'Admin'
+                                    : 'Soporte'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {formatDateColombia(comment.createdAt)}
                             </span>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {formatDateColombia(comment.createdAt)}
-                          </span>
+                          <p className="mt-2 text-sm text-gray-300">
+                            {comment.content}
+                          </p>
                         </div>
-                        <p className="mt-2 text-sm text-gray-300">
-                          {comment.content}
-                        </p>
-                      </div>
-                    ))
+                      ))
                   ) : (
                     <p className="text-center text-sm text-gray-500">
                       No hay comentarios

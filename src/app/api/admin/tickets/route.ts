@@ -176,6 +176,27 @@ export async function GET(request: Request) {
 
   const now = new Date();
 
+  // Obtener el conteo de mensajes no leídos del estudiante para cada ticket
+  const ticketIds = result.rows.map((row) => row.id as number);
+  const unreadCountsResult =
+    ticketIds.length > 0
+      ? await db.execute(sql`
+        SELECT 
+          ticket_id,
+          COUNT(*) AS unread_count
+        FROM ticket_comments
+        WHERE ticket_id IN (${sql.join(ticketIds, sql`, `)})
+          AND is_read = false
+          AND sender = 'user'
+        GROUP BY ticket_id
+      `)
+      : { rows: [] };
+
+  const unreadCountsMap = new Map<number, number>();
+  for (const row of unreadCountsResult.rows) {
+    unreadCountsMap.set(row.ticket_id as number, Number(row.unread_count));
+  }
+
   const ticketsFormatted = result.rows.map((row) => {
     const createdAt = new Date(row.created_at as string);
     const updatedAt = new Date(row.updated_at as string);
@@ -185,14 +206,17 @@ export async function GET(request: Request) {
       : now.getTime() - createdAt.getTime();
 
     const assignedUsers = assignedMap.get(row.id as number) ?? [];
+    const unreadCount = unreadCountsMap.get(row.id as number) ?? 0;
 
     return {
       ...row,
-      created_at: createdAt,
-      updated_at: updatedAt,
+      // Enviar fechas como ISO strings (UTC) para evitar problemas de interpretación
+      created_at: createdAt.toISOString(),
+      updated_at: updatedAt.toISOString(),
       time_elapsed_ms: timeElapsedMs,
       assigned_users: assignedUsers,
       assignedToIds: assignedUsers.map((u) => u.id),
+      unread_count: unreadCount,
     };
   });
 
