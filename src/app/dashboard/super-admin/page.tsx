@@ -46,6 +46,10 @@ interface User {
 interface Course {
   id: string;
   title: string;
+  coverImage?: string;
+  instructor: string; // ✅ IMPORTANTE: Debe estar presente
+  modalidad?: { name: string };
+  rating?: number;
 }
 
 type ConfirmationState = {
@@ -418,9 +422,25 @@ export default function AdminDashboard() {
     title: string;
   }
 
+  interface RawCourseData {
+    id: string | number;
+    title: string;
+    coverImageKey?: string | null;
+    coverImage?: string;
+    instructor?: string;
+    instructorName?: string;
+    modalidad?: { name: string };
+    rating?: number;
+  }
+
   interface Course {
     id: string;
     title: string;
+    coverImageKey?: string | null;
+    coverImage?: string;
+    instructor: string; // ✅ IMPORTANTE: Debe estar presente
+    modalidad?: { name: string };
+    rating?: number;
   }
   const isValidProgramArray = useCallback(
     (data: unknown): data is Program[] => {
@@ -637,9 +657,10 @@ export default function AdminDashboard() {
         throw new Error('Datos inválidos para cursos');
       }
 
-      const data = rawData.map((c) => ({
+      const data = rawData.map((c: RawCourseData) => ({
         id: String(c.id),
         title: c.title,
+        instructor: c.instructorName ?? c.instructor ?? 'Sin instructor',
       }));
 
       setCourses(data);
@@ -738,12 +759,12 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Error al cargar cursos');
       const rawData: unknown = await res.json();
       if (!Array.isArray(rawData)) throw new Error('Invalid data received');
-      const data: { id: string; title: string }[] = rawData.filter(
-        (item): item is { id: string; title: string } =>
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          'title' in item
+      const data: { id: string; title: string; instructor: string }[] = rawData.map(
+        (item: RawCourseData) => ({
+          id: String(item.id),
+          title: String(item.title),
+          instructor: item.instructor ?? 'Sin instructor',
+        })
       );
       setCourses(data);
     } catch (err) {
@@ -1634,7 +1655,16 @@ export default function AdminDashboard() {
           throw new Error('Datos inválidos al obtener cursos desde programa');
         }
 
-        const data: Program[] = rawData as Program[];
+        const data: Course[] = rawData.map((item: RawCourseData) => ({
+          id: String(item.id),
+          title: String(item.title),
+          coverImageKey: item.coverImageKey ?? null,
+          coverImage: item.coverImage,
+          instructor: item.instructorName ?? item.instructor ?? 'Sin instructor',
+          modalidad: item.modalidad,
+          rating: item.rating,
+        }));
+
         setCourses(data);
       } catch (error) {
         console.error('Error cargando cursos desde programa:', error);
@@ -1643,9 +1673,9 @@ export default function AdminDashboard() {
     };
 
     if (selectedProgram) {
-      void fetchCoursesFromProgram();
+      void fetchCoursesFromProgram(); // ✅ Llama la función async aquí
     } else {
-      void fetchAllCourses(); // 🔁 Si se deselecciona, mostrar todos
+      void fetchAllCourses();
     }
   }, [
     selectedCourse,
@@ -1654,7 +1684,7 @@ export default function AdminDashboard() {
     fetchAllCourses,
     isValidCourseArray,
     selectedProgram,
-  ]); // ✅ para programas
+  ]);
 
   useEffect(() => {
     if (!selectedProgram) {
@@ -1683,10 +1713,13 @@ export default function AdminDashboard() {
           throw new Error('Datos inválidos recibidos');
         }
 
-        const data: { id: string; title: string }[] = rawData as {
-          id: string;
-          title: string;
-        }[];
+        const data: { id: string; title: string; instructor: string }[] = rawData.map(
+          (item: RawCourseData) => ({
+            id: String(item.id),
+            title: String(item.title),
+            instructor: item.instructor ?? 'Sin instructor',
+          })
+        );
 
         setCourses([...new Set(data)]); // Eliminar duplicados en cursos
       } catch (err) {
@@ -1724,12 +1757,19 @@ export default function AdminDashboard() {
           throw new Error('Datos inválidos recibidos');
         }
 
-        const data: { id: string; title: string }[] = rawData as {
-          id: string;
+        interface RawProgramData {
+          id: string | number;
           title: string;
-        }[];
+        }
 
-        setPrograms([...new Set(data)]); // Eliminar duplicados en programas
+        const data: { id: string; title: string }[] = rawData.map(
+          (item: RawProgramData) => ({
+            id: String(item.id),
+            title: String(item.title),
+          })
+        );
+
+        setPrograms(data); // Ya no necesitas el Set porque estás creando nuevos objetos // Eliminar duplicados en programas
       } catch (err) {
         console.error('Error al cargar programas desde curso:', err);
       }
@@ -2388,216 +2428,258 @@ export default function AdminDashboard() {
       )}
 
       {showAssignModal && (
-        <div className="bg-opacity-30 fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="w-full max-w-3xl rounded-lg bg-gray-800 p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
-                Asignar a Curso o Programa
-              </h2>
-              <button onClick={() => setShowAssignModal(false)}>
-                <X className="size-6 text-gray-300 hover:text-white" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-black/50">
+          <div className="w-full max-w-5xl max-h-[90vh] flex flex-col rounded-xl bg-gray-900 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] px-4 py-3 sm:px-6 sm:py-4">
+              <div>
+                <h2 className="text-base font-bold text-white sm:text-lg">
+                  Asignar a Curso o Programa
+                </h2>
+                <p className="text-xs text-white/80">
+                  {selectedStudents.length} estudiante(s) seleccionado(s)
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20"
+              >
+                <X className="size-5 text-white" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg bg-gray-700 p-4">
-                <h3 className="mb-2 font-semibold text-white">
-                  Seleccionar Estudiantes
-                </h3>
-                <input
-                  type="text"
-                  placeholder="Buscar estudiante..."
-                  className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
-                  value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
-                />
-                <div className="mb-2 flex items-center justify-between rounded bg-gray-600 px-3 py-2">
-                  <span className="font-semibold text-white">
-                    Seleccionar Todos
-                  </span>
+
+            {/* Content - con scroll interno */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="grid gap-4 lg:grid-cols-2">
+
+                {/* Panel de Estudiantes */}
+                <div className="rounded-lg bg-gray-800 p-4">
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
+                    <UserPlus className="size-4 text-blue-400" />
+                    Seleccionar Estudiantes
+                  </h3>
+
                   <input
-                    type="checkbox"
-                    checked={
-                      selectedStudents.length === users.length &&
-                      users.length > 0
-                    }
-                    onChange={(e) =>
-                      setSelectedStudents(
-                        e.target.checked ? users.map((u) => u.id) : []
-                      )
-                    }
-                    className="form-checkbox h-5 w-5 text-blue-500"
+                    type="text"
+                    placeholder="Buscar estudiante..."
+                    className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
                   />
-                </div>
-                <div className="h-64 overflow-y-auto rounded border border-gray-600">
-                  {users
-                    .filter(
-                      (user) =>
-                        user.firstName
-                          .toLowerCase()
-                          .includes(studentSearch.toLowerCase()) ||
-                        user.lastName
-                          .toLowerCase()
-                          .includes(studentSearch.toLowerCase()) ||
-                        user.email
-                          .toLowerCase()
-                          .includes(studentSearch.toLowerCase())
-                    )
-                    .map((user) => (
-                      <label
-                        key={user.id}
-                        className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
-                      >
-                        <span className="text-white">
-                          {user.firstName} {user.lastName}
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={selectedStudents.includes(user.id)}
-                          onChange={() => handleSelectStudent(user.id)}
-                          className="form-checkbox h-5 w-5 text-blue-500"
-                        />
-                      </label>
-                    ))}
-                </div>
-              </div>
 
-              {/* Colapsable Cursos y Programas */}
-              <div className="space-y-4 rounded-lg bg-gray-700 p-4">
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-white">
-                    Plan de Suscripción
+                  <label className="mb-2 flex cursor-pointer items-center justify-between rounded-lg bg-gray-700 px-3 py-2 hover:bg-gray-600">
+                    <span className="text-sm font-medium text-white">Seleccionar Todos</span>
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.length === users.length && users.length > 0}
+                      onChange={(e) =>
+                        setSelectedStudents(e.target.checked ? users.map((u) => u.id) : [])
+                      }
+                      className="form-checkbox h-4 w-4 rounded text-blue-500"
+                    />
                   </label>
-                  <select
-                    value={selectedPlanType}
-                    onChange={(e) =>
-                      setSelectedPlanType(
-                        e.target.value as 'Pro' | 'Premium' | 'Enterprise'
+
+                  <div className="max-h-[250px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                    {users
+                      .filter(
+                        (user) =>
+                          user.firstName.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          user.lastName.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          user.email.toLowerCase().includes(studentSearch.toLowerCase())
                       )
-                    }
-                    className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-white"
-                  >
-                    <option value="Pro">Pro</option>
-                    <option value="Premium">Premium</option>
-                    <option value="Enterprise">Enterprise</option>
-                  </select>
-                </div>
-
-                <div>
-                  <button
-                    onClick={() => setCoursesCollapsed(!coursesCollapsed)}
-                    className="bg-secondary w-full rounded py-2 text-white"
-                  >
-                    {coursesCollapsed ? 'Mostrar Cursos' : 'Ocultar Cursos'}
-                  </button>
-                  {!coursesCollapsed && (
-                    <div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
-                      <input
-                        type="text"
-                        placeholder="Buscar cursos..."
-                        value={courseSearch}
-                        onChange={(e) => setCourseSearch(e.target.value)}
-                        className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
-                      />
-                      {filteredCourses.map((course) => (
+                      .map((user) => (
                         <label
-                          key={course.id}
-                          className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+                          key={user.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 hover:bg-gray-700"
                         >
-                          <span className="text-white">{course.title}</span>
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                            {user.firstName[0]}{user.lastName[0]}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm text-white">
+                              {user.firstName} {user.lastName}
+                            </p>
+                            <p className="truncate text-xs text-gray-400">{user.email}</p>
+                          </div>
                           <input
-                            type="radio"
-                            name="selectedCourse"
-                            checked={selectedCourse === course.id}
-                            onChange={() => {
-                              setSelectedCourse(course.id); // ✅ No longer resets the program
-                            }}
-                            className="form-radio h-5 w-5 text-blue-500"
+                            type="checkbox"
+                            checked={selectedStudents.includes(user.id)}
+                            onChange={() => handleSelectStudent(user.id)}
+                            className="form-checkbox h-4 w-4 flex-shrink-0 rounded text-blue-500"
                           />
                         </label>
                       ))}
-                    </div>
-                  )}
-                  {selectedCourse && (
-                    <button
-                      onClick={() => {
-                        setSelectedCourse(null);
-                        void fetchAllPrograms(); // 🔁 Forzar recarga de programas
-                      }}
-                      className="mt-2 w-full rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                    >
-                      Quitar selección de curso
-                    </button>
-                  )}
+                  </div>
                 </div>
 
-                <div>
-                  <button
-                    onClick={() => {
-                      setProgramsCollapsed(!programsCollapsed); // ✅ Esto era lo que faltaba
-                    }}
-                    className="bg-primary w-full rounded py-2 text-white"
-                  >
-                    {programsCollapsed
-                      ? 'Mostrar Programas'
-                      : 'Ocultar Programas'}
-                  </button>
-
-                  {!programsCollapsed && (
-                    <div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
-                      <input
-                        type="text"
-                        placeholder="Buscar programas..."
-                        value={programSearch}
-                        onChange={(e) => setProgramSearch(e.target.value)}
-                        className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
-                      />
-                      {filteredPrograms.map((program) => (
-                        <label
-                          key={program.id}
-                          className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
-                        >
-                          <span className="text-white">{program.title}</span>
-                          <input
-                            type="radio"
-                            name="selectedProgram"
-                            checked={selectedProgram === program.id}
-                            onChange={() => {
-                              setSelectedProgram(program.id); // ✅ No longer resets the course
-                            }}
-                            className="form-radio h-5 w-5 text-green-500"
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                  {selectedProgram && (
-                    <button
-                      onClick={() => setSelectedProgram(null)}
-                      className="mt-2 w-full rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                {/* Panel de Cursos y Programas */}
+                <div className="space-y-3">
+                  {/* Plan de Suscripción */}
+                  <div className="rounded-lg bg-gray-800 p-4">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                      Plan de Suscripción
+                    </label>
+                    <select
+                      value={selectedPlanType}
+                      onChange={(e) =>
+                        setSelectedPlanType(e.target.value as 'Pro' | 'Premium' | 'Enterprise')
+                      }
+                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
                     >
-                      Quitar selección de programa
+                      <option value="Pro">Pro</option>
+                      <option value="Premium">Premium</option>
+                      <option value="Enterprise">Enterprise</option>
+                    </select>
+                  </div>
+
+                  {/* Cursos */}
+                  <div className="rounded-lg bg-gray-800">
+                    <button
+                      onClick={() => setCoursesCollapsed(!coursesCollapsed)}
+                      className="flex w-full items-center justify-between bg-emerald-600 px-4 py-2.5 text-white transition-colors hover:bg-emerald-700 rounded-t-lg"
+                    >
+                      <span className="text-sm font-semibold">
+                        {coursesCollapsed ? 'Mostrar' : 'Ocultar'} Cursos
+                      </span>
+                      <svg
+                        className={`size-4 transition-transform ${!coursesCollapsed ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     </button>
-                  )}
+
+                    {!coursesCollapsed && (
+                      <div className="p-3">
+                        <input
+                          type="text"
+                          placeholder="Buscar cursos..."
+                          value={courseSearch}
+                          onChange={(e) => setCourseSearch(e.target.value)}
+                          className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                        />
+                        <div className="max-h-[180px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                          {filteredCourses.map((course) => (
+                            <label
+                              key={course.id}
+                              className="flex cursor-pointer items-start gap-2 rounded px-2 py-2 hover:bg-gray-700"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-white">
+                                  {course.title}
+                                </p>
+                                {course.instructor && (
+                                  <p className="mt-0.5 text-xs text-emerald-400">
+                                    👨‍🏫 {course.instructor}
+                                  </p>
+                                )}
+                              </div>
+                              <input
+                                type="radio"
+                                name="selectedCourse"
+                                checked={selectedCourse === course.id}
+                                onChange={() => setSelectedCourse(course.id)}
+                                className="form-radio mt-1 h-4 w-4 flex-shrink-0 text-emerald-500"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        {selectedCourse && (
+                          <button
+                            onClick={() => {
+                              setSelectedCourse(null);
+                              void fetchAllPrograms();
+                            }}
+                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                          >
+                            <X className="size-3" />
+                            Quitar selección
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Programas */}
+                  <div className="rounded-lg bg-gray-800">
+                    <button
+                      onClick={() => setProgramsCollapsed(!programsCollapsed)}
+                      className="flex w-full items-center justify-between bg-purple-600 px-4 py-2.5 text-white transition-colors hover:bg-purple-700 rounded-t-lg"
+                    >
+                      <span className="text-sm font-semibold">
+                        {programsCollapsed ? 'Mostrar' : 'Ocultar'} Programas
+                      </span>
+                      <svg
+                        className={`size-4 transition-transform ${!programsCollapsed ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {!programsCollapsed && (
+                      <div className="p-3">
+                        <input
+                          type="text"
+                          placeholder="Buscar programas..."
+                          value={programSearch}
+                          onChange={(e) => setProgramSearch(e.target.value)}
+                          className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                        />
+                        <div className="max-h-[180px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                          {filteredPrograms.map((program) => (
+                            <label
+                              key={program.id}
+                              className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 hover:bg-gray-700"
+                            >
+                              <span className="min-w-0 flex-1 text-sm text-white">
+                                {program.title}
+                              </span>
+                              <input
+                                type="radio"
+                                name="selectedProgram"
+                                checked={selectedProgram === program.id}
+                                onChange={() => setSelectedProgram(program.id)}
+                                className="form-radio h-4 w-4 flex-shrink-0 text-purple-500"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        {selectedProgram && (
+                          <button
+                            onClick={() => setSelectedProgram(null)}
+                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                          >
+                            <X className="size-3" />
+                            Quitar selección
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-between">
+            {/* Footer con botones - siempre visible */}
+            <div className="flex flex-col gap-2 border-t border-gray-700 bg-gray-800 px-4 py-3 sm:flex-row sm:justify-between sm:px-6">
               <button
                 onClick={handleAssignStudents}
-                className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-                disabled={
-                  selectedStudents.length === 0 ||
-                  (!selectedCourse && !selectedProgram)
-                }
+                className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={selectedStudents.length === 0 || (!selectedCourse && !selectedProgram)}
               >
+                <Check className="size-4" />
                 Asignar Estudiantes
               </button>
               <button
                 onClick={() => setShowAssignModal(false)}
-                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-600"
               >
-                Salir
+                Cancelar
               </button>
             </div>
           </div>

@@ -7,6 +7,9 @@ import { usePathname } from 'next/navigation';
 
 import { UserButton, useUser } from '@clerk/clerk-react';
 import {
+  FaWhatsapp,
+} from 'react-icons/fa';
+import {
   FiBook,
   FiChevronDown,
   FiChevronRight,
@@ -38,6 +41,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const pathname = usePathname();
+  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -352,15 +357,69 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         </Link>
                       </li>
                       <li>
+
                         <Link
-                          href="/dashboard/super-admin/whatsapp/inbox"
+                          href="/dashboard/super-admin/whatsapp/inbox?session=sesion2"
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-white transition-all duration-300 hover:text-white text-xs',
-                            pathname === '/dashboard/super-admin/whatsapp/inbox' &&
+                            pathname === '/dashboard/super-admin/whatsapp/inbox' && 'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          WhatsApp (Sesión 2)
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+                {/* Submenú: WhatsApp */}
+                <li>
+                  <button
+                    onClick={() => shouldShowText && setIsWhatsAppOpen(!isWhatsAppOpen)}
+                    className={cn(
+                      'hover:bg-secondary flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:text-white',
+                      !shouldShowText && 'justify-center'
+                    )}
+                    title={!shouldShowText ? 'WhatsApp' : undefined}
+                  >
+                    <FaWhatsapp size={18} />
+                    {shouldShowText && (
+                      <>
+                        <span className="ml-2.5 flex-1 whitespace-nowrap text-xs font-medium text-left">
+                          WhatsApp
+                        </span>
+                        {isWhatsAppOpen ? (
+                          <FiChevronDown size={16} />
+                        ) : (
+                          <FiChevronRight size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  {isWhatsAppOpen && shouldShowText && (
+                    <ul className="mt-1 ml-4 space-y-0.5">
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/whatsapp/soporte"
+                          className={cn(
+                            'hover:bg-secondary block rounded-lg px-2 py-1.5 text-white transition-all duration-300 hover:text-white text-xs',
+                            pathname === '/dashboard/super-admin/whatsapp/soporte' &&
                             'bg-primary text-[#01142B]'
                           )}
                         >
-                          WhatsApp (Inbox)
+                          Soporte
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/whatsapp/sesion2"
+                          className={cn(
+                            'hover:bg-secondary block rounded-lg px-2 py-1.5 text-white transition-all duration-300 hover:text-white text-xs',
+                            pathname === '/dashboard/super-admin/whatsapp/sesion2' &&
+                            'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Sesión 2
                         </Link>
                       </li>
                     </ul>

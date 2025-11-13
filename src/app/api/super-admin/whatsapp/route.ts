@@ -4,40 +4,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
 
+import { getSession, type WhatsAppSession } from './_config';
 import { isIn24hWindow, pushInbox } from './_inbox';
 
-
 /** ===================== Config ===================== */
-const WHATSAPP_WABA_ID = '683921414745007';
-const WHATSAPP_PHONE_NUMBER_ID = '805951652593761';
-const ACCESS_TOKEN =
-  'EAAgXFWT4Gt8BPRnyw8HZA038BKjYZAgQQN4q83KlIfQPeaq58gFlZAerzNTYmthlZA6h9CZBqZC9ZCS2Sp21JeRiW9go6iKonNdRsRzZBVrC5FkMgt84O8hMkpg8GODzU5tL8cCyKocnKl7ymjZCe84KompirjoRHZBvyX9uilAqEBBEF9gZABzTcf47ZCPpe9ovB4u0CAZDZD';
+// Las configuraciones ahora vienen de _config.ts
 
 interface PostBody {
-  to: string;                     // "57XXXXXXXXXX"
+  to: string;
   text?: string;
   forceTemplate?: boolean;
   templateName?: string;
   languageCode?: string;
   variables?: string[];
-  ensureSession?: boolean;        // nombre “oficial”
-  autoSession?: boolean;          // alias que usas en el front
+  ensureSession?: boolean;
+  autoSession?: boolean;
   sessionTemplate?: string;
   sessionLanguage?: string;
-  replyTo?: string;               // 👈 id del mensaje a citar
+  replyTo?: string;
+  session?: string; // 👈 NUEVO: 'soporte' | 'sesion2'
 }
 
-
-// agrega context para responder a un mensaje específico
 interface TextPayload {
   messaging_product: 'whatsapp';
   to: string;
   type: 'text';
   text: { body: string };
-  context?: { message_id: string }; // 👈 reply
+  context?: { message_id: string };
 }
 
-// WhatsApp payloads
 interface TemplateParameter {
   type: 'text';
   text: string;
@@ -59,16 +54,8 @@ interface TemplatePayload {
   };
 }
 
-interface TextPayload {
-  messaging_product: 'whatsapp';
-  to: string;
-  type: 'text';
-  text: { body: string };
-}
-
 type WhatsAppPayload = TemplatePayload | TextPayload;
 
-// Meta success mínimo
 interface MetaMessageId {
   id: string;
   message_status?: string;
@@ -83,7 +70,6 @@ interface MetaMessageResponse {
   messages?: MetaMessageId[];
 }
 
-// Meta error
 interface MetaErrorData {
   message?: string;
   type?: string;
@@ -96,17 +82,16 @@ interface MetaErrorResponse {
   error?: MetaErrorData;
 }
 
-/** Plantillas (GET /message_templates) */
 type TemplateStatus = string;
 
 interface TemplateListComponent {
-  type: string; // 'BODY', 'HEADER', etc.
+  type: string;
   text?: string;
-  example?: { body_text?: string[][] }; // formato que devuelve Meta
+  example?: { body_text?: string[][] };
 }
 interface TemplateItem {
   name: string;
-  language: string; // ej. 'es_ES'
+  language: string;
   status: TemplateStatus;
   components?: TemplateListComponent[];
 }
@@ -114,23 +99,22 @@ interface TemplateListResponse {
   data?: TemplateItem[];
 }
 
-/** Respuesta simplificada para el front */
 interface UiTemplate {
   name: string;
   label: string;
   language: 'es' | 'en';
-  langCode: string; // código exacto de Meta (usar al enviar)
+  langCode: string;
   body: string;
   example: string[];
   status: TemplateStatus;
 }
 
 /** ===================== Helpers ===================== */
-function toCurl(url: string, payload: unknown): string {
+function toCurl(url: string, payload: unknown, accessToken: string): string {
   return [
     `curl -i -X POST \\`,
     `  '${url}' \\`,
-    `  -H 'Authorization: Bearer ${ACCESS_TOKEN}' \\`,
+    `  -H 'Authorization: Bearer ${accessToken}' \\`,
     `  -H 'Content-Type: application/json' \\`,
     `  -d '${JSON.stringify(payload).replace(/'/g, "\\'")}'`,
   ].join('\n');
@@ -143,17 +127,18 @@ function metaErrorInfo(json: unknown): { message?: string; code?: number } {
 
 async function sendToMeta<T extends MetaMessageResponse>(
   payload: WhatsAppPayload,
-  note: string
+  note: string,
+  sessionConfig: WhatsAppSession
 ): Promise<T> {
-  const url = `https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const url = `https://graph.facebook.com/v22.0/${sessionConfig.phoneNumberId}/messages`;
   const headers = {
-    Authorization: `Bearer ${ACCESS_TOKEN}`,
+    Authorization: `Bearer ${sessionConfig.accessToken}`,
     'Content-Type': 'application/json',
   } as const;
 
-  console.log(`\n================ [WA][POST] ${note} ================`);
+  console.log(`\n================ [WA][POST][${sessionConfig.displayName}] ${note} ================`);
   console.log('📤 Payload:\n', JSON.stringify(payload, null, 2));
-  console.log('📟 cURL equivalente:\n' + toCurl(url, payload) + '\n');
+  console.log('📟 cURL equivalente:\n' + toCurl(url, payload, sessionConfig.accessToken) + '\n');
 
   const res = await fetch(url, {
     method: 'POST',
@@ -201,12 +186,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       templateName,
       languageCode,
       variables = [],
-      ensureSession,            // opcional (override)
-      autoSession = true,       // auto por defecto
-      sessionTemplate = 'bienvenida', // 👈 usa bienvenida por defecto
-      sessionLanguage = 'es_ES',      // 👈 idioma por defecto español
+      ensureSession,
+      autoSession = true,
+      sessionTemplate = 'bienvenida',
+      sessionLanguage = 'es_ES',
+      session,
     } = body;
 
+    // Obtener configuración de la sesión
+    const sessionConfig = getSession(session);
+    console.log(`[WA] Usando sesión: ${sessionConfig.displayName}`);
 
     if (!to) {
       return NextResponse.json(
@@ -215,12 +204,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ¿hay que abrir ventana? -> override > auto > false
     const needEnsure =
       typeof ensureSession === 'boolean'
         ? ensureSession
         : autoSession
-          ? !(await isIn24hWindow(to)) // ← Ahora es async
+          ? !(await isIn24hWindow(to, sessionConfig.name))
           : false;
 
     const usingExplicitTemplate = Boolean(forceTemplate ?? templateName);
@@ -254,7 +242,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       try {
         const ok = await sendToMeta<MetaMessageResponse>(
           baseTpl,
-          `ENVÍO DE PLANTILLA (${baseTpl.template.name}/${baseTpl.template.language.code})`
+          `ENVÍO DE PLANTILLA (${baseTpl.template.name}/${baseTpl.template.language.code})`,
+          sessionConfig
         );
 
         pushInbox({
@@ -265,6 +254,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           type: 'template',
           text: `[TPL] ${baseTpl.template.name}/${baseTpl.template.language.code}${variables.length ? ' | ' + variables.join(' | ') : ''}`,
           raw: ok,
+          session: sessionConfig.name,
         });
 
         return NextResponse.json({
@@ -281,7 +271,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           };
           const ok1 = await sendToMeta<MetaMessageResponse>(
             fallback1,
-            'FALLBACK MISMA PLANTILLA (en_US)'
+            'FALLBACK MISMA PLANTILLA (en_US)',
+            sessionConfig
           );
 
           pushInbox({
@@ -292,6 +283,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             type: 'template',
             text: `[TPL] ${fallback1.template.name}/${fallback1.template.language.code}${variables.length ? ' | ' + variables.join(' | ') : ''}`,
             raw: ok1,
+            session: sessionConfig.name,
           });
 
           return NextResponse.json({
@@ -309,7 +301,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           };
           const ok2 = await sendToMeta<MetaMessageResponse>(
             fallback2,
-            'FALLBACK hello_world (en_US)'
+            'FALLBACK hello_world (en_US)',
+            sessionConfig
           );
 
           pushInbox({
@@ -320,6 +313,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             type: 'template',
             text: `[TPL] hello_world/en_US`,
             raw: ok2,
+            session: sessionConfig.name,
           });
 
           return NextResponse.json({
@@ -335,7 +329,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // ---------- B) Texto (auto ventana + reply) ----------
     let templateOpened: MetaMessageResponse | null = null;
 
-    // Abre ventana si hace falta (auto/override)
     if (needEnsure) {
       try {
         const open1: TemplatePayload = {
@@ -346,7 +339,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         };
         templateOpened = await sendToMeta<MetaMessageResponse>(
           open1,
-          'APERTURA DE VENTANA (plantilla inicial)'
+          'APERTURA DE VENTANA (plantilla inicial)',
+          sessionConfig
         );
       } catch {
         const open2: TemplatePayload = {
@@ -357,7 +351,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         };
         templateOpened = await sendToMeta<MetaMessageResponse>(
           open2,
-          'APERTURA DE VENTANA (fallback hello_world)'
+          'APERTURA DE VENTANA (fallback hello_world)',
+          sessionConfig
         );
       }
     }
@@ -370,12 +365,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       });
     }
 
-    // si no nos pasan replyTo, intenta citar el último inbound
-    // body ya debe estar tipado como PostBody
     const replyTo: string | undefined =
       typeof body.replyTo === 'string' ? body.replyTo : undefined;
-
-    // si usas alias autoSession desde el front, unifícalo aquí:
 
     const payloadText: TextPayload = {
       messaging_product: 'whatsapp',
@@ -387,7 +378,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const textResp = await sendToMeta<MetaMessageResponse>(
       payloadText,
-      replyTo ? 'ENVÍO DE TEXTO (reply)' : 'ENVÍO DE TEXTO'
+      replyTo ? 'ENVÍO DE TEXTO (reply)' : 'ENVÍO DE TEXTO',
+      sessionConfig
     );
 
     pushInbox({
@@ -398,6 +390,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       type: 'text',
       text,
       raw: textResp,
+      session: sessionConfig.name,
     });
 
     const metaId = textResp.messages?.[0]?.id;
@@ -410,6 +403,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         body: text,
         tsMs: Date.now(),
         raw: textResp as object,
+        session: sessionConfig.name,
       });
     } catch (e) {
       console.error('[WA][DB] No se pudo guardar OUTBOUND:', e);
@@ -428,16 +422,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-
 /** ===================== GET: listar plantillas ===================== */
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const url = `https://graph.facebook.com/v22.0/${WHATSAPP_WABA_ID}/message_templates?fields=name,language,status,components&limit=200`;
+    const { searchParams } = new URL(req.url);
+    const sessionName = searchParams.get('session') ?? 'soporte';
+    const sessionConfig = getSession(sessionName);
 
-    console.log('🔎 [WA][GET] Consultando plantillas:', { url });
+    const url = `https://graph.facebook.com/v22.0/${sessionConfig.wabaId}/message_templates?fields=name,language,status,components&limit=200`;
+
+    console.log(`🔎 [WA][GET][${sessionConfig.displayName}] Consultando plantillas:`, { url });
 
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      headers: { Authorization: `Bearer ${sessionConfig.accessToken}` },
       method: 'GET',
     });
 
