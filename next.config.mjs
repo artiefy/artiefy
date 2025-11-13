@@ -51,13 +51,9 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-<<<<<<< HEAD
-    qualities: [100, 75],
-=======
     qualities: [100, 75, 85], // Agregar 85 para evitar warnings de imágenes
     maximumRedirects: 3, // Explicit default in v16 for security
     dangerouslyAllowLocalIP: false, // Default security restriction in v16
->>>>>>> 4310e909f352bdc3430556ab1b0d15dc6b7f229d
   },
   expireTime: 3600,
 };
