@@ -87,9 +87,8 @@ export const createCourse = async ({
   });
 };
 
-// Obtener todos los cursos de un profesor
 export const getCoursesByUserId = async (userId: string) => {
-  console.log('UserId recibido:', userId); // Asegúrate de que el ID del usuario sea el correcto
+  console.log('UserId recibido:', userId);
   return db
     .select({
       id: courses.id,
@@ -99,7 +98,8 @@ export const getCoursesByUserId = async (userId: string) => {
       categoryid: categories.name,
       modalidadesid: modalidades.name,
       nivelid: nivel.name,
-      instructor: courses.instructor,
+      instructor: users.name, // ✅ Ahora trae el NOMBRE
+      instructorId: courses.instructor, // ✅ Opcional: mantener el ID
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
@@ -142,7 +142,6 @@ export const getCourseById = async (courseId: number) => {
     .then((rows) => rows[0]);
 };
 
-// Obtener todos los cursos
 export const getAllCourses = async () => {
   return db
     .select({
@@ -153,7 +152,8 @@ export const getAllCourses = async () => {
       categoryid: categories.name,
       modalidadesid: modalidades.name,
       nivelid: nivel.name,
-      instructor: courses.instructor,
+      instructor: users.name, // ✅ Ahora trae el NOMBRE del instructor
+      instructorId: courses.instructor, // ✅ Opcional: mantener el ID si lo necesitas
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
@@ -161,7 +161,8 @@ export const getAllCourses = async () => {
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(nivel, eq(courses.nivelid, nivel.id))
-    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .leftJoin(users, eq(courses.instructor, users.id)); // ✅ Agregado el JOIN con users
 };
 
 // Actualizar un curso

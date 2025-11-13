@@ -13,19 +13,34 @@ jiti('./src/env.ts');
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
-  cacheComponents: false,
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [32, 48, 64, 96, 128, 256, 384], // 16 removed by default in v16
-    minimumCacheTTL: 14400, // 4 hours default in v16
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 14400,
     remotePatterns: [
-      new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
-      new URL('https://placehold.co/**'),
-      new URL('https://img.clerk.com/**'),
-      new URL('https://assets.example.com/**'),
+      {
+        protocol: 'https',
+        hostname: 's3.us-east-2.amazonaws.com',
+        pathname: '/artiefy-upload/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'assets.example.com',
+        pathname: '/**',
+      },
     ],
     localPatterns: [
       {
@@ -36,14 +51,9 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-    qualities: [100, 75], // Default in v16
-    maximumRedirects: 3, // Explicit default in v16 for security
-    dangerouslyAllowLocalIP: false, // Default security restriction in v16
+    qualities: [100, 75],
   },
   expireTime: 3600,
-  // Turbopack is now default; no --turbopack needed in scripts
-  // Add turbopack config here if custom options needed (e.g., resolveAlias)
-  // turbopack: {},
 };
 
 export default withNextVideo(withPlaiceholder(nextConfig));

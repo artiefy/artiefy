@@ -1445,6 +1445,8 @@ export const waMessages = pgTable(
     mediaId: text('media_id'),
     mediaType: text('media_type'),
     fileName: text('file_name'),
+    session: varchar('session', { length: 50 }).default('soporte'), // 👈 AGREGAR ESTA LÍNEA
+
   },
   // Cambia el objeto por un array para evitar el warning deprecado
   (t) => [

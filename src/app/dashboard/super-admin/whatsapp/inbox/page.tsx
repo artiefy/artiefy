@@ -6,6 +6,9 @@ import Image from 'next/image';
 
 import { FileText, Image as ImageIcon, Mic, Paperclip, Send, Video } from 'lucide-react';
 
+interface WhatsAppInboxPageProps {
+  searchParams: { session?: string };
+}
 interface InboxItem {
   id?: string;
   from?: string;
@@ -52,7 +55,6 @@ interface Thread {
   remainingMs: number;
   isAlmostExpired: boolean;
 }
-
 
 /* ========= Helpers de tipado para respuestas JSON ========= */
 interface ApiError { error: string }
@@ -136,23 +138,7 @@ function MediaMessage({ item }: { item: InboxItem }) {
           </a>
         </div>
       );
-    default:
-      return (
-        <div className="space-y-1">
-          <a
-            href={src}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded bg-[#2A3942] text-gray-100 hover:bg-[#33434c] text-sm"
-          >
-            {item.fileName ?? 'Abrir documento'}
-          </a>
-          {caption}
-          <a href={downloadHref} className="inline-flex items-center gap-1 text-xs underline">
-            Descargar
-          </a>
-        </div>
-      );
+
   }
 }
 
@@ -216,8 +202,8 @@ function CreateQuickTag({ onCreated }: { onCreated: (t: Tag) => void }) {
   );
 }
 
-export default function WhatsAppInboxPage() {
-  const [inbox, setInbox] = useState<InboxItem[]>([]);
+export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPageProps) {
+  const session = searchParams.session ?? 'soporte'; const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [compose, setCompose] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -235,6 +221,10 @@ export default function WhatsAppInboxPage() {
   const [tagFilter, setTagFilter] = useState<number | 'ALL'>('ALL');
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagAssignmentsCache, setTagAssignmentsCache] = useState<Record<string, number[]>>({});
+
+  // Configuración de la sesión actual
+  const sessionName = session;
+  const sessionDisplay = session === 'soporte' ? 'Soporte' : 'Sesión 2';
 
   const getInitialHiddenWaids = (): Set<string> => {
     try {
@@ -313,10 +303,8 @@ export default function WhatsAppInboxPage() {
     return list.sort((a, b) => b.lastTs - a.lastTs);
   }, [inbox]);
 
-  /* === Fix deps: memorizamos la lista de waids para el efecto de precarga === */
   const waidsKey = useMemo(() => threads.map(t => t.waid).sort().join(','), [threads]);
 
-  // Pre-cargar/actualizar asignaciones de etiquetas para TODOS los hilos.
   useEffect(() => {
     if (!waidsKey) return;
     let cancel = false;
@@ -324,7 +312,6 @@ export default function WhatsAppInboxPage() {
     (async () => {
       const waids = waidsKey.split(',').filter(Boolean);
       for (const waid of waids) {
-        // si ya está en cache, saltar
         if ((tagAssignmentsCache[waid] ?? undefined) !== undefined) continue;
 
         try {
@@ -367,11 +354,9 @@ export default function WhatsAppInboxPage() {
       if (filterWindow === 'almost' && !t.isAlmostExpired) return false;
       if (filterWindow === 'expired' && t.isNew24h) return false;
 
-      // Filtro por etiqueta
       if (tagFilter !== 'ALL') {
         let ids = tagAssignmentsCache[t.waid];
 
-        // fallback al cache de sessionStorage mientras llega la precarga
         if (ids === undefined && typeof window !== 'undefined') {
           try {
             const raw = sessionStorage.getItem(`wa_tagmap_${t.waid}`);
@@ -405,7 +390,7 @@ export default function WhatsAppInboxPage() {
     let cancel = false;
     const load = async () => {
       try {
-        const res = await fetch('/api/super-admin/whatsapp/inbox', {
+        const res = await fetch(`/api/super-admin/whatsapp/inbox?session=${sessionName}`, {
           cache: 'no-store',
         });
         const data = (await res.json()) as ApiInboxResponse;
@@ -420,9 +405,8 @@ export default function WhatsAppInboxPage() {
       cancel = true;
       clearInterval(iv);
     };
-  }, []);
+  }, [sessionName]);
 
-  // Cargar todas las etiquetas una vez
   useEffect(() => {
     const loadTags = async () => {
       try {
@@ -437,7 +421,6 @@ export default function WhatsAppInboxPage() {
     void loadTags();
   }, []);
 
-  // Cargar etiquetas asignadas cuando cambia la conversación seleccionada
   useEffect(() => {
     const loadAssigned = async (waid: string) => {
       try {
@@ -445,7 +428,6 @@ export default function WhatsAppInboxPage() {
         const j = (await r.json()) as unknown as AssignedResp;
         const ids = isAssignedOk(j) ? j.assignedTagIds : [];
         setAssignedTagIds(ids);
-        // Actualizar cache
         setTagAssignmentsCache(prev => ({ ...prev, [waid]: ids }));
       } catch {
         setAssignedTagIds([]);
@@ -546,6 +528,7 @@ export default function WhatsAppInboxPage() {
           text,
           autoSession: true,
           replyTo,
+          session: sessionName,
         }),
       });
 
@@ -590,7 +573,7 @@ export default function WhatsAppInboxPage() {
       setShowTplModal(true);
       setTplLoading(true);
 
-      const res = await fetch('/api/super-admin/whatsapp', { method: 'GET' });
+      const res = await fetch(`/api/super-admin/whatsapp?session=${sessionName}`, { method: 'GET' });
       const data = (await res.json()) as { templates?: UiTemplate[] };
 
       const list = Array.isArray(data.templates)
@@ -644,6 +627,7 @@ export default function WhatsAppInboxPage() {
           replyTo: replyToId,
           sessionTemplate: tplSelected.name,
           sessionLanguage: tplSelected.langCode,
+          session: sessionName,
         }),
       });
 
@@ -751,7 +735,7 @@ export default function WhatsAppInboxPage() {
         className={`w-full md:w-80 border-r border-gray-800 bg-[#111B21] text-gray-200 ${showList ? 'block' : 'hidden md:block'}`}
       >
         <div className="px-4 py-3 flex items-center justify-between">
-          <div className="text-lg font-semibold text-gray-100">WhatsApp Inbox</div>
+          <div className="text-lg font-semibold text-gray-100">WhatsApp {sessionDisplay}</div>
           {hiddenWaids.size > 0 && (
             <button
               onClick={restoreAllConversations}
@@ -891,7 +875,6 @@ export default function WhatsAppInboxPage() {
                     </>
                   )}
                 </div>
-                {/* Chips de etiquetas asignadas a la conversación */}
                 <div className="mt-1 flex flex-wrap gap-1">
                   {(tagAssignmentsCache[t.waid] ?? []).map((id) => {
                     const tag = allTags.find((x) => x.id === id);
@@ -911,8 +894,6 @@ export default function WhatsAppInboxPage() {
                     );
                   })}
                 </div>
-
-
 
                 <div className="mt-1 truncate text-sm text-[#8696A0]">
                   {t.lastText ?? '(sin texto)'}

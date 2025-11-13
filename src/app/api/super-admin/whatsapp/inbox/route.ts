@@ -1,7 +1,7 @@
 // src/app/api/super-admin/whatsapp/inbox/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { desc } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
@@ -9,7 +9,6 @@ import { waMessages } from '~/server/db/schema';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Definir tipos para la estructura del raw data
 interface MediaData {
   id?: string;
   mime_type?: string;
@@ -23,32 +22,39 @@ interface RawMessageData {
   document?: MediaData & { filename?: string };
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
+    const { searchParams } = new URL(req.url);
+    const sessionName = searchParams.get('session');
+
+    console.log('[WA][INBOX] Consultando para sesión:', sessionName ?? 'todas');
+
+    const conditions = sessionName ? [eq(waMessages.session, sessionName)] : [];
+
     const rows = await db
       .select({
-        id:        waMessages.id,
+        id: waMessages.id,
         metaMessageId: waMessages.metaMessageId,
-        waid:      waMessages.waid,
-        name:      waMessages.name,
+        waid: waMessages.waid,
+        name: waMessages.name,
         direction: waMessages.direction,
-        msgType:   waMessages.msgType,
-        body:      waMessages.body,
-        tsMs:      waMessages.tsMs,
-        mediaId:   waMessages.mediaId,
+        msgType: waMessages.msgType,
+        body: waMessages.body,
+        tsMs: waMessages.tsMs,
+        mediaId: waMessages.mediaId,
         mediaType: waMessages.mediaType,
-        fileName:  waMessages.fileName,
-        raw:       waMessages.raw,          // 👈 NECESARIO PARA EL FALLBACK
+        fileName: waMessages.fileName,
+        raw: waMessages.raw,
+        session: waMessages.session,
       })
       .from(waMessages)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(waMessages.tsMs))
       .limit(5000);
 
     const items = rows.map((r) => {
-      // Tipado seguro del raw data
       const raw: RawMessageData = (r.raw as RawMessageData) ?? {};
 
-      // Fallbacks desde raw si BD no tiene columnas/valores
       const fbMediaId =
         r.mediaId ??
         raw.image?.id ?? raw.video?.id ?? raw.audio?.id ?? raw.document?.id ?? undefined;
@@ -63,14 +69,14 @@ export async function GET(): Promise<NextResponse> {
       const fbType =
         r.msgType ??
         (raw.image ? 'image' :
-         raw.video ? 'video' :
-         raw.audio ? 'audio' :
-         raw.document ? 'document' : 'text');
+          raw.video ? 'video' :
+            raw.audio ? 'audio' :
+              raw.document ? 'document' : 'text');
 
       return {
         id: r.metaMessageId ?? String(r.id),
         from: r.direction === 'inbound' ? r.waid : undefined,
-        to:   r.direction === 'outbound' ? r.waid : undefined,
+        to: r.direction === 'outbound' ? r.waid : undefined,
         name: r.name ?? undefined,
         timestamp: r.tsMs,
         type: fbType,
@@ -79,6 +85,7 @@ export async function GET(): Promise<NextResponse> {
         mediaId: fbMediaId,
         mediaType: fbMediaType,
         fileName: fbFileName,
+        session: r.session ?? 'soporte',
       };
     });
 
