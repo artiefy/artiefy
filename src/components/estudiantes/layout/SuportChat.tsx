@@ -51,7 +51,6 @@ export const SuportChat: React.FC<SuportChatProps> = ({
   setMessages,
   messages,
   isLoading,
-  isTyping = false,
   messagesEndRef,
   inputText,
   setInputText,
@@ -67,7 +66,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   const isTicketClosed = Boolean(
     ticketStatus &&
-      ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
+    ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
   );
 
   useEffect(() => {
@@ -94,10 +93,10 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
           const historyMessages = ticket.messages
             ? ticket.messages.map((msg) => ({
-                id: msg.id,
-                text: msg.content,
-                sender: msg.sender === 'user' ? 'user' : 'support',
-              }))
+              id: msg.id,
+              text: msg.content,
+              sender: msg.sender === 'user' ? 'user' : 'support',
+            }))
             : [];
 
           // Solo agregar mensaje inicial si no existe en el historial

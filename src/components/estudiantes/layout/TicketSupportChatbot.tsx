@@ -404,7 +404,7 @@ const TicketSupportChatbot = () => {
         container.scrollTop = container.scrollHeight;
       }
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch (_err) {
+    } catch (_e) {
       // fallback silencioso
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -574,8 +574,6 @@ const TicketSupportChatbot = () => {
       inputRef.current.focus();
     }
   };
-
-  // eliminado: handler local no utilizado
 
   // if (!isDesktop) return null; // Solo se muestra si showExtras es true
 

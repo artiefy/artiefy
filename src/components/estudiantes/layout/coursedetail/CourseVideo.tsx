@@ -47,6 +47,19 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
     }
   };
 
+  const videoStyle: React.CSSProperties & Record<string, string | number> = {
+    '--media-primary-color': '#3AF4EF',
+    '--media-secondary-color': '#00BDD8',
+    '--media-accent-color': '#3AF4EF',
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    maxHeight: '100vh',
+    position: 'absolute',
+    top: '0',
+    left: '0',
+  };
+
   if (!videoKey || videoKey === 'null') {
     return (
       <div className="flex h-64 items-center justify-center text-center text-lg font-semibold text-gray-500">
@@ -72,20 +85,7 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
               onProgressUpdate(progressValue);
             }
           }}
-          style={
-            {
-              '--media-primary-color': '#3AF4EF',
-              '--media-secondary-color': '#00BDD8',
-              '--media-accent-color': '#3AF4EF',
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              maxHeight: '100vh',
-              position: 'absolute',
-              top: '0',
-              left: '0',
-            } as React.CSSProperties
-          }
+          style={videoStyle}
         />
       )}
       {isLoading && (

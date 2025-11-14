@@ -38,7 +38,7 @@ export async function POST(
       .where(eq(projects.id, projectId))
       .limit(1);
 
-    if (!project || project.userId !== userId) {
+    if (project?.userId !== userId) {
       return respondWithError(
         'No tienes permisos para aprobar entregas en este proyecto',
         403

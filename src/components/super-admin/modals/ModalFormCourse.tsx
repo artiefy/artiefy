@@ -436,8 +436,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     const controller = new AbortController();
     setUploadController(controller);
 
-    console.log('📦 Iniciando envío del formulario');
-    console.log('🎓 Instructor seleccionado:', instructor);
 
     const newErrors = {
       title: !editingCourseId && !title,
@@ -592,10 +590,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         );
       }
 
-      console.log('🧠 Guardando en BD...');
-      console.log('   - coverImageKey:', coverImageKey);
-      console.log('   - uploadedFileName:', finalUploadedFileName);
-      console.log('   - videoKey:', finalVideoKey);
       if (
         courseTypeId.includes(4) &&
         (!individualPrice || individualPrice <= 0)
