@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      courseTypeId: null, // <-- SIEMPRE null
+      courseTypeId: normalizedTypes.length > 0 ? normalizedTypes[0] : null, // ✅ Guarda el primero
       individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
     };
 

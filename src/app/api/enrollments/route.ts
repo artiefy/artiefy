@@ -11,7 +11,6 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
-import { sortLessons } from '~/utils/lessonSorting';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
@@ -176,42 +175,47 @@ export async function POST(request: Request) {
           }))
         );
 
-        // Obtener lecciones del curso
+        // Obtener lecciones del curso ordenadas por orderIndex
+        // Obtener lecciones del curso ordenadas por orderIndex
         const courseLessons = await db.query.lessons.findMany({
-          where: eq(lessons.courseId, parsedCourseId), // asegúrate de usar parsedCourseId aquí
+          where: eq(lessons.courseId, parsedCourseId),
+          orderBy: (lessons, { asc }) => [asc(lessons.orderIndex)],
         });
 
-        const sortedLessons = sortLessons(courseLessons);
-        const lessonIds = sortedLessons.map((lesson) => lesson.id);
+        if (courseLessons.length === 0) {
+          console.warn(`⚠️ No hay lecciones para el curso ${parsedCourseId}`);
+        } else {
+          // La primera lección es la que tiene el orderIndex más bajo
+          const firstLessonId = courseLessons[0].id;
+          const lessonIds = courseLessons.map((lesson) => lesson.id);
 
-        for (const userId of newUsers) {
-          const existingProgress = await db.query.userLessonsProgress.findMany({
-            where: and(
-              eq(userLessonsProgress.userId, userId),
-              inArray(userLessonsProgress.lessonId, lessonIds)
-            ),
-          });
+          for (const userId of newUsers) {
+            const existingProgress = await db.query.userLessonsProgress.findMany({
+              where: and(
+                eq(userLessonsProgress.userId, userId),
+                inArray(userLessonsProgress.lessonId, lessonIds)
+              ),
+            });
 
-          const existingProgressSet = new Set(
-            existingProgress.map((progress) => progress.lessonId)
-          );
+            const existingProgressSet = new Set(
+              existingProgress.map((progress) => progress.lessonId)
+            );
 
-          for (const [index, lesson] of sortedLessons.entries()) {
-            if (!existingProgressSet.has(lesson.id)) {
-              const isFirstOrWelcome =
-                index === 0 ||
-                lesson.title.toLowerCase().includes('bienvenida') ||
-                lesson.title.toLowerCase().includes('clase 1');
+            for (const lesson of courseLessons) {
+              if (!existingProgressSet.has(lesson.id)) {
+                // Solo desbloquear la primera lección (según orderIndex)
+                const isFirstLesson = lesson.id === firstLessonId;
 
-              await db.insert(userLessonsProgress).values({
-                userId,
-                lessonId: lesson.id,
-                progress: 0,
-                isCompleted: false,
-                isLocked: !isFirstOrWelcome,
-                isNew: true,
-                lastUpdated: new Date(),
-              });
+                await db.insert(userLessonsProgress).values({
+                  userId,
+                  lessonId: lesson.id,
+                  progress: 0,
+                  isCompleted: false,
+                  isLocked: !isFirstLesson, // ✅ Solo false para la primera
+                  isNew: true,
+                  lastUpdated: new Date(),
+                });
+              }
             }
           }
         }

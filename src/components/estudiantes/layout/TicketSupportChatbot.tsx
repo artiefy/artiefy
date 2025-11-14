@@ -404,7 +404,7 @@ const TicketSupportChatbot = () => {
         container.scrollTop = container.scrollHeight;
       }
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch (e) {
+    } catch (_e) {
       // fallback silencioso
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -575,26 +575,7 @@ const TicketSupportChatbot = () => {
     }
   };
 
-  const handleClick = () => {
-    if (!isSignedIn) {
-      const currentUrl = encodeURIComponent(window.location.href);
-      toast.error('Acceso restringido', {
-        description: 'Debes iniciar sesión para enviar tickets de soporte.',
-        action: {
-          label: 'Iniciar sesión',
-          onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
-        },
-        duration: 5000,
-      });
-      return;
-    }
-    const button = document.querySelector('.ticket-button');
-    button?.classList.add('clicked');
-    setTimeout(() => {
-      button?.classList.remove('clicked');
-      setIsOpen(!isOpen);
-    }, 300);
-  };
+
 
   // if (!isDesktop) return null; // Solo se muestra si showExtras es true
 

@@ -23,6 +23,8 @@ import {
   FiX,
 } from 'react-icons/fi';
 
+import { TicketNotificationBell } from '~/components/TicketNotificationBell';
+import { useTicketsUnread } from '~/hooks/useTicketsUnread';
 import { cn } from '~/lib/utils';
 
 import { ModalError } from './educators/modals/modalError';
@@ -33,6 +35,8 @@ interface ResponsiveSidebarProps {
 
 const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const { user } = useUser();
+  const { totalUnread } = useTicketsUnread(); // ✅ Agregar esto
+
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -76,6 +80,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Tickets',
       id: 'tickets',
       link: '/dashboard/super-admin/tickets',
+      badge: totalUnread,
     },
     {
       icon: <FiShieldOff size={18} />,
@@ -181,6 +186,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     id: string;
     link?: string;
     onClick?: () => void;
+    badge?: number;
   }[] = [];
 
   if (user?.publicMetadata?.role === 'admin') {
@@ -231,6 +237,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
               />
+              <TicketNotificationBell />
               <UserButton showName />
             </div>
           </div>
@@ -256,7 +263,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   href={item.link ?? '#'}
                   onClick={() => setActiveItem(item.id)}
                   className={cn(
-                    'hover:bg-primary group flex items-center rounded-lg p-2 text-white transition-all duration-200',
+                    'hover:bg-primary group flex items-center rounded-lg p-2 text-white transition-all duration-200 relative',
                     activeItem === item.id && 'bg-primary text-black',
                     !shouldShowText && 'justify-center'
                   )}
@@ -264,15 +271,27 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 >
                   <span
                     className={cn(
-                      'text-gray-300 transition duration-75 group-hover:text-gray-900',
+                      'text-gray-300 transition duration-75 group-hover:text-gray-900 relative',
                       activeItem === item.id && 'text-black'
                     )}
                   >
                     {item.icon}
+                    {/* ✅ Badge cuando el sidebar está CERRADO - aparece sobre el ícono */}
+                    {!shouldShowText && item.badge && item.badge > 0 && (
+                      <span className="absolute -top-2 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white animate-pulse ring-1 ring-background">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </span>
+                  {/* ✅ Badge cuando el sidebar está ABIERTO - aparece al final del texto */}
                   {shouldShowText && (
-                    <span className="ml-2.5 whitespace-nowrap text-xs font-medium">
+                    <span className="ml-2.5 flex items-center justify-between whitespace-nowrap text-xs font-medium flex-1">
                       {item.title}
+                      {item.badge && item.badge > 0 && (
+                        <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white animate-pulse">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
                     </span>
                   )}
                 </Link>

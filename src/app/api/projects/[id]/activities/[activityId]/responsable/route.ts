@@ -32,7 +32,7 @@ export async function PATCH(
       .where(eq(projects.id, projectId))
       .limit(1);
 
-    if (!project || project.userId !== userId) {
+    if (project?.userId !== userId) {
       return NextResponse.json(
         { error: 'No tienes permisos' },
         { status: 403 }

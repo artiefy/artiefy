@@ -507,7 +507,7 @@ export default function ModalSolicitudesParticipacion({
           ? todasLasSolicitudes.find((s) => s.id === solicitud.id)
           : null;
 
-        if (!solicitudActual || solicitudActual.status !== 'pending') {
+        if (solicitudActual?.status !== 'pending') {
           alert('Esta solicitud ya ha sido procesada');
           await fetchSolicitudes(); // Refrescar lista
           return;
