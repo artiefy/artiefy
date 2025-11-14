@@ -752,15 +752,40 @@ export function CourseHeader({
 
     try {
       const userPlanType = user?.publicMetadata?.planType as string;
-      const hasPremiumType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
-      );
-      const hasProType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
-      );
-      const isPurchasable =
-        course.courseTypeId === 4 ||
-        course.courseTypes?.some((type) => type.isPurchasableIndividually);
+      // Unificar detección cuando sólo existe course.courseType (estructura legacy)
+      const singleType = !course.courseTypes?.length
+        ? course.courseType
+        : undefined;
+      let hasPremiumType = false;
+      if (
+        course.courseTypes?.some(
+          (type) => type.requiredSubscriptionLevel === 'premium'
+        )
+      ) {
+        hasPremiumType = true;
+      } else if (singleType?.requiredSubscriptionLevel === 'premium') {
+        hasPremiumType = true;
+      }
+      let hasProType = false;
+      if (
+        course.courseTypes?.some(
+          (type) => type.requiredSubscriptionLevel === 'pro'
+        )
+      ) {
+        hasProType = true;
+      } else if (singleType?.requiredSubscriptionLevel === 'pro') {
+        hasProType = true;
+      }
+      let isPurchasable = false;
+      if (course.courseTypeId === 4) {
+        isPurchasable = true;
+      } else if (
+        course.courseTypes?.some((type) => type.isPurchasableIndividually)
+      ) {
+        isPurchasable = true;
+      } else if (singleType?.isPurchasableIndividually) {
+        isPurchasable = true;
+      }
 
       // Si el curso es individual y el usuario no tiene suscripción activa, abrir el modal de pago
       if (
@@ -789,9 +814,16 @@ export function CourseHeader({
       }
 
       // FIRST, CHECK IF USER CAN ACCESS VIA SUBSCRIPTION
-      const userCanAccessWithSubscription =
-        (userPlanType === 'Premium' && hasPremiumType) ??
-        ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+      // Corregir lógica: Premium debe poder acceder a Pro; evitar uso incorrecto de ?? que bloqueaba acceso
+      let userCanAccessWithSubscription = false;
+      if (userPlanType === 'Premium' && hasPremiumType) {
+        userCanAccessWithSubscription = true;
+      } else if (
+        (userPlanType === 'Pro' || userPlanType === 'Premium') &&
+        hasProType
+      ) {
+        userCanAccessWithSubscription = true;
+      }
 
       // If user has subscription access and subscription is active, proceed with direct enrollment
       if (userCanAccessWithSubscription && isSubscriptionActive) {
@@ -878,21 +910,55 @@ export function CourseHeader({
   // Actualiza la lógica para mostrar el texto correcto según el estado de suscripción
   const getEnrollButtonText = (): string => {
     const userPlanType = user?.publicMetadata?.planType as string;
-    const isPurchasableIndividually =
-      course.courseTypeId === 4 ||
-      course.courseTypes?.some((type) => type.isPurchasableIndividually);
+    let isPurchasableIndividually = false;
+    if (course.courseTypeId === 4) {
+      isPurchasableIndividually = true;
+    } else if (
+      course.courseTypes?.some((type) => type.isPurchasableIndividually)
+    ) {
+      isPurchasableIndividually = true;
+    } else if (course.courseType?.isPurchasableIndividually) {
+      isPurchasableIndividually = true;
+    }
 
-    const hasPremiumType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
-    );
-    const hasProType = course.courseTypes?.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
-    );
-    const hasFreeType = course.courseTypes?.some(
-      (type) =>
-        type.requiredSubscriptionLevel === 'none' &&
-        !type.isPurchasableIndividually
-    );
+    const singleType = !course.courseTypes?.length
+      ? course.courseType
+      : undefined;
+    let hasPremiumType = false;
+    if (
+      course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      )
+    ) {
+      hasPremiumType = true;
+    } else if (singleType?.requiredSubscriptionLevel === 'premium') {
+      hasPremiumType = true;
+    }
+    let hasProType = false;
+    if (
+      course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
+      )
+    ) {
+      hasProType = true;
+    } else if (singleType?.requiredSubscriptionLevel === 'pro') {
+      hasProType = true;
+    }
+    let hasFreeType = false;
+    if (
+      course.courseTypes?.some(
+        (type) =>
+          type.requiredSubscriptionLevel === 'none' &&
+          !type.isPurchasableIndividually
+      )
+    ) {
+      hasFreeType = true;
+    } else if (
+      singleType?.requiredSubscriptionLevel === 'none' &&
+      !singleType?.isPurchasableIndividually
+    ) {
+      hasFreeType = true;
+    }
 
     // Detectar si la suscripción está inactiva o vencida
     const subscriptionStatus = user?.publicMetadata
@@ -1017,6 +1083,21 @@ export function CourseHeader({
     }
 
     // Fallback final
+    if (hasPremiumType) return 'Inscribirse al Curso Premium';
+    if (hasProType) return 'Inscribirse al Curso Pro';
+    if (hasFreeType) return 'Inscribirse al Curso Gratis';
+    if (isPurchasableIndividually) {
+      const price =
+        course.individualPrice ??
+        course.courseTypes?.find((type) => type.isPurchasableIndividually)
+          ?.price ??
+        singleType?.price ??
+        0;
+      return `Comprar Curso $${price.toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`;
+    }
     return 'Inscribirse al Curso';
   };
 

@@ -404,7 +404,7 @@ const TicketSupportChatbot = () => {
         container.scrollTop = container.scrollHeight;
       }
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch (e) {
+    } catch (_err) {
       // fallback silencioso
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -575,26 +575,7 @@ const TicketSupportChatbot = () => {
     }
   };
 
-  const handleClick = () => {
-    if (!isSignedIn) {
-      const currentUrl = encodeURIComponent(window.location.href);
-      toast.error('Acceso restringido', {
-        description: 'Debes iniciar sesión para enviar tickets de soporte.',
-        action: {
-          label: 'Iniciar sesión',
-          onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
-        },
-        duration: 5000,
-      });
-      return;
-    }
-    const button = document.querySelector('.ticket-button');
-    button?.classList.add('clicked');
-    setTimeout(() => {
-      button?.classList.remove('clicked');
-      setIsOpen(!isOpen);
-    }, 300);
-  };
+  // eliminado: handler local no utilizado
 
   // if (!isDesktop) return null; // Solo se muestra si showExtras es true
 
@@ -605,7 +586,7 @@ const TicketSupportChatbot = () => {
       {/* Botón de soporte siempre visible, arriba */}
       {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
         <div
-          className="fixed right-6 bottom-28 z-50 sm:right-6"
+          className="fixed right-7 bottom-25 z-50 sm:right-6"
           style={{
             animationName: isDesktop
               ? showExtras

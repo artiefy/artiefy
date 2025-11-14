@@ -158,6 +158,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     width: 400,
     height: 500,
   });
+  // Responsive: dimensiones seguras para móviles (teclado táctil)
+  const [viewportWidth, setViewportWidth] = useState<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 0
+  );
+  const [viewportHeight, setViewportHeight] = useState<number>(
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
+  const [bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -463,6 +472,82 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   // Prefer nullish coalescing operator for safePathname
   const safePathname = pathname ?? '';
   const isChatPage = safePathname === '/';
+
+  // Efecto: gestionar visualViewport para móviles (altura real con teclado)
+  useEffect(() => {
+    // Bloquear scroll del body cuando el chatbot está abierto en móvil
+    if (!isDesktop && isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+    return undefined;
+  }, [isDesktop, isOpen]);
+
+  useEffect(() => {
+    const hasVV = typeof window !== 'undefined' && 'visualViewport' in window;
+    const handleResize = () => {
+      if (hasVV && window.visualViewport) {
+        const vv = window.visualViewport;
+        setViewportWidth(Math.round(vv.width));
+        setViewportHeight(Math.round(vv.height));
+        setIsKeyboardOpen(vv.height < window.innerHeight - 80);
+        const inset = Math.max(
+          0,
+          window.innerHeight - vv.height - (vv.offsetTop ?? 0)
+        );
+        setBottomInset(inset);
+      } else {
+        setViewportWidth(window.innerWidth);
+        setViewportHeight(window.innerHeight);
+        setIsKeyboardOpen(false);
+        setBottomInset(0);
+      }
+    };
+
+    handleResize();
+    if (hasVV && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.visualViewport?.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+        window.removeEventListener('resize', handleResize);
+      };
+    } else {
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+      };
+    }
+  }, []);
+
+  // Mantener el input visible y scrollear al fondo cuando abre el teclado
+  useEffect(() => {
+    if (isOpen && (isKeyboardOpen || viewportHeight)) {
+      // pequeño delay para que el layout se estabilice
+      setTimeout(() => {
+        try {
+          messagesEndRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+          });
+          inputRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+          });
+          inputRef.current?.focus();
+        } catch {
+          // noop
+        }
+      }, 50);
+    }
+  }, [isOpen, isKeyboardOpen, viewportHeight]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {
@@ -2766,29 +2851,42 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
               style={
                 isDesktop
                   ? { right: 0, bottom: 0, left: 'auto', top: 'auto' }
-                  : undefined
+                  : {
+                      height: viewportHeight
+                        ? `${viewportHeight}px`
+                        : undefined,
+                    }
               }
             >
               <ResizableBox
-                width={dimensions.width}
-                height={dimensions.height}
+                width={isDesktop ? dimensions.width : viewportWidth}
+                height={isDesktop ? dimensions.height : viewportHeight}
                 onResize={handleResize}
                 minConstraints={
                   isDesktop
                     ? [500, window.innerHeight]
-                    : [window.innerWidth, window.innerHeight]
+                    : [viewportWidth, viewportHeight]
                 }
                 maxConstraints={[
                   isDesktop
                     ? Math.min(window.innerWidth, window.innerWidth - 20)
-                    : window.innerWidth,
-                  isDesktop ? window.innerHeight : window.innerHeight,
+                    : viewportWidth,
+                  isDesktop ? window.innerHeight : viewportHeight,
                 ]}
                 resizeHandles={isDesktop ? ['sw'] : []}
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
               >
                 <div
                   className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-200' : ''} bg-white`}
+                  style={
+                    !isDesktop
+                      ? {
+                          paddingBottom: isKeyboardOpen
+                            ? Math.max(0, bottomInset)
+                            : 0,
+                        }
+                      : undefined
+                  }
                 >
                   {/* Header */}
                   <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
@@ -2814,20 +2912,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                           className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
                           aria-label="Minimizar chatbot"
                         >
-                          {!isChatPage &&
-                            (chatMode.status ? (
-                              <MdArrowBack
-                                className="text-xl text-gray-500"
-                                onClick={() => {
-                                  setChatMode({
-                                    idChat: null,
-                                    status: true,
-                                    curso_title: '',
-                                  });
-                                  setShowChatList(true);
-                                }}
-                              />
-                            ) : null)}
+                          {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
+                          {!isChatPage && chatMode.idChat !== null ? (
+                            <MdArrowBack
+                              className="text-xl text-gray-500"
+                              onClick={() => {
+                                setChatMode({
+                                  idChat: null,
+                                  status: true,
+                                  curso_title: '',
+                                });
+                                setShowChatList(true);
+                              }}
+                            />
+                          ) : null}
                         </button>
 
                         <button
@@ -2840,7 +2938,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                         </button>
 
                         <button
-                          onClick={() => setIsOpen(false)}
+                          onClick={() => {
+                            setIsOpen(false);
+                            // Cerrar completamente el chatbot (padres escuchan este evento)
+                            window.dispatchEvent(
+                              new CustomEvent('close-chatbot')
+                            );
+                          }}
                           className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
                           aria-label="Cerrar chatbot"
                         >
