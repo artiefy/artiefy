@@ -904,11 +904,6 @@ export function CourseHeader({
       subscriptionStatus !== 'active' ||
       (subscriptionEndDate && new Date(subscriptionEndDate) < new Date());
 
-    // Usar ?? en vez de ||
-    const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
-
     // --- NUEVO: Detectar si la inscripción es permanente (compra individual) ---
     // Busca en enrollments si hay isPermanent === true
     const isPermanentEnrollment =
@@ -927,15 +922,30 @@ export function CourseHeader({
       if (hasPremiumType && userPlanType === 'Premium')
         return 'Inscrito al Curso Premium';
       if (hasProType && userPlanType === 'Pro') return 'Inscrito al Curso Pro';
-      if (hasFreeType) return 'Inscribto al Curso Gratis';
+      if (hasFreeType) return 'Inscrito al Curso Gratis';
       if (isPurchasableIndividually) return 'Inscrito al Curso Individual';
       return 'Inscrito al Curso';
     }
 
-    // Si el curso es individual y el usuario no tiene acceso por suscripción activa, mostrar "Comprar Curso"
+    // PRIORIDAD 1: Si el usuario tiene suscripción activa, mostrar según su plan
+    if (isSignedIn && isSubscriptionActive && !isSubscriptionExpired) {
+      // Usuario con Premium activo y curso tiene tipo Premium
+      if (userPlanType === 'Premium' && hasPremiumType) {
+        return 'Inscribirse al Curso Premium';
+      }
+      // Usuario con Pro o Premium activo y curso tiene tipo Pro
+      if (
+        (userPlanType === 'Pro' || userPlanType === 'Premium') &&
+        hasProType
+      ) {
+        return 'Inscribirse al Curso Pro';
+      }
+    }
+
+    // PRIORIDAD 2: Si no tiene suscripción activa Y el curso es individual, mostrar compra
     if (
       isPurchasableIndividually &&
-      (!userCanAccessWithSubscription || isSubscriptionExpired)
+      (!isSubscriptionActive || isSubscriptionExpired)
     ) {
       const price =
         course.individualPrice ??
@@ -948,9 +958,21 @@ export function CourseHeader({
       })}`;
     }
 
-    // Si el usuario no está autenticado
+    // PRIORIDAD 3: Si el usuario no está autenticado, mostrar según tipos disponibles
     if (!isSignedIn) {
       if (course.courseTypes && course.courseTypes.length > 0) {
+        // Orden de prioridad: Individual > Premium > Pro > Free
+        if (isPurchasableIndividually) {
+          const price =
+            course.individualPrice ??
+            course.courseTypes?.find((type) => type.isPurchasableIndividually)
+              ?.price ??
+            0;
+          return `Comprar Curso $${price.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}`;
+        }
         if (hasPremiumType) return 'Inscribirse al Curso Premium';
         if (hasProType) return 'Inscribirse al Curso Pro';
         if (hasFreeType) return 'Inscribirse al Curso Gratis';
@@ -966,38 +988,35 @@ export function CourseHeader({
       return 'Iniciar Sesión';
     }
 
-    // Si el curso es gratuito
+    // PRIORIDAD 4: Si el curso es SOLO gratuito (sin otros tipos)
     if (
-      course.courseType?.requiredSubscriptionLevel === 'none' ||
-      hasFreeType
+      hasFreeType &&
+      !isPurchasableIndividually &&
+      !hasPremiumType &&
+      !hasProType
     ) {
       return 'Inscribirse al Curso Gratis';
     }
 
-    // Si el usuario tiene suscripción activa y acceso
-    if (isSignedIn && isSubscriptionActive && userCanAccessWithSubscription) {
+    // PRIORIDAD 5: Si no tiene suscripción activa, mostrar tipo predominante
+    if (!isSubscriptionActive || isSubscriptionExpired) {
+      if (isPurchasableIndividually) {
+        const price =
+          course.individualPrice ??
+          course.courseTypes?.find((type) => type.isPurchasableIndividually)
+            ?.price ??
+          0;
+        return `Comprar Curso $${price.toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`;
+      }
       if (hasPremiumType) return 'Inscribirse al Curso Premium';
       if (hasProType) return 'Inscribirse al Curso Pro';
-      return 'Inscribirse al Curso';
+      if (hasFreeType) return 'Inscribirse al Curso Gratis';
     }
 
-    // Si el usuario no tiene suscripción activa y el curso es premium/pro
-    if (!isSubscriptionActive && (hasPremiumType || hasProType)) {
-      if (hasPremiumType) return 'Inscribirse al Curso Premium';
-      if (hasProType) return 'Inscribirse al Curso Pro';
-    }
-
-    // Fallback
-    if (course.courseTypes && course.courseTypes.length > 0) {
-      if (hasPremiumType && !hasProType) return 'Inscribirse al Curso Premium';
-      if (hasProType && !hasPremiumType) return 'Inscribirse al Curso Pro';
-    }
-    if (course.courseType) {
-      if (course.courseType.requiredSubscriptionLevel === 'premium')
-        return 'Inscribirse al Curso Premium';
-      if (course.courseType.requiredSubscriptionLevel === 'pro')
-        return 'Inscribirse al Curso Pro';
-    }
+    // Fallback final
     return 'Inscribirse al Curso';
   };
 
@@ -1568,98 +1587,6 @@ export function CourseHeader({
                   </div>
                 ) : null)}
             </div>
-          </div>
-          {/* New buttons container */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Grade button */}
-            {/* Ocultar botón en mobile si no está logueado */}
-            {/* 
-            {(isSignedIn ?? window.innerWidth >= 640) && (
-              <Button
-                onClick={() => setIsGradeModalOpen(true)}
-                disabled={!canAccessGrades}
-                className={cn(
-                  'mt-6 h-9 shrink-0 px-4 font-semibold sm:w-auto', // <-- aumenta el mt aquí
-                  canAccessGrades
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-400 text-white'
-                )}
-                aria-label={
-                  !isEnrolled
-                    ? 'Debes inscribirte al curso'
-                    : 'Completa todas las clases para ver tus calificaciones'
-                }
-              >
-                <FaTrophy
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    !canAccessGrades ? 'text-black' : ''
-                  )}
-                />
-                <span
-                  className={cn(
-                    'text-sm font-bold',
-                    !canAccessGrades ? 'text-black' : ''
-                  )}
-                >
-                  Mis Calificaciones
-                </span>
-              </Button>
-            )}
-            */}
-            {/* Price button with space theme */}
-            {course.courseTypeId === 4 &&
-              course.individualPrice &&
-              !isEnrolled && (
-                <div className="flex w-full flex-col items-center justify-center gap-4">
-                  {!isSignedIn ? (
-                    <SignInButton mode="modal">
-                      <button className="btn">
-                        <strong>
-                          {/* Solo mostrar el texto con precio */}
-                          <span>
-                            {`Comprar Curso $${course.individualPrice.toLocaleString(
-                              'es-CO',
-                              {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0,
-                              }
-                            )}`}
-                          </span>
-                        </strong>
-                        <div id="container-stars">
-                          <div id="stars" />
-                        </div>
-                        <div id="glow">
-                          <div className="circle" />
-                          <div className="circle" />
-                        </div>
-                      </button>
-                    </SignInButton>
-                  ) : (
-                    <button onClick={handleEnrollClick} className="btn">
-                      <strong>
-                        <span>
-                          {`Comprar Curso $${course.individualPrice.toLocaleString(
-                            'es-CO',
-                            {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }
-                          )}`}
-                        </span>
-                      </strong>
-                      <div id="container-stars">
-                        <div id="stars" />
-                      </div>
-                      <div id="glow">
-                        <div className="circle" />
-                        <div className="circle" />
-                      </div>
-                    </button>
-                  )}
-                </div>
-              )}
           </div>
           {/* Duplicated enrollment button (centered) - mirror the bottom control exactly for consistent visuals */}
           <div
