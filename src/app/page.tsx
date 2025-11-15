@@ -84,6 +84,17 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
+  // Listener para cerrar completamente el chatbot desde dentro (evento global)
+  useEffect(() => {
+    const handleCloseChatbot = () => {
+      setShowChatbot(false);
+    };
+    window.addEventListener('close-chatbot', handleCloseChatbot);
+    return () => {
+      window.removeEventListener('close-chatbot', handleCloseChatbot);
+    };
+  }, []);
+
   return (
     <div className="relative flex min-h-screen flex-col">
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}

@@ -230,12 +230,19 @@ export default function StudentDetails({
 
     window.addEventListener('force-open-chatbot', handleForceOpenChatbot);
 
+    // Listener para cierre completo del chatbot
+    const handleCloseChatbot = () => {
+      setShowChatbot(false);
+    };
+    window.addEventListener('close-chatbot', handleCloseChatbot);
+
     return () => {
       window.removeEventListener(
         'artiefy-search',
         handleGlobalSearch as EventListener
       );
       window.removeEventListener('force-open-chatbot', handleForceOpenChatbot);
+      window.removeEventListener('close-chatbot', handleCloseChatbot);
     };
   }, []);
 

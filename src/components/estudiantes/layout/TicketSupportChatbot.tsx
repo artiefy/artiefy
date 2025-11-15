@@ -575,8 +575,6 @@ const TicketSupportChatbot = () => {
     }
   };
 
-
-
   // if (!isDesktop) return null; // Solo se muestra si showExtras es true
 
   console.log('Datos: ' + isOpen, showExtras, isSignedIn, isOpen, isDesktop);
@@ -586,7 +584,7 @@ const TicketSupportChatbot = () => {
       {/* Botón de soporte siempre visible, arriba */}
       {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
         <div
-          className="fixed right-6 bottom-28 z-50 sm:right-6"
+          className="fixed right-7 bottom-25 z-50 sm:right-6"
           style={{
             animationName: isDesktop
               ? showExtras
