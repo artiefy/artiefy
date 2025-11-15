@@ -394,7 +394,40 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           cache: 'no-store',
         });
         const data = (await res.json()) as ApiInboxResponse;
-        if (!cancel) setInbox(Array.isArray(data?.items) ? data.items : []);
+        if (!cancel) {
+          const serverItems = Array.isArray(data?.items) ? data.items : [];
+
+          setInbox((prevInbox) => {
+            // Obtener mensajes locales (los que tienen id local-...)
+            const localMessages = prevInbox.filter((m) => m.id?.startsWith('local-'));
+
+            // Si no hay mensajes locales, simplemente usar los del servidor
+            if (localMessages.length === 0) {
+              return serverItems;
+            }
+
+            // Crear un Set con los IDs del servidor para búsqueda rápida
+            const serverIds = new Set(serverItems.map((m) => m.id));
+
+            // Mantener mensajes locales que aún no están en el servidor
+            const pendingLocalMessages = localMessages.filter((local) => {
+              // Buscar si existe un mensaje similar en el servidor
+              const existsInServer = serverItems.some((server) => {
+                // Comparar por texto, destinatario y timestamp similar (dentro de 15 segundos)
+                return (
+                  server.text === local.text &&
+                  server.to === local.to &&
+                  Math.abs((server.timestamp || 0) - (local.timestamp || 0)) < 15000
+                );
+              });
+
+              return !existsInServer;
+            });
+
+            // Combinar: mensajes del servidor + mensajes locales pendientes
+            return [...pendingLocalMessages, ...serverItems];
+          });
+        }
       } catch {
         if (!cancel) setInbox([]);
       }
@@ -406,7 +439,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       clearInterval(iv);
     };
   }, [sessionName]);
-
   useEffect(() => {
     const loadTags = async () => {
       try {
@@ -546,9 +578,10 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         throw new Error(errMsg);
       }
 
+      const localId = 'local-' + Date.now();
       setInbox((prev) => [
         {
-          id: 'local-' + Date.now(),
+          id: localId,
           direction: 'outbound',
           timestamp: Date.now(),
           to: waid,
@@ -558,6 +591,11 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         ...prev,
       ]);
       setCompose((p) => ({ ...p, [waid]: '' }));
+
+      // Eliminar mensaje local después de 8 segundos (el polling ya habrá traído el real)
+      setTimeout(() => {
+        setInbox((prev) => prev.filter((m) => m.id !== localId));
+      }, 8000);
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : 'No se pudo enviar el WhatsApp';
@@ -598,7 +636,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
   const sendWithTemplateThenText = async (waid: string) => {
     if (!tplSelected) return;
-    const text = (compose[waid] || '').trim();
+    // NO leer el texto del compose
     try {
       setSending(waid);
       const replyToId = lastInboundId(waid);
@@ -612,17 +650,22 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           timestamp: now,
           to: waid,
           type: 'template',
-          text: `[TPL] ${tplSelected.name}/${tplSelected.langCode}`,
+          text: tplSelected.body || `[Plantilla: ${tplSelected.name}]`,
         },
         ...prev,
       ]);
+
+      // Eliminar mensaje local después de 8 segundos (el polling ya habrá traído el real)
+      setTimeout(() => {
+        setInbox((prev) => prev.filter((m) => m.id !== localTplId));
+      }, 8000);
 
       const res = await fetch('/api/super-admin/whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: waid,
-          text,
+          // NO incluir text
           autoSession: true,
           replyTo: replyToId,
           sessionTemplate: tplSelected.name,
@@ -654,20 +697,8 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         );
       }
 
-      if (text) {
-        setInbox((prev) => [
-          {
-            id: 'local-' + Date.now(),
-            direction: 'outbound',
-            timestamp: Date.now(),
-            to: waid,
-            type: 'text',
-            text,
-          },
-          ...prev,
-        ]);
-        setCompose((p) => ({ ...p, [waid]: '' }));
-      }
+      // Limpiar el input
+      setCompose((p) => ({ ...p, [waid]: '' }));
 
       setShowTplModal(false);
     } catch (e) {
@@ -677,7 +708,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       setSending(null);
     }
   };
-
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>, waid: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -734,15 +764,15 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       <aside
         className={`w-full md:w-80 border-r border-gray-800 bg-[#111B21] text-gray-200 ${showList ? 'block' : 'hidden md:block'}`}
       >
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="text-lg font-semibold text-gray-100">WhatsApp {sessionDisplay}</div>
+        <div className="px-4 py-4 flex items-center justify-between bg-[#202C33]">
+          <div className="text-xl font-semibold text-gray-100">Chats</div>
           {hiddenWaids.size > 0 && (
             <button
               onClick={restoreAllConversations}
-              className="text-xs text-emerald-400 hover:text-emerald-300 underline"
+              className="text-xs text-emerald-400 hover:text-emerald-300"
               title={`Restaurar ${hiddenWaids.size} conversación(es) oculta(s)`}
             >
-              Restaurar ({hiddenWaids.size})
+              ({hiddenWaids.size})
             </button>
           )}
         </div>
@@ -818,85 +848,86 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           {filteredThreads.map((t) => (
             <div
               key={t.waid}
-              className={`group relative flex w-full transition-colors ${selected === t.waid ? 'bg-[#2A3942]' : 'hover:bg-[#202C33]'}`}
+              className={`group relative flex w-full border-b border-gray-800/50 transition-colors ${selected === t.waid ? 'bg-[#2A3942]' : 'hover:bg-[#202C33]'}`}
             >
               <button
                 onClick={() => {
                   setSelected(t.waid);
                   setShowList(false);
                 }}
-                className="flex-1 px-4 py-3 text-left"
+                className="flex-1 px-3 md:px-4 py-3 text-left flex items-center gap-3"
               >
-                <div className="flex items-baseline justify-between pr-8">
-                  <div className="truncate font-medium text-gray-100">
-                    {t.name ?? t.waid}
-                    <span className="ml-2 text-xs text-[#8696A0]">({t.waid})</span>
-                  </div>
-                  <div className="ml-2 shrink-0 text-xs text-[#8696A0]">
-                    {t.lastTs ? fmtTime(t.lastTs) : ''}
-                  </div>
+                {/* Avatar circular */}
+                <div className="h-12 w-12 md:h-10 md:w-10 rounded-full bg-[#25D366] flex items-center justify-center text-white font-bold text-lg md:text-base flex-shrink-0">
+                  {(t.name ?? t.waid).charAt(0).toUpperCase()}
                 </div>
 
-                <div className="mt-1 flex items-center gap-2">
-                  {t.isNew24h ? (
-                    t.isAlmostExpired ? (
-                      <>
+                <div className="flex-1 min-w-0">
+                  {/* Header con nombre y hora */}
+                  <div className="flex items-baseline justify-between mb-0.5">
+                    <div className="truncate font-medium text-gray-100 text-base md:text-sm">
+                      {t.name ?? t.waid}
+                    </div>
+                    <div className="ml-2 shrink-0 text-xs text-[#8696A0]">
+                      {t.lastTs ? fmtTime(t.lastTs) : ''}
+                    </div>
+                  </div>
+
+                  {/* Último mensaje */}
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm text-[#8696A0] flex-1">
+                      {t.lastText ?? '(sin texto)'}
+                    </div>
+                    {/* Badge de estado (solo móvil) */}
+                    <div className="md:hidden shrink-0">
+                      {t.isNew24h ? (
+                        t.isAlmostExpired ? (
+                          <span className="inline-block h-2 w-2 rounded-full bg-amber-400" title="Casi expira" />
+                        ) : (
+                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" title="Activo" />
+                        )
+                      ) : (
+                        <span className="inline-block h-2 w-2 rounded-full bg-gray-500" title="Expirado" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Etiquetas compactas */}
+                  <div className="flex mt-1 flex-wrap gap-1">
+                    {(tagAssignmentsCache[t.waid] ?? []).map((id) => {
+                      const tag = allTags.find((x) => x.id === id);
+                      if (!tag) return null;
+                      return (
                         <span
-                          className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400"
-                          title={`Inició: ${t.firstTs ? fmtTime(t.firstTs) : ''}`}
+                          key={`${t.waid}-tag-${id}`}
+                          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px]"
+                          style={{
+                            background: (tag.color ?? '#202C33') + '20',
+                            color: tag.color ?? '#cbd5e1',
+                          }}
                         >
-                          ⏳ Falta poco
+                          ● {tag.name}
                         </span>
-                        <span className="text-[11px] text-amber-300">
-                          ¡Corre! te quedan <b>{fmtDuration(t.remainingMs)}</b> ✨
+                      );
+                    })}
+                  </div>
+
+                  {/* Estado de ventana (solo desktop) */}
+                  <div className="hidden md:flex mt-1 items-center gap-2">
+                    {t.isNew24h ? (
+                      t.isAlmostExpired ? (
+                        <span className="text-[10px] text-amber-400">
+                          ⏳ {fmtDuration(t.remainingMs)}
                         </span>
-                      </>
+                      ) : (
+                        <span className="text-[10px] text-emerald-400">
+                          🚀 {fmtDuration(t.remainingMs)}
+                        </span>
+                      )
                     ) : (
-                      <>
-                        <span
-                          className="rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
-                          title={`Inició: ${t.firstTs ? fmtTime(t.firstTs) : ''}`}
-                        >
-                          🚀 Activo ≤ 24h
-                        </span>
-                        <span className="text-[11px] text-emerald-300">
-                          Ventana abierta — quedan <b>{fmtDuration(t.remainingMs)}</b> 🙌
-                        </span>
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <span className="rounded-full bg-gray-500/20 px-2 py-0.5 text-[10px] font-medium text-gray-400">
-                        🕒 Expirado
-                      </span>
-                      <span className="text-[11px] text-[#8696A0]">
-                        La ventana de 24 h ya cerró.
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {(tagAssignmentsCache[t.waid] ?? []).map((id) => {
-                    const tag = allTags.find((x) => x.id === id);
-                    if (!tag) return null;
-                    return (
-                      <span
-                        key={`${t.waid}-tag-${id}`}
-                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]"
-                        style={{
-                          background: (tag.color ?? '#202C33') + '20',
-                          color: tag.color ?? '#cbd5e1',
-                          border: '1px solid ' + (tag.color ?? '#334155'),
-                        }}
-                      >
-                        ● {tag.name}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-1 truncate text-sm text-[#8696A0]">
-                  {t.lastText ?? '(sin texto)'}
+                      <span className="text-[10px] text-gray-500">🕒 Expirado</span>
+                    )}
+                  </div>
                 </div>
               </button>
 
@@ -907,7 +938,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                     hideConversation(t.waid);
                   }
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full p-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 md:group-hover:opacity-100 transition-opacity rounded-full p-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-300"
                 title="Ocultar conversación"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -920,15 +951,19 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       </aside>
 
       <section className={`flex min-w-0 flex-1 flex-col ${showList ? 'hidden md:flex' : 'flex'}`}>
-        <div className="flex items-center gap-2 border-b border-gray-800 bg-[#202C33] px-5 py-3 text-gray-100">
+        <div className="flex items-center gap-3 border-b border-gray-800 bg-[#202C33] px-3 md:px-5 py-2.5 md:py-3 text-gray-100">
           <button
             onClick={() => setShowList(true)}
-            className="rounded px-2 py-1 text-sm hover:bg-white/10 md:hidden"
+            className="md:hidden -ml-1 p-2 hover:bg-white/10 rounded-full"
             aria-label="Volver a chats"
           >
-            ← Chats
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <div className="h-8 w-8 rounded-full bg-white/10" />
+          <div className="h-10 w-10 md:h-8 md:w-8 rounded-full bg-[#25D366] flex items-center justify-center text-white font-bold text-lg md:text-base flex-shrink-0">
+            {selected ? (threads.find((t) => t.waid === selected)?.name ?? selected ?? '—').charAt(0).toUpperCase() : '—'}
+          </div>
           <div className="min-w-0">
             <div className="truncate font-medium">
               {threads.find((t) => t.waid === selected)?.name ?? selected ?? '—'}
@@ -1031,7 +1066,14 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                   >
                     {(m.mediaId && ['image', 'video', 'audio', 'document'].includes((m.type || '').toLowerCase()))
                       ? <MediaMessage item={m} />
-                      : (m.text && <div className="whitespace-pre-wrap">{m.text}</div>)
+                      : m.type === 'template'
+                        ? (
+                          <div>
+                            <div className="text-xs text-white/70 mb-1 italic">📋 Plantilla</div>
+                            <div className="whitespace-pre-wrap">{m.text}</div>
+                          </div>
+                        )
+                        : (m.text && <div className="whitespace-pre-wrap">{m.text}</div>)
                     }
 
                     <div
@@ -1045,7 +1087,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
             })}
         </div>
 
-        <div className="border-t border-gray-800 bg-[#111B21] p-3 space-y-3">
+        <div className="border-t border-gray-800 bg-[#202C33] p-2 md:p-3 space-y-2 md:space-y-3">
           {selectedFile && (
             <div className="bg-[#202C33] rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
@@ -1091,7 +1133,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
             </div>
           )}
 
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-1.5 md:gap-2">
             <input
               type="file"
               ref={fileInputRef}
@@ -1103,27 +1145,26 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={!!selectedFile}
-              className="rounded-xl bg-[#202C33] p-2 text-[#8696A0] hover:bg-[#2A3942] disabled:opacity-50"
+              className="rounded-full bg-[#2A3942] p-2.5 md:p-2 text-[#8696A0] hover:bg-[#374854] disabled:opacity-50 flex-shrink-0"
               title="Adjuntar archivo"
             >
-              <Paperclip className="h-5 w-5" />
+              <Paperclip className="h-5 w-5 md:h-5 md:w-5" />
             </button>
 
-            <textarea
-              disabled={!selected}
-              rows={1}
-              onKeyDown={(e) => selected && handleKey(e, selected)}
-              className="max-h-40 min-h-[44px] w-full resize-y rounded-xl border border-transparent bg-[#202C33] p-3 text-sm text-gray-100 placeholder-[#8696A0] focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:opacity-50"
-              placeholder={
-                selected
-                  ? 'Escribe un mensaje (Enter para enviar, Shift+Enter salto de línea)'
-                  : 'Selecciona un chat…'
-              }
-              value={selected ? compose[selected] || '' : ''}
-              onChange={(e) =>
-                selected && setCompose((prev) => ({ ...prev, [selected]: e.target.value }))
-              }
-            />
+            <div className="flex-1 flex items-center gap-1.5 md:gap-2 bg-[#2A3942] rounded-full px-4 md:px-3 py-1.5 md:py-2">
+              <textarea
+                disabled={!selected}
+                rows={1}
+                onKeyDown={(e) => selected && handleKey(e, selected)}
+                className="max-h-32 min-h-[36px] md:min-h-[44px] w-full resize-none bg-transparent text-sm md:text-sm text-gray-100 placeholder-[#8696A0] focus:outline-none disabled:opacity-50 py-1.5"
+                placeholder={selected ? 'Mensaje' : 'Selecciona un chat…'}
+                value={selected ? compose[selected] || '' : ''}
+                onChange={(e) =>
+                  selected && setCompose((prev) => ({ ...prev, [selected]: e.target.value }))
+                }
+                style={{ scrollbarWidth: 'none' }}
+              />
+            </div>
 
             <button
               disabled={
@@ -1138,10 +1179,9 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                   void handleSend(selected);
                 }
               }}
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-white shadow hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2"
+              className="rounded-full bg-[#25D366] p-3 md:p-2.5 text-white shadow-lg hover:bg-[#20BA5A] disabled:opacity-50 disabled:bg-[#2A3942] flex-shrink-0"
             >
-              <Send className="h-4 w-4" />
-              {sending === selected ? 'Enviando…' : 'Enviar'}
+              <Send className="h-5 w-5 md:h-4 md:w-4" />
             </button>
           </div>
         </div>
