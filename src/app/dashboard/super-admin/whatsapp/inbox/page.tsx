@@ -224,7 +224,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
   // Configuración de la sesión actual
   const sessionName = session;
-  const sessionDisplay = session === 'soporte' ? 'Soporte' : 'Sesión 2';
 
   const getInitialHiddenWaids = (): Set<string> => {
     try {
@@ -407,7 +406,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
             }
 
             // Crear un Set con los IDs del servidor para búsqueda rápida
-            const serverIds = new Set(serverItems.map((m) => m.id));
 
             // Mantener mensajes locales que aún no están en el servidor
             const pendingLocalMessages = localMessages.filter((local) => {
