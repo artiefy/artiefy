@@ -117,6 +117,7 @@ export async function POST(request: Request) {
       lastName: string;
       email: string;
       role: AllowedRole;
+      phone?: string;
     }
 
     const body = (await request.json()) as RequestBody;
@@ -166,6 +167,7 @@ export async function POST(request: Request) {
           user.emailAddresses.find(
             (addr) => addr.id === user.primaryEmailAddressId
           )?.emailAddress ?? email,
+        phone: body.phone?.trim() ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -174,6 +176,7 @@ export async function POST(request: Request) {
         set: {
           id: user.id,
           name: `${firstName} ${lastName}`,
+          phone: body.phone?.trim() ?? null,
           updatedAt: new Date(),
         },
       });
@@ -218,6 +221,34 @@ export async function POST(request: Request) {
         clerkUserId: user.id,
         email: email,
       });
+    }
+    // 📱 Enviar plantilla de WhatsApp si hay teléfono
+    if (body.phone?.trim()) {
+      try {
+        const phoneNumber = body.phone.trim();
+        console.log(`📱 Enviando plantilla WhatsApp a: ${phoneNumber}`);
+
+        const waResponse = await fetch(`${request.url.split('/api')[0]}/api/super-admin/whatsapp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: phoneNumber,
+            forceTemplate: true,
+            templateName: 'binvenida_creacion_de_usuario',
+            languageCode: 'es',
+            session: 'soporte',
+          }),
+        });
+
+        if (waResponse.ok) {
+          console.log(`✅ Plantilla WhatsApp enviada exitosamente a ${phoneNumber}`);
+        } else {
+          const errorData = await waResponse.json();
+          console.error(`❌ Error enviando WhatsApp a ${phoneNumber}:`, errorData);
+        }
+      } catch (waError) {
+        console.error('❌ Error crítico enviando WhatsApp:', waError);
+      }
     }
 
     await sendWelcomeEmail(email, safeUser.username, generatedPassword);

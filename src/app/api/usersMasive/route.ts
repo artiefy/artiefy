@@ -461,6 +461,7 @@ export async function POST(request: Request) {
     const emailErrors: string[] = [];
     const credenciales: { correo: string; contraseña: string }[] = [];
     const emailQueue: PendingEmail[] = [];
+    const whatsappQueue: { phone: string; name: string }[] = [];
 
     console.log(`📊 Procesando ${usersData.length} usuarios...`);
 
@@ -674,6 +675,15 @@ export async function POST(request: Request) {
             password: generatedPassword,
           });
         }
+        const trimmedPhone = phone?.trim();
+
+        if (trimmedPhone) {
+          whatsappQueue.push({
+            phone: trimmedPhone,
+            name: `${firstName} ${lastName}`.trim(),
+          });
+        }
+
       } catch (error) {
         const msg =
           error instanceof Error ? error.message : 'Error desconocido';
@@ -692,6 +702,53 @@ export async function POST(request: Request) {
     if (emailQueue.length > 0) {
       console.log(`\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`);
       await sendWelcomeEmailsBatch(emailQueue, emailErrors);
+    }
+
+    // FASE 2.5: Enviar plantillas de WhatsApp
+    if (whatsappQueue.length > 0) {
+      console.log(`\n📱 Fase 2.5: Enviando ${whatsappQueue.length} plantillas de WhatsApp...`);
+
+      for (let i = 0; i < whatsappQueue.length; i++) {
+        const { phone } = whatsappQueue[i];
+
+        // Delay entre cada mensaje (2 segundos)
+        if (i > 0) {
+          await delay(2000);
+        }
+
+        // Delay más largo cada 5 mensajes (10 segundos)
+        if (i > 0 && i % 5 === 0) {
+          console.log(`⏳ Pausa de 10s cada 5 mensajes... (${i}/${whatsappQueue.length})`);
+          await delay(10000);
+        }
+
+        console.log(`📤 Enviando WhatsApp ${i + 1}/${whatsappQueue.length} a ${phone}`);
+
+        try {
+          const waResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/super-admin/whatsapp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: phone,
+              forceTemplate: true,
+              templateName: 'binvenida_creacion_de_usuario',
+              languageCode: 'es',
+              session: 'soporte',
+            }),
+          });
+
+          if (waResponse.ok) {
+            console.log(`✅ WhatsApp enviado exitosamente a ${phone}`);
+          } else {
+            const errorData = await waResponse.json();
+            console.error(`❌ Error enviando WhatsApp a ${phone}:`, errorData);
+          }
+        } catch (waError) {
+          console.error(`❌ Error crítico enviando WhatsApp a ${phone}:`, waError);
+        }
+      }
+
+      console.log(`✅ Proceso de envío de WhatsApp completado`);
     }
 
     // Resumen final

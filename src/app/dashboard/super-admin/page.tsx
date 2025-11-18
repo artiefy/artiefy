@@ -234,6 +234,7 @@ export default function AdminDashboard() {
     lastName: '',
     email: '',
     role: 'estudiante',
+    phone: '',
   });
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
@@ -1244,58 +1245,79 @@ export default function AdminDashboard() {
 
   const fetchUsers = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error('Error al cargar usuarios');
 
       const rawData: unknown = await res.json();
       if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
-      const rawList: RawUser[] = Array.isArray(rawData) ? (rawData as RawUser[]) : [];
+      const rawList: RawUser[] = rawData as RawUser[];
 
       const data: User[] = rawList.map((item) => {
+        const id = String(item.id ?? '');
+
+        // nombres
+        interface ItemWithName {
+          name?: string | null;
+        }
+
+        const nameFromCombined = asString((item as ItemWithName).name);
+        const [fromNameFirst = '', ...fromNameRest] =
+          nameFromCombined?.split(' ') ?? [];
+
+        const firstName =
+          asString(item.firstName) ??
+          asString(item.first_name) ??
+          fromNameFirst ??
+          '';
+
+        const lastName =
+          asString(item.lastName) ??
+          asString(item.last_name) ??
+          (fromNameRest.length > 0 ? fromNameRest.join(' ') : '') ??
+          '';
+
+        const email = asString(item.email) ?? '';
+
+        const role = asString(item.role) ?? 'estudiante';
+        const status = asString(item.status) ?? 'activo';
+
+        // teléfonos: buscamos en varias claves
         const rawPhone =
           asString(item.phone) ??
           asString(item.phoneNumber) ??
           asString(item.primaryPhoneNumber?.phoneNumber) ??
           asString(item.telefono);
 
-        // 👉 normaliza a string | undefined (no null)
         const phone: string | undefined =
-          rawPhone && rawPhone.trim() !== '' ? rawPhone.trim() : undefined;
+          rawPhone?.trim() ? rawPhone.trim() : undefined;
 
-        const idVal = item.id;
-        const id =
-          typeof idVal === 'string' || typeof idVal === 'number' ? String(idVal) : '';
+        const permissions = asStringArray(item.permissions);
 
         return {
           id,
-          firstName: asString(item.firstName) ?? asString(item.first_name) ?? '',
-          lastName: asString(item.lastName) ?? asString(item.last_name) ?? '',
-          email: asString(item.email) ?? '',
-          role: asString(item.role) ?? 'sin-role',
-          status: asString(item.status) ?? 'activo',
-          // 👉 sólo agrega phone si existe (coincide con phone?: string)
-          ...(phone !== undefined ? { phone } : {}),
-          permissions: asStringArray(item.permissions),
+          firstName: firstName || 'Sin nombre',
+          lastName: lastName || 'Sin apellido',
+          email,
+          role,
+          status,
+          phone,
+          permissions,
         };
       });
 
-
-      console.table(
-        data.map((u) => ({
-          id: u.id,
-          email: u.email,
-          phone: u.phone,
-        })),
-      );
       setUsers(data);
+      setLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching users:', err);
-    } finally {
+      console.error('Error al cargar usuarios:', err);
+      setError('Error al cargar usuarios');
       setLoading(false);
     }
   }, [query]);
+
 
   // ✅ Ahora, `useEffect` ya no mostrará advertencias
   useEffect(() => {
@@ -1338,6 +1360,7 @@ export default function AdminDashboard() {
           lastName: newUser.lastName,
           email: newUser.email,
           role: newUser.role,
+          phone: newUser.phone,
         }),
       });
 
@@ -1394,6 +1417,7 @@ export default function AdminDashboard() {
         lastName: '',
         email: '',
         role: 'estudiante',
+        phone: '',
       });
     } catch {
       showNotification('Error al crear el usuario.', 'error');
@@ -2273,6 +2297,18 @@ export default function AdminDashboard() {
                 onChange={(e) =>
                   setNewUser({ ...newUser, email: e.target.value })
                 }
+              />
+              <input
+                type="tel"
+                placeholder="Teléfono (ej: 3001234567)"
+                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                value={newUser.phone}
+                onChange={(e) => {
+                  // Solo permitir números
+                  const phone = e.target.value.replace(/\D/g, '');
+                  setNewUser({ ...newUser, phone });
+                }}
+                maxLength={10}
               />
               <select
                 className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
