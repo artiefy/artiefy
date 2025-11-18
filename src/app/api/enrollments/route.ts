@@ -202,20 +202,48 @@ export async function POST(request: Request) {
             );
 
             for (const lesson of courseLessons) {
+              const isFirstLesson = lesson.id === firstLessonId;
               if (!existingProgressSet.has(lesson.id)) {
-                // Solo desbloquear la primera lección (según orderIndex)
-                const isFirstLesson = lesson.id === firstLessonId;
 
-                await db.insert(userLessonsProgress).values({
-                  userId,
-                  lessonId: lesson.id,
-                  progress: 0,
-                  isCompleted: false,
-                  isLocked: !isFirstLesson, // ✅ Solo false para la primera
-                  isNew: true,
-                  lastUpdated: new Date(),
-                });
+                // Usar onConflictDoUpdate para actualizar si ya existe
+                await db
+                  .insert(userLessonsProgress)
+                  .values({
+                    userId,
+                    lessonId: lesson.id,
+                    progress: 0,
+                    isCompleted: false,
+                    isLocked: !isFirstLesson, // ✅ Solo false para la primera
+                    isNew: true,
+                    lastUpdated: new Date(),
+                  })
+                  .onConflictDoUpdate({
+                    target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+                    set: {
+                      isLocked: !isFirstLesson, // ✅ Actualiza isLocked aunque ya exista
+                      isNew: true,
+                      lastUpdated: new Date(),
+                    },
+                  });
+              } else {
+                await db
+                  .update(userLessonsProgress)
+                  .set({
+                    isLocked: !isFirstLesson,
+                    isNew: true,
+                    lastUpdated: new Date(),
+                  })
+                  .where(
+                    and(
+                      eq(userLessonsProgress.userId, userId),
+                      eq(userLessonsProgress.lessonId, lesson.id)
+                    )
+                  );
+                console.log(`🔄 ACTUALIZADO - Lección ${lesson.id} para usuario ${userId}`);
               }
+              console.log(
+                `${isFirstLesson ? '🔓 DESBLOQUEADA' : '🔒 BLOQUEADA'} - Lección ${lesson.id} para usuario ${userId}`
+              );
             }
           }
         }

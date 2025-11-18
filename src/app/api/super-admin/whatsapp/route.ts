@@ -342,6 +342,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           'APERTURA DE VENTANA (plantilla inicial)',
           sessionConfig
         );
+
+        // ✅ GUARDAR LA PLANTILLA EN BD
+        const templateMetaId = templateOpened.messages?.[0]?.id;
+        try {
+          // Obtener el BODY de la plantilla desde GET templates
+          const templatesUrl = `https://graph.facebook.com/v22.0/${sessionConfig.wabaId}/message_templates?fields=name,language,status,components&limit=200`;
+          const templatesRes = await fetch(templatesUrl, {
+            headers: { Authorization: `Bearer ${sessionConfig.accessToken}` },
+          });
+          const templatesData = await templatesRes.json() as TemplateListResponse;
+          const template = (templatesData.data ?? []).find(
+            (t) => t.name === sessionTemplate && t.language === sessionLanguage
+          );
+          const bodyComp = template?.components?.find((c) => c.type.toUpperCase() === 'BODY');
+          const templateBody = bodyComp?.text ?? `[Plantilla: ${sessionTemplate}]`;
+
+          await db.insert(waMessages).values({
+            metaMessageId: templateMetaId,
+            waid: to,
+            direction: 'outbound',
+            msgType: 'template',
+            body: templateBody, // ⚠️ Guardar el BODY de la plantilla
+            tsMs: Date.now(),
+            raw: templateOpened as object,
+            session: sessionConfig.name,
+          });
+        } catch (e) {
+          console.error('[WA][DB] No se pudo guardar TEMPLATE:', e);
+        }
+
       } catch {
         const open2: TemplatePayload = {
           messaging_product: 'whatsapp',
@@ -354,6 +384,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           'APERTURA DE VENTANA (fallback hello_world)',
           sessionConfig
         );
+
+        // ✅ GUARDAR EL FALLBACK EN BD
+        const templateMetaId = templateOpened.messages?.[0]?.id;
+        try {
+          await db.insert(waMessages).values({
+            metaMessageId: templateMetaId,
+            waid: to,
+            direction: 'outbound',
+            msgType: 'template',
+            body: 'Hello World', // Body del hello_world
+            tsMs: Date.now(),
+            raw: templateOpened as object,
+            session: sessionConfig.name,
+          });
+        } catch (e) {
+          console.error('[WA][DB] No se pudo guardar TEMPLATE fallback:', e);
+        }
       }
     }
 
