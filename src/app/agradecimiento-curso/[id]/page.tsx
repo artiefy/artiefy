@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+
 export default function AgradecimientoCursoPage({
   params,
 }: {
@@ -16,6 +18,17 @@ export default function AgradecimientoCursoPage({
   const [showModal, setShowModal] = useState(false);
   const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
   const { id: courseId } = use(params);
+  const [courseTitle, setCourseTitle] = useState<string>('');
+
+  useEffect(() => {
+    if (courseId) {
+      getCourseById(courseId)
+        .then((course) => {
+          setCourseTitle(course?.title ?? '');
+        })
+        .catch(() => setCourseTitle(''));
+    }
+  }, [courseId]);
 
   useEffect(() => {
     if (searchParams && searchParams.get('from') === 'payu') {
@@ -179,11 +192,12 @@ export default function AgradecimientoCursoPage({
           <p className="mb-2 text-center text-xl font-semibold tracking-wide text-[#00A5C0]">
             Bienvenido al curso{' '}
             <span className="font-bold text-[#0A2540]">#{courseId}</span>
-            <br />
-            <span className="text-lg font-medium text-[#1B3A4B]">
-              La educación del futuro
-            </span>
           </p>
+          {courseTitle && (
+            <p className="mb-2 text-center text-lg font-bold text-[#1B3A4B]">
+              {courseTitle}
+            </p>
+          )}
           <p className="mt-2 mb-8 text-center text-lg font-medium text-[#0A2540]">
             Tu pago fue procesado correctamente.
           </p>
