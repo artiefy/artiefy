@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { courses, modalidades } from '~/server/db/schema';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_EMBEDDING_MODEL =
@@ -177,9 +177,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    // 1. Traer el curso de la BD
+    // 1. Traer el curso y su modalidad de la BD
     const [course] = await db
-      .select()
+      .select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        modalidadesid: courses.modalidadesid,
+      })
       .from(courses)
       .where(eq(courses.id, courseId));
     if (!course) {
@@ -187,6 +192,17 @@ export async function POST(req: NextRequest) {
         { error: 'Curso no encontrado' },
         { status: 404 }
       );
+    }
+    // Consultar modalidad si existe
+    let modalidadName: string | null = null;
+    if (course.modalidadesid) {
+      const modalidadRes = await db
+        .select({ name: modalidades.name })
+        .from(modalidades)
+        .where(eq(modalidades.id, course.modalidadesid));
+      if (Array.isArray(modalidadRes) && modalidadRes[0]?.name) {
+        modalidadName = modalidadRes[0].name;
+      }
     }
     const text = buildCourseText({
       title: course.title,
@@ -224,7 +240,13 @@ export async function POST(req: NextRequest) {
     }
     // 3. Guardar embedding
     await db.update(courses).set({ embedding }).where(eq(courses.id, courseId));
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      courseId,
+      embedding,
+      text,
+      modalidad: modalidadName,
+    });
   } catch (err) {
     console.error('Error actualizando el embedding:', err);
     return NextResponse.json(
