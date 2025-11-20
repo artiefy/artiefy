@@ -183,7 +183,7 @@ export default function MyCoursesPreview() {
                       return (
                         <div className="flex justify-end">
                           <Link
-                            href={`/estudiantes/cursos/${course.id}/lecciones/${targetLessonId}`}
+                            href={`/estudiantes/clases/${targetLessonId}`}
                             className="bg-primary/90 hover:bg-primary pointer-events-auto rounded px-3 py-2 backdrop-blur-sm transition-colors"
                           >
                             <div className="font-semibold whitespace-nowrap text-gray-800">

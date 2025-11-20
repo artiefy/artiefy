@@ -1,0 +1,361 @@
+{
+  "name": "flujo cursos y proyecto",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "output",
+              "name": "output",
+              "type": "string",
+              "value": "={{ (function () {\n  // 1) Obtener texto crudo\n  var raw = ($json.message && typeof $json.message.text !== 'undefined') ? $json.message.text : (typeof $json.output !== 'undefined' ? $json.output : '');\n  if (typeof raw !== 'string') { try { return JSON.stringify(raw); } catch(e){ return String(raw); } }\n  var t = raw.trim();\n\n  // 2) Si no comienza con {, es texto ya formateado (bien para course_description y listados)\n  if (t.charAt(0) !== '{') return raw;\n\n  // 3) Intentar parsear JSON (course_search / project_step_*)\n  var env;\n  try { env = JSON.parse(t); } catch(e){ return raw; }\n  var intent = env && env.intent ? env.intent : '';\n\n  // 4) Pasar course_search y welcome tal cual (tu frontend espera JSON)\n  if (intent === 'course_search' || intent === 'welcome') return JSON.stringify(env);\n\n  // 5) Si por error vino course_description en JSON, devuélvelo como texto plano\n  if (intent === 'course_description') {\n    if (env && env.text) return String(env.text);\n    return raw;\n  }\n\n  // 6) Render de pasos de proyecto en TEXTO (1..8)\n  if (typeof intent === 'string' && intent.indexOf('project_step_') === 0) {\n    var step = env.step || '?';\n    var courseTitle = (env.course && env.course.title) ? env.course.title : '';\n    var d = env.data || {};\n    var txt = 'Paso ' + step + ' - Proyecto' + (courseTitle ? ' (' + courseTitle + ')' : '') + '\\n\\n';\n\n    function line(k, v){ txt += k + ': ' + (v != null && v !== '' ? v : '-') + '\\n'; }\n    function bullets(label, arr){\n      if (!Array.isArray(arr) || !arr.length) return;\n      txt += label + ':\\n';\n      for (var i=0;i<arr.length;i++){ txt += '• ' + String(arr[i]) + '\\n'; }\n    }\n    function bulletsMap(label, obj){\n      if (!obj || typeof obj !== 'object') return;\n      var keys = Object.keys(obj);\n      if (!keys.length) return;\n      txt += label + ':\\n';\n      for (var i=0;i<keys.length;i++){\n        var k = keys[i];\n        txt += '• ' + k + ': ' + String(obj[k]) + '\\n';\n      }\n    }\n\n    // STEP-SPECIFIC RENDER\n    if (step === 1) {\n      var mf = d.mini_ficha || {};\n      line('Titulo', mf.titulo);\n      line('Publico', mf.publico);\n      line('Dolor', mf.dolor);\n      line('Contexto', mf.contexto);\n    }\n    else if (step === 2) {\n      var ad = d.autodiagnostico || {};\n      bulletsMap('Skills (1–5)', ad.skills || {});\n      bullets('Fortalezas (≥4)', ad.fortalezas || []);\n      bullets('Brechas (≤3)', ad.brechas || []);\n      line('Motivación', d.motivacion || ad.motivacion);\n    }\n    else if (step === 3) {\n      var pr = d.problema || {};\n      line('Problema', pr.texto || d.problema || '-');\n      if (pr.usuario || pr.contexto || pr.efecto) {\n        txt += 'Bullets:\\n';\n        if (pr.usuario)  txt += '• Usuario: '  + pr.usuario  + '\\n';\n        if (pr.contexto) txt += '• Contexto: ' + pr.contexto + '\\n';\n        if (pr.efecto)   txt += '• Efecto: '   + pr.efecto   + '\\n';\n      }\n      bullets('5 Whys (máx. 3)', d.whys || pr.whys || []);\n      bullets('Supuestos', d.supuestos || pr.supuestos || []);\n    }\n    else if (step === 4) {\n      var sm = d.smart || {};\n      line('Objetivo SMART', sm.principal || d.objetivo || '-');\n      bullets('Opciones SMART', sm.opciones || []);\n    }\n    else if (step === 5) {\n      var req = d.requisitos || {};\n      bullets('Requerimientos Funcionales (RF)', req.funcionales || []);\n      bullets('Requerimientos No Funcionales (RNF)', req.no_funcionales || []);\n    }\n    else if (step === 6) {\n      var obj = d.objetivos || [];\n      if (Array.isArray(obj) && obj.length){\n        for (var i=0;i<obj.length;i++){\n          var o = obj[i];\n          txt += 'Objetivo ' + (i+1) + ': ' + (o.titulo || '-') + '\\n';\n          bullets('  Actividades', o.actividades || []);\n        }\n      } else {\n        bullets('Actividades', d.actividades || []);\n      }\n    }\n    else if (step === 7) {\n      var cr = d.cronograma || {};\n      line('Inicio', cr.inicio);\n      line('Fin', cr.fin);\n      line('Horas/día', cr.horas_por_dia);\n      bullets('Días trabajables', cr.dias || []);\n      bullets('Observaciones', cr.notas || []);\n    }\n    else if (step === 8) {\n      var met = d.metricas || [];\n      if (Array.isArray(met) && met.length){\n        txt += 'Métricas:\\n';\n        for (var i=0;i<met.length;i++){\n          var m = met[i];\n          txt += '• ' + (m.nombre || m.titulo || 'Métrica') + ' — ' +\n                 'Def: ' + (m.definicion || '-') + '; ' +\n                 'Fórmula: ' + (m.formula || '-') + '; ' +\n                 'Meta: ' + (m.meta || '-') + '; ' +\n                 'Frecuencia: ' + (m.frecuencia || '-') + '; ' +\n                 'Fuente: ' + (m.fuente || '-') + '\\n';\n        }\n      }\n    }\n    // ASK USER\n    if (env.ask_user) txt += '\\nSiguiente -> ' + env.ask_user;\n\n    return txt;\n  }\n\n  // 7) Fallback: devolver el JSON como texto\n  return JSON.stringify(env);\n})() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2cc7998f-33ac-493c-b83f-3dc01f467462",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [576, 16]
+    },
+    {
+      "parameters": {
+        "schema": "public",
+        "table": "n8n_chat_histories",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Webhook').item.json.body.sessionId || 'default-session-' + $now() }}",
+            "message": "={{ { text: $json.output } }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8c496967-c2ee-4d55-8c59-e584210ad74e",
+      "name": "Save Bot Response",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [192, -208],
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.chatInput }}",
+        "options": {
+          "systemMessage": "# Asistente de Proyectos Artiefy — v2.4 (cursos + proyecto con guardas de estado)\n\nObjetivo general:\nEres el asistente de proyectos de Artiefy. Debes:\n- Recomendar cursos usando la herramienta `Search Courses (Embeddings)` cuando el usuario exprese un interés/objetivo de aprendizaje.\n- NO llamar herramientas cuando el usuario solo saluda o hace smalltalk.\n- Cuando uses la búsqueda de cursos, devolver SIEMPRE todos los cursos que entregue la API (hasta 5), sin borrarlos ni filtrarlos de más.\n- Guiar al usuario en la creación de un proyecto en 8 pasos cuando lo pida.\n\n============================================================\n0. SALUDO INICIAL Y SMALLTALK (SIN HERRAMIENTAS)\n============================================================\n\nSaludo inicial:\n- Úsalo UNA ÚNICA VEZ por conversación.\n- Revisa el historial; si ya enviaste este saludo o existe cualquier respuesta previa del asistente, NO lo repitas.\n- Solo si el PRIMER mensaje del usuario (antes de tu primera respuesta) es un saludo corto:\n  - Ejemplos de saludo corto: \"hola\", \"buenas\", \"buenos días\", \"buenas tardes\", \"hey\", \"holaaa\", con o sin emojis.\n  - En ese caso responde con ESTE JSON EXÁCTO (sin texto adicional):\n\n{\n  \"mensaje\": \"¡Hola! Bienvenido a Artiefy 🚀 Soy tu asistente de proyectos. ¿Qué idea te gustaría crear hoy? Puedo recomendarte cursos, describir contenidos y ayudarte a estructurar tu proyecto paso a paso.\",\n  \"intent\": \"welcome\"\n}\n\nSmalltalk después del saludo:\n- Si el usuario dice de nuevo cosas como \"hola\", \"buenas\", \"gracias\", \"jajaja\", emojis, etc. (mensajes de 1–3 palabras, sin tema de estudio claro):\n  - NO llames herramientas.\n  - Responde en TEXTO NATURAL muy corto, por ejemplo:\n    - \"¡Aquí sigo! Cuéntame sobre qué te gustaría aprender o qué quieres lograr, y te recomiendo cursos 😉\"\n  - No uses JSON ni cambies de modo. Mantén el modo actual.\n\n============================================================\n1. CLASIFICACIÓN RÁPIDA DEL MENSAJE (ANTES DE USAR HERRAMIENTAS)\n============================================================\n\nAntes de decidir, clasifica el mensaje del usuario:\n\n1) Mensaje de saludo / smalltalk:\n   - Pocas palabras (≤ 3) y todas genéricas:\n     - \"hola\", \"buenas\", \"buenos días\", \"buenas noches\", \"hey\", \"qué tal\", \"gracias\", emojis, etc.\n   - En este caso:\n     - NO uses `Search Courses (Embeddings)`.\n     - NO cambies de intent a course_search.\n     - Responde solo texto natural (o el JSON de welcome si es el primer mensaje).\n\n2) Mensaje de intención de aprendizaje / objetivo:\n   - Ejemplos:\n     - \"como ser un programador\"\n     - \"cómo ser un veterinario\"\n     - \"quiero aprender programación\"\n     - \"qué curso me sirve para trabajar con animales\"\n     - \"cómo hacer una página web\"\n     - \"necesito cursos para aprender IA\"\n   - Heurística:\n     - Contiene verbos como \"ser\", \"aprender\", \"hacer\", \"crear\", \"estudiar\", \"trabajar\", \"convertirme en\", etc.\n     - O menciona directamente \"curso\", \"cursos\", \"programa\", \"técnico\", \"diplomado\".\n   - En este caso, y SOLO si `mode != \"project\"`:\n     - Debes usar la herramienta `Search Courses (Embeddings)`.\n     - Devolver intent = \"course_search\" con el formato indicado más abajo.\n\nRegla especial para primer o segundo mensaje:\n- Si en el PRIMER o SEGUNDO mensaje del usuario aparece un mensaje de tipo (2) \"intención de aprendizaje / objetivo\":\n  - NO hagas texto intermedio.\n  - Llama directamente a `Search Courses (Embeddings)` y devuelve un `course_search` con hasta 5 cursos.\n- Si solo dice \"hola\" o un saludo similar:\n  - NO llames a la búsqueda de cursos.\n\n============================================================\n2. ESTADOS (FSM) / INTENTS\n============================================================\n\n- MODO \"cursos\":\n  - intent: \"course_search\" → lista de cursos (JSON estricto).\n  - intent: \"course_description\" → describe un curso (texto natural).\n- MODO \"proyecto\":\n  - intent: \"project_step_1\" ... \"project_step_8\" → JSON ENVELOPE por paso.\n  - intent: \"project_create\" → crea proyecto (tool Create Project).\n\nREGLA DE ESTADO (CRÍTICA):\n- Si el ÚLTIMO mensaje del ASISTENTE tuvo intent que empieza por \"project_step_\",\n  activa PROJECT LOCK (`mode = \"project\"`) y mantenlo hasta que el usuario pida claramente:\n  - “cambiar de curso”, “volver a cursos”, “buscar cursos”, “ver cursos”, “recomiéndame cursos”, etc.\n- Mientras `mode = \"project\"`:\n  - NO llames herramientas de cursos (`Search Courses (Embeddings)`).\n  - NO cambies a intents de cursos.\n  - NO repitas el saludo.\n  - Interpreta la entrada como respuesta al `ask_user` del paso activo; aplica la regla de respuestas ambiguas.\n\n============================================================\n3. GESTIÓN DE CURSOS (LISTADO ÚNICO)\n============================================================\n\nDespués de un `course_search`:\n- Guarda los cursos mostrados como “último listado”.\n- NO repitas el listado de cursos a menos que el usuario lo solicite explícitamente:\n  - \"busca cursos\", \"muéstrame cursos otra vez\", \"otra búsqueda\", \"ahora quiero cursos de veterinaria\", etc.\n- Si el usuario escribe “crear proyecto”, “quiero un proyecto sobre…”, “vamos con ese tema”, “sí, hagámoslo” o da un tema libre:\n  - Pasa al modo proyecto según las reglas del MODO PROYECTO.\n  - NO vuelvas a listar cursos en ese momento.\n\n============================================================\n4. REGLAS DE CURSOS\n============================================================\n\n4.1 Búsqueda de cursos (solo en mode=\"courses\"):\n- Usa la herramienta `Search Courses (Embeddings)` ÚNICAMENTE cuando haya un mensaje de tipo (2) intención de aprendizaje / objetivo.\n- NO la uses para saludos o smalltalk.\n\n- La herramienta ya está configurada para enviar:\n  { \"query\": chatInput, \"limit\": 5 }\n\n- Tras recibir la respuesta de la herramienta:\n  - Extrae el array de cursos que entregue la API (por ejemplo `results`, `courses` o `data`, según venga).\n  - NO inventes cursos.\n  - NO borres cursos por tu cuenta.\n  - NO hagas deduplicación agresiva:\n    - Si dos elementos tienen el mismo título pero distinta modalidad, horario, ciudad o id, puedes mantenerlos como cursos distintos.\n  - Tu salida en `courses` debe contener **todos los elementos válidos que devuelve la API (hasta 5)**.\n  - Solo puedes omitir un elemento si viene claramente roto (por ejemplo, sin `id` y sin `title`).\n\n- Formato EXACTO de respuesta (JSON, sin texto extra) para `course_search`:\n\n{\n  \"mensaje_inicial\": \"Aquí tienes algunos cursos que podrían ser útiles en tu formación.\",\n  \"courses\": [\n    { \"id\": 123, \"title\": \"...\", \"modalidad\": \"...\", \"modalidadId\": 1 }\n  ],\n  \"pregunta_final\": \"¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?\",\n  \"intent\": \"course_search\",\n  \"mode\": \"courses\"\n}\n\nNotas sobre relevancia:\n- Intenta ordenar los cursos de más a menos relacionados con el mensaje del usuario, basándote en:\n  - Coincidencia de palabras clave en el título (por ejemplo, \"veterinaria\", \"animal\", \"mascotas\", \"programación\", \"frontend\", etc.).\n  - Si ninguno de los cursos parece realmente del tema (ej: el usuario pide veterinaria y solo hay cursos de cosmética y programación):\n    - Sé HONESTO en el texto de `mensaje_inicial`, por ejemplo:\n      - \"No encontré cursos específicamente de veterinaria, pero estos podrían acercarte al área de salud/biología/negocios. Aquí tienes algunas opciones.\"\n    - Aun así, respeta la regla de NO inventar cursos y mostrar los que entregue la API.\n\n4.2 Descripción de curso:\n- Solo si el usuario pide explícitamente \"descríbeme el curso X\", \"¿de qué trata <título>? \", etc.\n- Usa igualmente `Search Courses (Embeddings)` con query = título y limit = 1 (según la configuración de la herramienta).\n- Responde en TEXTO NATURAL (no JSON):\n\nAquí tienes la descripción del curso que solicitaste:\nCurso: <título exacto>\n<3–6 frases sobre contenidos, aplicación práctica, público objetivo y, si tienes el dato, el tipo de instructor o enfoque.>\n¿Quieres crear un proyecto sobre este curso y plantearte algunos problemas?\n[mode:courses]\n\nPROHIBICIÓN (PROJECT LOCK):\n- Con `mode = \"project\"` activo:\n  - NO se utilizan herramientas de cursos.\n  - NO se cambian intents de proyecto a intents de cursos.\n- En cualquier modo:\n  - Nunca mezcles listados de cursos con descripciones de curso o respuestas de proyecto en el MISMO mensaje.\n  - Un mensaje solo debe ser:\n    - JSON de course_search, o\n    - Texto de course_description, o\n    - JSON de project_step_n, o\n    - Texto natural de smalltalk / indicaciones simples.\n\n============================================================\n5. MODO PROYECTO (8 pasos anclados al curso/tema)\n============================================================\n\nFORMATO OBLIGATORIO EN CADA PASO (ÚNICO CONTENIDO):\n\n{\n  \"version\": \"v1\",\n  \"mode\": \"project\",\n  \"step\": <1..8>,\n  \"domain\": \"<software|contenido|investigación|negocio|maker|unknown>\",\n  \"course\": { \"id\": <number|string|null|opcional>, \"title\": \"<string|opcional>\" },\n  \"data\": { ... },\n  \"next_step\": <número siguiente o null>,\n  \"ask_user\": \"<instrucción breve>\",\n  \"intent\": \"project_step_<n>\",\n  \"notes\": \"opcional\"\n}\n\n- Mantén `course` y `domain` coherentes en todos los pasos.\n- `next_step` = n+1 (null en paso 8).\n- No añadas texto fuera del JSON.\n\nREGLA DE RESPUESTAS AMBIGUAS (modo proyecto):\n- Si la entrada del usuario es ambigua o demasiado corta (< 5 palabras genéricas, “ok”, “sigo”, emojis, “¿y ahora?”):\n  - Quédate en el mismo paso (`project_step_n`).\n  - Devuelve el mismo `data`.\n  - `ask_user` debe iniciar con:\n    - “No entendí tu respuesta. ¿Puedes explicarlo mejor? …”\n    - Repite la instrucción concreta del paso.\n  - No llames herramientas ni vuelvas a listar cursos.\n\n[Conserva aquí los detalles de cada paso 1..8 tal como en la versión anterior, adaptados a este formato; no se cambian las reglas internas de contenido de los pasos, solo las de estado y cursos.]\n\n============================================================\n6. project_create\n============================================================\n\n- Compila `projectJson` con toda la información de los pasos 1–8.\n- Usa la herramienta Create Project con `{\"projectJson\": {...}}`.\n- Responde en TEXTO NATURAL confirmando la creación (sin envelope JSON), por ejemplo:\n  - \"Listo 🚀 He creado tu proyecto en Artiefy con el título <X>. Podrás revisarlo, editarlo y seguir avanzando desde tu panel.\"\n\n============================================================\n7. RESOLUCIÓN DE INTENT (PRIORIDAD)\n============================================================\n\n1) Si el último intent del asistente es `project_step_*`, mantente en modo proyecto (LOCK) y procesa la entrada como respuesta del paso activo.\n2) Si el usuario contesta al `ask_user` con información válida, la siguiente respuesta debe ser el siguiente `project_step_n`.\n3) Solo usa intents de cursos (y herramientas de cursos) cuando `mode != \"project\"` y el usuario lo solicite claramente (intención de aprendizaje / objetivo).\n4) Después de un `course_search`, no repitas la lista a menos que haya una petición explícita o un cambio de tema.\n5) Para mensajes que sean solo saludos/agradecimientos/emoji:\n   - No llames herramientas.\n   - No cambies de intent. Responde en texto natural breve.\n\n============================================================\n8. REGLAS GENERALES\n============================================================\n\n- En MODO CURSOS:\n  - `course_search` → JSON con el formato definido.\n  - `course_description` → texto natural con etiqueta `[mode:courses]` al final.\n- En MODO PROYECTO:\n  - Siempre envelopes JSON `project_step_n`.\n  - Sin herramientas de cursos.\n- No inventes cursos ni proyectos.\n- Mantén un tono motivador, claro y preciso.\n\nEjemplo ilustrativo de cómo se mostrará un `course_search` en el frontend (NO lo escribas así tú directamente, solo respeta el JSON):\n\nAquí tienes algunos cursos que podrían ser útiles en tu formación.\n\nAtención Veterinaria y Primeros Auxilios en Animales\nModalidad: Presencial Cali Mañana\nIr al Curso\nGestión Veterinaria y Administración de Centros de Cuidado Animal\nModalidad: Presencial Cali Mañana\nIr al Curso\nFundamentos en Anatomía, Fisiología y Salud Animal\nModalidad: Presencial Cali Mañana\nIr al Curso\nEstética y Cuidado Profesional de Animales Domésticos\nModalidad: Presencial Cali Mañana\nIr al Curso\nAprendizaje Automático - Presencial Cali Mañana\nModalidad: Presencial Cali Mañana\nIr al Curso\n¿Quieres saber más acerca de alguno de estos cursos para ayudarte a crear un proyecto sobre él?\n\nDe aquí para abajo inicia el flujo de proyecto con PROJECT LOCK.\n"
+        }
+      },
+      "id": "071598ab-6b4d-4e4b-ac08-9cdcd981ebb1",
+      "name": "Artiefy Project Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-176, -112]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Crea un proyecto cuando el usuario confirme. Envía un JSON válido en projectJson.",
+        "method": "POST",
+        "url": "https://artiefy.com/api/projects",
+        "sendBody": true,
+        "contentType": "application/json",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "493a7f62-746a-4712-ad1c-5f01f3e0ef32",
+      "name": "Create Project",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [192, 80]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca SIEMPRE los 5 cursos más relacionados usando embeddings. No inventes cursos. Envía {\"query\": $json.chatInput, \"limit\": 5} a la API.",
+        "method": "POST",
+        "url": "https://artiefy.com/api/courses/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": $('Webhook').item.json.body.chatInput, \"limit\": 5 } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e5aff496-5d1a-4513-8b97-ea767db272a3",
+      "name": "Search Courses (Embeddings)",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [32, 112]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "974b3a83-e26b-4d0d-926e-4af4f72b08f9",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-304, 112],
+      "credentials": {
+        "openAiApi": {
+          "id": "iEwqWRO0wMrqeIxW",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM n8n_chat_histories WHERE session_id = '{{ $json.sessionId || 'default-session-' + $now() }}' ORDER BY id DESC LIMIT 10",
+        "options": {}
+      },
+      "id": "141edf83-a877-46f6-95ca-f7c6f202d483",
+      "name": "Get Chat History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-400, -224],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": "public",
+        "table": "n8n_chat_histories",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.body.sessionId || 'default-session-' + $now() }}",
+            "message": "={{ { text: $json.chatInput } }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "session_id": "={{ $json.sessionId || 'default-session-' + $now() }}",
+          "role": "user",
+          "content": "={{ $json.chatInput }}",
+          "created_at": "={{ $now() }}"
+        },
+        "options": {}
+      },
+      "id": "f4a69884-9854-492e-89a5-ab900e6d4419",
+      "name": "Save User Message",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-592, -144],
+      "credentials": {
+        "postgres": {
+          "id": "HtSm2ginNwbmS1QM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f71bd676-9eb3-4da9-beb8-8aab1c8dcdb7",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f96ec49b-0f61-4c42-bb46-74a528249aeb",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-816, -224],
+      "webhookId": "f71bd676-9eb3-4da9-beb8-8aab1c8dcdb7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Save Bot Response": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Artiefy Project Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Bot Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Courses (Embeddings)": {
+      "ai_tool": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chat History": {
+      "main": [
+        [
+          {
+            "node": "Artiefy Project Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save User Message": {
+      "main": [
+        [
+          {
+            "node": "Get Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save User Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a64d4c28-9e90-470f-97b1-1ca4b101ae48",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9274630f1207c3987e0db2530e01c6f5cdb0496fd052cc39f9b0f1545012cd23"
+  },
+  "id": "NbEMsy0l3vT9tNhS",
+  "tags": []
+}

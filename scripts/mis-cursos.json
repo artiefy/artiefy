@@ -1,0 +1,537 @@
+[
+  {
+    "id": 409,
+    "title": "Animación y Visualización 3D - Combinada Cali Mañana ",
+    "description": "Este módulo enseña las técnicas fundamentales para dar vida a modelos tridimensionales mediante animación y visualización avanzada. Se explorarán principios de animación, rigging, simulaciones, iluminación y renderizado, utilizando software especializado. Además, se abordarán aplicaciones en cine, videojuegos, arquitectura y diseño de productos. "
+  },
+  {
+    "id": 391,
+    "title": " Intervención Familiar y Desarrollo Comunitario",
+    "description": "Este módulo aborda estrategias para la intervención en el entorno familiar y el fortalecimiento del desarrollo comunitario. Se explorarán dinámicas familiares, resolución de conflictos, políticas sociales y programas de apoyo para mejorar la calidad de vida de las personas."
+  },
+  {
+    "id": 408,
+    "title": "Modelado 3D - Presencial Cali Tarde ",
+    "description": "Este módulo proporciona los fundamentos esenciales para la creación de modelos tridimensionales en distintos entornos digitales. Se abordarán técnicas de modelado, texturización, iluminación y renderizado, utilizando software especializado. Además, se explorarán aplicaciones del modelado 3D en áreas como diseño de productos, animación, videojuegos, arquitectura e impresión 3D."
+  },
+  {
+    "id": 410,
+    "title": "Animación y Visualización 3D - Combinada Cali Tarde ",
+    "description": "Este módulo enseña las técnicas fundamentales para dar vida a modelos tridimensionales mediante animación y visualización avanzada. Se explorarán principios de animación, rigging, simulaciones, iluminación y renderizado, utilizando software especializado. Además, se abordarán aplicaciones en cine, videojuegos, arquitectura y diseño de productos. "
+  },
+  {
+    "id": 411,
+    "title": "Marketing digital y ventas - Presencial Cali Mañana ",
+    "description": "Este módulo proporciona los conocimientos y herramientas esenciales para desarrollar estrategias de marketing digital efectivas y maximizar las ventas en el entorno online. Se abordarán temas como la optimización de motores de búsqueda (SEO), marketing en redes sociales, publicidad digital, análisis de datos y estrategias de ventas en línea."
+  },
+  {
+    "id": 413,
+    "title": "Fundamentos de los Drones y Operación Básica",
+    "description": "Este módulo introduce los principios esenciales sobre el funcionamiento y la operación segura de drones. Se explorarán temas como los tipos de drones, sus componentes, normativas de vuelo, maniobras básicas y mantenimiento. Además, se abordarán aplicaciones en diversas industrias como fotografía aérea, inspección técnica y cartografía. "
+  },
+  {
+    "id": 407,
+    "title": "Modelado 3D",
+    "description": "Este módulo proporciona los fundamentos esenciales para la creación de modelos tridimensionales en distintos entornos digitales. Se abordarán técnicas de modelado, texturización, iluminación y renderizado, utilizando software especializado. Además, se explorarán aplicaciones del modelado 3D en áreas como diseño de productos, animación, videojuegos, arquitectura e impresión 3D."
+  },
+  {
+    "id": 383,
+    "title": " Bienestar Animal y Alojamiento según Especie",
+    "description": "Este módulo proporciona conocimientos fundamentales sobre la asistencia veterinaria y la aplicación de primeros auxilios en animales. Se abordarán técnicas de evaluación de signos vitales, control de hemorragias, manejo de heridas, inmovilización y reanimación."
+  },
+  {
+    "id": 614,
+    "title": "Curso de Maquillaje Artístico - Presencial Cali Mañana ",
+    "description": "Aprende como hacer la preparación de piel (diagnóstico, skincare y primers), elección de bases y subtonos, corrección y cobertura, contorno/iluminación, diseño de cejas, ojos (transiciones, cut crease, delineados), labios y sellado para alta durabilidad (eventos/fotografía). Integraremos colorimetría, visagismo y bioseguridad en el uso de herramientas."
+  },
+  {
+    "id": 422,
+    "title": "Diseño Avanzado y Simulación de Sistemas Fotovoltaicos",
+    "description": "Este módulo profundiza en el diseño, análisis y optimización de sistemas fotovoltaicos mediante herramientas de simulación avanzada. Se abordarán temas como dimensionamiento de paneles solares, eficiencia energética, almacenamiento en baterías, inversores y conexión a la red eléctrica. Además, se explorarán software de simulación para evaluar el rendimiento y viabilidad de proyectos solares en distintos entornos. "
+  },
+  {
+    "id": 423,
+    "title": " Instalación y Mantenimiento de Sistemas Fotovoltaicos",
+    "description": "Este módulo proporciona los conocimientos y habilidades necesarias para la correcta instalación, configuración y mantenimiento de sistemas de energía solar. Se abordarán temas como montaje de paneles solares, conexión de inversores y baterías, cableado eléctrico, normativas de seguridad y resolución de fallas."
+  },
+  {
+    "id": 472,
+    "title": "Programacion Frontend",
+    "description": "El módulo en Programación Frontend enseña a construir interfaces web modernas usando HTML, CSS y JavaScript. Los estudiantes aprenderán a desarrollar sitios responsivos y dinámicos, integrando frameworks como React o Vue.js. A lo largo del curso, implementarán componentes interactivos y consumirán datos desde APIs. Cada clase incluye actividades prácticas que contribuyen al desarrollo de un proyecto final funcional. Al finalizar, los participantes podrán diseñar, construir y desplegar aplicaciones web completas."
+  },
+  {
+    "id": 414,
+    "title": "Construcción y mantenimiento de drones",
+    "description": "Este módulo proporciona los conocimientos esenciales para el ensamblaje, configuración y mantenimiento de drones. Se explorarán componentes clave como motores, controladores de vuelo, sistemas de propulsión y baterías. Además, se abordarán técnicas de calibración, reparación y optimización del rendimiento."
+  },
+  {
+    "id": 421,
+    "title": " Fundamentos de Electricidad y Bases de Energía solar",
+    "description": "Este módulo introduce los principios fundamentales de la electricidad y su aplicación en sistemas de energía solar. Se abordarán conceptos como circuitos eléctricos, corriente, voltaje, resistencia y potencia, junto con el funcionamiento de paneles solares, baterías y reguladores de carga. "
+  },
+  {
+    "id": 415,
+    "title": " Regulaciones y Fotogrametría Aérea",
+    "description": "Este módulo aborda los aspectos legales y técnicos esenciales para la operación de drones en el ámbito profesional. Se explorarán normativas nacionales e internacionales, requisitos para la certificación de pilotos y protocolos de seguridad aérea. Además, se enseñarán los fundamentos de la fotogrametría aérea, incluyendo captura de imágenes georreferenciadas, procesamiento de datos y generación de modelos 3D."
+  },
+  {
+    "id": 623,
+    "title": "Curso en Estética Corporal Avanzado - Presencial Cali Tarde ",
+    "description": "Domina maderoterapia (biotipos, maniobras, secuencias y presión segura), crioterapia (ventanas térmicas, tiempos, contraindicaciones) y aparatología estética avanzada (radiofrecuencia, cavitación, vacumterapia, ultrasonido, EMS) con secuenciación por objetivo: drenaje, tejido adiposo localizado, flacidez y remodelación. Aprenderás screening, fichas clínicas, fotografía A/D, parámetros y tiempos óptimos, manejo de eventos esperables y plan de cuidados en casa."
+  },
+  {
+    "id": 481,
+    "title": "Programacion Backend y Bases de Datos",
+    "description": "En Programación Backend aprenderás a desarrollar la parte del servidor de una aplicación, conectando bases de datos, creando APIs y asegurando que todo funcione de forma rápida, segura y eficiente. Desde los conceptos fundamentales hasta la creación de servicios completos, este curso te prepara para convertirte en el motor que impulsa cualquier software moderno."
+  },
+  {
+    "id": 478,
+    "title": "Diplomado en Gestión publica y mecanismos de participación comunitaria",
+    "description": "Es un programa de formación que capacita a los participantes en la comprensión y aplicación de principios de la administración pública, el funcionamiento del Estado y las herramientas de participación ciudadana. Su objetivo es fortalecer las capacidades para incidir en la toma de decisiones públicas, promover la transparencia y fomentar la organización comunitaria como base del desarrollo territorial."
+  },
+  {
+    "id": 375,
+    "title": "Salud Ambiental y Epidemiología",
+    "description": "Este módulo explora la relación entre el medio ambiente y la salud pública, así como los principios de la epidemiología en la prevención de enfermedades. Se abordarán temas como contaminación, control de riesgos ambientales, vigilancia epidemiológica y estrategias de salud comunitaria."
+  },
+  {
+    "id": 482,
+    "title": "Desarrollo Backend y Bases de Datos Combinada",
+    "description": "Este curso brinda las bases esenciales para crear aplicaciones del lado del servidor, abordando el manejo de bases de datos, la construcción de APIs RESTful, autenticación, y control de acceso. A través de herramientas modernas como Node.js y Express, el estudiante desarrollará soluciones escalables y seguras, listas para su implementación en entornos reales."
+  },
+  {
+    "id": 483,
+    "title": "Desarrollo de Aplicaciones Moviles",
+    "description": "Este módulo introduce a los estudiantes en la creación de aplicaciones móviles modernas utilizando frameworks multiplataforma como Flutter o React Native. Se abordan conceptos clave de arquitectura móvil, diseño de interfaces, gestión de estados y conexión con servicios externos, con un enfoque práctico orientado al desarrollo de soluciones funcionales y escalables para Android y iOS."
+  },
+  {
+    "id": 340,
+    "title": "Inglés Para La Comunicación Básica",
+    "description": "El curso de Inglés para la Comunicación Básica desarrolla habilidades fundamentales en el idioma, enfocándose en la comprensión y expresión oral y escrita en situaciones cotidianas."
+  },
+  {
+    "id": 331,
+    "title": "Aprendizaje Automático - Modalidad Combinada",
+    "description": "Objetivo: Introducir los principios fundamentales del aprendizaje automático, incluyendo aprendizaje supervisado y no supervisado, con el objetivo de desarrollar un proyecto que resuelva un problema real mediante el uso de datos.\nIntroducción al Aprendizaje Automático: Conceptos básicos, historia, y aplicaciones.\nPreprocesamiento de Datos: Técnicas de limpieza y normalización de datos.\nModelos de Aprendizaje Supervisado: Regresión lineal, regresión logística, máquinas de soporte vectorial (SVM).\nModelos de Aprendizaje No Supervisado: K-means, clustering jerárquico, DBSCAN.\nEvaluación de Modelos: Matrices de confusión, curvas ROC, validación cruzada.\n"
+  },
+  {
+    "id": 398,
+    "title": " Fundamentos de Legislación y Administración Empresarial",
+    "description": "Este módulo introduce los principios legales y estructurales que regulan la creación y funcionamiento de las empresas. Se explorarán temas como normativas mercantiles, derechos y obligaciones empresariales, tipos de sociedades, gestión administrativa y estrategias organizacionales."
+  },
+  {
+    "id": 369,
+    "title": "Gestión Administrativa y Documental ",
+    "description": "Este módulo aborda los principios y técnicas para la organización eficiente de procesos administrativos y la gestión documental en entornos empresariales. Se explorarán estrategias para el manejo de archivos, digitalización, normativas legales y optimización del flujo de información."
+  },
+  {
+    "id": 348,
+    "title": "Inglés funcional para Viajes y Negocios",
+    "description": "Este módulo está diseñado para mejorar el dominio del inglés en contextos de Viajes y negocios."
+  },
+  {
+    "id": 577,
+    "title": "Pruebas y Gestión",
+    "description": "Curso De Prueba"
+  },
+  {
+    "id": 400,
+    "title": "Gestión Administrativa y Documental",
+    "description": "Este módulo aborda los principios y técnicas para una administración eficiente en entornos organizacionales. Se explorarán temas como la gestión de documentos, organización de archivos, normativas de archivo y digitalización de información. Además, se enseñarán estrategias para optimizar procesos administrativos y mejorar la productividad en el manejo de datos."
+  },
+  {
+    "id": 401,
+    "title": "Auditoría y Tesorería Empresarial",
+    "description": "Este módulo proporciona conocimientos clave sobre los procesos de auditoría y la gestión de tesorería en el ámbito empresarial. Se abordarán temas como control financiero, análisis de riesgos, normativas contables, flujo de caja, manejo de inversiones y estrategias para la optimización de recursos."
+  },
+  {
+    "id": 578,
+    "title": "Matemáticas",
+    "description": "Matemáticas"
+  },
+  {
+    "id": 523,
+    "title": "Acumulación y conversión de energía - Combinada  Cali Mañana",
+    "description": "El curso “Acumulación y Conversión de Energía” proporciona los conocimientos fundamentales y aplicados para comprender cómo se almacena y transforma la energía en diferentes sistemas. Aborda tecnologías clave como baterías, supercondensadores y sistemas híbridos, así como los principios físicos y electroquímicos que los sustentan."
+  },
+  {
+    "id": 602,
+    "title": "DESARROLLO DE COMPETENCIAS EN INVESTIGACIÓN Y ANÁLISIS DE PROYECTOS",
+    "description": "Bienvenido al módulo \"Desarrollo de Competencias en Investigación y Análisis de Proyectos\" del programa de formación. Este módulo tiene como propósito fundamental fortalecer tus habilidades en comprensión lectora, investigación, uso de plataformas e inteligencia artificial, así como en la validación de ideas y la evaluación de proyectos.\nA lo largo de este módulo, te sumergirás en actividades diseñadas para desarrollar una base sólida en el análisis crítico de textos, la investigación aplicada, y el uso de herramientas tecnológicas avanzadas. Además, trabajarás en la validación y evaluación de ideas, preparando proyectos con un enfoque integral que considere tanto el rigor académico como la viabilidad práctica.\nPara el desarrollo de las actividades planteadas en esta guía, contarás con el acompañamiento constante del instructor asignado, quien te orientará de manera continua con las pautas necesarias para lograr los objetivos de aprendizaje. Este acompañamiento incluirá la provisión de herramientas conceptuales y metodológicas, siempre enmarcadas en un enfoque ético y de alta calidad.\nEs fundamental que organices tu tiempo, dedicando un promedio de dos horas diarias al estudio y desarrollo de las actividades que se presentan en esta guía de aprendizaje. Asimismo, te recomendamos revisar los materiales del programa, realizar consultas adicionales en internet y explorar las recomendaciones que encontraras en los referentes bibliográficos."
+  },
+  {
+    "id": 594,
+    "title": "Competencias Comunicativas",
+    "description": "\n¿Quieres expresarte mejor, escribir con claridad y destacar en tu vida académica y profesional?\n\nLa comunicación efectiva no es un lujo, es una de las habilidades más valoradas en el mundo actual. Ya sea que quieras mejorar tus estudios, crecer en tu trabajo o desenvolverte con seguridad en entornos digitales, este curso te dará las herramientas que necesitas.\n\nEn el Curso de Competencias Comunicativas aprenderás a:\n✅ Analizar y comprender textos académicos de forma crítica.\n✅ Redactar textos académicos y profesionales claros y estructurados.\n✅ Hablar en público con seguridad y hacer presentaciones efectivas.\n✅ Manejar la comunicación en entornos digitales y profesionales."
+  },
+  {
+    "id": 524,
+    "title": "Acumulación y conversión de energía - Combinada Cali Tarde",
+    "description": "El curso “Acumulación y Conversión de Energía” proporciona los conocimientos fundamentales y aplicados para comprender cómo se almacena y transforma la energía en diferentes sistemas. Aborda tecnologías clave como baterías, supercondensadores y sistemas híbridos, así como los principios físicos y electroquímicos que los sustentan."
+  },
+  {
+    "id": 521,
+    "title": "Curso en Machine Learning con énfasis en Visión Artificial",
+    "description": "Aprende a diseñar, entrenar y evaluar modelos inteligentes que resuelvan problemas del mundo real. Domina algoritmos clave, procesamiento de datos y herramientas prácticas para impulsar tu carrera con IA."
+  },
+  {
+    "id": 352,
+    "title": " Estrategias de Enseñanza y Traducción en Inglés",
+    "description": "Este módulo está diseñado para desarrollar habilidades clave en la enseñanza y traducción del inglés. Aprenderás metodologías efectivas para la enseñanza del idioma, estrategias didácticas innovadoras y técnicas de traducción precisa en diversos contextos. A través de actividades prácticas, mejorarás tu capacidad de adaptar materiales, interpretar textos y facilitar el aprendizaje en entornos educativos y profesionales."
+  },
+  {
+    "id": 416,
+    "title": " Automatización y Aplicaciones Específicas de Drones",
+    "description": "Este módulo explora el uso avanzado de drones en diversas industrias mediante la automatización y programación de vuelos. Se abordarán temas como planificación de misiones autónomas, integración con inteligencia artificial, sensores avanzados y análisis de datos en tiempo real. Además, se analizarán aplicaciones especializadas en sectores como agricultura de precisión, seguridad, inspección industrial y monitoreo ambiental."
+  },
+  {
+    "id": 595,
+    "title": "Desarrollo Web y Bases de Datos",
+    "description": "Crea Aplicaciones Web Profesionales con Backend y Transforma tu Futuro en 60 Días.\n\n- De Cero a Desarrollador Web Completo. \n- Haz de la Programación Backend tu Nuevo Ingreso. \n- Consigue Empleos Pagados Aprendiendo lo que las Empresas Realmente Necesitan.\n- Construye Herramientas que Resuelvan Problemas Reales Con Código Backend Profesional.\n- Al Finalizar Tendrás un Proyecto Funcional, Documentado y Listo Para Tu Portafolio. \n"
+  },
+  {
+    "id": 417,
+    "title": "Avanzado y Ética en la Operación de Drones",
+    "description": "Este módulo profundiza en las técnicas avanzadas de pilotaje, automatización y aplicación profesional de drones, con un enfoque en la seguridad y la responsabilidad ética. Se abordarán normativas actualizadas, protocolos de seguridad, privacidad de datos, y buenas prácticas en la operación de drones en diferentes industrias."
+  },
+  {
+    "id": 353,
+    "title": "Fundamentos Jurídicos y Legislación",
+    "description": "Este módulo proporciona una introducción a los principios fundamentales del derecho y la legislación. Se abordarán conceptos clave del marco legal, estructuras jurídicas y normativas esenciales en distintos ámbitos."
+  },
+  {
+    "id": 402,
+    "title": "Emprendimiento e innovación empresarial",
+    "description": "Este módulo desarrolla las habilidades necesarias para la creación y gestión de negocios innovadores. Se explorarán estrategias de emprendimiento, modelos de negocio, planificación financiera, desarrollo de productos y servicios, así como la aplicación de tecnologías emergentes en el ámbito empresarial."
+  },
+  {
+    "id": 399,
+    "title": " Administración Financiera y Contabilidad",
+    "description": "Este módulo proporciona los fundamentos esenciales para la gestión financiera y contable en organizaciones. Se abordarán temas como planificación financiera, análisis de estados financieros, control de costos, presupuestos y normativas contables."
+  },
+  {
+    "id": 403,
+    "title": "Diseño Gráfico Innovador Combinada Cali",
+    "description": "Este módulo explora el impacto de la inteligencia artificial en el diseño gráfico, proporcionando herramientas y técnicas para la creación de contenido visual innovador. Se abordarán temas como el uso de IA en la automatización del diseño, generación de imágenes, edición avanzada, personalización y optimización de workflows creativos."
+  },
+  {
+    "id": 355,
+    "title": " Derecho Penal, Civil y de Familia",
+    "description": "Este módulo ofrece una visión general de los principios y normativas del derecho penal, civil y de familia. Se explorarán los fundamentos de la responsabilidad penal, los derechos y obligaciones en las relaciones civiles, y la regulación legal de la familia."
+  },
+  {
+    "id": 596,
+    "title": "Despliegue y Mantenimiento de Aplicaciones - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de la improvisación a la confiabilidad: aprenderás a preparar entornos dev/prod, diseñar pipelines CI/CD sólidos, versionar con buenas prácticas, configurar servidores y nube, y asegurar monitoreo, pruebas, seguridad y depuración para reducir fallos y evitar caídas. Dominarás estrategias como blue-green/canary, rollback rápido y alertas efectivas para dormir tranquilo tras cada release. Cerrarás con un proyecto final: despliegue real end-to-end con monitoreo y plan de mantenimiento documentado."
+  },
+  {
+    "id": 385,
+    "title": " Estética y Cuidado Profesional de Animales Domésticos",
+    "description": "Este módulo proporciona conocimientos y técnicas esenciales para el cuidado higiénico y estético de los animales domésticos. Se abordarán temas como el baño, corte de pelo, cepillado, limpieza de oídos y uñas, así como el manejo adecuado según la raza y especie."
+  },
+  {
+    "id": 597,
+    "title": "Despliegue y Mantenimiento de Aplicaciones - Sincrónica Virtual Mañana",
+    "description": "Este curso te lleva de la improvisación a la confiabilidad: aprenderás a preparar entornos dev/prod, diseñar pipelines CI/CD sólidos, versionar con buenas prácticas, configurar servidores y nube, y asegurar monitoreo, pruebas, seguridad y depuración para reducir fallos y evitar caídas. Dominarás estrategias como blue-green/canary, rollback rápido y alertas efectivas para dormir tranquilo tras cada release. Cerrarás con un proyecto final: despliegue real end-to-end con monitoreo y plan de mantenimiento documentado."
+  },
+  {
+    "id": 332,
+    "title": "Aprendizaje Automático - Sincronica",
+    "description": "Objetivo: Introducir los principios fundamentales del aprendizaje automático, incluyendo aprendizaje supervisado y no supervisado, con el objetivo de desarrollar un proyecto que resuelva un problema real mediante el uso de datos.\nIntroducción al Aprendizaje Automático: Conceptos básicos, historia, y aplicaciones.\nPreprocesamiento de Datos: Técnicas de limpieza y normalización de datos.\nModelos de Aprendizaje Supervisado: Regresión lineal, regresión logística, máquinas de soporte vectorial (SVM).\nModelos de Aprendizaje No Supervisado: K-means, clustering jerárquico, DBSCAN.\nEvaluación de Modelos: Matrices de confusión, curvas ROC, validación cruzada.\n"
+  },
+  {
+    "id": 404,
+    "title": "Diseño Gráfico Innovador con Inteligencia Artificial - Presencial Cali Tarde ",
+    "description": "Este módulo explora el impacto de la inteligencia artificial en el diseño gráfico, proporcionando herramientas y técnicas para la creación de contenido visual innovador. Se abordarán temas como el uso de IA en la automatización del diseño, generación de imágenes, edición avanzada, personalización y optimización de workflows creativos."
+  },
+  {
+    "id": 598,
+    "title": "Legislación Financiera y Tributaria",
+    "description": "¿Temes sanciones por errores en facturación, nómina o declaraciones? En este curso pasarás del desconocimiento a una operación ordenada, segura y optimizada. \n\nDomina la legislación laboral y comercial, los principios del sistema tributario, retenciones y facturación, declaraciones y el régimen especial, con enfoque práctico en pruebas y casos reales. \n\nConstruirás tu calendario anual de obligaciones, un checklist de cumplimiento y un flujo de control interno para evitar multas, intereses y riesgos ante la autoridad tributaria. \n\nCerrarás con un proyecto aplicado: una revisión integral legal-tributaria a una empresa, con hallazgos y plan de acción."
+  },
+  {
+    "id": 599,
+    "title": "Curso de Eficiencia Energética y Gestión de Proyectos de Energía Solar Fotovoltaica",
+    "description": "Este curso te lleva de la intuición a la decisión basada en datos: aprenderás a diagnosticar consumos, detectar oportunidades de eficiencia energética, dimensionar un sistema FV y evaluar su viabilidad (CAPEX/OPEX, LCOE, payback, NPV/IRR). \n\n- Construirás un caso de inversión claro, con rutas de financiación, permisos y requisitos legales, e indicadores de sostenibilidad e impacto. \n\n- Terminarás con un proyecto integral listo para presentar: cronograma, presupuesto, matriz de riesgos y plan de O&M. \n\n- Reduce costos, descarboniza y comunica resultados con confianza.\n"
+  },
+  {
+    "id": 429,
+    "title": "Aprendizaje Automático - Presencial Cali Mañana ",
+    "description": "Este módulo introduce los fundamentos del aprendizaje automático (machine learning), un área clave de la inteligencia artificial que permite a los sistemas aprender de los datos y mejorar su rendimiento sin ser programados explícitamente. Los estudiantes explorarán diferentes tipos de algoritmos supervisados y no supervisados, técnicas de clasificación, regresión, agrupamiento y reducción de dimensiones. Además, se abordará el ciclo completo de desarrollo de modelos, desde la preparación de datos hasta la evaluación y validación. El módulo combina teoría con práctica, utilizando herramientas y lenguajes de programación como Python y bibliotecas populares como Scikit-learn o TensorFlow para resolver problemas reales."
+  },
+  {
+    "id": 366,
+    "title": "Didáctica Del Ingles En La Primera Infancia ",
+    "description": "¿Te cuesta mantener la atención de los niños y lograr que realmente usen el inglés?\n\nEste curso te lleva de actividades sueltas a una planificación efectiva y lúdica basada en el desarrollo infantil. \n\nAprenderás:\n\n- Fundamentos de adquisición de L2, didácticas activas (TPR, storytelling, canciones, juegos).\n\n- Diseño de rutas de clase con rutinas predecibles, materiales visuales y centros de aprendizaje. \n\n- Integra evaluación formativa y observación para ajustar la enseñanza a cada niño. Cerrarás con un plan de clase completo (objetivos, actividades, recursos y evaluación) listo para implementar y un kit práctico de 20 actividades lúdicas adaptables."
+  },
+  {
+    "id": 341,
+    "title": "Programación Frontend",
+    "description": "Programación enfocada a el frontend de una pagina web"
+  },
+  {
+    "id": 363,
+    "title": "Estimulación Adecuada y Desarrollo Infantil ",
+    "description": "Este módulo aborda los principios y estrategias de la estimulación temprana para favorecer el desarrollo integral en la primera infancia. Se explorarán las etapas del desarrollo infantil, técnicas de intervención y enfoques pedagógicos para potenciar habilidades cognitivas, motoras, emocionales y sociales."
+  },
+  {
+    "id": 359,
+    "title": "Ciencias Del Ejercicio ",
+    "description": "Este módulo estudia los principios científicos que fundamentan la actividad física y el rendimiento humano. Se abordan aspectos de fisiología, biomecánica y nutrición aplicados al ejercicio y el deporte."
+  },
+  {
+    "id": 357,
+    "title": "Historia y Pedagogía del Deporte ",
+    "description": "Este módulo explora la evolución histórica del deporte y su impacto en la sociedad, así como los principios pedagógicos aplicados a su enseñanza. Se analizarán las corrientes filosóficas, metodologías de entrenamiento y enfoques didácticos para la formación deportiva."
+  },
+  {
+    "id": 361,
+    "title": "Gestión y Administración Deportiva ",
+    "description": "Este módulo proporciona conocimientos sobre la planificación, organización y dirección de entidades y eventos deportivos. Se abordarán estrategias de gestión, marketing, financiamiento y normativas aplicadas al ámbito deportivo."
+  },
+  {
+    "id": 601,
+    "title": "Curso de Eficiencia Energética y Gestión de Proyectos de Energía Solar Fotovoltaica",
+    "description": "Este curso te lleva de la intuición a la decisión basada en datos: aprenderás a diagnosticar consumos, detectar oportunidades de eficiencia energética, dimensionar un sistema FV y evaluar su viabilidad (CAPEX/OPEX, LCOE, payback, NPV/IRR). - Construirás un caso de inversión claro, con rutas de financiación, permisos y requisitos legales, e indicadores de sostenibilidad e impacto. - Terminarás con un proyecto integral listo para presentar: cronograma, presupuesto, matriz de riesgos y plan de O&M. - Reduce costos, descarboniza y comunica resultados con confianza."
+  },
+  {
+    "id": 606,
+    "title": "Curso de Primeros Auxilios - Presencial Cali Mañana ",
+    "description": "Este curso te enseña a actuar con seguridad y confianza: evaluación de escena, protocolo PAS (Proteger–Alertar–Socorrer), RCP adulto/niño, uso del DEA, manejo de hemorragias, atragantamiento (maniobra), shock, convulsiones, fracturas e inmovilización, quemaduras y envenenamientos. Aprenderás a priorizar con triage básico, armar un botiquín inteligente y coordinar con los servicios de emergencia."
+  },
+  {
+    "id": 607,
+    "title": "Curso de Química Cosmética - Presencial Cali Tarde ",
+    "description": "Este curso te lleva de “recetas” a formulación profesional. Dominarás materias primas (emolientes, humectantes, tensioactivos, polímeros), arquitectura de emulsiones O/W y W/O, ajuste de pH, preservación y estabilidad (viscosidad, centrifugado, estrés térmico). Aprenderás a diseñar champús, acondicionadores, cremas, geles y sérums con activos funcionales y a leer INCI para comprar y comunicar mejor. Incluye BPM (Buenas Prácticas de Manufactura), etiquetado responsable y guía de claims sin prometer lo que la ciencia no respalda."
+  },
+  {
+    "id": 612,
+    "title": "Curso en Técnicas de Spa y Relajación - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de técnicas aisladas a experiencias integrales de bienestar. Aprenderás protocolos profesionales de relajación, respiración guiada, mindfulness), masajes de tejido superficial y profundo, aromaterapia, termoterapia/crioterapia segura, rituales de manos y pies, ambientación (luz, sonido, aroma) y comunicación empática para fidelizar"
+  },
+  {
+    "id": 613,
+    "title": "Curso de Maquillaje Artístico - Presencial Cali Tarde ",
+    "description": "Aprende como hacer la preparación de piel (diagnóstico, skincare y primers), elección de bases y subtonos, corrección y cobertura, contorno/iluminación, diseño de cejas, ojos (transiciones, cut crease, delineados), labios y sellado para alta durabilidad (eventos/fotografía). Integraremos colorimetría, visagismo y bioseguridad en el uso de herramientas."
+  },
+  {
+    "id": 603,
+    "title": "Curso en Bioseguridad - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de prácticas improvisadas a una operación segura y certificable. Aprenderás principios de bioseguridad, cadena de higiene y asepsia, uso correcto de EPP, esterilización y desinfección, manejo de residuos (segregación y rutas), toma y transporte de muestras, y protocolos de contingencia ante incidentes biológicos. Incluye checklists operativos, mapa de riesgos del área y guías para diseñar POE (Procedimientos Operativos Estandarizados) acordes a la normatividad vigente."
+  },
+  {
+    "id": 605,
+    "title": "Curso de Primeros Auxilios - Presencial Cali Tarde ",
+    "description": "Este curso te enseña a actuar con seguridad y confianza: evaluación de escena, protocolo PAS (Proteger–Alertar–Socorrer), RCP adulto/niño, uso del DEA, manejo de hemorragias, atragantamiento (maniobra), shock, convulsiones, fracturas e inmovilización, quemaduras y envenenamientos. Aprenderás a priorizar con triage básico, armar un botiquín inteligente y coordinar con los servicios de emergencia."
+  },
+  {
+    "id": 611,
+    "title": "Curso en Técnicas de Spa y Relajación - Presencial Cali Tarde ",
+    "description": "Este curso te lleva de técnicas aisladas a experiencias integrales de bienestar. Aprenderás protocolos profesionales de relajación, respiración guiada, mindfulness), masajes de tejido superficial y profundo, aromaterapia, termoterapia/crioterapia segura, rituales de manos y pies, ambientación (luz, sonido, aroma) y comunicación empática para fidelizar"
+  },
+  {
+    "id": 617,
+    "title": "Curso de Estética Facial - Presencial Cali Tarde ",
+    "description": "Aprenderás diagnóstico profesional (fototipo, biotipo, estado de barrera), rutina por objetivos (limpieza, exfoliación química/enzimática, extracciones seguras, hidratación, masaje, máscara y sellado), manejo de sensibilidad y protocolos para acné, manchas y fotoenvejecimiento."
+  },
+  {
+    "id": 406,
+    "title": "Diseño e impresión 3D - Presencial Cali Tarde ",
+    "description": "Este módulo introduce los principios fundamentales del diseño y la fabricación mediante impresión 3D. Se explorarán conceptos clave como modelado tridimensional, tipos de materiales, funcionamiento de impresoras 3D y aplicaciones en diversas industrias."
+  },
+  {
+    "id": 405,
+    "title": "Diseño e impresión 3D",
+    "description": "Este módulo introduce los principios fundamentales del diseño y la fabricación mediante impresión 3D. Se explorarán conceptos clave como modelado tridimensional, tipos de materiales, funcionamiento de impresoras 3D y aplicaciones en diversas industrias."
+  },
+  {
+    "id": 390,
+    "title": "Psicología Social y Salud Pública",
+    "description": "Este módulo explora la relación entre los procesos psicológicos, el comportamiento social y su impacto en la salud pública. Se abordarán temas como la influencia de los factores sociales en la salud mental, la prevención de enfermedades, la promoción del bienestar comunitario y las estrategias de intervención en poblaciones vulnerables."
+  },
+  {
+    "id": 604,
+    "title": "Curso en Bioseguridad - Presencial Cali Tarde ",
+    "description": "Este curso te lleva de prácticas improvisadas a una operación segura y certificable. Aprenderás principios de bioseguridad, cadena de higiene y asepsia, uso correcto de EPP, esterilización y desinfección, manejo de residuos (segregación y rutas), toma y transporte de muestras, y protocolos de contingencia ante incidentes biológicos. Incluye checklists operativos, mapa de riesgos del área y guías para diseñar POE (Procedimientos Operativos Estandarizados) acordes a la normatividad vigente."
+  },
+  {
+    "id": 608,
+    "title": "Curso de Química Cosmética - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de “recetas” a formulación profesional. Dominarás materias primas (emolientes, humectantes, tensioactivos, polímeros), arquitectura de emulsiones O/W y W/O, ajuste de pH, preservación y estabilidad (viscosidad, centrifugado, estrés térmico). Aprenderás a diseñar champús, acondicionadores, cremas, geles y sérums con activos funcionales y a leer INCI para comprar y comunicar mejor. Incluye BPM (Buenas Prácticas de Manufactura), etiquetado responsable y guía de claims sin prometer lo que la ciencia no respalda."
+  },
+  {
+    "id": 619,
+    "title": "Curso de Estética Facial Avanzado - Presencial Cali Tarde ",
+    "description": "Este curso te lleva de protocolos genéricos a planes avanzados, combinados y medibles. Profundizarás en Estética Facial, Tratamientos Faciales Avanzados, Electroestética y Protocolos Antiedad para pieles con acné, hiperpigmentación, fotoenvejecimiento y flacidez"
+  },
+  {
+    "id": 618,
+    "title": "Curso de Estética Facial - Presencial Cali Mañana ",
+    "description": "Aprenderás diagnóstico profesional (fototipo, biotipo, estado de barrera), rutina por objetivos (limpieza, exfoliación química/enzimática, extracciones seguras, hidratación, masaje, máscara y sellado), manejo de sensibilidad y protocolos para acné, manchas y fotoenvejecimiento."
+  },
+  {
+    "id": 616,
+    "title": "Curso de Depilación Integral  - Presencial Cali Mañana ",
+    "description": "Aprenderás diagnóstico de tipo de piel y vello, preparación correcta (asepsia, temperatura, tensión de piel), técnicas con cera caliente/fría/roll-on y combinadas por zonas (rostro, axilas, brazos, bikini, piernas), además de diseño de cejas y manejo de piel sensible."
+  },
+  {
+    "id": 610,
+    "title": "Curso de Anatomía Basica - Presencial Cali Tarde",
+    "description": "Este curso transforma la anatomía en un mapa claro y funcional. Aprenderás terminología y planos anatómicos, relaciones topográficas y los principales sistemas (esquelético, muscular, nervioso, cardiovascular, respiratorio y digestivo) entendidos desde su función y conexión real."
+  },
+  {
+    "id": 373,
+    "title": "Fundamentos de Seguridad y Salud En El Trabajo",
+    "description": "Este módulo proporciona los principios esenciales para la prevención de riesgos laborales y la promoción de un ambiente de trabajo seguro. Se abordarán normativas de seguridad, identificación de peligros, gestión de emergencias y ergonomía. "
+  },
+  {
+    "id": 358,
+    "title": "Actividad Física y Deporte Especializado ",
+    "description": "Este módulo aborda la planificación y aplicación de programas de actividad física adaptados a diversas poblaciones y niveles de especialización deportiva. Se explorarán metodologías de entrenamiento, rehabilitación y rendimiento, considerando las necesidades específicas de cada grupo."
+  },
+  {
+    "id": 347,
+    "title": "Ingles Académico y Profesional (intermediate-B1/B2)",
+    "description": "Este módulo está diseñado para desarrollar habilidades prácticas en inglés, enfocadas en situaciones Académicas y profesionales."
+  },
+  {
+    "id": 376,
+    "title": " Gestión de Seguridad y salud en el trabajo",
+    "description": "seguridad y salud ocupacional en el entorno laboral. Se abordarán normativas vigentes, identificación y prevención de riesgos, ergonomía y cultura de prevención."
+  },
+  {
+    "id": 367,
+    "title": "Fundamentos de Administración y Matemáticas Aplicadas",
+    "description": "Este módulo introduce los principios básicos de la administración y su relación con las matemáticas aplicadas en la toma de decisiones. Se abordarán conceptos clave de gestión, planificación y análisis financiero, junto con herramientas matemáticas esenciales para la optimización de recursos. "
+  },
+  {
+    "id": 364,
+    "title": "Diplomado en Creatividad y Educación Inclusiva ",
+    "description": "Este módulo explora el papel de la creatividad en la enseñanza y su impacto en la educación inclusiva. Se abordarán estrategias innovadoras para adaptar el aprendizaje a la diversidad de estudiantes, fomentando un ambiente educativo equitativo y accesible."
+  },
+  {
+    "id": 368,
+    "title": "Administración Financiera",
+    "description": "Este módulo proporciona los fundamentos de la gestión financiera en organizaciones. Se abordarán temas como análisis financiero, planeación presupuestaria, gestión de inversiones y control de costos."
+  },
+  {
+    "id": 360,
+    "title": "Nutrición Deportiva ",
+    "description": "Este módulo explora la relación entre la alimentación y el rendimiento físico, abordando principios de nutrición aplicada al deporte. Se estudiarán macronutrientes, micronutrientes, hidratación y estrategias de alimentación para distintas disciplinas deportivas."
+  },
+  {
+    "id": 370,
+    "title": "Estadísticas y Salud Ocupacional ",
+    "description": "Este módulo explora el uso de herramientas estadísticas para el análisis y la gestión de la salud en el ámbito laboral. Se abordarán métodos de recolección e interpretación de datos, identificación de riesgos laborales y estrategias de prevención."
+  },
+  {
+    "id": 372,
+    "title": " Legislación y Marketing Empresarial",
+    "description": "Este módulo combina el conocimiento legal y las estrategias de mercadeo necesarias para la gestión empresarial. Se explorarán normativas comerciales, derechos del consumidor, propiedad intelectual y regulaciones fiscales, junto con principios de marketing, branding y posicionamiento de productos."
+  },
+  {
+    "id": 365,
+    "title": "Salud Infantil y Psicología Evolutiva",
+    "description": "Este módulo aborda el desarrollo físico, emocional y cognitivo de la infancia desde una perspectiva psicológica y de salud. Se explorarán las etapas del desarrollo evolutivo, factores que influyen en el bienestar infantil y estrategias para la promoción de hábitos saludables."
+  },
+  {
+    "id": 615,
+    "title": "Curso de Depilación Integral  - Presencial Cali Tarde ",
+    "description": "Aprenderás diagnóstico de tipo de piel y vello, preparación correcta (asepsia, temperatura, tensión de piel), técnicas con cera caliente/fría/roll-on y combinadas por zonas (rostro, axilas, brazos, bikini, piernas), además de diseño de cejas y manejo de piel sensible."
+  },
+  {
+    "id": 374,
+    "title": " Legislación y Clasificación de Riesgos",
+    "description": "Este módulo aborda el marco legal y los criterios para la identificación, evaluación y control de riesgos en el entorno laboral. Se estudiarán normativas de seguridad, tipos de riesgos laborales y medidas de prevención para garantizar ambientes de trabajo seguros. "
+  },
+  {
+    "id": 386,
+    "title": " Estética y Cuidado Profesional de Animales Domésticos",
+    "description": "Este módulo proporciona conocimientos y técnicas esenciales para el cuidado higiénico y estético de los animales domésticos. Se abordarán temas como el baño, corte de pelo, cepillado, limpieza de oídos y uñas, así como el manejo adecuado según la raza y especie."
+  },
+  {
+    "id": 388,
+    "title": " Gestión Veterinaria y Administración de Centros de Cuidado Animal",
+    "description": "Este módulo aborda los principios de gestión y administración necesarios para la operación eficiente de clínicas veterinarias, refugios y centros de cuidado animal. Se explorarán temas como planificación estratégica, atención al cliente, manejo de inventarios, normativas legales y bienestar a"
+  },
+  {
+    "id": 620,
+    "title": "Curso de Estética Facial Avanzado - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de protocolos genéricos a planes avanzados, combinados y medibles. Profundizarás en Estética Facial, Tratamientos Faciales Avanzados, Electroestética y Protocolos Antiedad para pieles con acné, hiperpigmentación, fotoenvejecimiento y flacidez"
+  },
+  {
+    "id": 378,
+    "title": "Administración y emergencias en el entorno laboral",
+    "description": "Cuando ocurre una emergencia, la improvisación cuesta vidas y reputación. En este curso pasarás del caos a la respuesta organizada: aprenderás fundamentos de administración aplicados a crisis, planes de emergencia y evacuación, clasificación de riesgos, brigadas y primeros auxilios, gestión de recursos y comunicación efectiva bajo presión. \n\nConstruirás protocolos claros y accionables para tu empresa, con roles, rutas, alertas y toma de decisiones basada en datos. \n\nCerrarás con un proyecto real: un protocolo integral de respuesta que podrás implementar de inmediato para proteger personas, reducir pérdidas y cumplir normativas."
+  },
+  {
+    "id": 389,
+    "title": " Fundamentos del Trabajo Social y Sociología",
+    "description": "Este módulo introduce los principios básicos del trabajo social y su relación con la sociología, proporcionando un enfoque integral para comprender y abordar problemáticas sociales. Se explorarán teorías sociológicas, dinámicas comunitarias, políticas sociales y estrategias de intervención para el bienestar de individuos y comunidades."
+  },
+  {
+    "id": 382,
+    "title": "Atención Veterinaria y Primeros Auxilios en Animales ",
+    "description": "Este módulo proporciona conocimientos fundamentales sobre la asistencia veterinaria y la aplicación de primeros auxilios en animales. Se abordarán técnicas de evaluación de signos vitales, control de hemorragias, manejo de heridas, inmovilización y reanimación. "
+  },
+  {
+    "id": 380,
+    "title": "Fundamentos en Anatomía, Fisiología y Salud Animal",
+    "description": "Este módulo proporciona conocimientos esenciales sobre la estructura y funcionamiento del organismo animal, abordando principios de anatomía, fisiología y bienestar animal. Se explorarán los sistemas biológicos, procesos vitales y cuidados sanitarios básicos para la prevención y tratamiento de enfermedades."
+  },
+  {
+    "id": 384,
+    "title": " Bienestar Animal y Alojamiento según Especie",
+    "description": "Este módulo proporciona conocimientos fundamentales sobre la asistencia veterinaria y la aplicación de primeros auxilios en animales. Se abordarán técnicas de evaluación de signos vitales, control de hemorragias, manejo de heridas, inmovilización y reanimación."
+  },
+  {
+    "id": 356,
+    "title": " Investigación Jurídica y Gestión Documental",
+    "description": "Este módulo desarrolla habilidades para la investigación en el ámbito legal y la gestión eficiente de documentos jurídicos. Se abordarán metodologías de análisis, búsqueda de normativas y jurisprudencia, así como técnicas para la organización y conservación de documentos legales. "
+  },
+  {
+    "id": 354,
+    "title": "Filosofía y Sociología del Derecho",
+    "description": "Este módulo analiza los fundamentos filosóficos y sociales del derecho, explorando su origen, naturaleza y función en la sociedad. Se estudiarán teorías jurídicas, corrientes filosóficas y el impacto del derecho en la estructura social."
+  },
+  {
+    "id": 362,
+    "title": "Fundamentos Pedagógicos y Curriculares",
+    "description": "Este módulo explora los principios esenciales de la pedagogía y el diseño curricular en la educación. Se analizarán teorías del aprendizaje, enfoques didácticos y estrategias para la planificación y evaluación de contenidos educativos."
+  },
+  {
+    "id": 351,
+    "title": "Inglés Avanzado para la Industria y la Tecnología",
+    "description": "Este módulo está diseñado para profesionales y estudiantes que buscan mejorar su dominio del inglés en entornos industriales y tecnológicos. Aprenderás vocabulario técnico, redacción de informes, interpretación de manuales y comunicación efectiva en reuniones y presentaciones."
+  },
+  {
+    "id": 624,
+    "title": "Curso en Estética Corporal Avanzado - Presencial Cali Mañana ",
+    "description": "Domina maderoterapia (biotipos, maniobras, secuencias y presión segura), crioterapia (ventanas térmicas, tiempos, contraindicaciones) y aparatología estética avanzada (radiofrecuencia, cavitación, vacumterapia, ultrasonido, EMS) con secuenciación por objetivo: drenaje, tejido adiposo localizado, flacidez y remodelación. Aprenderás screening, fichas clínicas, fotografía A/D, parámetros y tiempos óptimos, manejo de eventos esperables y plan de cuidados en casa."
+  },
+  {
+    "id": 622,
+    "title": "Curso en Estética Corporal - Presencial Cali Mañana ",
+    "description": "Este curso te lleva de sesiones genéricas a protocolos corporales personalizados y medibles. Aprenderás evaluación inicial (historial, hábitos, antropometría básica, fotos A/D), bioseguridad y contraindicaciones. Dominarás técnicas manuales y de aparatología: drenaje linfático, modelado, radiofrecuencia, cavitación, vacumterapia, ultrasonido y EMS, con secuenciación por objetivo (retención de líquidos, aspecto de celulitis, flacidez, tonicidad)."
+  },
+  {
+    "id": 621,
+    "title": "Curso en Estética Corporal - Presencial Cali Tarde ",
+    "description": "Este curso te lleva de sesiones genéricas a protocolos corporales personalizados y medibles. Aprenderás evaluación inicial (historial, hábitos, antropometría básica, fotos A/D), bioseguridad y contraindicaciones. Dominarás técnicas manuales y de aparatología: drenaje linfático, modelado, radiofrecuencia, cavitación, vacumterapia, ultrasonido y EMS, con secuenciación por objetivo (retención de líquidos, aspecto de celulitis, flacidez, tonicidad)."
+  },
+  {
+    "id": 625,
+    "title": "Programación Frontend",
+    "description": "Este curso te lleva de páginas sueltas a interfaces modernas, rápidas y mantenibles. Dominarás HTML semántico, CSS moderno (Flexbox, Grid, variables), JavaScript (ES6+), componentes con React, estado, ruteo, fetching y accesibilidad. Aprenderás performance (lazy loading, code splitting), testing básico y buenas prácticas (Git, ramas, PRs)."
+  },
+  {
+    "id": 393,
+    "title": "Neuropsicología y educación inclusiva",
+    "description": "Este módulo explora la relación entre el funcionamiento cerebral y los procesos de aprendizaje, con un enfoque en la educación inclusiva. Se abordarán aspectos del desarrollo cognitivo, las dificultades de aprendizaje, la adaptación de estrategias pedagógicas y el diseño de entornos educativos accesibles."
+  },
+  {
+    "id": 609,
+    "title": "Curso de Anatomía Basica - Presencial Cali Mañana",
+    "description": "Este curso transforma la anatomía en un mapa claro y funcional. Aprenderás terminología y planos anatómicos, relaciones topográficas y los principales sistemas (esquelético, muscular, nervioso, cardiovascular, respiratorio y digestivo) entendidos desde su función y conexión real."
+  }
+]

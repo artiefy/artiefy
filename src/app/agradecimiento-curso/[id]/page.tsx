@@ -1,35 +1,131 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
-import { getCourseById } from '~/server/queries/courses';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 export default function AgradecimientoCursoPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
-  const courseId = params.id;
+  const { id: courseId } = use(params);
+  const [courseTitle, setCourseTitle] = useState<string>('');
+
+  useEffect(() => {
+    if (courseId) {
+      getCourseById(courseId)
+        .then((course) => {
+          setCourseTitle(course?.title ?? '');
+        })
+        .catch(() => setCourseTitle(''));
+    }
+  }, [courseId]);
 
   useEffect(() => {
     if (searchParams && searchParams.get('from') === 'payu') {
       setShowModal(true);
-      // Consultar el pixel dinámico
-      getCourseById(courseId).then((course) => {
-        setMetaPixelId(course?.metaPixelId ?? null);
-      });
+      // Consultar el pixel dinámico desde la API
+      console.log('📡 Consultando pixel para curso:', courseId);
+      fetch(`/api/courses/${courseId}/pixel`)
+        .then((res) => res.json())
+        .then((data: { metaPixelId: string | null }) => {
+          console.log('✅ Pixel ID recibido:', data.metaPixelId);
+          setMetaPixelId(data.metaPixelId);
+        })
+        .catch((err) => {
+          console.error('❌ Error fetching pixel:', err);
+          setMetaPixelId(null);
+        });
     } else {
       router.replace('/'); // Redirigir si no viene de PayU
     }
   }, [courseId, searchParams, router]);
+
+  // Disparar el evento cuando tengamos el pixel ID
+  useEffect(() => {
+    if (metaPixelId) {
+      console.log('🔥 Inicializando Facebook Pixel:', metaPixelId);
+
+      // Inicializar fbq manualmente
+      interface FbqFunction {
+        (...args: unknown[]): void;
+        callMethod?: (...args: unknown[]) => void;
+        queue?: unknown[];
+        push?: FbqFunction;
+        loaded?: boolean;
+        version?: string;
+      }
+
+      interface WindowWithFbq extends Window {
+        fbq?: FbqFunction;
+        _fbq?: FbqFunction;
+      }
+
+      const win = window as WindowWithFbq;
+
+      // Crear función fbq si no existe
+      if (!win.fbq) {
+        const n: FbqFunction = function (...args: unknown[]) {
+          if (n.callMethod) {
+            n.callMethod(...args);
+          } else if (n.queue) {
+            n.queue.push(args);
+          }
+        };
+        win._fbq ??= n;
+        n.push = n;
+        n.loaded = true;
+        n.version = '2.0';
+        n.queue = [];
+        win.fbq = n;
+      }
+
+      // Esperar a que el script esté cargado antes de disparar
+      const initPixel = () => {
+        if (win.fbq) {
+          console.log('✅ fbq disponible, disparando eventos...');
+          win.fbq('init', metaPixelId);
+          win.fbq('track', 'PageView');
+          win.fbq('track', 'Purchase', {
+            content_ids: [courseId],
+            content_type: 'product',
+            value: 0,
+            currency: 'COP',
+          });
+          console.log('✅ Eventos enviados a pixel:', metaPixelId);
+        }
+      };
+
+      // Intentar múltiples veces por si el script aún está cargando
+      let attempts = 0;
+      const maxAttempts = 10;
+      const interval = setInterval(() => {
+        attempts++;
+        if (win.fbq && typeof win.fbq === 'function') {
+          initPixel();
+          clearInterval(interval);
+        } else if (attempts >= maxAttempts) {
+          console.error(
+            '❌ fbq no se cargó después de',
+            maxAttempts,
+            'intentos'
+          );
+          clearInterval(interval);
+        }
+      }, 200);
+
+      return () => clearInterval(interval);
+    }
+  }, [metaPixelId, courseId]);
 
   const handleContinue = () => {
     router.replace(`/estudiantes/cursos/${courseId}`);
@@ -41,31 +137,27 @@ export default function AgradecimientoCursoPage({
     <>
       {/* Pixel de Facebook personalizado para el curso (dinámico) */}
       {metaPixelId && (
-        <Script id={`meta-pixel-curso-${courseId}`} strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${metaPixelId}');
-            fbq('track', 'Purchase', {courseId: '${courseId}'});
-          `}
-        </Script>
+        <>
+          {/* Cargar el script base de Facebook Pixel primero */}
+          <Script
+            id="fb-pixel-base"
+            strategy="afterInteractive"
+            src="https://connect.facebook.net/en_US/fbevents.js"
+          />
+        </>
       )}
-      <noscript>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          height="1"
-          width="1"
-          style={{ display: 'none' }}
-          src={`https://www.facebook.com/tr?id=${metaPixelId ?? '967037655459857'}&ev=Purchase&noscript=1&courseId=${courseId}`}
-          alt=""
-        />
-      </noscript>
+      {metaPixelId && (
+        <noscript>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=Purchase&noscript=1&courseId=${courseId}`}
+            alt=""
+          />
+        </noscript>
+      )}
       <div className="fixed inset-0 z-[2000] flex items-center justify-center">
         <Image
           alt="Fondo de agradecimiento"
@@ -100,11 +192,12 @@ export default function AgradecimientoCursoPage({
           <p className="mb-2 text-center text-xl font-semibold tracking-wide text-[#00A5C0]">
             Bienvenido al curso{' '}
             <span className="font-bold text-[#0A2540]">#{courseId}</span>
-            <br />
-            <span className="text-lg font-medium text-[#1B3A4B]">
-              La educación del futuro
-            </span>
           </p>
+          {courseTitle && (
+            <p className="mb-2 text-center text-lg font-bold text-[#1B3A4B]">
+              {courseTitle}
+            </p>
+          )}
           <p className="mt-2 mb-8 text-center text-lg font-medium text-[#0A2540]">
             Tu pago fue procesado correctamente.
           </p>
