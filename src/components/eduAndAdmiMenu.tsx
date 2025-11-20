@@ -80,7 +80,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Tickets',
       id: 'tickets',
       link: '/dashboard/super-admin/tickets',
-      badge: totalUnread,
+      badge: totalUnread > 0 ? totalUnread : undefined,
     },
     {
       icon: <FiShieldOff size={18} />,
