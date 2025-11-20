@@ -1,140 +1,107 @@
-import { NextRequest, NextResponse } from 'next/server';
+// src/app/api/courses/search/route.ts
+import { NextRequest } from 'next/server';
 
+// No se usan directamente, solo en la consulta SQL
 import { sql } from 'drizzle-orm';
 
+import { env } from '~/env';
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_EMBEDDING_MODEL =
-  process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-ada-002';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-interface OpenAIEmbeddingResponse {
-  data: { embedding: number[] }[];
-}
-
-// NUEVO: Definir tipo para el resultado de la consulta SQL
-interface CourseSearchResult {
-  id: number;
-  title: string;
-  description: string;
-  distance: number;
+async function getEmbedding(input: string): Promise<number[]> {
+  const res = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({ input, model: 'text-embedding-3-small' }),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`OpenAI error: ${res.status} ${txt}`);
+  }
+  const json = (await res.json()) as { data: { embedding: number[] }[] };
+  const emb = json?.data?.[0]?.embedding;
+  if (!Array.isArray(emb)) throw new Error('Embedding vacío');
+  return emb;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { query, limit = 5 } = await req.json();
+    const { query, limit } = (await req.json()) as {
+      query?: string;
+      limit?: number;
+    };
 
-    if (!query) {
-      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-    }
-
-    console.log('🔍 Búsqueda de cursos con embeddings:', { query, limit });
-
-    if (!OPENAI_API_KEY) {
-      console.warn('⚠️ OPENAI_API_KEY no configurada, usando búsqueda básica');
-      return NextResponse.json({ courses: [] });
-    }
-
-    // 1. Generar embedding para la consulta
-    const embeddingRes = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        input: query,
-        model: OPENAI_EMBEDDING_MODEL,
-      }),
-    });
-
-    if (!embeddingRes.ok) {
-      console.error('❌ Error generando embedding:', await embeddingRes.text());
-      return NextResponse.json({ courses: [] });
-    }
-
-    const embeddingData: OpenAIEmbeddingResponse = await embeddingRes.json();
-    const queryEmbedding = embeddingData?.data?.[0]?.embedding;
-
-    if (!queryEmbedding) {
-      console.error('❌ No se pudo generar embedding');
-      return NextResponse.json({ courses: [] });
-    }
-
-    // 2. Buscar cursos similares usando pgvector - CORREGIDO: acceder a rows
-    const result = await db.execute(
-      sql`
-        SELECT 
-          id, 
-          title, 
-          description,
-          (embedding <=> ${JSON.stringify(queryEmbedding)}::vector) as distance
-        FROM ${courses} 
-        WHERE embedding IS NOT NULL
-        ORDER BY distance ASC
-        LIMIT ${limit}
-      `
-    );
-
-    // CORREGIDO: Convertir primero a unknown y luego validar cada elemento
-    const rawRows = result.rows as unknown;
-    const similarCourses: CourseSearchResult[] = [];
-
-    if (Array.isArray(rawRows)) {
-      rawRows.forEach((row) => {
-        if (
-          row &&
-          typeof row === 'object' &&
-          'id' in row &&
-          'title' in row &&
-          'description' in row &&
-          'distance' in row
-        ) {
-          const typedRow = row as Record<string, unknown>;
-
-          // FIX: Validación segura de description antes de usarla
-          let safeDescription = '';
-          const desc = typedRow.description;
-
-          if (typeof desc === 'string') {
-            safeDescription = desc;
-          } else if (desc === null || desc === undefined) {
-            safeDescription = '';
-          } else if (typeof desc === 'number') {
-            safeDescription = String(desc);
-          } else {
-            // Para cualquier otro tipo (objeto, array, etc.), usar string vacío para evitar [object Object]
-            safeDescription = '';
-          }
-
-          similarCourses.push({
-            id: Number(typedRow.id),
-            title: String(typedRow.title),
-            description: safeDescription,
-            distance: Number(typedRow.distance),
-          });
-        }
+    if (!query || typeof query !== 'string' || query.trim().length < 2) {
+      return new Response(JSON.stringify({ error: 'query requerido' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('📚 Cursos encontrados:', similarCourses.length);
+    const topK =
+      Number.isFinite(limit) && typeof limit === 'number' && limit > 0
+        ? Math.min(Number(limit), 10)
+        : 5;
 
-    // CORREGIDO: Ya no necesitamos mapear porque ya están tipados
-    const formattedCourses = similarCourses.map((course) => ({
-      id: course.id,
-      title: course.title,
-      description: course.description,
-      distance: course.distance,
+    const qEmbedding = await getEmbedding(query);
+
+    // Construimos el literal vector de forma segura
+    const vectorLiteral = sql.raw(`'[${qEmbedding.join(',')}]'::vector`);
+
+    // Usamos consulta SQL cruda para ordenar por distancia de vector (cosine <=>)
+    const result = await db.execute<Record<string, unknown>>(sql`
+      SELECT
+        c.id,
+        c.title,
+        c.modalidadesid AS "modalidadId",
+        m.name AS modalidad,
+        (c.embedding <=> ${vectorLiteral}) AS distance
+      FROM courses c
+      LEFT JOIN modalidades m ON m.id = c.modalidadesid
+      WHERE c.embedding IS NOT NULL AND c.is_active = true
+      ORDER BY c.embedding <=> ${vectorLiteral}
+      LIMIT ${topK}
+    `);
+
+    const rows = (result.rows ?? []) as Record<string, unknown>[];
+    const coursesOut = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : Number(r.id),
+      title:
+        typeof r.title === 'string'
+          ? r.title
+          : r.title === undefined || r.title === null
+            ? ''
+            : null,
+      modalidad:
+        typeof r.modalidad === 'string' ? r.modalidad : (r.modalidad ?? null),
+      modalidadId:
+        typeof r.modalidadId === 'number'
+          ? r.modalidadId
+          : r.modalidadId !== undefined
+            ? Number(r.modalidadId)
+            : null,
     }));
 
-    return NextResponse.json({
-      courses: formattedCourses,
-      query,
-      method: 'embeddings',
+    return new Response(JSON.stringify({ courses: coursesOut }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
     });
-  } catch (error) {
-    console.error('💥 Error en búsqueda de cursos:', error);
-    return NextResponse.json({ courses: [] });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : 'error_desconocido',
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }

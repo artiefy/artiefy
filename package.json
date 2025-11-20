@@ -19,7 +19,8 @@
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "preview": "next build && next start",
-    "precommit:check": "pre-commit run --all-files"
+    "precommit:check": "pre-commit run --all-files",
+    "embeddings:regen": "tsx scripts/regen-embeddings.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.926.0",
