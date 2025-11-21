@@ -129,6 +129,15 @@ export function CourseHeader({
   const [programToastShown, setProgramToastShown] = useState(false);
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
 
+  // Determina si el curso es comprable individualmente (tipo compra)
+  const isPurchasable =
+    course.courseTypeId === 4 ||
+    !!course.courseTypes?.some((type) => type.isPurchasableIndividually) ||
+    !!course.courseType?.isPurchasableIndividually;
+
+  // URL de redirección para Clerk: sólo añadir ?comprar=1 para cursos comprables
+  const forceRedirectUrl = isPurchasable ? `${pathname}?comprar=1` : pathname;
+
   // Handler para pausar/reproducir con click
   const handleVideoClick = () => {
     const video = videoRef.current;
@@ -232,6 +241,9 @@ export function CourseHeader({
 
   // Add new effect to check program enrollment
   useEffect(() => {
+    // Keep a non-blocking advisory for program-associated courses.
+    // IMPORTANT: no redirect or enrollment blocking — users must be
+    // able to enroll even if they are not enrolled in the program.
     const checkProgramEnrollment = async () => {
       const programMateria = course.materias?.find(
         (materia) => materia.programaId !== null
@@ -239,7 +251,7 @@ export function CourseHeader({
 
       if (programMateria?.programaId && user?.id && !isEnrolled) {
         try {
-          // Check if course has both PRO and PREMIUM types
+          // If course has both PRO and PREMIUM types, nothing special to do
           const hasPremiumType = course.courseTypes?.some(
             (type) => type.requiredSubscriptionLevel === 'premium'
           );
@@ -247,28 +259,27 @@ export function CourseHeader({
             (type) => type.requiredSubscriptionLevel === 'pro'
           );
 
-          // If course has both types, don't redirect to program
-          if (hasPremiumType && hasProType) {
-            return; // Skip program redirection for courses with both PRO and PREMIUM types
-          }
+          if (hasPremiumType && hasProType) return;
 
+          // Check program enrollment only to inform the user. Do NOT block.
           const isProgramEnrolled = await isUserEnrolledInProgram(
             programMateria.programaId,
             user.id
           );
 
           if (!isProgramEnrolled && !programToastShown) {
-            // Only show toast if we haven't shown it yet
             setProgramToastShown(true);
-            toast.warning('Este curso requiere inscripción al programa', {
-              id: 'program-enrollment',
-            });
-            router.push(`/estudiantes/programas/${programMateria.programaId}`);
+            // Informational (non-blocking) notice — no redirect
+            toast(
+              'Este curso está asociado a un programa. No es necesario estar inscrito en el programa para inscribirte en el curso.',
+              {
+                id: `program-info-${programMateria.programaId}`,
+                duration: 6000,
+              }
+            );
           }
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Error desconocido';
-          console.error('Error checking program enrollment:', errorMessage);
+          console.error('Error checking program enrollment:', error);
         }
       }
     };
@@ -279,7 +290,6 @@ export function CourseHeader({
     course.courseTypes,
     user?.id,
     isEnrolled,
-    router,
     programToastShown,
   ]);
 
@@ -849,31 +859,27 @@ export function CourseHeader({
                 user?.id ?? ''
               );
 
-              if (!isProgramEnrolled) {
-                // Show toast and redirect to program page
+              if (!isProgramEnrolled && !programToastShown) {
+                // Inform the user but DO NOT block enrollment or redirect
                 setProgramToastShown(true);
-                toast.warning(
-                  `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
+                toast(
+                  `Este curso está asociado al programa "${programMateria.programa?.title}". No necesitas estar inscrito al programa para inscribirte al curso.`,
                   {
-                    description:
-                      'Serás redirigido a la página del programa para inscribirte.',
-                    duration: 4000,
-                    id: 'program-enrollment',
+                    duration: 5000,
+                    id: `program-enroll-advice-${programMateria.programaId}`,
                   }
                 );
-
-                // Wait a moment for the toast to be visible
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                router.push(
-                  `/estudiantes/programas/${programMateria.programaId}`
-                );
-                return;
               }
             }
           } catch (error) {
             console.error('Error checking program enrollment:', error);
-            toast.error('Error al verificar la inscripción al programa');
-            return;
+            // Don't block enrollment on error; just notify
+            if (!programToastShown) {
+              setProgramToastShown(true);
+              toast.error(
+                'Error al verificar la inscripción al programa (no bloqueante)'
+              );
+            }
           }
         }
 
@@ -1147,22 +1153,49 @@ export function CourseHeader({
 
   // NUEVO: Abrir modal automáticamente tras login si hay ?comprar=1 en la URL
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hasComprarParam = searchParams?.get('comprar') === '1';
+    let hasEnrollFlag = false;
+    try {
+      hasEnrollFlag =
+        sessionStorage.getItem('enrollAfterLogin') === '1' ||
+        sessionStorage.getItem('openPaymentModalAfterLogin') === '1';
+    } catch {
+      hasEnrollFlag = false;
+    }
+
     if (
-      typeof window !== 'undefined' &&
       isSignedIn &&
       !autoPaymentTriggered &&
       !isEnrolled &&
-      searchParams?.get('comprar') === '1'
+      (hasComprarParam || hasEnrollFlag)
     ) {
       setAutoPaymentTriggered(true);
-      // Limpiar el query param de la URL para evitar dobles ejecuciones
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.delete('comprar');
-      const newUrl =
-        pathname + (params.toString() ? `?${params.toString()}` : '');
-      router.replace(newUrl);
-      // Ejecuta la función de compra como si el usuario hubiera hecho clic
-      handleEnrollClick();
+
+      // If we have the comprar param, remove it from the URL to avoid reruns
+      if (hasComprarParam) {
+        const params = new URLSearchParams(Array.from(searchParams.entries()));
+        params.delete('comprar');
+        const newUrl =
+          pathname + (params.toString() ? `?${params.toString()}` : '');
+        router.replace(newUrl);
+      }
+
+      // Clear session flags (non-blocking)
+      try {
+        sessionStorage.removeItem('enrollAfterLogin');
+        sessionStorage.removeItem('openPaymentModalAfterLogin');
+      } catch {
+        // ignore
+      }
+
+      // Esperar un momento para que cualquier estado de suscripción en el padre
+      // (CourseDetails) se sincronice tras el login, luego intentar inscribirse.
+      void (async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        void handleEnrollClick();
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn, isEnrolled, searchParams, pathname]);
@@ -1703,9 +1736,25 @@ export function CourseHeader({
                   {!isSignedIn ? (
                     <SignInButton
                       mode="modal"
-                      forceRedirectUrl={`${pathname}?comprar=1`}
+                      forceRedirectUrl={forceRedirectUrl}
                     >
-                      <button className="btn h-10 w-56 sm:h-12 sm:w-64">
+                      <button
+                        className="btn h-10 w-56 sm:h-12 sm:w-64"
+                        onClick={() => {
+                          try {
+                            if (isPurchasable) {
+                              sessionStorage.setItem(
+                                'openPaymentModalAfterLogin',
+                                '1'
+                              );
+                            } else {
+                              sessionStorage.setItem('enrollAfterLogin', '1');
+                            }
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                      >
                         <strong className="text-sm sm:text-lg">
                           {getButtonPrice() && <span>{getButtonPrice()}</span>}
                           <span>{getEnrollButtonText()}</span>
@@ -1849,9 +1898,25 @@ export function CourseHeader({
                   {!isSignedIn ? (
                     <SignInButton
                       mode="modal"
-                      forceRedirectUrl={`${pathname}?comprar=1`}
+                      forceRedirectUrl={forceRedirectUrl}
                     >
-                      <button className="btn">
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          try {
+                            if (isPurchasable) {
+                              sessionStorage.setItem(
+                                'openPaymentModalAfterLogin',
+                                '1'
+                              );
+                            } else {
+                              sessionStorage.setItem('enrollAfterLogin', '1');
+                            }
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                      >
                         <strong>
                           {getButtonPrice() && <span>{getButtonPrice()}</span>}
                           <span>{getEnrollButtonText()}</span>
