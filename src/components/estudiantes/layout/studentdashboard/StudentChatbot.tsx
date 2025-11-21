@@ -2919,7 +2919,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
               >
                 <div
-                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-200' : ''} bg-white`}
+                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
                   style={
                     !isDesktop
                       ? {
@@ -2931,15 +2931,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   }
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
-                    <div className="flex items-start justify-between border-b p-3">
-                      <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+                  <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">
+                    <div className="flex items-start justify-between border-b border-gray-700 p-3">
+                      <HiMiniCpuChip className="mt-1 text-4xl text-white" />
                       <div className="-ml-6 flex flex-1 flex-col items-center">
-                        <h2 className="mt-1 text-lg font-semibold text-gray-800">
+                        <h2 className="mt-1 text-lg font-semibold text-white">
                           Artie IA
                         </h2>
                         <div className="flex items-center gap-2">
-                          <em className="text-sm font-semibold text-gray-600">
+                          <em className="text-sm font-semibold text-white/70">
                             {user?.fullName}
                           </em>
                           <div className="relative inline-flex">
@@ -2951,13 +2951,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                       <div className="flex">
                         <button
-                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
                           {!isChatPage && chatMode.idChat !== null ? (
                             <MdArrowBack
-                              className="text-xl text-gray-500"
+                              className="text-xl text-white/70"
                               onClick={() => {
                                 setChatMode({
                                   idChat: null,
@@ -2972,11 +2972,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                         <button
                           onClick={handleDeleteHistory}
-                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-white/6"
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
-                          <TrashIcon className="text-xl text-red-500" />
+                          <TrashIcon className="text-xl text-red-400" />
                         </button>
 
                         <button
@@ -2987,10 +2987,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                               new CustomEvent('close-chatbot')
                             );
                           }}
-                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Cerrar chatbot"
                         >
-                          <IoClose className="text-xl text-gray-500" />
+                          <IoClose className="text-xl text-white/70" />
                         </button>
                       </div>
                     </div>

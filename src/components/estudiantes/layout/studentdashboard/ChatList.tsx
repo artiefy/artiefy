@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { Button } from '@headlessui/react';
-import { FileText, Loader2, MessageSquare, Plus, Ticket } from 'lucide-react';
+import { FileText, Loader2, Plus, Ticket } from 'lucide-react';
+import { BsRobot } from 'react-icons/bs';
+import { IoChatboxEllipses } from 'react-icons/io5';
 import { toast } from 'sonner';
 
 import { getConversationByUserId } from '~/server/actions/estudiantes/chats/saveChat';
@@ -39,11 +41,11 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4 text-black" />,
+    icon: <Ticket className="h-4 w-4 text-white" />,
     color: 'purple',
   },
   chat: {
-    icon: <MessageSquare className="h-4 w-4 text-black" />,
+    icon: <IoChatboxEllipses className="h-4 w-4 text-white" />,
     color: 'blue',
   },
   project: {
@@ -403,16 +405,23 @@ export const ChatList = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col border-r border-gray-200 bg-white">
+    <div className="flex h-full min-h-0 w-full flex-col border-r border-transparent bg-gradient-to-b from-[#061226] to-[#071024] text-white">
       <div
-        className={`border-b border-gray-200 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
+        className={`border-b border-gray-700 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
       >
-        <h2 className="text-center text-lg font-semibold text-gray-800">
-          {activeType === 'tickets'
-            ? 'Tickets de Soporte'
-            : activeType === 'projects'
-              ? 'Mis Proyectos'
-              : 'Chats con IA'}
+        <h2
+          className={`flex items-center justify-center gap-2 text-center text-lg font-extrabold tracking-tight ${activeType === 'chatia' ? 'bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent' : 'text-white'}`}
+        >
+          {activeType === 'tickets' ? (
+            'Tickets de Soporte'
+          ) : activeType === 'projects' ? (
+            'Mis Proyectos'
+          ) : (
+            <>
+              Chats con IA
+              <BsRobot className="h-5 w-5 text-white" />
+            </>
+          )}
         </h2>
 
         {/* Botón para crear nuevo chat de IA */}
@@ -421,9 +430,14 @@ export const ChatList = ({
             <Button
               onClick={handleCreateNewChat}
               disabled={isCreatingChat}
-              className="bg-background text-foreground hover:bg-background/90 focus:ring-primary w-full rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
+                boxShadow:
+                  '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
+              }}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingChat ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -431,8 +445,12 @@ export const ChatList = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
-                    Crear Nuevo Chat IA
+                    <span className="flex items-center gap-2">
+                      <span className="rounded-full bg-white/20 p-1 shadow-sm">
+                        <Plus className="h-4 w-4 text-black" />
+                      </span>
+                      Crear Nuevo Chat IA
+                    </span>
                   </>
                 )}
               </div>
@@ -464,9 +482,14 @@ export const ChatList = ({
             <Button
               onClick={handleCreateNewTicket}
               disabled={isCreatingTicket}
-              className="bg-background text-foreground hover:bg-background/90 focus:ring-primary w-full rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
+                boxShadow:
+                  '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
+              }}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingTicket ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -474,7 +497,7 @@ export const ChatList = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-4 w-4 text-black" />
                     Crear Nuevo Ticket
                   </>
                 )}
@@ -486,7 +509,7 @@ export const ChatList = ({
         {/* Filtro por estado para tickets */}
         {activeType === 'tickets' && (
           <div className="mt-3">
-            <label className="mb-1 block text-xs font-medium text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-gray-300">
               Filtrar por estado
             </label>
             <select
@@ -494,7 +517,7 @@ export const ChatList = ({
               onChange={(e) =>
                 setStatusFilter(e.target.value as typeof statusFilter)
               }
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-gray-300 focus:outline-none"
+              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-sm focus:border-gray-500 focus:outline-none"
             >
               <option value="all">Todos</option>
               <option value="abierto">Abierto</option>
@@ -523,20 +546,10 @@ export const ChatList = ({
           disponibles
         </div>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-y-auto pr-2">
+        <ul className="min-h-0 flex-1 overflow-y-auto pr-2 pb-6">
           {chats.map((chat) => (
             <li key={chat.id} className="relative">
               <div className="flex items-center gap-2 p-2">
-                {activeType === 'chatia' && (
-                  <input
-                    type="checkbox"
-                    checked={selectedChats.includes(chat.id)}
-                    onChange={(e) =>
-                      handleSelectChat(chat.id, e.target.checked)
-                    }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                )}
                 <Button
                   onClick={() => {
                     setLoadingChatId(chat.id);
@@ -555,7 +568,7 @@ export const ChatList = ({
                     // Reset loading después de un breve delay
                     setTimeout(() => setLoadingChatId(null), 1000);
                   }}
-                  className="flex-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
+                  className="flex-1 rounded-xl border border-white/6 bg-white/4 px-4 py-3 text-left backdrop-blur-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-white/6 hover:shadow-[0_8px_30px_rgba(59,130,246,0.06)]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
@@ -567,7 +580,7 @@ export const ChatList = ({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="truncate font-medium text-gray-800">
+                        <div className="truncate font-semibold text-white">
                           {chat.title}
                         </div>
                         {chat.type === 'ticket' && (
@@ -587,14 +600,40 @@ export const ChatList = ({
                             )}
                           </div>
                         )}
+                        {/* Badge for new chats (futuristic neon) */}
+                        {chat.title === 'Nuevo Chat' && (
+                          <span className="ml-2 inline-flex items-center gap-2">
+                            <span className="animate-pulse rounded-full bg-gradient-to-r from-green-400 to-cyan-300 p-1 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
+                            <span
+                              className="rounded-full bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm"
+                              style={{
+                                boxShadow: '0 6px 18px rgba(6,182,212,0.12)',
+                              }}
+                            >
+                              <span className="text-green-200">Nuevo</span>
+                            </span>
+                          </span>
+                        )}
                       </div>
                       {/* Fecha y hora de creación/modificación */}
-                      <div className="mt-1 truncate text-xs text-gray-400">
+                      <div className="mt-1 truncate text-xs text-white/60">
                         {formatChatDateTime(chat)}
                       </div>
                     </div>
                   </div>
                 </Button>
+
+                {activeType === 'chatia' && (
+                  <input
+                    type="checkbox"
+                    checked={selectedChats.includes(chat.id)}
+                    onChange={(e) =>
+                      handleSelectChat(chat.id, e.target.checked)
+                    }
+                    className="ml-3 h-4 w-4 rounded border-gray-300 text-cyan-400 focus:ring-cyan-300"
+                    aria-label={`Seleccionar chat ${chat.title}`}
+                  />
+                )}
               </div>
             </li>
           ))}

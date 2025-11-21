@@ -14,16 +14,16 @@ export const ChatNavigation = ({
   onSectionChange,
 }: ChatNavigationProps) => {
   return (
-    <div className="flex items-center justify-around border-b border-gray-200 bg-white p-2">
+    <div className="flex items-center justify-around border-b border-gray-700 bg-[#071024] p-2">
       <button
         onClick={() => onSectionChange('tickets')}
         className={`flex items-center gap-2 rounded-lg px-4 py-2 transition-colors ${
           activeSection === 'tickets'
-            ? 'bg-purple-100 text-purple-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-white/6 text-white'
+            : 'text-white/60 hover:bg-white/4'
         }`}
       >
-        <Ticket className="h-5 w-5" />
+        <Ticket className="h-5 w-5 text-white" />
         <span>Tickets</span>
       </button>
 
@@ -31,11 +31,11 @@ export const ChatNavigation = ({
         onClick={() => onSectionChange('chatia')}
         className={`flex items-center gap-2 rounded-lg px-4 py-2 transition-colors ${
           activeSection === 'chatia'
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-white/6 text-white'
+            : 'text-white/60 hover:bg-white/4'
         }`}
       >
-        <MessageSquare className="h-5 w-5" />
+        <MessageSquare className="h-5 w-5 text-white" />
         <span>Chat IA</span>
       </button>
 
@@ -43,11 +43,11 @@ export const ChatNavigation = ({
         onClick={() => onSectionChange('projects')}
         className={`flex items-center gap-2 rounded-lg px-4 py-2 transition-colors ${
           activeSection === 'projects'
-            ? 'bg-green-100 text-green-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-white/6 text-white'
+            : 'text-white/60 hover:bg-white/4'
         }`}
       >
-        <FileText className="h-5 w-5" />
+        <FileText className="h-5 w-5 text-white" />
         <span>Proyectos</span>
       </button>
     </div>
