@@ -1511,3 +1511,29 @@ export const project_drafts = pgTable('project_drafts', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
+
+
+export const emailLogs = pgTable('email_logs', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').references(() => users.id),
+  email: text('email').notNull(),
+  emailType: text('email_type', {
+    enum: ['welcome', 'academic_notification', 'other'],
+  }).notNull(),
+  subject: text('subject').notNull(),
+  status: text('status', {
+    enum: ['success', 'failed'],
+  }).notNull(),
+  errorMessage: text('error_message'),
+  errorDetails: jsonb('error_details'),
+  recipientName: text('recipient_name'),
+  metadata: jsonb('metadata'), // Para datos adicionales como programa, comercial, etc.
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [emailLogs.userId],
+    references: [users.id],
+  }),
+}));

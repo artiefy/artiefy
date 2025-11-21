@@ -18,12 +18,8 @@ import { ArrowUpFromLine, GripVertical, SortAsc } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
-import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
   CardTitle,
 } from '~/components/educators/ui/card';
 import { Switch } from '~/components/super-admin/ui/switch';
@@ -140,9 +136,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mt-3">
           <Button
             style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -375,7 +370,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         )}
       </div>
 
-      {/* Lista de clases original - Modificado para mostrar correctamente en 2 columnas cuando no está en modo ordenar */}
+      {/* Lista de clases original - Modificado para una sola card por fila con diseño mejorado */}
       <div className="flex w-full flex-col">
         {isReorderModeActive ? (
           // En modo ordenar, usar el DragDropContext como antes
@@ -406,91 +401,75 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           >
                             {/* Card content */}
                             <div className="group relative">
-                              <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+                              <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
                               <Card
-                                className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]"
+                                className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
                                 style={{
                                   backgroundColor: selectedColor,
                                   color: getContrastYIQ(selectedColor),
                                 }}
                               >
-                                {/* Card content */}
-                                <div className="relative grid grid-cols-1 p-5 lg:grid-cols-2">
-                                  {/* ...existing card content... */}
-                                  <CardHeader>
-                                    <div className="relative size-full">
+                                {/* Card content en horizontal */}
+                                <div className="relative flex flex-col lg:flex-row">
+                                  {/* Imagen a la izquierda */}
+                                  <div className="lg:w-1/6">
+                                    <div className="relative h-20 w-full lg:h-full">
                                       <Image
                                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                                         alt={lesson.title}
-                                        className="rounded-lg object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
-                                        width={350}
-                                        height={100}
+                                        className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                                        width={400}
+                                        height={300}
                                         quality={75}
                                       />
-                                    </div>
-                                  </CardHeader>
-                                  <CardContent
-                                    className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                                      selectedColor === '#FFFFFF'
-                                        ? 'text-black'
-                                        : 'text-white'
-                                    }`}
-                                  >
-                                    {/* ...card content... */}
-                                    <CardTitle className="rounded-lg text-lg">
-                                      <div className={`font-bold`}>
-                                        Clase: {lesson.title}
+                                      <div className="absolute top-2 left-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-xs font-bold text-white shadow-xl ring-2 ring-white/50">
+                                          {lesson.orderIndex}
+                                        </div>
                                       </div>
-                                    </CardTitle>
-                                    <div className="mb-2 items-center">
-                                      <p className="text-sm font-bold">
-                                        Perteneciente al curso:
-                                      </p>
+                                    </div>
+                                  </div>
 
-                                      <Badge
-                                        variant="outline"
-                                        className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
-                                      >
-                                        {lesson.course.title}
-                                      </Badge>
+                                  {/* Contenido a la derecha */}
+                                  <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <CardTitle className="text-base font-bold leading-tight">
+                                        {lesson.title}
+                                      </CardTitle>
+
+                                      <Button asChild>
+                                        <Link
+                                          href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
+                                          className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-yellow-600 hover:to-orange-600 active:scale-95"
+                                        >
+                                          <span>Ver clase</span>
+                                          <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                                        </Link>
+                                      </Button>
                                     </div>
-                                    <p className="mb-2 line-clamp-2 text-sm">
-                                      Descripción: {lesson.description}
-                                    </p>
-                                    <p className="text-sm font-bold italic">
-                                      Educador:{' '}
-                                      <span className="font-bold italic">
-                                        {lesson.course.instructor}
-                                      </span>
-                                    </p>
-                                    <p className="text-sm font-bold italic">
-                                      Clase #{' '}
-                                      <span className="font-bold italic">
-                                        {lesson.orderIndex}
-                                      </span>
-                                    </p>
-                                    <p className="text-sm font-bold italic">
-                                      Duración:{' '}
-                                      <span className="font-bold italic">
-                                        {lesson.duration} Minutos
-                                      </span>
-                                    </p>
-                                  </CardContent>
-                                </div>
-                                <CardFooter className="-mt-6 flex flex-col items-start justify-between">
-                                  <Button asChild className="mx-auto">
-                                    <Link
-                                      href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                                      className={`group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
-                                    >
-                                      <p>Ver clase</p>
-                                      <ArrowRightIcon className="animate-bounce-right size-5" />
-                                      <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                                        <div className="relative h-full w-10 bg-white/30" />
+
+                                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3 py-1 backdrop-blur-sm">
+                                        <span>📚</span>
+                                        <span className="font-medium">
+                                          {lesson.course.title}
+                                        </span>
                                       </div>
-                                    </Link>
-                                  </Button>
-                                </CardFooter>
+                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-3 py-1 backdrop-blur-sm">
+                                        <span>⏱️</span>
+                                        <span className="font-medium">
+                                          {lesson.duration} min
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-3 py-1 backdrop-blur-sm">
+                                        <span>👨‍🏫</span>
+                                        <span className="font-medium">
+                                          {lesson.course.instructor}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </Card>
                             </div>
                           </div>
@@ -504,101 +483,81 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
             </DragDropContext>
           </div>
         ) : (
-          // Fuera del modo ordenar, usar grid normal con 2 columnas
-          <div className="grid grid-cols-1 gap-6 px-3 sm:grid-cols-2 lg:px-1">
+          // Fuera del modo ordenar, una sola card por fila con diseño mejorado
+          <div className="space-y-4 px-3 lg:px-1">
             {ordered.map((lesson) => (
               <div key={lesson.id} className="group relative">
-                <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+                <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
                 <Card
-                  className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]"
+                  className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
                   style={{
                     backgroundColor: selectedColor,
                     color: getContrastYIQ(selectedColor),
                   }}
                 >
-                  <div className="relative grid grid-cols-1 p-5 lg:grid-cols-2">
-                    <CardHeader>
-                      <div className="relative size-full">
+                  {/* Card content en horizontal */}
+                  <div className="relative flex flex-col lg:flex-row">
+                    {/* Imagen a la izquierda */}
+                    <div className="lg:w-1/6">
+                      <div className="relative h-20 w-full lg:h-full">
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                           alt={lesson.title}
-                          className="rounded-lg object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
-                          width={350}
-                          height={100}
+                          className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                          width={400}
+                          height={300}
                           quality={75}
                         />
                       </div>
-                    </CardHeader>
-                    <CardContent
-                      className={`flex grow flex-col justify-between space-y-2 px-2 ${
-                        selectedColor === '#FFFFFF'
-                          ? 'text-black'
-                          : 'text-white'
-                      }`}
-                    >
-                      <CardTitle className="rounded-lg text-lg">
-                        <div className={`font-bold`}>Clase: {lesson.title}</div>
-                      </CardTitle>
-                      <div className="mb-2 items-center">
-                        <p className="text-sm font-bold">
-                          Perteneciente al curso:
-                        </p>
+                    </div>
 
-                        <Badge
-                          variant="outline"
-                          className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
-                        >
-                          {lesson.course.title}
-                        </Badge>
+                    {/* Contenido a la derecha */}
+                    <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <CardTitle className="text-base font-bold leading-tight">
+                          {lesson.title}
+                        </CardTitle>
+
+                        <Button asChild>
+                          <Link
+                            href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
+                            className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-yellow-600 hover:to-orange-600 active:scale-95"
+                          >
+                            <span>Ver clase</span>
+                            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                          </Link>
+                        </Button>
                       </div>
-                      <p className="mb-2 line-clamp-2 text-sm">
-                        Descripción: {lesson.description}
-                      </p>
-                      <p className="text-sm font-bold italic">
-                        Educador:{' '}
-                        <span className="font-bold italic">
-                          {lesson.course.instructor}
-                        </span>
-                      </p>
-                      <p className="text-sm font-bold italic">
-                        Clase #{' '}
-                        <span className="font-bold italic">
-                          {lesson.orderIndex}
-                        </span>
-                      </p>
-                      <p className="text-sm font-bold italic">
-                        Duración:{' '}
-                        <span className="font-bold italic">
-                          {lesson.duration} Minutos
-                        </span>
-                      </p>
-                    </CardContent>
-                  </div>
-                  <CardFooter className="-mt-6 flex flex-col items-start justify-between">
-                    <Button asChild className="mx-auto">
-                      <Link
-                        href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                        className={`group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
-                      >
-                        <p>Ver clase</p>
-                        <ArrowRightIcon className="animate-bounce-right size-5" />
-                        <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                          <div className="relative h-full w-10 bg-white/30" />
+
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3 py-1 backdrop-blur-sm">
+                          <span className="font-medium">
+                            {lesson.course.title}
+                          </span>
                         </div>
-                      </Link>
-                    </Button>
-                  </CardFooter>
+                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-3 py-1 backdrop-blur-sm">
+                          <span className="font-medium">
+                            {lesson.duration} min
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-3 py-1 backdrop-blur-sm">
+                          <span className="font-medium">
+                            {lesson.course.instructor}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </Card>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mx-auto my-4">
+        <div className="mx-auto my-8">
           <Button
-            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
@@ -606,7 +565,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
               console.log('isModalOpenLessons:', isModalOpenLessons);
             }}
           >
-            <ArrowUpFromLine />
+            <ArrowUpFromLine className="mr-2" />
             Crear nueva clase
           </Button>
         </div>
