@@ -10,7 +10,7 @@ import {
   useSearchParams,
 } from 'next/navigation';
 
-import { SignInButton, useUser } from '@clerk/nextjs';
+import { SignInButton, useSignUp, useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
@@ -41,6 +41,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
+import generateUsername from '~/utils/generateUsername';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
@@ -119,6 +120,7 @@ export function CourseHeader({
   classMeetings = [],
 }: CourseHeaderProps) {
   const { user, isSignedIn } = useUser();
+  const { signUp } = useSignUp();
   const router = useNextRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1740,8 +1742,22 @@ export function CourseHeader({
                     >
                       <button
                         className="btn h-10 w-56 sm:h-12 sm:w-64"
-                        onClick={() => {
+                        onClick={async () => {
                           try {
+                            const suggested = String(
+                              sessionStorage.getItem(
+                                'clerkSuggestedUsername'
+                              ) ?? generateUsername()
+                            );
+                            try {
+                              sessionStorage.setItem(
+                                'clerkSuggestedUsername',
+                                suggested
+                              );
+                            } catch {
+                              // ignore storage errors
+                            }
+
                             if (isPurchasable) {
                               sessionStorage.setItem(
                                 'openPaymentModalAfterLogin',
@@ -1749,6 +1765,23 @@ export function CourseHeader({
                               );
                             } else {
                               sessionStorage.setItem('enrollAfterLogin', '1');
+                            }
+
+                            if (signUp) {
+                              const maybeCreate = (
+                                signUp as unknown as {
+                                  create?: (p: {
+                                    username?: string;
+                                  }) => Promise<unknown>;
+                                }
+                              ).create;
+                              if (typeof maybeCreate === 'function') {
+                                try {
+                                  await maybeCreate({ username: suggested });
+                                } catch (e) {
+                                  console.warn('signUp.create failed', e);
+                                }
+                              }
                             }
                           } catch {
                             // ignore
@@ -1902,8 +1935,22 @@ export function CourseHeader({
                     >
                       <button
                         className="btn"
-                        onClick={() => {
+                        onClick={async () => {
                           try {
+                            const suggested = String(
+                              sessionStorage.getItem(
+                                'clerkSuggestedUsername'
+                              ) ?? generateUsername()
+                            );
+                            try {
+                              sessionStorage.setItem(
+                                'clerkSuggestedUsername',
+                                suggested
+                              );
+                            } catch {
+                              // ignore storage errors
+                            }
+
                             if (isPurchasable) {
                               sessionStorage.setItem(
                                 'openPaymentModalAfterLogin',
@@ -1911,6 +1958,23 @@ export function CourseHeader({
                               );
                             } else {
                               sessionStorage.setItem('enrollAfterLogin', '1');
+                            }
+
+                            if (signUp) {
+                              const maybeCreate = (
+                                signUp as unknown as {
+                                  create?: (p: {
+                                    username?: string;
+                                  }) => Promise<unknown>;
+                                }
+                              ).create;
+                              if (typeof maybeCreate === 'function') {
+                                try {
+                                  await maybeCreate({ username: suggested });
+                                } catch (e) {
+                                  console.warn('signUp.create failed', e);
+                                }
+                              }
                             }
                           } catch {
                             // ignore
