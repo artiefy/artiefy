@@ -1,5 +1,5 @@
 // Helper para generar un username aleatorio y legible
-export function generateUsername(prefix = 'artiefy') {
+export function generateUsername() {
   // Preferir UUID cuando esté disponible
   try {
     const maybeCrypto = (
@@ -7,7 +7,7 @@ export function generateUsername(prefix = 'artiefy') {
     ).crypto;
     if (maybeCrypto && typeof maybeCrypto.randomUUID === 'function') {
       const uuid = maybeCrypto.randomUUID();
-      return `${prefix}_${String(uuid).split('-')[0]}`;
+      return String(uuid).split('-')[0];
     }
   } catch {
     // fallthrough
@@ -16,7 +16,7 @@ export function generateUsername(prefix = 'artiefy') {
   // Fallback: usar timestamp + random base36
   const timePart = Date.now().toString(36);
   const randPart = Math.random().toString(36).substring(2, 9);
-  return `${prefix}_${timePart}${randPart}`;
+  return `${timePart}${randPart}`;
 }
 
 export default generateUsername;
