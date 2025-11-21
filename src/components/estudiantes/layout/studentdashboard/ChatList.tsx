@@ -68,6 +68,8 @@ export const ChatList = ({
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'abierto' | 'solucionado' | 'cerrado'
   >('all');
+  const [selectedChats, setSelectedChats] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Función para formatear fecha y hora en formato colombiano (12 horas)
   const formatColombianDateTime = (date: string | Date | undefined) => {
@@ -201,25 +203,38 @@ export const ChatList = ({
 
   const handleCreateNewChat = () => {
     if (!user?.id) return;
-
     setIsCreatingChat(true);
 
-    // Disparar evento para crear nuevo chat de IA
-    window.dispatchEvent(
-      new CustomEvent('create-new-chat-with-search', {
-        detail: {
-          query: '', // Chat vacío sin búsqueda inicial
-        },
-      })
-    );
+    // Crear nuevo chat con menú inicial de Artie y curso_id: null
+    const now = Date.now();
+    const initialTitle = `Búsqueda: Chat nuevo - ${new Date(now).toLocaleString('es-CO')}`;
+    import('~/server/actions/estudiantes/chats/saveChat').then((mod) => {
+      // Tipar la respuesta como objeto que contiene `id`
+      const fn = mod.getOrCreateConversation as (args: {
+        senderId: string;
+        cursoId: number | null;
+        title?: string;
+      }) => Promise<{ id: number }>;
 
-    // Cerrar la lista de chats
-    setShowChatList(false);
-
-    // Desactivar el spinner después de un tiempo
-    setTimeout(() => {
-      setIsCreatingChat(false);
-    }, 1000);
+      fn({ senderId: user.id, cursoId: null, title: initialTitle })
+        .then((response) => {
+          window.dispatchEvent(
+            new CustomEvent('create-new-chat-with-search', {
+              detail: {
+                query: '',
+                chatId: response.id,
+                initialMenu: true,
+              },
+            })
+          );
+          setShowChatList(false);
+          setIsCreatingChat(false);
+        })
+        .catch((err) => {
+          console.error('Error creando chat IA:', err);
+          setIsCreatingChat(false);
+        });
+    });
   };
 
   useEffect(() => {
@@ -354,6 +369,39 @@ export const ChatList = ({
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  const handleSelectChat = (chatId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedChats((prev) => [...prev, chatId]);
+    } else {
+      setSelectedChats((prev) => prev.filter((id) => id !== chatId));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedChats.length === 0) return;
+    const confirm = window.confirm(
+      `¿Eliminar ${selectedChats.length} chat(s) seleccionado(s)? Esta acción no se puede deshacer.`
+    );
+    if (!confirm) return;
+
+    setIsDeleting(true);
+    try {
+      const mod = await import('~/server/actions/estudiantes/chats/saveChat');
+      const deleteFn = mod.deleteConversation as (id: number) => Promise<void>;
+      for (const id of selectedChats) {
+        await deleteFn(id);
+      }
+      setSelectedChats([]);
+      setRefreshKey((k) => k + 1);
+      toast.success('Chats eliminados correctamente');
+    } catch (error) {
+      console.error('Error eliminando chats:', error);
+      toast.error('Error al eliminar algunos chats');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col border-r border-gray-200 bg-white">
       <div
@@ -369,7 +417,7 @@ export const ChatList = ({
 
         {/* Botón para crear nuevo chat de IA */}
         {activeType === 'chatia' && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
             <Button
               onClick={handleCreateNewChat}
               disabled={isCreatingChat}
@@ -389,6 +437,24 @@ export const ChatList = ({
                 )}
               </div>
             </Button>
+            {selectedChats.length > 0 && (
+              <Button
+                onClick={handleDeleteSelected}
+                disabled={isDeleting}
+                className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>Eliminar {selectedChats.length} chat(s)</>
+                  )}
+                </div>
+              </Button>
+            )}
           </div>
         )}
 
@@ -459,65 +525,77 @@ export const ChatList = ({
       ) : (
         <ul className="min-h-0 flex-1 overflow-y-auto pr-2">
           {chats.map((chat) => (
-            <li key={chat.id}>
-              <Button
-                onClick={() => {
-                  setLoadingChatId(chat.id);
-                  if (chat.type === 'ticket') {
-                    window.dispatchEvent(
-                      new CustomEvent('support-open-chat', { detail: chat })
-                    );
-                  } else {
-                    setChatMode({
-                      idChat: chat.id,
-                      status: true,
-                      curso_title: chat.title,
-                      type: chat.type,
-                    });
-                  }
-                  // Reset loading después de un breve delay
-                  setTimeout(() => setLoadingChatId(null), 1000);
-                }}
-                className="w-full border-b border-gray-100 bg-gray-50 px-4 py-3 text-left transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-gray-100"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    {loadingChatId === chat.id ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
-                    ) : (
-                      chat.type && chatTypeConfig[chat.type]?.icon
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="truncate font-medium text-gray-800">
-                        {chat.title}
-                      </div>
-                      {chat.type === 'ticket' && (
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
-                          >
-                            {chat.status
-                              ? chat.status.charAt(0).toUpperCase() +
-                                chat.status.slice(1)
-                              : '—'}
-                          </span>
-                          {Number(chat.unreadCount) > 0 && (
-                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
-                              Nuevo
-                            </span>
-                          )}
-                        </div>
+            <li key={chat.id} className="relative">
+              <div className="flex items-center gap-2 p-2">
+                {activeType === 'chatia' && (
+                  <input
+                    type="checkbox"
+                    checked={selectedChats.includes(chat.id)}
+                    onChange={(e) =>
+                      handleSelectChat(chat.id, e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                )}
+                <Button
+                  onClick={() => {
+                    setLoadingChatId(chat.id);
+                    if (chat.type === 'ticket') {
+                      window.dispatchEvent(
+                        new CustomEvent('support-open-chat', { detail: chat })
+                      );
+                    } else {
+                      setChatMode({
+                        idChat: chat.id,
+                        status: true,
+                        curso_title: chat.title,
+                        type: chat.type,
+                      });
+                    }
+                    // Reset loading después de un breve delay
+                    setTimeout(() => setLoadingChatId(null), 1000);
+                  }}
+                  className="flex-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {loadingChatId === chat.id ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
+                      ) : (
+                        chat.type && chatTypeConfig[chat.type]?.icon
                       )}
                     </div>
-                    {/* Fecha y hora de creación/modificación */}
-                    <div className="mt-1 truncate text-xs text-gray-400">
-                      {formatChatDateTime(chat)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate font-medium text-gray-800">
+                          {chat.title}
+                        </div>
+                        {chat.type === 'ticket' && (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
+                            >
+                              {chat.status
+                                ? chat.status.charAt(0).toUpperCase() +
+                                  chat.status.slice(1)
+                                : '—'}
+                            </span>
+                            {Number(chat.unreadCount) > 0 && (
+                              <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                                Nuevo
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {/* Fecha y hora de creación/modificación */}
+                      <div className="mt-1 truncate text-xs text-gray-400">
+                        {formatChatDateTime(chat)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Button>
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

@@ -17,17 +17,32 @@ interface MessageToSave {
 
 export async function saveMessages(
   senderId: string,
-  cursoId: number,
+  conversationOrCursoId: number | null,
   messages: MessageToSave[]
 ) {
-  const conversation = await getOrCreateConversation({
-    senderId,
-    cursoId,
-  });
+  // Primero intentar interpretar el parámetro como conversation.id
+  let conversation: typeof conversations.$inferSelect | undefined = undefined;
+
+  if (conversationOrCursoId !== null && conversationOrCursoId !== undefined) {
+    // Intentar buscar una conversación con este id
+    conversation = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, conversationOrCursoId))
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
+
+  // Si no existe, tratar el valor como cursoId y usar getOrCreateConversation
+  if (!conversation) {
+    const cursoId = conversationOrCursoId ?? null;
+    conversation = await getOrCreateConversation({
+      senderId,
+      cursoId,
+    });
+  }
 
   for (const msg of messages) {
-    // Si coursesData es undefined, no agregues el campo (no lo incluyas en el objeto)
-    // Si coursesData es un array vacío, tampoco lo agregues
     const insertObj: {
       conversation_id: number;
       sender: string;
