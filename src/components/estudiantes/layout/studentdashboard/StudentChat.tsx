@@ -11,6 +11,7 @@ import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
   getConversationWithMessages,
+  getConversationById,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
@@ -100,9 +101,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
   const { user } = useUser();
 
-  const [conversation] = useState<{ id: number }>({
-    id: chatMode.idChat ?? courseId ?? 0,
-  });
+  const conversationId = chatMode.idChat ?? courseId ?? 0;
   const router = useRouter();
   const pathname = usePathname();
   const safePathname = pathname ?? '';
@@ -142,12 +141,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
   };
 
   useEffect(() => {
-    console.log('La conversación: ' + conversation.id);
+    console.log('La conversación: ' + conversationId);
 
-    if (!conversation) return;
+    if (!conversationId) return;
 
     // No hacer consulta SQL si es un chat temporal (ID muy grande)
-    if (conversation.id && conversation.id > 1000000000000) {
+    if (conversationId && conversationId > 1000000000000) {
       console.log('Chat temporal detectado, saltando consulta SQL');
       return;
     }
@@ -170,10 +169,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
         messages: { id: number; message: string; sender: string }[];
       } = { messages: [] };
       try {
-        if (conversation.id !== null && conversation.id < 1000000000000) {
+        if (conversationId !== null && conversationId < 1000000000000) {
           // Si es un ticket, usar la función de tickets
           if (chatMode.type === 'ticket') {
-            const ticketData = await getTicketWithMessages(conversation.id);
+            const ticketData = await getTicketWithMessages(conversationId);
             if (ticketData.ticket && ticketData.messages) {
               chats = {
                 messages: ticketData.messages.map((msg) => ({
@@ -184,14 +183,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
               };
             }
           } else {
-            // Para chats normales, usar la función existente
-            chats = await getConversationWithMessages(conversation.id);
+            // Para chats normales (IA o curso) usar siempre getConversationById
+            chats = await getConversationById(conversationId);
           }
         } else {
           console.log('ID temporal o null, no ejecutando consulta SQL');
         }
 
-        console.log('Datos: ' + conversation.id + ' ' + conversation.id);
+        console.log('Datos: ' + conversationId + ' ' + conversationId);
         console.log('Chats:', chats);
 
         if (chats && chats.messages.length > 0) {
@@ -199,7 +198,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
           // Si ya hay mensajes, los cargamos
           if (inCourse) {
             setChatMode({
-              idChat: conversation.id,
+              idChat: conversationId,
               status: true,
               curso_title: courseTitle ?? '',
             });
@@ -278,24 +277,32 @@ export const ChatMessages: React.FC<ChatProps> = ({
                         */
 
             if (courseId != null) {
-              void getOrCreateConversation({
-                senderId: user?.id ?? '',
-                cursoId: courseId,
-                title:
-                  'Curso - ' +
-                  (courseTitle
-                    ? courseTitle.length > 12
-                      ? courseTitle.slice(0, 35) + '...'
-                      : courseTitle
-                    : 'Sin título'),
-              });
-
-              if (isMounted) {
-                setChatMode({
-                  idChat: courseId,
-                  status: true,
-                  curso_title: '',
+              try {
+                const resp = await getOrCreateConversation({
+                  senderId: user?.id ?? '',
+                  cursoId: courseId,
+                  title:
+                    'Curso - ' +
+                    (courseTitle
+                      ? courseTitle.length > 12
+                        ? courseTitle.slice(0, 35) + '...'
+                        : courseTitle
+                      : 'Sin título'),
                 });
+
+                if (isMounted) {
+                  // Asegurarnos de usar el id de la conversación persistida
+                  setChatMode({
+                    idChat: resp.id,
+                    status: true,
+                    curso_title: '',
+                  });
+                }
+              } catch (err) {
+                console.error(
+                  'Error creando/obteniendo conversación de curso:',
+                  err
+                );
               }
             }
           }
@@ -311,7 +318,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
       isMounted = false;
     };
   }, [
-    conversation,
+    conversationId,
     courseId,
     courseTitle,
     isEnrolled,

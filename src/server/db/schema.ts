@@ -1003,10 +1003,15 @@ export const conversations = pgTable('conversations', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   title: text('title').notNull(),
+  // Nota: originalmente `curso_id` tenía `.unique()` lo que forzaba una sola
+  // conversación por curso globalmente. Eso provocaba que varios usuarios
+  // compartieran la misma conversación de curso. Se eliminó `.unique()` del
+  // schema porque la restricción debe manejarse mediante un índice único
+  // compuesto (curso_id, sender_id) si se requiere una conversación por
+  // usuario por curso. Aplicar la migración SQL correspondiente en la DB.
   curso_id: integer('curso_id')
     .references(() => courses.id)
-    .unique()
-    .notNull(), // Relación con el curso
+    .default(sql`NULL`), // Relación con el curso, ahora puede ser null
 });
 
 // Relación de mensajes con conversaciones
@@ -1448,7 +1453,6 @@ export const waMessages = pgTable(
     mediaType: text('media_type'),
     fileName: text('file_name'),
     session: varchar('session', { length: 50 }).default('soporte'), // 👈 AGREGAR ESTA LÍNEA
-
   },
   // Cambia el objeto por un array para evitar el warning deprecado
   (t) => [
@@ -1511,7 +1515,6 @@ export const project_drafts = pgTable('project_drafts', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
-
 
 export const emailLogs = pgTable('email_logs', {
   id: serial('id').primaryKey(),

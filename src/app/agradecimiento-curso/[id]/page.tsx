@@ -1,4 +1,5 @@
 'use client';
+import '~/styles/confetti.css';
 
 import { use, useEffect, useState } from 'react';
 

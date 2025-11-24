@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { Button } from '@headlessui/react';
-import { FileText, Loader2, MessageSquare, Plus, Ticket } from 'lucide-react';
+import { FileText, Loader2, Plus, Ticket } from 'lucide-react';
+import { BsRobot } from 'react-icons/bs';
+import { IoChatboxEllipses } from 'react-icons/io5';
 import { toast } from 'sonner';
 
 import { getConversationByUserId } from '~/server/actions/estudiantes/chats/saveChat';
@@ -39,11 +41,11 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4 text-black" />,
+    icon: <Ticket className="h-4 w-4 text-white" />,
     color: 'purple',
   },
   chat: {
-    icon: <MessageSquare className="h-4 w-4 text-black" />,
+    icon: <IoChatboxEllipses className="h-4 w-4 text-white" />,
     color: 'blue',
   },
   project: {
@@ -68,6 +70,8 @@ export const ChatList = ({
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'abierto' | 'solucionado' | 'cerrado'
   >('all');
+  const [selectedChats, setSelectedChats] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Función para formatear fecha y hora en formato colombiano (12 horas)
   const formatColombianDateTime = (date: string | Date | undefined) => {
@@ -201,25 +205,38 @@ export const ChatList = ({
 
   const handleCreateNewChat = () => {
     if (!user?.id) return;
-
     setIsCreatingChat(true);
 
-    // Disparar evento para crear nuevo chat de IA
-    window.dispatchEvent(
-      new CustomEvent('create-new-chat-with-search', {
-        detail: {
-          query: '', // Chat vacío sin búsqueda inicial
-        },
-      })
-    );
+    // Crear nuevo chat con menú inicial de Artie y curso_id: null
+    const now = Date.now();
+    const initialTitle = `Búsqueda: Chat nuevo - ${new Date(now).toLocaleString('es-CO')}`;
+    import('~/server/actions/estudiantes/chats/saveChat').then((mod) => {
+      // Tipar la respuesta como objeto que contiene `id`
+      const fn = mod.getOrCreateConversation as (args: {
+        senderId: string;
+        cursoId: number | null;
+        title?: string;
+      }) => Promise<{ id: number }>;
 
-    // Cerrar la lista de chats
-    setShowChatList(false);
-
-    // Desactivar el spinner después de un tiempo
-    setTimeout(() => {
-      setIsCreatingChat(false);
-    }, 1000);
+      fn({ senderId: user.id, cursoId: null, title: initialTitle })
+        .then((response) => {
+          window.dispatchEvent(
+            new CustomEvent('create-new-chat-with-search', {
+              detail: {
+                query: '',
+                chatId: response.id,
+                initialMenu: true,
+              },
+            })
+          );
+          setShowChatList(false);
+          setIsCreatingChat(false);
+        })
+        .catch((err) => {
+          console.error('Error creando chat IA:', err);
+          setIsCreatingChat(false);
+        });
+    });
   };
 
   useEffect(() => {
@@ -354,28 +371,73 @@ export const ChatList = ({
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  const handleSelectChat = (chatId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedChats((prev) => [...prev, chatId]);
+    } else {
+      setSelectedChats((prev) => prev.filter((id) => id !== chatId));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedChats.length === 0) return;
+    const confirm = window.confirm(
+      `¿Eliminar ${selectedChats.length} chat(s) seleccionado(s)? Esta acción no se puede deshacer.`
+    );
+    if (!confirm) return;
+
+    setIsDeleting(true);
+    try {
+      const mod = await import('~/server/actions/estudiantes/chats/saveChat');
+      const deleteFn = mod.deleteConversation as (id: number) => Promise<void>;
+      for (const id of selectedChats) {
+        await deleteFn(id);
+      }
+      setSelectedChats([]);
+      setRefreshKey((k) => k + 1);
+      toast.success('Chats eliminados correctamente');
+    } catch (error) {
+      console.error('Error eliminando chats:', error);
+      toast.error('Error al eliminar algunos chats');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="flex h-full min-h-0 w-full flex-col border-r border-gray-200 bg-white">
+    <div className="flex h-full min-h-0 w-full flex-col border-r border-transparent bg-gradient-to-b from-[#061226] to-[#071024] text-white">
       <div
-        className={`border-b border-gray-200 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
+        className={`border-b border-gray-700 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
       >
-        <h2 className="text-center text-lg font-semibold text-gray-800">
-          {activeType === 'tickets'
-            ? 'Tickets de Soporte'
-            : activeType === 'projects'
-              ? 'Mis Proyectos'
-              : 'Chats con IA'}
+        <h2
+          className={`flex items-center justify-center gap-2 text-center text-lg font-extrabold tracking-tight ${activeType === 'chatia' ? 'bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent' : 'text-white'}`}
+        >
+          {activeType === 'tickets' ? (
+            'Tickets de Soporte'
+          ) : activeType === 'projects' ? (
+            'Mis Proyectos'
+          ) : (
+            <>
+              Chats con IA
+              <BsRobot className="h-5 w-5 text-white" />
+            </>
+          )}
         </h2>
 
         {/* Botón para crear nuevo chat de IA */}
         {activeType === 'chatia' && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
             <Button
               onClick={handleCreateNewChat}
               disabled={isCreatingChat}
-              className="bg-background text-foreground hover:bg-background/90 focus:ring-primary w-full rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
+                boxShadow:
+                  '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
+              }}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingChat ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -383,12 +445,34 @@ export const ChatList = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
-                    Crear Nuevo Chat IA
+                    <span className="flex items-center gap-2">
+                      <span className="rounded-full bg-white/20 p-1 shadow-sm">
+                        <Plus className="h-4 w-4 text-black" />
+                      </span>
+                      Crear Nuevo Chat IA
+                    </span>
                   </>
                 )}
               </div>
             </Button>
+            {selectedChats.length > 0 && (
+              <Button
+                onClick={handleDeleteSelected}
+                disabled={isDeleting}
+                className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>Eliminar {selectedChats.length} chat(s)</>
+                  )}
+                </div>
+              </Button>
+            )}
           </div>
         )}
 
@@ -398,9 +482,14 @@ export const ChatList = ({
             <Button
               onClick={handleCreateNewTicket}
               disabled={isCreatingTicket}
-              className="bg-background text-foreground hover:bg-background/90 focus:ring-primary w-full rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
+                boxShadow:
+                  '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
+              }}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingTicket ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -408,7 +497,7 @@ export const ChatList = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-4 w-4 text-black" />
                     Crear Nuevo Ticket
                   </>
                 )}
@@ -420,7 +509,7 @@ export const ChatList = ({
         {/* Filtro por estado para tickets */}
         {activeType === 'tickets' && (
           <div className="mt-3">
-            <label className="mb-1 block text-xs font-medium text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-gray-300">
               Filtrar por estado
             </label>
             <select
@@ -428,7 +517,7 @@ export const ChatList = ({
               onChange={(e) =>
                 setStatusFilter(e.target.value as typeof statusFilter)
               }
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-gray-300 focus:outline-none"
+              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-sm focus:border-gray-500 focus:outline-none"
             >
               <option value="all">Todos</option>
               <option value="abierto">Abierto</option>
@@ -457,67 +546,95 @@ export const ChatList = ({
           disponibles
         </div>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-y-auto pr-2">
+        <ul className="min-h-0 flex-1 overflow-y-auto pr-2 pb-6">
           {chats.map((chat) => (
-            <li key={chat.id}>
-              <Button
-                onClick={() => {
-                  setLoadingChatId(chat.id);
-                  if (chat.type === 'ticket') {
-                    window.dispatchEvent(
-                      new CustomEvent('support-open-chat', { detail: chat })
-                    );
-                  } else {
-                    setChatMode({
-                      idChat: chat.id,
-                      status: true,
-                      curso_title: chat.title,
-                      type: chat.type,
-                    });
-                  }
-                  // Reset loading después de un breve delay
-                  setTimeout(() => setLoadingChatId(null), 1000);
-                }}
-                className="w-full border-b border-gray-100 bg-gray-50 px-4 py-3 text-left transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-gray-100"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    {loadingChatId === chat.id ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
-                    ) : (
-                      chat.type && chatTypeConfig[chat.type]?.icon
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="truncate font-medium text-gray-800">
-                        {chat.title}
-                      </div>
-                      {chat.type === 'ticket' && (
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
-                          >
-                            {chat.status
-                              ? chat.status.charAt(0).toUpperCase() +
-                                chat.status.slice(1)
-                              : '—'}
-                          </span>
-                          {Number(chat.unreadCount) > 0 && (
-                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
-                              Nuevo
-                            </span>
-                          )}
-                        </div>
+            <li key={chat.id} className="relative">
+              <div className="flex items-center gap-2 p-2">
+                <Button
+                  onClick={() => {
+                    setLoadingChatId(chat.id);
+                    if (chat.type === 'ticket') {
+                      window.dispatchEvent(
+                        new CustomEvent('support-open-chat', { detail: chat })
+                      );
+                    } else {
+                      setChatMode({
+                        idChat: chat.id,
+                        status: true,
+                        curso_title: chat.title,
+                        type: chat.type,
+                      });
+                    }
+                    // Reset loading después de un breve delay
+                    setTimeout(() => setLoadingChatId(null), 1000);
+                  }}
+                  className="flex-1 rounded-xl border border-white/6 bg-white/4 px-4 py-3 text-left backdrop-blur-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-white/6 hover:shadow-[0_8px_30px_rgba(59,130,246,0.06)]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {loadingChatId === chat.id ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
+                      ) : (
+                        chat.type && chatTypeConfig[chat.type]?.icon
                       )}
                     </div>
-                    {/* Fecha y hora de creación/modificación */}
-                    <div className="mt-1 truncate text-xs text-gray-400">
-                      {formatChatDateTime(chat)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate font-semibold text-white">
+                          {chat.title}
+                        </div>
+                        {chat.type === 'ticket' && (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
+                            >
+                              {chat.status
+                                ? chat.status.charAt(0).toUpperCase() +
+                                  chat.status.slice(1)
+                                : '—'}
+                            </span>
+                            {Number(chat.unreadCount) > 0 && (
+                              <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                                Nuevo
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Badge for new chats (futuristic neon) */}
+                        {chat.title === 'Nuevo Chat' && (
+                          <span className="ml-2 inline-flex items-center gap-2">
+                            <span className="animate-pulse rounded-full bg-gradient-to-r from-green-400 to-cyan-300 p-1 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
+                            <span
+                              className="rounded-full bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm"
+                              style={{
+                                boxShadow: '0 6px 18px rgba(6,182,212,0.12)',
+                              }}
+                            >
+                              <span className="text-green-200">Nuevo</span>
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                      {/* Fecha y hora de creación/modificación */}
+                      <div className="mt-1 truncate text-xs text-white/60">
+                        {formatChatDateTime(chat)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Button>
+                </Button>
+
+                {activeType === 'chatia' && (
+                  <input
+                    type="checkbox"
+                    checked={selectedChats.includes(chat.id)}
+                    onChange={(e) =>
+                      handleSelectChat(chat.id, e.target.checked)
+                    }
+                    className="ml-3 h-4 w-4 rounded border-gray-300 text-cyan-400 focus:ring-cyan-300"
+                    aria-label={`Seleccionar chat ${chat.title}`}
+                  />
+                )}
+              </div>
             </li>
           ))}
         </ul>

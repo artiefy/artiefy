@@ -17,7 +17,6 @@ import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
 import { Card } from '~/components/estudiantes/ui/card';
-import { getOrCreateConversation } from '~/server/actions/estudiantes/chats/saveChat';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
 import {
   createNewTicket,
@@ -1535,21 +1534,29 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   useEffect(() => {
     const handleCreateNewChatWithSearch = (
-      event: CustomEvent<{ query: string }>
+      event: CustomEvent<{
+        query: string;
+        chatId?: number;
+        initialMenu?: boolean;
+      }>
     ): void => {
       const rawQuery = event.detail.query ?? '';
       const trimmedQuery = rawQuery.trim();
-      if (!trimmedQuery) return;
-
       // Si el prompt es igual al último procesado y el chatbot está abierto, no lo proceses de nuevo
       if (lastProcessedPromptRef.current === trimmedQuery && isOpen) {
         return;
       }
       lastProcessedPromptRef.current = trimmedQuery;
 
-      const tempChatId = Date.now();
+      // Si viene chatId desde el evento, úsalo, si no, usa Date.now()
+      const chatId = event.detail.chatId ?? Date.now();
 
-      setChatMode({ idChat: tempChatId, status: true, curso_title: '' });
+      setChatMode({
+        idChat: chatId,
+        status: true,
+        curso_title: '',
+        type: 'chat',
+      });
       setShowChatList(false);
       pendingBotSaves.current = [];
       pendingUserSaves.current = [];
@@ -1559,73 +1566,108 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       setProjectPayload(null);
 
       const now = Date.now();
-      setMessages([
-        {
-          id: now,
-          text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
-          sender: 'bot',
-          buttons: [
-            { label: '🤖 Crear Proyecto', action: 'new_project' },
-            { label: '💡 Nueva Idea', action: 'new_idea' },
-            { label: '🛠️ Soporte Técnico', action: 'contact_support' },
-          ],
-        },
-        {
-          id: now + 1,
-          text: '¡Cuéntame tu nueva idea!',
-          sender: 'bot',
-        },
-      ]);
-      setIdea({ selected: true, idea: '' });
+      // Si initialMenu está presente, mostrar el menú inicial de Artie
+      if (event.detail.initialMenu) {
+        setMessages([
+          {
+            id: now,
+            text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
+            sender: 'bot',
+            buttons: [
+              { label: '🤖 Crear Proyecto', action: 'new_project' },
+              { label: '💡 Nueva Idea', action: 'new_idea' },
+              { label: '🛠️ Soporte Técnico', action: 'contact_support' },
+            ],
+          },
+        ]);
+        setIdea({ selected: false, idea: '' });
+        setInputText('');
+        setIsOpen(true);
+        initialSearchDone.current = false;
+        setProcessingQuery(false);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('force-open-chatbot'));
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }, 50);
+        return;
+      }
 
-      setInputText('');
-      setIsOpen(true);
-      initialSearchDone.current = false;
-      setProcessingQuery(false);
+      // Si hay query, continuar con el flujo anterior
+      if (trimmedQuery) {
+        setMessages([
+          {
+            id: now,
+            text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
+            sender: 'bot',
+            buttons: [
+              { label: '🤖 Crear Proyecto', action: 'new_project' },
+              { label: '💡 Nueva Idea', action: 'new_idea' },
+              { label: '🛠️ Soporte Técnico', action: 'contact_support' },
+            ],
+          },
+          {
+            id: now + 1,
+            text: '¡Cuéntame tu nueva idea!',
+            sender: 'bot',
+          },
+        ]);
+        setIdea({ selected: true, idea: '' });
+        setInputText('');
+        setIsOpen(true);
+        initialSearchDone.current = false;
+        setProcessingQuery(false);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('force-open-chatbot'));
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }, 50);
+        setTimeout(() => {
+          const newUserMessage = {
+            id: Date.now(),
+            text: trimmedQuery,
+            sender: 'user' as const,
+          };
 
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-        setTimeout(() => inputRef.current?.focus(), 0);
-      }, 50);
+          // Crear conversation en backend si no vino chatId (persistir antes de encolar mensajes)
+          (async () => {
+            if (user?.id && !event.detail.chatId) {
+              try {
+                const timestamp = Date.now();
+                const fecha = new Date(timestamp);
+                const dia = String(fecha.getDate()).padStart(2, '0');
+                const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                const anio = fecha.getFullYear();
+                const hora = String(fecha.getHours()).padStart(2, '0');
+                const minuto = String(fecha.getMinutes()).padStart(2, '0');
+                const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
 
-      setTimeout(() => {
-        const newUserMessage = {
-          id: Date.now(),
-          text: trimmedQuery,
-          sender: 'user' as const,
-        };
-        queueOrSaveUserMessage(trimmedQuery, 'user');
-        setMessages((prev) => [...prev, newUserMessage]);
-        setIdea({ selected: false, idea: trimmedQuery });
-        void handleBotResponse(trimmedQuery, { useN8n: true });
+                const mod = await import(
+                  '~/server/actions/estudiantes/chats/saveChat'
+                );
+                const fn = mod.getOrCreateConversation as (args: {
+                  senderId: string;
+                  cursoId: number | null;
+                  title?: string;
+                }) => Promise<{ id: number }>;
 
-        const timestamp = Date.now();
-        const fecha = new Date(timestamp);
-        const dia = String(fecha.getDate()).padStart(2, '0');
-        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-        const anio = fecha.getFullYear();
-        const hora = String(fecha.getHours()).padStart(2, '0');
-        const minuto = String(fecha.getMinutes()).padStart(2, '0');
-        const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
+                const resp = await fn({
+                  senderId: user.id,
+                  cursoId: courseId ?? null,
+                  title: `Búsqueda: ${trimmedQuery.substring(0, 30)}... - ${resultado}`,
+                });
 
-        if (user?.id) {
-          getOrCreateConversation({
-            senderId: user.id,
-            cursoId: courseId ?? Math.round(Math.random() * 100 + 1),
-            title: `Búsqueda: ${trimmedQuery.substring(0, 30)}... - ${resultado}`,
-          })
-            .then((response) => {
-              setChatMode({
-                idChat: response.id,
-                status: true,
-                curso_title: '',
-              });
-            })
-            .catch((error) => {
-              console.error('Error creando chat:', error);
-            });
-        }
-      }, 200);
+                setChatMode({ idChat: resp.id, status: true, curso_title: '' });
+              } catch (err) {
+                console.error('Error creando chat:', err);
+              }
+            }
+          })();
+
+          queueOrSaveUserMessage(trimmedQuery, 'user');
+          setMessages((prev) => [...prev, newUserMessage]);
+          setIdea({ selected: false, idea: trimmedQuery });
+          void handleBotResponse(trimmedQuery, { useN8n: true });
+        }, 200);
+      }
     };
 
     window.addEventListener(
@@ -2877,7 +2919,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
               >
                 <div
-                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-200' : ''} bg-white`}
+                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
                   style={
                     !isDesktop
                       ? {
@@ -2889,15 +2931,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                   }
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
-                    <div className="flex items-start justify-between border-b p-3">
-                      <HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
+                  <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">
+                    <div className="flex items-start justify-between border-b border-gray-700 p-3">
+                      <HiMiniCpuChip className="mt-1 text-4xl text-white" />
                       <div className="-ml-6 flex flex-1 flex-col items-center">
-                        <h2 className="mt-1 text-lg font-semibold text-gray-800">
+                        <h2 className="mt-1 text-lg font-semibold text-white">
                           Artie IA
                         </h2>
                         <div className="flex items-center gap-2">
-                          <em className="text-sm font-semibold text-gray-600">
+                          <em className="text-sm font-semibold text-white/70">
                             {user?.fullName}
                           </em>
                           <div className="relative inline-flex">
@@ -2909,13 +2951,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                       <div className="flex">
                         <button
-                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
                           {!isChatPage && chatMode.idChat !== null ? (
                             <MdArrowBack
-                              className="text-xl text-gray-500"
+                              className="text-xl text-white/70"
                               onClick={() => {
                                 setChatMode({
                                   idChat: null,
@@ -2930,11 +2972,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                         <button
                           onClick={handleDeleteHistory}
-                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-gray-100"
+                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-white/6"
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
-                          <TrashIcon className="text-xl text-red-500" />
+                          <TrashIcon className="text-xl text-red-400" />
                         </button>
 
                         <button
@@ -2945,10 +2987,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                               new CustomEvent('close-chatbot')
                             );
                           }}
-                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Cerrar chatbot"
                         >
-                          <IoClose className="text-xl text-gray-500" />
+                          <IoClose className="text-xl text-white/70" />
                         </button>
                       </div>
                     </div>

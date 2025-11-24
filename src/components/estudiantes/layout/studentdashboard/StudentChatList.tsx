@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { Button } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { ChevronDown, FileText, MessageSquare, Ticket } from 'lucide-react';
+import { BsRobot } from 'react-icons/bs';
 
 import { getConversationByUserId } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketByUser } from '~/server/actions/estudiantes/chats/suportChatBot';
@@ -113,12 +114,14 @@ export const ChatList = ({
   return (
     <div className="flex h-full w-full flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-200 p-4">
-        <h2 className="text-center text-lg font-semibold text-gray-800">
-          {activeType === 'tickets'
-            ? 'Tickets de Soporte'
-            : activeType === 'projects'
-              ? 'Mis Proyectos'
-              : 'Chats con IA'}
+        <h2 className="flex items-center justify-center gap-2 text-center text-lg font-semibold text-gray-800">
+          {activeType === 'tickets' ? (
+            'Tickets de Soporte'
+          ) : activeType === 'projects' ? (
+            'Mis Proyectos'
+          ) : (
+            <BsRobot className="h-5 w-5 text-white" />
+          )}
         </h2>
       </div>
 
