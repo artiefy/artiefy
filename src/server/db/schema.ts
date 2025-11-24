@@ -1237,9 +1237,9 @@ export const classMeetings = pgTable('class_meetings', {
   weekNumber: integer('week_number'),
   createdAt: timestamp('created_at').defaultNow(),
   meetingId: varchar('meeting_id', { length: 255 }).notNull(),
-  // 🆕 Agregado: Ruta del video en S3
   video_key: varchar('video_key', { length: 255 }),
-  progress: integer('progress'), // <-- Nuevo campo opcional para progreso (0-100)
+  video_key_2: varchar('video_key_2', { length: 255 }),
+  progress: integer('progress'),
 });
 export const comercials = pgTable('comercials', {
   id: serial('id').primaryKey(),
@@ -1537,3 +1537,31 @@ export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+
+// ✅ Logs de entrega de credenciales (bienvenida)
+export const credentialsDeliveryLogs = pgTable(
+  'credentials_delivery_logs',
+  {
+    id: serial('id').primaryKey(),
+
+    // opcional pero útil para trazabilidad
+    userId: text('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+
+    // campos pedidos
+    usuario: text('usuario').notNull(),
+    contrasena: text('contrasena'), // nullable si no se generó
+    correo: text('correo').notNull(),
+    nota: text('nota').notNull(),
+
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('credentials_delivery_logs_email_idx').on(t.correo),
+    index('credentials_delivery_logs_created_idx').on(t.createdAt),
+  ]
+);

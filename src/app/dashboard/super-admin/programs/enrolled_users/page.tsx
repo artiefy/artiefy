@@ -85,15 +85,28 @@ const studentSchema = z.object({
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
 
-  // ⚠️ ⚠️ SOLO UNA clave inscripcionOrigen (con normalización)
   inscripcionOrigen: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    (v) => {
+      if (v == null) return undefined;
+      if (typeof v !== 'string') return undefined;
+      const normalized = v.trim().toLowerCase();
+      // Si no coincide con los valores esperados, devolver undefined (será opcional)
+      if (normalized !== 'formulario' && normalized !== 'artiefy') return undefined;
+      return normalized;
+    },
     z.enum(['formulario', 'artiefy']).optional()
   ),
 
   // carteraStatus derivado o desde back (normalizado)
   carteraStatus: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    (v) => {
+      if (v == null) return undefined;
+      if (typeof v !== 'string') return undefined;
+      const normalized = v.trim().toLowerCase();
+      // Permitir solo los valores válidos, el resto se convierte en undefined
+      if (!['activo', 'inactivo', 'no verificado'].includes(normalized)) return undefined;
+      return normalized;
+    },
     z.enum(['activo', 'inactivo', 'no verificado']).optional()
   ),
   userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),

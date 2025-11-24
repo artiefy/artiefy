@@ -12,6 +12,13 @@ import { classMeetings } from '~/server/db/schema';
 
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
 
+interface VideoIdxItem {
+  meetingId: string;
+  videoKey: string;
+  videoUrl: string;
+  createdAt?: string;
+  isSecondary?: boolean;
+}
 // Para asegurarte de que estás en runtime Node (streams grandes)
 export const runtime = 'nodejs';
 
@@ -81,6 +88,7 @@ interface ClassMeetingRow {
   joinUrl: string | null;
   meetingId: string | null;
   video_key: string | null;
+  video_key_2: string | null;
 }
 
 function errMsg(e: unknown): string {
@@ -153,125 +161,121 @@ export async function GET(req: Request) {
   const recordings = data.value ?? [];
   console.log('🎥 Grabaciones encontradas:', recordings.length);
 
-  // ---- PRE-CARGA EN BATCH DE CLASS_MEETINGS ----
   const decodedIds = recordings
     .map((r) => decodeMeetingId(r.meetingId))
     .filter(Boolean);
 
   const uniqueIds = Array.from(new Set(decodedIds));
 
+  console.log('🔍 IDs decodificados de grabaciones:', uniqueIds);
+
   // ✅ Ahora guardamos TODAS las filas por meetingId (no solo una)
-const rowsByMeetingId = new Map<string, ClassMeetingRow[]>();
+  const rowsByMeetingId = new Map<string, ClassMeetingRow[]>();
 
-if (uniqueIds.length) {
-  const rows = (await withDbRetry(() =>
-    db
-      .select()
-      .from(classMeetings)
-      .where(inArray(classMeetings.meetingId, uniqueIds))
-  )) as unknown as ClassMeetingRow[];
+  if (uniqueIds.length) {
+    const rows = (await withDbRetry(() =>
+      db
+        .select()
+        .from(classMeetings)
+        .where(inArray(classMeetings.meetingId, uniqueIds))
+    )) as unknown as ClassMeetingRow[];
 
-  for (const r of rows) {
-    if (!r.meetingId) continue;
-    const k = r.meetingId;
-    const arr = rowsByMeetingId.get(k) ?? [];
-    arr.push(r);
-    rowsByMeetingId.set(k, arr);
-  }
-}
-
-
-  // b) Para IDs que faltan, intenta un backfill ÚNICO basado en join_url
-  // b) Backfill basado en join_url → también llena rowsByMeetingId
-const missingIds = uniqueIds.filter((id) => !rowsByMeetingId.has(id));
-if (missingIds.length) {
-  const candidates = (await withDbRetry(() =>
-    db
-      .select()
-      .from(classMeetings)
-      .where(dsql`${classMeetings.joinUrl} IS NOT NULL`)
-      .limit(1000)
-  )) as unknown as ClassMeetingRow[];
-
-  const updates: { id: number; meetingId: string }[] = [];
-
-  for (const mid of missingIds) {
-    const matches = candidates.filter((row) => {
-      try {
-        const decodedJoin = decodeURIComponent(row.joinUrl ?? '');
-        return decodedJoin.includes(mid);
-      } catch {
-        return false;
-      }
-    });
-
-    if (matches.length) {
-      // actualiza meetingId en BD para cada match (usualmente 1)
-      for (const m of matches) {
-        updates.push({ id: m.id, meetingId: mid });
-      }
-      // y refleja en el mapa local
-      rowsByMeetingId.set(mid, matches.map((m) => ({ ...m, meetingId: mid })));
-      console.log(
-        `🧩 Backfill meeting_id por join_url para ${mid} en ids: ${matches
-          .map((m) => m.id)
-          .join(', ')}`
-      );
-    } else {
-      console.warn(`⚠️ No encontré class_meetings para ${mid}. Omitiendo...`);
+    for (const r of rows) {
+      if (!r.meetingId) continue;
+      const k = r.meetingId;
+      const arr = rowsByMeetingId.get(k) ?? [];
+      arr.push(r);
+      rowsByMeetingId.set(k, arr);
     }
   }
 
-  for (const u of updates) {
-    await withDbRetry(() =>
+
+  const missingIds = uniqueIds.filter((id) => !rowsByMeetingId.has(id));
+  console.log('⚠️ IDs sin match en BD:', missingIds);
+
+  if (missingIds.length) {
+    const candidates = (await withDbRetry(() =>
       db
-        .update(classMeetings)
-        .set({ meetingId: u.meetingId })
-        .where(eq(classMeetings.id, u.id))
-    );
+        .select()
+        .from(classMeetings)
+        .where(dsql`${classMeetings.joinUrl} IS NOT NULL`)
+        .limit(1000)
+    )) as unknown as ClassMeetingRow[];
+
+    const updates: { id: number; meetingId: string }[] = [];
+
+    for (const mid of missingIds) {
+      const matches = candidates.filter((row) => {
+        try {
+          const decodedJoin = decodeURIComponent(row.joinUrl ?? '');
+          return decodedJoin.includes(mid);
+        } catch {
+          return false;
+        }
+      });
+
+      if (matches.length) {
+        // actualiza meetingId en BD para cada match (usualmente 1)
+        for (const m of matches) {
+          updates.push({ id: m.id, meetingId: mid });
+        }
+        // y refleja en el mapa local
+        rowsByMeetingId.set(mid, matches.map((m) => ({ ...m, meetingId: mid })));
+        console.log(
+          `🧩 Backfill meeting_id por join_url para ${mid} en ids: ${matches
+            .map((m) => m.id)
+            .join(', ')}`
+        );
+      } else {
+        console.warn(`⚠️ No encontré class_meetings para ${mid}. Omitiendo...`);
+      }
+    }
+
+    for (const u of updates) {
+      await withDbRetry(() =>
+        db
+          .update(classMeetings)
+          .set({ meetingId: u.meetingId })
+          .where(eq(classMeetings.id, u.id))
+      );
+    }
   }
-}
 
 
   // Para no bloquear el request por mucho tiempo
   const MAX_NEW_UPLOADS = 2; // súbelo si quieres, pero no lo dejes infinito
   const PER_DOWNLOAD_TIMEOUT_MS = 90_000; // 90s por grabación
 
-  const videos: {
-    meetingId: string;
-    videoKey: string;
-    videoUrl: string;
-    createdAt?: string;
-  }[] = [];
+  const videos: VideoIdxItem[] = [];
+
 
   let uploadsStarted = 0;
 
-  // 3) Recorremos recordings
   // 3) Recorremos recordings
   for (const recording of recordings) {
     try {
       // a) Obtener el meetingId real desde base64
       const decodedId = decodeMeetingId(recording.meetingId);
 
-     // b) Obtener TODAS las filas que comparten el meetingId
-const rowsForMeeting = rowsByMeetingId.get(decodedId) ?? [];
-if (!rowsForMeeting.length) {
-  console.warn(`⚠️ No encontré class_meetings para ${decodedId}. Omitiendo...`);
-  continue;
-}
+      // b) Obtener TODAS las filas que comparten el meetingId
+      const rowsForMeeting = rowsByMeetingId.get(decodedId) ?? [];
+      if (!rowsForMeeting.length) {
+        console.warn(`⚠️ No encontré class_meetings para ${decodedId}. Omitiendo...`);
+        continue;
+      }
 
-// c) Si alguna ya tiene video_key, úsala y no “contamines” otras
-const withKey = rowsForMeeting.find((r) => r.video_key);
-if (withKey?.video_key) {
-  console.log(`✅ Ya tenía video_key (id=${withKey.id}): ${withKey.video_key}`);
-  videos.push({
-    meetingId: decodedId,
-    videoKey: withKey.video_key,
-    videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${withKey.video_key}`,
-    createdAt: recording.createdDateTime,
-  });
-  continue;
-}
+      // c) Si alguna ya tiene video_key, úsala y no “contamines” otras
+      const withKey = rowsForMeeting.find((r) => r.video_key);
+      if (withKey?.video_key) {
+        console.log(`✅ Ya tenía video_key (id=${withKey.id}): ${withKey.video_key}`);
+        videos.push({
+          meetingId: decodedId,
+          videoKey: withKey.video_key,
+          videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${withKey.video_key}`,
+          createdAt: recording.createdDateTime,
+        });
+        continue;
+      }
 
 
       // d) Control de subidas nuevas por request
@@ -349,42 +353,49 @@ if (withKey?.video_key) {
         await uploader.done();
         console.log(`🚀 Subido a S3: ${videoKey}`);
 
-        // h) Guardar en BD el video_key (con retry)
-        // h) Elegir la fila más cercana a la fecha de la grabación
-let targetRow = rowsForMeeting[0]; // fallback
-const recISO = recording.createdDateTime ?? null;
+        let targetRow = rowsForMeeting[0];
+        const recISO = recording.createdDateTime ?? null;
 
-if (recISO) {
-  const recTime = new Date(recISO).getTime();
-  targetRow = rowsForMeeting.reduce((best, row) => {
-    const t = row.startDateTime ? new Date(row.startDateTime).getTime() : Infinity;
-    const bt = best.startDateTime ? new Date(best.startDateTime).getTime() : Infinity;
-    return Math.abs(t - recTime) < Math.abs(bt - recTime) ? row : best;
-  }, rowsForMeeting[0]);
-}
+        if (recISO) {
+          const recTime = new Date(recISO).getTime();
+          targetRow = rowsForMeeting.reduce((best, row) => {
+            const t = row.startDateTime ? new Date(row.startDateTime).getTime() : Infinity;
+            const bt = best.startDateTime ? new Date(best.startDateTime).getTime() : Infinity;
+            return Math.abs(t - recTime) < Math.abs(bt - recTime) ? row : best;
+          }, rowsForMeeting[0]);
+        }
 
-// h.1) Guardar en BD el video_key SOLO en esa fila
-try {
-  await withDbRetry(() =>
-    db
-      .update(classMeetings)
-      .set({ video_key: videoKey })
-      .where(eq(classMeetings.id, targetRow.id))
-  );
-  console.log(`✅ video_key asignado a class_meetings.id=${targetRow.id}`);
-} catch (err: unknown) {
-  console.error(
-    `❌ Error guardando video_key en BD (${decodedId}):`,
-    errMsg(err)
-  );
-  continue;
-}
+        // h.1) Determinar en qué campo guardar (video_key o video_key_2)
+        try {
+          const existingRow = rowsForMeeting.find(r => r.id === targetRow.id);
+          const updatePayload = existingRow?.video_key
+            ? { video_key_2: videoKey }
+            : { video_key: videoKey };
 
-// h.2) Refrescar el mapa en memoria para este meetingId
-const refreshed = rowsForMeeting.map((r) =>
-  r.id === targetRow.id ? { ...r, video_key: videoKey } : r
-);
-rowsByMeetingId.set(decodedId, refreshed);
+          await withDbRetry(() =>
+            db
+              .update(classMeetings)
+              .set(updatePayload)
+              .where(eq(classMeetings.id, targetRow.id))
+          );
+
+          const fieldUsed = existingRow?.video_key ? 'video_key_2' : 'video_key';
+          console.log(`✅ ${fieldUsed} asignado a class_meetings.id=${targetRow.id}`);
+        } catch (err: unknown) {
+          console.error(
+            `❌ Error guardando video_key en BD (${decodedId}):`,
+            errMsg(err)
+          );
+          continue;
+        }
+
+        // h.2) Refrescar el mapa en memoria
+        const refreshed = rowsForMeeting.map((r) =>
+          r.id === targetRow.id
+            ? { ...r, video_key: r.video_key ?? videoKey, video_key_2: r.video_key ? videoKey : r.video_key_2 }
+            : r
+        );
+        rowsByMeetingId.set(decodedId, refreshed);
 
 
 
@@ -395,6 +406,15 @@ rowsByMeetingId.set(decodedId, refreshed);
           videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`,
           createdAt: recording.createdDateTime,
         });
+        if (targetRow.video_key) {
+          videos.push({
+            meetingId: decodedId,
+            videoKey: videoKey,
+            videoUrl: `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`,
+            createdAt: recording.createdDateTime,
+            isSecondary: true,
+          });
+        }
 
         uploadsStarted += 1;
       } catch (err: unknown) {
@@ -411,21 +431,21 @@ rowsByMeetingId.set(decodedId, refreshed);
   }
 
   const latestByMeetingId = new Map<string, typeof videos[number]>();
-for (const v of videos) {
-  const key = v.meetingId;
-  const prev = latestByMeetingId.get(key);
-  if (!prev) {
-    latestByMeetingId.set(key, v);
-  } else {
-    const prevT = prev.createdAt ? new Date(prev.createdAt).getTime() : 0;
-    const curT  = v.createdAt    ? new Date(v.createdAt).getTime()    : 0;
-    if (curT >= prevT) latestByMeetingId.set(key, v);
+  for (const v of videos) {
+    const key = v.meetingId;
+    const prev = latestByMeetingId.get(key);
+    if (!prev) {
+      latestByMeetingId.set(key, v);
+    } else {
+      const prevT = prev.createdAt ? new Date(prev.createdAt).getTime() : 0;
+      const curT = v.createdAt ? new Date(v.createdAt).getTime() : 0;
+      if (curT >= prevT) latestByMeetingId.set(key, v);
+    }
   }
-}
 
-const payload = Array.from(latestByMeetingId.values());
-console.log('📤 Videos listos para enviar (dedup):', payload.length);
-return NextResponse.json({ videos: payload });
+  const payload = Array.from(latestByMeetingId.values());
+  console.log('📤 Videos listos para enviar (dedup):', payload.length);
+  return NextResponse.json({ videos: payload });
 }
 
 
