@@ -290,6 +290,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   const [filterWindow, setFilterWindow] = useState<'all' | 'active24' | 'almost' | 'expired'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true); // Default true para evitar hidratación
+  const [userSelectedChat, setUserSelectedChat] = useState(false); // Track if user manually selected
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -412,10 +413,10 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
   useEffect(() => {
     const saved = sessionStorage.getItem('wa_selected_chat');
-    if (saved) {
+    if (saved && isDesktop) {
       setSelected(saved);
     }
-  }, []);
+  }, [isDesktop]);
 
   // Auto-hide sidebar on mobile when chat is selected
   useEffect(() => {
@@ -820,11 +821,11 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-80px)] min-h-screen w-full overflow-hidden bg-[#0B141A]">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-[#0B141A]">
       {/* SIDEBAR - Lista de chats (móvil: oculto cuando hay chat seleccionado) */}
       <aside
-        className={`${selected && !isDesktop ? 'hidden' : 'flex'
-          } w-full md:w-72 md:flex border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200`}
+        className={`${selected && !isDesktop && userSelectedChat ? 'hidden' : 'flex'
+          } w-full md:w-72 border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200`}
       >
         {/* Header de sidebar */}
         <div className="px-3.5 md:px-4 py-3 md:py-4 flex items-center justify-between bg-[#202C33] border-b border-gray-800 flex-shrink-0">
@@ -931,6 +932,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               key={t.waid}
               onClick={() => {
                 setSelected(t.waid);
+                setUserSelectedChat(true);
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
@@ -1004,7 +1006,10 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         <div className="sticky top-0 flex items-center gap-2 md:gap-3 border-b border-gray-800 bg-[#202C33] px-3 md:px-4 py-2.5 md:py-3 text-gray-100 z-40 flex-shrink-0">
           {!isDesktop && selected && (
             <button
-              onClick={() => setSelected(null)}
+              onClick={() => {
+                setSelected(null);
+                setUserSelectedChat(false);
+              }}
               className="p-2 -ml-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors"
               aria-label="Volver a chats"
               title="Volver"
