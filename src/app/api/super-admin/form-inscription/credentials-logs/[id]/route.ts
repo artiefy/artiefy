@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+
 import { db } from "~/server/db";
 import { credentialsDeliveryLogs } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
 
 async function assertSuperAdmin(userId: string) {
     const client = await clerkClient();

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { desc, ilike, or, sql } from "drizzle-orm";
+
 import { db } from "~/server/db";
 import { credentialsDeliveryLogs } from "~/server/db/schema";
-import { desc, ilike, or, sql } from "drizzle-orm";
 
 export async function GET(req: Request) {
     try {

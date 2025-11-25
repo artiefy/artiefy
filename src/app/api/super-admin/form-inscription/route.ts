@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { emailLogs, credentialsDeliveryLogs } from '~/server/db/schema';
+import { credentialsDeliveryLogs,emailLogs } from '~/server/db/schema';
 import {
   comercials,
   dates,

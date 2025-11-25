@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+
 import { useUser } from "@clerk/clerk-react";
-import { FiSearch, FiTrash2, FiEdit2, FiEye, FiRefreshCw, FiX } from "react-icons/fi";
+import { FiEdit2, FiEye, FiRefreshCw, FiSearch, FiTrash2, FiX } from "react-icons/fi";
+
 import { cn } from "~/lib/utils";
 
-type LogItem = {
+interface LogItem {
     id: number;
     userId: string | null;
     usuario: string;
@@ -13,7 +15,7 @@ type LogItem = {
     correo: string;
     nota: string;
     createdAt: string;
-};
+}
 
 const pageSizeDefault = 20;
 

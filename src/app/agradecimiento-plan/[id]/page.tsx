@@ -1,6 +1,4 @@
 'use client';
-import '~/styles/confetti.css';
-
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
@@ -8,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
 import { getCourseTypeById } from '~/server/queries/courseTypes';
+
+import '~/styles/confetti.css';
 
 export default function AgradecimientoPlanPage({
   params,
