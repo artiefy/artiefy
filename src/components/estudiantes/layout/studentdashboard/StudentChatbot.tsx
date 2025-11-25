@@ -3313,7 +3313,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       <style jsx global>{`
         .chat-resizable input,
         .chat-resizable textarea {
-          color: #111 !important;
+          color: #fff !important;
         }
       `}</style>
     </>
