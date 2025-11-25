@@ -290,7 +290,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   const [filterWindow, setFilterWindow] = useState<'all' | 'active24' | 'almost' | 'expired'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true); // Default true para evitar hidratación
-  const [showList, setShowList] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -415,16 +414,13 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
     const saved = sessionStorage.getItem('wa_selected_chat');
     if (saved) {
       setSelected(saved);
-      setShowList(false);
     }
   }, []);
 
   // Auto-hide sidebar on mobile when chat is selected
   useEffect(() => {
-    if (selected && !isDesktop) {
-      setShowList(false);
-    }
-  }, [selected, isDesktop]);
+    // sidebar se oculta automáticamente en móvil cuando hay chat seleccionado
+  }, [isDesktop]);
 
   useEffect(() => {
     if (!selected && threads.length) setSelected(threads[0].waid);
@@ -813,14 +809,11 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
     // Inicializar en true si estamos en escritorio
     const isLargeScreen = window.innerWidth >= 768;
     setIsDesktop(isLargeScreen);
-    // En móvil, mostrar el chat por defecto (no la lista)
-    setShowList(isLargeScreen);
 
     // Listener para cambios de tamaño
     const handleResize = () => {
       const isLarge = window.innerWidth >= 768;
       setIsDesktop(isLarge);
-      setShowList(isLarge);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -828,9 +821,10 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
   return (
     <div className="flex h-[calc(100vh-80px)] min-h-screen w-full overflow-hidden bg-[#0B141A]">
-      {/* SIDEBAR - Lista de chats (móvil: overlay absoluto) */}
+      {/* SIDEBAR - Lista de chats (móvil: oculto cuando hay chat seleccionado) */}
       <aside
-        className={`fixed md:static inset-0 md:inset-auto z-40 md:z-auto md:w-72 border-r border-gray-800 bg-[#111B21] text-gray-200 flex flex-col transition-all duration-200 ${showList ? 'block' : 'hidden md:flex'}`}
+        className={`${selected && !isDesktop ? 'hidden' : 'flex'
+          } w-full md:w-72 md:flex border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200`}
       >
         {/* Header de sidebar */}
         <div className="px-3.5 md:px-4 py-3 md:py-4 flex items-center justify-between bg-[#202C33] border-b border-gray-800 flex-shrink-0">
@@ -937,7 +931,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               key={t.waid}
               onClick={() => {
                 setSelected(t.waid);
-                setShowList(false);
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
@@ -1005,27 +998,22 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         </div>
       </aside>
 
-      {/* Overlay para cerrar sidebar en móvil */}
-      {showList && (
-        <div
-          className="md:hidden fixed inset-0 z-30 bg-black/40"
-          onClick={() => setShowList(false)}
-        />
-      )}
-
-      {/* CHAT SECTION - Layout con header y footer STICKY */}
+      {/* CHAT SECTION - Fullscreen en móvil cuando hay chat */}
       <section className="flex min-w-0 flex-1 flex-col bg-[#0B141A] relative overflow-hidden">
         {/* Header del chat - STICKY AL TOP */}
         <div className="sticky top-0 flex items-center gap-2 md:gap-3 border-b border-gray-800 bg-[#202C33] px-3 md:px-4 py-2.5 md:py-3 text-gray-100 z-40 flex-shrink-0">
-          <button
-            onClick={() => setShowList(true)}
-            className="md:hidden p-2 -ml-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100"
-            aria-label="Volver a chats"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+          {!isDesktop && selected && (
+            <button
+              onClick={() => setSelected(null)}
+              className="p-2 -ml-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors"
+              aria-label="Volver a chats"
+              title="Volver"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
 
           <div className="h-10 w-10 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A] flex items-center justify-center text-white font-bold flex-shrink-0">
             {selected ? (threads.find((t) => t.waid === selected)?.name ?? selected ?? '—').charAt(0).toUpperCase() : '—'}
@@ -1050,6 +1038,19 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 0 1 0 2.828l-7 7a2 2 0 0 1-2.828 0l-7-7A1.994 1.994 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
               </svg>
             </button>
+          )}
+
+          {selected && (
+            <a
+              href="/dashboard/super-admin"
+              className="p-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors inline-flex items-center justify-center"
+              title="Volver al inicio"
+              aria-label="Volver al inicio"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </a>
           )}
         </div>
 
