@@ -12,6 +12,7 @@ interface VideoIdxItem {
   videoUrl: string;
   createdAt?: string;
   name?: string; // opcional
+  isSecondary?: boolean;
 }
 
 // ⚠️ el mismo userId (organizer) que ya usas para listar videos
@@ -82,40 +83,40 @@ export async function GET(req: Request) {
     const raw = (await res.json()) as { videos?: VideoIdxItem[] };
     const allVideos = Array.isArray(raw.videos) ? raw.videos : [];
 
-   // ...
-const usedByMeeting = new Map<string, Set<string>>(); // meetingId -> Set<videoKey>
+    // ...
+    const usedByMeeting = new Map<string, Set<string>>(); // meetingId -> Set<videoKey>
 
-const populated = meetings.map((mt) => {
-  const targetMs = toMs(mt.startDateTime as unknown as string);
+    const populated = meetings.map((mt) => {
+      const targetMs = toMs(mt.startDateTime as unknown as string);
 
-  const sameMeeting = allVideos.filter((v) => v.meetingId === mt.meetingId);
-  const usedSet =
-    usedByMeeting.get(mt.meetingId) ?? new Set<string>();
+      const sameMeeting = allVideos.filter((v) => v.meetingId === mt.meetingId);
+      const usedSet =
+        usedByMeeting.get(mt.meetingId) ?? new Set<string>();
 
-  // descarta videos ya usados para este meetingId
-  const available = sameMeeting.filter(v => !usedSet.has(v.videoKey));
+      // descarta videos ya usados para este meetingId
+      const available = sameMeeting.filter(v => !usedSet.has(v.videoKey));
 
-  let chosen: VideoIdxItem | undefined;
-  if (available.length) {
-    const nameOk = available.filter(v => looseMatchName(v.name, mt.title));
-    const pool = nameOk.length ? nameOk : available;
-    const { best } = pickNearestByCreatedAt(pool, targetMs);
-    chosen = best;
+      let chosen: VideoIdxItem | undefined;
+      if (available.length) {
+        const nameOk = available.filter(v => looseMatchName(v.name, mt.title));
+        const pool = nameOk.length ? nameOk : available;
+        const { best } = pickNearestByCreatedAt(pool, targetMs);
+        chosen = best;
 
-    if (chosen) {
-      usedSet.add(chosen.videoKey);
-      if (!usedByMeeting.has(mt.meetingId)) {
-        usedByMeeting.set(mt.meetingId, usedSet);
+        if (chosen) {
+          usedSet.add(chosen.videoKey);
+          if (!usedByMeeting.has(mt.meetingId)) {
+            usedByMeeting.set(mt.meetingId, usedSet);
+          }
+        }
       }
-    }
-  }
 
-  return {
-    ...mt,
-    video_key: chosen?.videoKey ?? mt.video_key ?? null,
-    videoUrl: chosen?.videoUrl ?? null,
-  };
-});
+      return {
+        ...mt,
+        video_key: chosen?.videoKey ?? mt.video_key ?? null,
+        videoUrl: chosen?.videoUrl ?? null,
+      };
+    });
 
 
     // 4) ordenado por fecha y devuelto

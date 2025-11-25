@@ -2,12 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
-import {
-  getNewTicketAssignmentEmail,
-  sendTicketEmail,
-} from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
-import { ticketAssignees, tickets } from '~/server/db/schema';
+import { tickets } from '~/server/db/schema';
 
 import type {
   CreateStudentTicketDTO,

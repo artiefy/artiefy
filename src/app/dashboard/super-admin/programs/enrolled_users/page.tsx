@@ -6,11 +6,12 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import { Loader2, Mail, UserPlus, X } from 'lucide-react';
+import { Loader2, Mail, MessageCircle, UserPlus, X, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
+import { AdvancedFilterMenu } from './AdvancedFilterMenu';
 
 // helpers
 const numNullOpt = z.preprocess(
@@ -85,15 +86,28 @@ const studentSchema = z.object({
   isSubOnly: z.boolean().optional(),
   enrolledInCourse: z.boolean().optional(),
 
-  // ⚠️ ⚠️ SOLO UNA clave inscripcionOrigen (con normalización)
   inscripcionOrigen: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    (v) => {
+      if (v == null) return undefined;
+      if (typeof v !== 'string') return undefined;
+      const normalized = v.trim().toLowerCase();
+      // Si no coincide con los valores esperados, devolver undefined (será opcional)
+      if (normalized !== 'formulario' && normalized !== 'artiefy') return undefined;
+      return normalized;
+    },
     z.enum(['formulario', 'artiefy']).optional()
   ),
 
   // carteraStatus derivado o desde back (normalizado)
   carteraStatus: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v ?? undefined),
+    (v) => {
+      if (v == null) return undefined;
+      if (typeof v !== 'string') return undefined;
+      const normalized = v.trim().toLowerCase();
+      // Permitir solo los valores válidos, el resto se convierte en undefined
+      if (!['activo', 'inactivo', 'no verificado'].includes(normalized)) return undefined;
+      return normalized;
+    },
     z.enum(['activo', 'inactivo', 'no verificado']).optional()
   ),
   userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
@@ -357,6 +371,20 @@ export default function EnrolledUsersPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
+
+  // ✅ Estados para WhatsApp separado (como en super-admin/page.tsx)
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [loadingWhatsApp, setLoadingWhatsApp] = useState(false);
+  const [waSubjectText, setWaSubjectText] = useState('');
+  const [waMessageText, setWaMessageText] = useState('');
+  const [numerosLocales, setNumerosLocales] = useState('');
+  const [waSelectedTemplate, setWaSelectedTemplate] = useState<string>('__TEXT_ONLY__');
+  const [waVariables, setWaVariables] = useState<string[]>([]);
+  const [waTemplates, setWaTemplates] = useState<{ name: string; label: string; language: 'es' | 'en'; body: string; example?: string[]; status?: string; langCode?: string }[]>([]);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waError, setWaError] = useState<string | null>(null);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+
   const [editablePagos, setEditablePagos] = useState<Pago[]>([]);
   const { user: clerkUser } = useUser();
 
@@ -1208,6 +1236,16 @@ export default function EnrolledUsersPage() {
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
   const [infoDialogTitle, setInfoDialogTitle] = useState('');
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
+
+  // ✅ Estados para filtro avanzado tipo Excel
+  const [advancedFilterOpen, setAdvancedFilterOpen] = useState<string | null>(null);
+  const [advancedFilterMenuPos, setAdvancedFilterMenuPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, string[]>>({});
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
   const [massiveEditFields, setMassiveEditFields] = useState<
@@ -1435,6 +1473,90 @@ export default function EnrolledUsersPage() {
     void loadPrograms();
   }, []);
 
+  // ✅ Función para cargar plantillas de WhatsApp
+  const loadWhatsAppTemplates = useCallback(async () => {
+    try {
+      setWaLoading(true);
+      setWaError(null);
+
+      interface WaGetOk {
+        templates?: typeof waTemplates;
+      }
+      interface WaGetErr {
+        error?: string;
+        details?: unknown;
+      }
+
+      const res = await fetch('/api/super-admin/whatsapp', { method: 'GET' });
+      const raw: unknown = await res.json();
+
+      if (!res.ok) {
+        const msg = (raw as WaGetErr)?.error ?? 'No se pudieron cargar las plantillas';
+        setWaTemplates([]);
+        setWaError(msg);
+        return;
+      }
+
+      const templates = (raw as WaGetOk)?.templates ?? [];
+      setWaTemplates(templates);
+    } catch (err) {
+      console.error('No se pudieron cargar las plantillas de WhatsApp:', err);
+      setWaTemplates([]);
+      setWaError('Error de red cargando plantillas');
+    } finally {
+      setWaLoading(false);
+    }
+  }, []);
+
+  // ✅ useEffect para cargar plantillas de WhatsApp
+  useEffect(() => {
+    // Solo cargar si se abre el modal de WhatsApp
+    if (showPhoneModal && sendWhatsapp) {
+      void loadWhatsAppTemplates();
+    }
+  }, [showPhoneModal, sendWhatsapp, loadWhatsAppTemplates]);
+
+  // ✅ useMemo para obtener la plantilla seleccionada (como en super-admin/page.tsx)
+  const selectedWaTemplate = useMemo(
+    () => waTemplates.find((t) => t.name === waSelectedTemplate) ?? null,
+    [waSelectedTemplate, waTemplates]
+  );
+
+  // ✅ Helpers reutilizables y testeables (como en super-admin/page.tsx)
+  const stripHtml = (html: string) =>
+    html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const buildEmailsList = () =>
+    Array.from(
+      new Set([
+        ...students
+          .filter((s) => selectedStudents.includes(s.id))
+          .map((s) => s.email),
+        ...manualEmails,
+      ])
+    );
+
+  const buildWhatsappNumbers = () => {
+    if (!numerosLocales.trim()) return [];
+
+    const onlyDigits = (s: string) => s.replace(/\D/g, '');
+    const countryDigits = codigoPais.replace('+', '');
+
+    return Array.from(
+      new Set(
+        numerosLocales
+          .split(',')
+          .map((n) => n.trim())
+          .filter(Boolean)
+          .map((n) => {
+            const d = onlyDigits(n);
+            return d.startsWith(countryDigits) ? d : countryDigits + d;
+          })
+          .filter((d) => d.length >= 10)
+      )
+    );
+  };
+
   const columnsWithOptions = useMemo<Column[]>(() => {
     const programOptions = ['No inscrito', ...programs.map((p) => p.title)];
     const courseOptions = [
@@ -1454,54 +1576,26 @@ export default function EnrolledUsersPage() {
   }, [programs, availableCourses]);
 
   const sendEmail = async () => {
-    console.log('📩 Enviando correo...');
-    if (
-      !subject ||
-      !message ||
-      ([
-        ...students
-          .filter((s) => selectedStudents.includes(s.id))
-          .map((s) => s.email),
-        ...manualEmails,
-      ].length === 0 &&
-        [
-          ...students
-            .filter((s) => selectedStudents.includes(s.id) && s.phone)
-            .map((s) => `${codigoPais}${s.phone}`),
-          ...manualPhones,
-        ].length === 0 &&
-        !sendWhatsapp)
-    ) {
+    console.log('📩 Enviando SOLO correo...');
+
+    if (!subject.trim() || !message.trim()) {
       setNotification({
-        message: 'Todos los campos son obligatorios',
+        message: 'Asunto y mensaje son obligatorios para enviar correo',
         type: 'error',
       });
-      console.error('❌ Error: Faltan datos obligatorios');
+      return;
+    }
+
+    const emails = buildEmailsList();
+    if (emails.length === 0) {
+      setNotification({
+        message: 'Debes seleccionar o agregar al menos un correo',
+        type: 'error',
+      });
       return;
     }
 
     setLoadingEmail(true);
-
-    const emails = Array.from(
-      new Set([
-        ...students
-          .filter((s) => selectedStudents.includes(s.id))
-          .map((s) => s.email),
-        ...manualEmails,
-      ])
-    );
-
-    const whatsappNumbers = sendWhatsapp
-      ? Array.from(
-        new Set([
-          ...students
-            .filter((s) => selectedStudents.includes(s.id) && s.phone)
-            .map((s) => `${codigoPais}${s.phone}`),
-          ...manualPhones.map((p) => `${codigoPais}${p}`),
-        ])
-      )
-      : [];
-
     try {
       const formData = new FormData();
       formData.append('subject', subject);
@@ -1516,39 +1610,122 @@ export default function EnrolledUsersPage() {
 
       if (!response.ok) throw new Error('Error al enviar el correo');
 
-      // Enviar whatsapp
-      if (sendWhatsapp) {
-        for (const number of whatsappNumbers) {
-          console.log('📲 Enviando WhatsApp a:', number);
-
-          await fetch('/api/super-admin/whatsapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: number,
-              message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
-            }),
-          });
-        }
-      }
-
-      console.log('✅ Mensajes enviados con éxito');
+      console.log('✅ Correo enviado con éxito');
       setNotification({
-        message: 'Correo y/o WhatsApp enviados correctamente',
+        message: 'Correo enviado correctamente',
         type: 'success',
       });
 
-      setSubject('');
-      setMessage('');
-      setAttachments([]);
-      setManualPhones([]);
+      // Limpia SOLO lo relativo a correo
       setManualEmails([]);
-      setShowPhoneModal(false);
-    } catch (err) {
-      console.error('❌ Error al enviar:', err);
-      setNotification({ message: 'Error al enviar', type: 'error' });
+      setAttachments([]);
+
+      // OJO: NO limpiamos subject/message para que puedas reutilizarlos
+    } catch (error) {
+      console.error('❌ Error al enviar el correo:', error);
+      setNotification({ message: 'Error al enviar el correo', type: 'error' });
     } finally {
       setLoadingEmail(false);
+    }
+  };
+
+  const sendWhatsApp = async () => {
+    console.log('📲 Enviando WhatsApp...');
+
+    const whatsappNumbers = buildWhatsappNumbers();
+    if (whatsappNumbers.length === 0) {
+      setNotification({
+        message: 'Debes ingresar al menos un número válido para WhatsApp',
+        type: 'error',
+      });
+      return;
+    }
+
+    const WA_TEXT_ONLY = '__TEXT_ONLY__';
+    const textOnly = waSelectedTemplate === WA_TEXT_ONLY;
+    const useTemplate = Boolean(waSelectedTemplate) && !textOnly && waSelectedTemplate !== '';
+
+    // Si NO es plantilla, exige mensaje
+    if (!useTemplate && !waMessageText.trim()) {
+      setNotification({
+        message: 'Escribe un mensaje para WhatsApp',
+        type: 'error',
+      });
+      return;
+    }
+
+    setLoadingWhatsApp(true);
+
+    try {
+      const selectedWaTemplate = waTemplates.find((t) => t.name === waSelectedTemplate) ?? null;
+      const textMessage =
+        `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
+
+      for (const number of whatsappNumbers) {
+        const to = number;
+
+        const body = useTemplate
+          ? {
+            to,
+            forceTemplate: true,
+            templateName: waSelectedTemplate,
+            languageCode:
+              selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+            variables: waVariables,
+          }
+          : textOnly
+            ? {
+              to,
+              text: textMessage,
+            }
+            : {
+              to,
+              text: textMessage,
+              ensureSession: true,
+              sessionTemplate: 'hello_world',
+              sessionLanguage: 'en_US',
+            };
+
+        const resp = await fetch('/api/super-admin/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const json = await resp.json().catch(() => ({}));
+        console.log('📗 [WA][FRONT] Respuesta backend:', {
+          status: resp.status,
+          ok: resp.ok,
+          json,
+        });
+
+        if (!resp.ok) {
+          console.error('❌ [WA][FRONT] Error enviando WhatsApp:', json);
+        }
+      }
+
+      setNotification({
+        message: 'WhatsApp enviado correctamente',
+        type: 'success',
+      });
+
+      // Limpieza SOLO WhatsApp
+      setNumerosLocales('');
+      setCodigoPais('+57');
+      setWaSelectedTemplate(WA_TEXT_ONLY);
+      setWaVariables([]);
+      setWaSubjectText('');
+      setWaMessageText('');
+      setShowWhatsAppModal(false);
+
+    } catch (error) {
+      console.error('❌ Error al enviar WhatsApp:', error);
+      setNotification({
+        message: 'Error al enviar WhatsApp',
+        type: 'error',
+      });
+    } finally {
+      setLoadingWhatsApp(false);
     }
   };
 
@@ -2307,6 +2484,50 @@ export default function EnrolledUsersPage() {
             : true
         )
 
+        // ✅ FILTROS AVANZADOS tipo Excel
+        .filter((student) => {
+          return Object.entries(advancedFilters).every(([colId, selectedValues]) => {
+            if (!selectedValues || selectedValues.length === 0) return true;
+
+            const studentValue = getValueForColumn(student, colId);
+            const safeStudentValue = safeToString(studentValue).trim();
+
+            // Si es carteraStatus, usar la lógica derivada
+            if (colId === 'carteraStatus') {
+              const base = safeToString(studentValue);
+              let ui = base;
+              if (student.id === currentUserId) {
+                const hoy = new Date();
+                const y = hoy.getFullYear();
+                const m = hoy.getMonth();
+
+                const pagosMes = (editablePagos ?? []).filter((p) => {
+                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+                });
+
+                if (pagosMes.length > 0) {
+                  const ultimo = [...pagosMes].sort(
+                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+                  )[pagosMes.length - 1];
+
+                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                    ui = 'no verificado';
+                  }
+                }
+              }
+
+              return selectedValues.some(v => ui.toLowerCase().includes(v.toLowerCase()));
+            }
+
+            return selectedValues.some((filterVal) =>
+              safeStudentValue.toLowerCase() === filterVal.toLowerCase() ||
+              safeStudentValue.toLowerCase().includes(filterVal.toLowerCase())
+            );
+          });
+        })
+
         // Ordenar activos primero
         .sort((a, b) => {
           if (
@@ -2323,6 +2544,24 @@ export default function EnrolledUsersPage() {
         })
     );
   };
+
+  // ✅ Generar opciones únicas para TODOS los estudiantes (para filtros avanzados)
+  const columnFilterOptions = useMemo(() => {
+    const options: Record<string, (string | null | undefined)[]> = {};
+
+    totalColumns.forEach((col) => {
+      const values: (string | null | undefined)[] = [];
+      students.forEach((student) => {
+        const value = getValueForColumn(student, col.id);
+        if (value !== null && value !== undefined) {
+          values.push(safeToString(value));
+        }
+      });
+      options[col.id] = values;
+    });
+
+    return options;
+  }, [students]);
 
   const sortedStudents = getFilteredSortedStudents();
   // — Hooks para infinite scroll
@@ -2674,22 +2913,35 @@ export default function EnrolledUsersPage() {
           <div className="relative w-full sm:w-auto">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowPhoneModal(true)}
-                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
-              >
-                <span className="relative z-10 font-medium">
-                  Enviar correo y/o whatsapp
-                </span>
-                <Mail className="relative z-10 size-3.5 sm:size-4" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
-              </button>
-
-              <button
                 onClick={() => setShowCreateForm(true)}
                 className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
                 <span className="relative z-10 font-medium">Crear Usuario</span>
                 <UserPlus className="relative z-10 size-3.5 sm:size-4" />
+                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setSendWhatsapp(false);
+                  setShowPhoneModal(true);
+                }}
+                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+              >
+                <span className="relative z-10 font-medium">📧 Correo</span>
+                <Mail className="relative z-10 size-3.5 sm:size-4" />
+                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setSendWhatsapp(true);
+                  setShowPhoneModal(true);
+                }}
+                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+              >
+                <span className="relative z-10 font-medium">💬 WhatsApp</span>
+                <MessageCircle className="relative z-10 size-3.5 sm:size-4" />
                 <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
               </button>
 
@@ -2865,7 +3117,7 @@ export default function EnrolledUsersPage() {
           <h2 className="mb-2 text-xl font-semibold">
             Seleccionar Estudiantes
           </h2>
-          <div className="mb-2 flex items-center gap-3 text-xs sm:text-sm text-gray-300">
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-300">
             <span>
               Seleccionados: <strong>{selectedStudents.length}</strong> / {sortedStudents.length}
             </span>
@@ -2880,6 +3132,16 @@ export default function EnrolledUsersPage() {
                 title="Limpiar selección"
               >
                 Limpiar
+              </button>
+            )}
+            {Object.keys(advancedFilters).some((k) => (advancedFilters[k]?.length ?? 0) > 0) && (
+              <button
+                type="button"
+                onClick={() => setAdvancedFilters({})}
+                className="rounded bg-blue-700 px-2 py-1 text-xs hover:bg-blue-600 font-medium"
+                title="Limpiar filtros avanzados"
+              >
+                ✓ Limpiar filtros avanzados
               </button>
             )}
           </div>
@@ -2923,7 +3185,32 @@ export default function EnrolledUsersPage() {
                         className="px-4 py-2 text-left font-medium"
                       >
                         <div className="space-y-1">
-                          <div className="truncate">{col.label}</div>
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="truncate">{col.label}</span>
+                            <button
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setAdvancedFilterMenuPos({
+                                  top: rect.bottom + 4,
+                                  left: rect.left,
+                                  width: rect.width,
+                                });
+                                setAdvancedFilterOpen(col.id);
+                              }}
+                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition text-xs ${(advancedFilters[col.id]?.length ?? 0) > 0
+                                  ? 'bg-blue-600 hover:bg-blue-700'
+                                  : 'bg-gray-700 hover:bg-gray-600'
+                                }`}
+                              title="Filtro avanzado"
+                            >
+                              <ChevronDown className="size-3.5" />
+                              {(advancedFilters[col.id]?.length ?? 0) > 0 && (
+                                <span className="ml-0.5 text-xs font-semibold">
+                                  {advancedFilters[col.id]?.length}
+                                </span>
+                              )}
+                            </button>
+                          </div>
                           {col.type === 'select' ? (
                             <div className="relative">
                               {/* Input que muestra chips seleccionados */}
@@ -3265,6 +3552,34 @@ export default function EnrolledUsersPage() {
           </div>
         </div>
 
+        {/* ✅ Componente de Filtro Avanzado tipo Excel */}
+        {advancedFilterOpen && (
+          <AdvancedFilterMenu
+            columnId={advancedFilterOpen}
+            columnLabel={
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.label ||
+              advancedFilterOpen
+            }
+            columnType={
+              (totalColumns.find((c) => c.id === advancedFilterOpen)?.type as
+                | 'text'
+                | 'date'
+                | 'select') || 'text'
+            }
+            allValues={columnFilterOptions[advancedFilterOpen] || []}
+            currentFilters={advancedFilters[advancedFilterOpen] || []}
+            onApplyFilters={(filters) => {
+              setAdvancedFilters((prev) => ({
+                ...prev,
+                [advancedFilterOpen]: filters,
+              }));
+              setAdvancedFilterOpen(null);
+            }}
+            onClose={() => setAdvancedFilterOpen(null)}
+            position={advancedFilterMenuPos || undefined}
+          />
+        )}
+
         {/* Paginación 
 
        <div className="flex items-center gap-2 text-sm">
@@ -3332,7 +3647,7 @@ export default function EnrolledUsersPage() {
           <button
             disabled={selectedStudents.length === 0}
             onClick={downloadSelectedAsExcel}
-            className="w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 sm:flex-1"
+            className="w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50 sm:flex-1"
           >
             Descargar seleccionados en Excel
           </button>
@@ -3483,7 +3798,7 @@ export default function EnrolledUsersPage() {
         )}
         {showPhoneModal && (
           <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-            <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+            <div className="relative max-h-screen w-full max-w-3xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
               <button
                 onClick={() => setShowPhoneModal(false)}
                 className="absolute top-4 right-4 text-white hover:text-red-500"
@@ -3495,170 +3810,317 @@ export default function EnrolledUsersPage() {
                 Enviar Correo y/o WhatsApp
               </h2>
 
-              {/* Inputs manuales */}
-              <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Agregar teléfono manual"
-                    value={newManualPhone}
-                    onChange={(e) => setNewManualPhone(e.target.value)}
-                    className="w-full rounded border bg-gray-800 p-2"
-                  />
-                  <button
-                    onClick={() => {
-                      if (newManualPhone.trim()) {
-                        setManualPhones([
-                          ...manualPhones,
-                          newManualPhone.trim(),
-                        ]);
-                        setNewManualPhone('');
-                      }
-                    }}
-                    className="mt-2 w-full rounded bg-green-600 px-3 py-1"
-                  >
-                    ➕ Agregar Teléfono
-                  </button>
-                </div>
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Agregar correo manual"
-                    value={newManualEmail}
-                    onChange={(e) => setNewManualEmail(e.target.value)}
-                    className="w-full rounded border bg-gray-800 p-2"
-                  />
-                  <button
-                    onClick={() => {
-                      if (newManualEmail.trim()) {
-                        setManualEmails([
-                          ...manualEmails,
-                          newManualEmail.trim(),
-                        ]);
-                        setNewManualEmail('');
-                      }
-                    }}
-                    className="mt-2 w-full rounded bg-blue-600 px-3 py-1"
-                  >
-                    ➕ Agregar Correo
-                  </button>
-                </div>
-              </div>
-
-              {/* Teléfonos finales */}
-              <h3 className="mt-4 text-lg font-semibold">Teléfonos:</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ...students
-                    .filter((s) => selectedStudents.includes(s.id) && s.phone)
-                    .map((s) => `${codigoPais}${s.phone}`),
-                  ...manualPhones,
-                ].map((phone, idx) => (
-                  <span
-                    key={idx}
-                    className="flex items-center rounded-full bg-green-600 px-3 py-1"
-                  >
-                    {phone}
-                    <button
-                      onClick={() =>
-                        setManualPhones((prev) =>
-                          prev.filter((p) => p !== phone)
-                        )
-                      }
-                      className="ml-2"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-                {manualPhones.length +
-                  students.filter(
-                    (s) => selectedStudents.includes(s.id) && s.phone
-                  ).length ===
-                  0 && <div className="text-gray-400">Sin teléfonos</div>}
-              </div>
-
-              {/* Correos finales */}
-              <h3 className="mt-4 text-lg font-semibold">Correos:</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ...students
-                    .filter((s) => selectedStudents.includes(s.id))
-                    .map((s) => s.email),
-                  ...manualEmails,
-                ].map((email, idx) => (
-                  <span
-                    key={idx}
-                    className="flex items-center rounded-full bg-blue-600 px-3 py-1"
-                  >
-                    {email}
-                    <button
-                      onClick={() =>
-                        setManualEmails((prev) =>
-                          prev.filter((e) => e !== email)
-                        )
-                      }
-                      className="ml-2"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-                {manualEmails.length +
-                  students.filter((s) => selectedStudents.includes(s.id))
-                    .length ===
-                  0 && <div className="text-gray-400">Sin correos</div>}
-              </div>
-
-              {/* Formulario mensaje */}
-              <div className="mt-4">
-                <input
-                  type="text"
-                  placeholder="Asunto"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="mb-2 w-full rounded bg-gray-800 p-2"
-                />
-                <textarea
-                  placeholder="Mensaje"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full rounded bg-gray-800 p-2"
-                  rows={5}
-                />
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(e) => {
-                      setAttachments([
-                        ...attachments,
-                        ...Array.from(e.target.files ?? []),
-                      ]);
-                    }}
-                    className="text-sm text-gray-300"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={sendWhatsapp}
-                  onChange={() => setSendWhatsapp(!sendWhatsapp)}
-                />
-                <label>Enviar también por WhatsApp</label>
-              </div>
-
-              <div className="mt-6 flex justify-center">
+              {/* Tabs para Email y WhatsApp */}
+              <div className="mb-6 flex gap-2 border-b border-gray-700">
                 <button
-                  onClick={sendEmail}
-                  className="rounded bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-                  disabled={loadingEmail}
+                  onClick={() => setSendWhatsapp(false)}
+                  className={`px-4 py-2 font-semibold transition ${!sendWhatsapp
+                    ? 'border-b-2 border-blue-500 text-blue-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
-                  {loadingEmail ? 'Enviando...' : 'Enviar'}
+                  📧 Correo
+                </button>
+                <button
+                  onClick={() => setSendWhatsapp(true)}
+                  className={`px-4 py-2 font-semibold transition ${sendWhatsapp
+                    ? 'border-b-2 border-green-500 text-green-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                  📱 WhatsApp
                 </button>
               </div>
+
+              {/* TAB: CORREO */}
+              {!sendWhatsapp && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Agregar correo manual</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        placeholder="ejemplo@correo.com"
+                        value={newManualEmail}
+                        onChange={(e) => setNewManualEmail(e.target.value)}
+                        className="flex-1 rounded border bg-gray-800 p-2"
+                      />
+                      <button
+                        onClick={() => {
+                          if (newManualEmail.trim()) {
+                            setManualEmails([
+                              ...manualEmails,
+                              newManualEmail.trim(),
+                            ]);
+                            setNewManualEmail('');
+                          }
+                        }}
+                        className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700"
+                      >
+                        ➕ Agregar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Correos finales */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Correos destinatarios:</h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {buildEmailsList().map((email, idx) => (
+                        <span
+                          key={idx}
+                          className="flex items-center rounded-full bg-blue-600 px-3 py-1"
+                        >
+                          {email}
+                          <button
+                            onClick={() =>
+                              setManualEmails((prev) =>
+                                prev.filter((e) => e !== email)
+                              )
+                            }
+                            className="ml-2"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                      {buildEmailsList().length === 0 && (
+                        <div className="text-gray-400">Sin correos seleccionados</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Asunto y Mensaje */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Asunto"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      className="mb-2 w-full rounded bg-gray-800 p-2"
+                    />
+                    <textarea
+                      placeholder="Mensaje"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      className="w-full rounded bg-gray-800 p-2"
+                      rows={5}
+                    />
+                  </div>
+
+                  {/* Adjuntos */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Adjuntos (opcional)</label>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => {
+                        setAttachments([
+                          ...attachments,
+                          ...Array.from(e.target.files ?? []),
+                        ]);
+                      }}
+                      className="text-sm text-gray-300"
+                    />
+                    {attachments.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {attachments.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between rounded bg-gray-800 p-2">
+                            <span className="text-sm">{file.name}</span>
+                            <button
+                              onClick={() =>
+                                setAttachments((prev) =>
+                                  prev.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-400 hover:text-red-600"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botón enviar correo */}
+                  <div className="mt-6 flex justify-center gap-4">
+                    <button
+                      onClick={sendEmail}
+                      className="rounded bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                      disabled={loadingEmail}
+                    >
+                      {loadingEmail ? '⏳ Enviando...' : '✉️ Enviar Correo'}
+                    </button>
+                    <button
+                      onClick={() => setShowPhoneModal(false)}
+                      className="rounded bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-600"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: WHATSAPP */}
+              {sendWhatsapp && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Código de país</label>
+                    <input
+                      type="text"
+                      placeholder="+57"
+                      value={codigoPais}
+                      onChange={(e) => setCodigoPais(e.target.value)}
+                      className="w-full rounded border bg-gray-800 p-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Números de WhatsApp (separados por coma)</label>
+                    <textarea
+                      placeholder="3001234567, 3007654321"
+                      value={numerosLocales}
+                      onChange={(e) => setNumerosLocales(e.target.value)}
+                      className="w-full rounded border bg-gray-800 p-2"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">O agregar teléfono manual</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="3001234567"
+                        value={newManualPhone}
+                        onChange={(e) => setNewManualPhone(e.target.value)}
+                        className="flex-1 rounded border bg-gray-800 p-2"
+                      />
+                      <button
+                        onClick={() => {
+                          if (newManualPhone.trim()) {
+                            setNumerosLocales(
+                              numerosLocales.trim()
+                                ? `${numerosLocales}, ${newManualPhone.trim()}`
+                                : newManualPhone.trim()
+                            );
+                            setNewManualPhone('');
+                          }
+                        }}
+                        className="rounded bg-green-600 px-4 py-2 font-semibold hover:bg-green-700"
+                      >
+                        ➕ Agregar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Números finales procesados */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Números finales de WhatsApp:</h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {buildWhatsappNumbers().length > 0 ? (
+                        buildWhatsappNumbers().map((phone, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center rounded-full bg-green-600 px-3 py-1"
+                          >
+                            {phone}
+                          </span>
+                        ))
+                      ) : (
+                        <div className="text-gray-400">Sin números válidos</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Seleccionar plantilla de WhatsApp */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold">Seleccionar plantilla (opcional)</label>
+                      {waError && (
+                        <button
+                          onClick={() => void loadWhatsAppTemplates()}
+                          className="text-xs bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded transition"
+                        >
+                          🔄 Reintentar
+                        </button>
+                      )}
+                    </div>
+                    {waLoading ? (
+                      <div className="text-gray-400 text-sm p-3 bg-gray-800 rounded">⏳ Cargando plantillas...</div>
+                    ) : waError ? (
+                      <div className="text-red-400 text-sm p-3 bg-red-900/30 rounded border border-red-600/50">
+                        ⚠️ {waError}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <select
+                          value={waSelectedTemplate}
+                          onChange={(e) => setWaSelectedTemplate(e.target.value)}
+                          className="w-full rounded bg-gray-800 p-2 text-white"
+                        >
+                          <option value="__TEXT_ONLY__">Texto personalizado</option>
+                          {waTemplates.length > 0 && (
+                            <>
+                              <optgroup label="Plantillas disponibles">
+                                {waTemplates.map((tpl) => (
+                                  <option key={tpl.name} value={tpl.name}>
+                                    {tpl.label || tpl.name} ({tpl.language})
+                                  </option>
+                                ))}
+                              </optgroup>
+                            </>
+                          )}
+                        </select>
+                        {waSelectedTemplate !== '__TEXT_ONLY__' && (
+                          <button
+                            onClick={() => setShowTemplatePreview(true)}
+                            className="w-full text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded transition"
+                          >
+                            👁️ Ver preview
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Asunto y Mensaje para WhatsApp */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Asunto (opcional)"
+                      value={waSubjectText}
+                      onChange={(e) => setWaSubjectText(e.target.value)}
+                      className="mb-2 w-full rounded bg-gray-800 p-2"
+                    />
+                    <textarea
+                      placeholder="Mensaje"
+                      value={waMessageText}
+                      onChange={(e) => setWaMessageText(e.target.value)}
+                      className="w-full rounded bg-gray-800 p-2"
+                      rows={5}
+                    />
+                  </div>
+
+                  {/* Botón enviar WhatsApp */}
+                  <div className="mt-6 flex justify-center gap-4">
+                    <button
+                      onClick={sendWhatsApp}
+                      className="rounded bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                      disabled={loadingWhatsApp}
+                    >
+                      {loadingWhatsApp ? '⏳ Enviando...' : '💬 Enviar WhatsApp'}
+                    </button>
+                    <button
+                      onClick={() => setShowPhoneModal(false)}
+                      className="rounded bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-600"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -4992,6 +5454,95 @@ export default function EnrolledUsersPage() {
                 Descargar
               </a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Preview de Plantilla de WhatsApp - IGUAL QUE SUPER-ADMIN */}
+      {showTemplatePreview && waSelectedTemplate !== '__TEXT_ONLY__' && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Preview de Plantilla</h3>
+              <button
+                onClick={() => setShowTemplatePreview(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Preview estilo WhatsApp */}
+            {selectedWaTemplate && (
+              <div className="space-y-4">
+                {/* Simulación de chat WhatsApp */}
+                <div className="overflow-hidden rounded-xl border border-gray-700">
+                  <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                      WA
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-white">Plantilla</div>
+                      <div className="text-xs text-gray-300">vista previa</div>
+                    </div>
+                    <div className="text-xl text-gray-300">⋮</div>
+                  </div>
+
+                  <div className="bg-[#0B141A] p-3">
+                    <div
+                      className="ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2 text-[14px] text-white shadow"
+                      style={{ borderTopRightRadius: 4 }}
+                    >
+                      <div className="break-words whitespace-pre-wrap">
+                        {selectedWaTemplate.body}
+                      </div>
+
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
+                        <span>
+                          {new Date().toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        <span>✓✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalles de la plantilla */}
+                <div className="space-y-2 border-t border-gray-700 pt-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400">Nombre</label>
+                    <p className="text-white">{selectedWaTemplate.label || selectedWaTemplate.name}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400">Idioma</label>
+                    <p className="text-white">{selectedWaTemplate.language === 'es' ? 'Español' : 'Inglés'}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400">Estado</label>
+                    <p className="text-white">{selectedWaTemplate.status || 'N/A'}</p>
+                  </div>
+
+                  {selectedWaTemplate.example && selectedWaTemplate.example.length > 0 && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-400">Ejemplos</label>
+                      <p className="text-xs text-gray-300">{selectedWaTemplate.example.join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setShowTemplatePreview(false)}
+                  className="w-full rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700 transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

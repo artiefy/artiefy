@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { emailLogs } from '~/server/db/schema';
+import { credentialsDeliveryLogs,emailLogs } from '~/server/db/schema';
 import {
   comercials,
   dates,
@@ -325,9 +325,7 @@ export async function POST(req: Request) {
 
     const comprobanteInscripcionKey = fileData.comprobanteInscripcionKey ?? null;
     const comprobanteInscripcionUrl = fileData.comprobanteInscripcionUrl ?? null;
-    // 1) Crear SIEMPRE usuario en Clerk (para garantizar que usamos su id)
-    console.time('[1] createUser (Clerk)');
-    // === Nombres normalizados para Clerk y BD ===
+    // 1) Crear usuario en Clerk o recuperar existente por email
     const firstNameClerk = [fields.primerNombre, fields.segundoNombre]
       .filter(Boolean)
       .join(' ')
@@ -338,101 +336,153 @@ export async function POST(req: Request) {
       .join(' ')
       .trim();
 
-    // Nombre completo para BD (columna `name`)
     const fullName = [firstNameClerk, lastNameClerk]
       .filter(Boolean)
       .join(' ')
       .replace(/\s+/g, ' ')
       .trim();
 
-    // Rol en el scope
     const role = 'estudiante' as const;
 
-    // === Suscripción (la necesitas para formattedEndDate ANTES de createUser) ===
+    // Suscripción
     const subscriptionEndDate = new Date();
     subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
-    // Formato "YYYY-MM-DD HH:mm:ss" (si tu createUser lo usa como string)
     const formattedEndDate = subscriptionEndDate
       .toISOString()
       .slice(0, 19)
       .replace('T', ' ');
 
+    const client = await clerkClient();
 
-    // Asegura rol en el scope
+    let userId: string;
+    let generatedPassword: string | null = null;
+    let usernameForEmail: string;
+    let wasExistingClerkUser = false;
 
-    // 1) Crear SIEMPRE usuario en Clerk (para garantizar que usamos su id)
-    console.time('[1] createUser (Clerk)');
+    // 0) PRE-CHECK: si ya existe en Clerk por email, lo usamos
+    const list = await client.users.getUserList({
+      emailAddress: [fields.email],
+      limit: 1,
+    });
 
-    const created = await createUser(
-      firstNameClerk,         // concatenado
-      lastNameClerk,          // concatenado
-      fields.email,
-      role,                   // 'estudiante'
-      'active',               // opcional
-      formattedEndDate        // opcional: tu firma admite endDate string
-    );
+    // Clerk a veces devuelve array directo o { data: [] }
+    const existing =
+      Array.isArray(list) ? list[0] :
+        (list?.data?.[0] ?? null);
 
-    console.timeEnd('[1] createUser (Clerk)');
+    if (existing) {
+      console.log('[CLERK] Email ya existe. Se actualizará usuario existente.');
+      wasExistingClerkUser = true;
 
-    if (!created) {
-      console.error('[CLERK] No se pudo crear el usuario');
-      return NextResponse.json(
-        { error: 'No se pudo crear el usuario en Clerk' },
-        { status: 400 }
+      userId = existing.id;
+      usernameForEmail = existing.username ?? fields.primerNombre;
+      generatedPassword = null; // no hay password nuevo
+    } else {
+      // 1) Si NO existe, lo creamos
+      console.time('[1] createUser (Clerk)');
+
+      const created = await createUser(
+        firstNameClerk,
+        lastNameClerk,
+        fields.email,
+        role,
+        'active',
+        formattedEndDate
       );
+
+      console.timeEnd('[1] createUser (Clerk)');
+
+      if (!created) {
+        console.error('[CLERK] No se pudo crear el usuario');
+        return NextResponse.json(
+          { error: 'No se pudo crear usuario en Clerk' },
+          { status: 400 }
+        );
+      }
+
+      userId = created.user.id;
+      generatedPassword = created.generatedPassword ?? null;
+      usernameForEmail = created.user.username ?? fields.primerNombre;
     }
 
-    const userId = created.user.id;
-    const generatedPassword = created.generatedPassword ?? null;
-    const usernameForEmail = created.user.username ?? fields.primerNombre;
 
-
-
-    const client = await clerkClient();
-    await client.users.updateUser(created.user.id, {
-      firstName: firstNameClerk,   // p.ej. "Luis Miguel"
-      lastName: lastNameClerk,    // p.ej. "García Márquez"
+    // Actualizar SIEMPRE datos en Clerk (nuevo o existente)
+    await client.users.updateUser(userId, {
+      firstName: firstNameClerk,
+      lastName: lastNameClerk,
       publicMetadata: {
         planType: 'Premium',
         subscriptionStatus: 'active',
-        subscriptionEndDate: formattedEndDate
+        subscriptionEndDate: formattedEndDate,
       },
     });
 
     // Calcular fecha fin (ahora + 1 mes)
+    // Guarda el id Clerk antes de cualquier cambio
+    const clerkUserId = userId;
 
-    await db.insert(users).values({
-      id: userId,
-      role,
-      name: fullName,                 // 👈 concatenado
-      email: fields.email,
-      subscriptionEndDate,            // Date está bien para timestamp (mode: 'date')
-      planType: 'Premium',
-      subscriptionStatus: 'activo',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).onConflictDoNothing();
+    // 1) Buscar si ya existe en BD por email (sin ON CONFLICT)
+    const existingUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, fields.email))
+      .limit(1);
 
+    // Si no existe: INSERT normal con id Clerk
+    if (existingUser.length === 0) {
+      await db.insert(users).values({
+        id: clerkUserId,
+        role,
+        name: fullName,
+        email: fields.email,
+        phone: fields.telefono,
+        address: fields.direccion,
+        country: fields.pais,
+        city: fields.ciudad,
+        birthDate: fields.birthDate?.trim()
+          ? new Date(fields.birthDate).toISOString().split("T")[0]
+          : null,
+        subscriptionEndDate,
+        planType: "Premium",
+        subscriptionStatus: "activo",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
-    await db.update(users).set({
-      role,
-      name: fullName, // 👈 concatenado
-      email: fields.email,
-      phone: fields.telefono,
-      address: fields.direccion,
-      country: fields.pais,
-      city: fields.ciudad,
-      birthDate: fields.birthDate?.trim()
-        ? new Date(fields.birthDate).toISOString().split('T')[0]
-        : null, // tu columna es date()
-      subscriptionEndDate,
-      planType: 'Premium',
-      subscriptionStatus: 'activo',
-      updatedAt: new Date(),
-    }).where(eq(users.id, userId));
+      // dejamos userId igual al clerk id
+      userId = clerkUserId;
 
+    } else {
+      // Si existe: UPDATE manual
+      const dbUserId = existingUser[0].id;
 
+      // Si el id en BD es diferente al de Clerk:
+      // NO lo cambies (evitas romper PK/FKs), y usa el de BD para relaciones internas
+      if (dbUserId !== clerkUserId) {
+        console.warn(
+          `[USERS] Email existe en BD con otro id. DB=${dbUserId} Clerk=${clerkUserId}. Manteniendo DB id para relaciones.`
+        );
+        userId = dbUserId;
+      }
+
+      await db.update(users).set({
+        role,
+        name: fullName,
+        email: fields.email,
+        phone: fields.telefono,
+        address: fields.direccion,
+        country: fields.pais,
+        city: fields.ciudad,
+        birthDate: fields.birthDate?.trim()
+          ? new Date(fields.birthDate).toISOString().split("T")[0]
+          : null,
+        subscriptionEndDate,
+        planType: "Premium",
+        subscriptionStatus: "activo",
+        updatedAt: new Date(),
+      }).where(eq(users.id, dbUserId));
+    }
 
 
     // 3) user_credentials: upsert manual (sin tocar schema)
@@ -468,8 +518,13 @@ export async function POST(req: Request) {
       console.log('[CRED] No se generó password (posible reutilización).');
     }
 
-    // 4) Guardar los campos EXTRA en userInscriptionDetails (no duplicar lo que ya está en `users`)
-    await db.insert(userInscriptionDetails).values({
+    const existingDetails = await db
+      .select({ userId: userInscriptionDetails.userId })
+      .from(userInscriptionDetails)
+      .where(eq(userInscriptionDetails.userId, userId))
+      .limit(1);
+
+    const detailsPayload = {
       userId,
       identificacionTipo: fields.identificacionTipo,
       identificacionNumero: fields.identificacionNumero,
@@ -491,7 +546,19 @@ export async function POST(req: Request) {
       utilityBillKey,
       diplomaKey,
       pagareKey,
-    });
+    };
+
+    if (existingDetails.length > 0) {
+      await db
+        .update(userInscriptionDetails)
+        .set(detailsPayload)
+        .where(eq(userInscriptionDetails.userId, userId));
+    } else {
+      await db
+        .insert(userInscriptionDetails)
+        .values(detailsPayload);
+    }
+
 
     // 6) Matricular SOLO al programa
     const programRow = await db.query.programas.findFirst({
@@ -507,36 +574,73 @@ export async function POST(req: Request) {
     }
     console.log('[PROGRAM] Encontrado:', programRow);
 
-    await db.insert(enrollmentPrograms).values({
-      programaId: programRow.id,
-      userId,
-      enrolledAt: new Date(),
-      completed: false,
-    });
-    console.log(
-      '[PROGRAM] Matriculado userId:',
-      userId,
-      'programaId:',
-      programRow.id
-    );
+    const alreadyEnrolled = await db
+      .select({ id: enrollmentPrograms.id })
+      .from(enrollmentPrograms)
+      .where(
+        and(
+          eq(enrollmentPrograms.userId, userId),
+          eq(enrollmentPrograms.programaId, programRow.id)
+        )
+      )
+      .limit(1);
+
+    if (alreadyEnrolled.length === 0) {
+      await db.insert(enrollmentPrograms).values({
+        programaId: programRow.id,
+        userId,
+        enrolledAt: new Date(),
+        completed: false,
+      });
+      console.log('[PROGRAM] Matriculado userId:', userId, 'programaId:', programRow.id);
+    } else {
+      console.log('[PROGRAM] Ya estaba matriculado, no se duplica.');
+    }
+
 
     // 7) Email credenciales (solo si se creó usuario nuevo y hubo contraseña)
+    let welcomeEmailOk = false;
+    let credentialsNote = '';
+
     if (generatedPassword) {
       try {
         await sendWelcomeEmail(
           fields.email,
           usernameForEmail,
           generatedPassword,
-          userId // 👈 Pasa el userId
+          userId
         );
+        welcomeEmailOk = true;
         console.log('[EMAIL] ✓ Enviado a', fields.email);
       } catch (mailErr) {
+        welcomeEmailOk = false;
         console.error('❌ [EMAIL] Error enviando correo de bienvenida:', mailErr);
-        // Ya está logueado en sendWelcomeEmail, no hace falta más
       }
-    } else {
-      console.log('[EMAIL] No se envía (no hay contraseña generada).');
     }
+
+    // ✅ calcular nota según tus reglas
+    if (!generatedPassword) {
+      credentialsNote = 'no se generó contraseña';
+    } else if (welcomeEmailOk) {
+      credentialsNote = 'exitoso';
+    } else {
+      credentialsNote = 'no se envió correo';
+    }
+
+    // ✅ guardar log SIEMPRE
+    try {
+      await db.insert(credentialsDeliveryLogs).values({
+        userId,
+        usuario: usernameForEmail,
+        contrasena: generatedPassword ?? null,
+        correo: fields.email,
+        nota: credentialsNote,
+      });
+      console.log('[CRED LOG] Insertado:', credentialsNote);
+    } catch (logErr) {
+      console.error('❌ [CRED LOG] No se pudo guardar log:', logErr);
+    }
+
 
     // 8) Notificar a Secretaría Académica
     try {
@@ -643,6 +747,10 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       userId,
+      existedInClerk: wasExistingClerkUser,
+      message: wasExistingClerkUser
+        ? 'El usuario ya existía en Clerk. Se actualizaron los datos en BD.'
+        : 'Usuario creado y matriculado correctamente.',
       program: { id: programRow.id, title: programRow.title },
       emailSent: Boolean(generatedPassword),
       s3: {
@@ -657,9 +765,9 @@ export async function POST(req: Request) {
         comprobanteInscripcionKey,
         comprobanteInscripcionUrl,
       },
-      // ejemplo que pediste (puedes construir “videoUrl” con cualquier key)
-      exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`, // ilustrativo
+      exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`,
     });
+
   } catch (err) {
     console.error('==== [FORM SUBMIT] FIN ERROR ====');
     console.error('❌ Error en submit inscripción:', err);

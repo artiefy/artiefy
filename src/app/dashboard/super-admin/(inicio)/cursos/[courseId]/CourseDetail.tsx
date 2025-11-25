@@ -87,12 +87,14 @@ export interface Parametros {
 type UIMeeting = ScheduledMeeting & {
   id: number;
   meetingId: string;
-  // Usa undefined (no null) para alinear con ModalScheduleMeeting.tsx
   joinUrl?: string;
   recordingContentUrl?: string;
   videoUrl?: string;
   video_key?: string;
+  video_key_2?: string;     // ✅ nuevo
+  videoUrl2?: string;       // ✅ nuevo opcional
 };
+
 
 // Add these interfaces after the existing interfaces
 interface Educator {
@@ -178,7 +180,9 @@ interface VideoIdxItem {
   videoKey: string;
   videoUrl: string;
   createdAt?: string;
+  isSecondary?: boolean;
 }
+
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -262,6 +266,61 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [isSyncingVideos, setIsSyncingVideos] = useState(false);
+  const [videos, setVideos] = useState<any[]>([]);
+  // 🔑 ID del organizador principal en Azure AD (Graph)
+  const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
+
+  async function fetchVideosList(aadUserId: string = MAIN_AAD_USER_ID) {
+    if (!aadUserId) return;
+
+    const res = await fetch(`/api/super-admin/teams/video?userId=${aadUserId}`, {
+      cache: 'no-store',
+    });
+
+    const data = await res.json();
+    setVideos(data.videos ?? []);
+  }
+
+  async function handleSyncVideos(aadUserId: string = MAIN_AAD_USER_ID) {
+    if (!aadUserId) return;
+
+    setIsSyncingVideos(true);
+    try {
+      const syncRes = await fetch('/api/super-admin/teams/video/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
+      });
+
+      const syncData = await syncRes.json();
+      if (!syncRes.ok) throw new Error(syncData?.error ?? 'Sync error');
+
+      await fetchVideosList(aadUserId);
+
+      let rounds = 0;
+      while (syncData.hasMore && rounds < 4) {
+        rounds += 1;
+        const r = await fetch('/api/super-admin/teams/video/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
+        });
+
+        const d = await r.json();
+        if (!r.ok) break;
+
+        await fetchVideosList(aadUserId);
+        if (!d.hasMore) break;
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingVideos(false);
+    }
+  }
+
+
 
   const { user } = useUser(); // Ya está dentro del componente
 
@@ -341,7 +400,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
             recordingContentUrl: getStr(r, 'recordingContentUrl'),
             video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
+            video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
             videoUrl: getStr(r, 'videoUrl'),
+            videoUrl2: getStr(r, 'videoUrl2'),
             title: typeof r.title === 'string' ? (r.title as string) : '',
             startDateTime: toIsoDate(r.startDateTime) ?? '',
             endDateTime: toIsoDate(r.endDateTime) ?? '',
@@ -523,53 +584,66 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   }, []);
 
   useEffect(() => {
-    // ⚠️ Usa el AAD userId del organizador (GUID). Este es el que aparece en tus logs.
-    const organizerAadUserId = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
-
-    if (!organizerAadUserId) return;
-
     const run = async () => {
       try {
-        const res = await fetch(
-          `/api/super-admin/teams/video?userId=${organizerAadUserId}`
-        );
-        // estado arriba del componente
+        // Obtener videos del organizador principal
+        const organizerAadUserId = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
-        if (!res.ok) return;
+        // Obtener también del coorganizador si existe
+        const coOrganizerIds = course?.meetings
+          ?.map(m => m.joinUrl)
+          .filter(Boolean)
+          .map(url => {
+            // Extraer ID de organizador alternativo de la URL si existe
+            const match = /organizer=([^&]+)/.exec(url ?? '');
+            return match?.[1];
+          })
+          .filter((id, idx, arr) => id && arr.indexOf(id) === idx);
 
-        interface VideoIdxItem {
-          meetingId: string;
-          videoKey: string;
-          videoUrl: string;
-          createdAt?: string;
+        const userIds = [organizerAadUserId, ...(coOrganizerIds ?? [])].filter(Boolean);
+
+        const allVideos: VideoIdxItem[] = [];
+
+        for (const userId of userIds) {
+          const res = await fetch(
+            `/api/super-admin/teams/video?userId=${userId}&courseId=${courseIdNumber}`
+          );
+
+          if (!res.ok) return;
+
+          // ...
+          const raw = (await res.json()) as unknown;
+
+          const videos: VideoIdxItem[] =
+            isRecord(raw) &&
+              Array.isArray((raw as Record<string, unknown>).videos)
+              ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
+                isVideoIdxItem
+              )
+              : [];
+
+          allVideos.push(...videos);
         }
-        // ...
-        const raw = (await res.json()) as unknown;
 
-        const videos: VideoIdxItem[] =
-          isRecord(raw) &&
-            Array.isArray((raw as Record<string, unknown>).videos)
-            ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-              isVideoIdxItem
-            )
-            : [];
+        // Deduplicar por videoKey
+        const uniqueVideos = Array.from(
+          new Map(allVideos.map(v => [v.videoKey, v])).values()
+        );
 
-        // ⬇️⬇️ IMPORTANTE
-        setVideosRaw(videos);
+        setVideosRaw(uniqueVideos);
 
-        console.log(`🎥 videosRaw=${videos.length}`);
-        for (const v of videos) {
+        console.log(`🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`);
+        for (const v of uniqueVideos) {
           console.log(
             `  • videoKey=${v.videoKey} createdAt=${v.createdAt ?? '-'} meetingId=${v.meetingId || '-'}`
           );
         }
 
-        // construir índice meetingId -> video más reciente (por si acaso)
-        const map = new Map<
-          string,
-          { videoKey: string; videoUrl: string; createdAt?: string }
-        >();
-        for (const v of videos) {
+        const map = new Map
+          <string,
+            { videoKey: string; videoUrl: string; createdAt?: string }
+          >();
+        for (const v of uniqueVideos) {
           const prev = map.get(v.meetingId);
           if (!prev) {
             map.set(v.meetingId, v);
@@ -585,7 +659,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     };
 
     void run();
-  }, []); // solo una vez
+  }, [course?.meetings, courseIdNumber]);
 
   // Obtener el color seleccionado al cargar la página
   useEffect(() => {
@@ -1203,6 +1277,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     const finalVideoUrl = video_key
       ? `${awsBase}/video_clase/${video_key}`
       : videoUrlFromApi;
+    const video_key_2 = str('video_key_2') ?? str('videoKey2');
+    const finalVideoUrl2 = video_key_2
+      ? `${awsBase}/video_clase/${video_key_2}`
+      : undefined;
 
     return {
       id,
@@ -1215,6 +1293,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       startDateTime: str('startDateTime') ?? '',
       endDateTime: str('endDateTime') ?? '',
       weekNumber: num('weekNumber') ?? 0,
+      video_key_2,
+      videoUrl2: finalVideoUrl2,
     };
   }
 
@@ -1223,33 +1303,69 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     populatedMeetings.length ? populatedMeetings : (course.meetings ?? [])
   ).map(ensureUIMeeting);
 
-
   // Emparejamiento ESTRICTO por meetingId (sin ventana temporal)
-  const allowedIds = new Set(
-    baseMeetings.map(m => m.meetingId).filter(Boolean)
+  const allowedMeetingIds = new Set(
+    baseMeetings.map((m) => m.meetingId).filter(Boolean)
   );
 
-  // Dedup por meetingId tomando el más reciente
-  const videosById = new Map<string, VideoIdxItem>();
-  for (const v of videosRaw) {
-    if (!v.meetingId || !allowedIds.has(v.meetingId)) continue;
-    const prev = videosById.get(v.meetingId);
-    const pt = prev?.createdAt ? Date.parse(prev.createdAt) : 0;
-    const ct = v.createdAt ? Date.parse(v.createdAt) : 0;
-    if (!prev || ct >= pt) videosById.set(v.meetingId, v);
+  // Agrupar videos por meetingId (máximo 2 por reunión), ordenados por createdAt asc
+  const videosByMeetingId = new Map<string, VideoIdxItem[]>();
+
+  for (const video of videosRaw) {
+    if (!video.meetingId || !allowedMeetingIds.has(video.meetingId)) continue;
+
+    const currentList = videosByMeetingId.get(video.meetingId) ?? [];
+    currentList.push(video);
+
+    currentList.sort((a, b) => {
+      const at = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const bt = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return at - bt;
+    });
+
+    // Nos quedamos con las 2 primeras (parte 1 y parte 2)
+    videosByMeetingId.set(video.meetingId, currentList.slice(0, 2));
   }
 
-  // Enriquecer SOLO si falta video y hay match exacto por meetingId
-  const enrichedMeetings: UIMeeting[] = baseMeetings.map((m) => {
-    if ((m.video_key || m.videoUrl) || !m.meetingId) return m;
-    const v = videosById.get(m.meetingId);
-    if (!v) return m;
-    return {
-      ...m,
-      video_key: v.videoKey,
-      videoUrl: `${awsBase}/video_clase/${v.videoKey}`,
-    };
+  // Enriquecer meetings con hasta 2 videos por meetingId
+  const enrichedMeetings: UIMeeting[] = baseMeetings.map((meeting) => {
+    if (!meeting.meetingId) return meeting;
+
+    const candidates = videosByMeetingId.get(meeting.meetingId);
+    if (!candidates?.length) return meeting;
+
+    const [first, second] = candidates;
+
+    const alreadyHasFirst = Boolean(meeting.video_key || meeting.videoUrl);
+    const alreadyHasSecond = Boolean(meeting.video_key_2);
+
+    // Si no tiene nada, setear ambos (si existen)
+    if (!alreadyHasFirst && !alreadyHasSecond) {
+      return {
+        ...meeting,
+        video_key: first?.videoKey,
+        videoUrl: first?.videoKey
+          ? `${awsBase}/video_clase/${first.videoKey}`
+          : meeting.videoUrl,
+        video_key_2: second?.videoKey,
+        videoUrl2: second?.videoKey
+          ? `${awsBase}/video_clase/${second.videoKey}`
+          : meeting.videoUrl2,
+      };
+    }
+
+    // Si tiene el primero pero no el segundo, setear solo el segundo
+    if (alreadyHasFirst && !alreadyHasSecond && second?.videoKey) {
+      return {
+        ...meeting,
+        video_key_2: second.videoKey,
+        videoUrl2: `${awsBase}/video_clase/${second.videoKey}`,
+      };
+    }
+
+    return meeting;
   });
+
 
   const meetingsForList: UIMeeting[] = [...enrichedMeetings].sort((a, b) => {
     const aMs = toMsFlexible(a.startDateTime);
@@ -1595,14 +1711,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="mt-12 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-primary text-xl font-bold">
-                  Clases agendada
+                  Clases agendadas
                 </h2>
-                <Button
-                  onClick={() => setIsMeetingModalOpen(true)}
-                  className="bg-primary hover:bg-primary/90 text-black"
-                >
-                  + Agendar clase en Teams
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => void handleSyncVideos()}  // 👈 aquí
+                    disabled={isSyncingVideos}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isSyncingVideos ? '🔄 Sincronizando...' : '🎥 Sincronizar Videos'}
+                  </Button>
+
+                  <Button
+                    onClick={() => setIsMeetingModalOpen(true)}
+                    className="bg-primary hover:bg-primary/90 text-black"
+                  >
+                    + Agendar clase en Teams
+                  </Button>
+                </div>
               </div>
 
               <ScheduledMeetingsList

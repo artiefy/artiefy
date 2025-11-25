@@ -88,6 +88,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'roles-secundarios',
       link: '/dashboard/super-admin/usuariosRoles',
     },
+    {
+      icon: <FiFileText size={18} />,
+      title: 'Logs credenciales',
+      id: 'cred-logs',
+      link: '/dashboard/super-admin/credentials-logs',
+    },
   ];
 
   const navItemsEducator = [

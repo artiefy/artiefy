@@ -1,3 +1,6 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 
 export default function DashboardLayout({
@@ -5,9 +8,12 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isWhatsApp = pathname.includes('/whatsapp/');
+
   return (
     <section>
-      <ResponsiveSidebar>{children}</ResponsiveSidebar>
+      {isWhatsApp ? children : <ResponsiveSidebar>{children}</ResponsiveSidebar>}
     </section>
   );
 }
