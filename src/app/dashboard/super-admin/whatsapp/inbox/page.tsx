@@ -244,7 +244,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   const [compose, setCompose] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [showList, setShowList] = useState<boolean>(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileCaption, setFileCaption] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -289,6 +288,9 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   const [filterTo, setFilterTo] = useState<string>('');
   const [filterHours, setFilterHours] = useState<string>('');
   const [filterWindow, setFilterWindow] = useState<'all' | 'active24' | 'almost' | 'expired'>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Default true para evitar hidratación
+  const [showList, setShowList] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -416,6 +418,13 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       setShowList(false);
     }
   }, []);
+
+  // Auto-hide sidebar on mobile when chat is selected
+  useEffect(() => {
+    if (selected && !isDesktop) {
+      setShowList(false);
+    }
+  }, [selected, isDesktop]);
 
   useEffect(() => {
     if (!selected && threads.length) setSelected(threads[0].waid);
@@ -800,15 +809,19 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
     return <FileText className="h-4 w-4" />;
   };
 
-  const [showFilters, setShowFilters] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-
   useEffect(() => {
     // Inicializar en true si estamos en escritorio
-    setIsDesktop(window.innerWidth >= 768);
+    const isLargeScreen = window.innerWidth >= 768;
+    setIsDesktop(isLargeScreen);
+    // En móvil, mostrar el chat por defecto (no la lista)
+    setShowList(isLargeScreen);
 
     // Listener para cambios de tamaño
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    const handleResize = () => {
+      const isLarge = window.innerWidth >= 768;
+      setIsDesktop(isLarge);
+      setShowList(isLarge);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1045,7 +1058,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           {/* Área de mensajes */}
           <div
             ref={scrollRef}
-            className={`flex-1 space-y-1.5 md:space-y-2 overflow-y-auto px-3 md:px-4 py-3 md:py-4 ${showList ? 'hidden' : 'flex flex-col'}`}
+            className="flex-1 space-y-1.5 md:space-y-2 overflow-y-auto px-3 md:px-4 py-3 md:py-4 flex flex-col"
             style={{
               backgroundImage: "url('/wallWhat.png')",
               backgroundRepeat: 'no-repeat',
