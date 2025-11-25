@@ -200,7 +200,7 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                       ? 'Escribe tu mensaje...'
                       : 'Inscríbete para chatear'
                   }
-                  className="text-background focus:ring-secondary flex-1 rounded-lg border border-gray-300 p-2 focus:ring-2 focus:outline-none"
+                  className="focus:ring-secondary flex-1 rounded-lg border border-gray-300 p-2 text-white focus:ring-2 focus:outline-none"
                   disabled={!isEnrolled || isLoading}
                 />
                 <button

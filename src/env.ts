@@ -46,6 +46,10 @@ export const env = createEnv({
     N8N_WEBHOOK_PATH: z.string().optional(),
     N8N_LICENSE_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
+    // Optional: API key specifically for OpenAI Assistants (useful if you separate keys)
+    OPENAI_ASSISTANT_API_KEY: z.string().min(1).optional(),
+    // Optional: OpenAI Assistant ID (asst_...)
+    OPENAI_ASSISTANT_ID: z.string().min(1).optional(),
     N8N_WEBHOOK_ID: z.string().min(1),
   },
   /*
@@ -118,7 +122,9 @@ export const env = createEnv({
     N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH,
     N8N_LICENSE_KEY: process.env.N8N_LICENSE_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_ASSISTANT_ID: process.env.OPENAI_ASSISTANT_ID,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
+    OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,
@@ -129,4 +135,6 @@ export const ENV = {
   N8N_BASE_URL: env.N8N_BASE_URL ?? '',
   N8N_WEBHOOK_PATH: env.N8N_WEBHOOK_PATH ?? '',
   OPENAI_API_KEY: env.OPENAI_API_KEY,
+  OPENAI_ASSISTANT_ID: env.OPENAI_ASSISTANT_ID ?? '',
+  OPENAI_ASSISTANT_API_KEY: env.OPENAI_ASSISTANT_API_KEY ?? '',
 };

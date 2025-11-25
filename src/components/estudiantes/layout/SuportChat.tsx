@@ -66,7 +66,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   const isTicketClosed = Boolean(
     ticketStatus &&
-    ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
+      ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
   );
 
   useEffect(() => {
@@ -93,10 +93,10 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
           const historyMessages = ticket.messages
             ? ticket.messages.map((msg) => ({
-              id: msg.id,
-              text: msg.content,
-              sender: msg.sender === 'user' ? 'user' : 'support',
-            }))
+                id: msg.id,
+                text: msg.content,
+                sender: msg.sender === 'user' ? 'user' : 'support',
+              }))
             : [];
 
           // Solo agregar mensaje inicial si no existe en el historial
@@ -233,7 +233,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
               : 'Describe el problema...'
           }
           disabled={isTicketClosed}
-          className="text-background focus:ring-secondary flex-1 rounded-lg border p-1 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:p-2 sm:text-base"
+          className="focus:ring-secondary flex-1 rounded-lg border p-1 text-sm text-white focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:p-2 sm:text-base"
         />
         <button
           type="submit"

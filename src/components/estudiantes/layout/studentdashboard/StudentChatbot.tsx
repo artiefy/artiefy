@@ -1172,6 +1172,116 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         if (useN8n) {
           const conversationId = chatModeRef.current.idChat ?? undefined;
 
+          // Si no hay sesión iniciada, enrutar la petición al Assistant de Ventas de OpenAI
+          if (!isSignedIn) {
+            try {
+              const assistantId = 'asst_uSJJLPx3uAheBOkIOVtcCrww';
+              const salesSystemPrompt = `ACTÚA COMO: Artie — Asesor de Admisiones y Ventas de Artiefy
+"Soy Artie, asesor educativo de ARTIEFY, plataforma educativa y de gestión de proyectos donde tus ideas son las protagonistas.  
+
+OBJETIVO
+- Ayudar a cada persona a encontrar el el curso y programa ideal de Artiefy y completar su inscripción hoy mismo.
+- Priorizar claridad, honestidad y valor práctico (empleabilidad, portafolio, proyectos reales).
+
+OFERTA Y PRECIOS
+- Plan **Premium**: $1.500.000 COP o 12 cuotas de $124.900 COP. 385 USD o 32,15 USD
+  Incluye: gestión de proyectos ILIMITADA, herramientas de IA para desarrollo de ideas y **acceso a todos los cursos y programas** de la plataforma.
+- Plan **Pro**: $1.200.000 COP o 12 cuotas de $99.900 COP. 308,62 USD o 30,86 USD
+  Incluye: herramientas de IA, gestionar **hasta 10 proyectos** y acceso a **programas para el trabajo**.
+
+INSCRIPCIÓN / PAGO (rutas oficiales)
+1) **Página de planes** (recomendada): https://artiefy.com/planes
+2) Tras la inscripción, deben llegar **credenciales por correo**.
+
+ESTILO Y TONO
+- Español (Colombia). Cercano, claro, motivador y profesional.
+- Vende mostrando valor (empleabilidad, portafolio, proyectos), sin presión.
+
+Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el usuario e invítalo a inscribirse.`;
+
+              console.log('No hay sesión, usando OpenAI Assistant para ventas');
+              const res = await fetch('/api/openai-assistant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  assistantId,
+                  prompt: query,
+                  systemPrompt: salesSystemPrompt,
+                  messageHistory: messages
+                    .filter((m) => m.sender === 'user' || m.sender === 'bot')
+                    .map((m) => ({
+                      role: m.sender === 'bot' ? 'assistant' : 'user',
+                      text: m.text,
+                    }))
+                    .slice(-10),
+                }),
+              });
+
+              if (res.ok) {
+                const json = await res.json();
+                let text = '';
+                if (
+                  json &&
+                  typeof json === 'object' &&
+                  Object.prototype.hasOwnProperty.call(json, 'response') &&
+                  typeof (json as { response?: unknown }).response === 'string'
+                ) {
+                  text = (json as { response: string }).response;
+                } else {
+                  text = JSON.stringify(json);
+                }
+                console.log('Respuesta del Assistant:', text);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    text: String(text),
+                    sender: 'bot',
+                  },
+                ]);
+                queueOrSaveBotMessage(String(text));
+                setIdea({ selected: false, idea: '' });
+                setProcessingQuery(false);
+                setIsLoading(false);
+                searchRequestInProgress.current = false;
+                return;
+              } else {
+                const errorData = await res.json().catch(() => ({}));
+                console.error(
+                  'OpenAI assistant endpoint error:',
+                  res.status,
+                  errorData
+                );
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    text: 'Estamos teniendo problemas para conectar con el asesor. Inténtalo de nuevo en unos minutos o inicia sesión para acceder a más funciones.',
+                    sender: 'bot',
+                  },
+                ]);
+                setProcessingQuery(false);
+                setIsLoading(false);
+                searchRequestInProgress.current = false;
+                return;
+              }
+            } catch (err) {
+              console.error('Error calling OpenAI assistant endpoint:', err);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + Math.random(),
+                  text: 'Ocurrió un error. Por favor inicia sesión para acceder al chat.',
+                  sender: 'bot',
+                },
+              ]);
+              setProcessingQuery(false);
+              setIsLoading(false);
+              searchRequestInProgress.current = false;
+              return;
+            }
+          }
+
           // Construir messageHistory limpio para el agente n8n:
           // - eliminar saludo inicial estándar para evitar que el agent vuelva a saludar
           // - mapear roles: 'bot' -> 'assistant', 'user' -> 'user'
@@ -1525,6 +1635,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       queueOrSaveBotMessage,
       handleN8nData,
       handleProjectEnvelopeData,
+      isSignedIn,
     ]
   );
 
@@ -1872,10 +1983,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return;
       }
 
-      // Si no está autenticado: abrir chat y mostrar aviso para iniciar sesión
+      // Si no está autenticado: abrir chat y procesar la búsqueda usando el asistente externo
       if (!isSignedIn) {
         setIsOpen(true);
-        setShowLoginNotice(true);
+        // Disparar el mismo evento que crea un nuevo chat con búsqueda — el handler interno
+        window.dispatchEvent(
+          new CustomEvent('create-new-chat-with-search', {
+            detail: { query: initialSearchQuery.trim() },
+          })
+        );
+        // No devolver; dejar que el flujo normal del handler lo procese
         return;
       }
 
@@ -3036,7 +3153,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                         <div className="mb-6">
                           <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
                             <svg
-                              className="h-8 w-8 text-black"
+                              className="h-8 w-8 text-[#3AF4EF]"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -3049,10 +3166,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                               />
                             </svg>
                           </div>
-                          <h3 className="mb-2 text-lg font-semibold text-black">
+                          <h3 className="mb-2 text-xl font-bold text-white">
                             Acceso restringido
                           </h3>
-                          <p className="text-muted-foreground mb-6">
+                          <p className="mb-6 text-gray-300">
                             Debes iniciar sesión para crear y gestionar tickets
                             de soporte
                           </p>
@@ -3064,7 +3181,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                             );
                             window.location.href = `/sign-in?redirect_url=${currentUrl}`;
                           }}
-                          className="bg-background hover:bg-background/90 focus:ring-background rounded-lg px-6 py-3 font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                          className="rounded-lg bg-gradient-to-r from-[#3AF4EF] to-[#00BDD8] px-6 py-3 font-semibold text-[#071024] shadow-lg transition-all hover:from-[#1FE0DD] hover:to-[#00A5C0] hover:shadow-xl focus:ring-2 focus:ring-[#3AF4EF] focus:ring-offset-2 focus:outline-none active:scale-95"
                         >
                           Iniciar sesión
                         </button>

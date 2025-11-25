@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -10,7 +10,6 @@ import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
-  getConversationWithMessages,
   getConversationById,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
@@ -332,7 +331,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   return (
     <>
       {/* Top bar: botón borrar historial */}
-      <div className="flex items-center justify-end gap-2 border-b bg-white/95 p-2">
+      <div className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] p-2">
         <button
           type="button"
           onClick={() => {
@@ -345,7 +344,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               onDeleteHistory();
             }
           }}
-          className="rounded px-3 py-1 text-sm font-semibold text-red-600 hover:bg-red-50"
+          className="rounded px-3 py-1 text-sm font-semibold text-red-400 transition hover:bg-red-900/30 hover:text-red-300"
           title="Borrar historial"
         >
           Borrar historial
@@ -443,7 +442,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       {/* Input */}
-      <div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
+      <div className="relative z-[5] border-t border-gray-700 bg-[#071024] p-4 backdrop-blur-sm">
         <form onSubmit={handleSendMessage}>
           <div className="flex gap-2">
             <input
@@ -452,7 +451,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={'Escribe un mensaje...'}
-              className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
+              className="flex-1 rounded-lg border border-gray-600 bg-gray-900 p-2 text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
               disabled={isLoading}
             />
             <button
