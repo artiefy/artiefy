@@ -117,7 +117,7 @@
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.colorDecorators": true,
   "tailwindCSS.lint.recommendedVariantOrder": "warning",
-   "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
   // Search and Performance
   "search.exclude": {
     "/node_modules": true,
@@ -130,4 +130,5 @@
   "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
+  "terminal.integrated.defaultProfile.windows": "Git Bash"
 }

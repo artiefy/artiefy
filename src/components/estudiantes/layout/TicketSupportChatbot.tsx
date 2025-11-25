@@ -584,7 +584,7 @@ const TicketSupportChatbot = () => {
       {/* Botón de soporte siempre visible, arriba */}
       {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
         <div
-          className="fixed right-7 bottom-28 z-50 sm:right-6" // bottom-32 para subir el botón
+          className="fixed right-7 bottom-25 z-50 sm:right-6 sm:bottom-28" // bottom-32 para subir el botón
           style={{
             animationName: isDesktop
               ? showExtras
