@@ -1,8 +1,10 @@
 // src/app/api/super-admin/whatsapp/media/route.ts
-import type { NextRequest } from 'next/server';
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
+
 import { getSession } from '../_config';
+
+import type { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 const GRAPH = 'https://graph.facebook.com/v22.0';

@@ -801,6 +801,17 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   };
 
   const [showFilters, setShowFilters] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    // Inicializar en true si estamos en escritorio
+    setIsDesktop(window.innerWidth >= 768);
+
+    // Listener para cambios de tamaño
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-80px)] min-h-screen w-full overflow-hidden bg-[#0B141A]">
@@ -845,7 +856,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
         </div>
 
         {/* Filtros avanzados (ocultos en móvil por defecto) */}
-        {(showFilters || window.innerWidth >= 768) && (
+        {(showFilters || isDesktop) && (
           <div className="px-3 md:px-4 pb-2 md:pb-3 pt-2 md:pt-1 space-y-2 text-xs text-[#8696A0] border-b border-gray-800 bg-[#0B141A] flex-shrink-0 overflow-auto max-h-fit">
             <div className="grid grid-cols-2 gap-2">
               <input
