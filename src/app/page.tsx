@@ -8,6 +8,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
+import { ExtrasProvider } from '~/app/estudiantes/StudentContext';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
@@ -146,25 +147,23 @@ export default function HomePage() {
           </section>
         </main>
       </div>
-      {!isSignedIn && mounted && (
-        <>
-          <div className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-32 sm:bottom-20 sm:translate-x-0">
-            {/* Triángulo tipo burbuja */}
-            <span className="absolute bottom-[63px] left-1/2 inline h-0 w-0 translate-x-[75px] rotate-[360deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:bottom-[63px] sm:translate-x-[250px]" />
-          </div>
+      <div className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-32 sm:bottom-20 sm:translate-x-0">
+        {/* Triángulo tipo burbuja */}
+        <span className="absolute bottom-[63px] left-1/2 inline h-0 w-0 translate-x-[75px] rotate-[360deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:bottom-[63px] sm:translate-x-[250px]" />
+      </div>
 
-          <TourComponent />
+      <TourComponent />
 
-          <StudentChatbot
-            isAlwaysVisible={true}
-            showChat={showChatbot}
-            key={chatbotKey}
-            className="animation-delay-400 animate-zoom-in"
-            initialSearchQuery={lastSearchQuery}
-            onSearchComplete={handleSearchComplete}
-          />
-        </>
-      )}
+      <ExtrasProvider>
+        <StudentChatbot
+          isAlwaysVisible={true}
+          showChat={showChatbot}
+          key={chatbotKey}
+          className="animation-delay-400 animate-zoom-in"
+          initialSearchQuery={lastSearchQuery}
+          onSearchComplete={handleSearchComplete}
+        />
+      </ExtrasProvider>
     </div>
   );
 }

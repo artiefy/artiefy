@@ -632,7 +632,6 @@
     inset: 0 !important;
   }
 }
-
 /* Optimizaciones para teclado táctil en móviles */
 @media (max-width: 768px) {
   /* Evitar desplazamientos no deseados cuando se abre el teclado */

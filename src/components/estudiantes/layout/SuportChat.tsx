@@ -152,11 +152,11 @@ export const SuportChat: React.FC<SuportChatProps> = ({
     <>
       {/* Banner de ticket cerrado */}
       {isTicketClosed && (
-        <div className="mb-2 rounded-lg border border-yellow-500 bg-yellow-50 p-3 text-sm">
+        <div className="mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3 text-sm text-yellow-100">
           <div className="flex items-center gap-2">
             <span className="text-xl">🔒</span>
             <div>
-              <p className="font-semibold text-yellow-800">
+              <p className="font-semibold">
                 Este ticket ha sido marcado como {ticketStatus?.toLowerCase()}.
               </p>
             </div>
@@ -165,13 +165,13 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       )}
 
       {/* Mensajes */}
-      <div className="support-chat-messages">
+      <div className="support-chat-messages bg-[#050c1b] text-white">
         {filteredMessages.map((message) => (
           <div key={message.id}>
             {/* Timestamp arriba de la burbuja */}
             {message.createdAt && (
               <div
-                className={`mb-1 flex text-xs text-gray-400 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`mb-1 flex text-xs text-white/40 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {formatDateColombia(message.createdAt)}
               </div>
@@ -183,7 +183,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                 className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}
               >
                 {message.sender === 'support' ? (
-                  <MdSupportAgent className="text-secondary mt-2 text-xl" />
+                  <MdSupportAgent className="mt-2 text-2xl text-[#3AF4EF]" />
                 ) : user?.imageUrl ? (
                   <Image
                     src={user.imageUrl}
@@ -193,10 +193,10 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                     className="mt-2 rounded-full"
                   />
                 ) : (
-                  <BsPersonCircle className="mt-2 text-xl text-gray-500" />
+                  <BsPersonCircle className="mt-2 text-xl text-white/60" />
                 )}
                 <div
-                  className={`rounded-lg p-3 ${message.sender === 'user' ? 'bg-secondary text-white' : 'bg-gray-800 text-white'}`}
+                  className={`rounded-2xl px-4 py-3 shadow-lg ${message.sender === 'user' ? 'bg-gradient-to-r from-[#00bdd8] to-[#009fbf] text-white shadow-[#00bdd8]/30' : 'border border-white/10 bg-[#08142a] text-white'}`}
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
                   {message.buttons && message.buttons.length > 0 && (
@@ -205,7 +205,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                         <button
                           key={index}
                           onClick={() => onBotButtonClick?.(button.action)}
-                          className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                          className="rounded-lg border border-[#00bdd8]/70 px-3 py-2 text-xs font-semibold text-[#3AF4EF] transition-colors hover:bg-[#00bdd8] hover:text-[#041226] focus:outline-none"
                         >
                           {button.label}
                         </button>
@@ -233,12 +233,12 @@ export const SuportChat: React.FC<SuportChatProps> = ({
               : 'Describe el problema...'
           }
           disabled={isTicketClosed}
-          className="focus:ring-secondary flex-1 rounded-lg border p-1 text-sm text-white focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:p-2 sm:text-base"
+          className="flex-1 rounded-lg border border-[#1f2c44] bg-[#0b1d36] p-2 text-sm text-white placeholder-white/40 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#1a2a44] disabled:text-white/30 sm:p-3 sm:text-base"
         />
         <button
           type="submit"
           disabled={isLoading || isTicketClosed}
-          className="bg-secondary rounded-lg px-3 py-1 text-sm text-white transition-colors hover:bg-[#00A5C0] disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-4 sm:py-2 sm:text-base"
+          className="rounded-lg bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-2 text-sm font-semibold text-[#041226] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-base"
         >
           Enviar
         </button>

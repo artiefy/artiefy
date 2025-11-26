@@ -1,8 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { useAuth, useUser } from '@clerk/nextjs';
 import { IoClose } from 'react-icons/io5';
 import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
@@ -78,7 +76,6 @@ const TicketSupportChatbot = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const router = useRouter();
   const ANIMATION_DURATION = 350; // ms
   const [showAnim, setShowAnim] = useState(false);
 
@@ -581,70 +578,25 @@ const TicketSupportChatbot = () => {
 
   return (
     <>
-      {/* Botón de soporte siempre visible, arriba */}
-      {!hideButton && (isDesktop ? showAnim && !isOpen : !isOpen) && (
-        <div
-          className="fixed right-7 bottom-25 z-50 sm:right-6 sm:bottom-28" // bottom-32 para subir el botón
-          style={{
-            animationName: isDesktop
-              ? showExtras
-                ? 'fadeInUp'
-                : 'fadeOutDown'
-              : undefined,
-            animationDuration: isDesktop
-              ? `${ANIMATION_DURATION}ms`
-              : undefined,
-            animationTimingFunction: isDesktop ? 'ease' : undefined,
-            animationFillMode: isDesktop ? 'forwards' : undefined,
-          }}
-        >
-          <button
-            onClick={() => {
-              if (!isSignedIn) {
-                const currentUrl = encodeURIComponent(window.location.href);
-                router.push(`/sign-in?redirect_url=${currentUrl}`);
-                return;
-              }
-              if (user?.id) {
-                window.dispatchEvent(
-                  new CustomEvent('create-new-ticket', {
-                    detail: {
-                      userId: user.id,
-                      email: user.primaryEmailAddress?.emailAddress,
-                    },
-                  })
-                );
-              }
-            }}
-            className={`relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]`}
-          >
-            <MdSupportAgent className="text-xl text-white opacity-90" />
-            <span className="hidden font-medium tracking-wide sm:inline">
-              Soporte técnico
-            </span>
-            <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
-          </button>
-        </div>
-      )}
       {/* Chatbot solo si está logueado */}
       {isOpen && isSignedIn && (
-        <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
-          <div className="support-chat">
+        <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-700 bg-[#050c1b] text-white shadow-[0_25px_80px_rgba(3,6,20,0.85)] sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
+          <div className="support-chat bg-transparent text-white">
             {/* Header */}
-            <div className="relative z-[5] flex flex-col bg-white/95 backdrop-blur-sm">
-              <div className="flex items-center justify-between border-b p-4">
-                <MdSupportAgent className="text-4xl text-blue-500" />
+            <div className="relative z-[5] flex flex-col bg-[#050c1b]/95 backdrop-blur-lg">
+              <div className="flex items-center justify-between border-b border-gray-700 p-4">
+                <MdSupportAgent className="text-4xl text-[#3AF4EF]" />
                 <div className="flex flex-1 flex-col items-center">
-                  <h2 className="text-lg font-semibold text-gray-800">
+                  <h2 className="text-lg font-semibold text-white">
                     Soporte Técnico
                   </h2>
                   <div className="mt-1 flex items-center gap-2">
-                    <em className="text-sm font-semibold text-gray-600">
+                    <em className="text-sm font-semibold text-white/70">
                       {user?.fullName}
                     </em>
                     <div className="relative inline-flex">
-                      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
-                      <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+                      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-400/20" />
+                      <div className="relative h-2.5 w-2.5 rounded-full bg-green-400" />
                     </div>
                   </div>
                 </div>
@@ -653,11 +605,17 @@ const TicketSupportChatbot = () => {
                   {/* Solo mostrar botón de flecha hacia atrás si NO estamos en el menú principal */}
                   {currentTicketId !== null && (
                     <button
-                      className="rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                      className="rounded-full p-1.5 text-white/70 transition-all duration-200 hover:bg-white/10 active:scale-95"
                       aria-label="Volver atrás"
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        setIsOpen(false);
+                        window.dispatchEvent(new Event('support-chat-close'));
+                        window.dispatchEvent(
+                          new CustomEvent('ticket-chat-return-to-list')
+                        );
+                      }}
                     >
-                      <MdArrowBack className="text-xl text-gray-500" />
+                      <MdArrowBack className="text-xl" />
                     </button>
                   )}
 
@@ -668,10 +626,10 @@ const TicketSupportChatbot = () => {
                       // Notificar cierre para resetear estados asociados
                       window.dispatchEvent(new Event('support-chat-close'));
                     }}
-                    className={`${currentTicketId !== null ? 'ml-2' : ''} rounded-full p-1.5 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200`}
+                    className={`${currentTicketId !== null ? 'ml-2' : ''} rounded-full p-1.5 text-white/70 transition-all duration-200 hover:bg-white/10 active:scale-95`}
                     aria-label="Cerrar chatbot"
                   >
-                    <IoClose className="text-xl text-gray-500" />
+                    <IoClose className="text-xl" />
                   </button>
                 </div>
               </div>

@@ -132,7 +132,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
         ]);
         break;
       case 'contact_support':
-        window.dispatchEvent(new CustomEvent('support-open-chat'));
+        // Abrir menú de nuevo ticket (detail === null) para el handler
+        window.dispatchEvent(
+          new CustomEvent('support-open-chat', { detail: null })
+        );
         break;
       case 'new_project':
         if (!isSignedIn) router.push(`/planes`);
@@ -389,8 +392,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 <div
                   className={
                     message.sender === 'user'
-                      ? 'bg-secondary rounded-2xl px-4 py-3 text-white shadow-lg'
-                      : 'bg-background rounded-2xl px-4 py-3 text-white shadow-lg'
+                      ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
+                      : 'rounded-2xl border border-white/10 bg-[#08142a] px-4 py-3 text-white shadow-lg'
                   }
                 >
                   {renderMessage(message, idx)}

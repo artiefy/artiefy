@@ -3,6 +3,8 @@ import React from 'react';
 import { ExtrasProvider } from '~/app/estudiantes/StudentContext';
 import Providers from '~/app/providers';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 
 import '~/styles/ticketSupportButton.css';
 
@@ -17,6 +19,8 @@ export default function StudentLayout({
         <div className="relative min-h-screen">
           {children}
           <TourComponent />
+          <StudentChatbot isAlwaysVisible={true} />
+          <TicketSupportChatbot />
         </div>
       </ExtrasProvider>
     </Providers>

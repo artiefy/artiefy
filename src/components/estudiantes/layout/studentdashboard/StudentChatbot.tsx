@@ -11,7 +11,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoClose } from 'react-icons/io5';
-import { MdArrowBack } from 'react-icons/md';
+import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
@@ -31,6 +31,7 @@ import { ChatMessages } from './StudentChat';
 
 import '~/styles/chatmodal.css';
 import 'react-resizable/css/styles.css';
+import '~/styles/ticketSupportButton.css';
 
 interface StudentChatbotProps {
   className?: string;
@@ -201,8 +202,56 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   });
 
   const [isHovered, setIsHovered] = useState(false);
+  const [isSupportChatVisible, setIsSupportChatVisible] = useState(false);
 
-  const { show } = useExtras();
+  const { show, hide, showExtras } = useExtras();
+  const [extrasHovered, setExtrasHovered] = useState(false);
+  const [showAnim, setShowAnim] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const ANIMATION_DURATION = 350; // ms (coincide con otros componentes)
+  const hideTimeoutRef = useRef<number | null>(null);
+
+  // Sincronizar animación de entrada/salida con el estado global showExtras
+  useEffect(() => {
+    if (showExtras) {
+      setShowAnim(true);
+      setIsExiting(false);
+    } else if (showAnim) {
+      setIsExiting(true);
+      const t = window.setTimeout(() => {
+        setShowAnim(false);
+        setIsExiting(false);
+      }, ANIMATION_DURATION);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, [showExtras, showAnim]);
+
+  // Escuchar eventos globales de hover en otras opciones (ej.: TourComponent)
+  useEffect(() => {
+    const handleEnter = () => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setExtrasHovered(true);
+      show();
+    };
+    const handleLeave = () => {
+      setExtrasHovered(false);
+      if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = window.setTimeout(() => {
+        if (!isHovered && !extrasHovered) hide();
+        hideTimeoutRef.current = null;
+      }, 150);
+    };
+    window.addEventListener('extras-hover-enter', handleEnter);
+    window.addEventListener('extras-hover-leave', handleLeave);
+    return () => {
+      window.removeEventListener('extras-hover-enter', handleEnter);
+      window.removeEventListener('extras-hover-leave', handleLeave);
+    };
+  }, [isHovered, extrasHovered, show, hide]);
 
   const ideaRef = useRef(idea);
   useEffect(() => {
@@ -1983,6 +2032,76 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     };
   }, [user?.emailAddresses]);
 
+  // Ocultar el chatbot principal cuando se abra el modal de soporte y bajar el botón flotante
+  useEffect(() => {
+    const handleSupportChatOpen = (_event: Event) => {
+      setIsOpen(false);
+      setShowChatList(false);
+      setIsSupportChatVisible(true);
+    };
+
+    const handleSupportChatClose = () => {
+      setIsSupportChatVisible(false);
+    };
+
+    window.addEventListener('support-open-chat', handleSupportChatOpen);
+    window.addEventListener('support-chat-close', handleSupportChatClose);
+    return () => {
+      window.removeEventListener('support-open-chat', handleSupportChatOpen);
+      window.removeEventListener('support-chat-close', handleSupportChatClose);
+    };
+  }, []);
+
+  // Manejar creación de ticket después del login
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'create_ticket') {
+        window.dispatchEvent(
+          new CustomEvent('create-new-ticket', {
+            detail: {
+              userId: user!.id,
+              email: user!.emailAddresses?.[0]?.emailAddress,
+            },
+          })
+        );
+        // Limpiar la URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }
+    }
+  }, [isSignedIn, user]);
+
+  // Reabrir la lista de tickets dentro del chatbot principal al volver desde el modal de soporte
+  useEffect(() => {
+    const handleReturnToTicketList = () => {
+      setActiveSection('tickets');
+      setIsOpen(true);
+      setChatMode({
+        idChat: null,
+        status: true,
+        curso_title: '',
+        type: 'ticket',
+      });
+      setShowChatList(true);
+    };
+
+    window.addEventListener(
+      'ticket-chat-return-to-list',
+      handleReturnToTicketList as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'ticket-chat-return-to-list',
+        handleReturnToTicketList as EventListener
+      );
+    };
+  }, []);
+
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
@@ -2207,15 +2326,16 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     }
     if (action === 'contact_support') {
       queueOrSaveUserMessage('🛠 Soporte Técnico');
-      // Cerrar el chat de IA y activar el botón de crear nuevo ticket
-      setIsOpen(false);
-      // Disparar el evento para crear un nuevo ticket
-      if (user?.id) {
+      if (!isSignedIn) {
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.href = `/sign-in?redirect_url=${currentUrl}&action=create_ticket`;
+      } else {
+        setIsOpen(false);
         window.dispatchEvent(
           new CustomEvent('create-new-ticket', {
             detail: {
-              userId: user.id,
-              email: user.emailAddresses?.[0]?.emailAddress,
+              userId: user!.id,
+              email: user!.emailAddresses?.[0]?.emailAddress,
             },
           })
         );
@@ -2890,6 +3010,14 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     }
   }, [isOpen]);
 
+  const shouldLowerFloatingButtons =
+    isSupportChatVisible ||
+    (isOpen && (activeSection === 'tickets' || chatMode.type === 'ticket'));
+  const floatingButtonsZIndex = shouldLowerFloatingButtons ? 40 : 100001;
+  const floatingButtonStyle: React.CSSProperties = shouldLowerFloatingButtons
+    ? { zIndex: floatingButtonsZIndex, pointerEvents: 'none', opacity: 0.5 }
+    : { zIndex: floatingButtonsZIndex };
+
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ): void {
@@ -2973,14 +3101,29 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       <Tooltip.Provider>
         <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
           {isAlwaysVisible && (
-            <div className="fixed right-6 bottom-6 z-[100001] md:z-50">
+            <div className="fixed right-6 bottom-6" style={floatingButtonStyle}>
               <button
                 className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
                 onMouseEnter={() => {
+                  // al entrar en el botón principal, mostrar extras y cancelar cualquier hide pending
+                  if (hideTimeoutRef.current) {
+                    window.clearTimeout(hideTimeoutRef.current);
+                    hideTimeoutRef.current = null;
+                  }
                   setIsHovered(true);
                   show();
                 }}
-                onMouseLeave={() => setIsHovered(false)}
+                onMouseLeave={() => {
+                  setIsHovered(false);
+                  // esperar un poco antes de ocultar para permitir mover el mouse a los extras
+                  if (hideTimeoutRef.current)
+                    window.clearTimeout(hideTimeoutRef.current);
+                  hideTimeoutRef.current = window.setTimeout(() => {
+                    // ocultar solo si NO estamos sobre los extras
+                    if (!extrasHovered && !isHovered) hide();
+                    hideTimeoutRef.current = null;
+                  }, 150);
+                }}
                 onClick={handleClick}
               >
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
@@ -3020,6 +3163,68 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
                     <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
                   </div>
+                </div>
+              )}
+
+              {(showExtras || isHovered || extrasHovered) && showAnim && (
+                <div
+                  className="animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-28 duration-200 sm:right-6"
+                  onMouseEnter={() => {
+                    // mantener visibles las opciones al entrar en el contenedor de extras
+                    if (hideTimeoutRef.current) {
+                      window.clearTimeout(hideTimeoutRef.current);
+                      hideTimeoutRef.current = null;
+                    }
+                    setExtrasHovered(true);
+                    show();
+                  }}
+                  onMouseLeave={() => {
+                    setExtrasHovered(false);
+                    // pequeño delay para evitar parpadeos al moverse entre botones
+                    if (hideTimeoutRef.current)
+                      window.clearTimeout(hideTimeoutRef.current);
+                    hideTimeoutRef.current = window.setTimeout(() => {
+                      if (!isHovered && !extrasHovered) hide();
+                      hideTimeoutRef.current = null;
+                    }, 150);
+                  }}
+                  style={{
+                    zIndex: floatingButtonsZIndex,
+                    pointerEvents: shouldLowerFloatingButtons
+                      ? 'none'
+                      : undefined,
+                    opacity: shouldLowerFloatingButtons ? 0.5 : 1,
+                    animationName: isExiting ? 'fadeOutDown' : 'fadeInUp',
+                    animationDuration: `${ANIMATION_DURATION}ms`,
+                    animationTimingFunction: 'ease',
+                    animationFillMode: 'forwards',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      if (!isSignedIn) {
+                        router.push('/sign-in');
+                        return;
+                      }
+                      if (user?.id) {
+                        window.dispatchEvent(
+                          new CustomEvent('create-new-ticket', {
+                            detail: {
+                              userId: user.id,
+                              email: user.emailAddresses?.[0]?.emailAddress,
+                            },
+                          })
+                        );
+                      }
+                    }}
+                    className="relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]"
+                  >
+                    <MdSupportAgent className="text-xl text-white opacity-90" />
+                    <span className="hidden font-medium tracking-wide sm:inline">
+                      Soporte técnico
+                    </span>
+                    <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
+                  </button>
                 </div>
               )}
             </div>
@@ -3077,19 +3282,19 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 }
               >
                 <div
-                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
+                  className={`relative flex h-full w-full flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
                   style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col overflow-visible bg-[#071024]/95 backdrop-blur-sm">
-                    <div className="grid grid-cols-3 items-center border-b border-gray-700 p-3">
+                  <div className="sticky top-0 z-10 flex flex-col border-b border-gray-800 bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+                    <div className="grid grid-cols-3 items-center gap-2 border-b border-gray-800 px-2 py-2 md:px-3 md:py-3">
                       <div className="flex items-center">
-                        <HiMiniCpuChip className="text-4xl text-white" />
+                        <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
                       </div>
 
                       <div className="flex items-center justify-center">
                         <div className="flex flex-col items-center">
-                          <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                          <h2 className="flex items-center gap-2 text-base font-semibold text-white md:text-lg">
                             Artie IA
                             <span
                               className={`status-dot ${isSignedIn ? 'glow-pulse' : ''} inline-flex`}
@@ -3100,21 +3305,21 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                             </span>
                           </h2>
 
-                          <em className="mt-0.5 text-sm font-semibold text-white/70">
+                          <em className="mt-0.5 text-xs font-semibold text-white/70 md:text-sm">
                             {user?.fullName}
                           </em>
                         </div>
                       </div>
 
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-2">
                         <button
-                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
+                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
                           {!isChatPage && chatMode.idChat !== null ? (
                             <MdArrowBack
-                              className="text-xl text-white/70"
+                              className="text-lg text-white/70 md:text-xl"
                               onClick={() => {
                                 setChatMode({
                                   idChat: null,
@@ -3129,11 +3334,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
                         <button
                           onClick={handleDeleteHistory}
-                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-white/6"
+                          className="rounded-full p-1.5 transition-colors hover:bg-white/6"
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
-                          <TrashIcon className="text-xl text-red-400" />
+                          <TrashIcon className="text-lg text-red-400 md:text-xl" />
                         </button>
 
                         <button
@@ -3147,16 +3352,17 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Cerrar chatbot"
                         >
-                          <IoClose className="text-xl text-white/70" />
+                          <IoClose className="text-lg text-white/70 md:text-xl" />
                         </button>
                       </div>
                     </div>
+                    <div className="px-2 pt-1 pb-2 md:px-3">
+                      <ChatNavigation
+                        activeSection={activeSection}
+                        onSectionChange={setActiveSection}
+                      />
+                    </div>
                   </div>
-
-                  <ChatNavigation
-                    activeSection={activeSection}
-                    onSectionChange={setActiveSection}
-                  />
 
                   {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
                   {activeSection === 'chatia' &&
