@@ -165,7 +165,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
-  const [bottomInset, setBottomInset] = useState<number>(0);
+  const [_bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -487,22 +487,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   useEffect(() => {
     const hasVV = typeof window !== 'undefined' && 'visualViewport' in window;
+
     const handleResize = () => {
-      if (hasVV && window.visualViewport) {
-        const vv = window.visualViewport;
-        setViewportWidth(Math.round(vv.width));
-        setViewportHeight(Math.round(vv.height));
-        setIsKeyboardOpen(vv.height < window.innerHeight - 80);
-        const inset = Math.max(
-          0,
-          window.innerHeight - vv.height - (vv.offsetTop ?? 0)
-        );
-        setBottomInset(inset);
-      } else {
-        setViewportWidth(window.innerWidth);
-        setViewportHeight(window.innerHeight);
-        setIsKeyboardOpen(false);
-        setBottomInset(0);
+      try {
+        if (hasVV && window.visualViewport) {
+          const vv = window.visualViewport;
+          setViewportWidth(Math.round(vv.width));
+          setViewportHeight(Math.round(vv.height));
+          // Detectar si el teclado está abierto comparando altura visible con altura completa
+          setIsKeyboardOpen(vv.height < window.innerHeight - 100);
+          // No usar bottomInset para padding en el contenedor principal
+          setBottomInset(0);
+        } else {
+          setViewportWidth(window.innerWidth);
+          setViewportHeight(window.innerHeight);
+          setIsKeyboardOpen(false);
+          setBottomInset(0);
+        }
+      } catch (err) {
+        console.warn('Error ajustando visualViewport:', err);
       }
     };
 
@@ -3019,33 +3022,38 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             >
               <ResizableBox
                 width={isDesktop ? dimensions.width : viewportWidth}
-                height={isDesktop ? dimensions.height : viewportHeight}
+                height={
+                  isDesktop
+                    ? dimensions.height
+                    : viewportHeight || window.innerHeight
+                }
                 onResize={handleResize}
                 minConstraints={
                   isDesktop
                     ? [500, window.innerHeight]
-                    : [viewportWidth, viewportHeight]
+                    : [
+                        viewportWidth,
+                        Math.max(viewportHeight, window.innerHeight),
+                      ]
                 }
                 maxConstraints={[
                   isDesktop
                     ? Math.min(window.innerWidth, window.innerWidth - 20)
                     : viewportWidth,
-                  isDesktop ? window.innerHeight : viewportHeight,
+                  isDesktop
+                    ? window.innerHeight
+                    : Math.max(viewportHeight, window.innerHeight),
                 ]}
                 resizeHandles={isDesktop ? ['sw'] : []}
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
+                style={
+                  !isDesktop
+                    ? { height: '100dvh', overflow: 'hidden' }
+                    : undefined
+                }
               >
                 <div
                   className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
-                  style={
-                    !isDesktop
-                      ? {
-                          paddingBottom: isKeyboardOpen
-                            ? Math.max(0, bottomInset)
-                            : 0,
-                        }
-                      : undefined
-                  }
                 >
                   {/* Header */}
                   <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">

@@ -332,7 +332,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   return (
     <>
       {/* Top bar: botón borrar historial */}
-      <div className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] p-2">
+      <div className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5">
         <button
           type="button"
           onClick={() => {
@@ -353,7 +353,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4 pb-0">
         {messages.map((message, idx) =>
           // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
           message.sender === 'bot' && message.text === '' ? null : (
@@ -392,26 +392,41 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   }
                 >
                   {renderMessage(message, idx)}
-                  {/* Renderizar botones si existen */}
-                  {message.sender === 'bot' && message.buttons && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {message.buttons
-                          .filter(
-                            (btn) =>
-                              !(btn.action === 'contact_support' && !isSignedIn)
-                          )
-                          .map((btn) => (
-                            <button
-                              key={btn.action}
-                              className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                              onClick={() => handleLocalButton(btn.action)}
-                              type="button"
-                            >
-                              {btn.label}
-                            </button>
-                          ))}
-                      </div>
+                  {/* Renderizado de botones del menú del bot IA, con clase especial para móvil */}
+                  {message.buttons && message.sender === 'bot' && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.buttons.map((btn, bidx) => (
+                        <button
+                          key={bidx}
+                          type="button"
+                          onClick={() => handleLocalButton(btn.action)}
+                          className="chatbot-menu-btn rounded border border-[#00bdd8] bg-[#eaf7fa] px-3 py-1 text-xs font-semibold text-[#00a5c0] shadow-sm transition hover:bg-[#00bdd8] hover:text-white"
+                          style={{
+                            whiteSpace: 'nowrap',
+                            minWidth: 0,
+                            lineHeight: '1.1',
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            marginRight: '4px',
+                            marginBottom: '2px',
+                            borderRadius: '6px',
+                            maxWidth: '90vw',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {btn.label}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -443,22 +458,25 @@ export const ChatMessages: React.FC<ChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       {/* Input */}
-      <div className="relative z-[5] border-t border-gray-700 bg-[#071024] p-4 backdrop-blur-sm">
-        <form onSubmit={handleSendMessage}>
-          <div className="flex gap-2">
+      <div
+        className="relative z-[5] border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
+        style={{ padding: '12px 16px', flexShrink: 0 }}
+      >
+        <form onSubmit={handleSendMessage} className="w-full">
+          <div className="flex w-full gap-2">
             <input
               ref={actualInputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={'Escribe un mensaje...'}
-              className="flex-1 rounded-lg border border-gray-600 bg-gray-900 p-2 text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
+              className="min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-base text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
+              className="bg-secondary group relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
             >
               <Image
                 src="/send-svgrepo-com.svg"

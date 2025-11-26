@@ -1,7 +1,14 @@
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
-@config "../../tailwind.config.js";
+@config '../../tailwind.config.js';
+
+/* Optimización para teclado táctil en móviles */
+@supports (padding: max(0px)) {
+  html {
+    --safe-area-inset-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
 
 /* Hover Media Query */
 @media (hover: hover) {
@@ -583,5 +590,26 @@
     z-index: 1000001 !important;
     position: fixed !important;
     inset: 0 !important;
+  }
+}
+
+/* Optimizaciones para teclado táctil en móviles */
+@media (max-width: 768px) {
+  /* Evitar desplazamientos no deseados cuando se abre el teclado */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Asegurar que el chat se ajuste correctamente al viewport */
+  .chat-resizable {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+
+  /* Input container debe pegarse al teclado */
+  [role='presentation'] {
+    position: fixed !important;
   }
 }
