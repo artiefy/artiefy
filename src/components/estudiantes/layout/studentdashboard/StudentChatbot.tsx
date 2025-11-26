@@ -3027,11 +3027,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
           {isOpen && (
             <div
-              className={`fixed ${isDesktop ? 'right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
+              className={`fixed ${isDesktop ? 'top-0 right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
               ref={chatContainerRef}
               style={
                 isDesktop
-                  ? { right: 0, bottom: 0, left: 'auto', top: 'auto' }
+                  ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
                       height: viewportHeight
                         ? `${viewportHeight}px`
@@ -3068,32 +3068,41 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 style={
                   !isDesktop
                     ? { height: '100dvh', overflow: 'hidden' }
-                    : undefined
+                    : {
+                        height: '100%',
+                        overflow: 'hidden',
+                        margin: 0,
+                        padding: 0,
+                      }
                 }
               >
                 <div
                   className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
+                  style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
                   <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">
-                    <div className="flex items-start justify-between border-b border-gray-700 p-3">
-                      <HiMiniCpuChip className="mt-1 text-4xl text-white" />
-                      <div className="-ml-6 flex flex-1 flex-col items-center">
-                        <h2 className="mt-1 text-lg font-semibold text-white">
-                          Artie IA
-                        </h2>
-                        <div className="flex items-center gap-2">
-                          <em className="text-sm font-semibold text-white/70">
+                    <div className="grid grid-cols-3 items-center border-b border-gray-700 p-3">
+                      <div className="flex items-center">
+                        <HiMiniCpuChip className="text-4xl text-white" />
+                      </div>
+
+                      <div className="flex items-center justify-center">
+                        <div className="flex flex-col items-center">
+                          <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                            Artie IA
+                            <span className="status-dot inline-flex">
+                              <span className="h-2 w-2 rounded-full bg-green-500" />
+                            </span>
+                          </h2>
+
+                          <em className="mt-0.5 text-sm font-semibold text-white/70">
                             {user?.fullName}
                           </em>
-                          <div className="relative inline-flex">
-                            <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
-                            <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
-                          </div>
                         </div>
                       </div>
 
-                      <div className="flex">
+                      <div className="flex justify-end">
                         <button
                           className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Minimizar chatbot"

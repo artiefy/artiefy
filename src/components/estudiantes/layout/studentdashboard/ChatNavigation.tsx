@@ -24,7 +24,7 @@ export const ChatNavigation = ({
         }`}
         title="Tickets"
       >
-        <Ticket className="h-4 w-4 flex-shrink-0 text-white sm:h-5 sm:w-5" />
+        <Ticket className="h-6 w-6 flex-shrink-0 text-white sm:h-5 sm:w-5" />
         <span className="hidden sm:inline">Tickets</span>
       </button>
 
@@ -37,7 +37,7 @@ export const ChatNavigation = ({
         }`}
         title="Chat IA"
       >
-        <MessageSquare className="h-4 w-4 flex-shrink-0 text-white sm:h-5 sm:w-5" />
+        <MessageSquare className="h-6 w-6 flex-shrink-0 text-white sm:h-5 sm:w-5" />
         <span className="hidden sm:inline">Chat IA</span>
       </button>
 
@@ -50,7 +50,7 @@ export const ChatNavigation = ({
         }`}
         title="Proyectos"
       >
-        <FileText className="h-4 w-4 flex-shrink-0 text-white sm:h-5 sm:w-5" />
+        <FileText className="h-6 w-6 flex-shrink-0 text-white sm:h-5 sm:w-5" />
         <span className="hidden sm:inline">Proyectos</span>
       </button>
     </div>

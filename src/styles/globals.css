@@ -346,6 +346,28 @@
   z-index: -1;
 }
 
+/* Status dot: small subtle glow used in chatbot header */
+.status-dot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px; /* pequeño margen alrededor del punto */
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.18); /* verde suave */
+  filter: blur(6px);
+  opacity: 0.9;
+  z-index: -1;
+}
+.status-dot > span {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes pulse-glow {
   0%,
   100% {
