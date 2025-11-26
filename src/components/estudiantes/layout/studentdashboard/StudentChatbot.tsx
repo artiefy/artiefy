@@ -3081,7 +3081,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">
+                  <div className="relative z-[5] flex flex-col overflow-visible bg-[#071024]/95 backdrop-blur-sm">
                     <div className="grid grid-cols-3 items-center border-b border-gray-700 p-3">
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-4xl text-white" />
@@ -3091,8 +3091,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         <div className="flex flex-col items-center">
                           <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
                             Artie IA
-                            <span className="status-dot inline-flex">
-                              <span className="h-2 w-2 rounded-full bg-green-500" />
+                            <span
+                              className={`status-dot ${isSignedIn ? 'glow-pulse' : ''} inline-flex`}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${isSignedIn ? 'bg-green-500' : 'bg-gray-500'}`}
+                              />
                             </span>
                           </h2>
 

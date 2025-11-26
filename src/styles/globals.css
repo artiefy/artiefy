@@ -346,6 +346,20 @@
   z-index: -1;
 }
 
+/* Specific glow for status-dot to ensure green neon effect */
+.status-dot.glow-pulse::before {
+  --green: 34, 197, 94; /* rgb parts */
+  content: '';
+  position: absolute;
+  inset: -12px; /* espacio para el resplandor */
+  border-radius: 9999px;
+  background: rgba(var(--green), 0.7);
+  filter: blur(30px);
+  opacity: 1;
+  z-index: -1;
+  pointer-events: none;
+}
+
 /* Status dot: small subtle glow used in chatbot header */
 .status-dot {
   position: relative;
@@ -356,16 +370,20 @@
 .status-dot::before {
   content: '';
   position: absolute;
-  inset: -4px; /* pequeño margen alrededor del punto */
+  inset: -10px; /* margen aún más grande */
   border-radius: 9999px;
-  background: rgba(34, 197, 94, 0.18); /* verde suave */
-  filter: blur(6px);
-  opacity: 0.9;
+  background: rgba(34, 197, 94, 0.6); /* verde aún más intenso */
+  filter: blur(25px);
+  opacity: 1;
   z-index: -1;
 }
 .status-dot > span {
   position: relative;
   z-index: 1;
+  /* Añadir sombra directa al punto para asegurar visibilidad incluso si el pseudo-elemento queda parcialmente oculto */
+  box-shadow:
+    0 0 8px rgba(34, 197, 94, 1),
+    0 0 20px rgba(34, 197, 94, 0.6);
 }
 
 @keyframes pulse-glow {
