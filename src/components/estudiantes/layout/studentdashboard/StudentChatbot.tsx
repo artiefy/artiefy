@@ -3012,6 +3012,22 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const floatingButtonStyle: React.CSSProperties = shouldLowerFloatingButtons
     ? { zIndex: floatingButtonsZIndex, pointerEvents: 'none', opacity: 0.5 }
     : { zIndex: floatingButtonsZIndex };
+  const shouldRenderSupportButton =
+    !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
+  const supportButtonWrapperClass = isDesktop
+    ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-28 duration-200 sm:right-6'
+    : 'fixed right-8 bottom-26';
+  const supportButtonStyle: React.CSSProperties = {
+    zIndex: floatingButtonsZIndex,
+    pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
+    opacity: shouldLowerFloatingButtons ? 0.5 : 1,
+  };
+  if (isDesktop) {
+    supportButtonStyle.animationName = isExiting ? 'fadeOutDown' : 'fadeInUp';
+    supportButtonStyle.animationDuration = `${ANIMATION_DURATION}ms`;
+    supportButtonStyle.animationTimingFunction = 'ease';
+    supportButtonStyle.animationFillMode = 'forwards';
+  }
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -3164,39 +3180,37 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 </div>
               )}
 
-              {(showExtras || isHovered || extrasHovered) && showAnim && (
+              {shouldRenderSupportButton && (
                 <div
-                  className="animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-28 duration-200 sm:right-6"
-                  onMouseEnter={() => {
-                    // mantener visibles las opciones al entrar en el contenedor de extras
-                    if (hideTimeoutRef.current) {
-                      window.clearTimeout(hideTimeoutRef.current);
-                      hideTimeoutRef.current = null;
-                    }
-                    setExtrasHovered(true);
-                    show();
-                  }}
-                  onMouseLeave={() => {
-                    setExtrasHovered(false);
-                    // pequeño delay para evitar parpadeos al moverse entre botones
-                    if (hideTimeoutRef.current)
-                      window.clearTimeout(hideTimeoutRef.current);
-                    hideTimeoutRef.current = window.setTimeout(() => {
-                      if (!isHovered && !extrasHovered) hide();
-                      hideTimeoutRef.current = null;
-                    }, 150);
-                  }}
-                  style={{
-                    zIndex: floatingButtonsZIndex,
-                    pointerEvents: shouldLowerFloatingButtons
-                      ? 'none'
-                      : undefined,
-                    opacity: shouldLowerFloatingButtons ? 0.5 : 1,
-                    animationName: isExiting ? 'fadeOutDown' : 'fadeInUp',
-                    animationDuration: `${ANIMATION_DURATION}ms`,
-                    animationTimingFunction: 'ease',
-                    animationFillMode: 'forwards',
-                  }}
+                  className={supportButtonWrapperClass}
+                  onMouseEnter={
+                    isDesktop
+                      ? () => {
+                          // mantener visibles las opciones al entrar en el contenedor de extras
+                          if (hideTimeoutRef.current) {
+                            window.clearTimeout(hideTimeoutRef.current);
+                            hideTimeoutRef.current = null;
+                          }
+                          setExtrasHovered(true);
+                          show();
+                        }
+                      : undefined
+                  }
+                  onMouseLeave={
+                    isDesktop
+                      ? () => {
+                          setExtrasHovered(false);
+                          // pequeño delay para evitar parpadeos al moverse entre botones
+                          if (hideTimeoutRef.current)
+                            window.clearTimeout(hideTimeoutRef.current);
+                          hideTimeoutRef.current = window.setTimeout(() => {
+                            if (!isHovered && !extrasHovered) hide();
+                            hideTimeoutRef.current = null;
+                          }, 150);
+                        }
+                      : undefined
+                  }
+                  style={supportButtonStyle}
                 >
                   <button
                     onClick={() => {
