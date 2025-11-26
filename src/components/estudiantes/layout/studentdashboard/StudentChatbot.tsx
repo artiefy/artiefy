@@ -3099,7 +3099,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   return (
     <>
       <Tooltip.Provider>
-        <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
+        <div
+          className={`${className} fixed`}
+          style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
+        >
           {isAlwaysVisible && (
             <div className="fixed right-6 bottom-6" style={floatingButtonStyle}>
               <button

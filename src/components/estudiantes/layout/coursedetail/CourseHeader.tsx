@@ -1661,7 +1661,7 @@ export function CourseHeader({
                     <h3 className="text-base font-extrabold text-white sm:text-lg">
                       {course.instructorName ?? 'Instructor no encontrado'}
                     </h3>
-                    <em className="-mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
+                    <em className="mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
                       Educador
                     </em>
                   </div>

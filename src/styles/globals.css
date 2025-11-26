@@ -631,6 +631,30 @@
     position: fixed !important;
     inset: 0 !important;
   }
+
+  /* Centrar modal de Clerk en móviles y limitar su tamaño para evitar scroll innecesario */
+  [data-testid='clerk-modal'],
+  [data-testid='clerk-modal-backdrop'],
+  .cl-modal-backdrop,
+  .cl-modalBackdrop {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+  }
+
+  [data-testid='clerk-modal-content'],
+  .cl-modal-content,
+  .cl-modalContent {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 520px !important;
+    max-height: 92vh !important;
+    overflow: auto !important;
+    border-radius: 12px !important;
+    margin: 0 auto !important;
+  }
 }
 /* Optimizaciones para teclado táctil en móviles */
 @media (max-width: 768px) {
