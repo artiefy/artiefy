@@ -582,6 +582,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
   }, []);
 
+  // Medir header y ajustar padding del wrapper para que el header fijo no solape el contenido
   // Mantener el input visible y scrollear al fondo cuando abre el teclado
   useEffect(() => {
     if (isOpen && (isKeyboardOpen || viewportHeight)) {
@@ -610,25 +611,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           }
         }
       }, 50);
-
-      // Si el chat es nuevo (solo mensaje de bienvenida y botones), reduce el espacio extra
-      if (
-        messages.length === 1 &&
-        messages[0].sender === 'bot' &&
-        messages[0].buttons &&
-        !inputText
-      ) {
-        const chatContainer = chatContainerRef.current;
-        if (chatContainer) {
-          chatContainer.style.paddingBottom = '16px'; // menos espacio entre menú y input
-        }
-      }
-    } else {
-      // Restablece el padding si no está el teclado abierto
-      const chatContainer = chatContainerRef.current;
-      if (chatContainer) {
-        chatContainer.style.paddingBottom = '';
-      }
     }
   }, [isOpen, isKeyboardOpen, viewportHeight, messages, inputText, isDesktop]);
 
@@ -3320,8 +3302,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
-                  <div className="sticky top-0 z-10 flex flex-col border-b border-gray-800 bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-sm">
-                    <div className="grid grid-cols-3 items-center gap-2 border-b border-gray-800 px-2 py-2 md:px-3 md:py-3">
+                  <div
+                    className={`z-50 flex flex-col border-b border-gray-800 bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-sm ${isDesktop ? '' : 'sticky top-0'}`}
+                  >
+                    <div className="grid grid-cols-3 items-center gap-1 border-b border-gray-800 px-2 py-0 md:px-3 md:py-3">
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
                       </div>
@@ -3390,7 +3374,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         </button>
                       </div>
                     </div>
-                    <div className="px-2 pt-1 pb-2 md:px-3">
+                    <div className="px-2 pt-0 pb-0 md:px-3">
                       <ChatNavigation
                         activeSection={activeSection}
                         onSectionChange={setActiveSection}
@@ -3398,206 +3382,239 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     </div>
                   </div>
 
-                  {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
-                  {activeSection === 'chatia' &&
-                    showLoginNotice &&
-                    !isSignedIn && (
-                      <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
-                        <p className="text-sm text-white">
-                          Debes iniciar sesión para seguir la conversación
-                        </p>
-                        <button
-                          onClick={() => {
-                            const currentUrl = encodeURIComponent(
-                              window.location.href
-                            );
-                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
-                          }}
-                          className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
-                        >
-                          Iniciar sesión
-                        </button>
-                      </div>
-                    )}
-
-                  {/* Contenido basado en la sección activa */}
-                  {activeSection === 'tickets' ? (
-                    chatMode.status && isSignedIn ? (
-                      <ChatList
-                        setChatMode={setChatMode}
-                        setShowChatList={setShowChatList}
-                        activeType="tickets"
-                      />
-                    ) : !isSignedIn ? (
-                      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-                        <div className="mb-6">
-                          <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                            <svg
-                              className="h-8 w-8 text-[#3AF4EF]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                  {/* Wrapper de contenido (mensajes + listas) */}
+                  <div className="min-h-0 flex-1">
+                    <div className="flex h-full flex-col">
+                      {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
+                      {activeSection === 'chatia' &&
+                        showLoginNotice &&
+                        !isSignedIn && (
+                          <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
+                            <p className="text-sm text-white">
+                              Debes iniciar sesión para seguir la conversación
+                            </p>
+                            <button
+                              onClick={() => {
+                                const currentUrl = encodeURIComponent(
+                                  window.location.href
+                                );
+                                window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                              }}
+                              className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
+                              Iniciar sesión
+                            </button>
                           </div>
-                          <h3 className="mb-2 text-xl font-bold text-white">
-                            Acceso restringido
-                          </h3>
-                          <p className="mb-6 text-gray-300">
-                            Debes iniciar sesión para crear y gestionar tickets
-                            de soporte
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const currentUrl = encodeURIComponent(
-                              window.location.href
-                            );
-                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
-                          }}
-                          className="rounded-lg bg-gradient-to-r from-[#3AF4EF] to-[#00BDD8] px-6 py-3 font-semibold text-[#071024] shadow-lg transition-all hover:from-[#1FE0DD] hover:to-[#00A5C0] hover:shadow-xl focus:ring-2 focus:ring-[#3AF4EF] focus:ring-offset-2 focus:outline-none active:scale-95"
-                        >
-                          Iniciar sesión
-                        </button>
+                        )}
+
+                      <div className="min-h-0 flex-1">
+                        {/* Contenido basado en la sección activa */}
+                        {activeSection === 'tickets' ? (
+                          <div className="h-full overflow-y-auto">
+                            {chatMode.status && isSignedIn ? (
+                              <ChatList
+                                setChatMode={setChatMode}
+                                setShowChatList={setShowChatList}
+                                activeType="tickets"
+                              />
+                            ) : !isSignedIn ? (
+                              <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                                <div className="mb-6">
+                                  <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                                    <svg
+                                      className="h-8 w-8 text-[#3AF4EF]"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <h3 className="mb-2 text-xl font-bold text-white">
+                                    Acceso restringido
+                                  </h3>
+                                  <p className="mb-6 text-gray-300">
+                                    Debes iniciar sesión para crear y gestionar
+                                    tickets de soporte
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const currentUrl = encodeURIComponent(
+                                      window.location.href
+                                    );
+                                    window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                  }}
+                                  className="rounded-lg bg-gradient-to-r from-[#3AF4EF] to-[#00BDD8] px-6 py-3 font-semibold text-[#071024] shadow-lg transition-all hover:from-[#1FE0DD] hover:to-[#00A5C0] hover:shadow-xl focus:ring-2 focus:ring-[#3AF4EF] focus:ring-offset-2 focus:outline-none active:scale-95"
+                                >
+                                  Iniciar sesión
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : activeSection === 'projects' ? (
+                          <div className="h-full overflow-y-auto">
+                            {chatMode.status && isSignedIn ? (
+                              <ChatList
+                                setChatMode={setChatMode}
+                                setShowChatList={setShowChatList}
+                                activeType="projects"
+                              />
+                            ) : null}
+                          </div>
+                        ) : activeSection === 'chatia' ? (
+                          chatMode.status && !isSignedIn ? (
+                            <ChatMessages
+                              idea={idea}
+                              setIdea={setIdea}
+                              setShowChatList={setShowChatList}
+                              courseId={courseId}
+                              isEnrolled={isEnrolled}
+                              courseTitle={courseTitle}
+                              messages={
+                                messages as {
+                                  id: number;
+                                  text: string;
+                                  sender: string;
+                                  coursesData?: { id: number; title: string }[];
+                                }[]
+                              }
+                              setMessages={
+                                setMessages as React.Dispatch<
+                                  React.SetStateAction<
+                                    {
+                                      id: number;
+                                      text: string;
+                                      sender: string;
+                                    }[]
+                                  >
+                                >
+                              }
+                              chatMode={chatMode}
+                              setChatMode={setChatMode}
+                              inputText={inputText}
+                              setInputText={setInputText}
+                              handleSendMessage={handleSendMessage}
+                              isLoading={isLoading}
+                              messagesEndRef={
+                                messagesEndRef as React.RefObject<HTMLDivElement>
+                              }
+                              isSignedIn={isSignedIn}
+                              inputRef={
+                                inputRef as React.RefObject<HTMLInputElement>
+                              }
+                              renderMessage={
+                                renderMessage as (
+                                  message: {
+                                    id: number;
+                                    text: string;
+                                    sender: string;
+                                    coursesData?: {
+                                      id: number;
+                                      title: string;
+                                    }[];
+                                  },
+                                  idx: number
+                                ) => React.ReactNode
+                              }
+                              onDeleteHistory={handleDeleteHistory}
+                              onBotButtonClick={handleBotButtonClick}
+                              compactWelcome={
+                                !isDesktop &&
+                                isKeyboardOpen &&
+                                messages.length === 1 &&
+                                messages[0].sender === 'bot' &&
+                                !!messages[0].buttons
+                              }
+                            />
+                          ) : chatMode.status &&
+                            isSignedIn &&
+                            chatMode.idChat ? (
+                            <ChatMessages
+                              idea={idea}
+                              setIdea={setIdea}
+                              setShowChatList={setShowChatList}
+                              courseId={courseId}
+                              isEnrolled={isEnrolled}
+                              courseTitle={courseTitle}
+                              messages={
+                                messages as {
+                                  id: number;
+                                  text: string;
+                                  sender: string;
+                                  coursesData?: { id: number; title: string }[];
+                                }[]
+                              }
+                              setMessages={
+                                setMessages as React.Dispatch<
+                                  React.SetStateAction<
+                                    {
+                                      id: number;
+                                      text: string;
+                                      sender: string;
+                                    }[]
+                                  >
+                                >
+                              }
+                              chatMode={chatMode}
+                              setChatMode={setChatMode}
+                              inputText={inputText}
+                              setInputText={setInputText}
+                              handleSendMessage={handleSendMessage}
+                              isLoading={isLoading}
+                              messagesEndRef={
+                                messagesEndRef as React.RefObject<HTMLDivElement>
+                              }
+                              isSignedIn={isSignedIn}
+                              inputRef={
+                                inputRef as React.RefObject<HTMLInputElement>
+                              }
+                              renderMessage={
+                                renderMessage as (
+                                  message: {
+                                    id: number;
+                                    text: string;
+                                    sender: string;
+                                    coursesData?: {
+                                      id: number;
+                                      title: string;
+                                    }[];
+                                  },
+                                  idx: number
+                                ) => React.ReactNode
+                              }
+                              onDeleteHistory={handleDeleteHistory}
+                              onBotButtonClick={handleBotButtonClick}
+                              compactWelcome={
+                                !isDesktop &&
+                                isKeyboardOpen &&
+                                messages.length === 1 &&
+                                messages[0].sender === 'bot' &&
+                                !!messages[0].buttons
+                              }
+                            />
+                          ) : (
+                            chatMode.status &&
+                            isSignedIn &&
+                            !chatMode.idChat && (
+                              <div className="h-full overflow-y-auto">
+                                <ChatList
+                                  setChatMode={setChatMode}
+                                  setShowChatList={setShowChatList}
+                                  activeType="chatia"
+                                />
+                              </div>
+                            )
+                          )
+                        ) : null}
                       </div>
-                    ) : null
-                  ) : activeSection === 'projects' ? (
-                    chatMode.status && isSignedIn ? (
-                      <ChatList
-                        setChatMode={setChatMode}
-                        setShowChatList={setShowChatList}
-                        activeType="projects"
-                      />
-                    ) : null
-                  ) : activeSection === 'chatia' ? (
-                    chatMode.status && !isSignedIn ? (
-                      <ChatMessages
-                        idea={idea}
-                        setIdea={setIdea}
-                        setShowChatList={setShowChatList}
-                        courseId={courseId}
-                        isEnrolled={isEnrolled}
-                        courseTitle={courseTitle}
-                        messages={
-                          messages as {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          }[]
-                        }
-                        setMessages={
-                          setMessages as React.Dispatch<
-                            React.SetStateAction<
-                              { id: number; text: string; sender: string }[]
-                            >
-                          >
-                        }
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        inputText={inputText}
-                        setInputText={setInputText}
-                        handleSendMessage={handleSendMessage}
-                        isLoading={isLoading}
-                        messagesEndRef={
-                          messagesEndRef as React.RefObject<HTMLDivElement>
-                        }
-                        isSignedIn={isSignedIn}
-                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                        renderMessage={
-                          renderMessage as (
-                            message: {
-                              id: number;
-                              text: string;
-                              sender: string;
-                              coursesData?: { id: number; title: string }[];
-                            },
-                            idx: number
-                          ) => React.ReactNode
-                        }
-                        onDeleteHistory={handleDeleteHistory}
-                        onBotButtonClick={handleBotButtonClick}
-                        compactWelcome={
-                          !isDesktop &&
-                          isKeyboardOpen &&
-                          messages.length === 1 &&
-                          messages[0].sender === 'bot' &&
-                          !!messages[0].buttons
-                        }
-                      />
-                    ) : chatMode.status && isSignedIn && chatMode.idChat ? (
-                      <ChatMessages
-                        idea={idea}
-                        setIdea={setIdea}
-                        setShowChatList={setShowChatList}
-                        courseId={courseId}
-                        isEnrolled={isEnrolled}
-                        courseTitle={courseTitle}
-                        messages={
-                          messages as {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          }[]
-                        }
-                        setMessages={
-                          setMessages as React.Dispatch<
-                            React.SetStateAction<
-                              { id: number; text: string; sender: string }[]
-                            >
-                          >
-                        }
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        inputText={inputText}
-                        setInputText={setInputText}
-                        handleSendMessage={handleSendMessage}
-                        isLoading={isLoading}
-                        messagesEndRef={
-                          messagesEndRef as React.RefObject<HTMLDivElement>
-                        }
-                        isSignedIn={isSignedIn}
-                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                        renderMessage={
-                          renderMessage as (
-                            message: {
-                              id: number;
-                              text: string;
-                              sender: string;
-                              coursesData?: { id: number; title: string }[];
-                            },
-                            idx: number
-                          ) => React.ReactNode
-                        }
-                        onDeleteHistory={handleDeleteHistory}
-                        onBotButtonClick={handleBotButtonClick}
-                        compactWelcome={
-                          !isDesktop &&
-                          isKeyboardOpen &&
-                          messages.length === 1 &&
-                          messages[0].sender === 'bot' &&
-                          !!messages[0].buttons
-                        }
-                      />
-                    ) : (
-                      chatMode.status &&
-                      isSignedIn &&
-                      !chatMode.idChat && (
-                        <ChatList
-                          setChatMode={setChatMode}
-                          setShowChatList={setShowChatList}
-                          activeType="chatia"
-                        />
-                      )
-                    )
-                  ) : null}
+                    </div>
+                  </div>
                 </div>
               </ResizableBox>
             </div>

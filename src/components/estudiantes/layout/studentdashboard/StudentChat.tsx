@@ -333,15 +333,17 @@ export const ChatMessages: React.FC<ChatProps> = ({
     chatMode.type,
   ]);
 
+  const bodyClasses = compactWelcome
+    ? 'flex-1 min-h-0 overflow-y-auto flex flex-col justify-end gap-3 px-3 pt-1 pb-4 scroll-pb-24'
+    : 'flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 px-3 pt-4 pb-4 scroll-pb-24';
+
   return (
-    <>
-      {/* Top bar: botón borrar historial */}
+    <div className="relative flex min-h-full flex-col overflow-hidden">
       <div className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5">
         <button
           type="button"
           onClick={() => {
             if (!onDeleteHistory) return;
-            // confirmación sencilla
             const ok = window.confirm(
               '¿Deseas eliminar todo el historial de esta conversación? Esta acción no se puede deshacer.'
             );
@@ -356,16 +358,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
         </button>
       </div>
 
-      {/* Messages */}
-      <div
-        className={`relative z-[3] min-h-0 flex-1 overflow-y-auto ${compactWelcome ? 'flex flex-col justify-end pt-0 pb-6' : 'p-4 pb-0'}`}
-      >
+      <div className={bodyClasses}>
         {messages.map((message, idx) =>
-          // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
           message.sender === 'bot' && message.text === '' ? null : (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-2' : 'mb-2'}`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-1' : 'mb-2'}`}
             >
               <div
                 className={`flex max-w-[80%] items-start space-x-2 ${
@@ -401,7 +399,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   }}
                 >
                   {renderMessage(message, idx)}
-                  {/* Renderizado de botones del menú del bot IA, con clase especial para móvil */}
                   {message.buttons && message.sender === 'bot' && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {message.buttons.map((btn, bidx) => (
@@ -443,7 +440,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
             </div>
           )
         )}
-        {/* Loader: solo muestra los dots, sin ningún div rounded */}
         {isLoading && (
           <div className="flex justify-start">
             <div>
@@ -466,10 +462,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
         )}
         <div ref={messagesEndRef} />
       </div>
-      {/* Input */}
+
       <div
-        className="relative z-[5] border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
-        style={{ padding: '12px 16px', flexShrink: 0 }}
+        className="border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
+        style={{
+          padding: '12px 16px',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+          flexShrink: 0,
+        }}
       >
         <form onSubmit={handleSendMessage} className="w-full">
           <div className="flex w-full gap-2">
@@ -499,6 +499,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 };
