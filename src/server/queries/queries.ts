@@ -1,7 +1,7 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { desc, eq, inArray, or,sql } from 'drizzle-orm';
+import { desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -60,36 +60,42 @@ export async function deleteUserWithRelations(userId: string) {
       .where(eq(projectActivities.responsibleUserId, userId));
 
     if (userActivities.length > 0) {
-      await db.delete(projectSchedule).where(
-        or(...userActivities.map(a => eq(projectSchedule.activityId, a.id)))
-      );
+      await db
+        .delete(projectSchedule)
+        .where(
+          or(...userActivities.map((a) => eq(projectSchedule.activityId, a.id)))
+        );
     }
 
     // 2. Eliminar entregas de actividades de proyectos
-    await db.delete(projectActivityDeliveries).where(
-      eq(projectActivityDeliveries.userId, userId)
-    );
+    await db
+      .delete(projectActivityDeliveries)
+      .where(eq(projectActivityDeliveries.userId, userId));
 
     // 3. Eliminar actividades de proyectos donde es responsable
-    await db.delete(projectActivities).where(
-      eq(projectActivities.responsibleUserId, userId)
-    );
+    await db
+      .delete(projectActivities)
+      .where(eq(projectActivities.responsibleUserId, userId));
 
     // 4. Eliminar solicitudes de participación en proyectos
-    await db.delete(projectParticipationRequests).where(
-      or(
-        eq(projectParticipationRequests.userId, userId),
-        eq(projectParticipationRequests.respondedBy, userId)
-      )
-    );
+    await db
+      .delete(projectParticipationRequests)
+      .where(
+        or(
+          eq(projectParticipationRequests.userId, userId),
+          eq(projectParticipationRequests.respondedBy, userId)
+        )
+      );
 
     // 5. Eliminar invitaciones a proyectos
-    await db.delete(projectInvitations).where(
-      or(
-        eq(projectInvitations.invitedUserId, userId),
-        eq(projectInvitations.invitedByUserId, userId)
-      )
-    );
+    await db
+      .delete(projectInvitations)
+      .where(
+        or(
+          eq(projectInvitations.invitedUserId, userId),
+          eq(projectInvitations.invitedByUserId, userId)
+        )
+      );
 
     // 6. Eliminar proyectos tomados
     await db.delete(projectsTaken).where(eq(projectsTaken.userId, userId));
@@ -104,21 +110,22 @@ export async function deleteUserWithRelations(userId: string) {
       .where(eq(pagos.userId, userId));
 
     if (userPayments.length > 0) {
-      await db.delete(pagoVerificaciones).where(
-        or(...userPayments.map(p => eq(pagoVerificaciones.pagoId, p.id)))
-      );
+      await db
+        .delete(pagoVerificaciones)
+        .where(
+          or(...userPayments.map((p) => eq(pagoVerificaciones.pagoId, p.id)))
+        );
     }
 
     // 9. Eliminar pagos
-    await db.delete(pagos).where(
-      or(
-        eq(pagos.userId, userId),
-        eq(pagos.receiptVerifiedBy, userId)
-      )
-    );
+    await db
+      .delete(pagos)
+      .where(or(eq(pagos.userId, userId), eq(pagos.receiptVerifiedBy, userId)));
 
     // 10. Eliminar precio personalizado de programas
-    await db.delete(userProgramPrice).where(eq(userProgramPrice.userId, userId));
+    await db
+      .delete(userProgramPrice)
+      .where(eq(userProgramPrice.userId, userId));
 
     // 11. Eliminar cartera del usuario
     await db.delete(userCartera).where(eq(userCartera.userId, userId));
@@ -145,7 +152,9 @@ export async function deleteUserWithRelations(userId: string) {
     await db.delete(notifications).where(eq(notifications.userId, userId));
 
     // 19. Eliminar campos personalizados
-    await db.delete(userCustomFields).where(eq(userCustomFields.userId, userId));
+    await db
+      .delete(userCustomFields)
+      .where(eq(userCustomFields.userId, userId));
 
     // 20. Eliminar notas de materias
     await db.delete(notas).where(eq(notas.userId, userId));
@@ -157,23 +166,29 @@ export async function deleteUserWithRelations(userId: string) {
     await db.delete(parameterGrades).where(eq(parameterGrades.userId, userId));
 
     // 23. Eliminar inscripciones a programas
-    await db.delete(enrollmentPrograms).where(eq(enrollmentPrograms.userId, userId));
+    await db
+      .delete(enrollmentPrograms)
+      .where(eq(enrollmentPrograms.userId, userId));
 
     // 24. Eliminar progreso de actividades
-    await db.delete(userActivitiesProgress).where(
-      eq(userActivitiesProgress.userId, userId)
-    );
+    await db
+      .delete(userActivitiesProgress)
+      .where(eq(userActivitiesProgress.userId, userId));
 
     // 25. Eliminar progreso de lecciones
-    await db.delete(userLessonsProgress).where(
-      eq(userLessonsProgress.userId, userId)
-    );
+    await db
+      .delete(userLessonsProgress)
+      .where(eq(userLessonsProgress.userId, userId));
 
     // 26. Eliminar tiempo de seguimiento
-    await db.delete(userTimeTracking).where(eq(userTimeTracking.userId, userId));
+    await db
+      .delete(userTimeTracking)
+      .where(eq(userTimeTracking.userId, userId));
 
     // 27. Eliminar anuncios para usuarios específicos
-    await db.delete(anunciosUsuarios).where(eq(anunciosUsuarios.userId, userId));
+    await db
+      .delete(anunciosUsuarios)
+      .where(eq(anunciosUsuarios.userId, userId));
 
     // 28. Eliminar inscripciones a cursos
     await db.delete(enrollments).where(eq(enrollments.userId, userId));
@@ -188,9 +203,9 @@ export async function deleteUserWithRelations(userId: string) {
     await db.delete(scores).where(eq(scores.userId, userId));
 
     // 32. Eliminar detalles de inscripción
-    await db.delete(userInscriptionDetails).where(
-      eq(userInscriptionDetails.userId, userId)
-    );
+    await db
+      .delete(userInscriptionDetails)
+      .where(eq(userInscriptionDetails.userId, userId));
 
     // 33. Eliminar credenciales
     await db.delete(userCredentials).where(eq(userCredentials.userId, userId));
@@ -198,7 +213,9 @@ export async function deleteUserWithRelations(userId: string) {
     // 34. FINALMENTE, eliminar el usuario
     await db.delete(users).where(eq(users.id, userId));
 
-    console.log(`✅ Usuario ${userId} eliminado exitosamente con todas sus relaciones`);
+    console.log(
+      `✅ Usuario ${userId} eliminado exitosamente con todas sus relaciones`
+    );
     return { success: true };
   } catch (error) {
     console.error(`❌ Error eliminando usuario ${userId}:`, error);
@@ -253,7 +270,10 @@ export async function getAdminUsers(query?: string) {
         })),
         primaryEmailAddressId: u.primaryEmailAddressId ?? undefined,
         phoneNumbers:
-          u.phoneNumbers?.map((p) => ({ id: p.id, phoneNumber: p.phoneNumber })) ?? [],
+          u.phoneNumbers?.map((p) => ({
+            id: p.id,
+            phoneNumber: p.phoneNumber,
+          })) ?? [],
         primaryPhoneNumberId: u.primaryPhoneNumberId ?? undefined,
         publicMetadata: (u.publicMetadata ?? {}) as Record<string, unknown>,
       }))
@@ -266,9 +286,9 @@ export async function getAdminUsers(query?: string) {
   const clerkIds = allUsers.map((u) => u.id);
   const dbPhones = clerkIds.length
     ? await db
-      .select({ id: users.id, phone: users.phone })
-      .from(users)
-      .where(inArray(users.id, clerkIds))
+        .select({ id: users.id, phone: users.phone })
+        .from(users)
+        .where(inArray(users.id, clerkIds))
     : [];
   const phoneById = new Map<string, string>(
     dbPhones.map((r) => [r.id, (r.phone ?? '').trim()])
@@ -279,7 +299,8 @@ export async function getAdminUsers(query?: string) {
 
     const phoneFromClerk =
       (u.primaryPhoneNumberId &&
-        u.phoneNumbers?.find((p) => p.id === u.primaryPhoneNumberId)?.phoneNumber) ??
+        u.phoneNumbers?.find((p) => p.id === u.primaryPhoneNumberId)
+          ?.phoneNumber) ??
       u.phoneNumbers?.[0]?.phoneNumber ??
       '';
 
@@ -299,16 +320,17 @@ export async function getAdminUsers(query?: string) {
     const status =
       typeof u.publicMetadata?.subscriptionStatus === 'string'
         ? (u.publicMetadata.subscriptionStatus as string)
-        : (typeof u.publicMetadata?.status === 'string'
+        : typeof u.publicMetadata?.status === 'string'
           ? (u.publicMetadata.status as string)
-          : 'activo');
+          : 'activo';
 
     return {
       id: u.id,
       firstName: u.firstName ?? '',
       lastName: u.lastName ?? '',
       email:
-        u.emailAddresses.find((e) => e.id === u.primaryEmailAddressId)?.emailAddress ?? '',
+        u.emailAddresses.find((e) => e.id === u.primaryEmailAddressId)
+          ?.emailAddress ?? '',
       role,
       status,
       phone, // 👈 ahora viene desde la BD si existe
@@ -317,10 +339,10 @@ export async function getAdminUsers(query?: string) {
 
   const filtered = query
     ? simplified.filter((user) =>
-      `${user.firstName} ${user.lastName} ${user.email}`
-        .toLowerCase()
-        .includes(query.toLowerCase())
-    )
+        `${user.firstName} ${user.lastName} ${user.email}`
+          .toLowerCase()
+          .includes(query.toLowerCase())
+      )
     : simplified;
 
   console.table(
@@ -329,7 +351,6 @@ export async function getAdminUsers(query?: string) {
 
   return filtered;
 }
-
 
 // ✅ Función para actualizar el rol de un usuario
 export async function setRoleWrapper({
@@ -357,7 +378,6 @@ export async function setRoleWrapper({
     await client.users.updateUser(id, {
       publicMetadata: newMetadata,
     });
-
 
     // Update in database
     await db
@@ -491,8 +511,14 @@ async function generateUniqueUsername(baseUsername: string): Promise<string> {
   }
 }
 
-interface ClerkErrorItem { code: string; meta?: { paramName?: string } }
-interface ClerkApiError { clerkError: true; errors: ClerkErrorItem[] }
+interface ClerkErrorItem {
+  code: string;
+  meta?: { paramName?: string };
+}
+interface ClerkApiError {
+  clerkError: true;
+  errors: ClerkErrorItem[];
+}
 
 function isClerkApiError(e: unknown): e is ClerkApiError {
   if (typeof e !== 'object' || e === null) return false;
@@ -502,12 +528,11 @@ function isClerkApiError(e: unknown): e is ClerkApiError {
   const errs = maybe.errors;
   if (!Array.isArray(errs)) return false;
 
-  return errs.every(it => {
+  return errs.every((it) => {
     if (typeof it !== 'object' || it === null) return false;
     return 'code' in (it as Record<string, unknown>);
   });
 }
-
 
 export async function createUser(
   firstName: string,
@@ -526,7 +551,7 @@ export async function createUser(
 
     // dentro de createUser(...)
     const takeFirst = (s?: string) => {
-      const first = (s ?? '').split(' ').find(p => p.trim().length > 0);
+      const first = (s ?? '').split(' ').find((p) => p.trim().length > 0);
       return first ?? '';
     };
 
@@ -540,7 +565,8 @@ export async function createUser(
     const lastPiece = normalize(takeFirst(lastName));
 
     let baseUsername = (firstPiece + lastPiece).replace(/[^a-z0-9_]/g, '');
-    if (baseUsername.length < 4) baseUsername = (baseUsername + 'user').slice(0, 60);
+    if (baseUsername.length < 4)
+      baseUsername = (baseUsername + 'user').slice(0, 60);
     else baseUsername = baseUsername.slice(0, 60);
 
     // 4) Garantizar que el username sea único en Clerk
@@ -552,7 +578,7 @@ export async function createUser(
       const newUser = await client.users.createUser({
         firstName,
         lastName,
-        username: uniqueUsername,       // <- OBLIGATORIO sin llaves extra
+        username: uniqueUsername, // <- OBLIGATORIO sin llaves extra
         password: generatedPassword,
         emailAddress: [emailNormalized],
         publicMetadata: {
@@ -573,7 +599,9 @@ export async function createUser(
         );
 
         const emailExists = error.errors.some(
-          (e) => e.code === 'form_identifier_exists' && e.meta?.paramName === 'email_address'
+          (e) =>
+            e.code === 'form_identifier_exists' &&
+            e.meta?.paramName === 'email_address'
         );
         if (emailExists) {
           return null;
@@ -581,13 +609,11 @@ export async function createUser(
       }
       throw error;
     }
-
   } catch (error) {
     console.error('Error al crear usuario:', error);
     throw error;
   }
 }
-
 
 export async function updateUserStatus(id: string, status: string) {
   try {
@@ -602,7 +628,6 @@ export async function updateUserStatus(id: string, status: string) {
       subscriptionStatus: status,
       status,
     };
-
 
     // 3. Escribir el objeto de metadatos completo y actualizado
     await client.users.updateUser(id, {
@@ -650,7 +675,6 @@ export async function updateMultipleUserStatus(
         subscriptionStatus: status,
         status,
       };
-
 
       // Escribir el objeto de metadatos completo y actualizado en Clerk.
       await client.users.updateUser(id, {
@@ -995,18 +1019,22 @@ export async function updateUserInClerk({
 
     const newMetadata = {
       ...(user.publicMetadata ?? {}),
-      role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+      role: (role || 'estudiante') as
+        | 'admin'
+        | 'educador'
+        | 'super-admin'
+        | 'estudiante',
       // normaliza planType a uno permitido
-      planType: (planType && ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType))
-        ? planType
-        : 'none',
+      planType:
+        planType && ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+          ? planType
+          : 'none',
       // escribe ambas: compat para UIs viejas y nuevas
       subscriptionStatus: normalizedStatus,
       status: normalizedStatus,
       subscriptionEndDate: formattedEndDate,
       permissions: Array.isArray(permissions) ? permissions : [],
     };
-
 
     await client.users.updateUser(userId, {
       firstName,
@@ -1026,7 +1054,7 @@ export async function updateUserInClerk({
         subscriptionStatus: normalizedStatus,
         planType:
           planType &&
-            ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+          ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
             ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
             : 'none',
         subscriptionEndDate: formattedEndDate
@@ -1092,4 +1120,4 @@ export async function getInstructorNameById(id: string): Promise<string> {
     return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
   }
 }
-export { };
+export {};

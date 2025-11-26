@@ -1817,6 +1817,9 @@ export function LessonActivityModal({
     return (
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent>
+          <DialogTitle id={modalTitleId} className="sr-only">
+            ACTIVIDAD
+          </DialogTitle>
           <DialogHeader>
             <DialogTitle
               id="activity-modal-title"
@@ -1842,6 +1845,9 @@ export function LessonActivityModal({
     return (
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent>
+          <DialogTitle id={modalTitleId} className="sr-only">
+            ACTIVIDAD
+          </DialogTitle>
           <DialogHeader>
             <DialogTitle
               id="activity-modal-title"

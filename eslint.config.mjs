@@ -33,7 +33,7 @@ export default [
       'src/components/educadores/ui/**',
       'src/components/admin/ui/**',
       'src/components/super-admin/ui/**',
-      'src/components/reactbits/**',
+      'src/components/reactbits/**'
     ],
   },
 

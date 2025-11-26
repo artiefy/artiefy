@@ -24,7 +24,10 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-async function verifyUserExists(token: string, email: string): Promise<boolean> {
+async function verifyUserExists(
+  token: string,
+  email: string
+): Promise<boolean> {
   console.log(`🔍 [VERIFY USER] Verificando existencia de: ${email}`);
   try {
     const response = await fetch(
@@ -104,7 +107,9 @@ function generateClassDates(
   daysOfWeek: string[],
   totalCount: number
 ): Date[] {
-  console.log(`📅 [DATES] Generando ${totalCount} fechas desde ${startDate.toISOString()}`);
+  console.log(
+    `📅 [DATES] Generando ${totalCount} fechas desde ${startDate.toISOString()}`
+  );
   const result: Date[] = [];
   const targetDays = daysOfWeek.map((d) => d.toLowerCase());
 
@@ -119,7 +124,9 @@ function generateClassDates(
     const weekday = weekdayFmt.format(current).toLowerCase();
     if (targetDays.includes(weekday)) {
       result.push(new Date(current));
-      console.log(`  ✓ Fecha ${result.length}: ${current.toISOString()} (${weekday})`);
+      console.log(
+        `  ✓ Fecha ${result.length}: ${current.toISOString()} (${weekday})`
+      );
     }
     current.setDate(current.getDate() + 1);
   }
@@ -138,10 +145,14 @@ async function createTeamsEventForDate(params: {
   subject: string;
   startLocal: string;
   endLocal: string;
-  attendees: { emailAddress: { address: string; name?: string }, type?: 'required' | 'optional' }[];
+  attendees: {
+    emailAddress: { address: string; name?: string };
+    type?: 'required' | 'optional';
+  }[];
   coHostUpn: string;
 }) {
-  const { token, userId, subject, startLocal, endLocal, attendees, coHostUpn } = params;
+  const { token, userId, subject, startLocal, endLocal, attendees, coHostUpn } =
+    params;
 
   console.log('\n🎯 [CREATE EVENT] Iniciando creación de evento...');
   console.log(`   📌 Subject: ${subject}`);
@@ -159,7 +170,9 @@ async function createTeamsEventForDate(params: {
   // ✅ VERIFICAR QUE EL USUARIO EXISTE EN AZURE AD
   const userExists = await verifyUserExists(token, coHostUpn);
   if (!userExists) {
-    console.error(`❌ [CREATE EVENT] Usuario no encontrado en Azure AD: ${coHostUpn}`);
+    console.error(
+      `❌ [CREATE EVENT] Usuario no encontrado en Azure AD: ${coHostUpn}`
+    );
     throw new Error(`Usuario no encontrado en Azure AD: ${coHostUpn}`);
   }
 
@@ -167,21 +180,24 @@ async function createTeamsEventForDate(params: {
 
   // 1) Crear el evento con Teams habilitado
   console.log('📤 [CREATE EVENT] Creando evento en calendario...');
-  const createRes = await fetch(`https://graph.microsoft.com/v1.0/users/${userId}/events`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      subject,
-      start: { dateTime: startLocal, timeZone: 'America/Bogota' },
-      end: { dateTime: endLocal, timeZone: 'America/Bogota' },
-      isOnlineMeeting: true,
-      onlineMeetingProvider: 'teamsForBusiness',
-      attendees,
-    }),
-  });
+  const createRes = await fetch(
+    `https://graph.microsoft.com/v1.0/users/${userId}/events`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subject,
+        start: { dateTime: startLocal, timeZone: 'America/Bogota' },
+        end: { dateTime: endLocal, timeZone: 'America/Bogota' },
+        isOnlineMeeting: true,
+        onlineMeetingProvider: 'teamsForBusiness',
+        attendees,
+      }),
+    }
+  );
 
   interface GraphEventResponse {
     id?: string;
@@ -192,8 +208,13 @@ async function createTeamsEventForDate(params: {
   const created = (await createRes.json()) as GraphEventResponse;
 
   if (!createRes.ok || !created?.id) {
-    console.error('❌ [CREATE EVENT] Error al crear evento:', created?.error?.message);
-    throw new Error(`[Teams] Error creando evento: ${created?.error?.message ?? 'Desconocido'}`);
+    console.error(
+      '❌ [CREATE EVENT] Error al crear evento:',
+      created?.error?.message
+    );
+    throw new Error(
+      `[Teams] Error creando evento: ${created?.error?.message ?? 'Desconocido'}`
+    );
   }
 
   console.log(`✅ [CREATE EVENT] Evento creado con ID: ${created.id}`);
@@ -248,10 +269,10 @@ async function createTeamsEventForDate(params: {
         attendees: [
           {
             upn: coHostUpn,
-            role: 'coorganizer'
-          }
-        ]
-      }
+            role: 'coorganizer',
+          },
+        ],
+      },
     };
 
     console.log('🔄 [PATCH] Asignando co-organizador...');
@@ -261,7 +282,10 @@ async function createTeamsEventForDate(params: {
       `https://graph.microsoft.com/v1.0/users/${userId}/onlineMeetings/${encodeURIComponent(meetingIdShort)}`,
       {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(patchBody),
       }
     );
@@ -275,15 +299,21 @@ async function createTeamsEventForDate(params: {
         statusText: patchRes.statusText,
         body: errText,
         coHostUpn,
-        meetingIdShort
+        meetingIdShort,
       });
 
-      console.warn(`⚠️ [PATCH] No se pudo asignar co-organizador. El evento se creó pero sin permisos.`);
+      console.warn(
+        `⚠️ [PATCH] No se pudo asignar co-organizador. El evento se creó pero sin permisos.`
+      );
     } else {
-      console.log(`✅ [PATCH] Co-organizador ${coHostUpn} asignado correctamente`);
+      console.log(
+        `✅ [PATCH] Co-organizador ${coHostUpn} asignado correctamente`
+      );
     }
   } else {
-    console.warn('[⚠️ PATCH] No se pudo asignar coorganizer porque falta meetingIdShort');
+    console.warn(
+      '[⚠️ PATCH] No se pudo asignar coorganizer porque falta meetingIdShort'
+    );
   }
 
   console.log('✅ [CREATE EVENT] Evento completado exitosamente\n');
@@ -334,7 +364,9 @@ export async function POST(req: Request) {
     console.log('   - coHostEmail:', coHostEmail ?? 'no proporcionado');
 
     // ✅ VALIDAR Y NORMALIZAR EMAIL DEL CO-HOST
-    const coHostUpn = (coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co').toLowerCase();
+    const coHostUpn = (
+      coHostEmail?.trim() ?? 'educadorsoftwarem@ponao.com.co'
+    ).toLowerCase();
     console.log(`\n📧 [VALIDATION] Co-host email: ${coHostUpn}`);
 
     if (!isValidEmail(coHostUpn)) {
@@ -356,7 +388,9 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(`✅ [VALIDATION] Fecha válida: ${firstStartDate.toISOString()}`);
+    console.log(
+      `✅ [VALIDATION] Fecha válida: ${firstStartDate.toISOString()}`
+    );
 
     // ✅ OBTENER TOKEN
     const token = await getGraphToken();
@@ -370,8 +404,9 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: `El usuario ${coHostUpn} no existe en Azure AD. Por favor verifica el correo.`,
-          suggestion: 'Asegúrate de que el correo pertenece a tu organización Microsoft 365.',
-          testedEmail: coHostUpn
+          suggestion:
+            'Asegúrate de que el correo pertenece a tu organización Microsoft 365.',
+          testedEmail: coHostUpn,
         },
         { status: 404 }
       );
@@ -389,7 +424,9 @@ export async function POST(req: Request) {
         },
       },
     });
-    console.log(`✅ [DATABASE] Estudiantes encontrados: ${enrolledStudents.length}`);
+    console.log(
+      `✅ [DATABASE] Estudiantes encontrados: ${enrolledStudents.length}`
+    );
 
     const attendees: GraphAttendee[] = enrolledStudents.map((enr) => ({
       emailAddress: {
@@ -400,8 +437,12 @@ export async function POST(req: Request) {
     }));
 
     // ➕ Asegurar que el cohost reciba invitación
-    if (!attendees.some(a => a.emailAddress.address.toLowerCase() === coHostUpn)) {
-      console.log(`📧 [ATTENDEES] Agregando co-host a lista de asistentes: ${coHostUpn}`);
+    if (
+      !attendees.some((a) => a.emailAddress.address.toLowerCase() === coHostUpn)
+    ) {
+      console.log(
+        `📧 [ATTENDEES] Agregando co-host a lista de asistentes: ${coHostUpn}`
+      );
       attendees.push({
         emailAddress: { address: coHostUpn, name: coHostUpn },
         type: 'required' as const,
@@ -450,7 +491,9 @@ export async function POST(req: Request) {
           ? `${title} (${customTitles[index]!.trim()})`
           : `${title} (Clase ${index + 1})`;
 
-      console.log(`\n📝 [CREATION] Clase ${index + 1}/${classDates.length}: ${displayTitle}`);
+      console.log(
+        `\n📝 [CREATION] Clase ${index + 1}/${classDates.length}: ${displayTitle}`
+      );
 
       try {
         const created = await createTeamsEventForDate({
@@ -500,7 +543,9 @@ export async function POST(req: Request) {
     const clasesListadoHTML = meetings
       .map((m, i) => {
         const nombreClase = customTitles?.[i]?.trim() ?? `Clase ${i + 1}`;
-        const fechaLocal = new Date(m.startDateTime.getTime() - (5 * 60 * 60 * 1000));
+        const fechaLocal = new Date(
+          m.startDateTime.getTime() - 5 * 60 * 60 * 1000
+        );
         const fechaStr = fechaLocal.toLocaleDateString('es-CO', {
           weekday: 'long',
           year: 'numeric',
@@ -511,7 +556,9 @@ export async function POST(req: Request) {
           hour: '2-digit',
           minute: '2-digit',
         });
-        const link = m.joinUrl ? `<a href="${m.joinUrl}">Unirse</a>` : '(enlace no disponible)';
+        const link = m.joinUrl
+          ? `<a href="${m.joinUrl}">Unirse</a>`
+          : '(enlace no disponible)';
         return `<li><strong>${nombreClase}</strong>: ${fechaStr} a las ${horaStr} — ${link}</li>`;
       })
       .join('');
@@ -556,7 +603,7 @@ export async function POST(req: Request) {
       success: true,
       meetings,
       totalCreated: meetings.length,
-      coHost: coHostUpn
+      coHost: coHostUpn,
     });
   } catch (error: unknown) {
     const err = error as { message?: string };

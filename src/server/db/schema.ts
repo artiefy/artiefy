@@ -173,7 +173,7 @@ export const enrollments = pgTable('enrollments', {
     .notNull(),
   courseId: integer('course_id')
     .references(() => courses.id)
-    .notNull(),
+    .default(sql`NULL`),
   enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
   completed: boolean('completed').default(false),
   isPermanent: boolean('is_permanent').default(false).notNull(),
@@ -587,9 +587,14 @@ export const certificates = pgTable('certificates', {
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
+  // courseId puede ser nulo para soportar certificados de programas
   courseId: integer('course_id')
     .references(() => courses.id)
-    .notNull(),
+    .default(sql`NULL`),
+  // Programa opcional cuando el certificado pertenece a un programa
+  programaId: integer('programa_id')
+    .references(() => programas.id)
+    .default(sql`NULL`),
   grade: real('grade').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   // Puedes agregar un código público para validación si lo deseas
@@ -1228,6 +1233,10 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
     fields: [certificates.courseId],
     references: [courses.id],
   }),
+  programa: one(programas, {
+    fields: [certificates.programaId],
+    references: [programas.id],
+  }),
 }));
 
 export const classMeetings = pgTable('class_meetings', {
@@ -1540,7 +1549,6 @@ export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 
 // ✅ Logs de entrega de credenciales (bienvenida)
 export const credentialsDeliveryLogs = pgTable(

@@ -624,7 +624,7 @@ export default function ProjectInfoModal({
             </Button>
           </div>
           {/* Imagen/video del proyecto con ciclo y fullscreen */}
-          <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm mb-6">
+          <Card className="relative mb-6 border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             <div
               className="relative flex w-full items-center justify-center"
               style={{ minHeight: 180 }}
@@ -730,7 +730,7 @@ export default function ProjectInfoModal({
                 </div>
               )}
             </div>
-            </Card>
+          </Card>
           <div className="w-full space-y-6">
             {/* Header del Proyecto */}
             <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm">

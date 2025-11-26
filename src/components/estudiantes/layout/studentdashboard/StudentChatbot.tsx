@@ -165,6 +165,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [viewportHeight, setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
+  const [viewportOffsetTop, setViewportOffsetTop] = useState<number>(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
   const [_bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -543,6 +544,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           const vv = window.visualViewport;
           setViewportWidth(Math.round(vv.width));
           setViewportHeight(Math.round(vv.height));
+          const safeOffset = Math.max(0, Math.round(vv.offsetTop));
+          setViewportOffsetTop(safeOffset);
           // Detectar si el teclado está abierto comparando altura visible con altura completa
           setIsKeyboardOpen(vv.height < window.innerHeight - 100);
           // No usar bottomInset para padding en el contenedor principal
@@ -550,6 +553,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         } else {
           setViewportWidth(window.innerWidth);
           setViewportHeight(window.innerHeight);
+          setViewportOffsetTop(0);
           setIsKeyboardOpen(false);
           setBottomInset(0);
         }
@@ -596,6 +600,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         } catch {
           // noop
         }
+        if (!isDesktop) {
+          try {
+            chatContainerRef.current?.scrollTo({ top: 0 });
+          } catch {
+            if (chatContainerRef.current) {
+              chatContainerRef.current.scrollTop = 0;
+            }
+          }
+        }
       }, 50);
 
       // Si el chat es nuevo (solo mensaje de bienvenida y botones), reduce el espacio extra
@@ -617,7 +630,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         chatContainer.style.paddingBottom = '';
       }
     }
-  }, [isOpen, isKeyboardOpen, viewportHeight, messages, inputText]);
+  }, [isOpen, isKeyboardOpen, viewportHeight, messages, inputText, isDesktop]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {
@@ -3220,13 +3233,26 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         );
                       }
                     }}
-                    className="relative flex items-center gap-2 rounded-full border border-blue-400 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8]"
+                    className={`relative flex items-center rounded-full border border-blue-400 text-white shadow-md transition-all duration-300 ease-in-out hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8] ${
+                      isDesktop
+                        ? 'gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 hover:scale-105'
+                        : 'h-12 w-12 justify-center bg-gradient-to-br from-blue-500 to-cyan-600 hover:scale-110'
+                    }`}
+                    aria-label="Soporte técnico"
                   >
-                    <MdSupportAgent className="text-xl text-white opacity-90" />
-                    <span className="hidden font-medium tracking-wide sm:inline">
-                      Soporte técnico
-                    </span>
-                    <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
+                    <MdSupportAgent
+                      className={`${isDesktop ? 'text-xl' : 'text-2xl'} text-white opacity-90`}
+                    />
+                    {isDesktop ? (
+                      <>
+                        <span className="hidden font-medium tracking-wide sm:inline">
+                          Soporte técnico
+                        </span>
+                        <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
+                      </>
+                    ) : (
+                      <span className="sr-only">Soporte técnico</span>
+                    )}
                   </button>
                 </div>
               )}
@@ -3241,9 +3267,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 isDesktop
                   ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
-                      height: viewportHeight
-                        ? `${viewportHeight}px`
-                        : undefined,
+                      top: viewportOffsetTop,
+                      bottom: 'auto',
+                      height: viewportHeight ? `${viewportHeight}px` : '100dvh',
                     }
               }
             >
@@ -3275,7 +3301,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
                 style={
                   !isDesktop
-                    ? { height: '100dvh', overflow: 'hidden' }
+                    ? {
+                        height: viewportHeight
+                          ? `${viewportHeight}px`
+                          : '100dvh',
+                        overflow: 'hidden',
+                      }
                     : {
                         height: '100%',
                         overflow: 'hidden',
@@ -3285,7 +3316,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 }
               >
                 <div
-                  className={`relative flex h-full w-full flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
+                  className={`relative flex h-full min-h-0 w-full flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
                   style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}

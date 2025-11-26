@@ -52,11 +52,16 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
     });
 
     // Get progress for each course
+    // Filtrar inscripciones que no referencian un curso (program enrollments may exist)
+    const validEnrollments = enrolledCourses.filter(
+      (enrollment) => enrollment.courseId != null && enrollment.course != null
+    );
+
     const coursesWithProgress = await Promise.all(
-      enrolledCourses.map(async (enrollment) => {
+      validEnrollments.map(async (enrollment) => {
         // Get all lessons for this course
         const courseLessons = await db.query.lessons.findMany({
-          where: eq(lessons.courseId, enrollment.courseId),
+          where: eq(lessons.courseId, enrollment.courseId!),
         });
 
         // Get progress for all lessons belonging to this user
@@ -106,7 +111,7 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
 
         // Fetch instructor name
         const instructor = await db.query.users.findFirst({
-          where: eq(users.id, enrollment.course.instructor),
+          where: eq(users.id, enrollment.course!.instructor!),
         });
 
         const instructorName = instructor
@@ -144,15 +149,15 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           sortedCourseLessons.length > 0 ? sortedCourseLessons[0].id : null;
 
         return {
-          id: enrollment.courseId,
-          title: enrollment.course.title,
+          id: enrollment.courseId!,
+          title: enrollment.course!.title,
           instructorName: instructorName,
-          coverImageKey: enrollment.course.coverImageKey,
+          coverImageKey: enrollment.course!.coverImageKey,
           progress,
-          rating: enrollment.course.rating ?? 0,
-          category: enrollment.course.category
+          rating: enrollment.course!.rating ?? 0,
+          category: enrollment.course!.category
             ? {
-                name: enrollment.course.category.name,
+                name: enrollment.course!.category.name,
               }
             : null,
           firstLessonId,
@@ -162,7 +167,7 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
           lastUnlockedLessonId,
           lastUnlockedLessonTitle,
           lastUnlockedLessonNumber,
-        };
+        } as EnrolledCourse;
       })
     );
 

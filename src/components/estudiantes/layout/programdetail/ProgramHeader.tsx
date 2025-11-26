@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
@@ -27,6 +28,8 @@ import { ProgramContent } from './ProgramContent';
 import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { Program } from '~/types';
+
+import '~/styles/certificadobutton.css';
 
 interface ProgramHeaderProps {
   program: Program;
@@ -117,6 +120,18 @@ export function ProgramHeader({
           ).toFixed(2)
         )
       : 0;
+
+  // Verificar si el usuario tiene nota para todas las materias del programa
+  const programMateriaIds = program.materias?.map((m) => m.id) ?? [];
+
+  // Verificar si todas las materias están aprobadas (nota >= 3)
+  const hasAllMateriasPassed =
+    programMateriaIds.length > 0 &&
+    programMateriaIds.every((mid) =>
+      gradesData?.materias?.some(
+        (gm) => Number(gm.id) === Number(mid) && Number(gm.grade) >= 3
+      )
+    );
 
   interface CourseGrade {
     courseTitle: string;
@@ -404,6 +419,44 @@ export function ProgramHeader({
         </div>
 
         {/* --- NUEVO: Botón de inscripción arriba de la descripción con espacio dinámico --- */}
+        {/* Bloque de certificado del programa (estilo certificado de curso: dorado/amarillo) */}
+        {isEnrolled && hasAllMateriasPassed && programAverage >= 3 && (
+          <div className="mt-6 space-y-4">
+            <div className="relative mx-auto size-40">
+              <Image
+                src="/diploma-certificate.svg"
+                alt="Certificado del Programa"
+                fill
+                className="transition-all duration-300 hover:scale-110"
+              />
+            </div>
+            <p className="text-center font-serif text-lg text-yellow-500 italic">
+              ¡Felicitaciones! Has completado exitosamente el programa con una
+              calificación sobresaliente. Tu certificado está listo para ser
+              visualizado y compartido.
+            </p>
+            {/* Listado breve de materias asociadas (opcional) */}
+            {program.materias && program.materias.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                {program.materias.map((m) => (
+                  <Badge key={m.id} className="bg-yellow-50 text-yellow-800">
+                    {m.title}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-center">
+              <Link href={`/estudiantes/certificados/programa/${program.id}`}>
+                <button className="certificacion relative mx-auto text-base font-bold">
+                  <span className="relative z-10">
+                    Ver Certificado del Programa
+                  </span>
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {renderTopEnrollmentButton()}
 
         {/* Program courses */}
@@ -419,6 +472,7 @@ export function ProgramHeader({
         <div className="flex justify-center pt-4">
           <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
         </div>
+
         <ProgramGradesModal
           isOpen={isGradeModalOpen}
           onCloseAction={() => setIsGradeModalOpen(false)}
@@ -426,6 +480,9 @@ export function ProgramHeader({
           finalGrade={programAverage}
           isLoading={isLoadingGrade}
           coursesGrades={coursesGrades}
+          programId={program.id}
+          hasAllMateriasPassed={hasAllMateriasPassed}
+          materias={program.materias ?? []}
         />
       </CardContent>
     </Card>

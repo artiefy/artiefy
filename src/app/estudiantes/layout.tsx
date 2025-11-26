@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { ExtrasProvider } from '~/app/estudiantes/StudentContext';
 import Providers from '~/app/providers';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
@@ -15,14 +14,12 @@ export default function StudentLayout({
 }) {
   return (
     <Providers>
-      <ExtrasProvider>
-        <div className="relative min-h-screen">
-          {children}
-          <TourComponent />
-          <StudentChatbot isAlwaysVisible={true} />
-          <TicketSupportChatbot />
-        </div>
-      </ExtrasProvider>
+      <div className="relative min-h-screen">
+        {children}
+        <TourComponent />
+        <StudentChatbot isAlwaysVisible={true} />
+        <TicketSupportChatbot />
+      </div>
     </Providers>
   );
 }

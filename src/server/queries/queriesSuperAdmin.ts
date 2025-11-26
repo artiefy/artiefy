@@ -18,8 +18,6 @@ import {
 
 import type { BaseCourse, Program } from '~/types';
 
-
-
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
   const day = String(date.getDate()).padStart(2, '0');
@@ -50,7 +48,6 @@ export interface MassiveUserUpdateInput {
   customFields?: Record<string, string>;
 }
 
-
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
   console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
@@ -60,13 +57,13 @@ export async function getAdminUsers(query: string | undefined) {
 
   const filteredUsers = query
     ? users.filter(
-      (user) =>
-        (user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-        (user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-        user.emailAddresses.some((email) =>
-          email.emailAddress.toLowerCase().includes(query.toLowerCase())
-        )
-    )
+        (user) =>
+          (user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+          (user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+          user.emailAddresses.some((email) =>
+            email.emailAddress.toLowerCase().includes(query.toLowerCase())
+          )
+      )
     : users;
 
   const simplifiedUsers = filteredUsers.map((user) => ({
@@ -490,11 +487,11 @@ export const getProgramById = async (id: string) => {
     courseid: materia.curso?.id ?? 0,
     curso: materia.curso
       ? {
-        ...materia.curso,
-        Nivelid: materia.curso.nivelid,
-        totalStudents: enrollmentCount,
-        lessons: [],
-      }
+          ...materia.curso,
+          Nivelid: materia.curso.nivelid,
+          totalStudents: enrollmentCount,
+          lessons: [],
+        }
       : undefined, // Ahora sí encaja con curso: BaseCourse | undefined
   }));
 
@@ -588,7 +585,7 @@ export async function deleteProgram(programId: number): Promise<void> {
   await db.delete(programas).where(eq(programas.id, programId)).execute();
 }
 
-export { };
+export {};
 
 // Añade/actualiza el tipo para incluir TODOS los users.* que manejas en la UI
 export interface FullUserUpdateInput {
@@ -657,11 +654,11 @@ export interface FullUserUpdateInput {
   customFields?: Record<string, string>;
 }
 
-
 function formatDateForClerk(date?: string | Date | null): string | null {
   if (!date) return null;
 
-  const baseDate = date instanceof Date ? new Date(date) : new Date(String(date));
+  const baseDate =
+    date instanceof Date ? new Date(date) : new Date(String(date));
   if (isNaN(baseDate.getTime())) return null;
 
   // Obtener hora actual
@@ -734,7 +731,6 @@ export async function updateFullUser(
     courseId,
   } = input;
 
-
   const client = await clerkClient();
   let userExistsInClerk = true;
   let existingMetadata = {};
@@ -765,7 +761,6 @@ export async function updateFullUser(
 
   const formattedEndDate = formatDateForClerk(subscriptionEndDate);
 
-
   // Normalizadores seguros (no rompen null/undefined)
   const toNumOrNull = (v: unknown): number | null => {
     if (typeof v === 'number') return Number.isFinite(v) ? v : null;
@@ -790,7 +785,11 @@ export async function updateFullUser(
       // (opcional) sanear metadata para evitar 422
       const newMetadataRaw = {
         ...existingMetadata,
-        role: (role ?? 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+        role: (role ?? 'estudiante') as
+          | 'admin'
+          | 'educador'
+          | 'super-admin'
+          | 'estudiante',
         planType: planType ?? 'none',
         subscriptionStatus: normalizedStatus,
         subscriptionEndDate: formattedEndDate ?? null,
@@ -813,7 +812,9 @@ export async function updateFullUser(
       if (email) {
         const u = await client.users.getUser(userId);
         const target = email.toLowerCase();
-        const ea = u.emailAddresses.find(e => e.emailAddress.toLowerCase() === target);
+        const ea = u.emailAddresses.find(
+          (e) => e.emailAddress.toLowerCase() === target
+        );
 
         if (ea) {
           // ✅ ya existe: hazlo verificado y primario
@@ -836,7 +837,6 @@ export async function updateFullUser(
       await client.users.updateUser(userId, { publicMetadata: safeMetadata });
     }
 
-
     await db
       .update(users)
       .set({
@@ -844,8 +844,10 @@ export async function updateFullUser(
         name: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
         role: role!,
         subscriptionStatus: status, // guardas "activo / inactivo / no verificado" si así lo usas en tu UI
-        planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType ?? '')
-          ? (planType!)
+        planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(
+          planType ?? ''
+        )
+          ? planType!
           : null,
         email: email,
 
@@ -858,7 +860,9 @@ export async function updateFullUser(
 
         // plan / fechas
         purchaseDate: purchaseDate ? toDateOrNull(purchaseDate) : null,
-        subscriptionEndDate: formattedEndDate ? new Date(formattedEndDate) : null,
+        subscriptionEndDate: formattedEndDate
+          ? new Date(formattedEndDate)
+          : null,
 
         // ====== users.* (inscripción / cartera) ======
         document: document ?? null,
@@ -867,7 +871,9 @@ export async function updateFullUser(
         inscripcionValor: toNumOrNull(inscripcionValor),
         paymentMethod: paymentMethod ?? null,
 
-        cuota1Fecha: cuota1Fecha ? toDateOrNull(cuota1Fecha)?.toISOString() : null,
+        cuota1Fecha: cuota1Fecha
+          ? toDateOrNull(cuota1Fecha)?.toISOString()
+          : null,
         cuota1Metodo: cuota1Metodo ?? null,
         cuota1Valor: toNumOrNull(cuota1Valor),
 
@@ -906,7 +912,6 @@ export async function updateFullUser(
       })
       .where(eq(users.id, userId));
 
-
     if (customFields && Object.keys(customFields).length > 0) {
       for (const [key, value] of Object.entries(customFields)) {
         const existing = await db
@@ -941,9 +946,13 @@ export async function updateFullUser(
       `usuario en programa: userId=${userId}, programaId=${input.programId}`
     );
 
-    console.log(`usuario en programa: userId=${userId}, programaId=${programId}`);
+    console.log(
+      `usuario en programa: userId=${userId}, programaId=${programId}`
+    );
     if (programId != null) {
-      console.log(`📝 Matriculando usuario en programa: userId=${userId}, programaId=${programId}`);
+      console.log(
+        `📝 Matriculando usuario en programa: userId=${userId}, programaId=${programId}`
+      );
       await db.insert(enrollmentPrograms).values({
         userId,
         programaId: programId,
@@ -952,13 +961,19 @@ export async function updateFullUser(
       });
     }
 
-
     if (courseId != null) {
-      console.log(`📝 Matriculando usuario en curso: userId=${userId}, courseId=${courseId}`);
+      console.log(
+        `📝 Matriculando usuario en curso: userId=${userId}, courseId=${courseId}`
+      );
       const exists = await db
         .select()
         .from(enrollments)
-        .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)))
+        .where(
+          and(
+            eq(enrollments.userId, userId),
+            eq(enrollments.courseId, courseId)
+          )
+        )
         .limit(1);
       if (exists.length === 0) {
         await db.insert(enrollments).values({
@@ -975,7 +990,9 @@ export async function updateFullUser(
         .set({
           planType: 'Premium',
           subscriptionStatus: 'active',
-          subscriptionEndDate: subscriptionEndDate ? toDateOrNull(subscriptionEndDate) : null,
+          subscriptionEndDate: subscriptionEndDate
+            ? toDateOrNull(subscriptionEndDate)
+            : null,
         })
         .where(eq(users.id, userId))
         .execute();
@@ -983,7 +1000,8 @@ export async function updateFullUser(
       // 4) Actualiza el metadata en Clerk
       const clerk = await clerkClient();
       const formattedEndDateStr = subscriptionEndDate
-        ? formatDateToClerk(new Date(String(subscriptionEndDate))) : null;
+        ? formatDateToClerk(new Date(String(subscriptionEndDate)))
+        : null;
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: {
           planType: 'Premium',
@@ -992,7 +1010,6 @@ export async function updateFullUser(
         },
       });
     }
-
 
     return true;
   } catch (error) {
@@ -1018,13 +1035,19 @@ export async function updateMultipleUsers(
       continue;
     }
 
-    const allowedStatuses = ['active', 'inactive', 'activo', 'inactivo', 'no verificado'] as const;
+    const allowedStatuses = [
+      'active',
+      'inactive',
+      'activo',
+      'inactivo',
+      'no verificado',
+    ] as const;
     const rawStatus = input.status ?? user.subscriptionStatus ?? 'active';
-    const statusValue = (allowedStatuses.includes(rawStatus as typeof allowedStatuses[number]) ? rawStatus : 'active') as | 'active'
-      | 'inactive'
-      | 'activo'
-      | 'inactivo'
-      | 'no verificado';
+    const statusValue = (
+      allowedStatuses.includes(rawStatus as (typeof allowedStatuses)[number])
+        ? rawStatus
+        : 'active'
+    ) as 'active' | 'inactive' | 'activo' | 'inactivo' | 'no verificado';
 
     const result = await updateFullUser({
       userId,

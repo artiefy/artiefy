@@ -16,7 +16,6 @@ const idSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-
 // PUT: actualizar sede (?id=)
 export async function PUT(req: NextRequest) {
   try {
@@ -47,7 +46,12 @@ export async function PUT(req: NextRequest) {
       (e as { code?: string }).code === '23505';
 
     return NextResponse.json(
-      { ok: false, error: isUniqueViolation ? 'Ya existe una sede con ese nombre' : 'No se pudo actualizar la sede' },
+      {
+        ok: false,
+        error: isUniqueViolation
+          ? 'Ya existe una sede con ese nombre'
+          : 'No se pudo actualizar la sede',
+      },
       { status: 400 }
     );
   }
@@ -79,7 +83,6 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-
 
 // GET: listar todas las sedes (ordenadas alfabéticamente)
 export async function GET() {

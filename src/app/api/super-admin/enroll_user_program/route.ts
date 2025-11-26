@@ -193,8 +193,6 @@ export async function GET(req: Request) {
       )
       .as('latest_course_enrollments');
 
-
-
     const students = await db
       .select({
         id: users.id,
@@ -250,7 +248,10 @@ export async function GET(req: Request) {
       // ⬇️ dejamos los joins para que el filtro por programId siga funcionando, aunque no traigamos columnas externas
       .leftJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
       .leftJoin(programas, eq(latestEnrollments.programaId, programas.id))
-      .leftJoin(latestCourseEnrollments, eq(users.id, latestCourseEnrollments.userId))
+      .leftJoin(
+        latestCourseEnrollments,
+        eq(users.id, latestCourseEnrollments.userId)
+      )
       .leftJoin(courses, eq(latestCourseEnrollments.courseId, courses.id))
       .leftJoin(latestCartera, eq(users.id, latestCartera.userId))
       .where(
@@ -260,13 +261,10 @@ export async function GET(req: Request) {
         )
       );
 
-
     const enrichedStudents = students.map((student) => ({
       ...student,
       programTitles: programsMap.get(student.id) ?? [],
     }));
-
-
 
     const coursesList = await db
       .select({
@@ -276,11 +274,12 @@ export async function GET(req: Request) {
       .from(courses);
 
     // Reemplaza tu versión actual por esta:
-    const enrolledUsers = Array.from(programsMap.entries()).map(([id, titles]) => ({
-      id,
-      programTitle: titles[0] ?? null, // ← string | null
-    }));
-
+    const enrolledUsers = Array.from(programsMap.entries()).map(
+      ([id, titles]) => ({
+        id,
+        programTitle: titles[0] ?? null, // ← string | null
+      })
+    );
 
     // --- PRECIO DEL PROGRAMA Y PAGOS ---
     type PagoRow = typeof pagos.$inferSelect;

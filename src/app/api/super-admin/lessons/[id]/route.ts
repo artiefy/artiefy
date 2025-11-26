@@ -57,7 +57,9 @@ export async function GET(
     // Preparar respuesta con recursos como array si están en formato string
     let resourceNames: string[] = [];
     if (typeof lesson.resourceNames === 'string') {
-      resourceNames = lesson.resourceNames.split(',').map((name) => name.trim());
+      resourceNames = lesson.resourceNames
+        .split(',')
+        .map((name) => name.trim());
     } else if (Array.isArray(lesson.resourceNames)) {
       resourceNames = lesson.resourceNames;
     }

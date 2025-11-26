@@ -58,7 +58,7 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-red-600 px-6 py-2 font-bold text-white shadow transition-colors duration-200 hover:bg-red-700 sm:w-auto hover:underline"
+            className="w-full rounded-lg bg-red-600 px-6 py-2 font-bold text-white shadow transition-colors duration-200 hover:bg-red-700 hover:underline sm:w-auto"
           >
             Cancelar
           </button>

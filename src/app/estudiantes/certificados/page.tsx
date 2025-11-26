@@ -32,6 +32,7 @@ export default async function CertificatesListPage() {
     where: (cert) => eq(cert.userId, userId),
     with: {
       course: true,
+      programa: true,
     },
     orderBy: (cert) => cert.createdAt,
   });
@@ -74,7 +75,9 @@ export default async function CertificatesListPage() {
                   <div className="flex items-center gap-2">
                     <PiCertificate className="h-5 w-5 text-white" />
                     <CardTitle className="line-clamp-2">
-                      {certificate.course?.title || 'Curso'}
+                      {certificate.course?.title ??
+                        certificate.programa?.title ??
+                        'Certificado'}
                     </CardTitle>
                   </div>
                 </CardHeader>
@@ -94,14 +97,25 @@ export default async function CertificatesListPage() {
                     </div>
                   </div>
                   <div className="flex justify-center">
-                    <Link
-                      href={`/estudiantes/certificados/${certificate.courseId}`}
-                      className="flex justify-center"
-                    >
-                      <button className="certificacion relative mx-auto text-base font-bold">
-                        <span className="relative z-10">Ver Certificado</span>
-                      </button>
-                    </Link>
+                    {certificate.courseId ? (
+                      <Link
+                        href={`/estudiantes/certificados/${certificate.courseId}`}
+                        className="flex justify-center"
+                      >
+                        <button className="certificacion relative mx-auto text-base font-bold">
+                          <span className="relative z-10">Ver Certificado</span>
+                        </button>
+                      </Link>
+                    ) : certificate.programaId ? (
+                      <Link
+                        href={`/estudiantes/certificados/programa/${certificate.programaId}`}
+                        className="flex justify-center"
+                      >
+                        <button className="certificacion relative mx-auto text-base font-bold">
+                          <span className="relative z-10">Ver Certificado</span>
+                        </button>
+                      </Link>
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>

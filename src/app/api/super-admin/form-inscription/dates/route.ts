@@ -1,4 +1,4 @@
-import { type NextRequest,NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -51,10 +51,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const { id } = idSchema.parse({ id: req.nextUrl.searchParams.get('id') });
 
-    const deleted = await db
-      .delete(dates)
-      .where(eq(dates.id, id))
-      .returning();
+    const deleted = await db.delete(dates).where(eq(dates.id, id)).returning();
 
     if (deleted.length === 0) {
       return NextResponse.json(
@@ -71,8 +68,6 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-
-
 
 // GET: listar todas las fechas (ascendente)
 export async function GET() {

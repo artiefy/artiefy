@@ -11,7 +11,6 @@ import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
   getConversationById,
-  getConversationWithMessages,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
@@ -359,7 +358,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
       {/* Messages */}
       <div
-        className={`relative z-[3] flex-1 overflow-y-auto ${compactWelcome ? 'flex flex-col justify-end pt-0 pb-6' : 'p-4 pb-0'}`}
+        className={`relative z-[3] min-h-0 flex-1 overflow-y-auto ${compactWelcome ? 'flex flex-col justify-end pt-0 pb-6' : 'p-4 pb-0'}`}
       >
         {messages.map((message, idx) =>
           // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
@@ -395,6 +394,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
                       ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
                       : 'rounded-2xl border border-white/10 bg-[#08142a] px-4 py-3 text-white shadow-lg'
                   }
+                  style={{
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                  }}
                 >
                   {renderMessage(message, idx)}
                   {/* Renderizado de botones del menú del bot IA, con clase especial para móvil */}

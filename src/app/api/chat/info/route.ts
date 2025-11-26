@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
     // Parsear JSON normalmente
     const data = (await response.json()) as BackendResponse;
 
-    return NextResponse.json(
-      { result: data.result ?? data },
-      { status: 200 }
-    );
+    return NextResponse.json({ result: data.result ?? data }, { status: 200 });
   } catch (error) {
     console.error('Error en la petición POST:', error);
     return NextResponse.json(

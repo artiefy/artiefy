@@ -13,7 +13,11 @@ export default function DashboardLayout({
 
   return (
     <section>
-      {isWhatsApp ? children : <ResponsiveSidebar>{children}</ResponsiveSidebar>}
+      {isWhatsApp ? (
+        children
+      ) : (
+        <ResponsiveSidebar>{children}</ResponsiveSidebar>
+      )}
     </section>
   );
 }

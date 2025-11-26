@@ -50,7 +50,10 @@ export async function PUT(
     const id = parseInt(resolvedParams.id, 10);
 
     if (isNaN(id)) {
-      return NextResponse.json({ error: 'ID de la actividad inválido' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'ID de la actividad inválido' },
+        { status: 400 }
+      );
     }
 
     const bodySchema = z.object({
@@ -67,7 +70,13 @@ export async function PUT(
 
     const parsed = bodySchema.safeParse(await request.json());
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Datos de entrada no válidos', issues: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Datos de entrada no válidos',
+          issues: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
     }
 
     const {
@@ -88,7 +97,9 @@ export async function PUT(
       ...(typeid !== undefined && { typeid }),
       ...(revisada !== undefined && { revisada }),
       ...(fechaMaximaEntrega !== undefined && {
-        fechaMaximaEntrega: fechaMaximaEntrega ? new Date(fechaMaximaEntrega) : null,
+        fechaMaximaEntrega: fechaMaximaEntrega
+          ? new Date(fechaMaximaEntrega)
+          : null,
       }),
     };
 
@@ -114,9 +125,13 @@ export async function PUT(
       porcentaje: typeof porcentaje,
       fechaMaximaEntrega: typeof fechaMaximaEntrega,
     };
-    console.log('▶ PUT /actividades/:id payload normalizado:', { id, payload, types, dryRun: !!dryRun });
+    console.log('▶ PUT /actividades/:id payload normalizado:', {
+      id,
+      payload,
+      types,
+      dryRun: !!dryRun,
+    });
     console.log('🧩 updateActivity(id, payload):', id, payload);
-
 
     if (dryRun) {
       return NextResponse.json({ ok: true, dryRun: true, id, payload });
@@ -124,11 +139,19 @@ export async function PUT(
 
     await updateActivity(id, payload);
 
-    return NextResponse.json({ message: 'Actividad actualizada correctamente', id });
+    return NextResponse.json({
+      message: 'Actividad actualizada correctamente',
+      id,
+    });
   } catch (error) {
     console.error('❌ Error en PUT /api/educadores/actividades/[id]:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Error desconocido al actualizar la actividad' },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Error desconocido al actualizar la actividad',
+      },
       { status: 500 }
     );
   }

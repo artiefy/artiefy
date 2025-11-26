@@ -450,7 +450,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       rating: !editingCourseId && !rating,
       file: !editingCourseId && !file && !coverImageKey,
       modalidad: false,
-      courseTypeId: !editingCourseId && (!courseTypeId || courseTypeId.length === 0),
+      courseTypeId:
+        !editingCourseId && (!courseTypeId || courseTypeId.length === 0),
     };
 
     if (editingCourseId) {
@@ -463,7 +464,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       newErrors.modalidadesid =
         modifiedFields.has('modalidadesid') && !modalidadesid;
       newErrors.rating = modifiedFields.has('rating') && !rating;
-      newErrors.courseTypeId = modifiedFields.has('courseTypeId') && (!courseTypeId || courseTypeId.length === 0); // 👈 NUEVO
+      newErrors.courseTypeId =
+        modifiedFields.has('courseTypeId') &&
+        (!courseTypeId || courseTypeId.length === 0); // 👈 NUEVO
     }
 
     const sumaPorcentajes = parametros.reduce(
@@ -1057,12 +1060,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 Imagen de portada
               </label>
               <div
-                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${isDragging
-                  ? 'border-blue-500 bg-blue-50'
-                  : errors.file
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-gray-50'
-                  }`}
+                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-50'
+                    : errors.file
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300 bg-gray-50'
+                }`}
               >
                 <div className="text-center text-white">
                   {!file && (coverVideoCourseKey || coverImage) ? (

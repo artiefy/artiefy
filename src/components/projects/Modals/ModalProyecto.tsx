@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FaHashtag,FaUsers } from 'react-icons/fa';
+import { FaHashtag, FaUsers } from 'react-icons/fa';
 
 import ModalRamaInvestigacion from './ModalCategoria';
 import ModalConfirmacionRegistro from './ModalConfirmacionIscripcion';

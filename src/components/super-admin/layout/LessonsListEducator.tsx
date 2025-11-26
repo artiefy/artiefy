@@ -18,10 +18,7 @@ import { ArrowUpFromLine, GripVertical, SortAsc } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
-import {
-  Card,
-  CardTitle,
-} from '~/components/educators/ui/card';
+import { Card, CardTitle } from '~/components/educators/ui/card';
 import { Switch } from '~/components/super-admin/ui/switch';
 
 import ModalFormLessons from '../modals/ModalFormLessons';
@@ -136,8 +133,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mt-3">
           <Button
             style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }`}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -433,14 +431,14 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                   {/* Contenido a la derecha */}
                                   <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
                                     <div className="flex flex-wrap items-center justify-between gap-3">
-                                      <CardTitle className="text-base font-bold leading-tight">
+                                      <CardTitle className="text-base leading-tight font-bold">
                                         {lesson.title}
                                       </CardTitle>
 
                                       <Button asChild>
                                         <Link
                                           href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                                          className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-yellow-600 hover:to-orange-600 active:scale-95"
+                                          className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
                                         >
                                           <span>Ver clase</span>
                                           <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
@@ -514,14 +512,14 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     {/* Contenido a la derecha */}
                     <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <CardTitle className="text-base font-bold leading-tight">
+                        <CardTitle className="text-base leading-tight font-bold">
                           {lesson.title}
                         </CardTitle>
 
                         <Button asChild>
                           <Link
                             href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                            className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-yellow-600 hover:to-orange-600 active:scale-95"
+                            className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
                           >
                             <span>Ver clase</span>
                             <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
@@ -556,8 +554,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
         <div className="mx-auto my-8">
           <Button
-            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }`}
+            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');

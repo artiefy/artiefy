@@ -2758,7 +2758,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             )}
             <button
               onClick={handleGuardarProyecto}
-              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 sm:px-6 sm:text-lg hover:underline"
+              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 hover:underline sm:px-6 sm:text-lg"
               disabled={isUpdating}
             >
               {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
@@ -2766,7 +2766,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 sm:px-6 sm:text-lg hover:underline"
+              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 hover:underline sm:px-6 sm:text-lg"
               disabled={isUpdating}
             >
               Cancelar

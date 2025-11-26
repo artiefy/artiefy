@@ -2,6 +2,8 @@
 
 import { AppProgressProvider as ProgressProvider } from '@bprogress/next';
 
+import { ExtrasProvider } from '~/app/estudiantes/StudentContext';
+
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProgressProvider
@@ -10,7 +12,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
       options={{ showSpinner: true }}
       shallowRouting
     >
-      {children}
+      <ExtrasProvider>{children}</ExtrasProvider>
     </ProgressProvider>
   );
 };

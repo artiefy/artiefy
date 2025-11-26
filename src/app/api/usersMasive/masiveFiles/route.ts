@@ -6,24 +6,33 @@ import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
-import { enrollmentPrograms, pagos, programas, users } from '~/server/db/schema';
+import {
+  enrollmentPrograms,
+  pagos,
+  programas,
+  users,
+} from '~/server/db/schema';
 import { createUser, updateUserInClerk } from '~/server/queries/queries';
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'direcciongeneral@artiefy.com',
-        pass: process.env.PASS!,
-    },
+  service: 'gmail',
+  auth: {
+    user: 'direcciongeneral@artiefy.com',
+    pass: process.env.PASS!,
+  },
 });
 
-async function sendWelcomeEmail(to: string, fullName: string, password: string): Promise<void> {
-    await transporter.sendMail({
-        from: '"Artiefy" <direcciongeneral@artiefy.com>',
-        to,
-        subject: '🎨 Bienvenido a Artiefy - Tus credenciales de acceso',
-        replyTo: 'direcciongeneral@artiefy.com',
-        html: `
+async function sendWelcomeEmail(
+  to: string,
+  fullName: string,
+  password: string
+): Promise<void> {
+  await transporter.sendMail({
+    from: '"Artiefy" <direcciongeneral@artiefy.com>',
+    to,
+    subject: '🎨 Bienvenido a Artiefy - Tus credenciales de acceso',
+    replyTo: 'direcciongeneral@artiefy.com',
+    html: `
       <h2>¡Hola ${fullName}!</h2>
       <p>Tu cuenta ha sido creada en <b>Artiefy</b>. Estas son tus credenciales provisionales:</p>
       <ul>
@@ -35,68 +44,75 @@ async function sendWelcomeEmail(to: string, fullName: string, password: string):
       <hr/>
       <small>Este correo fue generado automáticamente.</small>
     `,
-    });
+  });
 }
 
-
 interface PendingEmail {
-    email: string;
-    fullName: string;
-    password: string;
+  email: string;
+  fullName: string;
+  password: string;
 }
 
 // Enviar correos por lotes con delays
 async function sendWelcomeEmailsBatch(
-    emailQueue: PendingEmail[],
-    emailErrors: string[]
+  emailQueue: PendingEmail[],
+  emailErrors: string[]
 ): Promise<void> {
-    console.log(`📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`);
+  console.log(
+    `📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`
+  );
 
-    for (let i = 0; i < emailQueue.length; i++) {
-        const { email, fullName, password } = emailQueue[i];
+  for (let i = 0; i < emailQueue.length; i++) {
+    const { email, fullName, password } = emailQueue[i];
 
-        // Delay entre cada correo (3 segundos)
-        if (i > 0) {
-            await delay(3000);
-        }
-
-        // Delay más largo cada 10 correos (30 segundos)
-        if (i > 0 && i % 10 === 0) {
-            console.log(`⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`);
-            await delay(30000);
-        }
-
-        console.log(`📤 Enviando correo ${i + 1}/${emailQueue.length} a ${email}`);
-
-        try {
-            let emailSent = false;
-
-            // Intentar enviar hasta 3 veces
-            for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
-                if (attempts > 0) {
-                    console.log(`⏳ Reintento ${attempts} para ${email}`);
-                    await delay(2000);
-                }
-
-                try {
-                    await sendWelcomeEmail(email, fullName, password);
-                    emailSent = true;
-                } catch (err) {
-                    if (attempts === 2) throw err;
-                }
-            }
-
-            if (!emailSent) {
-                emailErrors.push(email);
-                console.error(`❌ No se pudo enviar email a ${email} después de 3 intentos`);
-            }
-        } catch (error) {
-            emailErrors.push(email);
-            console.error(`❌ Error crítico enviando a ${email}:`, error);
-        }
+    // Delay entre cada correo (3 segundos)
+    if (i > 0) {
+      await delay(3000);
     }
 
-    console.log(`✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`);
+    // Delay más largo cada 10 correos (30 segundos)
+    if (i > 0 && i % 10 === 0) {
+      console.log(
+        `⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`
+      );
+      await delay(30000);
+    }
+
+    console.log(`📤 Enviando correo ${i + 1}/${emailQueue.length} a ${email}`);
+
+    try {
+      let emailSent = false;
+
+      // Intentar enviar hasta 3 veces
+      for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+        if (attempts > 0) {
+          console.log(`⏳ Reintento ${attempts} para ${email}`);
+          await delay(2000);
+        }
+
+        try {
+          await sendWelcomeEmail(email, fullName, password);
+          emailSent = true;
+        } catch (err) {
+          if (attempts === 2) throw err;
+        }
+      }
+
+      if (!emailSent) {
+        emailErrors.push(email);
+        console.error(
+          `❌ No se pudo enviar email a ${email} después de 3 intentos`
+        );
+      }
+    } catch (error) {
+      emailErrors.push(email);
+      console.error(`❌ Error crítico enviando a ${email}:`, error);
+    }
+  }
+
+  console.log(
+    `✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`
+  );
 }
 
 // === Runtime ===
@@ -106,1560 +122,1871 @@ export const maxDuration = 300;
 // ====== Tipos ======
 type ResultadoEstado = 'GUARDADO' | 'YA_EXISTE' | 'ERROR';
 interface RowResultado {
-    email: string;
-    estado: ResultadoEstado;
-    detalle?: string;
+  email: string;
+  estado: ResultadoEstado;
+  detalle?: string;
 }
 interface ClerkUser {
-    id: string;
+  id: string;
 }
 interface ColumnMapping {
-    excelColumn: string;
-    dbField: string;
+  excelColumn: string;
+  dbField: string;
 }
 interface CuotaDet {
-    nroPago: number;
-    fecha?: string | null;
-    metodo?: string | null;
-    valor?: number | null;
+  nroPago: number;
+  fecha?: string | null;
+  metodo?: string | null;
+  valor?: number | null;
 }
 
 const safeTrim = (v?: unknown): string => {
-    if (typeof v === 'string') return v.trim();
-    if (v == null) return '';
-    if (typeof v === 'object') {
-        try {
-            return JSON.stringify(v).trim();
-        } catch {
-            return '[object]';
-        }
+  if (typeof v === 'string') return v.trim();
+  if (v == null) return '';
+  if (typeof v === 'object') {
+    try {
+      return JSON.stringify(v).trim();
+    } catch {
+      return '[object]';
     }
-    if (typeof v === 'number' || typeof v === 'boolean') {
-        return String(v).trim();
-    }
-    return '';
+  }
+  if (typeof v === 'number' || typeof v === 'boolean') {
+    return String(v).trim();
+  }
+  return '';
 };
 
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 /** Calcula similitud entre dos strings (0-1, donde 1 es idéntico) */
 function stringSimilarity(str1: string, str2: string): number {
-    const s1 = str1.toLowerCase().trim();
-    const s2 = str2.toLowerCase().trim();
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
 
-    if (s1 === s2) return 1;
-    if (s1.length < 2 || s2.length < 2) return 0;
+  if (s1 === s2) return 1;
+  if (s1.length < 2 || s2.length < 2) return 0;
 
-    // Levenshtein simplificado
-    const longer = s1.length > s2.length ? s1 : s2;
-    const shorter = s1.length > s2.length ? s2 : s1;
+  // Levenshtein simplificado
+  const longer = s1.length > s2.length ? s1 : s2;
+  const shorter = s1.length > s2.length ? s2 : s1;
 
-    if (longer.length === 0) return 1;
+  if (longer.length === 0) return 1;
 
-    const editDistance = levenshteinDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
-    const matrix: number[][] = [];
+  const matrix: number[][] = [];
 
-    for (let i = 0; i <= str2.length; i++) {
-        matrix[i] = [i];
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
     }
+  }
 
-    for (let j = 0; j <= str1.length; j++) {
-        matrix[0][j] = j;
-    }
-
-    for (let i = 1; i <= str2.length; i++) {
-        for (let j = 1; j <= str1.length; j++) {
-            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1,
-                    matrix[i][j - 1] + 1,
-                    matrix[i - 1][j] + 1
-                );
-            }
-        }
-    }
-
-    return matrix[str2.length][str1.length];
+  return matrix[str2.length][str1.length];
 }
 
 /** Busca el programa más similar por nombre */
 async function findSimilarProgram(programName: string): Promise<number | null> {
-    if (!programName?.trim()) return null;
+  if (!programName?.trim()) return null;
 
-    // ✅ NUEVO: Mapeo directo de Ciclos (Florencia) → Bachillerato (BD)
-    const cicloMap: Record<string, string> = {
-        'ciclo 3': 'Bachillerato - Ciclo III',
-        'ciclo 4': 'Bachillerato - Ciclo IV',
-        'ciclo 5': 'Bachillerato - Ciclo V',
-        'ciclo 6': 'Bachillerato - Ciclo VI',
-        'ciclo3': 'Bachillerato - Ciclo III',
-        'ciclo4': 'Bachillerato - Ciclo IV',
-        'ciclo5': 'Bachillerato - Ciclo V',
-        'ciclo6': 'Bachillerato - Ciclo VI',
-        'ciclo iii': 'Bachillerato - Ciclo III',
-        'ciclo iv': 'Bachillerato - Ciclo IV',
-        'ciclo v': 'Bachillerato - Ciclo V',
-        'ciclo vi': 'Bachillerato - Ciclo VI',
-    };
+  // ✅ NUEVO: Mapeo directo de Ciclos (Florencia) → Bachillerato (BD)
+  const cicloMap: Record<string, string> = {
+    'ciclo 3': 'Bachillerato - Ciclo III',
+    'ciclo 4': 'Bachillerato - Ciclo IV',
+    'ciclo 5': 'Bachillerato - Ciclo V',
+    'ciclo 6': 'Bachillerato - Ciclo VI',
+    ciclo3: 'Bachillerato - Ciclo III',
+    ciclo4: 'Bachillerato - Ciclo IV',
+    ciclo5: 'Bachillerato - Ciclo V',
+    ciclo6: 'Bachillerato - Ciclo VI',
+    'ciclo iii': 'Bachillerato - Ciclo III',
+    'ciclo iv': 'Bachillerato - Ciclo IV',
+    'ciclo v': 'Bachillerato - Ciclo V',
+    'ciclo vi': 'Bachillerato - Ciclo VI',
+  };
 
-    const normalized = programName.toLowerCase().trim();
-    const mapped = cicloMap[normalized];
+  const normalized = programName.toLowerCase().trim();
+  const mapped = cicloMap[normalized];
 
-    const allPrograms = await db.select().from(programas);
+  const allPrograms = await db.select().from(programas);
 
-    if (allPrograms.length === 0) return null;
+  if (allPrograms.length === 0) return null;
 
-    // Si hay mapeo directo, buscar por título exacto
-    if (mapped) {
-        const exact = allPrograms.find(p => p.title === mapped);
-        if (exact) {
-            console.log(`[PROGRAM_MATCH] "${programName}" → "${exact.title}" (mapeo directo)`);
-            return exact.id;
-        }
+  // Si hay mapeo directo, buscar por título exacto
+  if (mapped) {
+    const exact = allPrograms.find((p) => p.title === mapped);
+    if (exact) {
+      console.log(
+        `[PROGRAM_MATCH] "${programName}" → "${exact.title}" (mapeo directo)`
+      );
+      return exact.id;
     }
+  }
 
-    // Fallback: búsqueda por similitud
-    let bestMatch = allPrograms[0];
-    let bestScore = 0;
+  // Fallback: búsqueda por similitud
+  let bestMatch = allPrograms[0];
+  let bestScore = 0;
 
-    for (const program of allPrograms) {
-        const score = stringSimilarity(mapped || programName, program.title);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = program;
-        }
+  for (const program of allPrograms) {
+    const score = stringSimilarity(mapped || programName, program.title);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = program;
     }
+  }
 
-    // Solo retornar si la similitud es al menos 40%
-    if (bestScore >= 0.4) {
-        console.log(`[PROGRAM_MATCH] "${programName}" → "${bestMatch.title}" (${(bestScore * 100).toFixed(1)}%)`);
-        return bestMatch.id;
-    }
+  // Solo retornar si la similitud es al menos 40%
+  if (bestScore >= 0.4) {
+    console.log(
+      `[PROGRAM_MATCH] "${programName}" → "${bestMatch.title}" (${(bestScore * 100).toFixed(1)}%)`
+    );
+    return bestMatch.id;
+  }
 
-    console.warn(`[PROGRAM_MATCH] No se encontró programa similar a "${programName}" (mejor score: ${(bestScore * 100).toFixed(1)}%)`);
-    return null;
+  console.warn(
+    `[PROGRAM_MATCH] No se encontró programa similar a "${programName}" (mejor score: ${(bestScore * 100).toFixed(1)}%)`
+  );
+  return null;
 }
 
 async function getLastUserProgramaId(userId: string): Promise<number | null> {
-    const last = await db
-        .select({ programaId: enrollmentPrograms.programaId, enrolledAt: enrollmentPrograms.enrolledAt })
-        .from(enrollmentPrograms)
-        .where(eq(enrollmentPrograms.userId, userId))
-        .orderBy(desc(enrollmentPrograms.enrolledAt))
-        .limit(1);
-    return last.length ? last[0].programaId : null;
+  const last = await db
+    .select({
+      programaId: enrollmentPrograms.programaId,
+      enrolledAt: enrollmentPrograms.enrolledAt,
+    })
+    .from(enrollmentPrograms)
+    .where(eq(enrollmentPrograms.userId, userId))
+    .orderBy(desc(enrollmentPrograms.enrolledAt))
+    .limit(1);
+  return last.length ? last[0].programaId : null;
 }
 
 /** Date -> 'YYYY-MM-DD' */
 const toYMD = (d: Date): string => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 function excelToDateString(input: unknown): string | null {
-    if (input == null) return null;
+  if (input == null) return null;
 
-    // A) Serial de Excel
-    if (typeof input === 'number' && Number.isFinite(input)) {
-        const epoch = new Date(Date.UTC(1899, 11, 30));
-        const d = new Date(epoch.getTime() + input * 86400000);
-        if (Number.isNaN(d.getTime())) return null;
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(d.getUTCDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
+  // A) Serial de Excel
+  if (typeof input === 'number' && Number.isFinite(input)) {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    const d = new Date(epoch.getTime() + input * 86400000);
+    if (Number.isNaN(d.getTime())) return null;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // B) Objeto Date
+  if (input instanceof Date && Number.isFinite(input.getTime())) {
+    const yyyy = input.getFullYear();
+    const mm = String(input.getMonth() + 1).padStart(2, '0');
+    const dd = String(input.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // C) Texto
+  const raw = safeTrim(input);
+  if (!raw) return null;
+
+  // C1) dd/mm/yyyy o dd-mm-yyyy
+  {
+    const m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(raw);
+    if (m) {
+      const d = Number(m[1]),
+        M = Number(m[2]),
+        y = Number(m[3]!.length === 2 ? `20${m[3]}` : m[3]);
+      if (y >= 1900 && M >= 1 && M <= 12 && d >= 1 && d <= 31) {
+        const mm = String(M).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return `${y}-${mm}-${dd}`;
+      }
+    }
+  }
+
+  // C2) "25 de Octubre 2025" / "25 Octubre 2025" / "Octubre 25, 2025"
+  {
+    const meses: Record<string, number> = {
+      enero: 1,
+      febrero: 2,
+      marzo: 3,
+      abril: 4,
+      mayo: 5,
+      junio: 6,
+      julio: 7,
+      agosto: 8,
+      septiembre: 9,
+      setiembre: 9,
+      octubre: 10,
+      noviembre: 11,
+      diciembre: 12,
+    };
+    const norm = raw
+      .toLowerCase()
+      .replace(/\bdel?\b/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    // "25 octubre 2025"
+    let m = /^(\d{1,2})\s+([a-záéíóúñ]+)\s+(\d{4})$/i.exec(norm);
+    if (m) {
+      const d = Number(m[1]);
+      const mes =
+        meses[m[2]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
+      const y = Number(m[3]);
+      if (mes && d >= 1 && d <= 31) {
+        const mm = String(mes).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return `${y}-${mm}-${dd}`;
+      }
     }
 
-    // B) Objeto Date
-    if (input instanceof Date && Number.isFinite(input.getTime())) {
-        const yyyy = input.getFullYear();
-        const mm = String(input.getMonth() + 1).padStart(2, '0');
-        const dd = String(input.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
+    // "octubre 25 2025" o "octubre 25, 2025"
+    m = /^([a-záéíóúñ]+)\s+(\d{1,2})(?:,)?\s+(\d{4})$/i.exec(norm);
+    if (m) {
+      const mes =
+        meses[m[1]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
+      const d = Number(m[2]);
+      const y = Number(m[3]);
+      if (mes && d >= 1 && d <= 31) {
+        const mm = String(mes).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return `${y}-${mm}-${dd}`;
+      }
     }
+  }
 
-    // C) Texto
-    const raw = safeTrim(input);
-    if (!raw) return null;
+  // C3) Último intento: Date nativo (solo si válido)
+  const tentative = new Date(raw);
+  if (!Number.isNaN(tentative.getTime())) {
+    const yyyy = tentative.getFullYear();
+    const mm = String(tentative.getMonth() + 1).padStart(2, '0');
+    const dd = String(tentative.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
-    // C1) dd/mm/yyyy o dd-mm-yyyy
-    {
-        const m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(raw);
-        if (m) {
-            const d = Number(m[1]), M = Number(m[2]), y = Number(m[3]!.length === 2 ? `20${m[3]}` : m[3]);
-            if (y >= 1900 && M >= 1 && M <= 12 && d >= 1 && d <= 31) {
-                const mm = String(M).padStart(2, '0');
-                const dd = String(d).padStart(2, '0');
-                return `${y}-${mm}-${dd}`;
-            }
-        }
-    }
-
-    // C2) "25 de Octubre 2025" / "25 Octubre 2025" / "Octubre 25, 2025"
-    {
-        const meses: Record<string, number> = {
-            enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
-            julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12
-        };
-        const norm = raw
-            .toLowerCase()
-            .replace(/\bdel?\b/g, ' ')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-
-        // "25 octubre 2025"
-        let m = /^(\d{1,2})\s+([a-záéíóúñ]+)\s+(\d{4})$/i.exec(norm);
-        if (m) {
-            const d = Number(m[1]);
-            const mes = meses[m[2]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
-            const y = Number(m[3]);
-            if (mes && d >= 1 && d <= 31) {
-                const mm = String(mes).padStart(2, '0');
-                const dd = String(d).padStart(2, '0');
-                return `${y}-${mm}-${dd}`;
-            }
-        }
-
-        // "octubre 25 2025" o "octubre 25, 2025"
-        m = /^([a-záéíóúñ]+)\s+(\d{1,2})(?:,)?\s+(\d{4})$/i.exec(norm);
-        if (m) {
-            const mes = meses[m[1]!.normalize('NFD').replace(/\p{Diacritic}/gu, '')] ?? 0;
-            const d = Number(m[2]);
-            const y = Number(m[3]);
-            if (mes && d >= 1 && d <= 31) {
-                const mm = String(mes).padStart(2, '0');
-                const dd = String(d).padStart(2, '0');
-                return `${y}-${mm}-${dd}`;
-            }
-        }
-    }
-
-    // C3) Último intento: Date nativo (solo si válido)
-    const tentative = new Date(raw);
-    if (!Number.isNaN(tentative.getTime())) {
-        const yyyy = tentative.getFullYear();
-        const mm = String(tentative.getMonth() + 1).padStart(2, '0');
-        const dd = String(tentative.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-    }
-
-    // No se pudo parsear
-    return null;
+  // No se pudo parsear
+  return null;
 }
 
 // ================== Helpers cuotas ==================
 const CUOTA_RE = /^cuota\s*(\d+)\s*(fecha|m[eé]todo|metodo|valor)$/i;
 
 const normalizeKey = (k: string) =>
-    String(k)
-        .toLowerCase()
-        .replace(/[_-]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .replace(/\.\d+$/, '') // <- quita .1, .2, ...
-        .trim();
+  String(k)
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\.\d+$/, '') // <- quita .1, .2, ...
+    .trim();
 
 const toIntMoney = (v: unknown): number | null => {
-    const raw = safeTrim(v);
-    if (!raw) return null;
-    const cleaned = raw.replace(/[^\d-]/g, '');
-    if (!cleaned) return null;
-    const n = Number.parseInt(cleaned, 10);
-    return Number.isFinite(n) ? n : null;
+  const raw = safeTrim(v);
+  if (!raw) return null;
+  const cleaned = raw.replace(/[^\d-]/g, '');
+  if (!cleaned) return null;
+  const n = Number.parseInt(cleaned, 10);
+  return Number.isFinite(n) ? n : null;
 };
 
-
 function extractCuotas(row: Record<string, unknown>): CuotaDet[] {
-    const buckets = new Map<number, { fecha?: string | null; metodo?: string | null; valor?: number | null }>();
+  const buckets = new Map<
+    number,
+    { fecha?: string | null; metodo?: string | null; valor?: number | null }
+  >();
 
-    const getNextIndexFor = (field: 'valor' | 'fecha' | 'metodo') => {
-        let n = 1;
-        while (buckets.has(n) && (buckets.get(n) as Record<string, unknown>)?.[field] != null) n += 1; return n;
-    };
-    const getFirstMissingInExisting = (field: 'fecha' | 'metodo') => {
-        const entries = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
-        for (const [n, b] of entries) {
-            if ((b as Record<string, unknown>)[field] == null) return n;
-        }
-        return null;
-    };
+  const getNextIndexFor = (field: 'valor' | 'fecha' | 'metodo') => {
+    let n = 1;
+    while (
+      buckets.has(n) &&
+      (buckets.get(n) as Record<string, unknown>)?.[field] != null
+    )
+      n += 1;
+    return n;
+  };
+  const getFirstMissingInExisting = (field: 'fecha' | 'metodo') => {
+    const entries = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
+    for (const [n, b] of entries) {
+      if ((b as Record<string, unknown>)[field] == null) return n;
+    }
+    return null;
+  };
 
-    // ✅ NUEVO: Pre-procesamiento para detectar patrón Florencia (cuota X | FECHA | CUOTA Y | FECHA)
-    const allKeys = Object.keys(row);
-    const cuotaPattern: number[] = [];
+  // ✅ NUEVO: Pre-procesamiento para detectar patrón Florencia (cuota X | FECHA | CUOTA Y | FECHA)
+  const allKeys = Object.keys(row);
+  const cuotaPattern: number[] = [];
 
-    for (let i = 0; i < allKeys.length; i++) {
-        const key = normalizeKey(allKeys[i]);
-        const nextKey = i + 1 < allKeys.length ? normalizeKey(allKeys[i + 1]) : '';
+  for (let i = 0; i < allKeys.length; i++) {
+    const key = normalizeKey(allKeys[i]);
+    const nextKey = i + 1 < allKeys.length ? normalizeKey(allKeys[i + 1]) : '';
 
-        // Detectar "cuota N" seguido de "fecha" → formato Florencia
-        const m = /^cuota\s*(\d+)$/i.exec(key);
-        if (m && nextKey === 'fecha') {
-            const cuotaNum = Number(m[1]);
-            cuotaPattern.push(cuotaNum);
+    // Detectar "cuota N" seguido de "fecha" → formato Florencia
+    const m = /^cuota\s*(\d+)$/i.exec(key);
+    if (m && nextKey === 'fecha') {
+      const cuotaNum = Number(m[1]);
+      cuotaPattern.push(cuotaNum);
 
-            // Asignar valor y fecha inmediatamente
-            if (!buckets.has(cuotaNum)) buckets.set(cuotaNum, {});
-            buckets.get(cuotaNum)!.valor = toIntMoney(row[allKeys[i]]);
-            buckets.get(cuotaNum)!.fecha = excelToDateString(row[allKeys[i + 1]]);
+      // Asignar valor y fecha inmediatamente
+      if (!buckets.has(cuotaNum)) buckets.set(cuotaNum, {});
+      buckets.get(cuotaNum)!.valor = toIntMoney(row[allKeys[i]]);
+      buckets.get(cuotaNum)!.fecha = excelToDateString(row[allKeys[i + 1]]);
 
-            console.log(`[CUOTA_PATTERN] Detectado patrón Florencia: Cuota ${cuotaNum} | FECHA`);
-        }
+      console.log(
+        `[CUOTA_PATTERN] Detectado patrón Florencia: Cuota ${cuotaNum} | FECHA`
+      );
+    }
+  }
+
+  for (const [rawKey, rawVal] of Object.entries(row)) {
+    const key = normalizeKey(String(rawKey));
+
+    // "primera cuota" => cuota 1 (valor)
+    if (key === 'primera cuota') {
+      if (!buckets.has(1)) buckets.set(1, {});
+      buckets.get(1)!.valor = toIntMoney(rawVal);
+      continue;
     }
 
-    for (const [rawKey, rawVal] of Object.entries(row)) {
-        const key = normalizeKey(String(rawKey));
-
-        // "primera cuota" => cuota 1 (valor)
-        if (key === 'primera cuota') {
-            if (!buckets.has(1)) buckets.set(1, {});
-            buckets.get(1)!.valor = toIntMoney(rawVal);
-            continue;
-        }
-
-        // "cuota2" o "cuota 2" (valor)
-        let m =
-            (/^cuota\s*(\d+)$/i.exec(key)) ??
-            (/^cuota(\d+)$/i.exec(key));
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.valor = toIntMoney(rawVal);
-            continue;
-        }
-
-        // "fecha2" / "fecha 2"  -> fecha de cuota N
-        m = (/^fecha\s*(\d+)$/i.exec(key)) ?? (/^fecha(\d+)$/i.exec(key));
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.fecha = excelToDateString(rawVal);
-            continue;
-        }
-
-        // "metodo de pago2" / "método de pago2"
-        m = /^m[eé]todo de pago\s*(\d+)$/i.exec(key);
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
-            continue;
-        }
-
-        // Compatibilidad: "cuota 3 valor" / "cuota3 valor"
-        m = (/^cuota\s*(\d+)\s*valor$/i.exec(key)) ?? (/^cuota(\d+)\s*valor$/i.exec(key));
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.valor = toIntMoney(rawVal);
-            continue;
-        }
-
-        // "cuota 3 fecha" / "cuota3 fecha"
-        m = (/^cuota\s*(\d+)\s*fecha$/i.exec(key)) ?? (/^cuota(\d+)\s*fecha$/i.exec(key));
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.fecha = excelToDateString(rawVal);
-            continue;
-        }
-
-        // "cuota 3 metodo" / "cuota3 método"
-        m = (/^cuota\s*(\d+)\s*m[eé]todo$/i.exec(key)) ?? (/^cuota(\d+)\s*m[eé]todo$/i.exec(key));
-        if (m) {
-            const n = Number(m[1]);
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
-            continue;
-        }
-
-        // Columnas duplicadas "cuota", "cuota.1"… sin número (pandas)
-        if (key === 'cuota') {
-            const n = getNextIndexFor('valor');
-            if (!buckets.has(n)) buckets.set(n, {});
-            buckets.get(n)!.valor = toIntMoney(rawVal);
-            continue;
-        }
-
-        // Columnas duplicadas "fecha" sin número → asigna a la primera cuota que no tenga fecha
-        if (key === 'fecha') {
-            const target = getFirstMissingInExisting('fecha') ?? getNextIndexFor('fecha');
-            if (!buckets.has(target)) buckets.set(target, {});
-            buckets.get(target)!.fecha = excelToDateString(rawVal);
-            continue;
-        }
-
-        // Columnas duplicadas "metodo de pago" sin número → asigna a la primera cuota sin método
-        if (key === 'metodo de pago') {
-            const target = getFirstMissingInExisting('metodo') ?? getNextIndexFor('metodo');
-            if (!buckets.has(target)) buckets.set(target, {});
-            buckets.get(target)!.metodo = safeTrim(rawVal) || null;
-            continue;
-        }
-
-        // Compatibilidad genérica con el patrón CUOTA_RE
-        m = CUOTA_RE.exec(key);
-        if (m) {
-            const n = Number(m[1]);
-            const field = m[2].toLowerCase();
-            if (!buckets.has(n)) buckets.set(n, {});
-            const b = buckets.get(n)!;
-            if (field.startsWith('m')) b.metodo = safeTrim(rawVal) || null;
-            else if (field === 'fecha') b.fecha = excelToDateString(rawVal);
-            else if (field === 'valor') b.valor = toIntMoney(rawVal);
-            continue;
-        }
+    // "cuota2" o "cuota 2" (valor)
+    let m = /^cuota\s*(\d+)$/i.exec(key) ?? /^cuota(\d+)$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.valor = toIntMoney(rawVal);
+      continue;
     }
 
-    return Array.from(buckets.entries())
-        .map(([n, b]) => ({ nroPago: n, ...b }))
-        .filter((c) => c.nroPago > 0 && (c.fecha ?? c.metodo ?? (c.valor ?? 0) > 0));
+    // "fecha2" / "fecha 2"  -> fecha de cuota N
+    m = /^fecha\s*(\d+)$/i.exec(key) ?? /^fecha(\d+)$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.fecha = excelToDateString(rawVal);
+      continue;
+    }
+
+    // "metodo de pago2" / "método de pago2"
+    m = /^m[eé]todo de pago\s*(\d+)$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
+      continue;
+    }
+
+    // Compatibilidad: "cuota 3 valor" / "cuota3 valor"
+    m =
+      /^cuota\s*(\d+)\s*valor$/i.exec(key) ?? /^cuota(\d+)\s*valor$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.valor = toIntMoney(rawVal);
+      continue;
+    }
+
+    // "cuota 3 fecha" / "cuota3 fecha"
+    m =
+      /^cuota\s*(\d+)\s*fecha$/i.exec(key) ?? /^cuota(\d+)\s*fecha$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.fecha = excelToDateString(rawVal);
+      continue;
+    }
+
+    // "cuota 3 metodo" / "cuota3 método"
+    m =
+      /^cuota\s*(\d+)\s*m[eé]todo$/i.exec(key) ??
+      /^cuota(\d+)\s*m[eé]todo$/i.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.metodo = safeTrim(rawVal) ?? null;
+      continue;
+    }
+
+    // Columnas duplicadas "cuota", "cuota.1"… sin número (pandas)
+    if (key === 'cuota') {
+      const n = getNextIndexFor('valor');
+      if (!buckets.has(n)) buckets.set(n, {});
+      buckets.get(n)!.valor = toIntMoney(rawVal);
+      continue;
+    }
+
+    // Columnas duplicadas "fecha" sin número → asigna a la primera cuota que no tenga fecha
+    if (key === 'fecha') {
+      const target =
+        getFirstMissingInExisting('fecha') ?? getNextIndexFor('fecha');
+      if (!buckets.has(target)) buckets.set(target, {});
+      buckets.get(target)!.fecha = excelToDateString(rawVal);
+      continue;
+    }
+
+    // Columnas duplicadas "metodo de pago" sin número → asigna a la primera cuota sin método
+    if (key === 'metodo de pago') {
+      const target =
+        getFirstMissingInExisting('metodo') ?? getNextIndexFor('metodo');
+      if (!buckets.has(target)) buckets.set(target, {});
+      buckets.get(target)!.metodo = safeTrim(rawVal) || null;
+      continue;
+    }
+
+    // Compatibilidad genérica con el patrón CUOTA_RE
+    m = CUOTA_RE.exec(key);
+    if (m) {
+      const n = Number(m[1]);
+      const field = m[2].toLowerCase();
+      if (!buckets.has(n)) buckets.set(n, {});
+      const b = buckets.get(n)!;
+      if (field.startsWith('m')) b.metodo = safeTrim(rawVal) || null;
+      else if (field === 'fecha') b.fecha = excelToDateString(rawVal);
+      else if (field === 'valor') b.valor = toIntMoney(rawVal);
+      continue;
+    }
+  }
+
+  return Array.from(buckets.entries())
+    .map(([n, b]) => ({ nroPago: n, ...b }))
+    .filter(
+      (c) => c.nroPago > 0 && (c.fecha ?? c.metodo ?? (c.valor ?? 0) > 0)
+    );
 }
-
-
-
-
 
 /** Excel serial o string -> Date (para columnas timestamp() de Drizzle) */
 function excelToDateObject(input: unknown): Date | null {
-    if (input == null) return null;
-    if (typeof input === 'number' && !Number.isNaN(input)) {
-        const epoch = new Date(Date.UTC(1899, 11, 30));
-        return new Date(epoch.getTime() + input * 24 * 60 * 60 * 1000);
-    }
-    if (input instanceof Date && !Number.isNaN(input.getTime())) return input;
-    const raw = safeTrim(input);
-    if (!raw) return null;
-    const d = new Date(raw);
-    return Number.isNaN(d.getTime()) ? null : d;
+  if (input == null) return null;
+  if (typeof input === 'number' && !Number.isNaN(input)) {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    return new Date(epoch.getTime() + input * 24 * 60 * 60 * 1000);
+  }
+  if (input instanceof Date && !Number.isNaN(input.getTime())) return input;
+  const raw = safeTrim(input);
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 /** YYYY-MM-DD HH:mm:ss (hora local del servidor) */
 function formatDateTime(dt: Date): string {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
 }
 
 // ↑ Colócalo ARRIBA de setClerkMetadata (una sola vez en el archivo)
 function readPublicMetadata(input: unknown): Record<string, unknown> {
-    if (typeof input === 'object' && input !== null && 'public_metadata' in input) {
-        const pm = (input as { public_metadata?: unknown }).public_metadata;
-        if (pm && typeof pm === 'object') return pm as Record<string, unknown>;
-    }
-    return {};
+  if (
+    typeof input === 'object' &&
+    input !== null &&
+    'public_metadata' in input
+  ) {
+    const pm = (input as { public_metadata?: unknown }).public_metadata;
+    if (pm && typeof pm === 'object') return pm as Record<string, unknown>;
+  }
+  return {};
 }
 
 async function setClerkMetadata(
-    clerkUserId: string,
-    meta: {
-        role?: string;
-        planType?: string;
-        mustChangePassword?: boolean;
-        subscriptionStatus?: string;
-        subscriptionEndDate?: string; // 'YYYY-MM-DD HH:mm:ss'
-    }
+  clerkUserId: string,
+  meta: {
+    role?: string;
+    planType?: string;
+    mustChangePassword?: boolean;
+    subscriptionStatus?: string;
+    subscriptionEndDate?: string; // 'YYYY-MM-DD HH:mm:ss'
+  }
 ): Promise<void> {
-    const key = process.env.CLERK_SECRET_KEY;
-    if (!key) throw new Error('Falta CLERK_SECRET_KEY');
+  const key = process.env.CLERK_SECRET_KEY;
+  if (!key) throw new Error('Falta CLERK_SECRET_KEY');
 
-    // 1) Leer metadata actual para MERGE
-    const getRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${key}` },
-    });
-    if (!getRes.ok) {
-        const t = await getRes.text().catch(() => '');
-        throw new Error(`Clerk GET user failed (${getRes.status}): ${t}`);
+  // 1) Leer metadata actual para MERGE
+  const getRes = await fetch(
+    `https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`,
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${key}` },
     }
-    const currentJson: unknown = await getRes.json();
-    const prevPublic: Record<string, unknown> = readPublicMetadata(currentJson);
+  );
+  if (!getRes.ok) {
+    const t = await getRes.text().catch(() => '');
+    throw new Error(`Clerk GET user failed (${getRes.status}): ${t}`);
+  }
+  const currentJson: unknown = await getRes.json();
+  const prevPublic: Record<string, unknown> = readPublicMetadata(currentJson);
 
-    // 2) Preparar actualización (merge sin borrar llaves previas)
-    const updates: Record<string, unknown> = {
-        ...prevPublic,
-        ...(meta.role != null ? { role: meta.role } : {}),
-        ...(meta.planType != null ? { planType: meta.planType } : {}),
-        ...(meta.mustChangePassword != null ? { mustChangePassword: meta.mustChangePassword } : {}),
-        ...(meta.subscriptionStatus != null ? { subscriptionStatus: meta.subscriptionStatus } : {}),
-        ...(meta.subscriptionEndDate != null ? { subscriptionEndDate: meta.subscriptionEndDate } : {}),
-    };
+  // 2) Preparar actualización (merge sin borrar llaves previas)
+  const updates: Record<string, unknown> = {
+    ...prevPublic,
+    ...(meta.role != null ? { role: meta.role } : {}),
+    ...(meta.planType != null ? { planType: meta.planType } : {}),
+    ...(meta.mustChangePassword != null
+      ? { mustChangePassword: meta.mustChangePassword }
+      : {}),
+    ...(meta.subscriptionStatus != null
+      ? { subscriptionStatus: meta.subscriptionStatus }
+      : {}),
+    ...(meta.subscriptionEndDate != null
+      ? { subscriptionEndDate: meta.subscriptionEndDate }
+      : {}),
+  };
 
-    // 3) PATCH
-    const patchRes = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`, {
-        method: 'PATCH',
-        headers: {
-            Authorization: `Bearer ${key}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ public_metadata: updates }),
-    });
-
-    if (!patchRes.ok) {
-        const text = await patchRes.text().catch(() => '');
-        throw new Error(`Clerk metadata update failed (${patchRes.status}): ${text}`);
+  // 3) PATCH
+  const patchRes = await fetch(
+    `https://api.clerk.com/v1/users/${encodeURIComponent(clerkUserId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ public_metadata: updates }),
     }
+  );
+
+  if (!patchRes.ok) {
+    const text = await patchRes.text().catch(() => '');
+    throw new Error(
+      `Clerk metadata update failed (${patchRes.status}): ${text}`
+    );
+  }
 }
-
 
 // ====== Clerk helpers ======
 async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
-    const key = process.env.CLERK_SECRET_KEY;
-    if (!key) throw new Error('Falta CLERK_SECRET_KEY');
-    const url = `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`;
+  const key = process.env.CLERK_SECRET_KEY;
+  if (!key) throw new Error('Falta CLERK_SECRET_KEY');
+  const url = `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`;
 
-    const res = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${key}`,
-            'Content-Type': 'application/json',
-        },
-        method: 'GET',
-    });
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'GET',
+  });
 
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Clerk lookup failed (${res.status}): ${text}`);
-    }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Clerk lookup failed (${res.status}): ${text}`);
+  }
 
-    const data: unknown = await res.json();
-    const arr: ClerkUser[] = Array.isArray(data)
-        ? (data as ClerkUser[])
-        : Array.isArray((data as Record<string, unknown>)?.data)
-            ? ((data as Record<string, unknown>).data as ClerkUser[])
-            : [];
+  const data: unknown = await res.json();
+  const arr: ClerkUser[] = Array.isArray(data)
+    ? (data as ClerkUser[])
+    : Array.isArray((data as Record<string, unknown>)?.data)
+      ? ((data as Record<string, unknown>).data as ClerkUser[])
+      : [];
 
-    return arr.length ? arr[0] : null;
+  return arr.length ? arr[0] : null;
 }
 
 const HEADER_SYNONYMS = new Map<string, string>([
-    ['nombres', 'Nombres'],
-    ['nombre', 'Nombres'],
-    ['apellidos', 'Apellidos'],
-    ['apellido', 'Apellidos'],
-    ['correo', 'Correo electrónico'],
-    ['correo electrónico', 'Correo electrónico'],
-    ['email', 'Correo electrónico'],
-    ['teléfono', 'Número de teléfono'],
-    ['telefono', 'Número de teléfono'],
-    ['número de teléfono', 'Número de teléfono'],
-    ['numero de telefono', 'Número de teléfono'],
-    ['identificacion', 'Identificación'],
-    ['identificación', 'Identificación'],
-    ['n.documento', 'Identificación'],
-    ['n documento', 'Identificación'],
-    ['numero de identificación', 'Identificación'],
-    ['número de identificación', 'Identificación'],
+  ['nombres', 'Nombres'],
+  ['nombre', 'Nombres'],
+  ['apellidos', 'Apellidos'],
+  ['apellido', 'Apellidos'],
+  ['correo', 'Correo electrónico'],
+  ['correo electrónico', 'Correo electrónico'],
+  ['email', 'Correo electrónico'],
+  ['teléfono', 'Número de teléfono'],
+  ['telefono', 'Número de teléfono'],
+  ['número de teléfono', 'Número de teléfono'],
+  ['numero de telefono', 'Número de teléfono'],
+  ['identificacion', 'Identificación'],
+  ['identificación', 'Identificación'],
+  ['n.documento', 'Identificación'],
+  ['n documento', 'Identificación'],
+  ['numero de identificación', 'Identificación'],
+  ['número de identificación', 'Identificación'],
 
-    ['dirección', 'Dirección'],
-    ['direccion', 'Dirección'],
-    ['país de residencia', 'País de residencia'],
-    ['pais de residencia', 'País de residencia'],
-    ['ciudad de residencia', 'Ciudad de residencia'],
-    ['birthdate', 'Fecha de nacimiento'],
-    ['fecha de nacimiento', 'Fecha de nacimiento'],
+  ['dirección', 'Dirección'],
+  ['direccion', 'Dirección'],
+  ['país de residencia', 'País de residencia'],
+  ['pais de residencia', 'País de residencia'],
+  ['ciudad de residencia', 'Ciudad de residencia'],
+  ['birthdate', 'Fecha de nacimiento'],
+  ['fecha de nacimiento', 'Fecha de nacimiento'],
 
-    ['nivel de educación', 'Nivel de educación'],
-    ['nivel educación', 'Nivel de educación'],
-    ['programa', 'Programa'],
-    ['comercial', 'Comercial'],
-    ['asesor', 'Comercial'],
-    ['sede', 'Sede'],
-    ['horario', 'Horario'],
-    ['fecha de inicio', 'Fecha de inicio'],
-    ['fecha primera cuota', 'Fecha de inicio'],
+  ['nivel de educación', 'Nivel de educación'],
+  ['nivel educación', 'Nivel de educación'],
+  ['programa', 'Programa'],
+  ['comercial', 'Comercial'],
+  ['asesor', 'Comercial'],
+  ['sede', 'Sede'],
+  ['horario', 'Horario'],
+  ['fecha de inicio', 'Fecha de inicio'],
+  ['fecha primera cuota', 'Fecha de inicio'],
 
-    ['número de cuotas', 'Numero de cuotas'],
-    ['numero de cuotas', 'Numero de cuotas'],
-    ['pago de inscripción', 'Pago de inscripción'],
-    ['pago inscripción', 'Pago de inscripción'],
-    ['pago cuota 1', 'Pago cuota 1'],
-    ['valor del programa', 'valor del programa'],
-    ['valor inscripción', 'Valor inscripción'],
-    ['inscripción valor', 'Valor inscripción'],
-    ['inscripcion valor', 'Valor inscripción'],
-    ['inscripcion_valor', 'Valor inscripción'],
-    ['método de pago', 'Método de pago'],
-    ['payment method', 'Método de pago'],
-    ['paymentmethod', 'Método de pago'],
-    ['cuota1 fecha', 'Cuota1 fecha'],
-    ['cuota 1 fecha', 'Cuota1 fecha'],
-    ['cuota1 método', 'Cuota1 método'],
-    ['cuota1 metodo', 'Cuota1 método'],
-    ['cuota 1 método', 'Cuota1 método'],
-    ['cuota 1 metodo', 'Cuota1 método'],
-    ['cuota1 valor', 'Cuota1 valor'],
-    ['cuota 1 valor', 'Cuota1 valor'],
-    ['origen de inscripción', 'Origen de inscripción'],
-    ['inscripción origen', 'Origen de inscripción'],
-    ['inscripcion_origen', 'Origen de inscripción'],
-    ['fecha de compra', 'Fecha de compra'],
-    ['purchase date', 'Fecha de compra'],
+  ['número de cuotas', 'Numero de cuotas'],
+  ['numero de cuotas', 'Numero de cuotas'],
+  ['pago de inscripción', 'Pago de inscripción'],
+  ['pago inscripción', 'Pago de inscripción'],
+  ['pago cuota 1', 'Pago cuota 1'],
+  ['valor del programa', 'valor del programa'],
+  ['valor inscripción', 'Valor inscripción'],
+  ['inscripción valor', 'Valor inscripción'],
+  ['inscripcion valor', 'Valor inscripción'],
+  ['inscripcion_valor', 'Valor inscripción'],
+  ['método de pago', 'Método de pago'],
+  ['payment method', 'Método de pago'],
+  ['paymentmethod', 'Método de pago'],
+  ['cuota1 fecha', 'Cuota1 fecha'],
+  ['cuota 1 fecha', 'Cuota1 fecha'],
+  ['cuota1 método', 'Cuota1 método'],
+  ['cuota1 metodo', 'Cuota1 método'],
+  ['cuota 1 método', 'Cuota1 método'],
+  ['cuota 1 metodo', 'Cuota1 método'],
+  ['cuota1 valor', 'Cuota1 valor'],
+  ['cuota 1 valor', 'Cuota1 valor'],
+  ['origen de inscripción', 'Origen de inscripción'],
+  ['inscripción origen', 'Origen de inscripción'],
+  ['inscripcion_origen', 'Origen de inscripción'],
+  ['fecha de compra', 'Fecha de compra'],
+  ['purchase date', 'Fecha de compra'],
 
-    // ✅ NUEVO: Sinónimos para acudiente (formato Florencia)
-    ['acudiente o empresa', 'Tiene acudiente'],
-    ['nombre de acudiente o empresa', 'Acudiente nombre'],
-    ['numero de contacto acudiente o empresa', 'Acudiente contacto'],
-    ['correo de contacto acudiente o empresa', 'Acudiente email'],
+  // ✅ NUEVO: Sinónimos para acudiente (formato Florencia)
+  ['acudiente o empresa', 'Tiene acudiente'],
+  ['nombre de acudiente o empresa', 'Acudiente nombre'],
+  ['numero de contacto acudiente o empresa', 'Acudiente contacto'],
+  ['correo de contacto acudiente o empresa', 'Acudiente email'],
 ]);
 
 function normalizeHeaderCell(v: unknown): string {
-    const raw = safeTrim(v).toLowerCase();
-    const key = raw.replace(/\s+/g, ' ');
-    return HEADER_SYNONYMS.get(key) ?? safeTrim(v);
+  const raw = safeTrim(v).toLowerCase();
+  const key = raw.replace(/\s+/g, ' ');
+  return HEADER_SYNONYMS.get(key) ?? safeTrim(v);
 }
 
 /** Detección de fila de encabezados (aunque no sea la primera) y parseo robusto */
 function extractObjectsFromSheet(sheet: XLSX.WorkSheet) {
-    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-        header: 1,
-        blankrows: false,
-        defval: '',
-    }) as unknown[][];
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    blankrows: false,
+    defval: '',
+  }) as unknown[][];
 
-    // 1) Detectar la fila de encabezados escaneando las primeras 20 filas
-    const maxScan = Math.min(rows.length, 20);
-    let headersRowIndex = 0;
-    let bestScore = -1;
+  // 1) Detectar la fila de encabezados escaneando las primeras 20 filas
+  const maxScan = Math.min(rows.length, 20);
+  let headersRowIndex = 0;
+  let bestScore = -1;
 
-    for (let i = 0; i < maxScan; i++) {
-        const row = rows[i] || [];
-        const score = row.reduce((acc: number, cell: unknown) => {
-            const norm = normalizeHeaderCell(cell).toLowerCase();
-            const isWord = /[a-záéíóúñ]/i.test(norm) && norm.length <= 50;
-            const isKey = ['nombre', 'nombres', 'apellido', 'apellidos', 'correo', 'email', 'teléfono', 'telefono', 'identificación', 'identificacion'].some((k) =>
-                norm.includes(k),
-            );
-            return acc + (isWord ? 1 : 0) + (isKey ? 2 : 0);
-        }, 0);
+  for (let i = 0; i < maxScan; i++) {
+    const row = rows[i] || [];
+    const score = row.reduce((acc: number, cell: unknown) => {
+      const norm = normalizeHeaderCell(cell).toLowerCase();
+      const isWord = /[a-záéíóúñ]/i.test(norm) && norm.length <= 50;
+      const isKey = [
+        'nombre',
+        'nombres',
+        'apellido',
+        'apellidos',
+        'correo',
+        'email',
+        'teléfono',
+        'telefono',
+        'identificación',
+        'identificacion',
+      ].some((k) => norm.includes(k));
+      return acc + (isWord ? 1 : 0) + (isKey ? 2 : 0);
+    }, 0);
 
-        if (score > bestScore) {
-            bestScore = score;
-            headersRowIndex = i;
-        }
+    if (score > bestScore) {
+      bestScore = score;
+      headersRowIndex = i;
     }
+  }
 
-    // 2) Construir encabezados normalizados
-    const headersRaw = rows[headersRowIndex] || [];
-    const headers = headersRaw.map((h: unknown, idx: number) => {
-        const norm = normalizeHeaderCell(h);
-        return norm || `col_${idx + 1}`;
-    });
+  // 2) Construir encabezados normalizados
+  const headersRaw = rows[headersRowIndex] || [];
+  const headers = headersRaw.map((h: unknown, idx: number) => {
+    const norm = normalizeHeaderCell(h);
+    return norm || `col_${idx + 1}`;
+  });
 
-    const objects: Record<string, unknown>[] = [];
-    for (let i = headersRowIndex + 1; i < rows.length; i++) {
-        const row = rows[i] || [];
-        const obj: Record<string, unknown> = {};
-        let empty = true;
-        for (let c = 0; c < headers.length; c++) {
-            const key = headers[c] ?? `col_${c + 1}`;
-            const val = row[c];
-            if (val !== null && val !== undefined) {
-                let strVal: string;
-                if (typeof val === 'object') {
-                    strVal = JSON.stringify(val);
-                } else if (typeof val === 'string') {
-                    strVal = val;
-                } else if (typeof val === 'number' || typeof val === 'boolean') {
-                    strVal = String(val);
-                } else {
-                    strVal = JSON.stringify(val);
-                }
-                if (strVal.trim() !== '') empty = false;
-            }
-            obj[key] = val;
+  const objects: Record<string, unknown>[] = [];
+  for (let i = headersRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    const obj: Record<string, unknown> = {};
+    let empty = true;
+    for (let c = 0; c < headers.length; c++) {
+      const key = headers[c] ?? `col_${c + 1}`;
+      const val = row[c];
+      if (val !== null && val !== undefined) {
+        let strVal: string;
+        if (typeof val === 'object') {
+          strVal = JSON.stringify(val);
+        } else if (typeof val === 'string') {
+          strVal = val;
+        } else if (typeof val === 'number' || typeof val === 'boolean') {
+          strVal = String(val);
+        } else {
+          strVal = JSON.stringify(val);
         }
-        if (!empty) objects.push(obj);
+        if (strVal.trim() !== '') empty = false;
+      }
+      obj[key] = val;
     }
+    if (!empty) objects.push(obj);
+  }
 
-    return { headersRowIndex, headers, objects };
+  return { headersRowIndex, headers, objects };
 }
 
 /** Genera mappings automáticos */
 function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
-    const lc = detectedColumns.map((c) => c.trim().toLowerCase());
-    const find = (...names: string[]) => {
-        const needle = names.map((n) => n.trim().toLowerCase());
-        const idx = lc.findIndex((c) => needle.includes(c));
-        return idx >= 0 ? detectedColumns[idx] : undefined;
-    };
+  const lc = detectedColumns.map((c) => c.trim().toLowerCase());
+  const find = (...names: string[]) => {
+    const needle = names.map((n) => n.trim().toLowerCase());
+    const idx = lc.findIndex((c) => needle.includes(c));
+    return idx >= 0 ? detectedColumns[idx] : undefined;
+  };
 
-    const mappings: ColumnMapping[] = [];
+  const mappings: ColumnMapping[] = [];
 
-    const pairs: { excel: string | undefined; db: string }[] = [
-        // básicos
-        { excel: find('nombres', 'nombre', 'firstname'), db: 'firstName' },
-        { excel: find('apellidos', 'apellido', 'lastname'), db: 'lastName' },
-        { excel: find('correo electrónico', 'correo', 'email'), db: 'email' },
-        { excel: find('número de teléfono', 'numero de telefono', 'teléfono', 'telefono', 'phone'), db: 'phone' },
-        { excel: find('identificación', 'n.documento', 'n documento', 'numero de identificación', 'número de identificación', 'documento'), db: 'document' },
+  const pairs: { excel: string | undefined; db: string }[] = [
+    // básicos
+    { excel: find('nombres', 'nombre', 'firstname'), db: 'firstName' },
+    { excel: find('apellidos', 'apellido', 'lastname'), db: 'lastName' },
+    { excel: find('correo electrónico', 'correo', 'email'), db: 'email' },
+    {
+      excel: find(
+        'número de teléfono',
+        'numero de telefono',
+        'teléfono',
+        'telefono',
+        'phone'
+      ),
+      db: 'phone',
+    },
+    {
+      excel: find(
+        'identificación',
+        'n.documento',
+        'n documento',
+        'numero de identificación',
+        'número de identificación',
+        'documento'
+      ),
+      db: 'document',
+    },
 
-        // dirección
-        { excel: find('dirección', 'direccion', 'address'), db: 'address' },
-        { excel: find('país de residencia', 'pais de residencia', 'country'), db: 'country' },
-        { excel: find('ciudad de residencia', 'ciudad', 'city'), db: 'city' },
-        { excel: find('fecha de nacimiento', 'birthdate'), db: 'birthDate' },
+    // dirección
+    { excel: find('dirección', 'direccion', 'address'), db: 'address' },
+    {
+      excel: find('país de residencia', 'pais de residencia', 'country'),
+      db: 'country',
+    },
+    { excel: find('ciudad de residencia', 'ciudad', 'city'), db: 'city' },
+    { excel: find('fecha de nacimiento', 'birthdate'), db: 'birthDate' },
 
-        // académicos
-        { excel: find('nivel de educación', 'nivel educación', 'niveleducacion'), db: 'nivelEducacion' },
-        { excel: find('programa'), db: 'programa' },
-        { excel: find('fecha de inicio', 'fecha de inicio', 'fecha inicio', 'fecha primera cuota'), db: 'fechaInicio' },
-        { excel: find('comercial', 'asesor'), db: 'comercial' },
-        { excel: find('sede'), db: 'sede' },
-        { excel: find('horario'), db: 'horario' },
+    // académicos
+    {
+      excel: find('nivel de educación', 'nivel educación', 'niveleducacion'),
+      db: 'nivelEducacion',
+    },
+    { excel: find('programa'), db: 'programa' },
+    {
+      excel: find(
+        'fecha de inicio',
+        'fecha de inicio',
+        'fecha inicio',
+        'fecha primera cuota'
+      ),
+      db: 'fechaInicio',
+    },
+    { excel: find('comercial', 'asesor'), db: 'comercial' },
+    { excel: find('sede'), db: 'sede' },
+    { excel: find('horario'), db: 'horario' },
 
-        // pagos / cuotas
-        { excel: find('número de cuotas', 'numero de cuotas'), db: 'numeroCuotas' },
-        { excel: find('pago de inscripción', 'pago inscripción'), db: 'pagoInscripcion' },
-        { excel: find('pago cuota 1'), db: 'pagoCuota1' },
-        { excel: find('valor del programa'), db: 'valorPrograma' },
-        { excel: find('valor inscripción', 'inscripción valor', 'inscripcion valor', 'inscripcion_valor'), db: 'inscripcionValor' },
-        { excel: find('método de pago', 'payment method', 'paymentmethod'), db: 'paymentMethod' },
-        { excel: find('cuota1 fecha', 'cuota 1 fecha'), db: 'cuota1Fecha' },
-        { excel: find('cuota1 método', 'cuota1 metodo', 'cuota 1 método', 'cuota 1 metodo'), db: 'cuota1Metodo' },
-        { excel: find('cuota1 valor', 'cuota 1 valor'), db: 'cuota1Valor' },
-        { excel: find('origen de inscripción', 'inscripcion_origen', 'inscripción origen'), db: 'inscripcionOrigen' },
-        { excel: find('fecha de compra', 'purchase date', 'purchasedate'), db: 'purchaseDate' },
+    // pagos / cuotas
+    { excel: find('número de cuotas', 'numero de cuotas'), db: 'numeroCuotas' },
+    {
+      excel: find('pago de inscripción', 'pago inscripción'),
+      db: 'pagoInscripcion',
+    },
+    { excel: find('pago cuota 1'), db: 'pagoCuota1' },
+    { excel: find('valor del programa'), db: 'valorPrograma' },
+    {
+      excel: find(
+        'valor inscripción',
+        'inscripción valor',
+        'inscripcion valor',
+        'inscripcion_valor'
+      ),
+      db: 'inscripcionValor',
+    },
+    {
+      excel: find('método de pago', 'payment method', 'paymentmethod'),
+      db: 'paymentMethod',
+    },
+    { excel: find('cuota1 fecha', 'cuota 1 fecha'), db: 'cuota1Fecha' },
+    {
+      excel: find(
+        'cuota1 método',
+        'cuota1 metodo',
+        'cuota 1 método',
+        'cuota 1 metodo'
+      ),
+      db: 'cuota1Metodo',
+    },
+    { excel: find('cuota1 valor', 'cuota 1 valor'), db: 'cuota1Valor' },
+    {
+      excel: find(
+        'origen de inscripción',
+        'inscripcion_origen',
+        'inscripción origen'
+      ),
+      db: 'inscripcionOrigen',
+    },
+    {
+      excel: find('fecha de compra', 'purchase date', 'purchasedate'),
+      db: 'purchaseDate',
+    },
 
-        // identificación / acudiente
-        { excel: find('tipo de identificación', 'identificacion_tipo'), db: 'identificacionTipo' },
-        { excel: find('número identificación', 'numero identificación', 'identificacion_numero'), db: 'identificacionNumero' },
-        { excel: find('tiene acudiente', 'tiene_acudiente'), db: 'tieneAcudiente' },
-        { excel: find('acudiente nombre', 'acudiente_nombre'), db: 'acudienteNombre' },
-        { excel: find('acudiente contacto', 'acudiente_contacto'), db: 'acudienteContacto' },
-        { excel: find('acudiente email', 'acudiente_email'), db: 'acudienteEmail' },
-    ];
+    // identificación / acudiente
+    {
+      excel: find('tipo de identificación', 'identificacion_tipo'),
+      db: 'identificacionTipo',
+    },
+    {
+      excel: find(
+        'número identificación',
+        'numero identificación',
+        'identificacion_numero'
+      ),
+      db: 'identificacionNumero',
+    },
+    { excel: find('tiene acudiente', 'tiene_acudiente'), db: 'tieneAcudiente' },
+    {
+      excel: find('acudiente nombre', 'acudiente_nombre'),
+      db: 'acudienteNombre',
+    },
+    {
+      excel: find('acudiente contacto', 'acudiente_contacto'),
+      db: 'acudienteContacto',
+    },
+    { excel: find('acudiente email', 'acudiente_email'), db: 'acudienteEmail' },
+  ];
 
-    for (const p of pairs) if (p.excel) mappings.push({ excelColumn: p.excel, dbField: p.db });
+  for (const p of pairs)
+    if (p.excel) mappings.push({ excelColumn: p.excel, dbField: p.db });
 
-    // columnas no capturadas también se devuelven (dbField vacío)
-    for (const c of detectedColumns) {
-        if (!mappings.some((m) => m.excelColumn === c)) {
-            mappings.push({ excelColumn: c, dbField: '' });
-        }
+  // columnas no capturadas también se devuelven (dbField vacío)
+  for (const c of detectedColumns) {
+    if (!mappings.some((m) => m.excelColumn === c)) {
+      mappings.push({ excelColumn: c, dbField: '' });
     }
-    return mappings;
+  }
+  return mappings;
 }
 export async function POST(request: NextRequest) {
-    try {
-        // auth robusto (tipado con Clerk)
-        const authData = await clerkAuth();
-        const userId: string | null = authData?.userId ?? null;
-
-        // fallback DEV
-        const headerUserId = request.headers.get('x-user-id');
-        const effectiveUserId = userId ?? headerUserId ?? null;
-
-        if (!effectiveUserId) {
-            return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-        }
-
-        const form = await request.formData();
-        const file = form.get('file');
-        const mappingsJson = form.get('mappings');
-        const previewOnly = form.get('previewOnly') === 'true';
-        // Filas editadas/eliminadas desde el front (opcional)
-        const rowsJson = form.get('rowsJson');
-
-        if (!file || !(file instanceof Blob)) {
-            return NextResponse.json({ error: 'Archivo no válido' }, { status: 400 });
-        }
-
-        const buf = await (file as Blob).arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-
-        const sheetName = wb.SheetNames?.[0];
-        if (!sheetName) {
-            return NextResponse.json({ error: 'Excel sin hojas válidas' }, { status: 400 });
-        }
-
-        // Parseo robusto del Excel
-        const { headersRowIndex, headers, objects } = extractObjectsFromSheet(wb.Sheets[sheetName]);
-        if (objects.length === 0) {
-            return NextResponse.json({ error: 'Excel vacío' }, { status: 400 });
-        }
-
-        console.log('[MASIVE] Hoja:', sheetName);
-        console.log('[MASIVE] headersRowIndex:', headersRowIndex);
-        console.log('[MASIVE] headers[0..15]:', headers.slice(0, 15));
-        console.log('[MASIVE] total rows detectadas:', objects.length);
-
-        // No filtramos por “Comercial/Asesor”
-        const rowsPorUsuario = objects;
-
-        // Filas SIN nombre → fuera
-        const hasName = (o: Record<string, unknown>) =>
-            !!safeTrim((o as Record<string, unknown>).Nombres ?? (o as Record<string, unknown>).Nombre ?? '');
-        const allowedRows = rowsPorUsuario.filter(hasName);
-
-        const omitidosPorSinNombre = rowsPorUsuario.length - allowedRows.length;
-
-        // Si el cliente envió filas editadas, usamos esas filas
-        let rowsToProcess: Record<string, unknown>[] = allowedRows;
-        let omitidosPorCliente = 0;
-
-        if (rowsJson && typeof rowsJson === 'string') {
-            try {
-                const clientRows = JSON.parse(rowsJson) as Record<string, unknown>[];
-                rowsToProcess = (clientRows || []).filter(hasName);
-                omitidosPorCliente = Math.max(allowedRows.length - rowsToProcess.length, 0);
-            } catch {
-                // seguimos con allowedRows
-            }
-        }
-
-        console.log('[MASIVE] rowsAllowed:', allowedRows.length, 'rowsToProcess:', rowsToProcess.length);
-
-        // Preview
-        if (previewOnly) {
-            const autoMappings = autoDetectMappings(headers);
-            console.log('[MASIVE][PREVIEW] autoMappings:', autoMappings);
-            return NextResponse.json({
-                preview: true,
-                columns: headers,
-                autoMappings,
-                detectedHeaderRow: headersRowIndex,
-                rowCount: allowedRows.length,
-                rowsTotal: objects.length,
-                rowsAllowed: allowedRows.length,
-                sampleData: allowedRows,
-            });
-        }
-
-        // Parse mappings recibidos del front
-        const mappings: ColumnMapping[] =
-            mappingsJson && typeof mappingsJson === 'string' ? (JSON.parse(mappingsJson) as ColumnMapping[]) : [];
-        const get = (row: Record<string, unknown>, dbField: string) => {
-            const map = mappings.find((m) => m.dbField === dbField);
-            if (map?.excelColumn) return safeTrim(row[map.excelColumn]);
-            return '';
-        };
-
-        console.log('[MASIVE] mappings filtrados:', mappings);
-
-        const resultados: RowResultado[] = [];
-        const createdOrSynced: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            isNew: boolean;
-        }[] = [];
-
-        const emailQueue: PendingEmail[] = [];
-        const emailErrors: string[] = [];
-
-        let processed = 0;
-
-        // helper para loggear sólo columnas de cuotas/fechas/metodos
-        const pickCuotaLike = (row: Record<string, unknown>) => {
-            const out: Record<string, unknown> = {};
-            for (const [k, v] of Object.entries(row)) {
-                const kk = String(k).toLowerCase();
-                if (
-                    kk.includes('cuota') ||
-                    kk === 'cuota' ||
-                    /^cuota\s*\d+/.test(kk) ||
-                    kk.startsWith('fecha') ||
-                    kk.includes('método') ||
-                    kk.includes('metodo') ||
-                    kk.includes('metodo de pago') ||
-                    kk.includes('método de pago') ||
-                    kk.includes('primera cuota')
-                ) {
-                    out[k] = v;
-                }
-            }
-            return out;
-        };
-
-        for (const row of rowsToProcess) {
-            processed++;
-            if (processed % 10 === 0) await delay(700);
-
-            const firstName = String(get(row, 'firstName') ?? '');
-            const lastName = String(get(row, 'lastName') ?? '');
-            let email = String(get(row, 'email') ?? '').toLowerCase();
-            // Fallback: si "Correo electrónico" viene vacío, usa el del acudiente/empresa
-            if (!email) {
-                email = safeTrim(
-                    (row as Record<string, unknown>)['Correo de contacto acudiente o empresa'] ??
-                    (row as Record<string, unknown>).acudiente_email ??
-                    ''
-                ).toLowerCase();
-            }
-            const phone = String(get(row, 'phone') ?? '');
-            const document = String(get(row, 'document') ?? '');
-
-            if (!firstName) continue;
-
-            if (!lastName || !email) {
-                resultados.push({
-                    email: email || '(sin_email)',
-                    estado: 'ERROR',
-                    detalle: 'Campos obligatorios faltantes (firstName, lastName, email)',
-                });
-                console.warn(`[MASIVE][ROW ${processed}] faltan obligatorios`, { firstName, lastName, email });
-                continue;
-            }
-            if (!isValidEmail(email)) {
-                resultados.push({ email, estado: 'ERROR', detalle: 'Email inválido' });
-                console.warn(`[MASIVE][ROW ${processed}] email inválido:`, email);
-                continue;
-            }
-
-            // opcionales
-            const address = safeTrim(
-                (row as Record<string, unknown>)['Dirección'] ?? (row as Record<string, unknown>).Direccion ?? get(row, 'address')
-            );
-            const country = safeTrim(
-                (row as Record<string, unknown>)['País de residencia'] ??
-                (row as Record<string, unknown>)['Pais de residencia'] ??
-                get(row, 'country')
-            );
-            const city = safeTrim(
-                (row as Record<string, unknown>)['Ciudad de residencia'] ??
-                (row as Record<string, unknown>).ciudad ??
-                get(row, 'city')
-            );
-            const birthDateStrRaw = excelToDateString(
-                (row as Record<string, unknown>)['Fecha de nacimiento'] ?? get(row, 'birthDate')
-            );
-
-            const nivelEducacion = safeTrim(
-                (row as Record<string, unknown>)['Nivel de educación'] ??
-                (row as Record<string, unknown>)['Nivel Educación'] ??
-                get(row, 'nivelEducacion')
-            );
-            const programa = safeTrim((row as Record<string, unknown>).Programa ?? get(row, 'programa'));
-            let selectedProgramaId: number | null = null;
-
-            // ✔️ Resolver el programa lo más pronto posible (antes de guardar pagos)
-            if (programa?.trim()) {
-                selectedProgramaId = await findSimilarProgram(programa);
-            }
-
-            const fechaInicioStr = excelToDateString(
-                (row as Record<string, unknown>)['Fecha de inicio'] ??
-                (row as Record<string, unknown>)['FECHA PRIMERA CUOTA'] ??
-                get(row, 'fechaInicio')
-            );
-            const comercial = safeTrim(
-                (row as Record<string, unknown>).Comercial ?? (row as Record<string, unknown>).Asesor ?? get(row, 'comercial')
-            );
-            const sede = safeTrim((row as Record<string, unknown>).Sede ?? get(row, 'sede'));
-            const horario = safeTrim((row as Record<string, unknown>).Horario ?? get(row, 'horario'));
-
-            const numeroCuotas = safeTrim(
-                (row as Record<string, unknown>)['Número de cuotas'] ??
-                (row as Record<string, unknown>)['Numero de cuotas'] ??
-                get(row, 'numeroCuotas')
-            );
-            const pagoInscripcion = safeTrim(
-                (row as Record<string, unknown>)['Pago de inscripción'] ??
-                (row as Record<string, unknown>)['pago de inscripción'] ??
-                get(row, 'pagoInscripcion')
-            );
-            const pagoCuota1 = safeTrim((row as Record<string, unknown>)['Pago cuota 1'] ?? get(row, 'pagoCuota1'));
-            const valorProgramaRaw = safeTrim(
-                (row as Record<string, unknown>)['valor del programa'] ??
-                (row as Record<string, unknown>)['Valor del programa'] ??
-                get(row, 'valorPrograma')
-            );
-            const valorPrograma =
-                valorProgramaRaw && !Number.isNaN(Number(valorProgramaRaw)) ? Number(valorProgramaRaw) : null;
-
-            const inscripcionValorRaw = safeTrim(
-                (row as Record<string, unknown>)['Valor inscripción'] ??
-                (row as Record<string, unknown>)['Inscripción valor'] ??
-                (row as Record<string, unknown>)['inscripcion valor'] ??
-                (row as Record<string, unknown>).inscripcion_valor ??
-                get(row, 'inscripcionValor')
-            );
-            const inscripcionValor =
-                inscripcionValorRaw && !Number.isNaN(Number(inscripcionValorRaw))
-                    ? Number(inscripcionValorRaw)
-                    : null;
-
-            const paymentMethod = safeTrim(
-                (row as Record<string, unknown>)['Método de pago'] ??
-                (row as Record<string, unknown>)['payment method'] ??
-                get(row, 'paymentMethod')
-            );
-            const cuota1FechaStr = excelToDateString(
-                (row as Record<string, unknown>)['Cuota1 fecha'] ??
-                (row as Record<string, unknown>)['CUOTA 1 FECHA'] ??
-                get(row, 'cuota1Fecha')
-            );
-
-            const cuota1Metodo = safeTrim(
-                (row as Record<string, unknown>)['Cuota1 método'] ??
-                (row as Record<string, unknown>)['CUOTA 1 MÉTODO'] ??
-                (row as Record<string, unknown>)['CUOTA 1 METODO'] ??
-                get(row, 'cuota1Metodo')
-            );
-            const cuota1ValorRaw = safeTrim(
-                (row as Record<string, unknown>)['Cuota1 valor'] ??
-                (row as Record<string, unknown>)['CUOTA 1 VALOR'] ??
-                get(row, 'cuota1Valor')
-            );
-            const cuota1Valor =
-                cuota1ValorRaw && !Number.isNaN(Number(cuota1ValorRaw)) ? Number(cuota1ValorRaw) : null;
-
-            const inscripcionOrigen = safeTrim(
-                (row as Record<string, unknown>)['Origen de inscripción'] ??
-                (row as Record<string, unknown>).inscripcion_origen ??
-                get(row, 'inscripcionOrigen')
-            );
-            const purchaseDateDate = excelToDateObject(
-                (row as Record<string, unknown>)['Fecha de compra'] ??
-                (row as Record<string, unknown>)['purchase date'] ??
-                get(row, 'purchaseDate')
-            );
-
-            const identificacionTipo = safeTrim(
-                (row as Record<string, unknown>)['Tipo de identificación'] ??
-                (row as Record<string, unknown>).identificacion_tipo ??
-                get(row, 'identificacionTipo')
-            );
-            const identificacionNumero =
-                safeTrim(
-                    (row as Record<string, unknown>)['Número identificación'] ??
-                    (row as Record<string, unknown>)['Numero identificación'] ??
-                    (row as Record<string, unknown>).identificacion_numero ??
-                    get(row, 'identificacionNumero')
-                ) || document;
-            const tieneAcudiente = safeTrim(
-                (row as Record<string, unknown>)['Tiene acudiente'] ??
-                (row as Record<string, unknown>).tiene_acudiente ??
-                get(row, 'tieneAcudiente')
-            );
-            const acudienteNombre = safeTrim(
-                (row as Record<string, unknown>)['Acudiente nombre'] ??
-                (row as Record<string, unknown>).acudiente_nombre ??
-                get(row, 'acudienteNombre')
-            );
-            const acudienteContacto = safeTrim(
-                (row as Record<string, unknown>)['Acudiente contacto'] ??
-                (row as Record<string, unknown>).acudiente_contacto ??
-                get(row, 'acudienteContacto')
-            );
-            const acudienteEmail = safeTrim(
-                (row as Record<string, unknown>)['Acudiente email'] ??
-                (row as Record<string, unknown>).acudiente_email ??
-                get(row, 'acudienteEmail')
-            );
-
-            // ✅ NUEVO: Fallback para formato Florencia (si campos estándar vienen vacíos)
-            const tieneAcudienteFinal = tieneAcudiente || safeTrim(
-                (row as Record<string, unknown>)['Acudiente o empresa']
-            );
-            const acudienteNombreFinal = acudienteNombre || safeTrim(
-                (row as Record<string, unknown>)['Nombre de Acudiente o empresa']
-            );
-            const acudienteContactoFinal = acudienteContacto || safeTrim(
-                (row as Record<string, unknown>)['Numero de contacto Acudiente o empresa']
-            );
-            const acudienteEmailFinal = acudienteEmail || safeTrim(
-                (row as Record<string, unknown>)['Correo de contacto acudiente o empresa']
-            );
-
-            console.log(`[MASIVE][ROW ${processed}] base`, {
-                firstName,
-                lastName,
-                email,
-                programa,
-                numeroCuotas,
-                valorPrograma,
-                inscripcionValor,
-            });
-
-            console.log(`[MASIVE][ROW ${processed}] cuota-like fields crudos`, pickCuotaLike(row));
-
-            try {
-                // 1) Clerk (tolerante cuota agotada)
-                let isNewInClerk = false;
-                let clerkUser: ClerkUser | null = null;
-                let generatedPassword: string | null = null;
-
-                try {
-                    const created = await createUser(firstName, lastName, email, 'estudiante', 'active');
-                    if (created && typeof created === 'object' && 'user' in created) {
-                        isNewInClerk = true;
-                        clerkUser = created.user as ClerkUser;
-                        generatedPassword =
-                            'generatedPassword' in created
-                                ? ((created as Record<string, unknown>).generatedPassword as string)
-                                : null;
-                    } else {
-                        clerkUser = await getClerkUserByEmail(email);
-                    }
-                } catch (err) {
-                    const msg = (err as Error)?.message ?? '';
-                    const quotaExceeded = /user[_\s-]*quota[_\s-]*exceeded|status:\s*403|^\s*403\s*$/i.test(msg);
-                    const probablyExists = /already\s*exist|identifier.*in\s*use|email.*taken|409|422/i.test(msg);
-
-                    console.warn(`[MASIVE][ROW ${processed}] Clerk error:`, msg);
-
-                    if (probablyExists) {
-                        clerkUser = await getClerkUserByEmail(email);
-                    } else if (quotaExceeded) {
-                        clerkUser = null; // seguimos modo local
-                    } else {
-                        resultados.push({
-                            email,
-                            estado: 'ERROR',
-                            detalle: `Clerk: ${msg || 'error creando usuario'}`,
-                        });
-                        continue;
-                    }
-                }
-
-                // 2) Upsert en BD (tabla users) → aunque no haya clerkUser, seguimos con id local
-                const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-                const subscriptionEnd = new Date();
-                subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
-                const toYMDorNull = (s?: string | null) =>
-                    s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
-                const fechaInicioYMD = toYMDorNull(fechaInicioStr);
-                const cuota1FechaYMD = toYMDorNull(cuota1FechaStr);
-
-
-                const baseSet = {
-                    name: `${firstName} ${lastName}`,
-                    role: 'estudiante' as const,
-                    updatedAt: new Date(),
-                    planType: 'Premium' as const,
-                    subscriptionStatus: 'active' as const,
-                    subscriptionEndDate: subscriptionEnd,
-
-                    phone: phone || null,
-                    document: document || null,
-
-                    address: address || null,
-                    country: country || null,
-                    city: city || null,
-                    birthDate: toYMDorNull(birthDateStrRaw),
-
-                    identificacionTipo: identificacionTipo || null,
-                    identificacionNumero: identificacionNumero || null,
-                    nivelEducacion: nivelEducacion || null,
-
-                    programa: programa || null,
-                    fechaInicio: fechaInicioYMD ?? null,
-                    comercial: comercial || null,
-                    sede: sede || null,
-                    horario: horario || null,
-
-                    numeroCuotas: numeroCuotas || null,
-                    pagoInscripcion: pagoInscripcion || null,
-                    pagoCuota1: pagoCuota1 || null,
-
-                    valorPrograma: valorPrograma ?? null,
-                    inscripcionValor: inscripcionValor ?? null,
-                    paymentMethod: paymentMethod || null,
-                    cuota1Fecha: cuota1FechaYMD,
-                    cuota1Metodo: cuota1Metodo || null,
-                    cuota1Valor: cuota1Valor ?? null,
-                    inscripcionOrigen: inscripcionOrigen || null,
-
-                    purchaseDate: purchaseDateDate,
-
-                    // ✅ NUEVO: Usar valores finales con fallback
-                    tieneAcudiente: tieneAcudienteFinal || null,
-                    acudienteNombre: acudienteNombreFinal || null,
-                    acudienteContacto: acudienteContactoFinal || null,
-                    acudienteEmail: acudienteEmailFinal || null,
-                };
-
-
-                let userIdToUse = existing.length > 0 ? existing[0].id : (clerkUser?.id ?? `local:${email}`);
-
-                if (existing.length > 0) {
-                    await db.update(users).set(baseSet).where(eq(users.id, existing[0].id));
-                    resultados.push({
-                        email,
-                        estado: 'YA_EXISTE',
-                        detalle: 'Actualizado en BD (ya existía)',
-                    });
-                    console.log(`[MASIVE][ROW ${processed}] user actualizado`, { id: existing[0].id });
-                } else {
-                    await db.insert(users).values({
-                        id: userIdToUse,
-                        email,
-                        createdAt: new Date(),
-                        ...baseSet,
-                    });
-                    resultados.push({ email, estado: 'GUARDADO' });
-                    console.log(`[MASIVE][ROW ${processed}] user insertado`, { id: userIdToUse });
-                }
-
-                try {
-                    const subEndIso = subscriptionEnd.toISOString();
-
-                    const ok = await updateUserInClerk({
-                        userId: userIdToUse,
-                        firstName,
-                        lastName,
-                        role: 'estudiante',
-                        status: 'active',
-                        planType: 'Premium',
-                        permissions: [],
-                        subscriptionEndDate: subEndIso,
-                    });
-
-                    // 🔁 Fallback solo si falló el SDK
-                    if (!ok && clerkUser?.id) {
-                        const endStr = formatDateTime(subscriptionEnd);
-                        await setClerkMetadata(clerkUser.id, {
-                            role: 'estudiante',
-                            planType: 'Premium',
-                            mustChangePassword: true,
-                            subscriptionStatus: 'active',
-                            subscriptionEndDate: endStr,
-                        });
-                    }
-                } catch (e) {
-                    console.warn(`[MASIVE][ROW ${processed}] No se pudo actualizar metadata en Clerk`, e);
-                }
-
-
-                // === NUEVO: asegurar existencia en Clerk y migrar id local->Clerk si aplica ===
-                try {
-                    // 1) Si todavía no tenemos clerkUser, reintentar: buscar por email y si no existe, crearlo.
-                    if (!clerkUser) {
-                        let fetched = await getClerkUserByEmail(email);
-                        if (!fetched) {
-                            try {
-                                const created = await createUser(firstName, lastName, email, 'estudiante', 'active');
-                                if (created && typeof created === 'object' && 'user' in created) {
-                                    fetched = created.user as ClerkUser;
-                                }
-                            } catch (err) {
-                                console.warn(`[MASIVE][ROW ${processed}] No se pudo crear usuario en Clerk (post-upsert BD):`, (err as Error)?.message ?? err);
-                            }
-                        }
-                        clerkUser = fetched;
-                    }
-
-                    // 2) Si el usuario ya EXISTÍA en BD con id "local:..." y ahora ya tenemos clerkUser,
-                    //    migrar el PK y las referencias (pagos, enrollmentPrograms) en una transacción segura.
-                    if (existing.length > 0 && clerkUser && existing[0].id?.startsWith?.('local:') && existing[0].id !== clerkUser.id) {
-                        const oldId = existing[0].id;
-                        const newId = clerkUser.id;
-
-                        // Evitar colisión si ya hubiese un user con ese newId en BD.
-                        const clash = await db.select().from(users).where(eq(users.id, newId)).limit(1);
-                        if (clash.length === 0) {
-                            await db.transaction(async (tx) => {
-                                // mover hijos primero
-                                await tx.update(pagos).set({ userId: newId }).where(eq(pagos.userId, oldId));
-                                await tx.update(enrollmentPrograms).set({ userId: newId }).where(eq(enrollmentPrograms.userId, oldId));
-                                // ahora actualizar el PK en users
-                                await tx.update(users).set({ id: newId }).where(eq(users.id, oldId));
-                            });
-                            console.log(`[MASIVE][ROW ${processed}] Migrado userId local -> Clerk`, { oldId, newId });
-                            // A partir de aquí, todos los inserts/updates deben usar el nuevo id
-                            userIdToUse = newId;
-
-                        } else {
-                            console.warn(`[MASIVE][ROW ${processed}] No se migra id local->Clerk: ya existe un usuario con id Clerk en BD`, { newId });
-                        }
-                    }
-                } catch (err) {
-                    console.warn(`[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`, err);
-                }
-
-                // Acumular correos para envío por lotes (NO enviar aquí)
-                if (isNewInClerk && generatedPassword) {
-                    emailQueue.push({
-                        email,
-                        fullName: `${firstName} ${lastName}`.trim(),
-                        password: generatedPassword,
-                    });
-                    console.log(`[MASIVE][ROW ${processed}] Correo agregado a cola para ${email}`);
-                }
-
-
-                // 3) ➕ Guardar cuotas en `pagos` (normalizado: 1 fila por cuota)
-                const cuotasDet = extractCuotas(row);
-                console.log(`[MASIVE][ROW ${processed}] cuotasDet extraídas`, cuotasDet);
-
-                const cuotasRows = cuotasDet
-                    .map<CuotaDet>((c) => ({
-                        nroPago: c.nroPago,
-                        // si la fecha vino vacía en la cuota, usamos fallback: cuota1Fecha -> fechaInicio -> hoy
-                        fecha: c.fecha ?? cuota1FechaYMD ?? fechaInicioYMD ?? toYMD(new Date()),
-                        metodo: (c.metodo ?? paymentMethod) || 'No especificado',
-                        valor: c.valor ?? null,
-                    }))
-                    // Pagos requiere: fecha, metodo y valor (NOT NULL). Solo insertamos si hay valor y fecha.
-                    .filter((c) => c.valor !== null && c.valor !== undefined && c.fecha);
-
-                console.log(`[MASIVE][ROW ${processed}] cuotasRows (a insertar)`, cuotasRows);
-
-                if (cuotasRows.length > 0) {
-                    // Determinar a qué programa amarrar los pagos
-                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
-
-                    // ✅ Backfill de CUOTAS viejas sin programa (ANTES de insertar nuevas)
-                    if (programaIdForPagos !== null) {
-                        await db
-                            .update(pagos)
-                            .set({ programaId: programaIdForPagos })
-                            .where(and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'cuota'),
-                                isNull(pagos.programaId)
-                            ));
-                    }
-
-                    const nros = cuotasRows.map((c) => c.nroPago);
-
-                    // Borramos SOLO cuotas del mismo programa o las que quedaron sin programa
-                    await db
-                        .delete(pagos)
-                        .where(
-                            and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'cuota'),
-                                inArray(pagos.nroPago, nros),
-                                programaIdForPagos !== null
-                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
-                                    : isNull(pagos.programaId)
-                            )
-                        );
-
-                    await db.insert(pagos).values(
-                        cuotasRows.map((c) => ({
-                            userId: userIdToUse,
-                            programaId: programaIdForPagos,
-                            concepto: 'cuota' as const,
-                            nroPago: c.nroPago,
-                            fecha: c.fecha!,
-                            metodo: (c.metodo ?? 'No especificado') as string,
-                            valor: c.valor!,
-                        }))
-                    );
-                } else {
-                    console.warn(
-                        `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
-                    );
-                }
-
-                if (inscripcionValor !== null && inscripcionValor !== undefined) {
-                    const insFechaStr =
-                        (purchaseDateDate ? toYMD(purchaseDateDate) : null) ?? cuota1FechaStr ?? fechaInicioStr ?? toYMD(new Date());
-
-                    const programaIdForPagos = selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
-
-                    // ✅ Backfill de INSCRIPCIONES viejas sin programa
-                    if (programaIdForPagos !== null) {
-                        await db
-                            .update(pagos)
-                            .set({ programaId: programaIdForPagos })
-                            .where(and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'inscripción'),
-                                isNull(pagos.programaId)
-                            ));
-                    }
-
-                    await db
-                        .delete(pagos)
-                        .where(
-                            and(
-                                eq(pagos.userId, userIdToUse),
-                                eq(pagos.concepto, 'inscripción'),
-                                eq(pagos.nroPago, 0),
-                                programaIdForPagos !== null
-                                    ? or(eq(pagos.programaId, programaIdForPagos), isNull(pagos.programaId))
-                                    : isNull(pagos.programaId)
-                            )
-                        );
-
-                    await db.insert(pagos).values({
-                        userId: userIdToUse,
-                        programaId: programaIdForPagos,
-                        concepto: 'inscripción' as const,
-                        nroPago: 0,
-                        fecha: insFechaStr,
-                        metodo: paymentMethod || 'No especificado',
-                        valor: inscripcionValor,
-                    });
-                }
-
-
-                // 5) ➕ Matricular al programa (si viene el nombre del programa)
-                if (programa?.trim()) {
-                    try {
-                        const programaId = await findSimilarProgram(programa);
-
-
-                        if (programaId) {
-                            // Verificar si ya está matriculado
-                            const existingEnrollment = await db
-                                .select()
-                                .from(enrollmentPrograms)
-                                .where(
-                                    and(
-                                        eq(enrollmentPrograms.userId, userIdToUse),
-                                        eq(enrollmentPrograms.programaId, programaId)
-                                    )
-                                )
-                                .limit(1);
-
-                            if (existingEnrollment.length === 0) {
-                                // Matricular al programa
-                                await db.insert(enrollmentPrograms).values({
-                                    userId: userIdToUse,
-                                    programaId: programaId,
-                                    enrolledAt: new Date(),
-                                    completed: false,
-                                });
-
-                                console.log(`[MASIVE][ROW ${processed}] Matriculado en programa`, {
-                                    programaId,
-                                    programa,
-                                });
-                            } else {
-                                console.log(`[MASIVE][ROW ${processed}] Ya estaba matriculado en el programa`, {
-                                    programaId,
-                                    programa,
-                                });
-                            }
-                        } else {
-                            console.warn(`[MASIVE][ROW ${processed}] No se encontró programa similar a "${programa}"`);
-                        }
-                    } catch (err) {
-                        console.error(`[MASIVE][ROW ${processed}] Error al matricular en programa:`, err);
-                        // No detener el proceso, solo loggear el error
-                    }
-                }
-
-                createdOrSynced.push({
-                    id: userIdToUse,
-                    email,
-                    firstName,
-                    lastName,
-                    isNew: !!clerkUser && existing.length === 0,
-                });
-                void generatedPassword;
-            } catch (err) {
-                console.error(`[MASIVE][ROW ${processed}] ERROR al guardar usuario/pagos`, err);
-                resultados.push({
-                    email,
-                    estado: 'ERROR',
-                    detalle: (err as Error)?.message ?? 'Error desconocido al guardar usuario',
-                });
-            }
-        }
-
-        const summary = {
-            total: resultados.length,
-            guardados: resultados.filter((r) => r.estado === 'GUARDADO').length,
-            yaExiste: resultados.filter((r) => r.estado === 'YA_EXISTE').length,
-            errores: resultados.filter((r) => r.estado === 'ERROR').length,
-            emailErrors: emailErrors.length,
-            omitidosPorCompatibilidad: omitidosPorSinNombre + omitidosPorCliente,
-        };
-
-        console.log('[MASIVE] summary:', summary);
-        // FASE 2: Enviar correos por lotes
-        console.log('✅ Fase 1 completada: Todos los usuarios procesados');
-
-        if (emailQueue.length > 0) {
-            console.log(`\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`);
-            await sendWelcomeEmailsBatch(emailQueue, emailErrors);
-        }
-
-        return NextResponse.json({
-            message: 'OK',
-            summary,
-            resultados,
-            users: createdOrSynced,
-        });
-    } catch (error) {
-        console.error('[MASIVE] ERROR general', error);
-        return NextResponse.json(
-            {
-                error: 'Error al procesar archivo',
-                detalle: (error as Error)?.message ?? 'Error desconocido',
-            },
-            { status: 500 }
-        );
+  try {
+    // auth robusto (tipado con Clerk)
+    const authData = await clerkAuth();
+    const userId: string | null = authData?.userId ?? null;
+
+    // fallback DEV
+    const headerUserId = request.headers.get('x-user-id');
+    const effectiveUserId = userId ?? headerUserId ?? null;
+
+    if (!effectiveUserId) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
-}
 
+    const form = await request.formData();
+    const file = form.get('file');
+    const mappingsJson = form.get('mappings');
+    const previewOnly = form.get('previewOnly') === 'true';
+    // Filas editadas/eliminadas desde el front (opcional)
+    const rowsJson = form.get('rowsJson');
+
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json({ error: 'Archivo no válido' }, { status: 400 });
+    }
+
+    const buf = await (file as Blob).arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+
+    const sheetName = wb.SheetNames?.[0];
+    if (!sheetName) {
+      return NextResponse.json(
+        { error: 'Excel sin hojas válidas' },
+        { status: 400 }
+      );
+    }
+
+    // Parseo robusto del Excel
+    const { headersRowIndex, headers, objects } = extractObjectsFromSheet(
+      wb.Sheets[sheetName]
+    );
+    if (objects.length === 0) {
+      return NextResponse.json({ error: 'Excel vacío' }, { status: 400 });
+    }
+
+    console.log('[MASIVE] Hoja:', sheetName);
+    console.log('[MASIVE] headersRowIndex:', headersRowIndex);
+    console.log('[MASIVE] headers[0..15]:', headers.slice(0, 15));
+    console.log('[MASIVE] total rows detectadas:', objects.length);
+
+    // No filtramos por “Comercial/Asesor”
+    const rowsPorUsuario = objects;
+
+    // Filas SIN nombre → fuera
+    const hasName = (o: Record<string, unknown>) =>
+      !!safeTrim(
+        (o as Record<string, unknown>).Nombres ??
+          (o as Record<string, unknown>).Nombre ??
+          ''
+      );
+    const allowedRows = rowsPorUsuario.filter(hasName);
+
+    const omitidosPorSinNombre = rowsPorUsuario.length - allowedRows.length;
+
+    // Si el cliente envió filas editadas, usamos esas filas
+    let rowsToProcess: Record<string, unknown>[] = allowedRows;
+    let omitidosPorCliente = 0;
+
+    if (rowsJson && typeof rowsJson === 'string') {
+      try {
+        const clientRows = JSON.parse(rowsJson) as Record<string, unknown>[];
+        rowsToProcess = (clientRows || []).filter(hasName);
+        omitidosPorCliente = Math.max(
+          allowedRows.length - rowsToProcess.length,
+          0
+        );
+      } catch {
+        // seguimos con allowedRows
+      }
+    }
+
+    console.log(
+      '[MASIVE] rowsAllowed:',
+      allowedRows.length,
+      'rowsToProcess:',
+      rowsToProcess.length
+    );
+
+    // Preview
+    if (previewOnly) {
+      const autoMappings = autoDetectMappings(headers);
+      console.log('[MASIVE][PREVIEW] autoMappings:', autoMappings);
+      return NextResponse.json({
+        preview: true,
+        columns: headers,
+        autoMappings,
+        detectedHeaderRow: headersRowIndex,
+        rowCount: allowedRows.length,
+        rowsTotal: objects.length,
+        rowsAllowed: allowedRows.length,
+        sampleData: allowedRows,
+      });
+    }
+
+    // Parse mappings recibidos del front
+    const mappings: ColumnMapping[] =
+      mappingsJson && typeof mappingsJson === 'string'
+        ? (JSON.parse(mappingsJson) as ColumnMapping[])
+        : [];
+    const get = (row: Record<string, unknown>, dbField: string) => {
+      const map = mappings.find((m) => m.dbField === dbField);
+      if (map?.excelColumn) return safeTrim(row[map.excelColumn]);
+      return '';
+    };
+
+    console.log('[MASIVE] mappings filtrados:', mappings);
+
+    const resultados: RowResultado[] = [];
+    const createdOrSynced: {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      isNew: boolean;
+    }[] = [];
+
+    const emailQueue: PendingEmail[] = [];
+    const emailErrors: string[] = [];
+
+    let processed = 0;
+
+    // helper para loggear sólo columnas de cuotas/fechas/metodos
+    const pickCuotaLike = (row: Record<string, unknown>) => {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(row)) {
+        const kk = String(k).toLowerCase();
+        if (
+          kk.includes('cuota') ||
+          kk === 'cuota' ||
+          /^cuota\s*\d+/.test(kk) ||
+          kk.startsWith('fecha') ||
+          kk.includes('método') ||
+          kk.includes('metodo') ||
+          kk.includes('metodo de pago') ||
+          kk.includes('método de pago') ||
+          kk.includes('primera cuota')
+        ) {
+          out[k] = v;
+        }
+      }
+      return out;
+    };
+
+    for (const row of rowsToProcess) {
+      processed++;
+      if (processed % 10 === 0) await delay(700);
+
+      const firstName = String(get(row, 'firstName') ?? '');
+      const lastName = String(get(row, 'lastName') ?? '');
+      let email = String(get(row, 'email') ?? '').toLowerCase();
+      // Fallback: si "Correo electrónico" viene vacío, usa el del acudiente/empresa
+      if (!email) {
+        email = safeTrim(
+          (row as Record<string, unknown>)[
+            'Correo de contacto acudiente o empresa'
+          ] ??
+            (row as Record<string, unknown>).acudiente_email ??
+            ''
+        ).toLowerCase();
+      }
+      const phone = String(get(row, 'phone') ?? '');
+      const document = String(get(row, 'document') ?? '');
+
+      if (!firstName) continue;
+
+      if (!lastName || !email) {
+        resultados.push({
+          email: email || '(sin_email)',
+          estado: 'ERROR',
+          detalle: 'Campos obligatorios faltantes (firstName, lastName, email)',
+        });
+        console.warn(`[MASIVE][ROW ${processed}] faltan obligatorios`, {
+          firstName,
+          lastName,
+          email,
+        });
+        continue;
+      }
+      if (!isValidEmail(email)) {
+        resultados.push({ email, estado: 'ERROR', detalle: 'Email inválido' });
+        console.warn(`[MASIVE][ROW ${processed}] email inválido:`, email);
+        continue;
+      }
+
+      // opcionales
+      const address = safeTrim(
+        (row as Record<string, unknown>)['Dirección'] ??
+          (row as Record<string, unknown>).Direccion ??
+          get(row, 'address')
+      );
+      const country = safeTrim(
+        (row as Record<string, unknown>)['País de residencia'] ??
+          (row as Record<string, unknown>)['Pais de residencia'] ??
+          get(row, 'country')
+      );
+      const city = safeTrim(
+        (row as Record<string, unknown>)['Ciudad de residencia'] ??
+          (row as Record<string, unknown>).ciudad ??
+          get(row, 'city')
+      );
+      const birthDateStrRaw = excelToDateString(
+        (row as Record<string, unknown>)['Fecha de nacimiento'] ??
+          get(row, 'birthDate')
+      );
+
+      const nivelEducacion = safeTrim(
+        (row as Record<string, unknown>)['Nivel de educación'] ??
+          (row as Record<string, unknown>)['Nivel Educación'] ??
+          get(row, 'nivelEducacion')
+      );
+      const programa = safeTrim(
+        (row as Record<string, unknown>).Programa ?? get(row, 'programa')
+      );
+      let selectedProgramaId: number | null = null;
+
+      // ✔️ Resolver el programa lo más pronto posible (antes de guardar pagos)
+      if (programa?.trim()) {
+        selectedProgramaId = await findSimilarProgram(programa);
+      }
+
+      const fechaInicioStr = excelToDateString(
+        (row as Record<string, unknown>)['Fecha de inicio'] ??
+          (row as Record<string, unknown>)['FECHA PRIMERA CUOTA'] ??
+          get(row, 'fechaInicio')
+      );
+      const comercial = safeTrim(
+        (row as Record<string, unknown>).Comercial ??
+          (row as Record<string, unknown>).Asesor ??
+          get(row, 'comercial')
+      );
+      const sede = safeTrim(
+        (row as Record<string, unknown>).Sede ?? get(row, 'sede')
+      );
+      const horario = safeTrim(
+        (row as Record<string, unknown>).Horario ?? get(row, 'horario')
+      );
+
+      const numeroCuotas = safeTrim(
+        (row as Record<string, unknown>)['Número de cuotas'] ??
+          (row as Record<string, unknown>)['Numero de cuotas'] ??
+          get(row, 'numeroCuotas')
+      );
+      const pagoInscripcion = safeTrim(
+        (row as Record<string, unknown>)['Pago de inscripción'] ??
+          (row as Record<string, unknown>)['pago de inscripción'] ??
+          get(row, 'pagoInscripcion')
+      );
+      const pagoCuota1 = safeTrim(
+        (row as Record<string, unknown>)['Pago cuota 1'] ??
+          get(row, 'pagoCuota1')
+      );
+      const valorProgramaRaw = safeTrim(
+        (row as Record<string, unknown>)['valor del programa'] ??
+          (row as Record<string, unknown>)['Valor del programa'] ??
+          get(row, 'valorPrograma')
+      );
+      const valorPrograma =
+        valorProgramaRaw && !Number.isNaN(Number(valorProgramaRaw))
+          ? Number(valorProgramaRaw)
+          : null;
+
+      const inscripcionValorRaw = safeTrim(
+        (row as Record<string, unknown>)['Valor inscripción'] ??
+          (row as Record<string, unknown>)['Inscripción valor'] ??
+          (row as Record<string, unknown>)['inscripcion valor'] ??
+          (row as Record<string, unknown>).inscripcion_valor ??
+          get(row, 'inscripcionValor')
+      );
+      const inscripcionValor =
+        inscripcionValorRaw && !Number.isNaN(Number(inscripcionValorRaw))
+          ? Number(inscripcionValorRaw)
+          : null;
+
+      const paymentMethod = safeTrim(
+        (row as Record<string, unknown>)['Método de pago'] ??
+          (row as Record<string, unknown>)['payment method'] ??
+          get(row, 'paymentMethod')
+      );
+      const cuota1FechaStr = excelToDateString(
+        (row as Record<string, unknown>)['Cuota1 fecha'] ??
+          (row as Record<string, unknown>)['CUOTA 1 FECHA'] ??
+          get(row, 'cuota1Fecha')
+      );
+
+      const cuota1Metodo = safeTrim(
+        (row as Record<string, unknown>)['Cuota1 método'] ??
+          (row as Record<string, unknown>)['CUOTA 1 MÉTODO'] ??
+          (row as Record<string, unknown>)['CUOTA 1 METODO'] ??
+          get(row, 'cuota1Metodo')
+      );
+      const cuota1ValorRaw = safeTrim(
+        (row as Record<string, unknown>)['Cuota1 valor'] ??
+          (row as Record<string, unknown>)['CUOTA 1 VALOR'] ??
+          get(row, 'cuota1Valor')
+      );
+      const cuota1Valor =
+        cuota1ValorRaw && !Number.isNaN(Number(cuota1ValorRaw))
+          ? Number(cuota1ValorRaw)
+          : null;
+
+      const inscripcionOrigen = safeTrim(
+        (row as Record<string, unknown>)['Origen de inscripción'] ??
+          (row as Record<string, unknown>).inscripcion_origen ??
+          get(row, 'inscripcionOrigen')
+      );
+      const purchaseDateDate = excelToDateObject(
+        (row as Record<string, unknown>)['Fecha de compra'] ??
+          (row as Record<string, unknown>)['purchase date'] ??
+          get(row, 'purchaseDate')
+      );
+
+      const identificacionTipo = safeTrim(
+        (row as Record<string, unknown>)['Tipo de identificación'] ??
+          (row as Record<string, unknown>).identificacion_tipo ??
+          get(row, 'identificacionTipo')
+      );
+      const identificacionNumero =
+        safeTrim(
+          (row as Record<string, unknown>)['Número identificación'] ??
+            (row as Record<string, unknown>)['Numero identificación'] ??
+            (row as Record<string, unknown>).identificacion_numero ??
+            get(row, 'identificacionNumero')
+        ) || document;
+      const tieneAcudiente = safeTrim(
+        (row as Record<string, unknown>)['Tiene acudiente'] ??
+          (row as Record<string, unknown>).tiene_acudiente ??
+          get(row, 'tieneAcudiente')
+      );
+      const acudienteNombre = safeTrim(
+        (row as Record<string, unknown>)['Acudiente nombre'] ??
+          (row as Record<string, unknown>).acudiente_nombre ??
+          get(row, 'acudienteNombre')
+      );
+      const acudienteContacto = safeTrim(
+        (row as Record<string, unknown>)['Acudiente contacto'] ??
+          (row as Record<string, unknown>).acudiente_contacto ??
+          get(row, 'acudienteContacto')
+      );
+      const acudienteEmail = safeTrim(
+        (row as Record<string, unknown>)['Acudiente email'] ??
+          (row as Record<string, unknown>).acudiente_email ??
+          get(row, 'acudienteEmail')
+      );
+
+      // ✅ NUEVO: Fallback para formato Florencia (si campos estándar vienen vacíos)
+      const tieneAcudienteFinal =
+        tieneAcudiente ||
+        safeTrim((row as Record<string, unknown>)['Acudiente o empresa']);
+      const acudienteNombreFinal =
+        acudienteNombre ||
+        safeTrim(
+          (row as Record<string, unknown>)['Nombre de Acudiente o empresa']
+        );
+      const acudienteContactoFinal =
+        acudienteContacto ||
+        safeTrim(
+          (row as Record<string, unknown>)[
+            'Numero de contacto Acudiente o empresa'
+          ]
+        );
+      const acudienteEmailFinal =
+        acudienteEmail ||
+        safeTrim(
+          (row as Record<string, unknown>)[
+            'Correo de contacto acudiente o empresa'
+          ]
+        );
+
+      console.log(`[MASIVE][ROW ${processed}] base`, {
+        firstName,
+        lastName,
+        email,
+        programa,
+        numeroCuotas,
+        valorPrograma,
+        inscripcionValor,
+      });
+
+      console.log(
+        `[MASIVE][ROW ${processed}] cuota-like fields crudos`,
+        pickCuotaLike(row)
+      );
+
+      try {
+        // 1) Clerk (tolerante cuota agotada)
+        let isNewInClerk = false;
+        let clerkUser: ClerkUser | null = null;
+        let generatedPassword: string | null = null;
+
+        try {
+          const created = await createUser(
+            firstName,
+            lastName,
+            email,
+            'estudiante',
+            'active'
+          );
+          if (created && typeof created === 'object' && 'user' in created) {
+            isNewInClerk = true;
+            clerkUser = created.user as ClerkUser;
+            generatedPassword =
+              'generatedPassword' in created
+                ? ((created as Record<string, unknown>)
+                    .generatedPassword as string)
+                : null;
+          } else {
+            clerkUser = await getClerkUserByEmail(email);
+          }
+        } catch (err) {
+          const msg = (err as Error)?.message ?? '';
+          const quotaExceeded =
+            /user[_\s-]*quota[_\s-]*exceeded|status:\s*403|^\s*403\s*$/i.test(
+              msg
+            );
+          const probablyExists =
+            /already\s*exist|identifier.*in\s*use|email.*taken|409|422/i.test(
+              msg
+            );
+
+          console.warn(`[MASIVE][ROW ${processed}] Clerk error:`, msg);
+
+          if (probablyExists) {
+            clerkUser = await getClerkUserByEmail(email);
+          } else if (quotaExceeded) {
+            clerkUser = null; // seguimos modo local
+          } else {
+            resultados.push({
+              email,
+              estado: 'ERROR',
+              detalle: `Clerk: ${msg || 'error creando usuario'}`,
+            });
+            continue;
+          }
+        }
+
+        // 2) Upsert en BD (tabla users) → aunque no haya clerkUser, seguimos con id local
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        const subscriptionEnd = new Date();
+        subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+        const toYMDorNull = (s?: string | null) =>
+          s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+        const fechaInicioYMD = toYMDorNull(fechaInicioStr);
+        const cuota1FechaYMD = toYMDorNull(cuota1FechaStr);
+
+        const baseSet = {
+          name: `${firstName} ${lastName}`,
+          role: 'estudiante' as const,
+          updatedAt: new Date(),
+          planType: 'Premium' as const,
+          subscriptionStatus: 'active' as const,
+          subscriptionEndDate: subscriptionEnd,
+
+          phone: phone || null,
+          document: document || null,
+
+          address: address || null,
+          country: country || null,
+          city: city || null,
+          birthDate: toYMDorNull(birthDateStrRaw),
+
+          identificacionTipo: identificacionTipo || null,
+          identificacionNumero: identificacionNumero || null,
+          nivelEducacion: nivelEducacion || null,
+
+          programa: programa || null,
+          fechaInicio: fechaInicioYMD ?? null,
+          comercial: comercial || null,
+          sede: sede || null,
+          horario: horario || null,
+
+          numeroCuotas: numeroCuotas || null,
+          pagoInscripcion: pagoInscripcion || null,
+          pagoCuota1: pagoCuota1 || null,
+
+          valorPrograma: valorPrograma ?? null,
+          inscripcionValor: inscripcionValor ?? null,
+          paymentMethod: paymentMethod || null,
+          cuota1Fecha: cuota1FechaYMD,
+          cuota1Metodo: cuota1Metodo || null,
+          cuota1Valor: cuota1Valor ?? null,
+          inscripcionOrigen: inscripcionOrigen || null,
+
+          purchaseDate: purchaseDateDate,
+
+          // ✅ NUEVO: Usar valores finales con fallback
+          tieneAcudiente: tieneAcudienteFinal || null,
+          acudienteNombre: acudienteNombreFinal || null,
+          acudienteContacto: acudienteContactoFinal || null,
+          acudienteEmail: acudienteEmailFinal || null,
+        };
+
+        let userIdToUse =
+          existing.length > 0
+            ? existing[0].id
+            : (clerkUser?.id ?? `local:${email}`);
+
+        if (existing.length > 0) {
+          await db
+            .update(users)
+            .set(baseSet)
+            .where(eq(users.id, existing[0].id));
+          resultados.push({
+            email,
+            estado: 'YA_EXISTE',
+            detalle: 'Actualizado en BD (ya existía)',
+          });
+          console.log(`[MASIVE][ROW ${processed}] user actualizado`, {
+            id: existing[0].id,
+          });
+        } else {
+          await db.insert(users).values({
+            id: userIdToUse,
+            email,
+            createdAt: new Date(),
+            ...baseSet,
+          });
+          resultados.push({ email, estado: 'GUARDADO' });
+          console.log(`[MASIVE][ROW ${processed}] user insertado`, {
+            id: userIdToUse,
+          });
+        }
+
+        try {
+          const subEndIso = subscriptionEnd.toISOString();
+
+          const ok = await updateUserInClerk({
+            userId: userIdToUse,
+            firstName,
+            lastName,
+            role: 'estudiante',
+            status: 'active',
+            planType: 'Premium',
+            permissions: [],
+            subscriptionEndDate: subEndIso,
+          });
+
+          // 🔁 Fallback solo si falló el SDK
+          if (!ok && clerkUser?.id) {
+            const endStr = formatDateTime(subscriptionEnd);
+            await setClerkMetadata(clerkUser.id, {
+              role: 'estudiante',
+              planType: 'Premium',
+              mustChangePassword: true,
+              subscriptionStatus: 'active',
+              subscriptionEndDate: endStr,
+            });
+          }
+        } catch (e) {
+          console.warn(
+            `[MASIVE][ROW ${processed}] No se pudo actualizar metadata en Clerk`,
+            e
+          );
+        }
+
+        // === NUEVO: asegurar existencia en Clerk y migrar id local->Clerk si aplica ===
+        try {
+          // 1) Si todavía no tenemos clerkUser, reintentar: buscar por email y si no existe, crearlo.
+          if (!clerkUser) {
+            let fetched = await getClerkUserByEmail(email);
+            if (!fetched) {
+              try {
+                const created = await createUser(
+                  firstName,
+                  lastName,
+                  email,
+                  'estudiante',
+                  'active'
+                );
+                if (
+                  created &&
+                  typeof created === 'object' &&
+                  'user' in created
+                ) {
+                  fetched = created.user as ClerkUser;
+                }
+              } catch (err) {
+                console.warn(
+                  `[MASIVE][ROW ${processed}] No se pudo crear usuario en Clerk (post-upsert BD):`,
+                  (err as Error)?.message ?? err
+                );
+              }
+            }
+            clerkUser = fetched;
+          }
+
+          // 2) Si el usuario ya EXISTÍA en BD con id "local:..." y ahora ya tenemos clerkUser,
+          //    migrar el PK y las referencias (pagos, enrollmentPrograms) en una transacción segura.
+          if (
+            existing.length > 0 &&
+            clerkUser &&
+            existing[0].id?.startsWith?.('local:') &&
+            existing[0].id !== clerkUser.id
+          ) {
+            const oldId = existing[0].id;
+            const newId = clerkUser.id;
+
+            // Evitar colisión si ya hubiese un user con ese newId en BD.
+            const clash = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, newId))
+              .limit(1);
+            if (clash.length === 0) {
+              await db.transaction(async (tx) => {
+                // mover hijos primero
+                await tx
+                  .update(pagos)
+                  .set({ userId: newId })
+                  .where(eq(pagos.userId, oldId));
+                await tx
+                  .update(enrollmentPrograms)
+                  .set({ userId: newId })
+                  .where(eq(enrollmentPrograms.userId, oldId));
+                // ahora actualizar el PK en users
+                await tx
+                  .update(users)
+                  .set({ id: newId })
+                  .where(eq(users.id, oldId));
+              });
+              console.log(
+                `[MASIVE][ROW ${processed}] Migrado userId local -> Clerk`,
+                { oldId, newId }
+              );
+              // A partir de aquí, todos los inserts/updates deben usar el nuevo id
+              userIdToUse = newId;
+            } else {
+              console.warn(
+                `[MASIVE][ROW ${processed}] No se migra id local->Clerk: ya existe un usuario con id Clerk en BD`,
+                { newId }
+              );
+            }
+          }
+        } catch (err) {
+          console.warn(
+            `[MASIVE][ROW ${processed}] No se pudo asegurar Clerk/migración de id`,
+            err
+          );
+        }
+
+        // Acumular correos para envío por lotes (NO enviar aquí)
+        if (isNewInClerk && generatedPassword) {
+          emailQueue.push({
+            email,
+            fullName: `${firstName} ${lastName}`.trim(),
+            password: generatedPassword,
+          });
+          console.log(
+            `[MASIVE][ROW ${processed}] Correo agregado a cola para ${email}`
+          );
+        }
+
+        // 3) ➕ Guardar cuotas en `pagos` (normalizado: 1 fila por cuota)
+        const cuotasDet = extractCuotas(row);
+        console.log(
+          `[MASIVE][ROW ${processed}] cuotasDet extraídas`,
+          cuotasDet
+        );
+
+        const cuotasRows = cuotasDet
+          .map<CuotaDet>((c) => ({
+            nroPago: c.nroPago,
+            // si la fecha vino vacía en la cuota, usamos fallback: cuota1Fecha -> fechaInicio -> hoy
+            fecha:
+              c.fecha ?? cuota1FechaYMD ?? fechaInicioYMD ?? toYMD(new Date()),
+            metodo: (c.metodo ?? paymentMethod) || 'No especificado',
+            valor: c.valor ?? null,
+          }))
+          // Pagos requiere: fecha, metodo y valor (NOT NULL). Solo insertamos si hay valor y fecha.
+          .filter((c) => c.valor !== null && c.valor !== undefined && c.fecha);
+
+        console.log(
+          `[MASIVE][ROW ${processed}] cuotasRows (a insertar)`,
+          cuotasRows
+        );
+
+        if (cuotasRows.length > 0) {
+          // Determinar a qué programa amarrar los pagos
+          const programaIdForPagos =
+            selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+          // ✅ Backfill de CUOTAS viejas sin programa (ANTES de insertar nuevas)
+          if (programaIdForPagos !== null) {
+            await db
+              .update(pagos)
+              .set({ programaId: programaIdForPagos })
+              .where(
+                and(
+                  eq(pagos.userId, userIdToUse),
+                  eq(pagos.concepto, 'cuota'),
+                  isNull(pagos.programaId)
+                )
+              );
+          }
+
+          const nros = cuotasRows.map((c) => c.nroPago);
+
+          // Borramos SOLO cuotas del mismo programa o las que quedaron sin programa
+          await db
+            .delete(pagos)
+            .where(
+              and(
+                eq(pagos.userId, userIdToUse),
+                eq(pagos.concepto, 'cuota'),
+                inArray(pagos.nroPago, nros),
+                programaIdForPagos !== null
+                  ? or(
+                      eq(pagos.programaId, programaIdForPagos),
+                      isNull(pagos.programaId)
+                    )
+                  : isNull(pagos.programaId)
+              )
+            );
+
+          await db.insert(pagos).values(
+            cuotasRows.map((c) => ({
+              userId: userIdToUse,
+              programaId: programaIdForPagos,
+              concepto: 'cuota' as const,
+              nroPago: c.nroPago,
+              fecha: c.fecha!,
+              metodo: (c.metodo ?? 'No especificado') as string,
+              valor: c.valor!,
+            }))
+          );
+        } else {
+          console.warn(
+            `[MASIVE][ROW ${processed}] NO se insertaron cuotas (faltó valor/fecha en todas).`
+          );
+        }
+
+        if (inscripcionValor !== null && inscripcionValor !== undefined) {
+          const insFechaStr =
+            (purchaseDateDate ? toYMD(purchaseDateDate) : null) ??
+            cuota1FechaStr ??
+            fechaInicioStr ??
+            toYMD(new Date());
+
+          const programaIdForPagos =
+            selectedProgramaId ?? (await getLastUserProgramaId(userIdToUse));
+
+          // ✅ Backfill de INSCRIPCIONES viejas sin programa
+          if (programaIdForPagos !== null) {
+            await db
+              .update(pagos)
+              .set({ programaId: programaIdForPagos })
+              .where(
+                and(
+                  eq(pagos.userId, userIdToUse),
+                  eq(pagos.concepto, 'inscripción'),
+                  isNull(pagos.programaId)
+                )
+              );
+          }
+
+          await db
+            .delete(pagos)
+            .where(
+              and(
+                eq(pagos.userId, userIdToUse),
+                eq(pagos.concepto, 'inscripción'),
+                eq(pagos.nroPago, 0),
+                programaIdForPagos !== null
+                  ? or(
+                      eq(pagos.programaId, programaIdForPagos),
+                      isNull(pagos.programaId)
+                    )
+                  : isNull(pagos.programaId)
+              )
+            );
+
+          await db.insert(pagos).values({
+            userId: userIdToUse,
+            programaId: programaIdForPagos,
+            concepto: 'inscripción' as const,
+            nroPago: 0,
+            fecha: insFechaStr,
+            metodo: paymentMethod || 'No especificado',
+            valor: inscripcionValor,
+          });
+        }
+
+        // 5) ➕ Matricular al programa (si viene el nombre del programa)
+        if (programa?.trim()) {
+          try {
+            const programaId = await findSimilarProgram(programa);
+
+            if (programaId) {
+              // Verificar si ya está matriculado
+              const existingEnrollment = await db
+                .select()
+                .from(enrollmentPrograms)
+                .where(
+                  and(
+                    eq(enrollmentPrograms.userId, userIdToUse),
+                    eq(enrollmentPrograms.programaId, programaId)
+                  )
+                )
+                .limit(1);
+
+              if (existingEnrollment.length === 0) {
+                // Matricular al programa
+                await db.insert(enrollmentPrograms).values({
+                  userId: userIdToUse,
+                  programaId: programaId,
+                  enrolledAt: new Date(),
+                  completed: false,
+                });
+
+                console.log(
+                  `[MASIVE][ROW ${processed}] Matriculado en programa`,
+                  {
+                    programaId,
+                    programa,
+                  }
+                );
+              } else {
+                console.log(
+                  `[MASIVE][ROW ${processed}] Ya estaba matriculado en el programa`,
+                  {
+                    programaId,
+                    programa,
+                  }
+                );
+              }
+            } else {
+              console.warn(
+                `[MASIVE][ROW ${processed}] No se encontró programa similar a "${programa}"`
+              );
+            }
+          } catch (err) {
+            console.error(
+              `[MASIVE][ROW ${processed}] Error al matricular en programa:`,
+              err
+            );
+            // No detener el proceso, solo loggear el error
+          }
+        }
+
+        createdOrSynced.push({
+          id: userIdToUse,
+          email,
+          firstName,
+          lastName,
+          isNew: !!clerkUser && existing.length === 0,
+        });
+        void generatedPassword;
+      } catch (err) {
+        console.error(
+          `[MASIVE][ROW ${processed}] ERROR al guardar usuario/pagos`,
+          err
+        );
+        resultados.push({
+          email,
+          estado: 'ERROR',
+          detalle:
+            (err as Error)?.message ?? 'Error desconocido al guardar usuario',
+        });
+      }
+    }
+
+    const summary = {
+      total: resultados.length,
+      guardados: resultados.filter((r) => r.estado === 'GUARDADO').length,
+      yaExiste: resultados.filter((r) => r.estado === 'YA_EXISTE').length,
+      errores: resultados.filter((r) => r.estado === 'ERROR').length,
+      emailErrors: emailErrors.length,
+      omitidosPorCompatibilidad: omitidosPorSinNombre + omitidosPorCliente,
+    };
+
+    console.log('[MASIVE] summary:', summary);
+    // FASE 2: Enviar correos por lotes
+    console.log('✅ Fase 1 completada: Todos los usuarios procesados');
+
+    if (emailQueue.length > 0) {
+      console.log(
+        `\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`
+      );
+      await sendWelcomeEmailsBatch(emailQueue, emailErrors);
+    }
+
+    return NextResponse.json({
+      message: 'OK',
+      summary,
+      resultados,
+      users: createdOrSynced,
+    });
+  } catch (error) {
+    console.error('[MASIVE] ERROR general', error);
+    return NextResponse.json(
+      {
+        error: 'Error al procesar archivo',
+        detalle: (error as Error)?.message ?? 'Error desconocido',
+      },
+      { status: 500 }
+    );
+  }
+}
 
 // ====== GET: plantilla ======
 export function GET() {
-    try {
-        const template = [
-            {
-                Nombres: 'Ana',
-                Apellidos: 'Ramírez',
-                'Correo electrónico': 'ana.ramirez@example.com',
-                'Número de teléfono': '3001234567',
-                'Numero de identificación': '1234567890',
-                'País de residencia': 'Colombia',
-                'Ciudad de residencia': 'Bogotá',
-                'Fecha de nacimiento': '1999-07-15',
+  try {
+    const template = [
+      {
+        Nombres: 'Ana',
+        Apellidos: 'Ramírez',
+        'Correo electrónico': 'ana.ramirez@example.com',
+        'Número de teléfono': '3001234567',
+        'Numero de identificación': '1234567890',
+        'País de residencia': 'Colombia',
+        'Ciudad de residencia': 'Bogotá',
+        'Fecha de nacimiento': '1999-07-15',
 
-                Programa: 'Diseño',
-                'Fecha de inicio': '2025-02-01',
-                Comercial: 'Tu Nombre',
-                Sede: 'Norte',
-                Horario: 'Mañana',
+        Programa: 'Diseño',
+        'Fecha de inicio': '2025-02-01',
+        Comercial: 'Tu Nombre',
+        Sede: 'Norte',
+        Horario: 'Mañana',
 
-                'Numero de cuotas': '10',
-                'Pago de inscripción': 'Sí',
-                'Pago cuota 1': 'No',
-                'valor del programa': 1200000,
+        'Numero de cuotas': '10',
+        'Pago de inscripción': 'Sí',
+        'Pago cuota 1': 'No',
+        'valor del programa': 1200000,
 
-                'Valor inscripción': 200000,
-                'Método de pago': 'Tarjeta',
-                'Cuota1 fecha': '2025-03-01',
-                'Cuota1 método': 'Transferencia',
-                'Cuota1 valor': 300000,
-                'Origen de inscripción': 'Web',
-                'Fecha de compra': '2025-02-10',
+        'Valor inscripción': 200000,
+        'Método de pago': 'Tarjeta',
+        'Cuota1 fecha': '2025-03-01',
+        'Cuota1 método': 'Transferencia',
+        'Cuota1 valor': 300000,
+        'Origen de inscripción': 'Web',
+        'Fecha de compra': '2025-02-10',
 
-                'Tipo de identificación': 'CC',
-                'Acudiente nombre': '',
-                'Acudiente contacto': '',
-                'Acudiente email': '',
+        'Tipo de identificación': 'CC',
+        'Acudiente nombre': '',
+        'Acudiente contacto': '',
+        'Acudiente email': '',
 
-                // Ejemplos de cuotas adicionales:
-                'Cuota 2 fecha': '2025-04-01',
-                'Cuota 2 método': 'Transferencia',
-                'Cuota 2 valor': 300000,
-                'Cuota 3 fecha': '2025-05-01',
-                'Cuota 3 método': 'Tarjeta',
-                'Cuota 3 valor': 300000,
-            },
-        ];
+        // Ejemplos de cuotas adicionales:
+        'Cuota 2 fecha': '2025-04-01',
+        'Cuota 2 método': 'Transferencia',
+        'Cuota 2 valor': 300000,
+        'Cuota 3 fecha': '2025-05-01',
+        'Cuota 3 método': 'Tarjeta',
+        'Cuota 3 valor': 300000,
+      },
+    ];
 
-        const ws = XLSX.utils.json_to_sheet(template);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
 
-        const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+    const buffer = XLSX.write(wb, {
+      bookType: 'xlsx',
+      type: 'array',
+    }) as ArrayBuffer;
 
-        return new NextResponse(buffer, {
-            headers: {
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition': 'attachment; filename=plantilla_usuarios_v2.xlsx',
-            },
-        });
-    } catch {
-        return NextResponse.json({ error: 'No se pudo generar la plantilla' }, { status: 500 });
-    }
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition':
+          'attachment; filename=plantilla_usuarios_v2.xlsx',
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: 'No se pudo generar la plantilla' },
+      { status: 500 }
+    );
+  }
 }

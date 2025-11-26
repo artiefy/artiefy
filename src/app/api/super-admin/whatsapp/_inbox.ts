@@ -47,7 +47,7 @@ export function clearInbox() {
 // ✅ NUEVA: Filtra inbox por sesión
 export function getInboxBySession(sessionName?: string): InboxItem[] {
   if (!sessionName) return inbox;
-  return inbox.filter(item => item.session === sessionName);
+  return inbox.filter((item) => item.session === sessionName);
 }
 
 // ✅ NUEVA: Consulta BD para último mensaje entrante
@@ -81,9 +81,13 @@ export async function getLastInboundFromDB(
 }
 
 // Devuelve el último mensaje entrante de ese wa_id desde memoria (inmediato)
-export function getLastInbound(waId: string, session?: string): InboxItem | undefined {
+export function getLastInbound(
+  waId: string,
+  session?: string
+): InboxItem | undefined {
   return inbox.find(
-    (m) => m.direction === 'inbound' &&
+    (m) =>
+      m.direction === 'inbound' &&
       m.from === waId &&
       (!session || m.session === session)
   );
@@ -100,7 +104,12 @@ export async function isIn24hWindow(
   if (memoryLast) {
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     const inWindow = now - memoryLast < TWENTY_FOUR_HOURS;
-    console.log('[WA] Ventana 24h (memoria):', { waId, session, memoryLast, inWindow });
+    console.log('[WA] Ventana 24h (memoria):', {
+      waId,
+      session,
+      memoryLast,
+      inWindow,
+    });
     return inWindow;
   }
 
@@ -113,6 +122,11 @@ export async function isIn24hWindow(
 
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
   const inWindow = now - dbLast.timestamp < TWENTY_FOUR_HOURS;
-  console.log('[WA] Ventana 24h (BD):', { waId, session, dbTimestamp: dbLast.timestamp, inWindow });
+  console.log('[WA] Ventana 24h (BD):', {
+    waId,
+    session,
+    dbTimestamp: dbLast.timestamp,
+    inWindow,
+  });
   return inWindow;
 }

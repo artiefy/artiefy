@@ -64,7 +64,9 @@ const getDaysOfWeek = (group: UIMeeting[]) => {
   return Array.from(new Set(days)).join(', ');
 };
 
-export const ScheduledMeetingsList = ({ meetings }: ScheduledMeetingsListProps) => {
+export const ScheduledMeetingsList = ({
+  meetings,
+}: ScheduledMeetingsListProps) => {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
 
@@ -105,7 +107,10 @@ export const ScheduledMeetingsList = ({ meetings }: ScheduledMeetingsListProps) 
       for (const meeting of group) {
         const res = await fetch('/api/super-admin/teams/delete', {
           method: 'DELETE',
-          body: JSON.stringify({ id: meeting.id, video_key: meeting.video_key }),
+          body: JSON.stringify({
+            id: meeting.id,
+            video_key: meeting.video_key,
+          }),
           headers: { 'Content-Type': 'application/json' },
         });
 
@@ -309,7 +314,7 @@ export const ScheduledMeetingsList = ({ meetings }: ScheduledMeetingsListProps) 
           <div className="relative w-[90%] max-w-3xl rounded-lg bg-[#111827] p-6 shadow-xl">
             <button
               onClick={() => setVideoToShow(null)}
-              className="absolute right-3 top-3 text-white hover:text-red-400"
+              className="absolute top-3 right-3 text-white hover:text-red-400"
               aria-label="Cerrar video"
               type="button"
             >

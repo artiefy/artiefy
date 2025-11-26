@@ -108,12 +108,10 @@ export async function POST(request: Request) {
               planType, // ⬅ usa el planType del body
               mustChangePassword: true,
               subscriptionStatus: 'active',
-              status: 'active',                // ⬅ compat
+              status: 'active', // ⬅ compat
               subscriptionEndDate: formattedDate,
             },
           });
-
-
         })
       );
 

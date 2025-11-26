@@ -45,13 +45,16 @@ function pickNearestByCreatedAt(videos: VideoIdxItem[], targetMs: number) {
 }
 
 // (opcional) nombre “parecido”
-function looseMatchName(videoName: string | undefined, classTitle: string): boolean {
+function looseMatchName(
+  videoName: string | undefined,
+  classTitle: string
+): boolean {
   if (!videoName) return true; // si no hay nombre no bloqueamos
   const vn = videoName.toLowerCase();
   const tn = classTitle.toLowerCase();
   // prueba simple: alguna palabra “larga” del título está en el nombre del video
-  const tokens = tn.split(/\s+/).filter(w => w.length >= 5);
-  return tokens.some(t => vn.includes(t));
+  const tokens = tn.split(/\s+/).filter((w) => w.length >= 5);
+  return tokens.some((t) => vn.includes(t));
 }
 
 export async function GET(req: Request) {
@@ -59,7 +62,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const courseId = Number(searchParams.get('courseId'));
     if (!courseId) {
-      return NextResponse.json({ error: 'courseId requerido' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'courseId requerido' },
+        { status: 400 }
+      );
     }
 
     // 1) leemos clases de BD
@@ -77,7 +83,10 @@ export async function GET(req: Request) {
     if (!res.ok) {
       const text = await res.text();
       console.error('❌ /teams/video fallo:', res.status, text);
-      return NextResponse.json({ error: 'No se pudo obtener videos' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'No se pudo obtener videos' },
+        { status: 500 }
+      );
     }
 
     const raw = (await res.json()) as { videos?: VideoIdxItem[] };
@@ -90,15 +99,16 @@ export async function GET(req: Request) {
       const targetMs = toMs(mt.startDateTime as unknown as string);
 
       const sameMeeting = allVideos.filter((v) => v.meetingId === mt.meetingId);
-      const usedSet =
-        usedByMeeting.get(mt.meetingId) ?? new Set<string>();
+      const usedSet = usedByMeeting.get(mt.meetingId) ?? new Set<string>();
 
       // descarta videos ya usados para este meetingId
-      const available = sameMeeting.filter(v => !usedSet.has(v.videoKey));
+      const available = sameMeeting.filter((v) => !usedSet.has(v.videoKey));
 
       let chosen: VideoIdxItem | undefined;
       if (available.length) {
-        const nameOk = available.filter(v => looseMatchName(v.name, mt.title));
+        const nameOk = available.filter((v) =>
+          looseMatchName(v.name, mt.title)
+        );
         const pool = nameOk.length ? nameOk : available;
         const { best } = pickNearestByCreatedAt(pool, targetMs);
         chosen = best;
@@ -118,12 +128,12 @@ export async function GET(req: Request) {
       };
     });
 
-
     // 4) ordenado por fecha y devuelto
-    populated.sort((a, b) =>
-      toMs(a.startDateTime as unknown as string) - toMs(b.startDateTime as unknown as string)
+    populated.sort(
+      (a, b) =>
+        toMs(a.startDateTime as unknown as string) -
+        toMs(b.startDateTime as unknown as string)
     );
-
 
     return NextResponse.json({ meetings: populated });
   } catch (e) {
