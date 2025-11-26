@@ -597,7 +597,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
             behavior: 'smooth',
             block: 'end',
           });
-          inputRef.current?.focus();
         } catch {
           // noop
         }
@@ -1764,7 +1763,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         setProcessingQuery(false);
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-          setTimeout(() => inputRef.current?.focus(), 0);
         }, 50);
         return;
       }
@@ -1795,7 +1793,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         setProcessingQuery(false);
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-          setTimeout(() => inputRef.current?.focus(), 0);
         }, 50);
         setTimeout(() => {
           const newUserMessage = {
@@ -2098,12 +2095,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   }, []);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen, initialSearchQuery]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -2316,7 +2307,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         { id: Date.now(), text: '¡Cuéntame tu nueva idea!', sender: 'bot' },
       ]);
       // NUEVO: enfocar de inmediato el input para escribir la idea
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
     if (action === 'contact_support') {
@@ -2349,7 +2340,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2363,7 +2354,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2377,7 +2368,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2391,7 +2382,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2416,7 +2407,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2430,7 +2421,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -3263,9 +3254,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 isDesktop
                   ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
-                      top: viewportOffsetTop,
-                      bottom: 'auto',
+                      top: 0,
                       height: viewportHeight ? `${viewportHeight}px` : '100dvh',
+                      paddingTop:
+                        viewportOffsetTop > 0
+                          ? `${viewportOffsetTop}px`
+                          : undefined,
                     }
               }
             >

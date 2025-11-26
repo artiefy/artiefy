@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -99,6 +99,17 @@ export const ChatMessages: React.FC<ChatProps> = ({
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
+  const handleBackgroundPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const inputEl = actualInputRef.current;
+      if (!inputEl) return;
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target === inputEl || inputEl.contains(target)) return;
+      inputEl.blur();
+    },
+    [actualInputRef]
+  );
 
   const { user } = useUser();
 
@@ -339,7 +350,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden">
-      <div className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5">
+      <div
+        className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5"
+        onPointerDown={handleBackgroundPointerDown}
+      >
         <button
           type="button"
           onClick={() => {
@@ -358,7 +372,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
         </button>
       </div>
 
-      <div className={bodyClasses}>
+      <div className={bodyClasses} onPointerDown={handleBackgroundPointerDown}>
         {messages.map((message, idx) =>
           message.sender === 'bot' && message.text === '' ? null : (
             <div
