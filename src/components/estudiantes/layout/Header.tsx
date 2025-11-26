@@ -483,8 +483,8 @@ export function Header({
               </div>
             )}
           </div>
-          <div className="relative flex w-full items-center md:hidden">
-            <div className="mx-auto shrink-0">
+          <div className="relative flex w-full items-center justify-between md:hidden">
+            <div className="shrink-0">
               <Link href="/estudiantes">
                 <div className="relative size-[100px] md:size-[150px]">
                   <Image
@@ -498,7 +498,7 @@ export function Header({
                 </div>
               </Link>
             </div>
-            <label className="hamburger absolute right-3 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
+            <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
               <input
                 type="checkbox"
                 checked={mobileMenuOpen}
