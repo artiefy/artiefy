@@ -548,8 +548,27 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           // noop
         }
       }, 50);
+
+      // Si el chat es nuevo (solo mensaje de bienvenida y botones), reduce el espacio extra
+      if (
+        messages.length === 1 &&
+        messages[0].sender === 'bot' &&
+        messages[0].buttons &&
+        !inputText
+      ) {
+        const chatContainer = chatContainerRef.current;
+        if (chatContainer) {
+          chatContainer.style.paddingBottom = '16px'; // menos espacio entre menú y input
+        }
+      }
+    } else {
+      // Restablece el padding si no está el teclado abierto
+      const chatContainer = chatContainerRef.current;
+      if (chatContainer) {
+        chatContainer.style.paddingBottom = '';
+      }
     }
-  }, [isOpen, isKeyboardOpen, viewportHeight]);
+  }, [isOpen, isKeyboardOpen, viewportHeight, messages, inputText]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {
@@ -3251,6 +3270,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         }
                         onDeleteHistory={handleDeleteHistory}
                         onBotButtonClick={handleBotButtonClick}
+                        compactWelcome={
+                          !isDesktop &&
+                          isKeyboardOpen &&
+                          messages.length === 1 &&
+                          messages[0].sender === 'bot' &&
+                          !!messages[0].buttons
+                        }
                       />
                     ) : chatMode.status && isSignedIn && chatMode.idChat ? (
                       <ChatMessages
@@ -3299,6 +3325,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         }
                         onDeleteHistory={handleDeleteHistory}
                         onBotButtonClick={handleBotButtonClick}
+                        compactWelcome={
+                          !isDesktop &&
+                          isKeyboardOpen &&
+                          messages.length === 1 &&
+                          messages[0].sender === 'bot' &&
+                          !!messages[0].buttons
+                        }
                       />
                     ) : (
                       chatMode.status &&

@@ -70,6 +70,7 @@ interface ChatProps {
   onDeleteHistory?: (
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
+  compactWelcome?: boolean;
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -95,6 +96,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   ),
   onBotButtonClick,
   onDeleteHistory,
+  compactWelcome,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
@@ -353,15 +355,15 @@ export const ChatMessages: React.FC<ChatProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4 pb-0">
+      <div
+        className={`relative z-[3] flex-1 overflow-y-auto ${compactWelcome ? 'flex flex-col justify-end pt-0 pb-6' : 'p-4 pb-0'}`}
+      >
         {messages.map((message, idx) =>
           // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
           message.sender === 'bot' && message.text === '' ? null : (
             <div
               key={message.id}
-              className={`flex ${
-                message.sender === 'user' ? 'justify-end' : 'justify-start'
-              } mb-4`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-2' : 'mb-2'}`}
             >
               <div
                 className={`flex max-w-[80%] items-start space-x-2 ${
@@ -394,7 +396,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   {renderMessage(message, idx)}
                   {/* Renderizado de botones del menú del bot IA, con clase especial para móvil */}
                   {message.buttons && message.sender === 'bot' && (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {message.buttons.map((btn, bidx) => (
                         <button
                           key={bidx}
