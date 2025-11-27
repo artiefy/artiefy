@@ -65,62 +65,126 @@ export default async function CertificatesListPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {userCertificates.map((certificate) => (
-              <Card
-                key={certificate.id}
-                className="overflow-hidden transition-all duration-300 hover:shadow-lg"
-              >
-                <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white">
-                  <div className="flex items-center gap-2">
-                    <PiCertificate className="h-5 w-5 text-white" />
-                    <CardTitle className="line-clamp-2">
-                      {certificate.course?.title ??
-                        certificate.programa?.title ??
-                        'Certificado'}
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="mb-4 text-sm">
-                    <div className="mb-1 flex justify-between">
-                      <span className="font-medium">Nota obtenida:</span>
-                      <span className="font-bold">
-                        {certificate.grade.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="mb-1 flex justify-between">
-                      <span className="font-medium">Fecha emisión:</span>
-                      <span>
-                        {new Date(certificate.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-center">
-                    {certificate.courseId ? (
-                      <Link
-                        href={`/estudiantes/certificados/${certificate.courseId}`}
-                        className="flex justify-center"
+          <>
+            {/* Certificados de Cursos */}
+            {userCertificates.filter((c) => c.courseId).length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-primary mb-2 text-xl font-bold">
+                  Certificados de Cursos
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {userCertificates
+                    .filter((c) => c.courseId)
+                    .map((certificate) => (
+                      <Card
+                        key={certificate.id}
+                        className="poster-certificado mx-auto flex min-h-[420px] max-w-xs flex-col items-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-blue-900 via-[#01142B] to-cyan-900 p-0 shadow-xl"
                       >
-                        <button className="certificacion relative mx-auto text-base font-bold">
-                          <span className="relative z-10">Ver Certificado</span>
-                        </button>
-                      </Link>
-                    ) : certificate.programaId ? (
-                      <Link
-                        href={`/estudiantes/certificados/programa/${certificate.programaId}`}
-                        className="flex justify-center"
+                        <CardHeader className="flex w-full flex-col items-center rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white">
+                          <PiCertificate className="mb-2 h-12 w-12 text-white" />
+                          <CardTitle className="line-clamp-3 text-center text-lg font-bold">
+                            {certificate.course?.title ?? 'Certificado'}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex w-full flex-1 flex-col items-center justify-between p-6">
+                          <div className="mb-4 w-full text-base text-white">
+                            <div className="mb-2 flex justify-between">
+                              <span className="font-medium text-white">
+                                Resultado obtenido:
+                              </span>
+                              <span className="font-bold text-white">
+                                {certificate.grade.toFixed(1)}
+                              </span>
+                            </div>
+                            <div className="mb-2 flex justify-between">
+                              <span className="font-medium text-white">
+                                Fecha emisión:
+                              </span>
+                              <span className="text-white">
+                                {new Date(
+                                  certificate.createdAt
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex w-full justify-center">
+                            <Link
+                              href={`/estudiantes/certificados/${certificate.courseId}`}
+                              className="flex w-full justify-center"
+                            >
+                              <button className="certificado-modal-button w-full">
+                                <span className="relative z-10">
+                                  Ver Certificado
+                                </span>
+                              </button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+            {/* Certificados de Programas */}
+            {userCertificates.filter((c) => c.programaId).length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-primary mb-2 text-xl font-bold">
+                  Certificados de Programas
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {userCertificates
+                    .filter((c) => c.programaId)
+                    .map((certificate) => (
+                      <Card
+                        key={certificate.id}
+                        className="poster-certificado mx-auto flex min-h-[420px] max-w-xs flex-col items-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-blue-900 via-[#01142B] to-cyan-900 p-0 shadow-xl"
                       >
-                        <button className="certificacion relative mx-auto text-base font-bold">
-                          <span className="relative z-10">Ver Certificado</span>
-                        </button>
-                      </Link>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                        <CardHeader className="flex w-full flex-col items-center rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white">
+                          <PiCertificate className="mb-2 h-12 w-12 text-white" />
+                          <CardTitle className="line-clamp-3 text-center text-lg font-bold">
+                            {certificate.programa?.title ?? 'Certificado'}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex w-full flex-1 flex-col items-center justify-between p-6">
+                          <div className="mb-4 w-full text-base text-white">
+                            <div className="mb-2 flex justify-between">
+                              <span className="font-medium text-white">
+                                Resultado obtenido:
+                              </span>
+                              <span className="font-bold text-white">
+                                {certificate.grade.toFixed(1)}
+                              </span>
+                            </div>
+                            <div className="mb-2 flex justify-between">
+                              <span className="font-medium text-white">
+                                Fecha emisión:
+                              </span>
+                              <span className="text-white">
+                                {new Date(
+                                  certificate.createdAt
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex w-full justify-center">
+                            <Link
+                              href={`/estudiantes/certificados/programa/${certificate.programaId}`}
+                              className="flex w-full justify-center"
+                            >
+                              <button className="certificado-modal-button w-full">
+                                <span className="relative z-10">
+                                  Ver Certificado
+                                </span>
+                              </button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
       <Footer />
