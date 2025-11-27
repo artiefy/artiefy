@@ -65,17 +65,11 @@ function formatDuration(minutes: number): string {
 // Nuevo formateador para el estilo solicitado
 function formatMeetingDateTimeModern(startDate: string, endDate: string) {
   if (!startDate) return '';
-  const matchStart =
-    /^([0-9]{4})-([0-9]{2})-([0-9]{2})[T\s]([0-9]{2}):([0-9]{2})/.exec(
-      startDate
-    );
-  const matchEnd = endDate
-    ? /^([0-9]{4})-([0-9]{2})-([0-9]{2})[T\s]([0-9]{2}):([0-9]{2})/.exec(
-        endDate
-      )
-    : null;
-  if (!matchStart) return startDate;
-  const [, , month, day, hour, minute] = matchStart;
+  // Ajustar hora restando 5 horas manualmente
+  const start = new Date(startDate);
+  start.setHours(start.getHours() - 5);
+  const end = endDate ? new Date(endDate) : null;
+  if (end) end.setHours(end.getHours() - 5);
   const meses = [
     'Ene',
     'Feb',
@@ -90,21 +84,20 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
     'Nov',
     'Dic',
   ];
-  const mesNombre = meses[parseInt(month, 10) - 1];
+  const mesNombre = meses[start.getMonth()];
+  const day = start.getDate();
   // Hora inicio
-  const h = parseInt(hour, 10);
-  let hour12 = h % 12;
+  let hour12 = start.getHours() % 12;
   if (hour12 === 0) hour12 = 12;
-  const ampm = h < 12 ? 'a. m.' : 'p. m.';
-  const minStr = minute.padStart(2, '0');
+  const ampm = start.getHours() < 12 ? 'a. m.' : 'p. m.';
+  const minStr = String(start.getMinutes()).padStart(2, '0');
   // Hora fin
   let horaFin = '';
-  if (matchEnd) {
-    const h2 = parseInt(matchEnd[4], 10);
-    let hour12_2 = h2 % 12;
+  if (end) {
+    let hour12_2 = end.getHours() % 12;
     if (hour12_2 === 0) hour12_2 = 12;
-    const ampm2 = h2 < 12 ? 'a. m.' : 'p. m.';
-    const minStr2 = matchEnd[5].padStart(2, '0');
+    const ampm2 = end.getHours() < 12 ? 'a. m.' : 'p. m.';
+    const minStr2 = String(end.getMinutes()).padStart(2, '0');
     horaFin = `${hour12_2}:${minStr2} ${ampm2}`;
   }
   return (
@@ -112,7 +105,7 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
       <div className="block sm:hidden">
         <span className="block text-sm font-bold text-yellow-400">
-          {mesNombre} {parseInt(day, 10)},
+          {mesNombre} {String(day)},
         </span>
         <span className="block text-sm font-bold text-cyan-400">
           {hour12}:{minStr} {ampm}
@@ -122,7 +115,7 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En desktop: mantener diseño inline original */}
       <div className="hidden sm:block">
         <span className="text-base font-bold text-yellow-400">
-          {mesNombre} {parseInt(day, 10)},
+          {mesNombre} {String(day)},
         </span>{' '}
         <span className="text-base font-bold text-cyan-400">
           {hour12}:{minStr} {ampm}
@@ -830,23 +823,29 @@ export function CourseContent({
                                 textDecoration: 'none',
                               }}
                             >
-                              {new Date(
-                                upcomingMeetings[0].startDateTime
-                              ).toLocaleTimeString('es-CO', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true,
-                              })}{' '}
-                              -{' '}
-                              {upcomingMeetings[0].endDateTime
-                                ? new Date(
-                                    upcomingMeetings[0].endDateTime
-                                  ).toLocaleTimeString('es-CO', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                  })
-                                : ''}
+                              {(() => {
+                                const start = new Date(
+                                  upcomingMeetings[0].startDateTime
+                                );
+                                start.setHours(start.getHours() - 5);
+                                const end = upcomingMeetings[0].endDateTime
+                                  ? new Date(upcomingMeetings[0].endDateTime)
+                                  : null;
+                                if (end) end.setHours(end.getHours() - 5);
+                                return `${start.toLocaleTimeString('es-CO', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true,
+                                })} - ${
+                                  end
+                                    ? end.toLocaleTimeString('es-CO', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                      })
+                                    : ''
+                                }`;
+                              })()}
                             </span>
                           </span>
                         )}
@@ -875,23 +874,29 @@ export function CourseContent({
                                   textDecoration: 'none',
                                 }}
                               >
-                                {new Date(
-                                  upcomingMeetings[0].startDateTime
-                                ).toLocaleTimeString('es-CO', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                })}{' '}
-                                -{' '}
-                                {upcomingMeetings[0].endDateTime
-                                  ? new Date(
-                                      upcomingMeetings[0].endDateTime
-                                    ).toLocaleTimeString('es-CO', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: true,
-                                    })
-                                  : ''}
+                                {(() => {
+                                  const start = new Date(
+                                    upcomingMeetings[0].startDateTime
+                                  );
+                                  start.setHours(start.getHours() - 5);
+                                  const end = upcomingMeetings[0].endDateTime
+                                    ? new Date(upcomingMeetings[0].endDateTime)
+                                    : null;
+                                  if (end) end.setHours(end.getHours() - 5);
+                                  return `${start.toLocaleTimeString('es-CO', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                  })} - ${
+                                    end
+                                      ? end.toLocaleTimeString('es-CO', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          hour12: true,
+                                        })
+                                      : ''
+                                  }`;
+                                })()}
                               </span>
                             </>
                           )}
