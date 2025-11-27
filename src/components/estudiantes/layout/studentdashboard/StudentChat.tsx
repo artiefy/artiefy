@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
@@ -70,6 +71,8 @@ interface ChatProps {
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
   compactWelcome?: boolean;
+  isKeyboardOpen?: boolean;
+  keyboardInset?: number;
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -96,6 +99,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
   onBotButtonClick,
   onDeleteHistory,
   compactWelcome,
+  isKeyboardOpen,
+  keyboardInset,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
@@ -416,9 +421,26 @@ export const ChatMessages: React.FC<ChatProps> = ({
     chatMode.type,
   ]);
 
+  const baseBodyClasses =
+    'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 px-3 pb-4 scroll-pb-24';
   const bodyClasses = compactWelcome
-    ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col justify-end gap-3 px-3 pt-1 pb-4 scroll-pb-24'
-    : 'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 px-3 pt-4 pb-4 scroll-pb-24';
+    ? `${baseBodyClasses} pt-1`
+    : `${baseBodyClasses} pt-4`;
+  const effectiveKeyboardInset = Math.max(0, keyboardInset ?? 0);
+  const messageAreaStyle =
+    effectiveKeyboardInset > 0
+      ? { paddingBottom: `${effectiveKeyboardInset + 24}px` }
+      : undefined;
+  const inputBarStyle: CSSProperties = {
+    padding: '12px 16px',
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+    flexShrink: 0,
+    transform:
+      effectiveKeyboardInset > 0
+        ? `translateY(-${effectiveKeyboardInset}px)`
+        : undefined,
+    transition: 'transform 120ms ease-out',
+  };
 
   return (
     <div
@@ -450,7 +472,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
         </button>
       </div>
 
-      <div className={bodyClasses}>
+      <div className={bodyClasses} style={messageAreaStyle}>
         {messages.map((message, idx) =>
           message.sender === 'bot' && message.text === '' ? null : (
             <div
@@ -557,11 +579,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
       <div
         className="border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
-        style={{
-          padding: '12px 16px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-          flexShrink: 0,
-        }}
+        style={inputBarStyle}
       >
         <form onSubmit={handleSendMessage} className="w-full">
           <div className="flex w-full gap-2">

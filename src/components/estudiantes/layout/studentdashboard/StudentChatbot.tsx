@@ -162,13 +162,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 0
   );
-  const [viewportHeight, setViewportHeight] = useState<number>(
+  const [, setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
   const [mobileViewportBase, setMobileViewportBase] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
+  const [keyboardInset, setKeyboardInset] = useState<number>(0);
   const [_bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -554,12 +555,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           setViewportWidth(Math.round(vv.width));
           const windowHeight =
             typeof window !== 'undefined' ? window.innerHeight : vv.height;
-          const keyboardOpen = windowHeight - vv.height > 120;
+          const keyboardOverlap = Math.max(0, windowHeight - vv.height);
+          const keyboardOpen = keyboardOverlap > 80;
           setIsKeyboardOpen(keyboardOpen);
           if (!keyboardOpen) {
+            setKeyboardInset(0);
             setMobileViewportBase(windowHeight);
             setViewportHeight(windowHeight);
           } else {
+            setKeyboardInset(keyboardOverlap);
             const stableHeight =
               mobileViewportBaseRef.current || windowHeight || vv.height;
             setViewportHeight(stableHeight);
@@ -572,6 +576,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           setMobileViewportBase(window.innerHeight);
           mobileViewportBaseRef.current = window.innerHeight;
           setIsKeyboardOpen(false);
+          setKeyboardInset(0);
           setBottomInset(0);
         }
       } catch (err) {
@@ -3021,6 +3026,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     supportButtonStyle.animationTimingFunction = 'ease';
     supportButtonStyle.animationFillMode = 'forwards';
   }
+  const fallbackMobileWidth =
+    typeof window !== 'undefined' ? window.innerWidth : 390;
+  const fallbackMobileHeight =
+    typeof window !== 'undefined' ? window.innerHeight : 844;
+  const mobileViewportWidth = !isDesktop
+    ? viewportWidth || fallbackMobileWidth
+    : undefined;
+  const mobileViewportHeight = !isDesktop
+    ? mobileViewportBase || fallbackMobileHeight
+    : undefined;
+  const mobileBoxWidth = mobileViewportWidth ?? fallbackMobileWidth;
+  const mobileBoxHeight = mobileViewportHeight ?? fallbackMobileHeight;
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -3258,45 +3275,37 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   : {
                       inset: 0,
                       width: '100vw',
-                      height: viewportHeight ? `${viewportHeight}px` : '100dvh',
-                      maxHeight: '100dvh',
+                      minWidth: '100vw',
+                      maxWidth: '100vw',
+                      height: `${mobileBoxHeight}px`,
                       minHeight: '100dvh',
+                      maxHeight: '100dvh',
                       overflow: 'hidden',
                     }
               }
             >
               <ResizableBox
-                width={isDesktop ? dimensions.width : viewportWidth}
-                height={
-                  isDesktop
-                    ? dimensions.height
-                    : viewportHeight || window.innerHeight
-                }
+                width={isDesktop ? dimensions.width : mobileBoxWidth}
+                height={isDesktop ? dimensions.height : mobileBoxHeight}
                 onResize={handleResize}
                 minConstraints={
                   isDesktop
                     ? [500, window.innerHeight]
-                    : [
-                        viewportWidth,
-                        Math.max(viewportHeight, window.innerHeight),
-                      ]
+                    : [mobileBoxWidth, mobileBoxHeight]
                 }
                 maxConstraints={[
                   isDesktop
                     ? Math.min(window.innerWidth, window.innerWidth - 20)
-                    : viewportWidth,
-                  isDesktop
-                    ? window.innerHeight
-                    : Math.max(viewportHeight, window.innerHeight),
+                    : mobileBoxWidth,
+                  isDesktop ? window.innerHeight : mobileBoxHeight,
                 ]}
                 resizeHandles={isDesktop ? ['sw'] : []}
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
                 style={
                   !isDesktop
                     ? {
-                        height: viewportHeight
-                          ? `${viewportHeight}px`
-                          : '100dvh',
+                        height: '100%',
+                        width: '100%',
                         overflow: 'hidden',
                       }
                     : {
@@ -3523,6 +3532,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
+                              isKeyboardOpen={isKeyboardOpen}
+                              keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (
                                   message: {
@@ -3589,6 +3600,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
+                              isKeyboardOpen={isKeyboardOpen}
+                              keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (
                                   message: {
