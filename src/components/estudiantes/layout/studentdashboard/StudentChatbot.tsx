@@ -525,8 +525,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const pathname = usePathname();
   // Prefer nullish coalescing operator for safePathname
-  const safePathname = pathname ?? '';
-  const isChatPage = safePathname === '/';
+  const _safePathname = pathname ?? '';
 
   useEffect(() => {
     mobileViewportBaseRef.current = mobileViewportBase;
@@ -3329,7 +3328,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         : { top: 'env(safe-area-inset-top, 0px)' }
                     }
                   >
-                    <div className="grid grid-cols-3 items-center gap-1 border-b border-gray-800 px-2 py-0 md:px-3 md:py-3">
+                    <div className="grid grid-cols-3 items-center gap-1 border-b border-gray-800 px-3 py-2 md:px-4 md:py-4">
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
                       </div>
@@ -3359,7 +3358,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
-                          {!isChatPage && chatMode.idChat !== null ? (
+                          {chatMode.idChat !== null ? (
                             <MdArrowBack
                               className="text-lg text-white/70 md:text-xl"
                               onClick={() => {
@@ -3532,7 +3531,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
-                              isKeyboardOpen={isKeyboardOpen}
                               keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (
@@ -3600,7 +3598,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
-                              isKeyboardOpen={isKeyboardOpen}
                               keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (

@@ -71,7 +71,6 @@ interface ChatProps {
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
   compactWelcome?: boolean;
-  isKeyboardOpen?: boolean;
   keyboardInset?: number;
 }
 
@@ -99,7 +98,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
   onBotButtonClick,
   onDeleteHistory,
   compactWelcome,
-  isKeyboardOpen,
   keyboardInset,
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
@@ -504,7 +502,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   className={
                     message.sender === 'user'
                       ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
-                      : 'rounded-2xl border border-white/5 bg-[#0c1e32] px-4 py-3 text-white shadow-lg shadow-black/30'
+                      : 'rounded-2xl border border-white/40 bg-[#102843] px-4 py-3 text-white shadow-lg shadow-black/30'
                   }
                   style={{
                     overflowWrap: 'anywhere',
@@ -520,7 +518,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                           key={bidx}
                           type="button"
                           onClick={() => handleLocalButton(btn.action)}
-                          className="chatbot-menu-btn rounded border border-[#00bdd8] bg-[#eaf7fa] px-3 py-1 text-xs font-semibold text-[#00a5c0] shadow-sm transition hover:bg-[#00bdd8] hover:text-white"
+                          className="chatbot-menu-btn flex items-center justify-center gap-1 rounded border border-[#00bdd8] bg-[#eaf7fa] px-3 py-1 text-xs font-semibold text-[#00a5c0] shadow-sm transition hover:bg-[#00bdd8] hover:text-white"
                           style={{
                             whiteSpace: 'nowrap',
                             minWidth: 0,
@@ -535,14 +533,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
+                          <span className="flex items-center justify-center gap-1 whitespace-nowrap">
                             {btn.label}
                           </span>
                         </button>
