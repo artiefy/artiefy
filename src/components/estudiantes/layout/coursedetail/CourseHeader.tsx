@@ -1672,22 +1672,7 @@ export function CourseHeader({
                   </div>
                 </div>
               </div>
-              {/* Botón certificado SOLO en mobile */}
-              {canAccessCertificate && (
-                <div className="mt-8 -mb-6 flex w-full items-center justify-center gap-3 sm:hidden">
-                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
-                  <Button
-                    onClick={() => setIsCertModalOpen(true)}
-                    className="cert2-button text-white"
-                    aria-label="Ver Certificado"
-                  >
-                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
-                    <span className="text-sm font-semibold text-white">
-                      Ver Certificado
-                    </span>
-                  </Button>
-                </div>
-              )}
+              {/* Elimina el botón duplicado en mobile, solo se muestra en el bloque principal */}
               {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
               {isEnrolled && (forumId ?? course.forumId) && (
                 <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">

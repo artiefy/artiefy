@@ -188,7 +188,7 @@ export function ProgramHeader({
   const canAccessGrades = isEnrolled;
 
   // Renderizar un botón simplificado en SSR, para evitar diferencias de hidratación
-  const renderEnrollmentButton = () => {
+  const renderEnrollmentButton = (showCertificate = true) => {
     // Si estamos en el servidor o no se ha hidratado aún, mostrar un botón estático básico
     if (!isClient) {
       return (
@@ -222,8 +222,8 @@ export function ProgramHeader({
     } else if (isEnrolled) {
       return (
         <div className="flex w-full flex-col space-y-4">
-          {/* Botón Ver Certificado en la fila superior */}
-          {hasAllMateriasPassed && programAverage >= 3 && (
+          {/* Botón Ver Certificado en la fila superior (controlado por showCertificate) */}
+          {showCertificate && hasAllMateriasPassed && programAverage >= 3 && (
             <div className="flex items-center justify-center gap-4">
               <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
               <Button
@@ -323,15 +323,15 @@ export function ProgramHeader({
     // Si está inscrito, muestra ambos botones y deja espacio
     if (isEnrolled) {
       return (
-        <div className="mb-0 flex justify-center pt-2 sm:mb-0">
-          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+        <div className="mb-2 flex justify-center pt-2 sm:mb-4">
+          <div className="relative w-64">{renderEnrollmentButton()}</div>
         </div>
       );
     }
     // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
     return (
       <div className="flex justify-center pt-3 sm:pt-0">
-        <div className="relative h-16 w-64">{renderEnrollmentButton()}</div>
+        <div className="relative w-64">{renderEnrollmentButton()}</div>
       </div>
     );
   };
@@ -450,6 +450,7 @@ export function ProgramHeader({
         {/* --- NUEVO: Botón de inscripción arriba de la descripción con espacio dinámico --- */}
         {/* El bloque de certificado ahora está en el modal */}
 
+        {/* El botón Ver Certificado solo se muestra una vez, centrado en móvil y desktop */}
         {renderTopEnrollmentButton()}
 
         {/* Program courses */}
@@ -461,9 +462,11 @@ export function ProgramHeader({
           isCheckingEnrollment={isCheckingEnrollment}
         />
 
-        {/* Botón de inscripción abajo como antes */}
+        {/* Botón de inscripción abajo como antes (oculto en escritorio) */}
         <div className="flex justify-center pt-4">
-          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+          <div className="relative h-32 w-64">
+            {renderEnrollmentButton(false)}
+          </div>
         </div>
 
         <ProgramGradesModal
