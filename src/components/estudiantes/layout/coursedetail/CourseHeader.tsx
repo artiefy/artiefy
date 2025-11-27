@@ -24,7 +24,9 @@ import {
   FaVolumeMute,
   FaVolumeUp,
 } from 'react-icons/fa';
-import { IoGiftOutline } from 'react-icons/io5';
+import { IoCloseOutline, IoGiftOutline } from 'react-icons/io5';
+import { MdKeyboardDoubleArrowRight } from 'react-icons/md';
+import { PiCertificateFill } from 'react-icons/pi';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -49,6 +51,8 @@ import { CourseContent } from './CourseContent';
 import type { ClassMeeting, Course, CourseMateria, Enrollment } from '~/types';
 
 import '~/styles/certificadobutton.css';
+import '~/styles/certificadobutton2.css';
+import '~/styles/certificado-modal.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 import '~/styles/buttonforum.css';
@@ -127,6 +131,7 @@ export function CourseHeader({
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [programToastShown, setProgramToastShown] = useState(false);
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
@@ -1667,6 +1672,22 @@ export function CourseHeader({
                   </div>
                 </div>
               </div>
+              {/* Botón certificado SOLO en mobile */}
+              {canAccessCertificate && (
+                <div className="mt-8 -mb-6 flex w-full items-center justify-center gap-3 sm:hidden">
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
+                  <Button
+                    onClick={() => setIsCertModalOpen(true)}
+                    className="cert2-button text-white"
+                    aria-label="Ver Certificado"
+                  >
+                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <span className="text-sm font-semibold text-white">
+                      Ver Certificado
+                    </span>
+                  </Button>
+                </div>
+              )}
               {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
               {isEnrolled && (forumId ?? course.forumId) && (
                 <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">
@@ -1683,9 +1704,12 @@ export function CourseHeader({
             </div>
             {/* Modalidad badge solo visible en desktop */}
             <div className="hidden flex-col items-end gap-4 sm:flex">
-              <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
-                {course.modalidad?.name}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+                  {course.modalidad?.name}
+                </Badge>
+              </div>
+
               {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
               {isEnrolled &&
                 (forumId || course.forumId ? (
@@ -1711,27 +1735,47 @@ export function CourseHeader({
             {/* Escala completa más pequeña en pantallas móviles, restaurada en sm+ */}
             <div className="relative h-auto origin-center scale-90 transform-gpu sm:scale-100">
               {localIsEnrolled ? (
-                <div className="flex flex-col items-center space-y-2">
-                  <Button
-                    className="bg-primary text-background hover:bg-primary/90 h-10 w-56 justify-center border-white/20 text-sm font-semibold transition-colors active:scale-95 sm:h-12 sm:w-64 sm:text-lg"
-                    disabled
-                  >
-                    <FaCheck className="mr-2" /> Suscrito Al Curso
-                  </Button>
-                  <Button
-                    className="h-10 w-56 justify-center border-white/20 bg-red-500 text-sm font-semibold hover:bg-red-600 sm:h-12 sm:w-64 sm:text-lg"
-                    onClick={onUnenrollAction}
-                    disabled={isUnenrolling}
-                  >
-                    {isUnenrolling ? (
-                      <Icons.spinner
-                        className="text-white"
-                        style={{ width: '28px', height: '28px' }}
-                      />
-                    ) : (
-                      'Cancelar Suscripción'
-                    )}
-                  </Button>
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Botón Ver Certificado en la fila superior */}
+                  {canAccessCertificate && (
+                    <div className="flex items-center justify-center gap-4">
+                      <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
+                      <Button
+                        onClick={() => setIsCertModalOpen(true)}
+                        className="cert2-button h-10 w-40 text-white sm:h-12 sm:w-48"
+                        aria-label="Ver Certificado"
+                      >
+                        <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                        <span className="text-xs font-semibold text-white sm:text-sm">
+                          Ver Certificado
+                        </span>
+                      </Button>
+                      <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 rotate-180 transform sm:h-12 sm:w-12" />
+                    </div>
+                  )}
+                  {/* Botones de inscripción en la fila inferior */}
+                  <div className="flex flex-col items-center space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
+                    <Button
+                      className="bg-primary text-background hover:bg-primary/90 h-10 w-56 justify-center border-white/20 text-sm font-semibold transition-colors active:scale-95 sm:h-12 sm:w-64 sm:text-lg"
+                      disabled
+                    >
+                      <FaCheck className="mr-2" /> Suscrito Al Curso
+                    </Button>
+                    <Button
+                      className="h-10 w-56 justify-center border-white/20 bg-red-500 text-sm font-semibold hover:bg-red-600 sm:h-12 sm:w-64 sm:text-lg"
+                      onClick={onUnenrollAction}
+                      disabled={isUnenrolling}
+                    >
+                      {isUnenrolling ? (
+                        <Icons.spinner
+                          className="text-white"
+                          style={{ width: '28px', height: '28px' }}
+                        />
+                      ) : (
+                        'Cancelar Suscripción'
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1842,28 +1886,37 @@ export function CourseHeader({
             </div>
             {/* Eliminar el botón de compra de aquí */}
           </div>
-          {/* Botón de certificado con texto descriptivo */}
-          {canAccessCertificate && (
-            <div className="mt-6 space-y-4">
-              <div className="relative mx-auto size-40">
-                <Image
-                  src="/diploma-certificate.svg"
-                  alt="Certificado"
-                  fill
-                  className="transition-all duration-300 hover:scale-110"
-                />
-              </div>
-              <p className="text-center font-serif text-lg text-yellow-500 italic">
-                ¡Felicitaciones! Has completado exitosamente el curso con una
-                calificación sobresaliente. Tu certificado está listo para ser
-                visualizado y compartido.
-              </p>
-              <div className="flex justify-center">
-                <Link href={`/estudiantes/certificados/${course.id}`}>
-                  <button className="certificacion relative mx-auto text-base font-bold">
-                    <span className="relative z-10">Ver Tu Certificado</span>
-                  </button>
-                </Link>
+          {/* El bloque de certificado ahora está en el modal */}
+          {isCertModalOpen && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
+              <div className="relative w-full max-w-lg rounded-lg border border-gray-200 bg-[#01142B] p-6">
+                <button
+                  onClick={() => setIsCertModalOpen(false)}
+                  className="text-primary hover:text-secondary absolute top-2 right-2 transition-colors"
+                  type="button"
+                  aria-label="Cerrar"
+                >
+                  <IoCloseOutline className="h-8 w-8" />
+                </button>
+                <div className="flex flex-col items-center gap-4">
+                  <Image
+                    src="/diploma-certificate.svg"
+                    alt="Certificado"
+                    width={120}
+                    height={120}
+                    className="mb-2"
+                  />
+                  <p className="text-primary text-center font-serif text-lg italic">
+                    ¡Felicitaciones! Has completado exitosamente el curso con
+                    una calificación sobresaliente. Tu certificado está listo
+                    para ser visualizado y compartido.
+                  </p>
+                  <Link href={`/estudiantes/certificados/${course.id}`}>
+                    <button className="certificado-modal-button">
+                      <span className="relative z-10">Ver Tu Certificado</span>
+                    </button>
+                  </Link>
+                </div>
               </div>
             </div>
           )}

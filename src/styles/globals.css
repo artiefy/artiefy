@@ -183,6 +183,18 @@
       background-position: 0% 50%;
     }
   }
+
+  @keyframes arrow-slide {
+    0% {
+      transform: translateX(-10px);
+    }
+    50% {
+      transform: translateX(10px);
+    }
+    100% {
+      transform: translateX(-10px);
+    }
+  }
 }
 
 /* Base Styles */
@@ -231,6 +243,10 @@
 @layer utilities {
   .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-arrow-slide {
+    animation: arrow-slide 2s ease-in-out infinite;
   }
 }
 

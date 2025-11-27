@@ -119,39 +119,7 @@ export function ProgramGradesModal({
             </div>
           </div>
         </div>
-        {/* Certificado del Programa: mostrar si todas las materias aprobadas */}
-        {hasAllMateriasPassed && !isLoading && (
-          <div className="mt-6 rounded-lg border bg-green-50 p-4">
-            <h4 className="mb-2 text-lg font-semibold">Certificado</h4>
-            <p className="text-sm text-gray-700">
-              ¡Felicitaciones! Has completado exitosamente el programa con una
-              calificación sobresaliente. Tu certificado está listo para ser
-              visualizado y compartido.
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <Link
-                href={`/estudiantes/certificados/programa/${programId}`}
-                className="inline-flex items-center gap-2 rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
-              >
-                <FaTrophy /> Ver Tu Certificado
-              </Link>
-            </div>
-
-            {/* Materias asociadas */}
-            {materias.length > 0 && (
-              <div className="mt-4">
-                <h5 className="mb-2 text-sm font-semibold">
-                  Materias asociadas:
-                </h5>
-                <ul className="list-disc pl-5 text-sm text-gray-800">
-                  {materias.map((m) => (
-                    <li key={m.id}>{m.title ?? m.title}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Zona de certificado eliminada para evitar duplicidad. */}
       </DialogContent>
     </Dialog>
   );

@@ -1,0 +1,42 @@
+/* Botón Ver Tu Certificado - Modal */
+.certificado-modal-button {
+  --bg-primary: #3af4ef;
+  --bg-secondary: #00bdd8;
+  --bg-dark: #01142b;
+  --bg-hover: #00a5c0;
+  --text-color: #fff;
+
+  position: relative;
+  width: auto;
+  min-width: fit-content;
+  border: none;
+  background: var(--bg-primary);
+  color: var(--bg-dark);
+  padding: 0.75em 1.5em;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: 0.2s;
+  border-radius: 8px;
+  opacity: 0.9;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow:
+    var(--bg-secondary) 0px 7px 2px,
+    #000 0px 8px 5px;
+  cursor: pointer;
+}
+
+.certificado-modal-button:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+  box-shadow:
+    var(--bg-primary) 0px 7px 2px,
+    #000 0px 8px 5px;
+}
+
+.certificado-modal-button:active {
+  top: 4px;
+  box-shadow:
+    var(--bg-secondary) 0px 3px 2px,
+    #000 0px 3px 5px;
+}
