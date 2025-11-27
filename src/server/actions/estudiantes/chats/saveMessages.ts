@@ -35,10 +35,16 @@ export async function saveMessages(
 
   // Si no existe, tratar el valor como cursoId y usar getOrCreateConversation
   if (!conversation) {
-    const cursoId = conversationOrCursoId ?? null;
+    // No se encontró una conversación con el id proporcionado.
+    // No debemos interpretar automáticamente el parámetro numérico
+    // como `cursoId`, porque en el frontend a veces usamos ids
+    // temporales (Date.now()) o ids de sesión que no corresponden
+    // a `curso_id` en la BD. Para evitar colisiones y que varios
+    // chats compartan la misma conversación, creamos una nueva
+    // conversación explícita asociada al `senderId` y con `curso_id` = null.
     conversation = await getOrCreateConversation({
       senderId,
-      cursoId,
+      cursoId: null,
     });
   }
 

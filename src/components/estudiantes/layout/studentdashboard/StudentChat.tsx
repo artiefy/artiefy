@@ -259,6 +259,9 @@ export const ChatMessages: React.FC<ChatProps> = ({
         messages: { id: number; message: string; sender: string }[];
       } = { messages: [] };
       try {
+        // Limpiar mensajes previos inmediatamente al cambiar de conversación
+        // para evitar que se vea el historial anterior mientras cargan los nuevos.
+        setMessages([]);
         if (conversationId !== null && conversationId < 1000000000000) {
           // Si es un ticket, usar la función de tickets
           if (chatMode.type === 'ticket') {
@@ -356,16 +359,48 @@ export const ChatMessages: React.FC<ChatProps> = ({
             'No hay mensajes en la conversación, creando una nueva conversación'
           );
           if (chats.messages.length === 0) {
-            /*
-                        const botMessage = {
-                            id: -1,
-                            text: isEnrolled == true ?  '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' + courseTitle + ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎' : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-                            sender: 'bot'
-                        };
-                        
-                        setMessages([botMessage, ...messages]);
-                        */
-
+            // Mostrar saludo inicial independiente para nueva conversación sin mensajes
+            const emptyBotMessage = {
+              id: -1,
+              text:
+                chatMode.type === 'ticket'
+                  ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
+                  : isEnrolled == true
+                    ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
+                      courseTitle +
+                      ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacérmela! 😎'
+                    : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+              sender: 'bot' as const,
+              buttons:
+                chatMode.type === 'ticket'
+                  ? [
+                      { label: '🐛 Reportar Error', action: 'report_bug' },
+                      {
+                        label: '❓ Pregunta General',
+                        action: 'general_question',
+                      },
+                      {
+                        label: '🔧 Problema Técnico',
+                        action: 'technical_issue',
+                      },
+                      {
+                        label: '💰 Consulta de Pagos',
+                        action: 'payment_inquiry',
+                      },
+                    ]
+                  : [
+                      { label: '📚 Crear Proyecto', action: 'new_project' },
+                      { label: '💬 Nueva Idea', action: 'new_idea' },
+                      {
+                        label: '🛠 Soporte Técnico',
+                        action: 'contact_support',
+                      },
+                    ],
+            };
+            if (isMounted) {
+              setMessages([emptyBotMessage]);
+            }
+            // Si es un chat de curso, crear conversación asociada al curso (persistir)
             if (courseId != null) {
               try {
                 const resp = await getOrCreateConversation({
@@ -374,14 +409,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   title:
                     'Curso - ' +
                     (courseTitle
-                      ? courseTitle.length > 12
+                      ? courseTitle.length > 35
                         ? courseTitle.slice(0, 35) + '...'
                         : courseTitle
                       : 'Sin título'),
                 });
-
                 if (isMounted) {
-                  // Asegurarnos de usar el id de la conversación persistida
                   setChatMode({
                     idChat: resp.id,
                     status: true,
@@ -389,10 +422,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   });
                 }
               } catch (err) {
-                console.error(
-                  'Error creando/obteniendo conversación de curso:',
-                  err
-                );
+                console.error('Error creando conversación de curso:', err);
               }
             }
           }

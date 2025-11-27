@@ -9,11 +9,8 @@ import { BsRobot } from 'react-icons/bs';
 import { IoChatboxEllipses } from 'react-icons/io5';
 import { toast } from 'sonner';
 
-import { getConversationByUserId } from '~/server/actions/estudiantes/chats/saveChat';
-import {
-  getTicketsByUser,
-  getUserOpenTicket,
-} from '~/server/actions/estudiantes/chats/suportChatBot';
+import { useStudentChats } from '~/hooks/useStudentChats';
+import { getUserOpenTicket } from '~/server/actions/estudiantes/chats/suportChatBot';
 
 interface ChatListProps {
   setChatMode: React.Dispatch<
@@ -59,19 +56,29 @@ export const ChatList = ({
   setShowChatList,
   activeType = 'chatia',
 }: ChatListProps) => {
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Solo true en mount inicial
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // Nuevo estado para controlar carga inicial
   const [loadingChatId, setLoadingChatId] = useState<number | null>(null);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const { user } = useUser();
-  const [refreshKey, setRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'abierto' | 'solucionado' | 'cerrado'
   >('all');
   const [selectedChats, setSelectedChats] = useState<number[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Usar SWR para obtener chats en tiempo real
+  const {
+    chats: rawChats,
+    isLoading,
+    mutate,
+  } = useStudentChats(
+    activeType,
+    statusFilter,
+    4000 // Revalidar cada 4 segundos
+  );
+
+  // Estado local para chats procesados
+  const [chats, setChats] = useState<Chat[]>([]);
 
   // Función para formatear fecha y hora en formato colombiano (12 horas)
   const formatColombianDateTime = (date: string | Date | undefined) => {
@@ -111,23 +118,6 @@ export const ChatList = ({
     }
 
     return cleanTitle.trim() || 'Chat';
-  };
-
-  // Función para asignar títulos únicos a los chats
-  const assignUniqueTitles = (chats: Chat[]) => {
-    return chats.map((chat, index) => {
-      if (chat.type === 'ticket') {
-        // Para tickets: "Ticket #ID"
-        return { ...chat, title: `Ticket #${chat.id}` };
-      } else {
-        // Para chats de IA: solo el más reciente es "Nuevo Chat", los demás son "Chat"
-        const isNewest = index === 0; // El array ya está ordenado por fecha desc
-        return {
-          ...chat,
-          title: isNewest ? 'Nuevo Chat' : 'Chat',
-        };
-      }
-    });
   };
 
   // Función para formatear la fecha con prefijo "Modificado"
@@ -220,6 +210,28 @@ export const ChatList = ({
 
       fn({ senderId: user.id, cursoId: null, title: initialTitle })
         .then((response) => {
+          // Mutación optimista: agregar el nuevo chat inmediatamente
+          void mutate(
+            (currentData) => {
+              if (!currentData) return currentData;
+
+              const newChat: Chat = {
+                id: response.id,
+                title: 'Nuevo Chat',
+                curso_id: null,
+                type: 'chat',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+
+              return {
+                chats: [newChat, ...currentData.chats],
+              };
+            },
+            { revalidate: true } // Revalidar para sincronizar con el servidor
+          );
+
+          // Disparar evento para abrir el chat
           window.dispatchEvent(
             new CustomEvent('create-new-chat-with-search', {
               detail: {
@@ -235,131 +247,72 @@ export const ChatList = ({
         .catch((err) => {
           console.error('Error creando chat IA:', err);
           setIsCreatingChat(false);
+          toast.error('Error al crear el chat');
         });
     });
   };
 
+  // Procesar los chats recibidos de SWR
   useEffect(() => {
-    if (!user?.id) return;
-
-    setShowChatList(true);
-    // Solo mostrar loader en la carga inicial, no en los refrescos periódicos
-    if (isInitialLoad) {
-      setIsLoading(true);
+    // rawChats puede ser null mientras SWR aún no trae datos.
+    if (!rawChats) {
+      // Evitar crear una nueva referencia [] cada render
+      setChats([]);
+      return;
     }
 
-    const fetchChats = async () => {
-      try {
-        let allChats: Chat[] = [];
+    if (rawChats.length === 0) {
+      setChats([]);
+      return;
+    }
 
-        if (activeType === 'chatia') {
-          const result = await getConversationByUserId(user.id);
-          allChats = result.conversations.map((conv) => ({
-            id: conv.id,
-            title: cleanChatTitle(conv.title || 'Sin título'),
-            curso_id: conv.curso_id,
-            type: 'chat' as const,
-            createdAt: conv.createdAt,
-            updatedAt: conv.updatedAt,
-          }));
-        } else if (activeType === 'tickets') {
-          const list = await getTicketsByUser(user.id);
-          // Filtro por estado si aplica
-          const filtered =
-            statusFilter === 'all'
-              ? list
-              : list.filter(
-                  (t) => (t.estado ?? '').toLowerCase() === statusFilter
-                );
+    // Limpiar títulos y asignar títulos únicos
+    const processedChats = rawChats.map((chat) => ({
+      ...chat,
+      title:
+        chat.type === 'ticket'
+          ? `Ticket #${chat.id}`
+          : cleanChatTitle(chat.title),
+    }));
 
-          allChats = filtered.map((t) => ({
-            id: t.id,
-            title: 'Ticket de Soporte',
-            curso_id: null,
-            type: 'ticket' as const,
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            status: (t.estado ?? '').toLowerCase(),
-            // Añadimos unread flag si el backend devolvió unreadCount
-            unreadCount: (t as { unreadCount?: number }).unreadCount ?? 0,
-          }));
-        } else if (activeType === 'projects') {
-          // TODO: Implementar cuando tengamos la API de proyectos
-          allChats = [];
-        }
-
-        // Ordenar por fecha de actualización, más recientes primero
-        allChats.sort((a, b) => {
-          // Si es de tipo ticket, priorizar los que tienen mensajes sin leer
-          if (activeType === 'tickets') {
-            const aUnread = a.unreadCount ?? 0;
-            const bUnread = b.unreadCount ?? 0;
-
-            // Si uno tiene mensajes sin leer y el otro no, el que tiene sin leer va primero
-            if (aUnread > 0 && bUnread === 0) return -1;
-            if (aUnread === 0 && bUnread > 0) return 1;
-
-            // Si ambos tienen o ambos no tienen sin leer, ordenar por fecha de actualización
-          }
-
-          const getTimestamp = (chat: Chat) => {
-            const date = chat.updatedAt ?? chat.createdAt;
-            if (!date) return 0;
-            return new Date(date).getTime();
-          };
-
-          return getTimestamp(b) - getTimestamp(a);
-        });
-
-        // Asignar títulos únicos después del ordenamiento
-        allChats = assignUniqueTitles(allChats);
-
-        setChats(allChats);
-      } catch (error) {
-        console.error('Error al traer chats:', error);
-        setChats([]);
-      } finally {
-        if (isInitialLoad) {
-          setIsLoading(false);
-          setIsInitialLoad(false);
-        }
+    // Asignar "Nuevo Chat" solo al más reciente de tipo chat
+    const finalChats = processedChats.map((chat, index) => {
+      if (chat.type === 'ticket') {
+        return chat;
       }
+
+      const isNewest = index === 0;
+      return {
+        ...chat,
+        title: isNewest ? 'Nuevo Chat' : 'Chat',
+      };
+    });
+
+    setChats(finalChats);
+  }, [rawChats]);
+
+  // Efecto para mostrar la lista de chats cuando hay un usuario
+  useEffect(() => {
+    if (user?.id) {
+      setShowChatList(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Removido setShowChatList de las dependencias - es estable
+
+  // Escuchar eventos globales para refrescar el cache de SWR
+  useEffect(() => {
+    const handleRefresh = () => {
+      void mutate(); // Revalidar los datos de SWR
     };
 
-    void fetchChats();
-  }, [
-    user?.id,
-    activeType,
-    setShowChatList,
-    refreshKey,
-    statusFilter,
-    isInitialLoad,
-  ]);
-
-  // Refresco periódico para tickets: asegura que el badge "Nuevo" reaparezca cuando admins comentan
-  useEffect(() => {
-    if (!user?.id || activeType !== 'tickets') return;
-    const interval = setInterval(() => {
-      setRefreshKey((k) => k + 1);
-    }, 4000); // cada 4s; ajustar si deseas menos/más frecuencia
-    const onFocus = () => setRefreshKey((k) => k + 1);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [user?.id, activeType]);
-
-  // Escuchar eventos globales para refrescar la lista cuando se creen/actualicen tickets
-  useEffect(() => {
-    const handleRefresh = () => setRefreshKey((k) => k + 1);
     window.addEventListener('ticket-created', handleRefresh);
     window.addEventListener('chat-updated', handleRefresh);
+
     return () => {
       window.removeEventListener('ticket-created', handleRefresh);
       window.removeEventListener('chat-updated', handleRefresh);
     };
-  }, []);
+  }, [mutate]);
 
   const statusBadge = (status?: string) => {
     const s = (status ?? '').toLowerCase();
@@ -390,11 +343,26 @@ export const ChatList = ({
     try {
       const mod = await import('~/server/actions/estudiantes/chats/saveChat');
       const deleteFn = mod.deleteConversation as (id: number) => Promise<void>;
+
       for (const id of selectedChats) {
         await deleteFn(id);
       }
+
+      // Mutación optimista: eliminar los chats del cache inmediatamente
+      void mutate(
+        (currentData) => {
+          if (!currentData) return currentData;
+
+          return {
+            chats: currentData.chats.filter(
+              (chat) => !selectedChats.includes(chat.id)
+            ),
+          };
+        },
+        { revalidate: true } // Revalidar para confirmar con el servidor
+      );
+
       setSelectedChats([]);
-      setRefreshKey((k) => k + 1);
       toast.success('Chats eliminados correctamente');
     } catch (error) {
       console.error('Error eliminando chats:', error);
