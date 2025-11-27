@@ -99,17 +99,89 @@ export const ChatMessages: React.FC<ChatProps> = ({
 }) => {
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
-  const handleBackgroundPointerDown = useCallback(
+  type BlurGestureState = {
+    id: number | null;
+    startX: number;
+    startY: number;
+    moved: boolean;
+    shouldBlur: boolean;
+  };
+  const blurGestureRef = useRef<BlurGestureState>({
+    id: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+    shouldBlur: false,
+  });
+  const resetBlurGesture = useCallback(() => {
+    blurGestureRef.current = {
+      id: null,
+      startX: 0,
+      startY: 0,
+      moved: false,
+      shouldBlur: false,
+    };
+  }, []);
+  const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType !== 'touch') {
+        resetBlurGesture();
+        return;
+      }
       const inputEl = actualInputRef.current;
-      if (!inputEl) return;
+      if (!inputEl) {
+        resetBlurGesture();
+        return;
+      }
       const target = event.target as HTMLElement | null;
-      if (!target) return;
-      if (target === inputEl || inputEl.contains(target)) return;
-      inputEl.blur();
+      if (!target) {
+        resetBlurGesture();
+        return;
+      }
+      if (target === inputEl || inputEl.contains(target)) {
+        resetBlurGesture();
+        return;
+      }
+      blurGestureRef.current = {
+        id: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        shouldBlur: true,
+      };
     },
-    [actualInputRef]
+    [actualInputRef, resetBlurGesture]
   );
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const state = blurGestureRef.current;
+      if (state.id !== event.pointerId) return;
+      if (
+        Math.abs(event.clientX - state.startX) > 6 ||
+        Math.abs(event.clientY - state.startY) > 6
+      ) {
+        state.moved = true;
+      }
+    },
+    []
+  );
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const state = blurGestureRef.current;
+      if (state.id !== event.pointerId) {
+        resetBlurGesture();
+        return;
+      }
+      if (!state.moved && state.shouldBlur) {
+        actualInputRef.current?.blur();
+      }
+      resetBlurGesture();
+    },
+    [actualInputRef, resetBlurGesture]
+  );
+  const handlePointerCancel = useCallback(() => {
+    resetBlurGesture();
+  }, [resetBlurGesture]);
 
   const { user } = useUser();
 
@@ -349,10 +421,16 @@ export const ChatMessages: React.FC<ChatProps> = ({
     : 'flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 px-3 pt-4 pb-4 scroll-pb-24';
 
   return (
-    <div className="relative flex min-h-full flex-col overflow-hidden">
+    <div
+      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
       <div
-        className="flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5"
-        onPointerDown={handleBackgroundPointerDown}
+        className="sticky top-0 left-0 z-20 flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5"
+        style={{ top: 'env(safe-area-inset-top, 0px)' }}
       >
         <button
           type="button"
@@ -372,7 +450,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
         </button>
       </div>
 
-      <div className={bodyClasses} onPointerDown={handleBackgroundPointerDown}>
+      <div className={bodyClasses}>
         {messages.map((message, idx) =>
           message.sender === 'bot' && message.text === '' ? null : (
             <div

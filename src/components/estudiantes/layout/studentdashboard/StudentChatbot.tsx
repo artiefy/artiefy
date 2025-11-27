@@ -165,7 +165,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [viewportHeight, setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
-  const [viewportOffsetTop, setViewportOffsetTop] = useState<number>(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
   const [_bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -544,8 +543,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           const vv = window.visualViewport;
           setViewportWidth(Math.round(vv.width));
           setViewportHeight(Math.round(vv.height));
-          const safeOffset = Math.max(0, Math.round(vv.offsetTop));
-          setViewportOffsetTop(safeOffset);
           // Detectar si el teclado está abierto comparando altura visible con altura completa
           setIsKeyboardOpen(vv.height < window.innerHeight - 100);
           // No usar bottomInset para padding en el contenedor principal
@@ -553,7 +550,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         } else {
           setViewportWidth(window.innerWidth);
           setViewportHeight(window.innerHeight);
-          setViewportOffsetTop(0);
           setIsKeyboardOpen(false);
           setBottomInset(0);
         }
@@ -585,33 +581,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   // Medir header y ajustar padding del wrapper para que el header fijo no solape el contenido
   // Mantener el input visible y scrollear al fondo cuando abre el teclado
   useEffect(() => {
-    if (isOpen && (isKeyboardOpen || viewportHeight)) {
-      // pequeño delay para que el layout se estabilice
-      setTimeout(() => {
-        try {
-          messagesEndRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-          });
-          inputRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-          });
-        } catch {
-          // noop
+    if (!isOpen || isDesktop) return;
+    if (!isKeyboardOpen) return;
+    const timeout = window.setTimeout(() => {
+      try {
+        chatContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      } catch {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = 0;
         }
-        if (!isDesktop) {
-          try {
-            chatContainerRef.current?.scrollTo({ top: 0 });
-          } catch {
-            if (chatContainerRef.current) {
-              chatContainerRef.current.scrollTop = 0;
-            }
-          }
-        }
-      }, 50);
-    }
-  }, [isOpen, isKeyboardOpen, viewportHeight, messages, inputText, isDesktop]);
+      }
+    }, 50);
+    return () => window.clearTimeout(timeout);
+  }, [isOpen, isDesktop, isKeyboardOpen]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {
@@ -3254,12 +3236,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 isDesktop
                   ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
-                      top: 0,
+                      inset: 0,
+                      width: '100vw',
                       height: viewportHeight ? `${viewportHeight}px` : '100dvh',
-                      paddingTop:
-                        viewportOffsetTop > 0
-                          ? `${viewportOffsetTop}px`
-                          : undefined,
+                      maxHeight: '100dvh',
+                      minHeight: '100dvh',
+                      overflow: 'hidden',
                     }
               }
             >
@@ -3312,6 +3294,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   {/* Header */}
                   <div
                     className={`z-50 flex flex-col border-b border-gray-800 bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-sm ${isDesktop ? '' : 'sticky top-0'}`}
+                    style={
+                      isDesktop
+                        ? undefined
+                        : { top: 'env(safe-area-inset-top, 0px)' }
+                    }
                   >
                     <div className="grid grid-cols-3 items-center gap-1 border-b border-gray-800 px-2 py-0 md:px-3 md:py-3">
                       <div className="flex items-center">
@@ -3391,8 +3378,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   </div>
 
                   {/* Wrapper de contenido (mensajes + listas) */}
-                  <div className="min-h-0 flex-1">
-                    <div className="flex h-full flex-col">
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    <div className="flex h-full flex-col overflow-hidden">
                       {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
                       {activeSection === 'chatia' &&
                         showLoginNotice &&
@@ -3415,7 +3402,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           </div>
                         )}
 
-                      <div className="min-h-0 flex-1">
+                      <div className="min-h-0 flex-1 overflow-hidden">
                         {/* Contenido basado en la sección activa */}
                         {activeSection === 'tickets' ? (
                           <div className="h-full overflow-y-auto">
