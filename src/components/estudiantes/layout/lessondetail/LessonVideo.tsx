@@ -36,6 +36,74 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [playerError, setPlayerError] = useState<string | null>(null);
   // Usa el tipo correcto para el ref de Player
   const playerRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Tipos seguros para fullscreen/orientación
+  type FullscreenTarget =
+    | (Element & { requestFullscreen?: () => Promise<void> })
+    | null;
+  interface SafariHTMLVideoElement extends HTMLVideoElement {
+    webkitEnterFullscreen?: () => void;
+  }
+
+  // Helper: solicitar fullscreen y bloquear orientación landscape cuando sea posible
+  const requestFullscreen = async () => {
+    try {
+      const target: FullscreenTarget =
+        (playerRef.current as unknown as Element) ??
+        containerRef.current ??
+        document.documentElement;
+      // iOS Safari (webkitEnterFullscreen en video)
+      const safariVideo = playerRef.current as SafariHTMLVideoElement | null;
+      if (
+        safariVideo &&
+        typeof safariVideo.webkitEnterFullscreen === 'function'
+      ) {
+        safariVideo.webkitEnterFullscreen();
+        setIsFullscreen(true);
+        return;
+      }
+      if (target && typeof target.requestFullscreen === 'function') {
+        await target.requestFullscreen();
+        setIsFullscreen(true);
+      }
+      const orientation = screen.orientation as unknown as {
+        lock?: (type: 'landscape' | 'portrait') => Promise<void>;
+      };
+      if (orientation && typeof orientation.lock === 'function') {
+        try {
+          await orientation.lock('landscape');
+        } catch {
+          // ignorar si no soporta lock
+        }
+      }
+    } catch (_err) {
+      // fallback sin cambiar estado
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (
+        document.fullscreenElement &&
+        typeof document.exitFullscreen === 'function'
+      ) {
+        await document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    } catch {
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   useEffect(() => {
     if (!videoKey || videoKey === 'null' || isLocked) {
@@ -61,16 +129,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // NUEVO: Saltar al tiempo guardado al cargar el video (nativo y next-video)
   useEffect(() => {
     if (!videoUrl || isLocked) return;
-    // Para el reproductor nativo
     if (useNativePlayer && playerRef.current && startAt > 0) {
       const video = playerRef.current;
       const seek = () => {
+        if (!video) return;
         if (Math.abs(video.currentTime - startAt) > 1) {
           video.currentTime = startAt;
         }
       };
-      video.addEventListener('loadedmetadata', seek, { once: true });
-      return () => video.removeEventListener('loadedmetadata', seek);
+      // Si ya tiene metadata cargada, aplicar directamente
+      if (video.readyState >= 1) {
+        seek();
+      } else {
+        video.addEventListener('loadedmetadata', seek, { once: true });
+      }
+      return () => {
+        video?.removeEventListener('loadedmetadata', seek);
+      };
     }
   }, [videoUrl, useNativePlayer, startAt, isLocked]);
 
@@ -95,12 +170,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             <h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
               Video de la Clase
             </h2>
-            <p className="text-5xl font-extrabold">
-              <span className="bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
-                {videoKey === 'none'
-                  ? 'Esta clase no tiene video disponible'
-                  : 'Disponible muy pronto'}
-              </span>
+            <p className="text-lg font-medium text-white">
+              Disponible muy pronto
             </p>
             <div className="mt-4 flex items-center space-x-2">
               <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
@@ -111,15 +182,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         ) : (
           <>
             <div className="hourglassBackground">
-              <div className="hourglassContainer">
-                <div className="hourglassCurves" />
-                <div className="hourglassCapTop" />
-                <div className="hourglassGlassTop" />
-                <div className="hourglassSand" />
-                <div className="hourglassSandStream" />
-                <div className="hourglassCapBottom" />
-                <div className="hourglassGlass" />
-              </div>
+              <div className="hourglassCurves" />
+              <div className="hourglassCapTop" />
+              <div className="hourglassSand" />
+              <div className="hourglassSandStream" />
+              <div className="hourglassCapBottom" />
+              <div className="hourglassGlass" />
             </div>
             <p className="text-lg font-medium text-white">
               Preparando video de la clase...
@@ -131,7 +199,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   );
 
   return (
-    <div className="relative aspect-video w-full">
+    <div className="relative aspect-video w-full" ref={containerRef}>
       {videoUrl && !useNativePlayer && !playerError && (
         <Player
           src={videoUrl}
@@ -173,6 +241,48 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             left: '0',
           }}
         />
+      )}
+      {/* Botón fullscreen para móviles: fuera del Player y solo si hay video */}
+      {videoUrl && (
+        <div className="absolute right-2 bottom-2 z-[100000] sm:hidden">
+          <button
+            type="button"
+            onClick={() =>
+              isFullscreen ? exitFullscreen() : requestFullscreen()
+            }
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00BDD8] text-[#01142B] shadow hover:bg-[#00A5C0] active:scale-95"
+            aria-label={
+              isFullscreen
+                ? 'Salir de pantalla completa'
+                : 'Entrar a pantalla completa'
+            }
+            title={
+              isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'
+            }
+          >
+            {isFullscreen ? (
+              // Icono salir pantalla completa (minimize arrows inward)
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M9 9H5v4H3V9a2 2 0 0 1 2-2h4v2zm10 0V7h-4V5h4a2 2 0 0 1 2 2v4h-2zM5 15h4v2H5a2 2 0 0 1-2-2v-4h2v4zm14-2h2v4a2 2 0 0 1-2 2h-4v-2h4v-4z" />
+              </svg>
+            ) : (
+              // Icono entrar pantalla completa (maximize arrows outward)
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M9 3H5a2 2 0 0 0-2 2v4h2V5h4V3zm10 0h-4v2h4v4h2V5a2 2 0 0 0-2-2zM3 15v4a2 2 0 0 0 2 2h4v-2H5v-4H3zm18 4v-4h-2v4h-4v2h4a2 2 0 0 0 2-2z" />
+              </svg>
+            )}
+          </button>
+        </div>
       )}
       {(videoUrl && useNativePlayer) || playerError ? (
         <video
