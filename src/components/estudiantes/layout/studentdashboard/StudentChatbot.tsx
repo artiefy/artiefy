@@ -165,11 +165,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [viewportHeight, setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
+  const [mobileViewportBase, setMobileViewportBase] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
   const [_bottomInset, setBottomInset] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const mobileViewportBaseRef = useRef<number>(
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
   const searchRequestInProgress = useRef(false);
 
   const { isSignedIn } = useAuth();
@@ -521,6 +527,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const safePathname = pathname ?? '';
   const isChatPage = safePathname === '/';
 
+  useEffect(() => {
+    mobileViewportBaseRef.current = mobileViewportBase;
+  }, [mobileViewportBase]);
+
   // Efecto: gestionar visualViewport para móviles (altura real con teclado)
   useEffect(() => {
     // Bloquear scroll del body cuando el chatbot está abierto en móvil
@@ -542,14 +552,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         if (hasVV && window.visualViewport) {
           const vv = window.visualViewport;
           setViewportWidth(Math.round(vv.width));
-          setViewportHeight(Math.round(vv.height));
-          // Detectar si el teclado está abierto comparando altura visible con altura completa
-          setIsKeyboardOpen(vv.height < window.innerHeight - 100);
+          const windowHeight =
+            typeof window !== 'undefined' ? window.innerHeight : vv.height;
+          const keyboardOpen = windowHeight - vv.height > 120;
+          setIsKeyboardOpen(keyboardOpen);
+          if (!keyboardOpen) {
+            setMobileViewportBase(windowHeight);
+            setViewportHeight(windowHeight);
+          } else {
+            const stableHeight =
+              mobileViewportBaseRef.current || windowHeight || vv.height;
+            setViewportHeight(stableHeight);
+          }
           // No usar bottomInset para padding en el contenedor principal
           setBottomInset(0);
-        } else {
+        } else if (typeof window !== 'undefined') {
           setViewportWidth(window.innerWidth);
           setViewportHeight(window.innerHeight);
+          setMobileViewportBase(window.innerHeight);
+          mobileViewportBaseRef.current = window.innerHeight;
           setIsKeyboardOpen(false);
           setBottomInset(0);
         }
@@ -582,7 +603,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   // Mantener el input visible y scrollear al fondo cuando abre el teclado
   useEffect(() => {
     if (!isOpen || isDesktop) return;
-    if (!isKeyboardOpen) return;
     const timeout = window.setTimeout(() => {
       try {
         chatContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
@@ -593,7 +613,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       }
     }, 50);
     return () => window.clearTimeout(timeout);
-  }, [isOpen, isDesktop, isKeyboardOpen]);
+  }, [isOpen, isDesktop, isKeyboardOpen, activeSection]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {

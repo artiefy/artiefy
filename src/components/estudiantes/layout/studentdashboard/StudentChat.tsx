@@ -417,8 +417,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
   ]);
 
   const bodyClasses = compactWelcome
-    ? 'flex-1 min-h-0 overflow-y-auto flex flex-col justify-end gap-3 px-3 pt-1 pb-4 scroll-pb-24'
-    : 'flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 px-3 pt-4 pb-4 scroll-pb-24';
+    ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col justify-end gap-3 px-3 pt-1 pb-4 scroll-pb-24'
+    : 'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 px-3 pt-4 pb-4 scroll-pb-24';
 
   return (
     <div
@@ -482,7 +482,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   className={
                     message.sender === 'user'
                       ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
-                      : 'rounded-2xl border border-white/10 bg-[#08142a] px-4 py-3 text-white shadow-lg'
+                      : 'rounded-2xl border border-white/5 bg-[#0c1e32] px-4 py-3 text-white shadow-lg shadow-black/30'
                   }
                   style={{
                     overflowWrap: 'anywhere',

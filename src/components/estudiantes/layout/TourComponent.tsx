@@ -72,7 +72,7 @@ export const TourComponent = () => {
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
         <div
-          className="fixed right-24 bottom-10 z-10 translate-x-0 sm:right-26 sm:bottom-12 sm:translate-x-0"
+          className="fixed right-24 bottom-9 z-10 translate-x-0 sm:right-26 sm:bottom-12 sm:translate-x-0"
           onMouseEnter={() =>
             window.dispatchEvent(new Event('extras-hover-enter'))
           }
@@ -91,7 +91,7 @@ export const TourComponent = () => {
               console.log('Botón de tour clickeado');
               window.dispatchEvent(new Event('start-tour'));
             }}
-            className="relative flex items-center gap-2 rounded-full border border-green-400 bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-2 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-emerald-500 hover:to-green-600 hover:shadow-[0_0_20px_#00c951]"
+            className="relative flex items-center gap-2 rounded-full border border-green-400 bg-gradient-to-r from-green-500 to-emerald-600 px-3.5 py-3.5 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-emerald-500 hover:to-green-600 hover:shadow-[0_0_20px_#00c951]"
           >
             <LuInfo className="text-xl text-white opacity-90" />
             <span className="hidden font-medium tracking-wide sm:inline">
@@ -99,7 +99,7 @@ export const TourComponent = () => {
             </span>
 
             {/* Triángulo tipo burbuja */}
-            <span className="absolute bottom-[13px] left-1/2 hidden h-0 w-0 translate-x-31 rotate-[270deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-green-500 border-r-transparent border-l-transparent sm:inline" />
+            <span className="absolute bottom-[14px] left-1/2 hidden h-0 w-0 translate-x-31 rotate-[270deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-green-500 border-r-transparent border-l-transparent sm:inline" />
           </button>
         </div>
       )}
