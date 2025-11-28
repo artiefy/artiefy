@@ -1,1 +1,8 @@
+# Chequeo de errores de compilación TypeScript antes del commit
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "Error: El commit fue bloqueado por errores de TypeScript."
+  exit 1
+fi
+
 npx lint-staged
