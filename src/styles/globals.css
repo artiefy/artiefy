@@ -681,14 +681,46 @@
     font-size: 16px !important;
   }
 
-  /* Asegurar que el chat se ajuste correctamente al viewport */
-  .chat-resizable {
-    height: 100vh !important;
-    height: 100dvh !important;
+  /* Prevenir zoom en iOS cuando se hace focus en inputs */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    font-size: 16px !important;
   }
 
-  /* Input container debe pegarse al teclado */
-  [role='presentation'] {
+  /* Asegurar que el chat se ajuste correctamente al viewport */
+  .chat-resizable {
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+  }
+
+  /* Eliminar hack de body fijo: permitir scroll natural del documento.
+     Mantener sólo bloqueo por overflow dentro de área de mensajes. */
+  body.chat-open {
+    position: static;
+    height: auto;
+    overflow: auto;
+    overscroll-behavior: auto;
+  }
+
+  /* Asegurar que el input se mantenga visible con el teclado */
+  .chat-resizable input[type='text'],
+  .chat-resizable textarea {
+    font-size: 16px !important;
+    -webkit-appearance: none;
+  }
+
+  /* Prevenir el rebote del scroll (rubber banding) */
+  .chat-resizable,
+  .messages-container {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }

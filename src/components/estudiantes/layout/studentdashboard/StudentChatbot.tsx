@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
 import { Card } from '~/components/estudiantes/ui/card';
+import { useKeyboardViewport } from '~/hooks/useKeyboardViewport';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
 import {
   createNewTicket,
@@ -159,18 +160,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     height: 500,
   });
   // Responsive: dimensiones seguras para móviles (teclado táctil)
-  const [viewportWidth, setViewportWidth] = useState<number>(
+  const [viewportWidth, _setViewportWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 0
   );
-  const [, setViewportHeight] = useState<number>(
+  const [, _setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
-  const [mobileViewportBase, setMobileViewportBase] = useState<number>(() =>
+  const [mobileViewportBase, _setMobileViewportBase] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
-  const [keyboardInset, setKeyboardInset] = useState<number>(0);
-  const [_bottomInset, setBottomInset] = useState<number>(0);
+  // Hook centralizado para gestionar la altura del teclado en móviles
+  const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
+    useKeyboardViewport();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -531,9 +532,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     mobileViewportBaseRef.current = mobileViewportBase;
   }, [mobileViewportBase]);
 
-  // Efecto: gestionar visualViewport para móviles (altura real con teclado)
+  // Bloquear scroll del body cuando el chatbot está abierto en móvil (sin lógica duplicada de visualViewport)
   useEffect(() => {
-    // Bloquear scroll del body cuando el chatbot está abierto en móvil
     if (!isDesktop && isOpen) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -543,65 +543,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     }
     return undefined;
   }, [isDesktop, isOpen]);
-
-  useEffect(() => {
-    const hasVV = typeof window !== 'undefined' && 'visualViewport' in window;
-
-    const handleResize = () => {
-      try {
-        if (hasVV && window.visualViewport) {
-          const vv = window.visualViewport;
-          setViewportWidth(Math.round(vv.width));
-          const windowHeight =
-            typeof window !== 'undefined' ? window.innerHeight : vv.height;
-          const keyboardOverlap = Math.max(0, windowHeight - vv.height);
-          const keyboardOpen = keyboardOverlap > 80;
-          setIsKeyboardOpen(keyboardOpen);
-          if (!keyboardOpen) {
-            setKeyboardInset(0);
-            setMobileViewportBase(windowHeight);
-            setViewportHeight(windowHeight);
-          } else {
-            setKeyboardInset(keyboardOverlap);
-            const stableHeight =
-              mobileViewportBaseRef.current || windowHeight || vv.height;
-            setViewportHeight(stableHeight);
-          }
-          // No usar bottomInset para padding en el contenedor principal
-          setBottomInset(0);
-        } else if (typeof window !== 'undefined') {
-          setViewportWidth(window.innerWidth);
-          setViewportHeight(window.innerHeight);
-          setMobileViewportBase(window.innerHeight);
-          mobileViewportBaseRef.current = window.innerHeight;
-          setIsKeyboardOpen(false);
-          setKeyboardInset(0);
-          setBottomInset(0);
-        }
-      } catch (err) {
-        console.warn('Error ajustando visualViewport:', err);
-      }
-    };
-
-    handleResize();
-    if (hasVV && window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      window.addEventListener('orientationchange', handleResize);
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleResize);
-        window.removeEventListener('orientationchange', handleResize);
-        window.removeEventListener('resize', handleResize);
-      };
-    } else {
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('orientationchange', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('orientationchange', handleResize);
-      };
-    }
-  }, []);
 
   // Medir header y ajustar padding del wrapper para que el header fijo no solape el contenido
   // Mantener el input visible y scrollear al fondo cuando abre el teclado
@@ -3531,7 +3472,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
-                              keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (
                                   message: {
@@ -3598,7 +3538,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               inputRef={
                                 inputRef as React.RefObject<HTMLInputElement>
                               }
-                              keyboardInset={keyboardInset}
                               renderMessage={
                                 renderMessage as (
                                   message: {

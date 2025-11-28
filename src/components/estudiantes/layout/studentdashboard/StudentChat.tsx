@@ -1,6 +1,5 @@
 'use client';
 
-import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
@@ -10,11 +9,14 @@ import { useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
+import { useKeyboardViewport } from '~/hooks/useKeyboardViewport';
 import {
   getConversationById,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
+
+import type { CSSProperties } from 'react';
 
 // Props for the chat component
 interface ChatProps {
@@ -71,7 +73,6 @@ interface ChatProps {
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
   compactWelcome?: boolean;
-  keyboardInset?: number;
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -98,17 +99,20 @@ export const ChatMessages: React.FC<ChatProps> = ({
   onBotButtonClick,
   onDeleteHistory,
   compactWelcome,
-  keyboardInset,
 }) => {
+  // Hook para detectar la altura real del teclado en móviles
+  // Cuando el teclado está abierto ajustamos el padding inferior del área de mensajes
+  const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
+    useKeyboardViewport();
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
-  type BlurGestureState = {
+  interface BlurGestureState {
     id: number | null;
     startX: number;
     startY: number;
     moved: boolean;
     shouldBlur: boolean;
-  };
+  }
   const blurGestureRef = useRef<BlurGestureState>({
     id: null,
     startX: 0,
@@ -454,20 +458,19 @@ export const ChatMessages: React.FC<ChatProps> = ({
   const bodyClasses = compactWelcome
     ? `${baseBodyClasses} pt-1`
     : `${baseBodyClasses} pt-4`;
-  const effectiveKeyboardInset = Math.max(0, keyboardInset ?? 0);
-  const messageAreaStyle =
-    effectiveKeyboardInset > 0
-      ? { paddingBottom: `${effectiveKeyboardInset + 24}px` }
-      : undefined;
+  const INPUT_BAR_HEIGHT = 70; // altura aproximada del contenedor del input
+  const dynamicBottomPadding = isKeyboardOpen
+    ? _keyboardHeight + INPUT_BAR_HEIGHT + 24
+    : INPUT_BAR_HEIGHT + 24;
+  const messageAreaStyle: CSSProperties = {
+    paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${dynamicBottomPadding}px)`,
+  };
   const inputBarStyle: CSSProperties = {
     padding: '12px 16px',
     paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
     flexShrink: 0,
-    transform:
-      effectiveKeyboardInset > 0
-        ? `translateY(-${effectiveKeyboardInset}px)`
-        : undefined,
-    transition: 'transform 120ms ease-out',
+    // Crucial en móviles: empujar el input por encima del teclado
+    bottom: isKeyboardOpen ? `${_keyboardHeight}px` : '0px',
   };
 
   return (
@@ -599,7 +602,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
       </div>
 
       <div
-        className="border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
+        className="fixed right-0 left-0 z-30 border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
         style={inputBarStyle}
       >
         <form onSubmit={handleSendMessage} className="w-full">
