@@ -73,6 +73,7 @@ interface ChatProps {
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
   compactWelcome?: boolean;
+  isDesktop?: boolean; // Nueva prop para detectar desktop
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -99,6 +100,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   onBotButtonClick,
   onDeleteHistory,
   compactWelcome,
+  isDesktop = false, // Nueva prop con valor por defecto
 }) => {
   // Hook para detectar la altura real del teclado en móviles
   // Cuando el teclado está abierto ajustamos el padding inferior del área de mensajes
@@ -473,6 +475,18 @@ export const ChatMessages: React.FC<ChatProps> = ({
     bottom: isKeyboardOpen ? `${_keyboardHeight}px` : '0px',
   };
 
+  const inputBarClass = isDesktop
+    ? 'flex-shrink-0 border-t border-gray-700 bg-[#071024] backdrop-blur-sm'
+    : 'fixed right-0 left-0 z-30 border-t border-gray-700 bg-[#071024] backdrop-blur-sm';
+
+  const inputBarStyleDesktop: CSSProperties = {
+    padding: '12px 16px',
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+    flexShrink: 0,
+  };
+
+  const actualInputBarStyle = isDesktop ? inputBarStyleDesktop : inputBarStyle;
+
   return (
     <div
       className="relative flex h-full min-h-0 flex-col overflow-hidden"
@@ -601,10 +615,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div
-        className="fixed right-0 left-0 z-30 border-t border-gray-700 bg-[#071024] backdrop-blur-sm"
-        style={inputBarStyle}
-      >
+      <div className={inputBarClass} style={actualInputBarStyle}>
         <form onSubmit={handleSendMessage} className="w-full">
           <div className="flex w-full gap-2">
             <input
@@ -615,6 +626,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               placeholder={'Escribe un mensaje...'}
               className="min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-base text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
               disabled={isLoading}
+              style={{ width: '100%', minWidth: 0, maxWidth: '100%' }}
             />
             <button
               type="submit"

@@ -3495,6 +3495,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 messages[0].sender === 'bot' &&
                                 !!messages[0].buttons
                               }
+                              isDesktop={isDesktop}
                             />
                           ) : chatMode.status &&
                             isSignedIn &&
@@ -3561,6 +3562,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 messages[0].sender === 'bot' &&
                                 !!messages[0].buttons
                               }
+                              isDesktop={isDesktop}
                             />
                           ) : (
                             chatMode.status &&
