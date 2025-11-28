@@ -2,6 +2,7 @@
 // By Jean
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -1243,15 +1244,80 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   text = JSON.stringify(json);
                 }
                 console.log('Respuesta del Assistant:', text);
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now() + Math.random(),
-                    text: String(text),
-                    sender: 'bot',
-                  },
-                ]);
-                queueOrSaveBotMessage(String(text));
+
+                // Detectar si hay una acción de WhatsApp con type guard seguro
+                function isWhatsAppAction(
+                  obj: unknown
+                ): obj is {
+                  url: string;
+                  phone: string;
+                  button_text?: string;
+                  message?: string;
+                } {
+                  if (typeof obj !== 'object' || obj === null) return false;
+                  const o = obj as Record<string, unknown>;
+                  return (
+                    typeof o.url === 'string' && typeof o.phone === 'string'
+                  );
+                }
+
+                let whatsappAction:
+                  | {
+                      url: string;
+                      phone: string;
+                      button_text?: string;
+                      message?: string;
+                    }
+                  | undefined = undefined;
+                if (
+                  json &&
+                  typeof json === 'object' &&
+                  'whatsapp_action' in (json as Record<string, unknown>) &&
+                  isWhatsAppAction(
+                    (json as Record<string, unknown>).whatsapp_action
+                  )
+                ) {
+                  whatsappAction = (json as Record<string, unknown>)
+                    .whatsapp_action as {
+                    url: string;
+                    phone: string;
+                    button_text?: string;
+                    message?: string;
+                  };
+                }
+
+                if (whatsappAction) {
+                  // Solo agregar el botón de WhatsApp, sin duplicar el texto del mensaje
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: Date.now() + Math.random(),
+                      text: String(text),
+                      sender: 'bot',
+                      buttons: [
+                        {
+                          label:
+                            whatsappAction.button_text ??
+                            'Chatear por WhatsApp',
+                          action: `whatsapp:${whatsappAction.url}`,
+                        },
+                      ],
+                    },
+                  ]);
+                  queueOrSaveBotMessage(String(text));
+                } else {
+                  // Sin acción de WhatsApp, solo mensaje normal
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: Date.now() + Math.random(),
+                      text: String(text),
+                      sender: 'bot',
+                    },
+                  ]);
+                  queueOrSaveBotMessage(String(text));
+                }
+
                 setIdea({ selected: false, idea: '' });
                 setProcessingQuery(false);
                 setIsLoading(false);
@@ -2237,6 +2303,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
   // Manejo de botones (creación, idea, soporte, flujo final_yes/no, selección/creación de proyecto)
   const handleBotButtonClick = (action: string) => {
+    // Manejar acciones de WhatsApp
+    if (action.startsWith('whatsapp:')) {
+      const url = action.replace('whatsapp:', '');
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (action === 'new_project') {
       queueOrSaveUserMessage('📚 Crear Proyecto');
       if (!isSignedIn) {
@@ -2918,16 +2991,37 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 (btn: { label: string; action: string }) =>
                   !(btn.action === 'contact_support' && !isSignedIn)
               )
-              .map((btn: { label: string; action: string }) => (
-                <button
-                  key={btn.action}
-                  className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                  onClick={() => handleBotButtonClick(btn.action)}
-                  type="button"
-                >
-                  {btn.label}
-                </button>
-              ))}
+              .map((btn: { label: string; action: string }) => {
+                const isWhatsAppButton = btn.action.startsWith('whatsapp:');
+
+                return (
+                  <button
+                    key={btn.action}
+                    className={`${
+                      isWhatsAppButton
+                        ? 'flex items-center gap-2 rounded border border-[#128C7E] bg-[#25D366] px-4 py-2 font-semibold text-white shadow-md shadow-[#128C7E]/40 transition hover:bg-[#1ebe5d]'
+                        : 'rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700'
+                    }`}
+                    onClick={() => handleBotButtonClick(btn.action)}
+                    type="button"
+                  >
+                    {isWhatsAppButton && (
+                      <Image
+                        src="/WhatsApp.webp"
+                        alt="WhatsApp"
+                        width={24}
+                        height={24}
+                        className="h-6 w-6"
+                      />
+                    )}
+                    <span
+                      className={isWhatsAppButton ? 'text-white' : undefined}
+                    >
+                      {btn.label}
+                    </span>
+                  </button>
+                );
+              })}
           </div>
         )}
       </div>
@@ -2953,8 +3047,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const shouldRenderSupportButton =
     !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
   const supportButtonWrapperClass = isDesktop
-    ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-28 duration-200 sm:right-6'
-    : 'fixed right-8 bottom-26';
+    ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-26 duration-200 sm:right-7'
+    : 'fixed right-8.5 bottom-26';
   const supportButtonStyle: React.CSSProperties = {
     zIndex: floatingButtonsZIndex,
     pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
@@ -3066,69 +3160,57 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         >
           {isAlwaysVisible && (
             <div className="fixed right-6 bottom-6" style={floatingButtonStyle}>
-              <button
-                className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
-                onMouseEnter={() => {
-                  // al entrar en el botón principal, mostrar extras y cancelar cualquier hide pending
-                  if (hideTimeoutRef.current) {
-                    window.clearTimeout(hideTimeoutRef.current);
-                    hideTimeoutRef.current = null;
-                  }
-                  setIsHovered(true);
-                  show();
-                }}
-                onMouseLeave={() => {
-                  setIsHovered(false);
-                  // esperar un poco antes de ocultar para permitir mover el mouse a los extras
-                  if (hideTimeoutRef.current)
-                    window.clearTimeout(hideTimeoutRef.current);
-                  hideTimeoutRef.current = window.setTimeout(() => {
-                    // ocultar solo si NO estamos sobre los extras
-                    if (!extrasHovered && !isHovered) hide();
-                    hideTimeoutRef.current = null;
-                  }, 150);
-                }}
-                onClick={handleClick}
-              >
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
-                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-                  <div className="relative">
-                    <MessageCircle
-                      className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
-                    />
-                    {isHovered && (
-                      <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
-                    )}
-                  </div>
-                </div>
-                <div
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                  style={{
-                    background:
-                      'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+              <div className="relative">
+                <button
+                  className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+                  onMouseEnter={() => {
+                    if (hideTimeoutRef.current) {
+                      window.clearTimeout(hideTimeoutRef.current);
+                      hideTimeoutRef.current = null;
+                    }
+                    setIsHovered(true);
+                    show();
                   }}
-                />
-                <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
-              </button>
-
-              {isDesktop && (
-                <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
-                  <div className="relative">
-                    <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
-                      Asistente IA
+                  onMouseLeave={() => {
+                    setIsHovered(false);
+                    if (hideTimeoutRef.current)
+                      window.clearTimeout(hideTimeoutRef.current);
+                    hideTimeoutRef.current = window.setTimeout(() => {
+                      if (!extrasHovered && !isHovered) hide();
+                      hideTimeoutRef.current = null;
+                    }, 150);
+                  }}
+                  onClick={handleClick}
+                >
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
+                  <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
+                    <div className="relative">
+                      <MessageCircle
+                        className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                      />
+                      {isHovered && (
+                        <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
+                      )}
                     </div>
-                    <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
-                      Asistente IA
-                    </div>
-                    <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
-                      Asistente IA
-                    </div>
-                    <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
-                    <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
-                    <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
                   </div>
-                </div>
-              )}
+                  <div
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    style={{
+                      background:
+                        'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                    }}
+                  />
+                  <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
+                </button>
+                {/* Tooltip solo en desktop y hover */}
+                {isDesktop && isHovered && (
+                  <div className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-md border border-cyan-400 bg-slate-800/95 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
+                    Asistente IA
+                  </div>
+                )}
+              </div>
+
+              {/* Eliminado el tooltip/frase "Asistente IA" y triángulo */}
 
               {shouldRenderSupportButton && (
                 <div
@@ -3190,12 +3272,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       className={`${isDesktop ? 'text-xl' : 'text-2xl'} text-white opacity-90`}
                     />
                     {isDesktop ? (
-                      <>
-                        <span className="hidden font-medium tracking-wide sm:inline">
-                          Soporte técnico
-                        </span>
-                        <span className="absolute bottom-[-9px] left-1/2 hidden h-0 w-0 translate-x-15 transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:inline" />
-                      </>
+                      <span className="hidden font-medium tracking-wide sm:inline">
+                        Soporte técnico
+                      </span>
                     ) : (
                       <span className="sr-only">Soporte técnico</span>
                     )}

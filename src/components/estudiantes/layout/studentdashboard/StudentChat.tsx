@@ -560,31 +560,67 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   {renderMessage(message, idx)}
                   {message.buttons && message.sender === 'bot' && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {message.buttons.map((btn, bidx) => (
-                        <button
-                          key={bidx}
-                          type="button"
-                          onClick={() => handleLocalButton(btn.action)}
-                          className="chatbot-menu-btn flex items-center justify-center gap-1 rounded border border-[#00bdd8] bg-[#eaf7fa] px-3 py-1 text-xs font-semibold text-[#00a5c0] shadow-sm transition hover:bg-[#00bdd8] hover:text-white"
-                          style={{
-                            whiteSpace: 'nowrap',
-                            minWidth: 0,
-                            lineHeight: '1.1',
-                            padding: '2px 8px',
-                            fontSize: '12px',
-                            marginRight: '4px',
-                            marginBottom: '2px',
-                            borderRadius: '6px',
-                            maxWidth: '90vw',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          <span className="flex items-center justify-center gap-1 whitespace-nowrap">
-                            {btn.label}
-                          </span>
-                        </button>
-                      ))}
+                      {message.buttons.map((btn, bidx) => {
+                        const isWhatsAppButton =
+                          btn.action.startsWith('whatsapp:');
+
+                        return (
+                          <button
+                            key={bidx}
+                            type="button"
+                            onClick={() => handleLocalButton(btn.action)}
+                            className={`chatbot-menu-btn flex items-center justify-center gap-2 rounded px-4 py-2 font-semibold shadow-md transition ${
+                              isWhatsAppButton
+                                ? 'border-2 border-[#128C7E] bg-white text-[#128C7E] hover:bg-[#f0fdf4]'
+                                : 'border border-[#00bdd8] bg-[#eaf7fa] text-[#00a5c0] hover:bg-[#00bdd8] hover:text-white'
+                            }`}
+                            style={
+                              isWhatsAppButton
+                                ? {
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 0,
+                                    lineHeight: '1.4',
+                                    padding: '10px 16px',
+                                    fontSize: '15px',
+                                    marginRight: '4px',
+                                    marginBottom: '6px',
+                                    borderRadius: '8px',
+                                    maxWidth: '90vw',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }
+                                : {
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 0,
+                                    lineHeight: '1.1',
+                                    padding: '2px 8px',
+                                    fontSize: '12px',
+                                    marginRight: '4px',
+                                    marginBottom: '2px',
+                                    borderRadius: '6px',
+                                    maxWidth: '90vw',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }
+                            }
+                          >
+                            <span
+                              className={`flex items-center justify-center gap-2 whitespace-nowrap ${isWhatsAppButton ? 'text-[#128C7E]' : ''}`}
+                            >
+                              {isWhatsAppButton && (
+                                <Image
+                                  src="/WhatsApp.webp"
+                                  alt="WhatsApp"
+                                  width={28}
+                                  height={28}
+                                  className="h-7 w-7"
+                                />
+                              )}
+                              {btn.label}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

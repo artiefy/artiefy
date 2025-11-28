@@ -387,3 +387,47 @@ git config user.email
 ```bash
 git config credential.helper store
 ```
+
+---
+
+## Mini tutorial: Husky + lint-staged + ESLint + Prettier + TypeScript
+
+1. Instala dependencias:
+
+   ```bash
+   npm install --save-dev husky lint-staged eslint prettier typescript
+   ```
+
+2. Inicializa Husky:
+
+   ```bash
+   npx husky init
+   ```
+
+3. Agrega el script en package.json:
+
+   ```json
+   "prepare": "husky"
+   ```
+
+4. Crea el hook pre-commit en `.husky/pre-commit`:
+
+   ```bash
+   npm run typecheck
+   if [ $? -ne 0 ]; then
+     echo "Error: El commit fue bloqueado por errores de TypeScript."
+     exit 1
+   fi
+   npx lint-staged
+   ```
+
+5. Configura lint-staged en `package.json` o `.lintstagedrc.js`:
+
+   ```js
+   module.exports = {
+     '*.{js,jsx,ts,tsx}': ['eslint --fix --max-warnings 0', 'prettier --write'],
+     '*.{json,md,mdx,css,yml,yaml}': ['prettier --write'],
+   };
+   ```
+
+6. ¡Listo! Al hacer `git commit`, se bloquea el commit si hay errores de formato, lint o tipos.
