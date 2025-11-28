@@ -26,97 +26,57 @@ TAILWINDCSS V4.0
 
 Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 permite usar max-breakpoints:
 
-```html
+````html
 <!-- Aplicar flex solo entre md y xl -->
 <div class="md:max-xl:flex">
   <!-- ... -->
 </div>
-```
+```json 📌 Ejemplo de variantes max-\*: max-sm @media (width < 40rem) { ... }
+max-md @media (width < 48rem) { ... } max-lg @media (width < 64rem) { ... }
+max-xl @media (width < 80rem) { ... } max-2xl @media (width < 96rem) { ... } ---
+## Volver a un commit anterior - `git reset --hard
+<commit-hash
+  >` --- Para mejorar el rendimiento de tu proyecto y limpiar archivos
+  innecesarios, puedes seguir estos pasos: chmod +x clean.sh //Dale permisos de
+  ejecución (solo la primera vez) ./clean.sh //Ejecutar el archivo de limpieza
+  automatica - `rm -rf node_modules package-lock.json .next` - `npm cache clean
+  --force` - `rm -rf .turbo` - `rm -rf next-env.d.ts` - `rm -rf
+  tsconfig.tsbuildinfo` - `rm -rf .tsbuildinfo` - `rm -rf .eslintcache` - `npm
+  cache verify` - `rm -rf node_modules/.cache` --- Algunas opciones del CLI de
+  npm para optimizar o reaprar tus librerias - `npm dedupe` //Reducir la
+  duplicación en el árbol de paquetes - `npm doctor` //Comprueba el estado de tu
+  entorno npm - `npm prune` //Eliminar paquetes extraños - `npm ci` //# Para
+  CI/CD y despliegues - `npm install -g npm@latest` //actualizar ultima version
+  del npm --- ### **Comandos Generales de TypeScript y ESlint** 1. `Eslint:
+  Restart ESlint Server`: Reinicia el servidor de ESlint. 2. `TypeScript: Select
+  TypeScript Version`: Cambia la versión de TypeScript que utiliza el proyecto.
+  3. `TypeScript: Restart TS Server`: Reinicia el servidor de TypeScript 4. `npm
+  install -g eslint`: Intalar globalmente Eslint 5. `npm install -g typescript`:
+  Intalar globalmente typescript 6. `npm install typescript --save-dev`: Instala
+  TypeScript localmente en el proyecto como una dependencia de desarrollo. 7.
+  `npx tsc`: Ejecuta el compilador TypeScript localmente. 8. `tsc`: Ejecuta el
+  compilador TypeScript globalmente. 9. `npm install next@latest react@latest
+  react-dom@latest`: Actualizar Next 10. `npm install --save-dev eslint
+  typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier
+  eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort
+  globals`: Dependencias para que funcione el archivo eslint.config.mjs 11. `npx
+  eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores 12.
+  `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto
+  como una dependencia de desarrollo. 13. `Remove-Item -Recurse -Force
+  "C:\Users\Usuario\AppData\Local\npm-cache"` : remover cache npm ---
+  Tecnologias Que Se Usan: - Next.js 15, App Router, Clerk, Tailwind CSS,
+  Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
+  --- CORREO SOPORTE:
 
-📌 Ejemplo de variantes max-\*:
-
-max-sm @media (width < 40rem) { ... }
-max-md @media (width < 48rem) { ... }
-max-lg @media (width < 64rem) { ... }
-max-xl @media (width < 80rem) { ... }
-max-2xl @media (width < 96rem) { ... }
-
----
-
-## Volver a un commit anterior
-
-- `git reset --hard <commit-hash>`
-
----
-
-Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
-
-chmod +x clean.sh //Dale permisos de ejecución (solo la primera vez)
-./clean.sh //Ejecutar el archivo de limpieza automatica
-
-- `rm -rf node_modules package-lock.json .next`
-- `npm cache clean --force`
-- `rm -rf .turbo`
-- `rm -rf next-env.d.ts`
-- `rm -rf tsconfig.tsbuildinfo`
-- `rm -rf .tsbuildinfo`
-- `rm -rf .eslintcache`
-- `npm cache verify`
-- `rm -rf node_modules/.cache`
-
----
-
-Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
-
-- `npm dedupe` //Reducir la duplicación en el árbol de paquetes
-- `npm doctor` //Comprueba el estado de tu entorno npm
-- `npm prune` //Eliminar paquetes extraños
-- `npm ci` //# Para CI/CD y despliegues
-- `npm install -g npm@latest` //actualizar ultima version del npm
-
----
-
-### **Comandos Generales de TypeScript y ESlint**
-
-1. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.
-2. `TypeScript: Select TypeScript Version`: Cambia la versión de TypeScript que utiliza el proyecto.
-3. `TypeScript: Restart TS Server`: Reinicia el servidor de TypeScript
-4. `npm install -g eslint`: Intalar globalmente Eslint
-5. `npm install -g typescript`: Intalar globalmente typescript
-6. `npm install typescript --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
-7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
-8. `tsc`: Ejecuta el compilador TypeScript globalmente.
-9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort globals`: Dependencias para que funcione el archivo eslint.config.mjs
-11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
-12. `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
-13. `Remove-Item -Recurse -Force "C:\Users\Usuario\AppData\Local\npm-cache"` : remover cache npm
-
----
-
-Tecnologias Que Se Usan:
-
-- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
-
----
-
-CORREO SOPORTE:
-
-<artiefysupport@gmail.com>
-
----
-
-Colores del manual de marca:
-
-```css
-#3AF4EF #00BDD8 #01142B #2ecc71
-
-#01142B -background //variable de tailwindcss
-#3AF4EF -primary //variable de tailwindcss
-#00BDD8 -secondary //variable de tailwindcss
-#1e2939 //color de fondo de las tarjetas de cursos
-#00A5C0 //color parecido mas oscuro de -secondary para el hover
-```
+  <artiefysupport@gmail.com>
+    --- Colores del manual de marca: ```css #3AF4EF #00BDD8 #01142B #2ecc71
+    #01142B -background //variable de tailwindcss #3AF4EF -primary //variable de
+    tailwindcss #00BDD8 -secondary //variable de tailwindcss #1e2939 //color de
+    fondo de las tarjetas de cursos #00A5C0 //color parecido mas oscuro de
+    -secondary para el hover</artiefysupport@gmail.com
+  ></commit-hash
+>
+````
 
 Lik Del Modo Blur:
 
@@ -428,6 +388,20 @@ git config credential.helper store
      '*.{js,jsx,ts,tsx}': ['eslint --fix --max-warnings 0', 'prettier --write'],
      '*.{json,md,mdx,css,yml,yaml}': ['prettier --write'],
    };
+   ```
+
+   ```js
+    "prepare": "husky",
+    ...
+   "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx,css,yml,yaml}": [
+      "prettier --write"
+    ]
+    }
    ```
 
 6. ¡Listo! Al hacer `git commit`, se bloquea el commit si hay errores de formato, lint o tipos.
