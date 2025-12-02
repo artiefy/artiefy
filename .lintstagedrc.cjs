@@ -1,6 +1,11 @@
 module.exports = {
   // Run Prettier first, then ESLint autofix for JS/TS files
-  '*.{js,jsx,ts,tsx}': ['prettier --write', 'eslint --fix --max-warnings 0'],
+  // prettier then eslint; use unix formatter to show file:line:col paths clearly
+  '*.{js,jsx,ts,tsx}': [
+    'prettier --write',
+    // 'stylish' is the default formatter and prints file paths and locations
+    'eslint --fix --max-warnings 0 --format stylish',
+  ],
 
   // Format common text/config files
   '*.{json,md,mdx,css,yml,yaml}': ['prettier --write'],

@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
-# Run lint-staged (which runs Prettier, ESLint and TypeScript check for staged files)
-npx lint-staged
+# Run lint-staged (Prettier, ESLint and TypeScript check for staged files)
+# Use verbose output and limit concurrency to 1 to make errors clearer and avoid OOM/SIGKILL
+npx lint-staged --verbose --concurrent 1
