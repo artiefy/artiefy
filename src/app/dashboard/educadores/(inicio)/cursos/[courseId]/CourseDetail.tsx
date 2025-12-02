@@ -53,6 +53,8 @@ interface Course {
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
   meetings?: ScheduledMeeting[];
+  horario?: string | null;
+  espacios?: string | null;
 }
 interface Materia {
   id: number;
@@ -1172,8 +1174,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     key={color}
                     style={{ backgroundColor: color }}
                     className={`size-8 border ${selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
+                      ? 'border-black'
+                      : 'border-white'
                       } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
@@ -1419,8 +1421,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Badge
                     variant="outline"
                     className={`ml-1 w-fit border ${course.isActive
-                        ? 'border-green-500 text-green-500'
-                        : 'border-red-500 text-red-500'
+                      ? 'border-green-500 text-green-500'
+                      : 'border-red-500 text-red-500'
                       } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}

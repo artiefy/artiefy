@@ -283,7 +283,7 @@ export default function Page() {
       // Declare individualPrice from editingCourse or set to null
       const individualPrice =
         editingCourse &&
-        Object.prototype.hasOwnProperty.call(editingCourse, 'individualPrice')
+          Object.prototype.hasOwnProperty.call(editingCourse, 'individualPrice')
           ? editingCourse.individualPrice
           : null;
 
@@ -522,11 +522,10 @@ export default function Page() {
             setShowProgramCourses(false);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            !showProgramCourses
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
-          }`}
+          className={`rounded-md px-4 py-2 ${!showProgramCourses
+            ? 'bg-primary text-white'
+            : 'bg-gray-800 text-gray-300'
+            }`}
         >
           Cursos Independientes
         </button>
@@ -535,11 +534,10 @@ export default function Page() {
             setShowProgramCourses(true);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            showProgramCourses
-              ? 'bg-primary text-background'
-              : 'bg-gray-800 text-gray-300'
-          }`}
+          className={`rounded-md px-4 py-2 ${showProgramCourses
+            ? 'bg-primary text-background'
+            : 'bg-gray-800 text-gray-300'
+            }`}
         >
           Cursos en Programas
         </button>
@@ -646,6 +644,10 @@ export default function Page() {
           setCoverVideoCourseKey={setEditCoverVideoCourseKey}
           individualPrice={null}
           setIndividualPrice={(price: number | null) => console.log(price)}
+          horario={null}
+          setHorario={() => undefined}
+          espacios={null}
+          setEspacios={() => undefined}
         />
       )}
     </div>
