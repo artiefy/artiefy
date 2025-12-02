@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { Search, X } from 'lucide-react';
 
 interface FilterOption {
     value: string;
@@ -20,9 +21,7 @@ interface AdvancedFilterMenuProps {
 }
 
 export function AdvancedFilterMenu({
-    columnId,
     columnLabel,
-    columnType,
     allValues,
     currentFilters,
     onApplyFilters,
@@ -250,7 +249,7 @@ export function AdvancedFilterMenu({
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
-                                        onChange={() => { }}
+                                        onChange={() => undefined}
                                         className="rounded cursor-pointer"
                                     />
                                     <span

@@ -48,8 +48,11 @@ interface Course {
   title: string;
   description: string;
   categoryid: string;
+  categoryName?: string;
   nivelid: string; // Replaced  with nivelid
+  nivelName?: string;
   modalidadesid: string;
+  modalidadesName?: string;
   instructor: string;
   coverImageKey: string;
   creatorId: string;
@@ -68,6 +71,15 @@ interface Course {
 interface Materia {
   id: number;
   title: string;
+}
+
+interface VideoData {
+  videos?: unknown[];
+}
+
+interface SyncResponse {
+  error?: string;
+  hasMore?: boolean;
 }
 
 // Definir la interfaz de las propiedades del componente
@@ -267,7 +279,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isSyncingVideos, setIsSyncingVideos] = useState(false);
-  const [videos, setVideos] = useState<any[]>([]);
+  const [_videos, setVideos] = useState<unknown[]>([]);
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
@@ -278,8 +290,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       cache: 'no-store',
     });
 
-    const data = await res.json();
-    setVideos(data.videos ?? []);
+    const data = (await res.json()) as VideoData;
+    const videoList = Array.isArray(data.videos) ? data.videos : [];
+    setVideos(videoList);
   }
 
   async function handleSyncVideos(aadUserId: string = MAIN_AAD_USER_ID) {
@@ -293,13 +306,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
       });
 
-      const syncData = await syncRes.json();
-      if (!syncRes.ok) throw new Error(syncData?.error ?? 'Sync error');
+      const syncData = (await syncRes.json()) as SyncResponse;
+      if (!syncRes.ok) {
+        const errorMsg = typeof syncData.error === 'string' ? syncData.error : 'Sync error';
+        throw new Error(errorMsg);
+      }
 
       await fetchVideosList(aadUserId);
 
       let rounds = 0;
-      while (syncData.hasMore && rounds < 4) {
+      while (syncData.hasMore === true && rounds < 4) {
         rounds += 1;
         const r = await fetch('/api/super-admin/teams/video/sync', {
           method: 'POST',
@@ -307,21 +323,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
         });
 
-        const d = await r.json();
+        const d = (await r.json()) as SyncResponse;
         if (!r.ok) break;
 
         await fetchVideosList(aadUserId);
-        if (!d.hasMore) break;
+        if (d.hasMore !== true) break;
       }
     } catch (e) {
-      console.error(e);
+      const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
+      console.error(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSyncingVideos(false);
     }
   }
-
-
-
   const { user } = useUser(); // Ya está dentro del componente
 
   // Estado para meetings ya poblados desde backend
@@ -1054,14 +1069,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       const [searchTerm, setSearchTerm] = useState('');
       const currentEducator = educators.find((e) => e.id === course.instructor);
       const displayEducator = educators.find(
-        (e) => e.id === (selectedInstructor || course.instructor)
+        (e) => e.id === (selectedInstructor ?? course.instructor)
       );
       void currentEducator;
 
       // Filtrar educadores por búsqueda
       const filteredEducators = educators.filter((educator) =>
-        educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        educator.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        (educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (educator.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
       );
 
       // Función para copiar al portapapeles
@@ -1133,9 +1148,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       filteredEducators.map((educator) => (
                         <div
                           key={educator.id}
-                          className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 ${educator.id === (selectedInstructor || course.instructor)
-                            ? 'bg-primary/20'
-                            : ''
+                          className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 
+                            ${educator.id === (selectedInstructor ?? course.instructor)
+                              ? 'bg-primary/20'
+                              : ''
                             }`}
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -1336,7 +1352,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     const [first, second] = candidates;
 
-    const alreadyHasFirst = Boolean(meeting.video_key || meeting.videoUrl);
+    const alreadyHasFirst = Boolean(meeting.video_key ?? meeting.videoUrl);
     const alreadyHasSecond = Boolean(meeting.video_key_2);
 
     // Si no tiene nada, setear ambos (si existen)
@@ -1413,28 +1429,33 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-            <CardTitle className="text-primary text-xl font-bold sm:text-2xl">
-              Curso: {course.title}
-            </CardTitle>
-            <div className="flex flex-col">
+          <CardHeader className="grid w-full grid-cols-1 gap-4 p-0 md:grid-cols-2 md:gap-8">
+            <div>
+              <CardTitle className="text-primary text-2xl font-bold md:text-3xl lg:text-4xl">
+                {course.title}
+              </CardTitle>
+              <p className={`mt-2 text-xs font-semibold uppercase tracking-widest md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/60' : 'text-white/60'}`}>
+                Detalles Completos del Curso
+              </p>
+            </div>
+            <div className="flex flex-col justify-start gap-3">
               <Label
-                className={
-                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                }
+                className={`text-xs font-bold uppercase tracking-wider md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                  }`}
               >
-                Seleccione el color deseado
+                🎨 Tema del Curso
               </Label>
-              <div className="mt-2 flex space-x-2">
+              <div className="flex gap-2 flex-wrap">
                 {predefinedColors.map((color) => (
-                  <Button
+                  <button
                     key={color}
-                    style={{ backgroundColor: color }}
-                    className={`size-8 border ${selectedColor === '#FFFFFF'
-                      ? 'border-black'
-                      : 'border-white'
-                      } `}
                     onClick={() => handlePredefinedColorChange(color)}
+                    style={{ backgroundColor: color }}
+                    className={`size-10 rounded-lg border-2 transition-all duration-300 hover:scale-110 ${selectedColor === color
+                      ? `border-${selectedColor === '#FFFFFF' ? 'black' : 'white'} ring-2 ring-offset-2 ring-primary`
+                      : 'border-gray-300 hover:border-gray-500'
+                      }`}
+                    title={`Cambiar tema a ${color}`}
                   />
                 ))}
               </div>
@@ -1454,29 +1475,34 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   quality={75}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+              <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                 <Button
                   onClick={handleEnrollAndRedirect}
-                  className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto"
+                  className="w-full bg-green-500 px-3 py-2 text-xs font-semibold hover:bg-green-600 md:px-4 md:py-2.5 md:text-sm"
                 >
-                  Visualizar curso
+                  👁️ Ver Curso
                 </Button>
                 <Button
                   onClick={handleEditCourse}
-                  className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
+                  className="w-full bg-yellow-500 px-3 py-2 text-xs font-semibold text-white hover:bg-yellow-600 md:px-4 md:py-2.5 md:text-sm"
                 >
-                  Editar curso
+                  ✏️ Editar
                 </Button>
-                <Button className="border-primary bg-primary hover:bg-primary/90 text-white">
+                <Button className="w-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 md:px-4 md:py-2.5 md:text-sm">
                   <Link
                     href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
                   >
-                    Estadisticas
+                    📊 Stats
                   </Link>
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Eliminar</Button>
+                    <Button
+                      variant="destructive"
+                      className="w-full px-3 py-2 text-xs font-semibold md:px-4 md:py-2.5 md:text-sm"
+                    >
+                      🗑️ Eliminar
+                    </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -1506,69 +1532,102 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <h2 className="text-primary text-xl font-bold sm:text-2xl">
                 Información del curso
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                       }`}
                   >
-                    Curso:
+                    Nombre del Curso
                   </h2>
-                  <h1 className="text-primary text-xl font-bold sm:text-2xl">
+                  <h1 className="text-primary text-lg font-bold md:text-xl">
                     {course.title}
                   </h1>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                       }`}
                   >
-                    Categoría:
+                    Categoría
                   </h2>
                   <Badge
                     variant="outline"
                     className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
                   >
-                    {course.categoryid}
+                    {course.categoryName ?? course.categoryid}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Nivel
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.nivelName ?? course.nivelid}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Modalidad
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.modalidadesName ?? course.modalidadesid}
                   </Badge>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                     }`}
                 >
-                  Descripción:
+                  Descripción del Curso
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  className={`text-justify text-sm leading-relaxed md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/90' : 'text-white/90'
                     }`}
                 >
                   {course.description}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                     }`}
                 >
-                  Precio Individual:
+                  Precio Individual
                 </h2>
-                <Badge
-                  variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                >
-                  {individualPrice !== null
-                    ? `$${individualPrice}`
-                    : 'No asignado'}
-                </Badge>
+                <div className="inline-block">
+                  <Badge
+                    variant="outline"
+                    className={`border-2 px-4 py-2 text-base font-semibold ${selectedColor === '#FFFFFF'
+                      ? 'border-black/30 text-black'
+                      : 'border-white/30 text-white'
+                      } bg-background/50`}
+                  >
+                    {individualPrice !== null
+                      ? `$${individualPrice.toLocaleString()}`
+                      : 'No asignado'}
+                  </Badge>
+                </div>
               </div>
 
               <div className="space-y-6">
                 {/* Educador - Sección destacada */}
-                <div className="rounded-lg border border-primary/20 bg-background/50 p-4 backdrop-blur-sm">
+                <div className="rounded-lg border-2 border-primary/30 bg-background/70 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:bg-background/90">
                   <h2
-                    className={`mb-3 text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    className={`mb-4 text-sm font-bold uppercase tracking-wider md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/80' : 'text-white/80'
                       }`}
                   >
                     👨‍🏫 Educador Asignado
@@ -1583,102 +1642,35 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   />
                 </div>
 
-                {/* Grid de información del curso */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {/* Nivel */}
-                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">📊</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                          }`}
-                      >
-                        Nivel
-                      </h2>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
-                    >
-                      {course.nivelid}
-                    </Badge>
-                  </div>
-
-                  {/* Modalidad */}
-                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">🎯</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                          }`}
-                      >
-                        Modalidad
-                      </h2>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
-                    >
-                      {course.modalidadesid}
-                    </Badge>
-                  </div>
-
-                  {/* Tipos de curso */}
-                  <div className="group rounded-lg border border-primary/20 bg-background/30 p-4 transition-all hover:border-primary/40 hover:bg-background/50 sm:col-span-2 lg:col-span-1">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">🏷️</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                          }`}
-                      >
-                        Tipos de Curso
-                      </h2>
-                    </div>
-                    {course.courseTypes && course.courseTypes.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {course.courseTypes.map((type) => (
-                          <Badge
-                            key={type.id}
-                            variant="outline"
-                            className="border-primary bg-background text-primary hover:bg-black/70"
-                          >
-                            {type.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="border-primary bg-background text-primary w-full justify-center py-2 text-sm opacity-50"
-                      >
-                        No especificado
-                      </Badge>
-                    )}
-                  </div>
-                </div>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+                {/* Estado */}
+                <div className="space-y-3">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                       }`}
                   >
-                    Estado:
+                    Estado del Curso
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${course.isActive
-                      ? 'border-green-500 text-green-500'
-                      : 'border-red-500 text-red-500'
-                      } bg-background hover:bg-black/70`}
+                    className={`inline-block border-2 px-4 py-2 font-semibold text-base transition-all ${course.isActive
+                      ? 'border-green-500/70 text-green-600 bg-green-50/20'
+                      : 'border-red-500/70 text-red-600 bg-red-50/20'
+                      }`}
                   >
-                    {course.isActive ? 'Activo' : 'Inactivo'}
+                    {course.isActive ? '✓ Activo' : '✕ Inactivo'}
                   </Badge>
                 </div>
-                <div className="materias-container col-span-1 sm:col-span-2">
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
-                    Materias:
-                  </h3>
+
+                {/* Materias */}
+                <div className="space-y-3">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Materias Asociadas
+                  </h2>
                   {materias.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {[
@@ -1687,14 +1679,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <Badge
                           key={materia.id}
                           variant="secondary"
-                          className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+                          className={`bg-gradient-to-r ${getBadgeGradient()} px-3 py-1.5 text-white text-xs md:text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg`}
                         >
                           {materia.title}
                         </Badge>
                       ))}
                     </div>
                   ) : (
-                    <p>No hay materias asociadas a este curso.</p>
+                    <p className={`text-sm italic ${selectedColor === '#FFFFFF' ? 'text-black/50' : 'text-white/50'}`}>
+                      No hay materias asociadas
+                    </p>
                   )}
                 </div>
               </div>
@@ -1709,22 +1703,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <>
             {/* NUEVO BLOQUE PARA SIMULAR CLASES EN TEAMS */}
             <div className="mt-12 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-primary text-xl font-bold">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <h2 className="text-primary text-xl font-bold md:text-2xl">
                   Clases agendadas
                 </h2>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row w-full md:w-auto">
                   <Button
-                    onClick={() => void handleSyncVideos()}  // 👈 aquí
+                    onClick={() => void handleSyncVideos()}
                     disabled={isSyncingVideos}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
                   >
                     {isSyncingVideos ? '🔄 Sincronizando...' : '🎥 Sincronizar Videos'}
                   </Button>
 
                   <Button
                     onClick={() => setIsMeetingModalOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-black"
+                    className="bg-primary hover:bg-primary/90 text-black w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
                   >
                     + Agendar clase en Teams
                   </Button>

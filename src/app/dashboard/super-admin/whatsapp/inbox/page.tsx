@@ -92,6 +92,63 @@ function isAssignedOk(x: unknown): x is AssignedOk {
 }
 /* ========================================================== */
 
+function CountdownCircle({ remainingMs, isAlmostExpired }: { remainingMs: number; isAlmostExpired: boolean }) {
+  const totalMs = 24 * 60 * 60 * 1000;
+  const percentage = Math.max(0, (remainingMs / totalMs) * 100);
+  const circumference = 2 * Math.PI * 18;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  // Calcular horas, minutos
+  const totalMinutes = Math.max(0, Math.floor(remainingMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return (
+    <div className="relative w-12 h-12 flex items-center justify-center" title={`${hours}h ${minutes}m`}>
+      <svg className="w-full h-full" viewBox="0 0 40 40">
+        {/* Círculo de fondo */}
+        <circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="text-[#2A3942]"
+        />
+        {/* Círculo de progreso */}
+        <circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke={isAlmostExpired ? '#ef4444' : '#25D366'}
+          strokeWidth="2"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-300"
+          style={{ transform: 'rotate(-90deg)', transformOrigin: '20px 20px' }}
+        />
+        {/* Punto en el inicio */}
+        <circle
+          cx="20"
+          cy="2"
+          r="1.5"
+          fill={isAlmostExpired ? '#ef4444' : '#25D366'}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-[10px] font-semibold text-center">
+          <div className="text-[#8696A0]" style={{ fontSize: '9px' }}>
+            {hours > 0 ? `${hours}h` : `${minutes}m`}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MediaMessage({ item }: { item: InboxItem }) {
   if (!item.mediaId) {
     return item.text ? <div className="whitespace-pre-wrap">{item.text}</div> : null;
@@ -257,7 +314,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   const [tagFilter, setTagFilter] = useState<number | 'ALL'>('ALL');
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagAssignmentsCache, setTagAssignmentsCache] = useState<Record<string, number[]>>({});
-
+  void uploadingFile;
   // Configuración de la sesión actual
   const sessionName = session;
 
@@ -528,17 +585,6 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       month: '2-digit',
     });
 
-  const fmtDuration = (ms: number) => {
-    const totalMin = Math.max(0, Math.floor(ms / 60000));
-    const d = Math.floor(totalMin / (60 * 24));
-    const h = Math.floor((totalMin % (60 * 24)) / 60);
-    const m = totalMin % 60;
-    const parts: string[] = [];
-    if (d) parts.push(`${d}d`);
-    if (h) parts.push(`${h}h`);
-    if (m || parts.length === 0) parts.push(`${m}m`);
-    return parts.join(' ');
-  };
 
   const lastInboundId = (waid: string) =>
     threads
@@ -825,21 +871,33 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
       {/* SIDEBAR - Lista de chats (móvil: oculto cuando hay chat seleccionado) */}
       <aside
         className={`${selected && !isDesktop && userSelectedChat ? 'hidden' : 'flex'
-          } w-full md:w-72 border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200`}
+          } w-full md:w-72 border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200 z-50`}
       >
         {/* Header de sidebar */}
-        <div className="px-3.5 md:px-4 py-3 md:py-4 flex items-center justify-between bg-[#202C33] border-b border-gray-800 flex-shrink-0">
-          <div className="text-lg md:text-xl font-bold text-gray-100">Chats</div>
-          <div className="flex items-center gap-2">
-            {hiddenWaids.size > 0 && (
-              <button
-                onClick={restoreAllConversations}
-                className="text-xs text-emerald-400 hover:text-emerald-300 px-2 py-1"
-                title={`Restaurar ${hiddenWaids.size} conversación(es)`}
-              >
-                ({hiddenWaids.size})
-              </button>
-            )}
+        <div className="flex-shrink-0 border-b border-gray-800 bg-[#202C33] px-2 py-2 md:px-4 md:py-4">
+          <div className="flex items-center justify-between gap-1">
+            <a
+              href="/dashboard/super-admin"
+              className="inline-flex items-center justify-center flex-shrink-0 rounded-full p-1.5 text-emerald-400 transition-colors hover:bg-white/10 hover:text-emerald-300"
+              title="Volver al inicio"
+              aria-label="Volver al inicio"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </a>
+            <div className="flex-1 text-center text-basrd/super-admin/cursos/e font-bold text-gray-100 md:text-lg">Chats</div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {hiddenWaids.size > 0 && (
+                <button
+                  onClick={restoreAllConversations}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 px-1.5 py-1 font-medium"
+                  title={`Restaurar ${hiddenWaids.size} conversación(es)`}
+                >
+                  ({hiddenWaids.size})
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -960,7 +1018,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
                 {/* Mensaje preview */}
                 <div className="truncate text-xs md:text-sm text-[#8696A0]">
-                  {t.lastText || '(sin mensajes)'}
+                  {t.lastText ?? '(sin mensajes)'}
                 </div>
 
                 {/* Indicadores de estado y etiquetas */}
@@ -987,12 +1045,16 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                 )}
               </div>
 
-              {/* Indicador de estado ventana */}
-              <div className="flex-shrink-0 text-lg md:text-base">
+              {/* Indicador de estado ventana - Contador circular */}
+              <div className="flex-shrink-0">
                 {t.isNew24h ? (
-                  t.isAlmostExpired ? '⏳' : '✓'
+                  <CountdownCircle remainingMs={t.remainingMs} isAlmostExpired={t.isAlmostExpired} />
                 ) : (
-                  '✗'
+                  <div className="w-12 h-12 flex items-center justify-center text-red-500" title="Ventana expirada">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 )}
               </div>
             </button>
@@ -1029,34 +1091,35 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               {threads.find((t) => t.waid === selected)?.name ?? selected ?? 'Selecciona un chat'}
             </div>
             <div className="truncate text-xs text-[#8696A0]">
-              {selected ? selected : ''}
-            </div>
+              {selected ?? ''}            </div>
           </div>
 
-          {selected && (
-            <button
-              onClick={() => setShowTagModal(true)}
-              className="md:hidden p-2 -mr-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100"
-              title="Etiquetas"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 0 1 0 2.828l-7 7a2 2 0 0 1-2.828 0l-7-7A1.994 1.994 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
-              </svg>
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {selected && (
+              <button
+                onClick={() => setShowTagModal(true)}
+                className="md:hidden p-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors"
+                title="Etiquetas"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 0 1 0 2.828l-7 7a2 2 0 0 1-2.828 0l-7-7A1.994 1.994 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
+                </svg>
+              </button>
+            )}
 
-          {selected && (
-            <a
-              href="/dashboard/super-admin"
-              className="p-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors inline-flex items-center justify-center"
-              title="Volver al inicio"
-              aria-label="Volver al inicio"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </a>
-          )}
+            {selected && (
+              <a
+                href="/dashboard/super-admin"
+                className="p-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors inline-flex items-center justify-center"
+                title="Volver al inicio"
+                aria-label="Volver al inicio"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Contenedor de scroll - SIN PADDING, flex layout puro */}

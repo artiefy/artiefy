@@ -6,6 +6,25 @@ import { desc, ilike, or, sql } from "drizzle-orm";
 import { db } from "~/server/db";
 import { credentialsDeliveryLogs } from "~/server/db/schema";
 
+interface UserPublicMetadata {
+    role?: string;
+}
+
+interface CreateCredentialsBody {
+    usuario?: unknown;
+    correo?: unknown;
+    nota?: unknown;
+    contrasena?: unknown;
+    userId?: unknown;
+}
+
+async function assertSuperAdmin(userId: string): Promise<boolean> {
+    const client = await clerkClient();
+    const me = await client.users.getUser(userId);
+    const metadata = me.publicMetadata as UserPublicMetadata;
+    return metadata?.role === "super-admin";
+}
+
 export async function GET(req: Request) {
     try {
         const { userId } = await auth();
@@ -13,14 +32,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "No autenticado" }, { status: 401 });
         }
 
-        const client = await clerkClient();
-        const me = await client.users.getUser(userId);
-        const role = (me.publicMetadata as any)?.role;
-
-        if (role !== "super-admin") {
+        if (!(await assertSuperAdmin(userId))) {
             return NextResponse.json({ message: "No autorizado" }, { status: 403 });
         }
-
 
         const { searchParams } = new URL(req.url);
         const q = (searchParams.get("q") ?? "").trim();
@@ -84,30 +98,48 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "No autenticado" }, { status: 401 });
         }
 
-        const client = await clerkClient();
-        const me = await client.users.getUser(userId);
-        const role = (me.publicMetadata as any)?.role;
-
-        if (role !== "super-admin") {
+        if (!(await assertSuperAdmin(userId))) {
             return NextResponse.json({ message: "No autorizado" }, { status: 403 });
         }
 
+        const body = (await req.json()) as CreateCredentialsBody;
 
-        const body = await req.json();
-
-        const usuario = String(body.usuario ?? "").trim();
-        const correo = String(body.correo ?? "").trim();
-        const nota = String(body.nota ?? "").trim();
-        const contrasena = body.contrasena ? String(body.contrasena) : null;
-        const refUserId = body.userId ? String(body.userId) : null;
-
-        if (!usuario || !correo || !nota) {
+        if (typeof body.usuario !== 'string' || !body.usuario.trim()) {
             return NextResponse.json(
-                { message: "usuario, correo y nota son obligatorios" },
+                { message: "Campo 'usuario' es obligatorio y debe ser string" },
+                { status: 400 }
+            );
+        }
+        if (typeof body.correo !== 'string' || !body.correo.trim()) {
+            return NextResponse.json(
+                { message: "Campo 'correo' es obligatorio y debe ser string" },
+                { status: 400 }
+            );
+        }
+        if (typeof body.nota !== 'string' || !body.nota.trim()) {
+            return NextResponse.json(
+                { message: "Campo 'nota' es obligatorio y debe ser string" },
+                { status: 400 }
+            );
+        }
+        if (body.contrasena !== undefined && body.contrasena !== null && typeof body.contrasena !== 'string') {
+            return NextResponse.json(
+                { message: "Campo 'contrasena' debe ser string o null" },
+                { status: 400 }
+            );
+        }
+        if (body.userId !== undefined && body.userId !== null && typeof body.userId !== 'string') {
+            return NextResponse.json(
+                { message: "Campo 'userId' debe ser string o null" },
                 { status: 400 }
             );
         }
 
+        const usuario = body.usuario.trim();
+        const correo = body.correo.trim();
+        const nota = body.nota.trim();
+        const contrasena = body.contrasena ?? null;
+        const refUserId = body.userId ?? null;
         const [created] = await db
             .insert(credentialsDeliveryLogs)
             .values({

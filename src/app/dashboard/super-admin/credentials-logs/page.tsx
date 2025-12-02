@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useUser } from "@clerk/clerk-react";
-import { FiEdit2, FiEye, FiRefreshCw, FiSearch, FiTrash2, FiX } from "react-icons/fi";
+import { FiEye, FiRefreshCw, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 
 import { cn } from "~/lib/utils";
 
@@ -53,9 +53,14 @@ export default function CredentialsLogsPage() {
             if (search.trim()) params.set("q", search.trim());
 
             const res = await fetch(`/api/super-admin/form-inscription/credentials-logs?${params.toString()}`);
-            const data = await res.json();
+            const data = (await res.json()) as {
+                message?: string;
+                items?: LogItem[];
+                page?: number;
+                totalPages?: number;
+            };
 
-            if (!res.ok) throw new Error(data?.message ?? "Error listando logs");
+            if (!res.ok) throw new Error(data.message ?? "Error listando logs");
 
             setItems(data.items ?? []);
             setPage(data.page ?? p);
@@ -90,12 +95,15 @@ export default function CredentialsLogsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ nota: notaEdit }),
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.message ?? "Error actualizando");
+            const data = (await res.json()) as {
+                message?: string;
+                nota?: string;
+            };
+            if (!res.ok) throw new Error(data.message ?? "Error actualizando");
 
             // update local
             setItems((prev) =>
-                prev.map((x) => (x.id === modalItem.id ? { ...x, nota: data.nota } : x))
+                prev.map((x) => (x.id === modalItem.id ? { ...x, nota: data.nota ?? notaEdit } : x))
             );
             setOpenModal(false);
         } catch (e) {
@@ -112,8 +120,8 @@ export default function CredentialsLogsPage() {
             const res = await fetch(`/api/super-admin/form-inscription/credentials-logs/${id}`, {
                 method: "DELETE",
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.message ?? "Error eliminando");
+            const data = (await res.json()) as { message?: string };
+            if (!res.ok) throw new Error(data.message ?? "Error eliminando");
 
             setItems((prev) => prev.filter((x) => x.id !== id));
         } catch (e) {

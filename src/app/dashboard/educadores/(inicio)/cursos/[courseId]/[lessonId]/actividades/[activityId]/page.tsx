@@ -73,6 +73,7 @@ interface ActivityDetails {
     courseTitle: string;
     courseDescription: string;
     courseInstructor: string;
+    courseInstructorName?: string | null;
   };
   fechaMaximaEntrega: string | null;
 }
@@ -421,14 +422,14 @@ const Page: React.FC = () => {
       <div className="group relative h-auto w-full">
         <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
         <div
-          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
+          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-4 sm:p-6 lg:p-8 shadow-lg"
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
-          <div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
-            <h2 className="text-primary flex flex-col text-4xl font-extrabold">
+          <div className="mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl sm:text-3xl md:text-3xl font-semibold md:grid-cols-2">
+            <h2 className="text-primary flex flex-col text-2xl sm:text-3xl md:text-4xl font-extrabold">
               Actividad: <b>{actividad.name}</b>
             </h2>
-            <h3 className="text-primary text-xl md:mr-8 lg:mr-24">
+            <h3 className="text-primary text-base sm:text-lg md:text-xl md:mr-8 lg:mr-24">
               Perteneciente a la clase: {actividad.lesson?.title}
             </h3>
           </div>
@@ -460,15 +461,15 @@ const Page: React.FC = () => {
             </div>
           </div>
 
-          <div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
-            <div className="space-y-5 text-lg">
+          <div className="my-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+            <div className="space-y-5 text-base sm:text-lg">
               <p className="font-semibold">
                 Del docente:{' '}
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
                 >
-                  {actividad.lesson.courseInstructor}
+                  {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
                 </Badge>
               </p>
               <p className="font-semibold">
@@ -478,9 +479,9 @@ const Page: React.FC = () => {
               <p className="font-semibold">
                 Permite: <b>{actividad.type?.description}</b>
               </p>
-              <p className="w-11/12 font-semibold">
+              <p className="w-full sm:w-11/12 font-semibold">
                 Descripción de la actividad:{' '}
-                <b className="w-11/12">{actividad.description}.</b>
+                <b className="block">{actividad.description}.</b>
               </p>
               <p className="font-semibold">
                 ¿La actividad es calificable?:{' '}
@@ -513,24 +514,24 @@ const Page: React.FC = () => {
                       : `/favicon.ico`
                   }
                   alt="Imagen de la lección"
-                  width={250}
-                  height={250}
-                  className="rounded-lg shadow-md"
+                  width={400}
+                  height={400}
+                  className="rounded-lg shadow-md w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-cover"
                 />
               </div>
             </div>
           </div>
-          <div className="mx-auto flex flex-wrap justify-center gap-4 sm:justify-evenly md:gap-6">
+          <div className="mx-auto flex w-full flex-col sm:flex-row flex-wrap justify-center gap-3 sm:justify-evenly md:gap-6">
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
+              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
             >
               Realizar Actividad
             </Link>
 
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
+              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
             >
               Editar Actividad
             </Link>
@@ -661,7 +662,7 @@ const Page: React.FC = () => {
 
               {selectedActivityType && (
                 <Button
-                  className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`mx-auto mb-4 w-full sm:w-2/4 md:w-1/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta

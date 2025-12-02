@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { credentialsDeliveryLogs,emailLogs } from '~/server/db/schema';
+import { credentialsDeliveryLogs, emailLogs } from '~/server/db/schema';
 import {
   comercials,
   dates,
@@ -367,9 +367,14 @@ export async function POST(req: Request) {
     });
 
     // Clerk a veces devuelve array directo o { data: [] }
-    const existing =
-      Array.isArray(list) ? list[0] :
-        (list?.data?.[0] ?? null);
+    const rawExisting = Array.isArray(list) ? list[0] : (list?.data?.[0] ?? null);
+
+    interface ClerkUser {
+      id: string;
+      username?: string | null;
+    }
+
+    const existing = rawExisting as ClerkUser | null;
 
     if (existing) {
       console.log('[CLERK] Email ya existe. Se actualizará usuario existente.');

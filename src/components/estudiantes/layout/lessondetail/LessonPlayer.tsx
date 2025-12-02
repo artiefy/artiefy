@@ -114,8 +114,8 @@ const LessonPlayer = ({
             startAt={
               lesson.porcentajecompletado
                 ? Math.round(
-                    (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
-                  )
+                  (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
+                )
                 : 0
             }
           />
@@ -126,164 +126,155 @@ const LessonPlayer = ({
           {lesson.title}
         </h1>
         <p className="font-semibold text-gray-600">{lesson.description}</p>
-        {isLoadingTranscription && (
-          <div className="mt-4 mb-4 flex items-center gap-2 text-indigo-700">
-            <span className="text-base italic">Cargando transcripción...</span>
-            <Icons.spinner className="h-5 w-5 text-indigo-500" />
-          </div>
-        )}
-        {transcription &&
-          transcription.length > 0 &&
-          !isLoadingTranscription && (
-            <div className="mt-4 mb-4">
-              <button
-                className="mb-2 rounded bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 transition hover:bg-indigo-200"
-                onClick={() => setShowTranscription((v) => !v)}
-              >
-                {showTranscription
-                  ? 'Ocultar transcripción'
-                  : 'Ver transcripción'}
-              </button>
-              {showTranscription && (
-                <div
-                  className="relative transition-all duration-300"
-                  style={{
-                    maxHeight: '16rem',
-                    minHeight: '10.2rem',
-                    height: 'auto',
-                    overflow: isTranscriptionScrollable ? 'auto' : 'hidden',
-                    border: '1px solid #e0e7ff',
-                    borderRadius: '0.5rem',
-                    background: '#f8fafc',
-                    position: 'relative',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    margin: 0,
-                  }}
-                  ref={transcriptionContainerRef}
+        <div className="flex flex-col">
+          {isLoadingTranscription && (
+            <div className="order-2 mt-4 mb-4 flex items-center gap-2 text-indigo-700 md:order-1">
+              <span className="text-base italic">Cargando transcripción...</span>
+              <Icons.spinner className="h-5 w-5 text-indigo-500" />
+            </div>
+          )}
+
+          {transcription &&
+            transcription.length > 0 &&
+            !isLoadingTranscription && (
+              <div className="order-2 mt-4 mb-4 md:order-1">
+                <button
+                  className="mb-2 rounded bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 transition hover:bg-indigo-200"
+                  onClick={() => setShowTranscription((v) => !v)}
                 >
-                  <h2
-                    className="text-lg font-semibold text-indigo-700"
-                    style={{ marginBottom: '0.1rem', marginTop: 0 }}
-                  >
-                    Transcripción
-                  </h2>
+                  {showTranscription ? 'Ocultar transcripción' : 'Ver transcripción'}
+                </button>
+                {showTranscription && (
                   <div
-                    className="relative w-full"
+                    className="relative transition-all duration-300"
                     style={{
-                      minHeight: '7.8rem',
-                      maxHeight: '14rem',
+                      maxHeight: '16rem',
+                      minHeight: '10.2rem',
+                      height: 'auto',
                       overflow: isTranscriptionScrollable ? 'auto' : 'hidden',
+                      border: '1px solid #e0e7ff',
+                      borderRadius: '0.5rem',
+                      background: '#f8fafc',
                       position: 'relative',
+                      width: '100%',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-start',
                       alignItems: 'center',
                       margin: 0,
-                      height: '10rem',
                     }}
+                    ref={transcriptionContainerRef}
                   >
-                    {isTranscriptionScrollable ? (
-                      // Modo scroll manual: muestra toda la transcripción
-                      <div>
-                        {transcription.map((item, idx) => (
-                          <div
-                            key={idx}
-                            data-transcription-idx={idx}
-                            className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
-                              idx === currentTranscriptionIndex
-                                ? 'font-bold text-indigo-900'
-                                : 'text-indigo-700'
-                            }`}
-                            style={{
-                              background:
-                                idx === currentTranscriptionIndex
-                                  ? '#a5b4fc'
-                                  : '#eef2ff',
-                              opacity:
-                                idx === currentTranscriptionIndex ? 1 : 0.7,
-                              textAlign: 'center',
-                              margin: '0.1rem 0',
-                              borderRadius:
-                                idx === currentTranscriptionIndex
-                                  ? '0.5rem'
-                                  : '',
-                              minHeight: '2.6rem',
-                              maxHeight: '3.4rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              zIndex: idx === currentTranscriptionIndex ? 3 : 1,
-                            }}
-                          >
-                            <span className="mr-2 font-mono text-xs text-indigo-400">
-                              [{item.start.toFixed(2)}s - {item.end.toFixed(2)}
-                              s]
-                            </span>
-                            {item.text}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      // Modo automático: efecto centrado
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: `calc(50% - 1.4rem)`,
-                          left: 0,
-                          width: '100%',
-                          transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
-                          transform: `translateY(-${currentTranscriptionIndex * 2.8}rem)`,
-                          willChange: 'transform',
-                        }}
-                      >
-                        {transcription.map((item, idx) => (
-                          <div
-                            key={idx}
-                            data-transcription-idx={idx}
-                            className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
-                              idx === currentTranscriptionIndex
-                                ? 'font-bold text-indigo-900'
-                                : 'text-indigo-700'
-                            }`}
-                            style={{
-                              background:
-                                idx === currentTranscriptionIndex
-                                  ? '#a5b4fc'
-                                  : '#eef2ff',
-                              opacity:
-                                idx === currentTranscriptionIndex ? 1 : 0.7,
-                              textAlign: 'center',
-                              margin: '0.1rem 0',
-                              borderRadius:
-                                idx === currentTranscriptionIndex
-                                  ? '0.5rem'
-                                  : '',
-                              minHeight: '2.6rem',
-                              maxHeight: '3.4rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              zIndex: idx === currentTranscriptionIndex ? 3 : 1,
-                            }}
-                          >
-                            <span className="mr-2 font-mono text-xs text-indigo-400">
-                              [{item.start.toFixed(2)}s - {item.end.toFixed(2)}
-                              s]
-                            </span>
-                            {item.text}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <h2
+                      className="text-lg font-semibold text-indigo-700"
+                      style={{ marginBottom: '0.1rem', marginTop: 0 }}
+                    >
+                      Transcripción
+                    </h2>
+                    <div
+                      className="relative w-full"
+                      style={{
+                        minHeight: '7.8rem',
+                        maxHeight: '14rem',
+                        overflow: isTranscriptionScrollable ? 'auto' : 'hidden',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        margin: 0,
+                        height: '10rem',
+                      }}
+                    >
+                      {isTranscriptionScrollable ? (
+                        <div>
+                          {transcription.map((item, idx) => (
+                            <div
+                              key={idx}
+                              data-transcription-idx={idx}
+                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${idx === currentTranscriptionIndex
+                                  ? 'font-bold text-indigo-900'
+                                  : 'text-indigo-700'
+                                }`}
+                              style={{
+                                background:
+                                  idx === currentTranscriptionIndex ? '#a5b4fc' : '#eef2ff',
+                                opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
+                                textAlign: 'center',
+                                margin: '0.1rem 0',
+                                borderRadius: idx === currentTranscriptionIndex ? '0.5rem' : '',
+                                minHeight: '2.6rem',
+                                maxHeight: '3.4rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: idx === currentTranscriptionIndex ? 3 : 1,
+                              }}
+                            >
+                              <span className="mr-2 font-mono text-xs text-indigo-400">
+                                [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                              </span>
+                              {item.text}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: `calc(50% - 1.4rem)`,
+                            left: 0,
+                            width: '100%',
+                            transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
+                            transform: `translateY(-${currentTranscriptionIndex * 2.8}rem)`,
+                            willChange: 'transform',
+                          }}
+                        >
+                          {transcription.map((item, idx) => (
+                            <div
+                              key={idx}
+                              data-transcription-idx={idx}
+                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${idx === currentTranscriptionIndex
+                                  ? 'font-bold text-indigo-900'
+                                  : 'text-indigo-700'
+                                }`}
+                              style={{
+                                background:
+                                  idx === currentTranscriptionIndex ? '#a5b4fc' : '#eef2ff',
+                                opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
+                                textAlign: 'center',
+                                margin: '0.1rem 0',
+                                borderRadius: idx === currentTranscriptionIndex ? '0.5rem' : '',
+                                minHeight: '2.6rem',
+                                maxHeight: '3.4rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: idx === currentTranscriptionIndex ? 3 : 1,
+                              }}
+                            >
+                              <span className="mr-2 font-mono text-xs text-indigo-400">
+                                [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                              </span>
+                              {item.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            )}
+
+          <div className="order-1 mt-4 md:-mt-2 md:order-2">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-bold text-gray-700">Progreso de la clase</span>
+              <span className="text-gray-600">{progress}%</span>
             </div>
-          )}
+            <Progress value={progress} showPercentage={true} />
+          </div>
+        </div>
         <div className="mt-4 md:-mt-2">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-bold text-gray-700">

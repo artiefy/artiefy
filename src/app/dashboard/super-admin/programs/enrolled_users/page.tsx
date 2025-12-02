@@ -6,11 +6,12 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import { Loader2, Mail, MessageCircle, UserPlus, X, ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2, Mail, MessageCircle, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
+
 import { AdvancedFilterMenu } from './AdvancedFilterMenu';
 
 // helpers
@@ -362,7 +363,7 @@ export default function EnrolledUsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [codigoPais, setCodigoPais] = useState('+57');
-  const [manualPhones, setManualPhones] = useState<string[]>([]);
+
   const [manualEmails, setManualEmails] = useState<string[]>([]);
   const [newManualPhone, setNewManualPhone] = useState('');
   const [newManualEmail, setNewManualEmail] = useState('');
@@ -1729,7 +1730,10 @@ export default function EnrolledUsersPage() {
     }
   };
 
-  const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
+  const totalColumns: Column[] = useMemo(
+    () => [...columnsWithOptions, ...dynamicColumns],
+    [columnsWithOptions, dynamicColumns]
+  );
   const [successMessage, setSuccessMessage] = useState('');
   void successMessage;
   const [searchFieldTerm, setSearchFieldTerm] = useState('');
@@ -2299,6 +2303,8 @@ export default function EnrolledUsersPage() {
         `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
+      void showWhatsAppModal;
+
 
       // ✅ Cerrar el modal después de crear el usuario
       setShowCreateForm(false);
@@ -2545,7 +2551,6 @@ export default function EnrolledUsersPage() {
     );
   };
 
-  // ✅ Generar opciones únicas para TODOS los estudiantes (para filtros avanzados)
   const columnFilterOptions = useMemo(() => {
     const options: Record<string, (string | null | undefined)[]> = {};
 
@@ -2561,7 +2566,7 @@ export default function EnrolledUsersPage() {
     });
 
     return options;
-  }, [students]);
+  }, [students, totalColumns]);
 
   const sortedStudents = getFilteredSortedStudents();
   // — Hooks para infinite scroll
@@ -3198,8 +3203,8 @@ export default function EnrolledUsersPage() {
                                 setAdvancedFilterOpen(col.id);
                               }}
                               className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition text-xs ${(advancedFilters[col.id]?.length ?? 0) > 0
-                                  ? 'bg-blue-600 hover:bg-blue-700'
-                                  : 'bg-gray-700 hover:bg-gray-600'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-gray-700 hover:bg-gray-600'
                                 }`}
                               title="Filtro avanzado"
                             >
@@ -3552,19 +3557,15 @@ export default function EnrolledUsersPage() {
           </div>
         </div>
 
-        {/* ✅ Componente de Filtro Avanzado tipo Excel */}
         {advancedFilterOpen && (
           <AdvancedFilterMenu
             columnId={advancedFilterOpen}
             columnLabel={
-              totalColumns.find((c) => c.id === advancedFilterOpen)?.label ||
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.label ??
               advancedFilterOpen
             }
             columnType={
-              (totalColumns.find((c) => c.id === advancedFilterOpen)?.type as
-                | 'text'
-                | 'date'
-                | 'select') || 'text'
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.type ?? 'text'
             }
             allValues={columnFilterOptions[advancedFilterOpen] || []}
             currentFilters={advancedFilters[advancedFilterOpen] || []}
@@ -3576,10 +3577,9 @@ export default function EnrolledUsersPage() {
               setAdvancedFilterOpen(null);
             }}
             onClose={() => setAdvancedFilterOpen(null)}
-            position={advancedFilterMenuPos || undefined}
+            position={advancedFilterMenuPos ?? undefined}
           />
         )}
-
         {/* Paginación 
 
        <div className="flex items-center gap-2 text-sm">
@@ -5524,7 +5524,7 @@ export default function EnrolledUsersPage() {
 
                   <div>
                     <label className="text-xs font-semibold text-gray-400">Estado</label>
-                    <p className="text-white">{selectedWaTemplate.status || 'N/A'}</p>
+                    <p className="text-white">{selectedWaTemplate.status ?? 'N/A'}</p>
                   </div>
 
                   {selectedWaTemplate.example && selectedWaTemplate.example.length > 0 && (

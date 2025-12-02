@@ -1,10 +1,19 @@
 // src/app/api/super-admin/teams/video-sync-all/route.ts
 import { NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
-    const { userId } = await req.json();
+interface SyncRequestBody {
+    userId?: unknown;
+}
 
-    if (!userId) {
+interface VideoApiResponse {
+    videos?: unknown[];
+}
+
+export async function POST(req: Request) {
+    const body = (await req.json()) as SyncRequestBody;
+    const userId = body.userId;
+
+    if (!userId || typeof userId !== 'string') {
         return NextResponse.json({ error: 'userId requerido' }, { status: 400 });
     }
 
@@ -17,7 +26,7 @@ export async function POST(req: Request) {
     });
 }
 
-async function syncAllVideos(userId: string) {
+async function syncAllVideos(userId: string): Promise<void> {
     const BATCH_SIZE = 10;
     let offset = 0;
     let hasMore = true;
@@ -31,9 +40,9 @@ async function syncAllVideos(userId: string) {
                 { method: 'GET' }
             );
 
-            const data = await res.json();
+            const data = (await res.json()) as VideoApiResponse;
 
-            if (!data.videos || data.videos.length === 0) {
+            if (!data.videos || !Array.isArray(data.videos) || data.videos.length === 0) {
                 hasMore = false;
                 console.log('✅ Sincronización completa');
             } else {
@@ -50,7 +59,7 @@ async function syncAllVideos(userId: string) {
     }
 }
 
-export async function GET() {
+export function GET() {
     return NextResponse.json({
         message: 'Usa POST para iniciar sincronización'
     });

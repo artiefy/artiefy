@@ -52,8 +52,11 @@ interface Lessons {
     title: string;
     description: string;
     instructor: string;
+    instructorName?: string;
     modalidadId: string;
+    modalidadName?: string;
     categoryId: string;
+    categoryName?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -113,11 +116,40 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
       try {
         setLoading(true);
         setError(null);
+
+        // Obtener los datos de la lección
         const response = await fetch(
           `/api/super-admin/lessons/${lessonsIdNumber}`
         );
+
         if (response.ok) {
           const data = (await response.json()) as Lessons;
+
+          // Obtener datos del curso para traer nombres completos
+          // Obtener datos del curso para traer nombres completos
+          if (data.course?.id) {
+            try {
+              const courseResponse = await fetch(
+                `/api/educadores/courses/${data.course.id}`
+              );
+              if (courseResponse.ok) {
+                const courseData = (await courseResponse.json()) as {
+                  categoryName?: string;
+                  modalidadesName?: string;
+                  instructorName?: string;
+                };
+
+                // Enriquecer los datos de la lección con los nombres del curso
+                data.course.categoryName = courseData.categoryName;
+                data.course.modalidadName = courseData.modalidadesName;
+                data.course.instructorName = courseData.instructorName;
+              }
+            } catch (err) {
+              console.error('Error fetching course details:', err);
+              // Continuamos sin los nombres si falla
+            }
+          }
+
           setLessons(data);
         } else {
           const errorData = (await response.json()) as { error?: string };
@@ -356,36 +388,36 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               color: getContrastYIQ(color),
             }}
           >
-            <CardHeader>
-              <CardTitle className={`text-primary text-2xl font-bold`}>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className={`text-primary text-xl sm:text-2xl md:text-3xl font-bold`}>
                 Clase: {lessons.title}
               </CardTitle>
               {/* Add color selection buttons */}
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-3 mt-4">
                 <Label
-                  className={color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  className={`text-sm sm:text-base font-semibold ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                 >
-                  Seleccione el color deseado
+                  🎨 Seleccione el color deseado
                 </Label>
-                <div className="mt-2 flex space-x-2">
+                <div className="flex gap-2 flex-wrap">
                   {predefinedColors.map((predefinedColor) => (
                     <Button
                       key={predefinedColor}
                       style={{ backgroundColor: predefinedColor }}
-                      className={`size-8 border ${
-                        color === '#FFFFFF' ? 'border-black' : 'border-white'
-                      }`}
+                      className={`size-10 sm:size-12 rounded-lg border-2 transition-all duration-300 hover:scale-110 ${color === predefinedColor ? 'ring-2 ring-offset-2 ring-primary' : ''
+                        }`}
                       onClick={() =>
                         handlePredefinedColorChange(predefinedColor)
                       }
+                      title={`Cambiar tema a ${predefinedColor}`}
                     />
                   ))}
                 </div>
               </div>
             </CardHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
               {/* Columna izquierda - Imagen */}
-              <div className="relative flex w-full">
+              <div className="relative flex w-full items-center justify-center order-2 md:order-1">
                 <Image
                   src={
                     lessons.coverImageKey
@@ -394,17 +426,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   }
                   alt={lessons.title}
                   width={300}
-                  height={100}
-                  className="mx-auto hidden justify-center rounded-lg object-contain md:block lg:block"
+                  height={300}
+                  className="mx-auto rounded-lg object-contain w-full max-w-sm h-auto"
                   priority
                   quality={75}
                 />
               </div>
-              {/* Columna derecha - Información */}
-              <div className="relative w-full">
+              {/* Columna derecha - Video */}
+              <div className="relative w-full order-1 md:order-2">
                 {lessons.coverVideoKey ? (
                   <video
-                    className="h-72 w-full rounded-lg object-cover"
+                    className="w-full h-auto rounded-lg object-cover aspect-video"
                     controls
                   >
                     <source
@@ -416,48 +448,48 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h4 className="hidden">No hay videos por el momento!.</h4>
                     <Image
                       src={'/NoHayVideos.jpg'}
-                      className="mx-auto rounded-lg object-cover"
+                      className="mx-auto rounded-lg object-cover w-full h-auto"
                       alt="No hay imagen o video disponible actualmente"
-                      width={350}
-                      height={80}
+                      width={400}
+                      height={300}
                       quality={75}
                     />
                   </>
                 )}
               </div>
-              <div className="col-span-full mt-6 flex justify-center">
+              <div className="col-span-full mt-4 sm:mt-6 flex justify-center">
                 <a
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
-                  className="bg-primary focus:ring-secondary rounded-lg px-6 py-3 text-black transition duration-300 hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                  className="bg-primary hover:bg-[#00A5C0] focus:ring-secondary rounded-lg px-4 sm:px-6 py-2 sm:py-3 text-black text-sm sm:text-base transition duration-300 focus:ring-2 focus:ring-offset-2 focus:outline-none"
                 >
-                  Descargar transcripción (.txt)
+                  📄 Descargar transcripción (.txt)
                 </a>
               </div>
             </div>
             {/* Zona de los files */}
-            <div>
+            <div className="mt-6 sm:mt-8">
               <ViewFiles lessonId={lessons.id} selectedColor={color} />
             </div>
-            <div className="flex justify-evenly lg:px-3 lg:py-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-evenly px-2 sm:px-3 py-4 sm:py-6 mt-4">
               <Button
-                className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
+                className={`border-transparent bg-green-400 text-white hover:bg-green-500 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5`}
               >
-                <Link href={`./${lessons.id}/verClase/${lessons.id}`}>
-                  Ver clase
+                <Link href={`./${lessons.id}/verClase/${lessons.id}`} className="w-full">
+                  👁️ Ver clase
                 </Link>
               </Button>
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600"
+                className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5"
               >
-                Editar clase
+                ✏️ Editar clase
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
-                    Eliminar
+                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5">
+                    🗑️ Eliminar
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -482,62 +514,78 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            <div>
+            <div className="mt-6 sm:mt-8">
               <div
-                className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`pb-4 sm:pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
               >
-                <h2 className="text-2xl font-bold">Información de la clase</h2>
-                <br />
-                <div className="grid grid-cols-2">
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold">Clase:</h2>
-                    <h1 className="text-primary mb-4 text-2xl font-bold">
+                <h2 className="text-xl sm:text-2xl font-bold mb-6">📋 Información de la clase</h2>
+
+                {/* Grid de información principal */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                      📚 Clase
+                    </h3>
+                    <h1 className="text-primary text-lg sm:text-xl font-bold">
                       {lessons.title}
                     </h1>
                   </div>
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold">Categoría:</h2>
+
+                  <div className="space-y-2">
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                      📂 Categoría
+                    </h3>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
                     >
-                      {lessons.course?.categoryId}
+                      {lessons.course?.categoryName ?? lessons.course?.categoryId ?? 'N/A'}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                      👨‍🏫 Educador
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
+                    >
+                      {lessons.course?.instructorName ?? lessons.course?.instructor ?? 'N/A'}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                      🎓 Modalidad
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
+                    >
+                      {lessons.course?.modalidadName ?? lessons.course?.modalidadId ?? 'N/A'}
                     </Badge>
                   </div>
                 </div>
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold">Descripción:</h2>
-                  <p className="text-justify">{lessons.description}</p>
-                </div>
-                <div className="grid grid-cols-2">
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold">Educador:</h2>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                    >
-                      {lessons.course?.instructor}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold">Modalidad:</h2>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                    >
-                      {lessons.course?.modalidadId}
-                    </Badge>
-                  </div>
+
+                {/* Descripción */}
+                <div className="space-y-3">
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                    📝 Descripción
+                  </h3>
+                  <p className={`text-justify text-sm sm:text-base leading-relaxed ${color === '#FFFFFF' ? 'text-black/90' : 'text-white/90'}`}>
+                    {lessons.description}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex w-full justify-center">
+            <div className="flex w-full justify-center mt-6 sm:mt-8 px-2">
               <Link
                 href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
-                className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 p-2 text-white hover:bg-green-500"
+                className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 px-4 sm:px-6 py-2 sm:py-3 text-white hover:bg-green-500 transition duration-300 text-sm sm:text-base w-full sm:w-auto text-center"
               >
-                Crear actividad
+                ➕ Crear actividad
               </Link>
             </div>
           </Card>

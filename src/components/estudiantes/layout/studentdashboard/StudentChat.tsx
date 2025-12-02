@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -11,7 +11,6 @@ import { HiMiniCpuChip } from 'react-icons/hi2';
 
 import {
   getConversationById,
-  getConversationWithMessages,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
@@ -225,29 +224,29 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
                 : isEnrolled == true
                   ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
-                    courseTitle +
-                    ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
+                  courseTitle +
+                  ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
                   : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
             sender: 'bot',
             buttons:
               chatMode.type === 'ticket'
                 ? [
-                    { label: '🐛 Reportar Error', action: 'report_bug' },
-                    {
-                      label: '❓ Pregunta General',
-                      action: 'general_question',
-                    },
-                    { label: '🔧 Problema Técnico', action: 'technical_issue' },
-                    {
-                      label: '💰 Consulta de Pagos',
-                      action: 'payment_inquiry',
-                    },
-                  ]
+                  { label: '🐛 Reportar Error', action: 'report_bug' },
+                  {
+                    label: '❓ Pregunta General',
+                    action: 'general_question',
+                  },
+                  { label: '🔧 Problema Técnico', action: 'technical_issue' },
+                  {
+                    label: '💰 Consulta de Pagos',
+                    action: 'payment_inquiry',
+                  },
+                ]
                 : [
-                    { label: '📚 Crear Proyecto', action: 'new_project' },
-                    { label: '💬 Nueva Idea', action: 'new_idea' },
-                    { label: '🛠 Soporte Técnico', action: 'contact_support' },
-                  ],
+                  { label: '📚 Crear Proyecto', action: 'new_project' },
+                  { label: '💬 Nueva Idea', action: 'new_idea' },
+                  { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                ],
           };
 
           const alreadyHasBot = loadedMessages.some(
@@ -359,16 +358,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
           message.sender === 'bot' && message.text === '' ? null : (
             <div
               key={message.id}
-              className={`flex ${
-                message.sender === 'user' ? 'justify-end' : 'justify-start'
-              } mb-4`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'
+                } mb-4`}
             >
               <div
-                className={`flex max-w-[80%] items-start space-x-2 ${
-                  message.sender === 'user'
-                    ? 'flex-row-reverse space-x-reverse'
-                    : 'flex-row'
-                }`}
+                className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user'
+                  ? 'flex-row-reverse space-x-reverse'
+                  : 'flex-row'
+                  }`}
               >
                 {message.sender === 'bot' ? (
                   <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />

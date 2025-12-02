@@ -634,9 +634,11 @@ const Page: React.FC = () => {
             </main>
           ) : (
             <form
-              className="mx-auto w-full justify-center rounded-lg bg-white p-4"
+              className={`mx-auto w-full justify-center rounded-lg p-4 ${
+                getContrastYIQ(color) === 'white' ? 'text-white' : 'text-black'
+              }`}
               onSubmit={handleSubmit}
-              style={{ backgroundColor: color, color: getContrastYIQ(color) }}
+              style={{ backgroundColor: color }}
             >
               <div className="mb-2 flex">
                 <Image
