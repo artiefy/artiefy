@@ -120,11 +120,11 @@ export function ProgramHeader({
   const programAverage =
     coursesGrades.length > 0
       ? Number(
-          (
-            coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
-            coursesGrades.length
-          ).toFixed(2)
-        )
+        (
+          coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
+          coursesGrades.length
+        ).toFixed(2)
+      )
       : 0;
 
   // Verificar si el usuario tiene nota para todas las materias del programa
@@ -407,11 +407,10 @@ export function ProgramHeader({
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    index < Math.floor(program.rating ?? 0)
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${index < Math.floor(program.rating ?? 0)
                       ? 'text-yellow-400'
                       : 'text-gray-300'
-                  }`}
+                    }`}
                 />
               ))}
               <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
@@ -477,7 +476,6 @@ export function ProgramHeader({
           isLoading={isLoadingGrade}
           coursesGrades={coursesGrades}
           programId={program.id}
-          hasAllMateriasPassed={hasAllMateriasPassed}
           materias={program.materias ?? []}
         />
         {/* Modal de certificado */}

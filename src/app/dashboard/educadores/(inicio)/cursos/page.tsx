@@ -467,6 +467,10 @@ export default function Page() {
                 )
               }
               educators={[]}
+              horario={null}
+              setHorario={() => undefined}
+              espacios={null}
+              setEspacios={() => undefined}
             />
           )}
         </div>
