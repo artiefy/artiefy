@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Run full TypeScript typecheck before pushing
+echo "Running TypeScript typecheck (pre-push)..."
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "TypeScript typecheck failed. Push aborted."
+  exit 1
+fi
