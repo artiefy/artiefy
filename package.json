@@ -23,15 +23,7 @@
     "prepare": "node .husky/install.mjs",
     "setup:hooks": "node .husky/install.mjs"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix --max-warnings 0",
-      "prettier --write"
-    ],
-    "*.{json,md,mdx,css,yml,yaml}": [
-      "prettier --write"
-    ]
-  },
+  
   "dependencies": {
     "@aws-sdk/client-s3": "^3.936.0",
     "@aws-sdk/lib-storage": "^3.936.0",
