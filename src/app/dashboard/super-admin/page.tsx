@@ -37,7 +37,7 @@ interface User {
   email: string;
   role: string;
   status: string;
-  phone?: string;             // 👈 nuevo
+  phone?: string; // 👈 nuevo
   selected?: boolean;
   isNew?: boolean;
   permissions?: string[]; // 👈 AGREGA ESTO
@@ -152,7 +152,6 @@ const asString = (v: unknown): string | undefined =>
 
 const asStringArray = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -273,29 +272,29 @@ export default function AdminDashboard() {
     setWaSelectedTemplate(WA_TEXT_ONLY);
   }, [WA_TEXT_ONLY]);
 
+  const handleUserSelection = useCallback(
+    (userId: string, email: string) => {
+      const u = users.find((x) => x.id === userId);
+      console.log('[UI] toggle selección', {
+        userId,
+        email,
+        phone: u?.phone ?? null,
+      });
 
-  const handleUserSelection = useCallback((userId: string, email: string) => {
-    const u = users.find((x) => x.id === userId);
-    console.log('[UI] toggle selección', {
-      userId,
-      email,
-      phone: u?.phone ?? null,
-    });
+      setSelectedUsers((prevSelected) =>
+        prevSelected.includes(userId)
+          ? prevSelected.filter((id) => id !== userId)
+          : [...prevSelected, userId]
+      );
 
-    setSelectedUsers((prevSelected) =>
-      prevSelected.includes(userId)
-        ? prevSelected.filter((id) => id !== userId)
-        : [...prevSelected, userId]
-    );
-
-    setSelectedEmails((prevEmails) =>
-      prevEmails.includes(email)
-        ? prevEmails.filter((e) => e !== email)
-        : [...prevEmails, email]
-    );
-  }, [users]); // 👈 agrega 'users' como dependencia
-
-
+      setSelectedEmails((prevEmails) =>
+        prevEmails.includes(email)
+          ? prevEmails.filter((e) => e !== email)
+          : [...prevEmails, email]
+      );
+    },
+    [users]
+  ); // 👈 agrega 'users' como dependencia
 
   // 👉 Helper para descargar un archivo desde base64
   const downloadBase64File = (
@@ -345,7 +344,7 @@ export default function AdminDashboard() {
         email: string;
         firstName: string;
         lastName: string;
-        isNew?: boolean
+        isNew?: boolean;
       }[];
       summary?: {
         guardados?: number;
@@ -362,8 +361,8 @@ export default function AdminDashboard() {
     const usersFromPayload = Array.isArray(data.users) ? data.users : [];
 
     if (usersFromPayload.length > 0) {
-      setUsers(prev => [
-        ...usersFromPayload.map(u => ({
+      setUsers((prev) => [
+        ...usersFromPayload.map((u) => ({
           id: u.id,
           firstName: u.firstName,
           lastName: u.lastName,
@@ -375,13 +374,15 @@ export default function AdminDashboard() {
         ...prev,
       ]);
 
-      showNotification?.(`Se crearon/actualizaron ${usersFromPayload.length} usuarios`, 'success');
+      showNotification?.(
+        `Se crearon/actualizaron ${usersFromPayload.length} usuarios`,
+        'success'
+      );
     }
 
     // NO tocamos tu lógica de descargas ni files aquí,
     // si la necesitas, puedes copiar lo de tu handleUsersMasiveFinished original.
   };
-
 
   const handleUsersMasiveFinished = (res: unknown) => {
     if (!res || typeof res !== 'object') return;
@@ -525,21 +526,22 @@ export default function AdminDashboard() {
     };
 
     const phones = users
-      .filter(u => selectedUsers.includes(u.id) && u.phone)
-      .map(u => toLocal(u.phone!))
+      .filter((u) => selectedUsers.includes(u.id) && u.phone)
+      .map((u) => toLocal(u.phone!))
       .filter(Boolean);
 
-    setNumerosLocales(prev => {
+    setNumerosLocales((prev) => {
       const current = prev
-        ? prev.split(',').map(s => s.trim()).filter(Boolean)
+        ? prev
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [];
       const unique = Array.from(new Set([...current, ...phones]));
       const next = unique.join(',');
       return next === prev ? prev : next;
     });
   }, [showWhatsAppModal, selectedUsers, users, codigoPais]);
-
-
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -770,13 +772,12 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Error al cargar cursos');
       const rawData: unknown = await res.json();
       if (!Array.isArray(rawData)) throw new Error('Invalid data received');
-      const data: { id: string; title: string; instructor: string }[] = rawData.map(
-        (item: RawCourseData) => ({
+      const data: { id: string; title: string; instructor: string }[] =
+        rawData.map((item: RawCourseData) => ({
           id: String(item.id),
           title: String(item.title),
           instructor: item.instructor ?? 'Sin instructor',
-        })
-      );
+        }));
       setCourses(data);
     } catch (err) {
       console.error('Error fetching courses:', err);
@@ -798,7 +799,10 @@ export default function AdminDashboard() {
 
   // Helpers reutilizables y testeables
   const stripHtml = (html: string) =>
-    html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const buildEmailsList = () =>
     Array.from(
@@ -902,7 +906,8 @@ export default function AdminDashboard() {
     }
 
     const textOnly = waSelectedTemplate === WA_TEXT_ONLY;
-    const useTemplate = Boolean(waSelectedTemplate) && !textOnly && waSelectedTemplate !== '';
+    const useTemplate =
+      Boolean(waSelectedTemplate) && !textOnly && waSelectedTemplate !== '';
 
     // Si NO es plantilla, exige mensaje
     if (!useTemplate && !waMessageText.trim()) {
@@ -916,33 +921,32 @@ export default function AdminDashboard() {
     setLoadingWhatsApp(true);
 
     try {
-      const textMessage =
-        `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
+      const textMessage = `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
 
       for (const number of whatsappNumbers) {
         const to = number;
 
         const body = useTemplate
           ? {
-            to,
-            forceTemplate: true,
-            templateName: waSelectedTemplate,
-            languageCode:
-              selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
-            variables: waVariables,
-          }
+              to,
+              forceTemplate: true,
+              templateName: waSelectedTemplate,
+              languageCode:
+                selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+              variables: waVariables,
+            }
           : textOnly
             ? {
-              to,
-              text: textMessage,
-            }
+                to,
+                text: textMessage,
+              }
             : {
-              to,
-              text: textMessage,
-              ensureSession: true,
-              sessionTemplate: 'hello_world',
-              sessionLanguage: 'en_US',
-            };
+                to,
+                text: textMessage,
+                ensureSession: true,
+                sessionTemplate: 'hello_world',
+                sessionLanguage: 'en_US',
+              };
 
         const resp = await fetch('/api/super-admin/whatsapp', {
           method: 'POST',
@@ -975,7 +979,6 @@ export default function AdminDashboard() {
       setWaSubjectText('');
       setWaMessageText('');
       setShowWhatsAppModal(false);
-
     } catch (error) {
       console.error('❌ Error al enviar WhatsApp:', error);
       setNotification({
@@ -986,8 +989,6 @@ export default function AdminDashboard() {
       setLoadingWhatsApp(false);
     }
   };
-
-
 
   // Llamar la función cuando el componente se monta si hay un usuario autenticado
   useEffect(() => {
@@ -1332,8 +1333,9 @@ export default function AdminDashboard() {
           asString(item.primaryPhoneNumber?.phoneNumber) ??
           asString(item.telefono);
 
-        const phone: string | undefined =
-          rawPhone?.trim() ? rawPhone.trim() : undefined;
+        const phone: string | undefined = rawPhone?.trim()
+          ? rawPhone.trim()
+          : undefined;
 
         const permissions = asStringArray(item.permissions);
 
@@ -1357,7 +1359,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }, [query]);
-
 
   // ✅ Ahora, `useEffect` ya no mostrará advertencias
   useEffect(() => {
@@ -1666,7 +1667,6 @@ export default function AdminDashboard() {
         firstName,
         lastName,
       }));
-
     } catch (error) {
       console.error('❌ Error al obtener usuario:', error);
     }
@@ -1725,7 +1725,8 @@ export default function AdminDashboard() {
           title: String(item.title),
           coverImageKey: item.coverImageKey ?? null,
           coverImage: item.coverImage,
-          instructor: item.instructorName ?? item.instructor ?? 'Sin instructor',
+          instructor:
+            item.instructorName ?? item.instructor ?? 'Sin instructor',
           modalidad: item.modalidad,
           rating: item.rating,
         }));
@@ -1778,13 +1779,12 @@ export default function AdminDashboard() {
           throw new Error('Datos inválidos recibidos');
         }
 
-        const data: { id: string; title: string; instructor: string }[] = rawData.map(
-          (item: RawCourseData) => ({
+        const data: { id: string; title: string; instructor: string }[] =
+          rawData.map((item: RawCourseData) => ({
             id: String(item.id),
             title: String(item.title),
             instructor: item.instructor ?? 'Sin instructor',
-          })
-        );
+          }));
 
         setCourses([...new Set(data)]); // Eliminar duplicados en cursos
       } catch (err) {
@@ -1885,10 +1885,11 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => handleMassUpdateStatus('activo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
-              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-              : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
-              }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+              selectedUsers.length === 0
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
+            }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Activar</span>
@@ -1897,10 +1898,11 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => handleMassUpdateStatus('inactivo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
-              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-              : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
-              }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+              selectedUsers.length === 0
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
+            }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Desactivar</span>
@@ -1909,10 +1911,11 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={handleMassRemoveRole}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
-              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-              : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
-              }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+              selectedUsers.length === 0
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
+            }`}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Quitar Rol</span>
@@ -1976,10 +1979,11 @@ export default function AdminDashboard() {
                 setSendingEmails(false);
               }
             }}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${selectedUsers.length === 0
-              ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-              : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-              }`}
+            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+              selectedUsers.length === 0
+                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+            }`}
             disabled={selectedUsers.length === 0 || sendingEmails}
           >
             <span className="relative z-10 font-medium">
@@ -2016,13 +2020,12 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={handleOpenWhatsApp}
-            className="group/button bg-background text-green-400 hover:bg-green-500/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button bg-background relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs text-green-400 transition-all hover:bg-green-500/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Enviar WhatsApp</span>
             <Send className="relative z-10 size-3.5 sm:size-4" />
             <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
           </button>
-
 
           <button
             onClick={() => setShowEmailModal(true)}
@@ -2038,7 +2041,6 @@ export default function AdminDashboard() {
           />
           {/* 🔹 NUEVO botón (V2) — mantiene el botón anterior funcionando */}
           <BulkUploadUsersV2 onFinished={handleUsersMasiveFinishedV2} />
-
         </div>
 
         <div className="mt-6">
@@ -2189,20 +2191,22 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.status === 'activo'
-                            ? 'bg-green-500/10 text-green-500'
-                            : user.status === 'inactivo'
-                              ? 'bg-red-500/10 text-red-500'
-                              : 'bg-yellow-500/10 text-yellow-500'
-                            }`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            user.status === 'activo'
+                              ? 'bg-green-500/10 text-green-500'
+                              : user.status === 'inactivo'
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-yellow-500/10 text-yellow-500'
+                          }`}
                         >
                           <div
-                            className={`mr-1 size-1.5 rounded-full sm:size-2 ${user.status === 'activo'
-                              ? 'bg-green-500'
-                              : user.status === 'inactivo'
-                                ? 'bg-red-500'
-                                : 'bg-yellow-500'
-                              }`}
+                            className={`mr-1 size-1.5 rounded-full sm:size-2 ${
+                              user.status === 'activo'
+                                ? 'bg-green-500'
+                                : user.status === 'inactivo'
+                                  ? 'bg-red-500'
+                                  : 'bg-yellow-500'
+                            }`}
                           />
                           <span className="hidden sm:inline">
                             {user.status}
@@ -2452,16 +2456,18 @@ export default function AdminDashboard() {
                   {/* Badges */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${viewUser.status === 'activo'
-                        ? 'bg-green-500/10 text-green-400'
-                        : 'bg-red-500/10 text-red-400'
-                        }`}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
+                        viewUser.status === 'activo'
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
+                      }`}
                     >
                       <span
-                        className={`size-2 rounded-full ${viewUser.status === 'activo'
-                          ? 'bg-green-400'
-                          : 'bg-red-400'
-                          }`}
+                        className={`size-2 rounded-full ${
+                          viewUser.status === 'activo'
+                            ? 'bg-green-400'
+                            : 'bg-red-400'
+                        }`}
                       />
                       {viewUser.status}
                     </span>
@@ -2515,8 +2521,8 @@ export default function AdminDashboard() {
       )}
 
       {showAssignModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-black/50">
-          <div className="w-full max-w-5xl max-h-[90vh] flex flex-col rounded-xl bg-gray-900 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-md">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-gray-900 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] px-4 py-3 sm:px-6 sm:py-4">
               <div>
@@ -2538,7 +2544,6 @@ export default function AdminDashboard() {
             {/* Content - con scroll interno */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="grid gap-4 lg:grid-cols-2">
-
                 {/* Panel de Estudiantes */}
                 <div className="rounded-lg bg-gray-800 p-4">
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
@@ -2555,12 +2560,19 @@ export default function AdminDashboard() {
                   />
 
                   <label className="mb-2 flex cursor-pointer items-center justify-between rounded-lg bg-gray-700 px-3 py-2 hover:bg-gray-600">
-                    <span className="text-sm font-medium text-white">Seleccionar Todos</span>
+                    <span className="text-sm font-medium text-white">
+                      Seleccionar Todos
+                    </span>
                     <input
                       type="checkbox"
-                      checked={selectedStudents.length === users.length && users.length > 0}
+                      checked={
+                        selectedStudents.length === users.length &&
+                        users.length > 0
+                      }
                       onChange={(e) =>
-                        setSelectedStudents(e.target.checked ? users.map((u) => u.id) : [])
+                        setSelectedStudents(
+                          e.target.checked ? users.map((u) => u.id) : []
+                        )
                       }
                       className="form-checkbox h-4 w-4 rounded text-blue-500"
                     />
@@ -2570,9 +2582,15 @@ export default function AdminDashboard() {
                     {users
                       .filter(
                         (user) =>
-                          user.firstName.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                          user.lastName.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                          user.email.toLowerCase().includes(studentSearch.toLowerCase())
+                          user.firstName
+                            .toLowerCase()
+                            .includes(studentSearch.toLowerCase()) ||
+                          user.lastName
+                            .toLowerCase()
+                            .includes(studentSearch.toLowerCase()) ||
+                          user.email
+                            .toLowerCase()
+                            .includes(studentSearch.toLowerCase())
                       )
                       .map((user) => (
                         <label
@@ -2580,13 +2598,16 @@ export default function AdminDashboard() {
                           className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 hover:bg-gray-700"
                         >
                           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
-                            {user.firstName[0]}{user.lastName[0]}
+                            {user.firstName[0]}
+                            {user.lastName[0]}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm text-white">
                               {user.firstName} {user.lastName}
                             </p>
-                            <p className="truncate text-xs text-gray-400">{user.email}</p>
+                            <p className="truncate text-xs text-gray-400">
+                              {user.email}
+                            </p>
                           </div>
                           <input
                             type="checkbox"
@@ -2609,7 +2630,9 @@ export default function AdminDashboard() {
                     <select
                       value={selectedPlanType}
                       onChange={(e) =>
-                        setSelectedPlanType(e.target.value as 'Pro' | 'Premium' | 'Enterprise')
+                        setSelectedPlanType(
+                          e.target.value as 'Pro' | 'Premium' | 'Enterprise'
+                        )
                       }
                       className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
                     >
@@ -2623,7 +2646,7 @@ export default function AdminDashboard() {
                   <div className="rounded-lg bg-gray-800">
                     <button
                       onClick={() => setCoursesCollapsed(!coursesCollapsed)}
-                      className="flex w-full items-center justify-between bg-emerald-600 px-4 py-2.5 text-white transition-colors hover:bg-emerald-700 rounded-t-lg"
+                      className="flex w-full items-center justify-between rounded-t-lg bg-emerald-600 px-4 py-2.5 text-white transition-colors hover:bg-emerald-700"
                     >
                       <span className="text-sm font-semibold">
                         {coursesCollapsed ? 'Mostrar' : 'Ocultar'} Cursos
@@ -2634,7 +2657,12 @@ export default function AdminDashboard() {
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </button>
 
@@ -2693,7 +2721,7 @@ export default function AdminDashboard() {
                   <div className="rounded-lg bg-gray-800">
                     <button
                       onClick={() => setProgramsCollapsed(!programsCollapsed)}
-                      className="flex w-full items-center justify-between bg-purple-600 px-4 py-2.5 text-white transition-colors hover:bg-purple-700 rounded-t-lg"
+                      className="flex w-full items-center justify-between rounded-t-lg bg-purple-600 px-4 py-2.5 text-white transition-colors hover:bg-purple-700"
                     >
                       <span className="text-sm font-semibold">
                         {programsCollapsed ? 'Mostrar' : 'Ocultar'} Programas
@@ -2704,7 +2732,12 @@ export default function AdminDashboard() {
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </button>
 
@@ -2757,7 +2790,10 @@ export default function AdminDashboard() {
               <button
                 onClick={handleAssignStudents}
                 className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={selectedStudents.length === 0 || (!selectedCourse && !selectedProgram)}
+                disabled={
+                  selectedStudents.length === 0 ||
+                  (!selectedCourse && !selectedProgram)
+                }
               >
                 <Check className="size-4" />
                 Asignar Estudiantes
@@ -2960,8 +2996,8 @@ export default function AdminDashboard() {
         onConfirm={
           confirmation?.onConfirm
             ? async () => {
-              await Promise.resolve(confirmation.onConfirm?.());
-            }
+                await Promise.resolve(confirmation.onConfirm?.());
+              }
             : async () => Promise.resolve()
         } // Asegura que `onConfirm` siempre devuelva una Promise<void></void>
         onCancel={() => setConfirmation(null)}
@@ -3078,7 +3114,6 @@ export default function AdminDashboard() {
               />
             </div>
 
-
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
               {/* ✅ Botón SOLO CORREO */}
               <button
@@ -3095,11 +3130,7 @@ export default function AdminDashboard() {
                   'Enviar Correo'
                 )}
               </button>
-
-
-
             </div>
-
           </div>
         </div>
       )}
@@ -3129,7 +3160,9 @@ export default function AdminDashboard() {
 
             {/* Plantillas */}
             <div className="mb-3">
-              <label className="mb-1 block text-sm">Plantilla de WhatsApp</label>
+              <label className="mb-1 block text-sm">
+                Plantilla de WhatsApp
+              </label>
 
               <div className="mb-2 text-xs text-gray-400">
                 Teléfonos detectados de seleccionados:{' '}
@@ -3140,7 +3173,9 @@ export default function AdminDashboard() {
               </div>
 
               {waLoading ? (
-                <div className="text-sm text-gray-400">Cargando plantillas…</div>
+                <div className="text-sm text-gray-400">
+                  Cargando plantillas…
+                </div>
               ) : waError ? (
                 <div className="text-sm text-red-400">{waError}</div>
               ) : waTemplates.length === 0 ? (
@@ -3161,10 +3196,11 @@ export default function AdminDashboard() {
 
                     const tmpl = waTemplates.find((t) => t.name === value);
                     if (tmpl) {
-                      const placeholders = tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
+                      const placeholders =
+                        tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
                       setWaVariables(
                         tmpl.example?.slice(0, placeholders.length) ??
-                        Array.from({ length: placeholders.length }, () => '')
+                          Array.from({ length: placeholders.length }, () => '')
                       );
                     } else {
                       setWaVariables([]);
@@ -3172,9 +3208,7 @@ export default function AdminDashboard() {
                   }}
                   className="w-full rounded-lg border bg-gray-800 p-3 text-white"
                 >
-                  <option value="">
-                    Texto + abrir sesión (automático)
-                  </option>
+                  <option value="">Texto + abrir sesión (automático)</option>
                   <option value={WA_TEXT_ONLY}>
                     Solo mensaje (sin plantilla)
                   </option>
@@ -3202,7 +3236,9 @@ export default function AdminDashboard() {
                       value={v}
                       onChange={(e) =>
                         setWaVariables((prev) =>
-                          prev.map((val, i) => (i === idx ? e.target.value : val))
+                          prev.map((val, i) =>
+                            i === idx ? e.target.value : val
+                          )
                         )
                       }
                     />
@@ -3225,7 +3261,9 @@ export default function AdminDashboard() {
                       value={v}
                       onChange={(e) =>
                         setWaVariables((prev) =>
-                          prev.map((val, i) => (i === idx ? e.target.value : val))
+                          prev.map((val, i) =>
+                            i === idx ? e.target.value : val
+                          )
                         )
                       }
                     />
@@ -3246,7 +3284,9 @@ export default function AdminDashboard() {
                       WA
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-semibold text-white">Contacto</div>
+                      <div className="text-sm font-semibold text-white">
+                        Contacto
+                      </div>
                       <div className="text-xs text-gray-300">en línea</div>
                     </div>
                     <div className="text-xl text-gray-300">⋮</div>
@@ -3282,14 +3322,17 @@ export default function AdminDashboard() {
               )}
 
             {/* 2) Preview si es SOLO MENSAJE (incluye "" y WA_TEXT_ONLY) */}
-            {(waSelectedTemplate === WA_TEXT_ONLY || waSelectedTemplate === '') && (
+            {(waSelectedTemplate === WA_TEXT_ONLY ||
+              waSelectedTemplate === '') && (
               <div className="mb-4 overflow-hidden rounded-xl border border-gray-700">
                 <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
                     WA
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-semibold text-white">Contacto</div>
+                    <div className="text-sm font-semibold text-white">
+                      Contacto
+                    </div>
                     <div className="text-xs text-gray-300">en línea</div>
                   </div>
                   <div className="text-xl text-gray-300">⋮</div>
@@ -3301,8 +3344,9 @@ export default function AdminDashboard() {
                     style={{ borderTopRightRadius: 4 }}
                   >
                     <div className="break-words whitespace-pre-wrap">
-                      {`${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText) || 'Escribe un mensaje…'
-                        }`}
+                      {`${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${
+                        stripHtml(waMessageText) || 'Escribe un mensaje…'
+                      }`}
                     </div>
 
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
@@ -3371,7 +3415,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
     </>
   );
 }

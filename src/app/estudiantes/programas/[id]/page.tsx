@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { ProgramDetailsSkeleton } from '~/components/estudiantes/layout/programdetail/ProgramDetailsSkeleton';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot'
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
 
 import ProgramDetails from './ProgramDetails';
@@ -18,11 +18,12 @@ interface PageProps {
 
 // Cambia la firma para recibir params como objeto plano
 export async function generateMetadata(
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
   try {
-    const { id } = params;
+    // Seguir la convención de Next.js: `params` es una Promise
+    const { id } = await params;
     const program = await getProgramById(id);
 
     if (!program) {
@@ -83,8 +84,12 @@ export async function generateMetadata(
         site: '@artiefy',
       },
     };
-  } catch (error) {
-    console.error('Error generating metadata:', error);
+  } catch (_error) {
+    // Evitar imprimir la traza completa para no generar ruido de source-maps en dev
+    if (process.env.NODE_ENV === 'development') {
+      // Imprimimos un mensaje corto; el objeto error puede contener stack maps ruidosos
+      console.warn('generateMetadata: fallo al generar metadata para programa');
+    }
     return {
       title: 'Error',
       description: 'Error al cargar el programa',

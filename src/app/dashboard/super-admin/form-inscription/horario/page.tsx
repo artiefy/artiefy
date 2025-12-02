@@ -36,11 +36,14 @@ export default function HorariosPage() {
     if (!value) return;
     try {
       setUpdatingId(id);
-      const res = await fetch(`/api/super-admin/form-inscription/horario?id=${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ schedules: value }),
-      });
+      const res = await fetch(
+        `/api/super-admin/form-inscription/horario?id=${id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schedules: value }),
+        }
+      );
       if (!res.ok) throw new Error('HTTP ' + res.status);
       setEditingId(null);
       setEditValue('');
@@ -57,9 +60,12 @@ export default function HorariosPage() {
     if (!confirm('¿Eliminar este horario?')) return;
     try {
       setDeletingId(id);
-      const res = await fetch(`/api/super-admin/form-inscription/horario?id=${id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `/api/super-admin/form-inscription/horario?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
       if (!res.ok) throw new Error('HTTP ' + res.status);
       await load();
     } catch {
@@ -68,7 +74,6 @@ export default function HorariosPage() {
       setDeletingId(null);
     }
   };
-
 
   const load = async () => {
     try {
@@ -217,13 +222,13 @@ export default function HorariosPage() {
                         <button
                           onClick={() => void handleUpdate(row.id)}
                           disabled={isUpdating || !editValue.trim()}
-                          className="rounded bg-green-500 px-3 py-1 text-black font-semibold hover:bg-green-400 disabled:opacity-60"
+                          className="rounded bg-green-500 px-3 py-1 font-semibold text-black hover:bg-green-400 disabled:opacity-60"
                         >
                           {isUpdating ? 'Guardando…' : 'Guardar'}
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded bg-gray-600 px-3 py-1 text-white font-semibold hover:bg-gray-500"
+                          className="rounded bg-gray-600 px-3 py-1 font-semibold text-white hover:bg-gray-500"
                         >
                           Cancelar
                         </button>
@@ -232,14 +237,14 @@ export default function HorariosPage() {
                       <>
                         <button
                           onClick={() => startEdit(row)}
-                          className="rounded bg-blue-500 px-3 py-1 text-black font-semibold hover:bg-blue-400"
+                          className="rounded bg-blue-500 px-3 py-1 font-semibold text-black hover:bg-blue-400"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => void handleDelete(row.id)}
                           disabled={isDeleting}
-                          className="rounded bg-red-500 px-3 py-1 text-black font-semibold hover:bg-red-400 disabled:opacity-60"
+                          className="rounded bg-red-500 px-3 py-1 font-semibold text-black hover:bg-red-400 disabled:opacity-60"
                         >
                           {isDeleting ? 'Eliminando…' : 'Eliminar'}
                         </button>
@@ -249,7 +254,6 @@ export default function HorariosPage() {
                 );
               })}
             </ul>
-
           )}
         </div>
       </div>

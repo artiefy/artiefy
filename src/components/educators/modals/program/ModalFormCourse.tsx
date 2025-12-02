@@ -318,7 +318,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       nivelid: !editingCourseId && !nivelid,
       rating: !editingCourseId && !rating,
       file: !editingCourseId && !file && !currentCoverImageKey,
-      courseTypeId: !editingCourseId && (!selectedCourseType || selectedCourseType.length === 0),
+      courseTypeId:
+        !editingCourseId &&
+        (!selectedCourseType || selectedCourseType.length === 0),
     };
 
     if (Object.values(newErrors).some((value) => value)) {
@@ -903,12 +905,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             Imagen de portada
           </label>
           <div
-            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${isDragging
-              ? 'border-blue-500 bg-blue-50'
-              : errors.file
-                ? 'border-red-500 bg-red-50'
-                : 'border-gray-300 bg-gray-50'
-              } transition-all duration-300 ease-in-out`}
+            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
+              isDragging
+                ? 'border-blue-500 bg-blue-50'
+                : errors.file
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-300 bg-gray-50'
+            } transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}

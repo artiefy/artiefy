@@ -115,7 +115,7 @@ const LessonChatBot: React.FC = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 placeholder="Escribe tu mensaje..."
-                className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-hidden"
+                className="focus:ring-secondary flex-1 rounded-lg border p-2 text-white focus:ring-2 focus:outline-hidden"
               />
               <button
                 type="submit"

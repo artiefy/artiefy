@@ -2,6 +2,7 @@
 // By Jean
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -11,12 +12,13 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { MessageCircle, Zap } from 'lucide-react';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoClose } from 'react-icons/io5';
-import { MdArrowBack } from 'react-icons/md';
+import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
 import { Card } from '~/components/estudiantes/ui/card';
+import { useKeyboardViewport } from '~/hooks/useKeyboardViewport';
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
 import {
   createNewTicket,
@@ -31,6 +33,7 @@ import { ChatMessages } from './StudentChat';
 
 import '~/styles/chatmodal.css';
 import 'react-resizable/css/styles.css';
+import '~/styles/ticketSupportButton.css';
 
 interface StudentChatbotProps {
   className?: string;
@@ -158,17 +161,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     height: 500,
   });
   // Responsive: dimensiones seguras para móviles (teclado táctil)
-  const [viewportWidth, setViewportWidth] = useState<number>(
+  const [viewportWidth, _setViewportWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 0
   );
-  const [viewportHeight, setViewportHeight] = useState<number>(
+  const [, _setViewportHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
-  const [bottomInset, setBottomInset] = useState<number>(0);
+  const [mobileViewportBase, _setMobileViewportBase] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
+  // Hook centralizado para gestionar la altura del teclado en móviles
+  const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
+    useKeyboardViewport();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const mobileViewportBaseRef = useRef<number>(
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
   const searchRequestInProgress = useRef(false);
 
   const { isSignedIn } = useAuth();
@@ -201,8 +211,56 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   });
 
   const [isHovered, setIsHovered] = useState(false);
+  const [isSupportChatVisible, setIsSupportChatVisible] = useState(false);
 
-  const { show } = useExtras();
+  const { show, hide, showExtras } = useExtras();
+  const [extrasHovered, setExtrasHovered] = useState(false);
+  const [showAnim, setShowAnim] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const ANIMATION_DURATION = 350; // ms (coincide con otros componentes)
+  const hideTimeoutRef = useRef<number | null>(null);
+
+  // Sincronizar animación de entrada/salida con el estado global showExtras
+  useEffect(() => {
+    if (showExtras) {
+      setShowAnim(true);
+      setIsExiting(false);
+    } else if (showAnim) {
+      setIsExiting(true);
+      const t = window.setTimeout(() => {
+        setShowAnim(false);
+        setIsExiting(false);
+      }, ANIMATION_DURATION);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, [showExtras, showAnim]);
+
+  // Escuchar eventos globales de hover en otras opciones (ej.: TourComponent)
+  useEffect(() => {
+    const handleEnter = () => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setExtrasHovered(true);
+      show();
+    };
+    const handleLeave = () => {
+      setExtrasHovered(false);
+      if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = window.setTimeout(() => {
+        if (!isHovered && !extrasHovered) hide();
+        hideTimeoutRef.current = null;
+      }, 150);
+    };
+    window.addEventListener('extras-hover-enter', handleEnter);
+    window.addEventListener('extras-hover-leave', handleLeave);
+    return () => {
+      window.removeEventListener('extras-hover-enter', handleEnter);
+      window.removeEventListener('extras-hover-leave', handleLeave);
+    };
+  }, [isHovered, extrasHovered, show, hide]);
 
   const ideaRef = useRef(idea);
   useEffect(() => {
@@ -469,12 +527,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const pathname = usePathname();
   // Prefer nullish coalescing operator for safePathname
-  const safePathname = pathname ?? '';
-  const isChatPage = safePathname === '/';
+  const _safePathname = pathname ?? '';
 
-  // Efecto: gestionar visualViewport para móviles (altura real con teclado)
   useEffect(() => {
-    // Bloquear scroll del body cuando el chatbot está abierto en móvil
+    mobileViewportBaseRef.current = mobileViewportBase;
+  }, [mobileViewportBase]);
+
+  // Bloquear scroll del body cuando el chatbot está abierto en móvil (sin lógica duplicada de visualViewport)
+  useEffect(() => {
     if (!isDesktop && isOpen) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -485,68 +545,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     return undefined;
   }, [isDesktop, isOpen]);
 
-  useEffect(() => {
-    const hasVV = typeof window !== 'undefined' && 'visualViewport' in window;
-    const handleResize = () => {
-      if (hasVV && window.visualViewport) {
-        const vv = window.visualViewport;
-        setViewportWidth(Math.round(vv.width));
-        setViewportHeight(Math.round(vv.height));
-        setIsKeyboardOpen(vv.height < window.innerHeight - 80);
-        const inset = Math.max(
-          0,
-          window.innerHeight - vv.height - (vv.offsetTop ?? 0)
-        );
-        setBottomInset(inset);
-      } else {
-        setViewportWidth(window.innerWidth);
-        setViewportHeight(window.innerHeight);
-        setIsKeyboardOpen(false);
-        setBottomInset(0);
-      }
-    };
-
-    handleResize();
-    if (hasVV && window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      window.addEventListener('orientationchange', handleResize);
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.visualViewport?.removeEventListener('resize', handleResize);
-        window.removeEventListener('orientationchange', handleResize);
-        window.removeEventListener('resize', handleResize);
-      };
-    } else {
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('orientationchange', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('orientationchange', handleResize);
-      };
-    }
-  }, []);
-
+  // Medir header y ajustar padding del wrapper para que el header fijo no solape el contenido
   // Mantener el input visible y scrollear al fondo cuando abre el teclado
   useEffect(() => {
-    if (isOpen && (isKeyboardOpen || viewportHeight)) {
-      // pequeño delay para que el layout se estabilice
-      setTimeout(() => {
-        try {
-          messagesEndRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-          });
-          inputRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-          });
-          inputRef.current?.focus();
-        } catch {
-          // noop
+    if (!isOpen || isDesktop) return;
+    const timeout = window.setTimeout(() => {
+      try {
+        chatContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      } catch {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = 0;
         }
-      }, 50);
-    }
-  }, [isOpen, isKeyboardOpen, viewportHeight]);
+      }
+    }, 50);
+    return () => window.clearTimeout(timeout);
+  }, [isOpen, isDesktop, isKeyboardOpen, activeSection]);
 
   // Efecto para resetear el estado del chat cuando cambie la sección activa
   useEffect(() => {
@@ -1172,6 +1185,181 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         if (useN8n) {
           const conversationId = chatModeRef.current.idChat ?? undefined;
 
+          // Si no hay sesión iniciada, enrutar la petición al Assistant de Ventas de OpenAI
+          if (!isSignedIn) {
+            try {
+              const assistantId = 'asst_uSJJLPx3uAheBOkIOVtcCrww';
+              const salesSystemPrompt = `ACTÚA COMO: Artie — Asesor de Admisiones y Ventas de Artiefy
+"Soy Artie, asesor educativo de ARTIEFY, plataforma educativa y de gestión de proyectos donde tus ideas son las protagonistas.  
+
+OBJETIVO
+- Ayudar a cada persona a encontrar el el curso y programa ideal de Artiefy y completar su inscripción hoy mismo.
+- Priorizar claridad, honestidad y valor práctico (empleabilidad, portafolio, proyectos reales).
+
+OFERTA Y PRECIOS
+- Plan **Premium**: $1.500.000 COP o 12 cuotas de $124.900 COP. 385 USD o 32,15 USD
+  Incluye: gestión de proyectos ILIMITADA, herramientas de IA para desarrollo de ideas y **acceso a todos los cursos y programas** de la plataforma.
+- Plan **Pro**: $1.200.000 COP o 12 cuotas de $99.900 COP. 308,62 USD o 30,86 USD
+  Incluye: herramientas de IA, gestionar **hasta 10 proyectos** y acceso a **programas para el trabajo**.
+
+INSCRIPCIÓN / PAGO (rutas oficiales)
+1) **Página de planes** (recomendada): https://artiefy.com/planes
+2) Tras la inscripción, deben llegar **credenciales por correo**.
+
+ESTILO Y TONO
+- Español (Colombia). Cercano, claro, motivador y profesional.
+- Vende mostrando valor (empleabilidad, portafolio, proyectos), sin presión.
+
+Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el usuario e invítalo a inscribirse.`;
+
+              console.log('No hay sesión, usando OpenAI Assistant para ventas');
+              const res = await fetch('/api/openai-assistant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  assistantId,
+                  prompt: query,
+                  systemPrompt: salesSystemPrompt,
+                  messageHistory: messages
+                    .filter((m) => m.sender === 'user' || m.sender === 'bot')
+                    .map((m) => ({
+                      role: m.sender === 'bot' ? 'assistant' : 'user',
+                      text: m.text,
+                    }))
+                    .slice(-10),
+                }),
+              });
+
+              if (res.ok) {
+                const json = await res.json();
+                let text = '';
+                if (
+                  json &&
+                  typeof json === 'object' &&
+                  Object.prototype.hasOwnProperty.call(json, 'response') &&
+                  typeof (json as { response?: unknown }).response === 'string'
+                ) {
+                  text = (json as { response: string }).response;
+                } else {
+                  text = JSON.stringify(json);
+                }
+                console.log('Respuesta del Assistant:', text);
+
+                // Detectar si hay una acción de WhatsApp con type guard seguro
+                function isWhatsAppAction(
+                  obj: unknown
+                ): obj is {
+                  url: string;
+                  phone: string;
+                  button_text?: string;
+                  message?: string;
+                } {
+                  if (typeof obj !== 'object' || obj === null) return false;
+                  const o = obj as Record<string, unknown>;
+                  return (
+                    typeof o.url === 'string' && typeof o.phone === 'string'
+                  );
+                }
+
+                let whatsappAction:
+                  | {
+                      url: string;
+                      phone: string;
+                      button_text?: string;
+                      message?: string;
+                    }
+                  | undefined = undefined;
+                if (
+                  json &&
+                  typeof json === 'object' &&
+                  'whatsapp_action' in (json as Record<string, unknown>) &&
+                  isWhatsAppAction(
+                    (json as Record<string, unknown>).whatsapp_action
+                  )
+                ) {
+                  whatsappAction = (json as Record<string, unknown>)
+                    .whatsapp_action as {
+                    url: string;
+                    phone: string;
+                    button_text?: string;
+                    message?: string;
+                  };
+                }
+
+                if (whatsappAction) {
+                  // Solo agregar el botón de WhatsApp, sin duplicar el texto del mensaje
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: Date.now() + Math.random(),
+                      text: String(text),
+                      sender: 'bot',
+                      buttons: [
+                        {
+                          label:
+                            whatsappAction.button_text ??
+                            'Chatear por WhatsApp',
+                          action: `whatsapp:${whatsappAction.url}`,
+                        },
+                      ],
+                    },
+                  ]);
+                  queueOrSaveBotMessage(String(text));
+                } else {
+                  // Sin acción de WhatsApp, solo mensaje normal
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: Date.now() + Math.random(),
+                      text: String(text),
+                      sender: 'bot',
+                    },
+                  ]);
+                  queueOrSaveBotMessage(String(text));
+                }
+
+                setIdea({ selected: false, idea: '' });
+                setProcessingQuery(false);
+                setIsLoading(false);
+                searchRequestInProgress.current = false;
+                return;
+              } else {
+                const errorData = await res.json().catch(() => ({}));
+                console.error(
+                  'OpenAI assistant endpoint error:',
+                  res.status,
+                  errorData
+                );
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    text: 'Estamos teniendo problemas para conectar con el asesor. Inténtalo de nuevo en unos minutos o inicia sesión para acceder a más funciones.',
+                    sender: 'bot',
+                  },
+                ]);
+                setProcessingQuery(false);
+                setIsLoading(false);
+                searchRequestInProgress.current = false;
+                return;
+              }
+            } catch (err) {
+              console.error('Error calling OpenAI assistant endpoint:', err);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + Math.random(),
+                  text: 'Ocurrió un error. Por favor inicia sesión para acceder al chat.',
+                  sender: 'bot',
+                },
+              ]);
+              setProcessingQuery(false);
+              setIsLoading(false);
+              searchRequestInProgress.current = false;
+              return;
+            }
+          }
+
           // Construir messageHistory limpio para el agente n8n:
           // - eliminar saludo inicial estándar para evitar que el agent vuelva a saludar
           // - mapear roles: 'bot' -> 'assistant', 'user' -> 'user'
@@ -1525,6 +1713,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       queueOrSaveBotMessage,
       handleN8nData,
       handleProjectEnvelopeData,
+      isSignedIn,
     ]
   );
 
@@ -1587,7 +1776,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         setProcessingQuery(false);
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-          setTimeout(() => inputRef.current?.focus(), 0);
         }, 50);
         return;
       }
@@ -1618,7 +1806,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         setProcessingQuery(false);
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('force-open-chatbot'));
-          setTimeout(() => inputRef.current?.focus(), 0);
         }, 50);
         setTimeout(() => {
           const newUserMessage = {
@@ -1850,11 +2037,75 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     };
   }, [user?.emailAddresses]);
 
+  // Ocultar el chatbot principal cuando se abra el modal de soporte y bajar el botón flotante
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    const handleSupportChatOpen = (_event: Event) => {
+      setIsOpen(false);
+      setShowChatList(false);
+      setIsSupportChatVisible(true);
+    };
+
+    const handleSupportChatClose = () => {
+      setIsSupportChatVisible(false);
+    };
+
+    window.addEventListener('support-open-chat', handleSupportChatOpen);
+    window.addEventListener('support-chat-close', handleSupportChatClose);
+    return () => {
+      window.removeEventListener('support-open-chat', handleSupportChatOpen);
+      window.removeEventListener('support-chat-close', handleSupportChatClose);
+    };
+  }, []);
+
+  // Manejar creación de ticket después del login
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'create_ticket') {
+        window.dispatchEvent(
+          new CustomEvent('create-new-ticket', {
+            detail: {
+              userId: user!.id,
+              email: user!.emailAddresses?.[0]?.emailAddress,
+            },
+          })
+        );
+        // Limpiar la URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }
     }
-  }, [isOpen, initialSearchQuery]);
+  }, [isSignedIn, user]);
+
+  // Reabrir la lista de tickets dentro del chatbot principal al volver desde el modal de soporte
+  useEffect(() => {
+    const handleReturnToTicketList = () => {
+      setActiveSection('tickets');
+      setIsOpen(true);
+      setChatMode({
+        idChat: null,
+        status: true,
+        curso_title: '',
+        type: 'ticket',
+      });
+      setShowChatList(true);
+    };
+
+    window.addEventListener(
+      'ticket-chat-return-to-list',
+      handleReturnToTicketList as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'ticket-chat-return-to-list',
+        handleReturnToTicketList as EventListener
+      );
+    };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -1872,10 +2123,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         return;
       }
 
-      // Si no está autenticado: abrir chat y mostrar aviso para iniciar sesión
+      // Si no está autenticado: abrir chat y procesar la búsqueda usando el asistente externo
       if (!isSignedIn) {
         setIsOpen(true);
-        setShowLoginNotice(true);
+        // Disparar el mismo evento que crea un nuevo chat con búsqueda — el handler interno
+        window.dispatchEvent(
+          new CustomEvent('create-new-chat-with-search', {
+            detail: { query: initialSearchQuery.trim() },
+          })
+        );
+        // No devolver; dejar que el flujo normal del handler lo procese
         return;
       }
 
@@ -2046,6 +2303,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   // Manejo de botones (creación, idea, soporte, flujo final_yes/no, selección/creación de proyecto)
   const handleBotButtonClick = (action: string) => {
+    // Manejar acciones de WhatsApp
+    if (action.startsWith('whatsapp:')) {
+      const url = action.replace('whatsapp:', '');
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (action === 'new_project') {
       queueOrSaveUserMessage('📚 Crear Proyecto');
       if (!isSignedIn) {
@@ -2063,20 +2327,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
         { id: Date.now(), text: '¡Cuéntame tu nueva idea!', sender: 'bot' },
       ]);
       // NUEVO: enfocar de inmediato el input para escribir la idea
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
     if (action === 'contact_support') {
       queueOrSaveUserMessage('🛠 Soporte Técnico');
-      // Cerrar el chat de IA y activar el botón de crear nuevo ticket
-      setIsOpen(false);
-      // Disparar el evento para crear un nuevo ticket
-      if (user?.id) {
+      if (!isSignedIn) {
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.href = `/sign-in?redirect_url=${currentUrl}&action=create_ticket`;
+      } else {
+        setIsOpen(false);
         window.dispatchEvent(
           new CustomEvent('create-new-ticket', {
             detail: {
-              userId: user.id,
-              email: user.emailAddresses?.[0]?.emailAddress,
+              userId: user!.id,
+              email: user!.emailAddresses?.[0]?.emailAddress,
             },
           })
         );
@@ -2095,7 +2360,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2109,7 +2374,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2123,7 +2388,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2137,7 +2402,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2162,7 +2427,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2176,7 +2441,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
           sender: 'bot',
         },
       ]);
-      setTimeout(() => inputRef.current?.focus(), 0);
+
       return;
     }
 
@@ -2726,16 +2991,37 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                 (btn: { label: string; action: string }) =>
                   !(btn.action === 'contact_support' && !isSignedIn)
               )
-              .map((btn: { label: string; action: string }) => (
-                <button
-                  key={btn.action}
-                  className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                  onClick={() => handleBotButtonClick(btn.action)}
-                  type="button"
-                >
-                  {btn.label}
-                </button>
-              ))}
+              .map((btn: { label: string; action: string }) => {
+                const isWhatsAppButton = btn.action.startsWith('whatsapp:');
+
+                return (
+                  <button
+                    key={btn.action}
+                    className={`${
+                      isWhatsAppButton
+                        ? 'flex items-center gap-2 rounded border border-[#128C7E] bg-[#25D366] px-4 py-2 font-semibold text-white shadow-md shadow-[#128C7E]/40 transition hover:bg-[#1ebe5d]'
+                        : 'rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700'
+                    }`}
+                    onClick={() => handleBotButtonClick(btn.action)}
+                    type="button"
+                  >
+                    {isWhatsAppButton && (
+                      <Image
+                        src="/WhatsApp.webp"
+                        alt="WhatsApp"
+                        width={24}
+                        height={24}
+                        className="h-6 w-6"
+                      />
+                    )}
+                    <span
+                      className={isWhatsAppButton ? 'text-white' : undefined}
+                    >
+                      {btn.label}
+                    </span>
+                  </button>
+                );
+              })}
           </div>
         )}
       </div>
@@ -2750,6 +3036,42 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       window.dispatchEvent(new CustomEvent('student-chat-close'));
     }
   }, [isOpen]);
+
+  const shouldLowerFloatingButtons =
+    isSupportChatVisible ||
+    (isOpen && (activeSection === 'tickets' || chatMode.type === 'ticket'));
+  const floatingButtonsZIndex = shouldLowerFloatingButtons ? 40 : 100001;
+  const floatingButtonStyle: React.CSSProperties = shouldLowerFloatingButtons
+    ? { zIndex: floatingButtonsZIndex, pointerEvents: 'none', opacity: 0.5 }
+    : { zIndex: floatingButtonsZIndex };
+  const shouldRenderSupportButton =
+    !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
+  const supportButtonWrapperClass = isDesktop
+    ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-26 duration-200 sm:right-7'
+    : 'fixed right-8.5 bottom-26';
+  const supportButtonStyle: React.CSSProperties = {
+    zIndex: floatingButtonsZIndex,
+    pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
+    opacity: shouldLowerFloatingButtons ? 0.5 : 1,
+  };
+  if (isDesktop) {
+    supportButtonStyle.animationName = isExiting ? 'fadeOutDown' : 'fadeInUp';
+    supportButtonStyle.animationDuration = `${ANIMATION_DURATION}ms`;
+    supportButtonStyle.animationTimingFunction = 'ease';
+    supportButtonStyle.animationFillMode = 'forwards';
+  }
+  const fallbackMobileWidth =
+    typeof window !== 'undefined' ? window.innerWidth : 390;
+  const fallbackMobileHeight =
+    typeof window !== 'undefined' ? window.innerHeight : 844;
+  const mobileViewportWidth = !isDesktop
+    ? viewportWidth || fallbackMobileWidth
+    : undefined;
+  const mobileViewportHeight = !isDesktop
+    ? mobileViewportBase || fallbackMobileHeight
+    : undefined;
+  const mobileBoxWidth = mobileViewportWidth ?? fallbackMobileWidth;
+  const mobileBoxHeight = mobileViewportHeight ?? fallbackMobileHeight;
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -2832,55 +3154,131 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   return (
     <>
       <Tooltip.Provider>
-        <div className={`${className} fixed`} style={{ zIndex: 99999 }}>
+        <div
+          className={`${className} fixed`}
+          style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
+        >
           {isAlwaysVisible && (
-            <div className="fixed right-6 bottom-6 z-[100001] md:z-50">
-              <button
-                className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
-                onMouseEnter={() => {
-                  setIsHovered(true);
-                  show();
-                }}
-                onMouseLeave={() => setIsHovered(false)}
-                onClick={handleClick}
-              >
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
-                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-                  <div className="relative">
-                    <MessageCircle
-                      className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
-                    />
-                    {isHovered && (
-                      <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
-                    )}
-                  </div>
-                </div>
-                <div
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                  style={{
-                    background:
-                      'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+            <div className="fixed right-6 bottom-6" style={floatingButtonStyle}>
+              <div className="relative">
+                <button
+                  className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+                  onMouseEnter={() => {
+                    if (hideTimeoutRef.current) {
+                      window.clearTimeout(hideTimeoutRef.current);
+                      hideTimeoutRef.current = null;
+                    }
+                    setIsHovered(true);
+                    show();
                   }}
-                />
-                <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
-              </button>
-
-              {isDesktop && (
-                <div className="animate-in fade-in-0 slide-in-from-bottom-2 absolute right-0 bottom-full mb-2 duration-200">
-                  <div className="relative">
-                    <div className="relative z-10 rounded-lg border border-cyan-400/50 bg-slate-800/90 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
-                      Asistente IA
+                  onMouseLeave={() => {
+                    setIsHovered(false);
+                    if (hideTimeoutRef.current)
+                      window.clearTimeout(hideTimeoutRef.current);
+                    hideTimeoutRef.current = window.setTimeout(() => {
+                      if (!extrasHovered && !isHovered) hide();
+                      hideTimeoutRef.current = null;
+                    }, 150);
+                  }}
+                  onClick={handleClick}
+                >
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
+                  <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
+                    <div className="relative">
+                      <MessageCircle
+                        className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                      />
+                      {isHovered && (
+                        <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
+                      )}
                     </div>
-                    <div className="absolute inset-0 animate-pulse rounded-lg bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300 blur-sm">
-                      Asistente IA
-                    </div>
-                    <div className="absolute inset-0 rounded-lg bg-cyan-400/5 px-3 py-1 text-sm text-cyan-300 blur-md">
-                      Asistente IA
-                    </div>
-                    <div className="absolute inset-0 scale-110 rounded-lg bg-cyan-400/20 blur-lg" />
-                    <div className="absolute top-full right-4 z-10 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-slate-800" />
-                    <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-cyan-400/50 blur-sm" />
                   </div>
+                  <div
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    style={{
+                      background:
+                        'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                    }}
+                  />
+                  <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
+                </button>
+                {/* Tooltip solo en desktop y hover */}
+                {isDesktop && isHovered && (
+                  <div className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-md border border-cyan-400 bg-slate-800/95 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
+                    Asistente IA
+                  </div>
+                )}
+              </div>
+
+              {/* Eliminado el tooltip/frase "Asistente IA" y triángulo */}
+
+              {shouldRenderSupportButton && (
+                <div
+                  className={supportButtonWrapperClass}
+                  onMouseEnter={
+                    isDesktop
+                      ? () => {
+                          // mantener visibles las opciones al entrar en el contenedor de extras
+                          if (hideTimeoutRef.current) {
+                            window.clearTimeout(hideTimeoutRef.current);
+                            hideTimeoutRef.current = null;
+                          }
+                          setExtrasHovered(true);
+                          show();
+                        }
+                      : undefined
+                  }
+                  onMouseLeave={
+                    isDesktop
+                      ? () => {
+                          setExtrasHovered(false);
+                          // pequeño delay para evitar parpadeos al moverse entre botones
+                          if (hideTimeoutRef.current)
+                            window.clearTimeout(hideTimeoutRef.current);
+                          hideTimeoutRef.current = window.setTimeout(() => {
+                            if (!isHovered && !extrasHovered) hide();
+                            hideTimeoutRef.current = null;
+                          }, 150);
+                        }
+                      : undefined
+                  }
+                  style={supportButtonStyle}
+                >
+                  <button
+                    onClick={() => {
+                      if (!isSignedIn) {
+                        router.push('/sign-in');
+                        return;
+                      }
+                      if (user?.id) {
+                        window.dispatchEvent(
+                          new CustomEvent('create-new-ticket', {
+                            detail: {
+                              userId: user.id,
+                              email: user.emailAddresses?.[0]?.emailAddress,
+                            },
+                          })
+                        );
+                      }
+                    }}
+                    className={`relative flex items-center rounded-full border border-blue-400 text-white shadow-md transition-all duration-300 ease-in-out hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8] ${
+                      isDesktop
+                        ? 'gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 hover:scale-105'
+                        : 'h-12 w-12 justify-center bg-gradient-to-br from-blue-500 to-cyan-600 hover:scale-110'
+                    }`}
+                    aria-label="Soporte técnico"
+                  >
+                    <MdSupportAgent
+                      className={`${isDesktop ? 'text-xl' : 'text-2xl'} text-white opacity-90`}
+                    />
+                    {isDesktop ? (
+                      <span className="hidden font-medium tracking-wide sm:inline">
+                        Soporte técnico
+                      </span>
+                    ) : (
+                      <span className="sr-only">Soporte técnico</span>
+                    )}
+                  </button>
                 </div>
               )}
             </div>
@@ -2888,76 +3286,101 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
           {isOpen && (
             <div
-              className={`fixed ${isDesktop ? 'right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
+              className={`fixed ${isDesktop ? 'top-0 right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
               ref={chatContainerRef}
               style={
                 isDesktop
-                  ? { right: 0, bottom: 0, left: 'auto', top: 'auto' }
+                  ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
-                      height: viewportHeight
-                        ? `${viewportHeight}px`
-                        : undefined,
+                      inset: 0,
+                      width: '100vw',
+                      minWidth: '100vw',
+                      maxWidth: '100vw',
+                      height: `${mobileBoxHeight}px`,
+                      minHeight: '100dvh',
+                      maxHeight: '100dvh',
+                      overflow: 'hidden',
                     }
               }
             >
               <ResizableBox
-                width={isDesktop ? dimensions.width : viewportWidth}
-                height={isDesktop ? dimensions.height : viewportHeight}
+                width={isDesktop ? dimensions.width : mobileBoxWidth}
+                height={isDesktop ? dimensions.height : mobileBoxHeight}
                 onResize={handleResize}
                 minConstraints={
                   isDesktop
                     ? [500, window.innerHeight]
-                    : [viewportWidth, viewportHeight]
+                    : [mobileBoxWidth, mobileBoxHeight]
                 }
                 maxConstraints={[
                   isDesktop
                     ? Math.min(window.innerWidth, window.innerWidth - 20)
-                    : viewportWidth,
-                  isDesktop ? window.innerHeight : viewportHeight,
+                    : mobileBoxWidth,
+                  isDesktop ? window.innerHeight : mobileBoxHeight,
                 ]}
                 resizeHandles={isDesktop ? ['sw'] : []}
                 className={`chat-resizable ${isDesktop ? 'ml-auto' : ''}`}
+                style={
+                  !isDesktop
+                    ? {
+                        height: '100%',
+                        width: '100%',
+                        overflow: 'hidden',
+                      }
+                    : {
+                        height: '100%',
+                        overflow: 'hidden',
+                        margin: 0,
+                        padding: 0,
+                      }
+                }
               >
                 <div
-                  className={`relative flex h-full w-full flex-col overflow-hidden ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
-                  style={
-                    !isDesktop
-                      ? {
-                          paddingBottom: isKeyboardOpen
-                            ? Math.max(0, bottomInset)
-                            : 0,
-                        }
-                      : undefined
-                  }
+                  className={`relative flex h-full min-h-0 w-full flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
+                  style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
-                  <div className="relative z-[5] flex flex-col bg-[#071024]/95 backdrop-blur-sm">
-                    <div className="flex items-start justify-between border-b border-gray-700 p-3">
-                      <HiMiniCpuChip className="mt-1 text-4xl text-white" />
-                      <div className="-ml-6 flex flex-1 flex-col items-center">
-                        <h2 className="mt-1 text-lg font-semibold text-white">
-                          Artie IA
-                        </h2>
-                        <div className="flex items-center gap-2">
-                          <em className="text-sm font-semibold text-white/70">
+                  <div
+                    className={`z-50 flex flex-col border-b border-gray-800 bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-sm ${isDesktop ? '' : 'sticky top-0'}`}
+                    style={
+                      isDesktop
+                        ? undefined
+                        : { top: 'env(safe-area-inset-top, 0px)' }
+                    }
+                  >
+                    <div className="grid grid-cols-3 items-center gap-1 border-b border-gray-800 px-3 py-2 md:px-4 md:py-4">
+                      <div className="flex items-center">
+                        <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
+                      </div>
+
+                      <div className="flex items-center justify-center">
+                        <div className="flex flex-col items-center">
+                          <h2 className="flex items-center gap-2 text-base font-semibold text-white md:text-lg">
+                            Artie IA
+                            <span
+                              className={`status-dot ${isSignedIn ? 'glow-pulse' : ''} inline-flex`}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${isSignedIn ? 'bg-green-500' : 'bg-gray-500'}`}
+                              />
+                            </span>
+                          </h2>
+
+                          <em className="mt-0.5 text-xs font-semibold text-white/70 md:text-sm">
                             {user?.fullName}
                           </em>
-                          <div className="relative inline-flex">
-                            <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
-                            <div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
-                          </div>
                         </div>
                       </div>
 
-                      <div className="flex">
+                      <div className="flex items-center justify-end gap-2">
                         <button
-                          className="ml-2 rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
+                          className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
-                          {!isChatPage && chatMode.idChat !== null ? (
+                          {chatMode.idChat !== null ? (
                             <MdArrowBack
-                              className="text-xl text-white/70"
+                              className="text-lg text-white/70 md:text-xl"
                               onClick={() => {
                                 setChatMode({
                                   idChat: null,
@@ -2972,11 +3395,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
                         <button
                           onClick={handleDeleteHistory}
-                          className="ml-2 rounded-full p-1.5 transition-colors hover:bg-white/6"
+                          className="rounded-full p-1.5 transition-colors hover:bg-white/6"
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
-                          <TrashIcon className="text-xl text-red-400" />
+                          <TrashIcon className="text-lg text-red-400 md:text-xl" />
                         </button>
 
                         <button
@@ -2990,203 +3413,253 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
                           className="rounded-full p-1.5 transition-all duration-200 hover:bg-white/6 active:scale-95"
                           aria-label="Cerrar chatbot"
                         >
-                          <IoClose className="text-xl text-white/70" />
+                          <IoClose className="text-lg text-white/70 md:text-xl" />
                         </button>
                       </div>
                     </div>
+                    <div className="px-2 pt-0 pb-0 md:px-3">
+                      <ChatNavigation
+                        activeSection={activeSection}
+                        onSectionChange={setActiveSection}
+                      />
+                    </div>
                   </div>
 
-                  <ChatNavigation
-                    activeSection={activeSection}
-                    onSectionChange={setActiveSection}
-                  />
-
-                  {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
-                  {activeSection === 'chatia' &&
-                    showLoginNotice &&
-                    !isSignedIn && (
-                      <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
-                        <p className="text-sm text-white">
-                          Debes iniciar sesión para seguir la conversación
-                        </p>
-                        <button
-                          onClick={() => {
-                            const currentUrl = encodeURIComponent(
-                              window.location.href
-                            );
-                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
-                          }}
-                          className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
-                        >
-                          Iniciar sesión
-                        </button>
-                      </div>
-                    )}
-
-                  {/* Contenido basado en la sección activa */}
-                  {activeSection === 'tickets' ? (
-                    chatMode.status && isSignedIn ? (
-                      <ChatList
-                        setChatMode={setChatMode}
-                        setShowChatList={setShowChatList}
-                        activeType="tickets"
-                      />
-                    ) : !isSignedIn ? (
-                      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-                        <div className="mb-6">
-                          <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                            <svg
-                              className="h-8 w-8 text-black"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                  {/* Wrapper de contenido (mensajes + listas) */}
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    <div className="flex h-full flex-col overflow-hidden">
+                      {/* Aviso de login requerido cuando la búsqueda abre el chat sin sesión */}
+                      {activeSection === 'chatia' &&
+                        showLoginNotice &&
+                        !isSignedIn && (
+                          <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
+                            <p className="text-sm text-white">
+                              Debes iniciar sesión para seguir la conversación
+                            </p>
+                            <button
+                              onClick={() => {
+                                const currentUrl = encodeURIComponent(
+                                  window.location.href
+                                );
+                                window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                              }}
+                              className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
+                              Iniciar sesión
+                            </button>
                           </div>
-                          <h3 className="mb-2 text-lg font-semibold text-black">
-                            Acceso restringido
-                          </h3>
-                          <p className="text-muted-foreground mb-6">
-                            Debes iniciar sesión para crear y gestionar tickets
-                            de soporte
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const currentUrl = encodeURIComponent(
-                              window.location.href
-                            );
-                            window.location.href = `/sign-in?redirect_url=${currentUrl}`;
-                          }}
-                          className="bg-background hover:bg-background/90 focus:ring-background rounded-lg px-6 py-3 font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
-                        >
-                          Iniciar sesión
-                        </button>
+                        )}
+
+                      <div className="min-h-0 flex-1 overflow-hidden">
+                        {/* Contenido basado en la sección activa */}
+                        {activeSection === 'tickets' ? (
+                          <div className="h-full overflow-y-auto">
+                            {chatMode.status && isSignedIn ? (
+                              <ChatList
+                                setChatMode={setChatMode}
+                                setShowChatList={setShowChatList}
+                                activeType="tickets"
+                              />
+                            ) : !isSignedIn ? (
+                              <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                                <div className="mb-6">
+                                  <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                                    <svg
+                                      className="h-8 w-8 text-[#3AF4EF]"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <h3 className="mb-2 text-xl font-bold text-white">
+                                    Acceso restringido
+                                  </h3>
+                                  <p className="mb-6 text-gray-300">
+                                    Debes iniciar sesión para crear y gestionar
+                                    tickets de soporte
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const currentUrl = encodeURIComponent(
+                                      window.location.href
+                                    );
+                                    window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                  }}
+                                  className="rounded-lg bg-gradient-to-r from-[#3AF4EF] to-[#00BDD8] px-6 py-3 font-semibold text-[#071024] shadow-lg transition-all hover:from-[#1FE0DD] hover:to-[#00A5C0] hover:shadow-xl focus:ring-2 focus:ring-[#3AF4EF] focus:ring-offset-2 focus:outline-none active:scale-95"
+                                >
+                                  Iniciar sesión
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : activeSection === 'projects' ? (
+                          <div className="h-full overflow-y-auto">
+                            {chatMode.status && isSignedIn ? (
+                              <ChatList
+                                setChatMode={setChatMode}
+                                setShowChatList={setShowChatList}
+                                activeType="projects"
+                              />
+                            ) : null}
+                          </div>
+                        ) : activeSection === 'chatia' ? (
+                          chatMode.status && !isSignedIn ? (
+                            <ChatMessages
+                              idea={idea}
+                              setIdea={setIdea}
+                              setShowChatList={setShowChatList}
+                              courseId={courseId}
+                              isEnrolled={isEnrolled}
+                              courseTitle={courseTitle}
+                              messages={
+                                messages as {
+                                  id: number;
+                                  text: string;
+                                  sender: string;
+                                  coursesData?: { id: number; title: string }[];
+                                }[]
+                              }
+                              setMessages={
+                                setMessages as React.Dispatch<
+                                  React.SetStateAction<
+                                    {
+                                      id: number;
+                                      text: string;
+                                      sender: string;
+                                    }[]
+                                  >
+                                >
+                              }
+                              chatMode={chatMode}
+                              setChatMode={setChatMode}
+                              inputText={inputText}
+                              setInputText={setInputText}
+                              handleSendMessage={handleSendMessage}
+                              isLoading={isLoading}
+                              messagesEndRef={
+                                messagesEndRef as React.RefObject<HTMLDivElement>
+                              }
+                              isSignedIn={isSignedIn}
+                              inputRef={
+                                inputRef as React.RefObject<HTMLInputElement>
+                              }
+                              renderMessage={
+                                renderMessage as (
+                                  message: {
+                                    id: number;
+                                    text: string;
+                                    sender: string;
+                                    coursesData?: {
+                                      id: number;
+                                      title: string;
+                                    }[];
+                                  },
+                                  idx: number
+                                ) => React.ReactNode
+                              }
+                              onDeleteHistory={handleDeleteHistory}
+                              onBotButtonClick={handleBotButtonClick}
+                              compactWelcome={
+                                !isDesktop &&
+                                isKeyboardOpen &&
+                                messages.length === 1 &&
+                                messages[0].sender === 'bot' &&
+                                !!messages[0].buttons
+                              }
+                              isDesktop={isDesktop}
+                            />
+                          ) : chatMode.status &&
+                            isSignedIn &&
+                            chatMode.idChat ? (
+                            <ChatMessages
+                              idea={idea}
+                              setIdea={setIdea}
+                              setShowChatList={setShowChatList}
+                              courseId={courseId}
+                              isEnrolled={isEnrolled}
+                              courseTitle={courseTitle}
+                              messages={
+                                messages as {
+                                  id: number;
+                                  text: string;
+                                  sender: string;
+                                  coursesData?: { id: number; title: string }[];
+                                }[]
+                              }
+                              setMessages={
+                                setMessages as React.Dispatch<
+                                  React.SetStateAction<
+                                    {
+                                      id: number;
+                                      text: string;
+                                      sender: string;
+                                    }[]
+                                  >
+                                >
+                              }
+                              chatMode={chatMode}
+                              setChatMode={setChatMode}
+                              inputText={inputText}
+                              setInputText={setInputText}
+                              handleSendMessage={handleSendMessage}
+                              isLoading={isLoading}
+                              messagesEndRef={
+                                messagesEndRef as React.RefObject<HTMLDivElement>
+                              }
+                              isSignedIn={isSignedIn}
+                              inputRef={
+                                inputRef as React.RefObject<HTMLInputElement>
+                              }
+                              renderMessage={
+                                renderMessage as (
+                                  message: {
+                                    id: number;
+                                    text: string;
+                                    sender: string;
+                                    coursesData?: {
+                                      id: number;
+                                      title: string;
+                                    }[];
+                                  },
+                                  idx: number
+                                ) => React.ReactNode
+                              }
+                              onDeleteHistory={handleDeleteHistory}
+                              onBotButtonClick={handleBotButtonClick}
+                              compactWelcome={
+                                !isDesktop &&
+                                isKeyboardOpen &&
+                                messages.length === 1 &&
+                                messages[0].sender === 'bot' &&
+                                !!messages[0].buttons
+                              }
+                              isDesktop={isDesktop}
+                            />
+                          ) : (
+                            chatMode.status &&
+                            isSignedIn &&
+                            !chatMode.idChat && (
+                              <div className="h-full overflow-y-auto">
+                                <ChatList
+                                  setChatMode={setChatMode}
+                                  setShowChatList={setShowChatList}
+                                  activeType="chatia"
+                                />
+                              </div>
+                            )
+                          )
+                        ) : null}
                       </div>
-                    ) : null
-                  ) : activeSection === 'projects' ? (
-                    chatMode.status && isSignedIn ? (
-                      <ChatList
-                        setChatMode={setChatMode}
-                        setShowChatList={setShowChatList}
-                        activeType="projects"
-                      />
-                    ) : null
-                  ) : activeSection === 'chatia' ? (
-                    chatMode.status && !isSignedIn ? (
-                      <ChatMessages
-                        idea={idea}
-                        setIdea={setIdea}
-                        setShowChatList={setShowChatList}
-                        courseId={courseId}
-                        isEnrolled={isEnrolled}
-                        courseTitle={courseTitle}
-                        messages={
-                          messages as {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          }[]
-                        }
-                        setMessages={
-                          setMessages as React.Dispatch<
-                            React.SetStateAction<
-                              { id: number; text: string; sender: string }[]
-                            >
-                          >
-                        }
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        inputText={inputText}
-                        setInputText={setInputText}
-                        handleSendMessage={handleSendMessage}
-                        isLoading={isLoading}
-                        messagesEndRef={
-                          messagesEndRef as React.RefObject<HTMLDivElement>
-                        }
-                        isSignedIn={isSignedIn}
-                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                        renderMessage={
-                          renderMessage as (
-                            message: {
-                              id: number;
-                              text: string;
-                              sender: string;
-                              coursesData?: { id: number; title: string }[];
-                            },
-                            idx: number
-                          ) => React.ReactNode
-                        }
-                        onDeleteHistory={handleDeleteHistory}
-                        onBotButtonClick={handleBotButtonClick}
-                      />
-                    ) : chatMode.status && isSignedIn && chatMode.idChat ? (
-                      <ChatMessages
-                        idea={idea}
-                        setIdea={setIdea}
-                        setShowChatList={setShowChatList}
-                        courseId={courseId}
-                        isEnrolled={isEnrolled}
-                        courseTitle={courseTitle}
-                        messages={
-                          messages as {
-                            id: number;
-                            text: string;
-                            sender: string;
-                            coursesData?: { id: number; title: string }[];
-                          }[]
-                        }
-                        setMessages={
-                          setMessages as React.Dispatch<
-                            React.SetStateAction<
-                              { id: number; text: string; sender: string }[]
-                            >
-                          >
-                        }
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        inputText={inputText}
-                        setInputText={setInputText}
-                        handleSendMessage={handleSendMessage}
-                        isLoading={isLoading}
-                        messagesEndRef={
-                          messagesEndRef as React.RefObject<HTMLDivElement>
-                        }
-                        isSignedIn={isSignedIn}
-                        inputRef={inputRef as React.RefObject<HTMLInputElement>}
-                        renderMessage={
-                          renderMessage as (
-                            message: {
-                              id: number;
-                              text: string;
-                              sender: string;
-                              coursesData?: { id: number; title: string }[];
-                            },
-                            idx: number
-                          ) => React.ReactNode
-                        }
-                        onDeleteHistory={handleDeleteHistory}
-                        onBotButtonClick={handleBotButtonClick}
-                      />
-                    ) : (
-                      chatMode.status &&
-                      isSignedIn &&
-                      !chatMode.idChat && (
-                        <ChatList
-                          setChatMode={setChatMode}
-                          setShowChatList={setShowChatList}
-                          activeType="chatia"
-                        />
-                      )
-                    )
-                  ) : null}
+                    </div>
+                  </div>
                 </div>
               </ResizableBox>
             </div>
@@ -3196,7 +3669,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       <style jsx global>{`
         .chat-resizable input,
         .chat-resizable textarea {
-          color: #111 !important;
+          color: #fff !important;
         }
       `}</style>
     </>

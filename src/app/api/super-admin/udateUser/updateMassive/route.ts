@@ -5,12 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import {
-  enrollmentPrograms,
-  enrollments,
-  users
-} from '~/server/db/schema';
-
+import { enrollmentPrograms, enrollments, users } from '~/server/db/schema';
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
@@ -76,7 +71,9 @@ export async function PATCH(req: Request) {
         const parts = name.trim().split(/\s+/);
         firstName = parts[0];
         lastName = parts.slice(1).join(' ') || '';
-        console.log(`✂️ name -> firstName="${firstName}", lastName="${lastName}"`);
+        console.log(
+          `✂️ name -> firstName="${firstName}", lastName="${lastName}"`
+        );
       }
 
       // === Clerk ===
@@ -93,7 +90,10 @@ export async function PATCH(req: Request) {
           userExistsInClerk = false;
         } else {
           console.error('❌ Clerk err:', err);
-          return NextResponse.json({ error: 'Error con Clerk' }, { status: 500 });
+          return NextResponse.json(
+            { error: 'Error con Clerk' },
+            { status: 500 }
+          );
         }
       }
 
@@ -138,7 +138,9 @@ export async function PATCH(req: Request) {
             : 'Premium';
 
       // Construimos el SET a partir de `fields` sin listar columnas manualmente.
-      const userUpdateFields: Record<string, unknown> = { updatedAt: new Date() };
+      const userUpdateFields: Record<string, unknown> = {
+        updatedAt: new Date(),
+      };
 
       // name → name; si no viene, y derivamos first/last, componemos name
       if (typeof name === 'string') {
@@ -148,22 +150,39 @@ export async function PATCH(req: Request) {
       }
 
       if (typeof role === 'string') userUpdateFields.role = role;
-      if (typeof status === 'string') userUpdateFields.subscriptionStatus = status;
-      if (resolvedPlanType !== undefined) userUpdateFields.planType = resolvedPlanType;
+      if (typeof status === 'string')
+        userUpdateFields.subscriptionStatus = status;
+      if (resolvedPlanType !== undefined)
+        userUpdateFields.planType = resolvedPlanType;
 
-      for (const [key, value] of Object.entries(fields as Record<string, unknown>)) {
+      for (const [key, value] of Object.entries(
+        fields as Record<string, unknown>
+      )) {
         if (RESERVED_KEYS.has(key)) continue; // programId, courseId, etc. ya tratados
         if (key === 'subscriptionEndDate') {
           userUpdateFields.subscriptionEndDate =
             value != null
-              ? new Date(value instanceof Date ? value : (typeof value === 'string' ? value : JSON.stringify(value)))
+              ? new Date(
+                  value instanceof Date
+                    ? value
+                    : typeof value === 'string'
+                      ? value
+                      : JSON.stringify(value)
+                )
               : null;
           continue;
         }
         if (DATE_KEYS.has(key)) {
-          userUpdateFields[key] = value != null
-            ? new Date(value instanceof Date ? value : (typeof value === 'string' ? value : JSON.stringify(value)))
-            : null;
+          userUpdateFields[key] =
+            value != null
+              ? new Date(
+                  value instanceof Date
+                    ? value
+                    : typeof value === 'string'
+                      ? value
+                      : JSON.stringify(value)
+                )
+              : null;
           continue;
         }
         // Caso general (cualquier columna dinámica de `users`)
@@ -228,12 +247,17 @@ export async function PATCH(req: Request) {
           .where(eq(users.id, userId));
       }
 
-      console.log(`✅ Usuario ${userId} actualizado completamente (solo users.*)`);
+      console.log(
+        `✅ Usuario ${userId} actualizado completamente (solo users.*)`
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('❌ Error en updateMassive:', err);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 }

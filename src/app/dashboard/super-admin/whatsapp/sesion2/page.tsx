@@ -4,5 +4,5 @@
 import WhatsAppInboxPage from '~/app/dashboard/super-admin/whatsapp/inbox/page';
 
 export default function WhatsAppSesion2Page() {
-    return <WhatsAppInboxPage searchParams={{ session: 'sesion2' }} />;
+  return <WhatsAppInboxPage searchParams={{ session: 'sesion2' }} />;
 }

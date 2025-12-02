@@ -1,7 +1,7 @@
 // src/app/api/super-admin/teams/class-meeting/delete/route.ts
 import { NextResponse } from 'next/server';
 
-import { DeleteObjectCommand,S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';

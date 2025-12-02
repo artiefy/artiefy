@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { FaHashtag,FaUsers } from 'react-icons/fa';
+import { FaHashtag, FaUsers } from 'react-icons/fa';
 
 import ModalRamaInvestigacion from './Modals/ModalCategoria';
 import ModalProyecto from './Modals/ModalProyecto';

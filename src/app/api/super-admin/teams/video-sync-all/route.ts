@@ -1,3 +1,4 @@
+ 
 // src/app/api/super-admin/teams/video-sync-all/route.ts
 import { NextResponse } from 'next/server';
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
         message: 'Sincronización iniciada en background',
-        status: 'processing'
+        status: 'processing',
     });
 }
 
@@ -50,7 +51,7 @@ async function syncAllVideos(userId: string): Promise<void> {
                 offset += BATCH_SIZE;
 
                 // Esperar 2 segundos entre batches para no saturar
-                await new Promise(r => setTimeout(r, 2000));
+                await new Promise((r) => setTimeout(r, 2000));
             }
         } catch (err) {
             console.error(`❌ Error en batch ${offset}:`, err);

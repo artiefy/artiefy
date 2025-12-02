@@ -190,12 +190,13 @@ export async function POST(request: Request) {
           const lessonIds = courseLessons.map((lesson) => lesson.id);
 
           for (const userId of newUsers) {
-            const existingProgress = await db.query.userLessonsProgress.findMany({
-              where: and(
-                eq(userLessonsProgress.userId, userId),
-                inArray(userLessonsProgress.lessonId, lessonIds)
-              ),
-            });
+            const existingProgress =
+              await db.query.userLessonsProgress.findMany({
+                where: and(
+                  eq(userLessonsProgress.userId, userId),
+                  inArray(userLessonsProgress.lessonId, lessonIds)
+                ),
+              });
 
             const existingProgressSet = new Set(
               existingProgress.map((progress) => progress.lessonId)
@@ -204,7 +205,6 @@ export async function POST(request: Request) {
             for (const lesson of courseLessons) {
               const isFirstLesson = lesson.id === firstLessonId;
               if (!existingProgressSet.has(lesson.id)) {
-
                 // Usar onConflictDoUpdate para actualizar si ya existe
                 await db
                   .insert(userLessonsProgress)
@@ -218,7 +218,10 @@ export async function POST(request: Request) {
                     lastUpdated: new Date(),
                   })
                   .onConflictDoUpdate({
-                    target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+                    target: [
+                      userLessonsProgress.userId,
+                      userLessonsProgress.lessonId,
+                    ],
                     set: {
                       isLocked: !isFirstLesson, // ✅ Actualiza isLocked aunque ya exista
                       isNew: true,
@@ -239,7 +242,9 @@ export async function POST(request: Request) {
                       eq(userLessonsProgress.lessonId, lesson.id)
                     )
                   );
-                console.log(`🔄 ACTUALIZADO - Lección ${lesson.id} para usuario ${userId}`);
+                console.log(
+                  `🔄 ACTUALIZADO - Lección ${lesson.id} para usuario ${userId}`
+                );
               }
               console.log(
                 `${isFirstLesson ? '🔓 DESBLOQUEADA' : '🔒 BLOQUEADA'} - Lección ${lesson.id} para usuario ${userId}`

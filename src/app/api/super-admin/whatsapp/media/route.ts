@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     process.env.FB_GRAPH_TOKEN;
 
   if (!token) {
-    return Response.json({ error: 'Missing WhatsApp Graph token' }, { status: 500 });
+    return Response.json(
+      { error: 'Missing WhatsApp Graph token' },
+      { status: 500 }
+    );
   }
 
   const metaRes = await fetch(`${GRAPH}/${id}`, {
@@ -33,7 +36,9 @@ export async function GET(req: NextRequest) {
   });
   if (!metaRes.ok) {
     const body = await metaRes.text();
-    return new Response(body || 'Error getting media info', { status: metaRes.status });
+    return new Response(body || 'Error getting media info', {
+      status: metaRes.status,
+    });
   }
   const meta = (await metaRes.json()) as {
     url: string;
@@ -51,11 +56,15 @@ export async function GET(req: NextRequest) {
   });
   if (!fileRes.ok) {
     const body = await fileRes.text();
-    return new Response(body || 'Error downloading media', { status: fileRes.status });
+    return new Response(body || 'Error downloading media', {
+      status: fileRes.status,
+    });
   }
 
   const contentType =
-    fileRes.headers.get('content-type') ?? meta.mime_type ?? 'application/octet-stream';
+    fileRes.headers.get('content-type') ??
+    meta.mime_type ??
+    'application/octet-stream';
 
   const getExtensionFromMimeType = (mimeType: string): string => {
     const map: Record<string, string> = {
@@ -74,9 +83,12 @@ export async function GET(req: NextRequest) {
       'application/vnd.ms-powerpoint': 'ppt',
       'application/msword': 'doc',
       'application/vnd.ms-excel': 'xls',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'docx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+        'pptx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        'xlsx',
       'text/plain': 'txt',
     };
     return map[mimeType.toLowerCase()] ?? 'bin';
@@ -97,7 +109,6 @@ export async function GET(req: NextRequest) {
   return new Response(fileRes.body, { headers });
 }
 
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -105,7 +116,8 @@ export async function POST(req: NextRequest) {
     const to = formData.get('to') as string | null;
     const caption = formData.get('caption') as string | null;
     const sessionNameRaw = formData.get('session');
-    const sessionName = typeof sessionNameRaw === 'string' ? sessionNameRaw : undefined;
+    const sessionName =
+      typeof sessionNameRaw === 'string' ? sessionNameRaw : undefined;
 
     if (!file || !to) {
       return Response.json({ error: 'Faltan file o to' }, { status: 400 });
@@ -116,7 +128,10 @@ export async function POST(req: NextRequest) {
     const phoneNumberId = sessionConfig.phoneNumberId;
 
     if (!token || !phoneNumberId) {
-      return Response.json({ error: 'Configuración de sesión inválida' }, { status: 500 });
+      return Response.json(
+        { error: 'Configuración de sesión inválida' },
+        { status: 500 }
+      );
     }
 
     // 1. Subir el archivo a WhatsApp

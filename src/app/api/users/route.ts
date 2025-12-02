@@ -89,7 +89,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('search') ?? '';
     const users = await getAdminUsers(query);
-    console.table(users.map(u => ({ id: u.id, email: u.email, phone: u.phone || '' })));
+    console.table(
+      users.map((u) => ({ id: u.id, email: u.email, phone: u.phone || '' }))
+    );
 
     // 🔹 Recuperar el tiempo desde localStorage en el servidor no es posible directamente.
     // 🔹 Lo manejaremos desde el frontend.
@@ -228,23 +230,31 @@ export async function POST(request: Request) {
         const phoneNumber = body.phone.trim();
         console.log(`📱 Enviando plantilla WhatsApp a: ${phoneNumber}`);
 
-        const waResponse = await fetch(`${request.url.split('/api')[0]}/api/super-admin/whatsapp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: phoneNumber,
-            forceTemplate: true,
-            templateName: 'binvenida_creacion_de_usuario',
-            languageCode: 'es',
-            session: 'soporte',
-          }),
-        });
+        const waResponse = await fetch(
+          `${request.url.split('/api')[0]}/api/super-admin/whatsapp`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: phoneNumber,
+              forceTemplate: true,
+              templateName: 'binvenida_creacion_de_usuario',
+              languageCode: 'es',
+              session: 'soporte',
+            }),
+          }
+        );
 
         if (waResponse.ok) {
-          console.log(`✅ Plantilla WhatsApp enviada exitosamente a ${phoneNumber}`);
+          console.log(
+            `✅ Plantilla WhatsApp enviada exitosamente a ${phoneNumber}`
+          );
         } else {
           const errorData = await waResponse.json();
-          console.error(`❌ Error enviando WhatsApp a ${phoneNumber}:`, errorData);
+          console.error(
+            `❌ Error enviando WhatsApp a ${phoneNumber}:`,
+            errorData
+          );
         }
       } catch (waError) {
         console.error('❌ Error crítico enviando WhatsApp:', waError);

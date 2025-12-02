@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {

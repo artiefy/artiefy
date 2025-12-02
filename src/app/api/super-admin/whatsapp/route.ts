@@ -136,9 +136,15 @@ async function sendToMeta<T extends MetaMessageResponse>(
     'Content-Type': 'application/json',
   } as const;
 
-  console.log(`\n================ [WA][POST][${sessionConfig.displayName}] ${note} ================`);
+  console.log(
+    `\n================ [WA][POST][${sessionConfig.displayName}] ${note} ================`
+  );
   console.log('📤 Payload:\n', JSON.stringify(payload, null, 2));
-  console.log('📟 cURL equivalente:\n' + toCurl(url, payload, sessionConfig.accessToken) + '\n');
+  console.log(
+    '📟 cURL equivalente:\n' +
+      toCurl(url, payload, sessionConfig.accessToken) +
+      '\n'
+  );
 
   const res = await fetch(url, {
     method: 'POST',
@@ -225,16 +231,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           language: { code: languageCode ?? 'en_US' },
           ...(variables.length > 0
             ? {
-              components: [
-                {
-                  type: 'body',
-                  parameters: variables.map<TemplateParameter>((v) => ({
-                    type: 'text',
-                    text: v,
-                  })),
-                },
-              ],
-            }
+                components: [
+                  {
+                    type: 'body',
+                    parameters: variables.map<TemplateParameter>((v) => ({
+                      type: 'text',
+                      text: v,
+                    })),
+                  },
+                ],
+              }
             : {}),
         },
       };
@@ -335,7 +341,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           messaging_product: 'whatsapp',
           to,
           type: 'template',
-          template: { name: sessionTemplate, language: { code: sessionLanguage } },
+          template: {
+            name: sessionTemplate,
+            language: { code: sessionLanguage },
+          },
         };
         templateOpened = await sendToMeta<MetaMessageResponse>(
           open1,
@@ -351,12 +360,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           const templatesRes = await fetch(templatesUrl, {
             headers: { Authorization: `Bearer ${sessionConfig.accessToken}` },
           });
-          const templatesData = await templatesRes.json() as TemplateListResponse;
+          const templatesData =
+            (await templatesRes.json()) as TemplateListResponse;
           const template = (templatesData.data ?? []).find(
             (t) => t.name === sessionTemplate && t.language === sessionLanguage
           );
-          const bodyComp = template?.components?.find((c) => c.type.toUpperCase() === 'BODY');
-          const templateBody = bodyComp?.text ?? `[Plantilla: ${sessionTemplate}]`;
+          const bodyComp = template?.components?.find(
+            (c) => c.type.toUpperCase() === 'BODY'
+          );
+          const templateBody =
+            bodyComp?.text ?? `[Plantilla: ${sessionTemplate}]`;
 
           await db.insert(waMessages).values({
             metaMessageId: templateMetaId,
@@ -371,7 +384,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         } catch (e) {
           console.error('[WA][DB] No se pudo guardar TEMPLATE:', e);
         }
-
       } catch {
         const open2: TemplatePayload = {
           messaging_product: 'whatsapp',
@@ -478,7 +490,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const url = `https://graph.facebook.com/v22.0/${sessionConfig.wabaId}/message_templates?fields=name,language,status,components&limit=200`;
 
-    console.log(`🔎 [WA][GET][${sessionConfig.displayName}] Consultando plantillas:`, { url });
+    console.log(
+      `🔎 [WA][GET][${sessionConfig.displayName}] Consultando plantillas:`,
+      { url }
+    );
 
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${sessionConfig.accessToken}` },

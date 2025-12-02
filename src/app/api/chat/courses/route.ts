@@ -18,11 +18,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const backendResponse = await fetch('http://3.142.77.31:5000/root_courses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
+    const backendResponse = await fetch(
+      'http://3.142.77.31:5000/root_courses',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      }
+    );
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text();
@@ -32,17 +35,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await backendResponse.json() as BackendResponse;
+    const data = (await backendResponse.json()) as BackendResponse;
 
     // Validar y estructurar la respuesta
     const result = data.result ?? data;
     const formattedResult = Array.isArray(result) ? result : [result];
 
-    return NextResponse.json(
-      { result: formattedResult },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ result: formattedResult }, { status: 200 });
   } catch (error) {
     console.error('Error en POST /api/root-courses:', error);
     return NextResponse.json(

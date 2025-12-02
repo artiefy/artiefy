@@ -1,7 +1,14 @@
 'use client';
 import React, { useState } from 'react';
 
-import { FiAlertCircle, FiCheck, FiDownload, FiMove, FiUpload, FiX } from 'react-icons/fi';
+import {
+  FiAlertCircle,
+  FiCheck,
+  FiDownload,
+  FiMove,
+  FiUpload,
+  FiX,
+} from 'react-icons/fi';
 
 interface User {
   id: string;
@@ -74,7 +81,7 @@ const BulkUploadUsers = ({
 
         if (!res.ok) throw new Error('Error al analizar el archivo');
 
-        const result = await res.json() as {
+        const result = (await res.json()) as {
           preview: boolean;
           columns: string[];
           sampleData: Record<string, unknown>[];
@@ -89,17 +96,36 @@ const BulkUploadUsers = ({
             const normalizedCol = col.toLowerCase().trim();
             let dbField = '';
 
-            if (normalizedCol.includes('nombre') || normalizedCol === 'firstname') {
+            if (
+              normalizedCol.includes('nombre') ||
+              normalizedCol === 'firstname'
+            ) {
               dbField = 'firstName';
-            } else if (normalizedCol.includes('apellido') || normalizedCol === 'lastname') {
+            } else if (
+              normalizedCol.includes('apellido') ||
+              normalizedCol === 'lastname'
+            ) {
               dbField = 'lastName';
-            } else if (normalizedCol.includes('email') || normalizedCol.includes('correo')) {
+            } else if (
+              normalizedCol.includes('email') ||
+              normalizedCol.includes('correo')
+            ) {
               dbField = 'email';
-            } else if (normalizedCol.includes('rol') || normalizedCol === 'role') {
+            } else if (
+              normalizedCol.includes('rol') ||
+              normalizedCol === 'role'
+            ) {
               dbField = 'role';
-            } else if (normalizedCol.includes('telefono') || normalizedCol.includes('phone')) {
+            } else if (
+              normalizedCol.includes('telefono') ||
+              normalizedCol.includes('phone')
+            ) {
               dbField = 'phone';
-            } else if (normalizedCol.includes('documento') || normalizedCol.includes('document') || normalizedCol.includes('identificacion')) {
+            } else if (
+              normalizedCol.includes('documento') ||
+              normalizedCol.includes('document') ||
+              normalizedCol.includes('identificacion')
+            ) {
               dbField = 'document';
             }
 
@@ -168,7 +194,9 @@ const BulkUploadUsers = ({
 
     const requiredFields = ['firstName', 'lastName', 'email'];
     const mappedFields = mappings.map((m) => m.dbField).filter(Boolean);
-    const missingFields = requiredFields.filter((f) => !mappedFields.includes(f));
+    const missingFields = requiredFields.filter(
+      (f) => !mappedFields.includes(f)
+    );
 
     if (missingFields.length > 0) {
       showNotification(
@@ -182,7 +210,10 @@ const BulkUploadUsers = ({
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('mappings', JSON.stringify(mappings.filter((m) => m.dbField)));
+    formData.append(
+      'mappings',
+      JSON.stringify(mappings.filter((m) => m.dbField))
+    );
 
     try {
       const res = await fetch('/api/usersMasive', {
@@ -196,7 +227,6 @@ const BulkUploadUsers = ({
       if (!contentType?.includes('application/json')) {
         throw new Error('Respuesta inesperada del servidor, no es JSON.');
       }
-
 
       const result: unknown = await res.json();
 
@@ -249,9 +279,13 @@ const BulkUploadUsers = ({
     }
   };
 
-  const requiredFields = dbFields.filter(f => f.required).map(f => f.value);
-  const mappedRequiredFields = mappings.map(m => m.dbField).filter(f => requiredFields.includes(f));
-  const allRequiredMapped = requiredFields.every(f => mappedRequiredFields.includes(f));
+  const requiredFields = dbFields.filter((f) => f.required).map((f) => f.value);
+  const mappedRequiredFields = mappings
+    .map((m) => m.dbField)
+    .filter((f) => requiredFields.includes(f));
+  const allRequiredMapped = requiredFields.every((f) =>
+    mappedRequiredFields.includes(f)
+  );
 
   return (
     <div>
@@ -264,7 +298,10 @@ const BulkUploadUsers = ({
 
       {modalIsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
-          <div className="relative w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300" style={{ maxHeight: '95vh' }}>
+          <div
+            className="relative w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300"
+            style={{ maxHeight: '95vh' }}
+          >
             {/* Header */}
             <div className="bg-[#01142B] px-8 py-6">
               <div className="flex items-center justify-between">
@@ -273,7 +310,9 @@ const BulkUploadUsers = ({
                     Carga Masiva de Usuarios
                   </h2>
                   <p className="mt-1 text-sm text-gray-300">
-                    {!showMapping ? 'Sube tu archivo Excel para comenzar' : 'Arrastra los campos a las columnas correspondientes'}
+                    {!showMapping
+                      ? 'Sube tu archivo Excel para comenzar'
+                      : 'Arrastra los campos a las columnas correspondientes'}
                   </p>
                 </div>
                 <button
@@ -291,7 +330,10 @@ const BulkUploadUsers = ({
             </div>
 
             {/* Body */}
-            <div className="overflow-y-auto p-8" style={{ maxHeight: 'calc(95vh - 200px)' }}>
+            <div
+              className="overflow-y-auto p-8"
+              style={{ maxHeight: 'calc(95vh - 200px)' }}
+            >
               {!showMapping ? (
                 <div className="space-y-6">
                   {/* Drop Zone */}
@@ -315,10 +357,13 @@ const BulkUploadUsers = ({
                   <div className="rounded-xl bg-blue-50 p-6">
                     <div className="mb-3 flex items-center gap-2 text-blue-800">
                       <FiAlertCircle className="text-xl" />
-                      <h3 className="font-semibold">¿No tienes una plantilla?</h3>
+                      <h3 className="font-semibold">
+                        ¿No tienes una plantilla?
+                      </h3>
                     </div>
                     <p className="mb-4 text-sm text-blue-700">
-                      Descarga nuestra plantilla de Excel con los campos correctos y ejemplos de datos.
+                      Descarga nuestra plantilla de Excel con los campos
+                      correctos y ejemplos de datos.
                     </p>
                     <button
                       onClick={handleDownloadTemplate}
@@ -331,7 +376,7 @@ const BulkUploadUsers = ({
               ) : (
                 <div className="space-y-6">
                   {/* Info Banner */}
-                  <div className="rounded-xl bg-blue-50 p-5 shadow-sm border-l-4 border-blue-500">
+                  <div className="rounded-xl border-l-4 border-blue-500 bg-blue-50 p-5 shadow-sm">
                     <div className="flex items-start gap-3">
                       <div className="rounded-full bg-blue-100 p-2">
                         <FiMove className="text-xl text-blue-600" />
@@ -341,8 +386,10 @@ const BulkUploadUsers = ({
                           Arrastra los campos a las columnas
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Arrastra los campos disponibles desde abajo hacia las columnas correspondientes de tu Excel.
-                          Los campos con <span className="font-semibold text-red-600">*</span> son obligatorios.
+                          Arrastra los campos disponibles desde abajo hacia las
+                          columnas correspondientes de tu Excel. Los campos con{' '}
+                          <span className="font-semibold text-red-600">*</span>{' '}
+                          son obligatorios.
                         </p>
                       </div>
                     </div>
@@ -350,15 +397,18 @@ const BulkUploadUsers = ({
 
                   {/* Status Badge */}
                   {allRequiredMapped ? (
-                    <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-green-700 border border-green-200">
+                    <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700">
                       <FiCheck className="text-lg" />
-                      <span className="font-medium">Todos los campos obligatorios están mapeados</span>
+                      <span className="font-medium">
+                        Todos los campos obligatorios están mapeados
+                      </span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-amber-700 border border-amber-200">
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
                       <FiAlertCircle className="text-lg" />
                       <span className="font-medium">
-                        Faltan campos obligatorios por mapear ({requiredFields.length - mappedRequiredFields.length})
+                        Faltan campos obligatorios por mapear (
+                        {requiredFields.length - mappedRequiredFields.length})
                       </span>
                     </div>
                   )}
@@ -367,33 +417,44 @@ const BulkUploadUsers = ({
                   <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className="bg-gray-100 border-b-2 border-gray-300">
+                        <tr className="border-b-2 border-gray-300 bg-gray-100">
                           {mappings.map((mapping) => {
-                            const mappedField = dbFields.find(f => f.value === mapping.dbField);
-                            const isOver = dragOverColumn === mapping.excelColumn;
+                            const mappedField = dbFields.find(
+                              (f) => f.value === mapping.dbField
+                            );
+                            const isOver =
+                              dragOverColumn === mapping.excelColumn;
 
                             return (
                               <th
                                 key={mapping.excelColumn}
-                                onDragOver={(e) => handleColumnDragOver(e, mapping.excelColumn)}
+                                onDragOver={(e) =>
+                                  handleColumnDragOver(e, mapping.excelColumn)
+                                }
                                 onDragLeave={handleColumnDragLeave}
-                                onDrop={(e) => handleColumnDrop(e, mapping.excelColumn)}
-                                className={`border border-gray-300 p-3 text-left transition-all ${isOver ? 'bg-[#00BDD8]/20 scale-105' : ''
-                                  }`}
+                                onDrop={(e) =>
+                                  handleColumnDrop(e, mapping.excelColumn)
+                                }
+                                className={`border border-gray-300 p-3 text-left transition-all ${
+                                  isOver ? 'scale-105 bg-[#00BDD8]/20' : ''
+                                }`}
                               >
                                 <div className="space-y-2">
                                   {/* Nombre de la columna Excel */}
-                                  <div className="font-semibold text-gray-900 text-sm">
+                                  <div className="text-sm font-semibold text-gray-900">
                                     {mapping.excelColumn}
                                   </div>
 
                                   {/* Campo mapeado o zona de drop */}
-                                  <div className={`min-h-[60px] rounded-lg border-2 border-dashed p-2 transition-all ${isOver
-                                    ? 'border-[#00BDD8] bg-[#00BDD8]/10'
-                                    : mappedField
-                                      ? 'border-green-400 bg-green-50'
-                                      : 'border-gray-300 bg-gray-50'
-                                    }`}>
+                                  <div
+                                    className={`min-h-[60px] rounded-lg border-2 border-dashed p-2 transition-all ${
+                                      isOver
+                                        ? 'border-[#00BDD8] bg-[#00BDD8]/10'
+                                        : mappedField
+                                          ? 'border-green-400 bg-green-50'
+                                          : 'border-gray-300 bg-gray-50'
+                                    }`}
+                                  >
                                     {mappedField ? (
                                       <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1">
@@ -401,21 +462,25 @@ const BulkUploadUsers = ({
                                             {mappedField.label}
                                           </div>
                                           {mappedField.required && (
-                                            <div className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                                            <div className="mt-1 flex items-center gap-1 text-xs text-green-600">
                                               <FiCheck className="text-xs" />
                                               Obligatorio
                                             </div>
                                           )}
                                         </div>
                                         <button
-                                          onClick={() => handleRemoveMapping(mapping.excelColumn)}
-                                          className="text-red-500 hover:text-red-700 transition-colors"
+                                          onClick={() =>
+                                            handleRemoveMapping(
+                                              mapping.excelColumn
+                                            )
+                                          }
+                                          className="text-red-500 transition-colors hover:text-red-700"
                                         >
                                           <FiX size={16} />
                                         </button>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center justify-center h-full text-xs text-gray-400 italic">
+                                      <div className="flex h-full items-center justify-center text-xs text-gray-400 italic">
                                         Arrastra campo aquí
                                       </div>
                                     )}
@@ -430,13 +495,22 @@ const BulkUploadUsers = ({
                         {sampleData.map((row, idx) => (
                           <tr key={idx} className="hover:bg-gray-50">
                             {mappings.map((mapping) => (
-                              <td key={`${idx}-${mapping.excelColumn}`} className="border border-gray-300 p-3 text-sm text-gray-700">
+                              <td
+                                key={`${idx}-${mapping.excelColumn}`}
+                                className="border border-gray-300 p-3 text-sm text-gray-700"
+                              >
                                 {(() => {
                                   const val = row[mapping.excelColumn];
-                                  if (val === null || val === undefined) return '-';
-                                  if (typeof val === 'object') return JSON.stringify(val);
+                                  if (val === null || val === undefined)
+                                    return '-';
+                                  if (typeof val === 'object')
+                                    return JSON.stringify(val);
                                   if (typeof val === 'string') return val;
-                                  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+                                  if (
+                                    typeof val === 'number' ||
+                                    typeof val === 'boolean'
+                                  )
+                                    return String(val);
                                   return JSON.stringify(val);
                                 })()}
                               </td>
@@ -445,7 +519,10 @@ const BulkUploadUsers = ({
                         ))}
                         {sampleData.length > 5 && (
                           <tr>
-                            <td colSpan={mappings.length} className="border border-gray-300 p-3 text-center text-sm text-gray-500 italic">
+                            <td
+                              colSpan={mappings.length}
+                              className="border border-gray-300 p-3 text-center text-sm text-gray-500 italic"
+                            >
                               ... y {sampleData.length - 5} filas más
                             </td>
                           </tr>
@@ -456,31 +533,37 @@ const BulkUploadUsers = ({
 
                   {/* Campos disponibles para arrastrar */}
                   <div className="rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
                       <FiMove className="text-[#00BDD8]" />
                       Campos Disponibles (Arrastra hacia las columnas)
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                       {dbFields.map((field) => (
                         <div
                           key={field.value}
                           draggable
                           onDragStart={() => handleFieldDragStart(field.value)}
                           onDragEnd={handleFieldDragEnd}
-                          className={`cursor-move rounded-lg border-2 p-3 text-center transition-all hover:scale-105 hover:shadow-lg ${draggedField === field.value
-                            ? 'border-[#00BDD8] bg-[#00BDD8] text-white shadow-lg scale-105'
-                            : field.required
-                              ? 'border-red-300 bg-white hover:border-red-400'
-                              : 'border-gray-300 bg-white hover:border-[#00BDD8]'
-                            }`}
+                          className={`cursor-move rounded-lg border-2 p-3 text-center transition-all hover:scale-105 hover:shadow-lg ${
+                            draggedField === field.value
+                              ? 'scale-105 border-[#00BDD8] bg-[#00BDD8] text-white shadow-lg'
+                              : field.required
+                                ? 'border-red-300 bg-white hover:border-red-400'
+                                : 'border-gray-300 bg-white hover:border-[#00BDD8]'
+                          }`}
                         >
                           <FiMove className="mx-auto mb-2 text-lg" />
                           <div className="text-sm font-semibold">
                             {field.label}
                           </div>
                           {field.required && (
-                            <div className={`text-xs mt-1 font-medium ${draggedField === field.value ? 'text-white' : 'text-red-600'
-                              }`}>
+                            <div
+                              className={`mt-1 text-xs font-medium ${
+                                draggedField === field.value
+                                  ? 'text-white'
+                                  : 'text-red-600'
+                              }`}
+                            >
                               Requerido *
                             </div>
                           )}

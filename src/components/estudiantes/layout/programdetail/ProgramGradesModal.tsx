@@ -1,5 +1,6 @@
 'use client';
 
+
 import { FaTrophy } from 'react-icons/fa';
 
 import {
@@ -24,6 +25,10 @@ interface GradeModalProps {
   isLoading: boolean;
   coursesGrades?: CourseGrade[];
 }
+interface Materia {
+  id: number;
+  title: string;
+}
 
 export function ProgramGradesModal({
   isOpen,
@@ -32,7 +37,10 @@ export function ProgramGradesModal({
   finalGrade,
   isLoading,
   coursesGrades = [],
-}: GradeModalProps) {
+}: GradeModalProps & {
+  programId?: string | number;
+  materias?: Materia[];
+}) {
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent className="sm:max-w-[600px]">
@@ -54,9 +62,8 @@ export function ProgramGradesModal({
               <Icons.spinner className="text-background mx-auto h-6 w-6" />
             ) : (
               <span
-                className={`text-3xl font-bold ${
-                  finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
-                }`}
+                className={`text-3xl font-bold ${finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
+                  }`}
               >
                 {formatScore(finalGrade)}
               </span>
@@ -87,11 +94,10 @@ export function ProgramGradesModal({
                     </div>
                     <div className="text-center">
                       <span
-                        className={`font-semibold ${
-                          course.finalGrade >= 3
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
+                        className={`font-semibold ${course.finalGrade >= 3
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                          }`}
                       >
                         {formatScore(course.finalGrade)}
                       </span>
@@ -106,6 +112,7 @@ export function ProgramGradesModal({
             </div>
           </div>
         </div>
+        {/* Zona de certificado eliminada para evitar duplicidad. */}
       </DialogContent>
     </Dialog>
   );

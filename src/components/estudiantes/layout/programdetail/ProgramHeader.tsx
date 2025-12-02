@@ -3,10 +3,14 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import { FaCalendar, FaCheck, FaTrophy, FaUserGraduate } from 'react-icons/fa';
+import { IoCloseOutline } from 'react-icons/io5';
+import { MdKeyboardDoubleArrowRight } from 'react-icons/md';
+import { PiCertificateFill } from 'react-icons/pi';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -27,6 +31,10 @@ import { ProgramContent } from './ProgramContent';
 import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { Program } from '~/types';
+
+import '~/styles/certificadobutton.css';
+import '~/styles/certificadobutton2.css';
+import '~/styles/certificado-modal.css';
 
 interface ProgramHeaderProps {
   program: Program;
@@ -59,6 +67,7 @@ export function ProgramHeader({
 }: ProgramHeaderProps) {
   const { user, isSignedIn } = useUser();
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   // Agregar estado para controlar renderizado después de hidratación
   const [isClient, setIsClient] = useState(false);
@@ -118,6 +127,18 @@ export function ProgramHeader({
         )
       : 0;
 
+  // Verificar si el usuario tiene nota para todas las materias del programa
+  const programMateriaIds = program.materias?.map((m) => m.id) ?? [];
+
+  // Verificar si todas las materias están aprobadas (nota >= 3)
+  const hasAllMateriasPassed =
+    programMateriaIds.length > 0 &&
+    programMateriaIds.every((mid) =>
+      gradesData?.materias?.some(
+        (gm) => Number(gm.id) === Number(mid) && Number(gm.grade) >= 3
+      )
+    );
+
   interface CourseGrade {
     courseTitle: string;
     finalGrade: number;
@@ -167,7 +188,7 @@ export function ProgramHeader({
   const canAccessGrades = isEnrolled;
 
   // Renderizar un botón simplificado en SSR, para evitar diferencias de hidratación
-  const renderEnrollmentButton = () => {
+  const renderEnrollmentButton = (showCertificate = true) => {
     // Si estamos en el servidor o no se ha hidratado aún, mostrar un botón estático básico
     if (!isClient) {
       return (
@@ -201,23 +222,43 @@ export function ProgramHeader({
     } else if (isEnrolled) {
       return (
         <div className="flex w-full flex-col space-y-4">
-          <Button
-            className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-            disabled={true}
-          >
-            <FaCheck className="mr-2" /> Suscrito Al Programa
-          </Button>
-          <Button
-            className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-            onClick={onUnenrollAction}
-            disabled={isUnenrolling}
-          >
-            {isUnenrolling ? (
-              <Icons.spinner className="size-9 text-white" />
-            ) : (
-              'Cancelar Suscripción'
-            )}
-          </Button>
+          {/* Botón Ver Certificado en la fila superior (controlado por showCertificate) */}
+          {showCertificate && hasAllMateriasPassed && programAverage >= 3 && (
+            <div className="flex items-center justify-center gap-4">
+              <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
+              <Button
+                onClick={() => setIsCertModalOpen(true)}
+                className="cert2-button h-10 w-40 text-white sm:h-12 sm:w-48"
+                aria-label="Ver Certificado"
+              >
+                <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                <span className="text-xs font-semibold text-white sm:text-sm">
+                  Ver Certificado
+                </span>
+              </Button>
+              <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 rotate-180 transform sm:h-12 sm:w-12" />
+            </div>
+          )}
+          {/* Botones de inscripción en fila horizontal */}
+          <div className="flex flex-col items-center space-y-2 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+            <Button
+              className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+              disabled={true}
+            >
+              <FaCheck className="mr-2" /> Suscrito Al Programa
+            </Button>
+            <Button
+              className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+              onClick={onUnenrollAction}
+              disabled={isUnenrolling}
+            >
+              {isUnenrolling ? (
+                <Icons.spinner className="size-9 text-white" />
+              ) : (
+                'Cancelar Suscripción'
+              )}
+            </Button>
+          </div>
         </div>
       );
     } else {
@@ -282,15 +323,15 @@ export function ProgramHeader({
     // Si está inscrito, muestra ambos botones y deja espacio
     if (isEnrolled) {
       return (
-        <div className="mb-0 flex justify-center pt-2 sm:mb-0">
-          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+        <div className="mb-2 flex justify-center pt-2 sm:mb-4">
+          <div className="relative w-64">{renderEnrollmentButton()}</div>
         </div>
       );
     }
     // Si NO está inscrito, muestra solo el botón y elimina el espacio extra
     return (
       <div className="flex justify-center pt-3 sm:pt-0">
-        <div className="relative h-16 w-64">{renderEnrollmentButton()}</div>
+        <div className="relative w-64">{renderEnrollmentButton()}</div>
       </div>
     );
   };
@@ -388,22 +429,28 @@ export function ProgramHeader({
               {program.description ?? 'No hay descripción disponible.'}
             </p>
           </div>
-          <Button
-            onClick={() => setIsGradeModalOpen(true)}
-            disabled={!canAccessGrades}
-            className="h-9 w-full shrink-0 bg-blue-500 px-4 font-semibold text-white hover:bg-blue-600 sm:w-auto"
-            aria-label={
-              !isEnrolled
-                ? 'Debes inscribirte al programa'
-                : 'Ver tus calificaciones'
-            }
-          >
-            <FaTrophy className="mr-2 h-4 w-4" />
-            <span className="text-sm font-semibold">Mis Calificaciones</span>
-          </Button>
+          <div className="flex flex-col gap-2">
+            {/* Botón Mis Resultados */}
+            <Button
+              onClick={() => setIsGradeModalOpen(true)}
+              disabled={!canAccessGrades}
+              className="h-9 bg-blue-500 px-4 font-semibold text-white hover:bg-blue-600"
+              aria-label={
+                !isEnrolled
+                  ? 'Debes inscribirte al programa'
+                  : 'Ver tus resultados'
+              }
+            >
+              <FaTrophy className="mr-2 h-4 w-4" />
+              <span className="text-sm font-semibold">Mis Resultados</span>
+            </Button>
+          </div>
         </div>
 
         {/* --- NUEVO: Botón de inscripción arriba de la descripción con espacio dinámico --- */}
+        {/* El bloque de certificado ahora está en el modal */}
+
+        {/* El botón Ver Certificado solo se muestra una vez, centrado en móvil y desktop */}
         {renderTopEnrollmentButton()}
 
         {/* Program courses */}
@@ -415,10 +462,13 @@ export function ProgramHeader({
           isCheckingEnrollment={isCheckingEnrollment}
         />
 
-        {/* Botón de inscripción abajo como antes */}
+        {/* Botón de inscripción abajo como antes (oculto en escritorio) */}
         <div className="flex justify-center pt-4">
-          <div className="relative h-32 w-64">{renderEnrollmentButton()}</div>
+          <div className="relative h-32 w-64">
+            {renderEnrollmentButton(false)}
+          </div>
         </div>
+
         <ProgramGradesModal
           isOpen={isGradeModalOpen}
           onCloseAction={() => setIsGradeModalOpen(false)}
@@ -426,7 +476,46 @@ export function ProgramHeader({
           finalGrade={programAverage}
           isLoading={isLoadingGrade}
           coursesGrades={coursesGrades}
+          programId={program.id}
+          hasAllMateriasPassed={hasAllMateriasPassed}
+          materias={program.materias ?? []}
         />
+        {/* Modal de certificado */}
+        {isCertModalOpen && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
+            <div className="relative w-full max-w-lg rounded-lg border border-gray-200 bg-[#01142B] p-6">
+              <button
+                onClick={() => setIsCertModalOpen(false)}
+                className="text-primary hover:text-secondary absolute top-2 right-2 transition-colors"
+                type="button"
+                aria-label="Cerrar"
+              >
+                <IoCloseOutline className="h-8 w-8" />
+              </button>
+              <div className="flex flex-col items-center gap-4">
+                <Image
+                  src="/diploma-certificate.svg"
+                  alt="Certificado del Programa"
+                  width={120}
+                  height={120}
+                  className="mb-2"
+                />
+                <p className="text-primary text-center font-serif text-lg italic">
+                  ¡Felicitaciones! Has completado exitosamente el programa con
+                  una calificación sobresaliente. Tu certificado está listo para
+                  ser visualizado y compartido.
+                </p>
+                <Link href={`/estudiantes/certificados/programa/${program.id}`}>
+                  <button className="certificado-modal-button">
+                    <span className="relative z-10">
+                      Ver Certificado del Programa
+                    </span>
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

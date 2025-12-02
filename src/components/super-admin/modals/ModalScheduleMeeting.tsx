@@ -56,7 +56,8 @@ export const ModalScheduleMeeting = ({
   const [customTitles, setCustomTitles] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [coHostEmail, setCoHostEmail] = useState(defaultCoHostEmail); const firstDayOfWeek = useMemo(() => {
+  const [coHostEmail, setCoHostEmail] = useState(defaultCoHostEmail);
+  const firstDayOfWeek = useMemo(() => {
     if (!date) return '';
     const [year, month, day] = date.split('-').map(Number);
     const localDate = new Date(year, month - 1, day);
@@ -108,7 +109,6 @@ export const ModalScheduleMeeting = ({
   const handleSubmit = async () => {
     setFormError(null); // Limpiar error previo
     setIsLoading(true); // Activar carga
-
 
     // Validaciones
     if (!title.trim()) {
@@ -295,12 +295,13 @@ export const ModalScheduleMeeting = ({
                   key={day}
                   type="button"
                   disabled={day === firstDayOfWeek}
-                  className={`rounded border px-3 py-1 text-sm ${selectedDays.includes(day)
-                    ? day === firstDayOfWeek
-                      ? 'cursor-not-allowed bg-gray-400 text-white'
-                      : 'bg-white text-black'
-                    : 'border-gray-500 bg-transparent text-white'
-                    }`}
+                  className={`rounded border px-3 py-1 text-sm ${
+                    selectedDays.includes(day)
+                      ? day === firstDayOfWeek
+                        ? 'cursor-not-allowed bg-gray-400 text-white'
+                        : 'bg-white text-black'
+                      : 'border-gray-500 bg-transparent text-white'
+                  }`}
                   onClick={() => toggleDay(day)}
                 >
                   {day.slice(0, 3)}
@@ -347,7 +348,8 @@ export const ModalScheduleMeeting = ({
               onChange={(e) => setCoHostEmail(e.target.value)}
             />
             <p className="mt-1 text-xs text-gray-400">
-              Este correo recibirá permisos de coorganizador en todas las clases.
+              Este correo recibirá permisos de coorganizador en todas las
+              clases.
             </p>
           </div>
         </div>
@@ -361,7 +363,10 @@ export const ModalScheduleMeeting = ({
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!selectedDays.length || isLoading}>
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedDays.length || isLoading}
+          >
             {isLoading ? 'Creando clases...' : 'Crear clases'}
           </Button>
         </DialogFooter>

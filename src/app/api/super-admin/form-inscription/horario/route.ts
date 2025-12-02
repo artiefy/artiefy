@@ -74,8 +74,6 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-
-
 // GET: listar todos los horarios (ordenados alfabéticamente)
 export async function GET() {
   try {

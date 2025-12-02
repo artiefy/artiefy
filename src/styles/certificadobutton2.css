@@ -1,0 +1,70 @@
+/* From Uiverse.io by Navarog21 (adapted)
+   Clase renombrada: .cert2-button */
+.cert2-button {
+  width: auto;
+  min-width: 10em;
+  position: relative;
+  height: 3.5em;
+  border: 3px ridge #149cea;
+  outline: none;
+  background-color: transparent;
+  color: white;
+  transition: 1s;
+  border-radius: 0.3em;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.cert2-button::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 3%;
+  width: 95%;
+  height: 40%;
+  background-color: #1e2939;
+  transition: 0.5s;
+  transform-origin: center;
+}
+
+.cert2-button::before {
+  content: '';
+  transform-origin: center;
+  position: absolute;
+  top: 80%;
+  left: 3%;
+  width: 95%;
+  height: 40%;
+  background-color: #1e2939;
+  transition: 0.5s;
+}
+
+.cert2-button:hover::before,
+.cert2-button:hover::after {
+  transform: scale(0);
+}
+
+.cert2-button:hover {
+  box-shadow: inset 0px 0px 25px #1479ea;
+}
+
+/* Animación para la flecha */
+@keyframes bounce-horizontal {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-bounce-horizontal {
+  animation: bounce-horizontal 1s ease-in-out infinite;
+}

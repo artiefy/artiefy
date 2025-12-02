@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { userProgramPrice } from '~/server/db/schema';
@@ -69,7 +69,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { userId, programaId, price } = body;
@@ -100,29 +99,27 @@ export async function PUT(req: NextRequest) {
 
   console.log('Buscando registro:', { userIdStr, programaIdInt });
 
-const existing = await db
-  .select()
-  .from(userProgramPrice)
-  .where(
-    and(
-      eq(userProgramPrice.userId, userIdStr),
-      eq(userProgramPrice.programaId, programaIdInt)
+  const existing = await db
+    .select()
+    .from(userProgramPrice)
+    .where(
+      and(
+        eq(userProgramPrice.userId, userIdStr),
+        eq(userProgramPrice.programaId, programaIdInt)
+      )
     )
-  )
-  .limit(1);
+    .limit(1);
 
-if (existing.length === 0) {
-  // Insertar el registro si no existe
-  const inserted = await db
-    .insert(userProgramPrice)
-    .values({ userId: userIdStr, programaId: programaIdInt, price })
-    .returning();
-  return NextResponse.json(inserted[0]);
-}
+  if (existing.length === 0) {
+    // Insertar el registro si no existe
+    const inserted = await db
+      .insert(userProgramPrice)
+      .values({ userId: userIdStr, programaId: programaIdInt, price })
+      .returning();
+    return NextResponse.json(inserted[0]);
+  }
 
-
-console.log('Registro encontrado:', existing);
-
+  console.log('Registro encontrado:', existing);
 
   const updated = await db
     .update(userProgramPrice)
@@ -136,7 +133,10 @@ console.log('Registro encontrado:', existing);
     .returning();
 
   if (!updated[0]) {
-    return NextResponse.json({ error: 'No se encontró el registro' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'No se encontró el registro' },
+      { status: 404 }
+    );
   }
 
   return NextResponse.json({

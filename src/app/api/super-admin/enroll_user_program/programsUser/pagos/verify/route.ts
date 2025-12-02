@@ -89,7 +89,7 @@ function getFormDataValue(formData: FormData, key: string): string {
   // Handle File objects or other non-string values safely
   if (value instanceof File) return value.name || '';
   // For other objects, convert to string safely
-return String(value);
+  return String(value);
 }
 
 async function uploadVerifiedToS3(
@@ -171,7 +171,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           .where(eq(users.id, verifiedBy));
         console.timeEnd(`[verify][${reqId}] check verifiedBy (multipart)`);
         if (!exists) {
-          warn(reqId, 'verifiedBy no existe en users; se usará null para no romper FK');
+          warn(
+            reqId,
+            'verifiedBy no existe en users; se usará null para no romper FK'
+          );
           verifiedBy = null;
         }
       }
@@ -231,7 +234,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           nroPago,
         });
         console.timeEnd(`[verify][${reqId}] multipart total`);
-        return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Pago no encontrado' },
+          { status: 404 }
+        );
       }
       log(reqId, '✅ Pago actualizado (multipart):', safe(updated[0]));
 
@@ -245,7 +251,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         fileUrl: url,
         fileName: (file as File).name ?? 'comprobante-verificado',
       });
-      console.timeEnd(`[verify][${reqId}] insert pago_verificaciones (multipart)`);
+      console.timeEnd(
+        `[verify][${reqId}] insert pago_verificaciones (multipart)`
+      );
       log(reqId, '🧾 Log de verificación (multipart) insertado');
 
       console.timeEnd(`[verify][${reqId}] multipart total`);
@@ -285,7 +293,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         .where(eq(users.id, verifiedBy));
       console.timeEnd(`[verify][${reqId}] check verifiedBy (json)`);
       if (!exists) {
-        warn(reqId, 'verifiedBy no existe en users; se usará null para no romper FK');
+        warn(
+          reqId,
+          'verifiedBy no existe en users; se usará null para no romper FK'
+        );
         verifiedBy = null;
       }
     }
@@ -333,7 +344,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         nroPago,
       });
       console.timeEnd(`[verify][${reqId}] json total`);
-      return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Pago no encontrado' },
+        { status: 404 }
+      );
     }
     log(reqId, '✅ Pago actualizado (json):', safe(updated[0]));
 
@@ -351,7 +365,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, pago: updated[0] });
   } catch (e) {
     err(reqId, '💥 Error en verify:', e);
-    return NextResponse.json({ error: 'Error interno', reqId }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno', reqId },
+      { status: 500 }
+    );
   } finally {
     const endedAt = new Date();
     log(reqId, '⏹ Fin petición', {

@@ -1,4 +1,4 @@
-import { type NextRequest,NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -15,7 +15,6 @@ const schema = z.object({
 const idSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
-
 
 // GET: listar todos los comerciales (ordenados por contacto)
 export async function GET() {
@@ -92,7 +91,6 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-
 
 // POST: crear comercial
 export async function POST(req: NextRequest) {

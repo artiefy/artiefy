@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { projectParticipationRequests,projects } from '~/server/db/schema';
+import { projectParticipationRequests, projects } from '~/server/db/schema';
 
 export async function GET(request: NextRequest) {
   try {

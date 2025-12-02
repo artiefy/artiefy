@@ -19,7 +19,6 @@ function formatMonthEs(dateStr: string) {
   });
 }
 
-
 function formatBytes(bytes: number) {
   const units = ['B', 'KB', 'MB', 'GB'];
   let i = 0;
@@ -83,7 +82,6 @@ function FileBadge({
     }
   }, [file]);
 
-
   if (!file) return null;
 
   const isImg =
@@ -91,9 +89,7 @@ function FileBadge({
     /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.name || '');
 
   const isPdf =
-    file.type === 'application/pdf' ||
-    /\.pdf$/i.test(file.name || '');
-
+    file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
 
   return (
     <div className="mt-2 flex items-center gap-3 rounded border border-cyan-900/40 bg-[#0f1a38] p-2">
@@ -112,7 +108,6 @@ function FileBadge({
           {isPdf ? 'PDF' : 'FILE'}
         </div>
       )}
-
 
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm">{file.name}</div>
@@ -134,15 +129,13 @@ function FileBadge({
       <button
         type="button"
         onClick={onClear}
-        className="text-xs rounded border border-gray-600 px-2 py-1 hover:bg-gray-800"
+        className="rounded border border-gray-600 px-2 py-1 text-xs hover:bg-gray-800"
       >
         Quitar
       </button>
     </div>
   );
 }
-
-
 
 /* =======================
    Listas estáticas
@@ -223,9 +216,9 @@ const ID_TYPES = [
    ======================= */
 const defaultFields = {
   primerNombre: '',
-  segundoNombre: '',        // opcional
+  segundoNombre: '', // opcional
   primerApellido: '',
-  segundoApellido: '',      // opcional
+  segundoApellido: '', // opcional
   identificacionTipo: '',
   identificacionNumero: '',
   email: '',
@@ -289,7 +282,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [dateOptions, setDateOptions] = useState<string[]>([]);
   // Opciones etiquetadas: value = fecha original, label = "mes año" en español
   const dateOptionsLabeled = useMemo(
-    () => dateOptions.map(d => ({ value: d, label: formatMonthEs(d) })),
+    () => dateOptions.map((d) => ({ value: d, label: formatMonthEs(d) })),
     [dateOptions]
   );
 
@@ -413,7 +406,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
           className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none ${error ? 'border border-red-500' : ''}`}
         />
 
-
         {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
 
         {/* Vista del archivo seleccionado */}
@@ -422,22 +414,32 @@ export default function FormModal({ isOpen, onClose }: Props) {
     );
   }
 
-
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
-  interface ProgramObj { title?: string | null }
-  interface ApiErr { error: string }
+  interface ProgramObj {
+    title?: string | null;
+  }
+  interface ApiErr {
+    error: string;
+  }
   function hasError(p: unknown): p is ApiErr {
     return isRecord(p) && typeof p.error === 'string';
   }
 
   function hasProgram(p: unknown): p is { program: ProgramObj } {
-    return isRecord(p) && 'program' in p && isRecord((p as Record<string, unknown>).program);
+    return (
+      isRecord(p) &&
+      'program' in p &&
+      isRecord((p as Record<string, unknown>).program)
+    );
   }
 
   function hasEmailSent(p: unknown): p is { emailSent: boolean } {
-    return isRecord(p) && typeof (p as Record<string, unknown>).emailSent === 'boolean';
+    return (
+      isRecord(p) &&
+      typeof (p as Record<string, unknown>).emailSent === 'boolean'
+    );
   }
 
   void isRecord; // <- para evitar warning de unused
@@ -532,21 +534,38 @@ export default function FormModal({ isOpen, onClose }: Props) {
     );
   }
 
-
   // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
   function sanitizeValueByKey(key: keyof Fields, value: string) {
     const TRIM_AND_FOLD: (keyof Fields)[] = [
-      'primerNombre', 'segundoNombre',
-      'primerApellido', 'segundoApellido',
-      'direccion', 'ciudad', 'comercial', 'programa',
-      'sede', 'horario', 'pais', 'nivelEducacion',
-      'tieneAcudiente', 'acudienteNombre', 'acudienteContacto',
-      'acudienteEmail', 'modalidad',
+      'primerNombre',
+      'segundoNombre',
+      'primerApellido',
+      'segundoApellido',
+      'direccion',
+      'ciudad',
+      'comercial',
+      'programa',
+      'sede',
+      'horario',
+      'pais',
+      'nivelEducacion',
+      'tieneAcudiente',
+      'acudienteNombre',
+      'acudienteContacto',
+      'acudienteEmail',
+      'modalidad',
     ];
     const TRIM_ONLY: (keyof Fields)[] = [
-      'email', 'identificacionTipo', 'identificacionNumero',
-      'telefono', 'numeroCuotas', 'fechaInicio', 'birthDate',
-      'fecha', 'pagoInscripcion', 'pagoCuota1',
+      'email',
+      'identificacionTipo',
+      'identificacionNumero',
+      'telefono',
+      'numeroCuotas',
+      'fechaInicio',
+      'birthDate',
+      'fecha',
+      'pagoInscripcion',
+      'pagoCuota1',
     ];
     if (typeof value !== 'string') return value as unknown as string;
     if (TRIM_AND_FOLD.includes(key)) return value.replace(/\s+/g, ' ').trim();
@@ -554,13 +573,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
     return value.trim();
   }
 
-
   const handleChange = (key: keyof Fields, value: string) => {
     const sanitized = sanitizeValueByKey(key, value);
     setFields((prev) => ({ ...prev, [key]: sanitized }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
-
 
   // estado nuevo
 
@@ -683,7 +700,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
         { file: reciboServicio, name: 'reciboServicio', prefix: 'servicio' },
         { file: actaGrado, name: 'actaGrado', prefix: 'diploma' },
         { file: pagare, name: 'pagare', prefix: 'pagare' },
-        { file: comprobanteInscripcion, name: 'comprobanteInscripcion', prefix: 'comprobante-inscripcion' },
+        {
+          file: comprobanteInscripcion,
+          name: 'comprobanteInscripcion',
+          prefix: 'comprobante-inscripcion',
+        },
       ];
 
       for (const { file, name, prefix } of fileFields) {
@@ -698,7 +719,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
             setSubmitting(false);
             setUploadingFiles(false);
             setSubmittedOK(false);
-            setSubmitMessage(`Error subiendo archivo: ${name}. Por favor intenta de nuevo.`);
+            setSubmitMessage(
+              `Error subiendo archivo: ${name}. Por favor intenta de nuevo.`
+            );
             return;
           }
         }
@@ -760,7 +783,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
       const payload: unknown = await res.json().catch(() => null);
 
       if (!res.ok) {
-        const message = hasError(payload) ? payload.error : `Error HTTP ${res.status}`;
+        const message = hasError(payload)
+          ? payload.error
+          : `Error HTTP ${res.status}`;
         throw new Error(message);
       }
 
@@ -789,7 +814,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
         setActaGrado(null);
         setPagare(null);
       }, 1500);
-
     } catch (err: unknown) {
       setSubmittedOK(false);
 
@@ -814,13 +838,23 @@ export default function FormModal({ isOpen, onClose }: Props) {
       onClose={handleClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
-      <Dialog.Panel className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20 flex flex-col">
+      <Dialog.Panel className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20">
         {showSuccess ? (
           // ==== Pantalla de ÉXITO ====
           <div className="flex flex-col items-center justify-center gap-6 px-8 py-12 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1C2541] shadow shadow-cyan-500/30">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10 text-cyan-400" aria-hidden="true">
-                <path fillRule="evenodd" d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm13.28-2.03a.75.75 0 10-1.06-1.06L10.5 12.88l-1.72-1.72a.75.75 0 10-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.5-4.5z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-10 w-10 text-cyan-400"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm13.28-2.03a.75.75 0 10-1.06-1.06L10.5 12.88l-1.72-1.72a.75.75 0 10-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.5-4.5z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
 
@@ -829,7 +863,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 ¡Gracias por diligenciar tus datos!
               </h2>
               <p className="mt-2 text-gray-300">
-                Ya puedes disfrutar de <span className="text-cyan-400 font-semibold">Artiefy</span>.
+                Ya puedes disfrutar de{' '}
+                <span className="font-semibold text-cyan-400">Artiefy</span>.
               </p>
             </div>
 
@@ -855,7 +890,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
               </a>
             </div>
           </div>
-
         ) : (
           // ==== Pantalla de FORMULARIO ====
           <>
@@ -865,20 +899,24 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Dialog.Title className="text-2xl font-semibold text-cyan-400">
                   Formulario de Inscripción
                 </Dialog.Title>
-                <p className="text-sm text-gray-300">Completa los campos y envía tu inscripción.</p>
+                <p className="text-sm text-gray-300">
+                  Completa los campos y envía tu inscripción.
+                </p>
               </div>
 
               {/* Banner resultado */}
               {submittedOK !== null && submitMessage && (
                 <div
-                  className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${submittedOK ? 'bg-green-600/20 text-green-300' : 'bg-red-600/20 text-red-300'
-                    }`}
+                  className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${
+                    submittedOK
+                      ? 'bg-green-600/20 text-green-300'
+                      : 'bg-red-600/20 text-red-300'
+                  }`}
                   role="alert"
                 >
                   {submitMessage}
                 </div>
               )}
-
 
               <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
                 {/* Datos personales */}
@@ -939,7 +977,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
                     />
                   </div>
                 </Section>
-
 
                 {/* Ubicación y educación */}
                 <Section title="Ubicación y educación">
@@ -1058,11 +1095,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                       value={fields.fechaInicio}
                       onChange={(v) => handleChange('fechaInicio', v)}
                       placeholder="Selecciona una fecha"
-                      options={dateOptionsLabeled}  // sigue mostrando "15 de marzo de 2025"
+                      options={dateOptionsLabeled} // sigue mostrando "15 de marzo de 2025"
                       error={errors.fechaInicio}
                     />
-
-
 
                     <FieldSelect
                       label="Comercial*"
@@ -1083,7 +1118,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                       value={fields.sede}
                       onChange={(v) => handleChange('sede', v)}
                       placeholder={
-                        sedeOptions.length ? 'Selecciona una sede' : 'No hay sedes'
+                        sedeOptions.length
+                          ? 'Selecciona una sede'
+                          : 'No hay sedes'
                       }
                       options={sedeOptions}
                       disabled={sedeOptions.length === 0}
@@ -1112,7 +1149,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
                       error={errors.pagoInscripcion}
                     />
 
-                    <div className={fields.pagoInscripcion === 'Sí' ? 'block' : 'hidden'}>
+                    <div
+                      className={
+                        fields.pagoInscripcion === 'Sí' ? 'block' : 'hidden'
+                      }
+                    >
                       <FieldFile
                         label="Subir comprobante de pago de inscripción (PDF/imagen)"
                         file={comprobanteInscripcion}
@@ -1121,8 +1162,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
                         required={fields.pagoInscripcion === 'Sí'}
                       />
                     </div>
-
-
 
                     <FieldSelect
                       label="Número de Cuotas*"
@@ -1166,7 +1205,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
                   </div>
                 </Section>
 
-
                 {/* Acciones */}
                 <div className="sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30 bg-[#0B132B] py-4">
                   <button
@@ -1195,7 +1233,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
       </Dialog.Panel>
     </Dialog>
   );
-
 }
 
 /* =======================

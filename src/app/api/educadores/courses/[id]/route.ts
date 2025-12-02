@@ -58,7 +58,6 @@ interface CreatedCourse {
   // agrega aquí las propiedades reales que uses
 }
 
-
 // Extrae el meetingId de un joinUrl de Teams
 function extractMeetingIdFromUrl(joinUrl?: string | null) {
   if (!joinUrl) return null;

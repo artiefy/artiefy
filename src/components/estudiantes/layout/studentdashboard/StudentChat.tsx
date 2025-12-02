@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,11 +9,14 @@ import { useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
+import { useKeyboardViewport } from '~/hooks/useKeyboardViewport';
 import {
   getConversationById,
   getOrCreateConversation,
 } from '~/server/actions/estudiantes/chats/saveChat';
 import { getTicketWithMessages } from '~/server/actions/estudiantes/chats/suportChatBot';
+
+import type { CSSProperties } from 'react';
 
 // Props for the chat component
 interface ChatProps {
@@ -69,6 +72,8 @@ interface ChatProps {
   onDeleteHistory?: (
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
+  compactWelcome?: boolean;
+  isDesktop?: boolean; // Nueva prop para detectar desktop
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
@@ -94,9 +99,98 @@ export const ChatMessages: React.FC<ChatProps> = ({
   ),
   onBotButtonClick,
   onDeleteHistory,
+  compactWelcome,
+  isDesktop = false, // Nueva prop con valor por defecto
 }) => {
+  // Hook para detectar la altura real del teclado en móviles
+  // Cuando el teclado está abierto ajustamos el padding inferior del área de mensajes
+  const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
+    useKeyboardViewport();
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
+  interface BlurGestureState {
+    id: number | null;
+    startX: number;
+    startY: number;
+    moved: boolean;
+    shouldBlur: boolean;
+  }
+  const blurGestureRef = useRef<BlurGestureState>({
+    id: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+    shouldBlur: false,
+  });
+  const resetBlurGesture = useCallback(() => {
+    blurGestureRef.current = {
+      id: null,
+      startX: 0,
+      startY: 0,
+      moved: false,
+      shouldBlur: false,
+    };
+  }, []);
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType !== 'touch') {
+        resetBlurGesture();
+        return;
+      }
+      const inputEl = actualInputRef.current;
+      if (!inputEl) {
+        resetBlurGesture();
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        resetBlurGesture();
+        return;
+      }
+      if (target === inputEl || inputEl.contains(target)) {
+        resetBlurGesture();
+        return;
+      }
+      blurGestureRef.current = {
+        id: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        shouldBlur: true,
+      };
+    },
+    [actualInputRef, resetBlurGesture]
+  );
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const state = blurGestureRef.current;
+      if (state.id !== event.pointerId) return;
+      if (
+        Math.abs(event.clientX - state.startX) > 6 ||
+        Math.abs(event.clientY - state.startY) > 6
+      ) {
+        state.moved = true;
+      }
+    },
+    []
+  );
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const state = blurGestureRef.current;
+      if (state.id !== event.pointerId) {
+        resetBlurGesture();
+        return;
+      }
+      if (!state.moved && state.shouldBlur) {
+        actualInputRef.current?.blur();
+      }
+      resetBlurGesture();
+    },
+    [actualInputRef, resetBlurGesture]
+  );
+  const handlePointerCancel = useCallback(() => {
+    resetBlurGesture();
+  }, [resetBlurGesture]);
 
   const { user } = useUser();
 
@@ -129,7 +223,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
         ]);
         break;
       case 'contact_support':
-        window.dispatchEvent(new CustomEvent('support-open-chat'));
+        // Abrir menú de nuevo ticket (detail === null) para el handler
+        window.dispatchEvent(
+          new CustomEvent('support-open-chat', { detail: null })
+        );
         break;
       case 'new_project':
         if (!isSignedIn) router.push(`/planes`);
@@ -168,6 +265,9 @@ export const ChatMessages: React.FC<ChatProps> = ({
         messages: { id: number; message: string; sender: string }[];
       } = { messages: [] };
       try {
+        // Limpiar mensajes previos inmediatamente al cambiar de conversación
+        // para evitar que se vea el historial anterior mientras cargan los nuevos.
+        setMessages([]);
         if (conversationId !== null && conversationId < 1000000000000) {
           // Si es un ticket, usar la función de tickets
           if (chatMode.type === 'ticket') {
@@ -265,16 +365,48 @@ export const ChatMessages: React.FC<ChatProps> = ({
             'No hay mensajes en la conversación, creando una nueva conversación'
           );
           if (chats.messages.length === 0) {
-            /*
-                        const botMessage = {
-                            id: -1,
-                            text: isEnrolled == true ?  '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' + courseTitle + ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎' : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-                            sender: 'bot'
-                        };
-                        
-                        setMessages([botMessage, ...messages]);
-                        */
-
+            // Mostrar saludo inicial independiente para nueva conversación sin mensajes
+            const emptyBotMessage = {
+              id: -1,
+              text:
+                chatMode.type === 'ticket'
+                  ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
+                  : isEnrolled == true
+                    ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
+                      courseTitle +
+                      ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacérmela! 😎'
+                    : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+              sender: 'bot' as const,
+              buttons:
+                chatMode.type === 'ticket'
+                  ? [
+                      { label: '🐛 Reportar Error', action: 'report_bug' },
+                      {
+                        label: '❓ Pregunta General',
+                        action: 'general_question',
+                      },
+                      {
+                        label: '🔧 Problema Técnico',
+                        action: 'technical_issue',
+                      },
+                      {
+                        label: '💰 Consulta de Pagos',
+                        action: 'payment_inquiry',
+                      },
+                    ]
+                  : [
+                      { label: '📚 Crear Proyecto', action: 'new_project' },
+                      { label: '💬 Nueva Idea', action: 'new_idea' },
+                      {
+                        label: '🛠 Soporte Técnico',
+                        action: 'contact_support',
+                      },
+                    ],
+            };
+            if (isMounted) {
+              setMessages([emptyBotMessage]);
+            }
+            // Si es un chat de curso, crear conversación asociada al curso (persistir)
             if (courseId != null) {
               try {
                 const resp = await getOrCreateConversation({
@@ -283,14 +415,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   title:
                     'Curso - ' +
                     (courseTitle
-                      ? courseTitle.length > 12
+                      ? courseTitle.length > 35
                         ? courseTitle.slice(0, 35) + '...'
                         : courseTitle
                       : 'Sin título'),
                 });
-
                 if (isMounted) {
-                  // Asegurarnos de usar el id de la conversación persistida
                   setChatMode({
                     idChat: resp.id,
                     status: true,
@@ -298,10 +428,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                   });
                 }
               } catch (err) {
-                console.error(
-                  'Error creando/obteniendo conversación de curso:',
-                  err
-                );
+                console.error('Error creando conversación de curso:', err);
               }
             }
           }
@@ -328,15 +455,54 @@ export const ChatMessages: React.FC<ChatProps> = ({
     chatMode.type,
   ]);
 
+  const baseBodyClasses =
+    'flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 px-3 pb-4 scroll-pb-24';
+  const bodyClasses = compactWelcome
+    ? `${baseBodyClasses} pt-1`
+    : `${baseBodyClasses} pt-4`;
+  const INPUT_BAR_HEIGHT = 70; // altura aproximada del contenedor del input
+  const dynamicBottomPadding = isKeyboardOpen
+    ? _keyboardHeight + INPUT_BAR_HEIGHT + 24
+    : INPUT_BAR_HEIGHT + 24;
+  const messageAreaStyle: CSSProperties = {
+    paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${dynamicBottomPadding}px)`,
+  };
+  const inputBarStyle: CSSProperties = {
+    padding: '12px 16px',
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+    flexShrink: 0,
+    // Crucial en móviles: empujar el input por encima del teclado
+    bottom: isKeyboardOpen ? `${_keyboardHeight}px` : '0px',
+  };
+
+  const inputBarClass = isDesktop
+    ? 'flex-shrink-0 border-t border-gray-700 bg-[#071024] backdrop-blur-sm'
+    : 'fixed right-0 left-0 z-30 border-t border-gray-700 bg-[#071024] backdrop-blur-sm';
+
+  const inputBarStyleDesktop: CSSProperties = {
+    padding: '12px 16px',
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+    flexShrink: 0,
+  };
+
+  const actualInputBarStyle = isDesktop ? inputBarStyleDesktop : inputBarStyle;
+
   return (
-    <>
-      {/* Top bar: botón borrar historial */}
-      <div className="flex items-center justify-end gap-2 border-b bg-white/95 p-2">
+    <div
+      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
+      <div
+        className="sticky top-0 left-0 z-20 flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5"
+        style={{ top: 'env(safe-area-inset-top, 0px)' }}
+      >
         <button
           type="button"
           onClick={() => {
             if (!onDeleteHistory) return;
-            // confirmación sencilla
             const ok = window.confirm(
               '¿Deseas eliminar todo el historial de esta conversación? Esta acción no se puede deshacer.'
             );
@@ -344,22 +510,19 @@ export const ChatMessages: React.FC<ChatProps> = ({
               onDeleteHistory();
             }
           }}
-          className="rounded px-3 py-1 text-sm font-semibold text-red-600 hover:bg-red-50"
+          className="rounded px-3 py-1 text-sm font-semibold text-red-400 transition hover:bg-red-900/30 hover:text-red-300"
           title="Borrar historial"
         >
           Borrar historial
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
+      <div className={bodyClasses} style={messageAreaStyle}>
         {messages.map((message, idx) =>
-          // Loader: si el mensaje es del bot y el texto está vacío, NO renderiza la burbuja, solo el loader abajo
           message.sender === 'bot' && message.text === '' ? null : (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'
-                } mb-4`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-1' : 'mb-2'}`}
             >
               <div
                 className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user'
@@ -384,31 +547,79 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 <div
                   className={
                     message.sender === 'user'
-                      ? 'bg-secondary rounded-2xl px-4 py-3 text-white shadow-lg'
-                      : 'bg-background rounded-2xl px-4 py-3 text-white shadow-lg'
+                      ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
+                      : 'rounded-2xl border border-white/40 bg-[#102843] px-4 py-3 text-white shadow-lg shadow-black/30'
                   }
+                  style={{
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                  }}
                 >
                   {renderMessage(message, idx)}
-                  {/* Renderizar botones si existen */}
-                  {message.sender === 'bot' && message.buttons && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {message.buttons
-                          .filter(
-                            (btn) =>
-                              !(btn.action === 'contact_support' && !isSignedIn)
-                          )
-                          .map((btn) => (
-                            <button
-                              key={btn.action}
-                              className="rounded bg-cyan-600 px-3 py-1 font-semibold text-white transition hover:bg-cyan-700"
-                              onClick={() => handleLocalButton(btn.action)}
-                              type="button"
+                  {message.buttons && message.sender === 'bot' && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {message.buttons.map((btn, bidx) => {
+                        const isWhatsAppButton =
+                          btn.action.startsWith('whatsapp:');
+
+                        return (
+                          <button
+                            key={bidx}
+                            type="button"
+                            onClick={() => handleLocalButton(btn.action)}
+                            className={`chatbot-menu-btn flex items-center justify-center gap-2 rounded px-4 py-2 font-semibold shadow-md transition ${
+                              isWhatsAppButton
+                                ? 'border-2 border-[#128C7E] bg-white text-[#128C7E] hover:bg-[#f0fdf4]'
+                                : 'border border-[#00bdd8] bg-[#eaf7fa] text-[#00a5c0] hover:bg-[#00bdd8] hover:text-white'
+                            }`}
+                            style={
+                              isWhatsAppButton
+                                ? {
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 0,
+                                    lineHeight: '1.4',
+                                    padding: '10px 16px',
+                                    fontSize: '15px',
+                                    marginRight: '4px',
+                                    marginBottom: '6px',
+                                    borderRadius: '8px',
+                                    maxWidth: '90vw',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }
+                                : {
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 0,
+                                    lineHeight: '1.1',
+                                    padding: '2px 8px',
+                                    fontSize: '12px',
+                                    marginRight: '4px',
+                                    marginBottom: '2px',
+                                    borderRadius: '6px',
+                                    maxWidth: '90vw',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }
+                            }
+                          >
+                            <span
+                              className={`flex items-center justify-center gap-2 whitespace-nowrap ${isWhatsAppButton ? 'text-[#128C7E]' : ''}`}
                             >
+                              {isWhatsAppButton && (
+                                <Image
+                                  src="/WhatsApp.webp"
+                                  alt="WhatsApp"
+                                  width={28}
+                                  height={28}
+                                  className="h-7 w-7"
+                                />
+                              )}
                               {btn.label}
-                            </button>
-                          ))}
-                      </div>
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -416,7 +627,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
             </div>
           )
         )}
-        {/* Loader: solo muestra los dots, sin ningún div rounded */}
         {isLoading && (
           <div className="flex justify-start">
             <div>
@@ -439,23 +649,24 @@ export const ChatMessages: React.FC<ChatProps> = ({
         )}
         <div ref={messagesEndRef} />
       </div>
-      {/* Input */}
-      <div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
-        <form onSubmit={handleSendMessage}>
-          <div className="flex gap-2">
+
+      <div className={inputBarClass} style={actualInputBarStyle}>
+        <form onSubmit={handleSendMessage} className="w-full">
+          <div className="flex w-full gap-2">
             <input
               ref={actualInputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={'Escribe un mensaje...'}
-              className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
+              className="min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-base text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
               disabled={isLoading}
+              style={{ width: '100%', minWidth: 0, maxWidth: '100%' }}
             />
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
+              className="bg-secondary group relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
             >
               <Image
                 src="/send-svgrepo-com.svg"
@@ -469,6 +680,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 };

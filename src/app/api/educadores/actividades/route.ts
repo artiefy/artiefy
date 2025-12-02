@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     const lessonIds = courseLessons.map((lesson) => lesson.id);
 
     // Construir las condiciones de la consulta
-const conditions: SQL[] = [];
+    const conditions: SQL[] = [];
 
     if (lessonIds.length > 0) {
       conditions.push(eq(activities.lessonsId, lessonIds[0]));

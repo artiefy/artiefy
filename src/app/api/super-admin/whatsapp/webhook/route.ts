@@ -25,7 +25,12 @@ type WaMessage =
       from: string;
       timestamp?: string;
       type: 'image';
-      image?: { id?: string; caption?: string; mime_type?: string; sha256?: string };
+      image?: {
+        id?: string;
+        caption?: string;
+        mime_type?: string;
+        sha256?: string;
+      };
     }
   | {
       id?: string;
@@ -39,14 +44,25 @@ type WaMessage =
       from: string;
       timestamp?: string;
       type: 'video';
-      video?: { id?: string; caption?: string; mime_type?: string; sha256?: string };
+      video?: {
+        id?: string;
+        caption?: string;
+        mime_type?: string;
+        sha256?: string;
+      };
     }
   | {
       id?: string;
       from: string;
       timestamp?: string;
       type: 'document';
-      document?: { id?: string; filename?: string; caption?: string; mime_type?: string; sha256?: string };
+      document?: {
+        id?: string;
+        filename?: string;
+        caption?: string;
+        mime_type?: string;
+        sha256?: string;
+      };
     }
   | {
       id?: string;
@@ -96,7 +112,8 @@ interface WaWebhookBody {
 
 function toMs(ts?: string): number {
   if (!ts) return Date.now();
-  if (/^\d+$/.test(ts)) return ts.length === 10 ? Number(ts) * 1000 : Number(ts);
+  if (/^\d+$/.test(ts))
+    return ts.length === 10 ? Number(ts) * 1000 : Number(ts);
   return Date.now();
 }
 
@@ -181,8 +198,12 @@ export async function POST(req: NextRequest) {
         const v = change.value;
         const contacts = v?.contacts ?? [];
 
-        const messages = Array.isArray(v?.messages) ? (v!.messages as WaMessage[]) : [];
-        const statuses = Array.isArray(v?.statuses) ? (v!.statuses as WaStatus[]) : [];
+        const messages = Array.isArray(v?.messages)
+          ? (v!.messages as WaMessage[])
+          : [];
+        const statuses = Array.isArray(v?.statuses)
+          ? (v!.statuses as WaStatus[])
+          : [];
 
         for (const m of messages) {
           const tsMs = toMs(m.timestamp);
@@ -192,40 +213,44 @@ export async function POST(req: NextRequest) {
           let fileName = '';
 
           switch (m.type) {
-            case 'text': 
+            case 'text':
               text = m.text?.body ?? '';
               break;
-            case 'image': 
+            case 'image':
               mediaId = m.image?.id ?? '';
               mediaType = m.image?.mime_type ?? 'image/jpeg';
               text = m.image?.caption ?? 'Imagen recibida';
               break;
-            case 'audio': 
+            case 'audio':
               mediaId = m.audio?.id ?? '';
               mediaType = m.audio?.mime_type ?? 'audio/ogg';
               text = 'Audio recibido';
               break;
-            case 'video': 
+            case 'video':
               mediaId = m.video?.id ?? '';
               mediaType = m.video?.mime_type ?? 'video/mp4';
               text = m.video?.caption ?? 'Video recibido';
               break;
-            case 'document': 
+            case 'document':
               mediaId = m.document?.id ?? '';
               mediaType = m.document?.mime_type ?? 'application/octet-stream';
               fileName = m.document?.filename ?? 'documento';
               text = m.document?.caption ?? `Documento: ${fileName}`;
               break;
-            case 'button': 
+            case 'button':
               text = m.button?.text ?? m.button?.payload ?? 'Botón presionado';
               break;
             case 'interactive': {
               const br = m.interactive?.button_reply;
               const lr = m.interactive?.list_reply;
-              text = br?.title ? `Botón: ${br.title}` : lr?.title ? `Lista: ${lr.title}` : 'Mensaje interactivo';
+              text = br?.title
+                ? `Botón: ${br.title}`
+                : lr?.title
+                  ? `Lista: ${lr.title}`
+                  : 'Mensaje interactivo';
               break;
             }
-            default: 
+            default:
               text = 'Mensaje recibido';
           }
 

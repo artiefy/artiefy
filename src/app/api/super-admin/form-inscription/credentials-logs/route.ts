@@ -10,13 +10,6 @@ interface UserPublicMetadata {
     role?: string;
 }
 
-interface CreateCredentialsBody {
-    usuario?: unknown;
-    correo?: unknown;
-    nota?: unknown;
-    contrasena?: unknown;
-    userId?: unknown;
-}
 
 async function assertSuperAdmin(userId: string): Promise<boolean> {
     const client = await clerkClient();
@@ -97,61 +90,8 @@ export async function POST(req: Request) {
         if (!userId) {
             return NextResponse.json({ message: "No autenticado" }, { status: 401 });
         }
+        void req;
 
-        if (!(await assertSuperAdmin(userId))) {
-            return NextResponse.json({ message: "No autorizado" }, { status: 403 });
-        }
-
-        const body = (await req.json()) as CreateCredentialsBody;
-
-        if (typeof body.usuario !== 'string' || !body.usuario.trim()) {
-            return NextResponse.json(
-                { message: "Campo 'usuario' es obligatorio y debe ser string" },
-                { status: 400 }
-            );
-        }
-        if (typeof body.correo !== 'string' || !body.correo.trim()) {
-            return NextResponse.json(
-                { message: "Campo 'correo' es obligatorio y debe ser string" },
-                { status: 400 }
-            );
-        }
-        if (typeof body.nota !== 'string' || !body.nota.trim()) {
-            return NextResponse.json(
-                { message: "Campo 'nota' es obligatorio y debe ser string" },
-                { status: 400 }
-            );
-        }
-        if (body.contrasena !== undefined && body.contrasena !== null && typeof body.contrasena !== 'string') {
-            return NextResponse.json(
-                { message: "Campo 'contrasena' debe ser string o null" },
-                { status: 400 }
-            );
-        }
-        if (body.userId !== undefined && body.userId !== null && typeof body.userId !== 'string') {
-            return NextResponse.json(
-                { message: "Campo 'userId' debe ser string o null" },
-                { status: 400 }
-            );
-        }
-
-        const usuario = body.usuario.trim();
-        const correo = body.correo.trim();
-        const nota = body.nota.trim();
-        const contrasena = body.contrasena ?? null;
-        const refUserId = body.userId ?? null;
-        const [created] = await db
-            .insert(credentialsDeliveryLogs)
-            .values({
-                userId: refUserId,
-                usuario,
-                correo,
-                nota,
-                contrasena,
-            })
-            .returning();
-
-        return NextResponse.json(created, { status: 201 });
     } catch (err) {
         console.error("POST credentials-logs error:", err);
         return NextResponse.json({ message: "Error interno" }, { status: 500 });

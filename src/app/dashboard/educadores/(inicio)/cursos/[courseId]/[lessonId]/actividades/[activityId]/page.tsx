@@ -117,8 +117,9 @@ const Page: React.FC = () => {
     localStorage.setItem(`selectedColor_${courseIdNumber}`, v);
   };
 
-  type ColorChangeEvent =
-    React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+  type ColorChangeEvent = React.ChangeEvent<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >;
 
   const handleCustomColorChange = (e: ColorChangeEvent) => {
     const v = e.currentTarget.value;

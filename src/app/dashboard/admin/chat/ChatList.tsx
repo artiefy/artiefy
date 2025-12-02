@@ -30,7 +30,6 @@ export default function ChatList({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-
   useEffect(() => {
     const fetchConversations = async () => {
       try {

@@ -231,10 +231,12 @@ export const updateActivity = async (
   try {
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
+    if (data.description !== undefined)
+      updateData.description = data.description;
     if (data.typeid !== undefined) updateData.typeid = data.typeid;
     if (data.revisada !== undefined) updateData.revisada = data.revisada;
-    if (data.parametroId !== undefined) updateData.parametroId = data.parametroId;
+    if (data.parametroId !== undefined)
+      updateData.parametroId = data.parametroId;
     if (data.porcentaje !== undefined) updateData.porcentaje = data.porcentaje;
     if (data.fechaMaximaEntrega !== undefined) {
       updateData.fechaMaximaEntrega = data.fechaMaximaEntrega; // Date | null
@@ -251,7 +253,6 @@ export const updateActivity = async (
     );
   }
 };
-
 
 // Eliminar una actividad y todos los datos asociados
 export const deleteActivity = async (activityId: number): Promise<void> => {

@@ -15,7 +15,8 @@ void userCredentials;
 
 // Utilidades de validación
 const safeTrim = (v?: string | null) => (typeof v === 'string' ? v.trim() : '');
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Helper para construir Excel con Resultados y Resumen
 function buildExcelFromResultados(
@@ -175,7 +176,9 @@ async function sendWelcomeEmailsBatch(
   emailQueue: PendingEmail[],
   emailErrors: string[]
 ): Promise<void> {
-  console.log(`📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`);
+  console.log(
+    `📧 Enviando ${emailQueue.length} correos de bienvenida por lotes...`
+  );
 
   for (let i = 0; i < emailQueue.length; i++) {
     const { email, fullName, password } = emailQueue[i];
@@ -187,7 +190,9 @@ async function sendWelcomeEmailsBatch(
 
     // Delay más largo cada 10 correos (30 segundos)
     if (i > 0 && i % 10 === 0) {
-      console.log(`⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`);
+      console.log(
+        `⏳ Pausa de 30s cada 10 correos... (${i}/${emailQueue.length})`
+      );
       await delay(30000);
     }
 
@@ -207,7 +212,9 @@ async function sendWelcomeEmailsBatch(
 
       if (!emailSent) {
         emailErrors.push(email);
-        console.error(`❌ No se pudo enviar email a ${email} después de 3 intentos`);
+        console.error(
+          `❌ No se pudo enviar email a ${email} después de 3 intentos`
+        );
       }
     } catch (error) {
       emailErrors.push(email);
@@ -215,7 +222,9 @@ async function sendWelcomeEmailsBatch(
     }
   }
 
-  console.log(`✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`);
+  console.log(
+    `✅ Proceso de envío de correos completado. Exitosos: ${emailQueue.length - emailErrors.length}/${emailQueue.length}`
+  );
 }
 
 // Notificar a Secretaría Académica y Dirección Tecnológica
@@ -235,7 +244,7 @@ async function sendAcademicNotification(
   try {
     const recipients = [
       'secretariaacademica@ciadet.co',
-      'direcciontecnologica@ciadet.co'
+      'direcciontecnologica@ciadet.co',
     ];
 
     const subject = `Nuevos usuarios creados – Total: ${createdUsers.length}`;
@@ -282,7 +291,9 @@ ${createdUsers.map((u) => `- ${u.firstName} ${u.lastName} (${u.email}) – ${u.r
       replyTo: 'direcciongeneral@artiefy.com',
     });
 
-    console.log(`✅ Notificación académica enviada a: ${recipients.join(', ')}`);
+    console.log(
+      `✅ Notificación académica enviada a: ${recipients.join(', ')}`
+    );
   } catch (error) {
     console.error('❌ Error enviando notificación académica:', error);
   }
@@ -341,7 +352,7 @@ async function getClerkUserByEmail(email: string): Promise<ClerkUser | null> {
     const arr: ClerkUser[] = Array.isArray(json)
       ? json
       : Array.isArray((json as ClerkUsersResponse).data)
-        ? (json as ClerkUsersResponse).data ?? []
+        ? ((json as ClerkUsersResponse).data ?? [])
         : [];
 
     return arr.length > 0 ? arr[0] : null;
@@ -492,7 +503,8 @@ export async function POST(request: Request) {
         resultados.push({
           email: email || `fila_${i + 1}`,
           estado: 'ERROR',
-          detalle: 'Campos obligatorios faltantes (firstName, lastName o email)',
+          detalle:
+            'Campos obligatorios faltantes (firstName, lastName o email)',
         });
         continue;
       }
@@ -580,7 +592,8 @@ export async function POST(request: Request) {
               resultados.push({
                 email,
                 estado: 'ERROR',
-                detalle: 'Clerk: Acceso denegado (403). Verifica permisos de API',
+                detalle:
+                  'Clerk: Acceso denegado (403). Verifica permisos de API',
               });
             } else {
               resultados.push({
@@ -683,7 +696,6 @@ export async function POST(request: Request) {
             name: `${firstName} ${lastName}`.trim(),
           });
         }
-
       } catch (error) {
         const msg =
           error instanceof Error ? error.message : 'Error desconocido';
@@ -700,13 +712,17 @@ export async function POST(request: Request) {
 
     // FASE 2: Enviar correos por lotes
     if (emailQueue.length > 0) {
-      console.log(`\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`);
+      console.log(
+        `\n📧 Fase 2: Enviando ${emailQueue.length} correos de bienvenida...`
+      );
       await sendWelcomeEmailsBatch(emailQueue, emailErrors);
     }
 
     // FASE 2.5: Enviar plantillas de WhatsApp
     if (whatsappQueue.length > 0) {
-      console.log(`\n📱 Fase 2.5: Enviando ${whatsappQueue.length} plantillas de WhatsApp...`);
+      console.log(
+        `\n📱 Fase 2.5: Enviando ${whatsappQueue.length} plantillas de WhatsApp...`
+      );
 
       for (let i = 0; i < whatsappQueue.length; i++) {
         const { phone } = whatsappQueue[i];
@@ -718,24 +734,31 @@ export async function POST(request: Request) {
 
         // Delay más largo cada 5 mensajes (10 segundos)
         if (i > 0 && i % 5 === 0) {
-          console.log(`⏳ Pausa de 10s cada 5 mensajes... (${i}/${whatsappQueue.length})`);
+          console.log(
+            `⏳ Pausa de 10s cada 5 mensajes... (${i}/${whatsappQueue.length})`
+          );
           await delay(10000);
         }
 
-        console.log(`📤 Enviando WhatsApp ${i + 1}/${whatsappQueue.length} a ${phone}`);
+        console.log(
+          `📤 Enviando WhatsApp ${i + 1}/${whatsappQueue.length} a ${phone}`
+        );
 
         try {
-          const waResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/super-admin/whatsapp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: phone,
-              forceTemplate: true,
-              templateName: 'binvenida_creacion_de_usuario',
-              languageCode: 'es',
-              session: 'soporte',
-            }),
-          });
+          const waResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/super-admin/whatsapp`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: phone,
+                forceTemplate: true,
+                templateName: 'binvenida_creacion_de_usuario',
+                languageCode: 'es',
+                session: 'soporte',
+              }),
+            }
+          );
 
           if (waResponse.ok) {
             console.log(`✅ WhatsApp enviado exitosamente a ${phone}`);
@@ -744,7 +767,10 @@ export async function POST(request: Request) {
             console.error(`❌ Error enviando WhatsApp a ${phone}:`, errorData);
           }
         } catch (waError) {
-          console.error(`❌ Error crítico enviando WhatsApp a ${phone}:`, waError);
+          console.error(
+            `❌ Error crítico enviando WhatsApp a ${phone}:`,
+            waError
+          );
         }
       }
 

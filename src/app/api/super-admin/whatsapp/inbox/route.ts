@@ -57,21 +57,33 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       const fbMediaId =
         r.mediaId ??
-        raw.image?.id ?? raw.video?.id ?? raw.audio?.id ?? raw.document?.id ?? undefined;
+        raw.image?.id ??
+        raw.video?.id ??
+        raw.audio?.id ??
+        raw.document?.id ??
+        undefined;
 
       const fbMediaType =
         r.mediaType ??
-        raw.image?.mime_type ?? raw.video?.mime_type ?? raw.audio?.mime_type ?? raw.document?.mime_type ?? undefined;
+        raw.image?.mime_type ??
+        raw.video?.mime_type ??
+        raw.audio?.mime_type ??
+        raw.document?.mime_type ??
+        undefined;
 
-      const fbFileName =
-        r.fileName ?? raw.document?.filename ?? undefined;
+      const fbFileName = r.fileName ?? raw.document?.filename ?? undefined;
 
       const fbType =
         r.msgType ??
-        (raw.image ? 'image' :
-          raw.video ? 'video' :
-            raw.audio ? 'audio' :
-              raw.document ? 'document' : 'text');
+        (raw.image
+          ? 'image'
+          : raw.video
+            ? 'video'
+            : raw.audio
+              ? 'audio'
+              : raw.document
+                ? 'document'
+                : 'text');
 
       return {
         id: r.metaMessageId ?? String(r.id),

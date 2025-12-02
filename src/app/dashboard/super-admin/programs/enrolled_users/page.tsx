@@ -1,3 +1,4 @@
+ 
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,101 +20,101 @@ const numNullOpt = z.preprocess(
   (v) => (v == null || v === '' ? null : v),
   z.coerce.number().nullable().optional()
 );
-const strNullOpt = z.preprocess(
-  (v) => {
-    if (v == null) return null;
-    if (typeof v === 'string') return v;
-    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-    return null; // Evita stringificar objetos
-  },
-  z.string().nullable().optional()
-);
+const strNullOpt = z.preprocess((v) => {
+  if (v == null) return null;
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  return null; // Evita stringificar objetos
+}, z.string().nullable().optional());
 
-const studentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  phone: z.string().nullable().optional(),
-  address: z.string().nullable().optional(),
-  country: z.string().nullable().optional(),
-  city: z.string().nullable().optional(),
-  birthDate: z.string().nullable().optional(),
-  subscriptionStatus: z.string(),
-  subscriptionEndDate: z.string().nullable().optional(),
-  role: z.string().optional(),
-  planType: z.string().nullable().optional(),
+const studentSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    phone: z.string().nullable().optional(),
+    address: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    birthDate: z.string().nullable().optional(),
+    subscriptionStatus: z.string(),
+    subscriptionEndDate: z.string().nullable().optional(),
+    role: z.string().optional(),
+    planType: z.string().nullable().optional(),
 
-  programTitle: z.string().nullish(),
-  programTitles: z.array(z.string()).optional(),
-  courseTitle: z.string().nullish(),
-  courseTitles: z.array(z.string()).optional(),
-  nivelNombre: z.string().nullable().optional(),
-  purchaseDate: z.string().nullable().optional(),
+    programTitle: z.string().nullish(),
+    programTitles: z.array(z.string()).optional(),
+    courseTitle: z.string().nullish(),
+    courseTitles: z.array(z.string()).optional(),
+    nivelNombre: z.string().nullable().optional(),
+    purchaseDate: z.string().nullable().optional(),
 
-  // ➕ CAMBIOS: ahora vienen del back desde users.*
-  document: strNullOpt,
-  modalidad: strNullOpt,
-  inscripcionValor: numNullOpt,
-  paymentMethod: strNullOpt,
-  cuota1Fecha: strNullOpt,
-  cuota1Metodo: strNullOpt,
-  cuota1Valor: numNullOpt,
-  valorPrograma: numNullOpt,
+    // ➕ CAMBIOS: ahora vienen del back desde users.*
+    document: strNullOpt,
+    modalidad: strNullOpt,
+    inscripcionValor: numNullOpt,
+    paymentMethod: strNullOpt,
+    cuota1Fecha: strNullOpt,
+    cuota1Metodo: strNullOpt,
+    cuota1Valor: numNullOpt,
+    valorPrograma: numNullOpt,
 
-  identificacionTipo: strNullOpt,
-  identificacionNumero: strNullOpt,
-  nivelEducacion: strNullOpt,
-  tieneAcudiente: strNullOpt,
-  acudienteNombre: strNullOpt,
-  acudienteContacto: strNullOpt,
-  acudienteEmail: strNullOpt,
+    identificacionTipo: strNullOpt,
+    identificacionNumero: strNullOpt,
+    nivelEducacion: strNullOpt,
+    tieneAcudiente: strNullOpt,
+    acudienteNombre: strNullOpt,
+    acudienteContacto: strNullOpt,
+    acudienteEmail: strNullOpt,
 
-  programa: strNullOpt,
-  fechaInicio: strNullOpt,
-  comercial: strNullOpt,
-  sede: strNullOpt,
-  horario: strNullOpt,
-  numeroCuotas: strNullOpt,
-  pagoInscripcion: strNullOpt,
-  pagoCuota1: strNullOpt,
+    programa: strNullOpt,
+    fechaInicio: strNullOpt,
+    comercial: strNullOpt,
+    sede: strNullOpt,
+    horario: strNullOpt,
+    numeroCuotas: strNullOpt,
+    pagoInscripcion: strNullOpt,
+    pagoCuota1: strNullOpt,
 
-  idDocKey: strNullOpt,
-  utilityBillKey: strNullOpt,
-  diplomaKey: strNullOpt,
-  pagareKey: strNullOpt,
+    idDocKey: strNullOpt,
+    utilityBillKey: strNullOpt,
+    diplomaKey: strNullOpt,
+    pagareKey: strNullOpt,
 
-  // flags del back
-  isNew: z.boolean().optional(),
-  isSubOnly: z.boolean().optional(),
-  enrolledInCourse: z.boolean().optional(),
+    // flags del back
+    isNew: z.boolean().optional(),
+    isSubOnly: z.boolean().optional(),
+    enrolledInCourse: z.boolean().optional(),
 
-  inscripcionOrigen: z.preprocess(
-    (v) => {
-      if (v == null) return undefined;
-      if (typeof v !== 'string') return undefined;
-      const normalized = v.trim().toLowerCase();
-      // Si no coincide con los valores esperados, devolver undefined (será opcional)
-      if (normalized !== 'formulario' && normalized !== 'artiefy') return undefined;
-      return normalized;
-    },
-    z.enum(['formulario', 'artiefy']).optional()
-  ),
+    inscripcionOrigen: z.preprocess(
+      (v) => {
+        if (v == null) return undefined;
+        if (typeof v !== 'string') return undefined;
+        const normalized = v.trim().toLowerCase();
+        // Si no coincide con los valores esperados, devolver undefined (será opcional)
+        if (normalized !== 'formulario' && normalized !== 'artiefy')
+          return undefined;
+        return normalized;
+      },
+      z.enum(['formulario', 'artiefy']).optional()
+    ),
 
-  // carteraStatus derivado o desde back (normalizado)
-  carteraStatus: z.preprocess(
-    (v) => {
-      if (v == null) return undefined;
-      if (typeof v !== 'string') return undefined;
-      const normalized = v.trim().toLowerCase();
-      // Permitir solo los valores válidos, el resto se convierte en undefined
-      if (!['activo', 'inactivo', 'no verificado'].includes(normalized)) return undefined;
-      return normalized;
-    },
-    z.enum(['activo', 'inactivo', 'no verificado']).optional()
-  ),
-  userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
-
-}).passthrough(); // 👈 MUY IMPORTANTE
+    // carteraStatus derivado o desde back (normalizado)
+    carteraStatus: z.preprocess(
+      (v) => {
+        if (v == null) return undefined;
+        if (typeof v !== 'string') return undefined;
+        const normalized = v.trim().toLowerCase();
+        // Permitir solo los valores válidos, el resto se convierte en undefined
+        if (!['activo', 'inactivo', 'no verificado'].includes(normalized))
+          return undefined;
+        return normalized;
+      },
+      z.enum(['activo', 'inactivo', 'no verificado']).optional()
+    ),
+    userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough(); // 👈 MUY IMPORTANTE
 
 const courseSchema = z.object({ id: z.string(), title: z.string() });
 
@@ -131,8 +132,6 @@ const apiResponseSchema = z.object({
 const errorResponseSchema = z.object({
   error: z.string(),
 });
-
-
 
 interface Student {
   id: string;
@@ -193,7 +192,6 @@ interface Student {
   inscripcionOrigen?: 'formulario' | 'artiefy';
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
   userInscriptionDetails?: Record<string, unknown>;
-
 }
 
 interface CreateUserResponse {
@@ -248,62 +246,233 @@ const allColumns: Column[] = [
   { id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
   { id: 'country', label: 'País', defaultVisible: false, type: 'text' },
   { id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
-  { id: 'birthDate', label: 'Fecha de nacimiento', defaultVisible: false, type: 'date' },
+  {
+    id: 'birthDate',
+    label: 'Fecha de nacimiento',
+    defaultVisible: false,
+    type: 'date',
+  },
 
   // Estado / fechas
-  { id: 'subscriptionStatus', label: 'Estado', defaultVisible: true, type: 'select', options: ['active', 'inactive'] },
-  { id: 'purchaseDate', label: 'Fecha de compra', defaultVisible: true, type: 'date' },
-  { id: 'subscriptionEndDate', label: 'Fin Suscripción', defaultVisible: true, type: 'date' },
+  {
+    id: 'subscriptionStatus',
+    label: 'Estado',
+    defaultVisible: true,
+    type: 'select',
+    options: ['active', 'inactive'],
+  },
+  {
+    id: 'purchaseDate',
+    label: 'Fecha de compra',
+    defaultVisible: true,
+    type: 'date',
+  },
+  {
+    id: 'subscriptionEndDate',
+    label: 'Fin Suscripción',
+    defaultVisible: true,
+    type: 'date',
+  },
 
   // Cartera / origen
-  { id: 'carteraStatus', label: 'Cartera', defaultVisible: true, type: 'select', options: ['activo', 'inactivo', 'No verificado'] },
-  { id: 'inscripcionOrigen', label: 'Origen', defaultVisible: true, type: 'select', options: ['formulario', 'artiefy'] },
+  {
+    id: 'carteraStatus',
+    label: 'Cartera',
+    defaultVisible: true,
+    type: 'select',
+    options: ['activo', 'inactivo', 'No verificado'],
+  },
+  {
+    id: 'inscripcionOrigen',
+    label: 'Origen',
+    defaultVisible: true,
+    type: 'select',
+    options: ['formulario', 'artiefy'],
+  },
 
   // Programa / curso
-  { id: 'programTitle', label: 'Programa', defaultVisible: true, type: 'select' },
-  { id: 'courseTitle', label: 'Último curso', defaultVisible: true, type: 'select' },
+  {
+    id: 'programTitle',
+    label: 'Programa',
+    defaultVisible: true,
+    type: 'select',
+  },
+  {
+    id: 'courseTitle',
+    label: 'Último curso',
+    defaultVisible: true,
+    type: 'select',
+  },
 
   // Rol / plan
-  { id: 'role', label: 'Rol', defaultVisible: false, type: 'select', options: ['estudiante', 'educador', 'admin', 'super-admin'] },
-  { id: 'planType', label: 'Plan', defaultVisible: false, type: 'select', options: ['none', 'Pro', 'Premium', 'Enterprise'] },
+  {
+    id: 'role',
+    label: 'Rol',
+    defaultVisible: false,
+    type: 'select',
+    options: ['estudiante', 'educador', 'admin', 'super-admin'],
+  },
+  {
+    id: 'planType',
+    label: 'Plan',
+    defaultVisible: false,
+    type: 'select',
+    options: ['none', 'Pro', 'Premium', 'Enterprise'],
+  },
 
   // Indicadores
-  { id: 'enrolledInCourseLabel', label: '¿En curso?', defaultVisible: true, type: 'select', options: ['Sí', 'No'] },
-  { id: 'nivelNombre', label: 'Nivel de educación', defaultVisible: false, type: 'text' },
+  {
+    id: 'enrolledInCourseLabel',
+    label: '¿En curso?',
+    defaultVisible: true,
+    type: 'select',
+    options: ['Sí', 'No'],
+  },
+  {
+    id: 'nivelNombre',
+    label: 'Nivel de educación',
+    defaultVisible: false,
+    type: 'text',
+  },
 
   // 🔽 AHORA todo desde users.* (ocultas por defecto para no romper layouts)
   { id: 'document', label: 'Documento', defaultVisible: false, type: 'text' },
-  { id: 'modalidad', label: 'Modalidad', defaultVisible: false, type: 'select', options: ['virtual', 'presencial', 'híbrida'] },
-  { id: 'inscripcionValor', label: 'Inscripción (valor)', defaultVisible: false, type: 'text' },
-  { id: 'paymentMethod', label: 'Método pago inscripción', defaultVisible: false, type: 'text' },
-  { id: 'cuota1Fecha', label: 'Cuota 1 (fecha)', defaultVisible: false, type: 'date' },
-  { id: 'cuota1Metodo', label: 'Cuota 1 (método)', defaultVisible: false, type: 'text' },
-  { id: 'cuota1Valor', label: 'Cuota 1 (valor)', defaultVisible: false, type: 'text' },
-  { id: 'valorPrograma', label: 'Valor Programa', defaultVisible: false, type: 'text' },
+  {
+    id: 'modalidad',
+    label: 'Modalidad',
+    defaultVisible: false,
+    type: 'select',
+    options: ['virtual', 'presencial', 'híbrida'],
+  },
+  {
+    id: 'inscripcionValor',
+    label: 'Inscripción (valor)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'paymentMethod',
+    label: 'Método pago inscripción',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'cuota1Fecha',
+    label: 'Cuota 1 (fecha)',
+    defaultVisible: false,
+    type: 'date',
+  },
+  {
+    id: 'cuota1Metodo',
+    label: 'Cuota 1 (método)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'cuota1Valor',
+    label: 'Cuota 1 (valor)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'valorPrograma',
+    label: 'Valor Programa',
+    defaultVisible: false,
+    type: 'text',
+  },
 
-  { id: 'identificacionTipo', label: 'Identificación (tipo)', defaultVisible: false, type: 'text' },
-  { id: 'identificacionNumero', label: 'Identificación (número)', defaultVisible: false, type: 'text' },
-  { id: 'nivelEducacion', label: 'Nivel educación', defaultVisible: false, type: 'text' },
-  { id: 'tieneAcudiente', label: '¿Tiene acudiente?', defaultVisible: false, type: 'text' },
-  { id: 'acudienteNombre', label: 'Acudiente nombre', defaultVisible: false, type: 'text' },
-  { id: 'acudienteContacto', label: 'Acudiente contacto', defaultVisible: false, type: 'text' },
-  { id: 'acudienteEmail', label: 'Acudiente email', defaultVisible: false, type: 'text' },
+  {
+    id: 'identificacionTipo',
+    label: 'Identificación (tipo)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'identificacionNumero',
+    label: 'Identificación (número)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'nivelEducacion',
+    label: 'Nivel educación',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'tieneAcudiente',
+    label: '¿Tiene acudiente?',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'acudienteNombre',
+    label: 'Acudiente nombre',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'acudienteContacto',
+    label: 'Acudiente contacto',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'acudienteEmail',
+    label: 'Acudiente email',
+    defaultVisible: false,
+    type: 'text',
+  },
 
-  { id: 'programa', label: 'Programa (texto)', defaultVisible: false, type: 'text' },
-  { id: 'fechaInicio', label: 'Fecha inicio', defaultVisible: false, type: 'date' },
+  {
+    id: 'programa',
+    label: 'Programa (texto)',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'fechaInicio',
+    label: 'Fecha inicio',
+    defaultVisible: false,
+    type: 'date',
+  },
   { id: 'comercial', label: 'Comercial', defaultVisible: false, type: 'text' },
   { id: 'sede', label: 'Sede', defaultVisible: false, type: 'text' },
   { id: 'horario', label: 'Horario', defaultVisible: false, type: 'text' },
-  { id: 'numeroCuotas', label: 'N° cuotas', defaultVisible: false, type: 'text' },
-  { id: 'pagoInscripcion', label: 'Pago inscripción', defaultVisible: false, type: 'text' },
-  { id: 'pagoCuota1', label: 'Pago cuota 1', defaultVisible: false, type: 'text' },
+  {
+    id: 'numeroCuotas',
+    label: 'N° cuotas',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'pagoInscripcion',
+    label: 'Pago inscripción',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'pagoCuota1',
+    label: 'Pago cuota 1',
+    defaultVisible: false,
+    type: 'text',
+  },
 
   { id: 'idDocKey', label: 'ID Doc key', defaultVisible: false, type: 'text' },
-  { id: 'utilityBillKey', label: 'Factura servicios key', defaultVisible: false, type: 'text' },
-  { id: 'diplomaKey', label: 'Diploma key', defaultVisible: false, type: 'text' },
+  {
+    id: 'utilityBillKey',
+    label: 'Factura servicios key',
+    defaultVisible: false,
+    type: 'text',
+  },
+  {
+    id: 'diplomaKey',
+    label: 'Diploma key',
+    defaultVisible: false,
+    type: 'text',
+  },
   { id: 'pagareKey', label: 'Pagaré key', defaultVisible: false, type: 'text' },
 ];
-
 
 // Helper function for safe string conversion
 function safeToString(value: unknown): string {
@@ -379,9 +548,20 @@ export default function EnrolledUsersPage() {
   const [waSubjectText, setWaSubjectText] = useState('');
   const [waMessageText, setWaMessageText] = useState('');
   const [numerosLocales, setNumerosLocales] = useState('');
-  const [waSelectedTemplate, setWaSelectedTemplate] = useState<string>('__TEXT_ONLY__');
+  const [waSelectedTemplate, setWaSelectedTemplate] =
+    useState<string>('__TEXT_ONLY__');
   const [waVariables, setWaVariables] = useState<string[]>([]);
-  const [waTemplates, setWaTemplates] = useState<{ name: string; label: string; language: 'es' | 'en'; body: string; example?: string[]; status?: string; langCode?: string }[]>([]);
+  const [waTemplates, setWaTemplates] = useState<
+    {
+      name: string;
+      label: string;
+      language: 'es' | 'en';
+      body: string;
+      example?: string[];
+      status?: string;
+      langCode?: string;
+    }[]
+  >([]);
   const [waLoading, setWaLoading] = useState(false);
   const [waError, setWaError] = useState<string | null>(null);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
@@ -654,7 +834,8 @@ export default function EnrolledUsersPage() {
     for (let idx = 0; idx < 12; idx++) {
       const cuotaNum = idx + 1;
       const row = editablePagos[idx] ?? {};
-      const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+      const valor =
+        typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
 
       rows += `
       <tr>
@@ -676,7 +857,8 @@ export default function EnrolledUsersPage() {
 
     especiales.forEach(({ label, idxBase }) => {
       const row = editablePagos[idxBase] ?? {};
-      const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+      const valor =
+        typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
 
       rows += `
       <tr>
@@ -691,7 +873,6 @@ export default function EnrolledUsersPage() {
 
     return rows;
   };
-
 
   void setCodigoPais;
 
@@ -761,11 +942,10 @@ export default function EnrolledUsersPage() {
   // ⛳️ CONVIERTE esta función en useCallback para estabilizar referencia (ayuda con el useEffect)
   const mapPagosToEditable = useCallback(
     (pagosFromApi: unknown[]): Pago[] => {
-      const slots: Pago[] = Array.from({ length: 15 }, () => ({} as Pago));
+      const slots: Pago[] = Array.from({ length: 15 }, () => ({}) as Pago);
 
       for (const raw of pagosFromApi ?? []) {
         const p = asRec(raw) as Record<string, unknown>;
-
 
         const conceptoUC = getStr(p, 'concepto').toUpperCase().trim();
 
@@ -777,11 +957,10 @@ export default function EnrolledUsersPage() {
           if (Number.isFinite(n2)) return n2;
           const n3 = getNum(p, 'numero');
           if (Number.isFinite(n3)) return n3;
-          const idx0 = getNum(p, 'index');        // 👈 NUEVO
+          const idx0 = getNum(p, 'index'); // 👈 NUEVO
           if (Number.isFinite(idx0)) return idx0 + 1; //    convertir 0-based → 1..12
           return NaN;
         })();
-
 
         // ¿especial?
         const esp = ESPECIALES.find((e) => e.label === conceptoUC);
@@ -852,8 +1031,6 @@ export default function EnrolledUsersPage() {
     },
     [ensure15, ESPECIALES]
   );
-
-
 
   const daysInMonthUTC = useCallback((year: number, month0: number) => {
     return new Date(Date.UTC(year, month0 + 1, 0)).getUTCDate();
@@ -945,7 +1122,6 @@ export default function EnrolledUsersPage() {
     });
   }
 
-
   async function savePagoRow(index: number) {
     if (!carteraUserId) {
       alert('Falta userId');
@@ -999,7 +1175,7 @@ export default function EnrolledUsersPage() {
       }
 
       // 👇 CAMBIO: Guardar el estado actual de fechas autocompletadas
-      const currentFechas = editablePagos.map(p => p.fecha);
+      const currentFechas = editablePagos.map((p) => p.fecha);
 
       const pagosRefrescados = await fetchPagosUsuarioPrograma(
         carteraUserId,
@@ -1101,17 +1277,15 @@ export default function EnrolledUsersPage() {
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
     {}
   );
-  const [columnFiltersMulti, setColumnFiltersMulti] = useState<Record<string, string[]>>(
-    {}
-  );
+  const [columnFiltersMulti, setColumnFiltersMulti] = useState<
+    Record<string, string[]>
+  >({});
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   // Opciones únicas de programas
   const programOptions = useMemo(
     () =>
-      Array.from(
-        new Set(students.flatMap((s) => s.programTitles ?? []))
-      )
+      Array.from(new Set(students.flatMap((s) => s.programTitles ?? [])))
         .map((t) => String(t ?? '').trim())
         .filter(Boolean),
     [students]
@@ -1177,9 +1351,7 @@ export default function EnrolledUsersPage() {
 
     const pagosMesActual = editablePagos.filter((p) => {
       const f = p?.fecha ? new Date(String(p.fecha)) : null;
-      const v = typeof p?.valor === 'number'
-        ? p.valor
-        : Number(p?.valor ?? 0);
+      const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
       return (
         f &&
         !isNaN(f.getTime()) &&
@@ -1197,7 +1369,8 @@ export default function EnrolledUsersPage() {
     // Tomamos el ÚLTIMO pago del mes por fecha
     const ultimoPagoMes = [...pagosMesActual].sort(
       (a, b) =>
-        new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+        new Date(String(a.fecha)).getTime() -
+        new Date(String(b.fecha)).getTime()
     )[pagosMesActual.length - 1];
 
     // Regla: si tiene pago y el verificado dice "No verificado", mostramos "No verificado"
@@ -1239,13 +1412,17 @@ export default function EnrolledUsersPage() {
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
 
   // ✅ Estados para filtro avanzado tipo Excel
-  const [advancedFilterOpen, setAdvancedFilterOpen] = useState<string | null>(null);
+  const [advancedFilterOpen, setAdvancedFilterOpen] = useState<string | null>(
+    null
+  );
   const [advancedFilterMenuPos, setAdvancedFilterMenuPos] = useState<{
     top: number;
     left: number;
     width: number;
   } | null>(null);
-  const [advancedFilters, setAdvancedFilters] = useState<Record<string, string[]>>({});
+  const [advancedFilters, setAdvancedFilters] = useState<
+    Record<string, string[]>
+  >({});
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
@@ -1268,7 +1445,6 @@ export default function EnrolledUsersPage() {
     receiptVerified?: boolean;
     verifiedReceiptUrl?: string;
     verifiedReceiptName?: string;
-
   }
 
   interface CarteraInfo {
@@ -1277,8 +1453,8 @@ export default function EnrolledUsersPage() {
     totalPagado: number;
     deuda: number;
     carnetPolizaUniforme: number; // obligatorio
-    derechosGrado: number;        // obligatorio
-    planType?: string;             // opcional
+    derechosGrado: number; // obligatorio
+    planType?: string; // opcional
   }
 
   function shouldMarkNoVerificado(arr: Pago[] = []): boolean {
@@ -1289,18 +1465,25 @@ export default function EnrolledUsersPage() {
     const pagosMes = arr.filter((p) => {
       const f = p?.fecha ? new Date(String(p.fecha)) : null;
       const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-      return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
+      return (
+        f &&
+        !isNaN(f.getTime()) &&
+        f.getFullYear() === y &&
+        f.getMonth() === m &&
+        v > 0
+      );
     });
 
     if (pagosMes.length === 0) return false;
 
     const ultimo = [...pagosMes].sort(
-      (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
+      (a, b) =>
+        new Date(String(a.fecha)).getTime() -
+        new Date(String(b.fecha)).getTime()
     )[pagosMes.length - 1];
 
     return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
   }
-
 
   // Ahora el estado usa exactamente CarteraInfo
   const [carteraInfo, setCarteraInfo] = useState<CarteraInfo>({
@@ -1309,10 +1492,9 @@ export default function EnrolledUsersPage() {
     totalPagado: 0,
     deuda: 0,
     carnetPolizaUniforme: 0, // inicializado
-    derechosGrado: 0,        // inicializado
+    derechosGrado: 0, // inicializado
     planType: undefined,
   });
-
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
@@ -1363,8 +1545,6 @@ export default function EnrolledUsersPage() {
     }
   }, [carteraInfo]);
 
-
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -1392,10 +1572,14 @@ export default function EnrolledUsersPage() {
       });
     }
     document.addEventListener('mousedown', handleClickOutsideMulti);
-    return () => document.removeEventListener('mousedown', handleClickOutsideMulti);
+    return () =>
+      document.removeEventListener('mousedown', handleClickOutsideMulti);
   }, []);
 
-  async function fetchPagosUsuarioPrograma(userId: string, programId: string): Promise<Pago[]> {
+  async function fetchPagosUsuarioPrograma(
+    userId: string,
+    programId: string
+  ): Promise<Pago[]> {
     const res = await fetch(
       `/api/super-admin/enroll_user_program/programsUser/pagos?userId=${userId}&programId=${programId}`
     );
@@ -1407,8 +1591,7 @@ export default function EnrolledUsersPage() {
       ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p): Pago => {
         const r = p as Record<string, unknown>;
         return {
-          concepto:
-            typeof r.concepto === 'string' ? r.concepto : null,
+          concepto: typeof r.concepto === 'string' ? r.concepto : null,
           nro_pago:
             typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
               ? r.nro_pago
@@ -1437,7 +1620,9 @@ export default function EnrolledUsersPage() {
 
           // 👇 NUEVOS: verificación + archivo verificado
           receiptVerified:
-            typeof r.receiptVerified === 'boolean' ? (r.receiptVerified as boolean) : false,
+            typeof r.receiptVerified === 'boolean'
+              ? (r.receiptVerified as boolean)
+              : false,
           verifiedReceiptUrl:
             typeof r.verifiedReceiptUrl === 'string'
               ? (r.verifiedReceiptUrl as string)
@@ -1452,8 +1637,6 @@ export default function EnrolledUsersPage() {
 
     return pagos;
   }
-
-
 
   useEffect(() => {
     // función asíncrona para cargar programasp
@@ -1492,7 +1675,8 @@ export default function EnrolledUsersPage() {
       const raw: unknown = await res.json();
 
       if (!res.ok) {
-        const msg = (raw as WaGetErr)?.error ?? 'No se pudieron cargar las plantillas';
+        const msg =
+          (raw as WaGetErr)?.error ?? 'No se pudieron cargar las plantillas';
         setWaTemplates([]);
         setWaError(msg);
         return;
@@ -1525,7 +1709,10 @@ export default function EnrolledUsersPage() {
 
   // ✅ Helpers reutilizables y testeables (como en super-admin/page.tsx)
   const stripHtml = (html: string) =>
-    html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const buildEmailsList = () =>
     Array.from(
@@ -1644,7 +1831,8 @@ export default function EnrolledUsersPage() {
 
     const WA_TEXT_ONLY = '__TEXT_ONLY__';
     const textOnly = waSelectedTemplate === WA_TEXT_ONLY;
-    const useTemplate = Boolean(waSelectedTemplate) && !textOnly && waSelectedTemplate !== '';
+    const useTemplate =
+      Boolean(waSelectedTemplate) && !textOnly && waSelectedTemplate !== '';
 
     // Si NO es plantilla, exige mensaje
     if (!useTemplate && !waMessageText.trim()) {
@@ -1658,9 +1846,9 @@ export default function EnrolledUsersPage() {
     setLoadingWhatsApp(true);
 
     try {
-      const selectedWaTemplate = waTemplates.find((t) => t.name === waSelectedTemplate) ?? null;
-      const textMessage =
-        `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
+      const selectedWaTemplate =
+        waTemplates.find((t) => t.name === waSelectedTemplate) ?? null;
+      const textMessage = `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
 
       for (const number of whatsappNumbers) {
         const to = number;
@@ -1718,7 +1906,6 @@ export default function EnrolledUsersPage() {
       setWaSubjectText('');
       setWaMessageText('');
       setShowWhatsAppModal(false);
-
     } catch (error) {
       console.error('❌ Error al enviar WhatsApp:', error);
       setNotification({
@@ -1753,16 +1940,14 @@ export default function EnrolledUsersPage() {
     setSelectedStudents((prev) => {
       const ids =
         mode === 'all'
-          ? sortedStudents.map((s) => s.id)      // ✅ TODOS los filtrados (incluye no visibles)
-          : displayedStudents.map((s) => s.id);  // ✅ SOLO visibles
+          ? sortedStudents.map((s) => s.id) // ✅ TODOS los filtrados (incluye no visibles)
+          : displayedStudents.map((s) => s.id); // ✅ SOLO visibles
       const set = new Set(prev);
       ids.forEach((id) => set.add(id));
       return Array.from(set);
     });
     setBulkSelectOpen(false);
   };
-
-
 
   const handleSavePrice = async () => {
     // Guardamos en backend
@@ -1771,10 +1956,7 @@ export default function EnrolledUsersPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, programaId, price }),
     });
-
-
   };
-
 
   const openCarteraModal = async (userId: string) => {
     try {
@@ -1797,7 +1979,10 @@ export default function EnrolledUsersPage() {
         // ⬇️ AÚN SIN PROGRAMA: igual traemos pagos (programId=null)
         setCurrentProgramId(null);
 
-        const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, 'null');
+        const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(
+          userId,
+          'null'
+        );
 
         // Totales básicos (sin depender de helpers externos)
         const toNum = (v: unknown) =>
@@ -1814,7 +1999,11 @@ export default function EnrolledUsersPage() {
             const n = Number(p.nro_pago ?? p.nroPago ?? 0);
             return Number.isFinite(n) && n >= 1 && n <= 12;
           })
-          .reduce((s, p) => s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0), 0);
+          .reduce(
+            (s, p) =>
+              s + (Number.isFinite(toNum(p.valor)) ? toNum(p.valor) : 0),
+            0
+          );
 
         // Usa el precio por defecto que ya manejas (12 x 150000)
         const programaPrice = DEFAULT_CUOTAS * DEFAULT_VALOR;
@@ -1845,8 +2034,6 @@ export default function EnrolledUsersPage() {
               : s
           )
         );
-
-
 
         // Resetear el flag para permitir autocompletado en la próxima apertura
         setShowCarteraModal(true);
@@ -1882,11 +2069,16 @@ export default function EnrolledUsersPage() {
             console.log('✅ [PRICE] Usando precio del backend:', programaPrice);
           } else {
             programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
-            console.warn('⚠️ [PRICE] Backend sin precio válido. Usando 1.800.000');
+            console.warn(
+              '⚠️ [PRICE] Backend sin precio válido. Usando 1.800.000'
+            );
           }
         } else {
           programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
-          console.warn('⚠️ [PRICE] fetch NO OK. Usando 1.800.000. status=', res.status);
+          console.warn(
+            '⚠️ [PRICE] fetch NO OK. Usando 1.800.000. status=',
+            res.status
+          );
         }
       } catch (err) {
         programaPrice = DEFAULT_VALOR * DEFAULT_CUOTAS; // 1.800.000
@@ -1895,21 +2087,25 @@ export default function EnrolledUsersPage() {
 
       console.log('🏁 [PRICE] programaPrice final:', programaPrice);
 
-
       // 2️⃣ Pagos del usuario en ese programa
-      const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(userId, programId);
+      const pagosUsuarioPrograma = await fetchPagosUsuarioPrograma(
+        userId,
+        programId
+      );
 
       // Total pagado (todos los registros, igual que antes)
-      const totalPagado = pagosUsuarioPrograma.reduce((sum: number, p: Pago) => {
-        const v =
-          typeof p.valor === 'string'
-            ? Number(p.valor)
-            : typeof p.valor === 'number'
-              ? p.valor
-              : 0;
-        return sum + (Number.isFinite(v) ? v : 0);
-      }, 0);
-
+      const totalPagado = pagosUsuarioPrograma.reduce(
+        (sum: number, p: Pago) => {
+          const v =
+            typeof p.valor === 'string'
+              ? Number(p.valor)
+              : typeof p.valor === 'number'
+                ? p.valor
+                : 0;
+          return sum + (Number.isFinite(v) ? v : 0);
+        },
+        0
+      );
 
       // ➕ NUEVO: total pagado SOLO por las 12 cuotas (excluye los 3 especiales)
       const ESPECIALES = new Set([
@@ -1943,8 +2139,6 @@ export default function EnrolledUsersPage() {
       // ⬅️ Deuda = precio total - (solo cuotas)
       const deuda = Math.max(programaPrice - totalPagadoCuotas, 0);
 
-
-
       // Guardar en state
 
       // Montos detectados por concepto
@@ -1964,10 +2158,9 @@ export default function EnrolledUsersPage() {
         totalPagado,
         deuda,
         carnetPolizaUniforme: 0, // o el valor real que corresponda
-        derechosGrado: 0,        // o el valor real que corresponda
-        planType: undefined,      // opcional
+        derechosGrado: 0, // o el valor real que corresponda
+        planType: undefined, // opcional
       });
-
 
       setEditablePagos(() => {
         const norm = mapPagosToEditable(pagosUsuarioPrograma);
@@ -2002,8 +2195,6 @@ export default function EnrolledUsersPage() {
     }
   };
 
-
-
   const markCarteraActivo = async () => {
     if (!carteraUserId) return;
     const res = await fetch('/api/super-admin/enroll_user_program', {
@@ -2026,8 +2217,6 @@ export default function EnrolledUsersPage() {
       alert('No se pudo actualizar el estado.');
     }
   };
-
-
 
   const uploadCarteraReceipt = async () => {
     if (!carteraUserId || !carteraReceipt) return;
@@ -2134,30 +2323,42 @@ export default function EnrolledUsersPage() {
         .map((s) => {
           const showNOW = !!s.isSubOnly;
 
-          const enrolledInCourseLabel: 'Sí' | 'No' = s.enrolledInCourse ? 'Sí' : 'No';
+          const enrolledInCourseLabel: 'Sí' | 'No' = s.enrolledInCourse
+            ? 'Sí'
+            : 'No';
 
           const displayName = s.isNew ? `${s.name} (NEW)` : s.name;
 
           const computedByDate: 'activo' | 'inactivo' =
-            s.subscriptionEndDate && new Date(s.subscriptionEndDate) >= new Date()
+            s.subscriptionEndDate &&
+              new Date(s.subscriptionEndDate) >= new Date()
               ? 'activo'
               : 'inactivo';
 
           const obj: Student = {
             ...s,
             name: displayName,
-            programTitle: showNOW ? 'NOW' : (enrolledMap.get(s.id) ?? 'No inscrito'),
+            programTitle: showNOW
+              ? 'NOW'
+              : (enrolledMap.get(s.id) ?? 'No inscrito'),
             courseTitle: showNOW ? 'NOW' : (s.courseTitle ?? 'Sin curso'),
             enrolledInCourseLabel,
             nivelNombre: s.nivelNombre ?? 'No definido',
             planType: s.planType ?? undefined,
-            inscripcionOrigen: (s.inscripcionOrigen ?? 'artiefy') as 'formulario' | 'artiefy',
-            carteraStatus: (s.carteraStatus ?? computedByDate) as 'activo' | 'inactivo' | 'no verificado',
+            inscripcionOrigen: (s.inscripcionOrigen ?? 'artiefy') as
+              | 'formulario'
+              | 'artiefy',
+            carteraStatus: (s.carteraStatus ?? computedByDate) as
+              | 'activo'
+              | 'inactivo'
+              | 'no verificado',
             // Aseguramos que subscriptionEndDate sea string o null (no undefined)
             subscriptionEndDate:
-              typeof s.subscriptionEndDate === 'string' && s.subscriptionEndDate.trim() !== ''
+              typeof s.subscriptionEndDate === 'string' &&
+                s.subscriptionEndDate.trim() !== ''
                 ? s.subscriptionEndDate
-                : Object.prototype.toString.call(s.subscriptionEndDate) === '[object Date]'
+                : Object.prototype.toString.call(s.subscriptionEndDate) ===
+                  '[object Date]'
                   ? (s.subscriptionEndDate as unknown as Date).toISOString()
                   : s.subscriptionEndDate != null
                     ? String(s.subscriptionEndDate)
@@ -2193,11 +2394,13 @@ export default function EnrolledUsersPage() {
 
       for (const student of studentsFilteredByRole as Student[]) {
         // Recolecta claves top-level del objeto usuario
-        const studentKeys = Object.keys(student as unknown as Record<string, unknown>);
+        const studentKeys = Object.keys(
+          student as unknown as Record<string, unknown>
+        );
         studentKeys.forEach((k) => {
           if (
-            !knownIds.has(k) &&                  // no duplicar las ya definidas
-            k !== 'userInscriptionDetails' &&    // ya lo tratamos arriba
+            !knownIds.has(k) && // no duplicar las ya definidas
+            k !== 'userInscriptionDetails' && // ya lo tratamos arriba
             k !== 'programTitles' &&
             k !== 'courseTitles' &&
             k !== 'enrolledInCourseLabel' &&
@@ -2210,17 +2413,17 @@ export default function EnrolledUsersPage() {
         });
       }
 
-      const dynamicUserColumns: Column[] = Array.from(dynamicUserKeys).map((key) => ({
-        id: key,
-        label: humanizeKey(key),
-        defaultVisible: true,     // ponlo visible por defecto si quieres verlos ya
-        type: 'text',
-      }));
+      const dynamicUserColumns: Column[] = Array.from(dynamicUserKeys).map(
+        (key) => ({
+          id: key,
+          label: humanizeKey(key),
+          defaultVisible: true, // ponlo visible por defecto si quieres verlos ya
+          type: 'text',
+        })
+      );
 
       // ✅ 3) Unimos ambas fuentes dinámicas
       setDynamicColumns([...dynamicUserColumns, ...dynamicUIDColumns]);
-
-
     } catch (err) {
       console.error('Error fetching data:', err);
     }
@@ -2372,91 +2575,126 @@ export default function EnrolledUsersPage() {
         // Filtros por columnas dinámicas (incluye customFields) - AHORA CON MULTISELECT
         .filter((student) => {
           // Filtros de texto (columnFilters)
-          const passesTextFilters = Object.entries(columnFilters ?? {}).every(([key, value]) => {
-            if (!value) return true;
+          const passesTextFilters = Object.entries(columnFilters ?? {}).every(
+            ([key, value]) => {
+              if (!value) return true;
 
-            const studentValue = getValueForColumn(student, key);
+              const studentValue = getValueForColumn(student, key);
 
+              // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
+              if (key === 'carteraStatus') {
+                const base = safeToString(studentValue);
+                let ui = base;
+                if (student.id === currentUserId) {
+                  const hoy = new Date();
+                  const y = hoy.getFullYear();
+                  const m = hoy.getMonth();
 
-            // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
-            if (key === 'carteraStatus') {
-              const base = safeToString(studentValue);
-              let ui = base;
-              if (student.id === currentUserId) {
-                const hoy = new Date();
-                const y = hoy.getFullYear();
-                const m = hoy.getMonth();
+                  const pagosMes = (editablePagos ?? []).filter((p) => {
+                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const v =
+                      typeof p?.valor === 'number'
+                        ? p.valor
+                        : Number(p?.valor ?? 0);
+                    return (
+                      f &&
+                      !isNaN(f.getTime()) &&
+                      f.getFullYear() === y &&
+                      f.getMonth() === m &&
+                      v > 0
+                    );
+                  });
 
-                const pagosMes = (editablePagos ?? []).filter((p) => {
-                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
-                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
-                });
+                  if (pagosMes.length > 0) {
+                    const ultimo = [...pagosMes].sort(
+                      (a, b) =>
+                        new Date(String(a.fecha)).getTime() -
+                        new Date(String(b.fecha)).getTime()
+                    )[pagosMes.length - 1];
 
-                if (pagosMes.length > 0) {
-                  const ultimo = [...pagosMes].sort(
-                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
-                  )[pagosMes.length - 1];
-
-                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
-                    ui = 'no verificado';
+                    if (
+                      ultimo?.receiptUrl &&
+                      ultimo?.receiptVerified === false
+                    ) {
+                      ui = 'no verificado';
+                    }
                   }
                 }
+
+                return ui.toLowerCase().includes(value.toLowerCase());
               }
 
-              return ui.toLowerCase().includes(value.toLowerCase());
+              if (!studentValue) return false;
+
+              if (key === 'subscriptionEndDate') {
+                const dateStr = safeToString(studentValue);
+                return new Date(dateStr).toISOString().split('T')[0] === value;
+              }
+
+              const safeStudentValue = safeToString(studentValue);
+              return safeStudentValue
+                .toLowerCase()
+                .includes(value.toLowerCase());
             }
+          );
 
-            if (!studentValue) return false;
+          const passesMultiFilters = Object.entries(columnFiltersMulti).every(
+            ([key, selectedValues]) => {
+              if (!selectedValues || selectedValues.length === 0) return true;
 
-            if (key === 'subscriptionEndDate') {
-              const dateStr = safeToString(studentValue);
-              return new Date(dateStr).toISOString().split('T')[0] === value;
-            }
+              const studentValue = getValueForColumn(student, key);
+              const safeStudentValue = safeToString(studentValue);
 
-            const safeStudentValue = safeToString(studentValue);
-            return safeStudentValue.toLowerCase().includes(value.toLowerCase());
-          });
+              // Si es carteraStatus, usar la lógica derivada
+              if (key === 'carteraStatus') {
+                const base = safeToString(studentValue);
+                let ui = base;
+                if (student.id === currentUserId) {
+                  const hoy = new Date();
+                  const y = hoy.getFullYear();
+                  const m = hoy.getMonth();
 
-          const passesMultiFilters = Object.entries(columnFiltersMulti).every(([key, selectedValues]) => {
-            if (!selectedValues || selectedValues.length === 0) return true;
+                  const pagosMes = (editablePagos ?? []).filter((p) => {
+                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const v =
+                      typeof p?.valor === 'number'
+                        ? p.valor
+                        : Number(p?.valor ?? 0);
+                    return (
+                      f &&
+                      !isNaN(f.getTime()) &&
+                      f.getFullYear() === y &&
+                      f.getMonth() === m &&
+                      v > 0
+                    );
+                  });
 
-            const studentValue = getValueForColumn(student, key);
-            const safeStudentValue = safeToString(studentValue);
+                  if (pagosMes.length > 0) {
+                    const ultimo = [...pagosMes].sort(
+                      (a, b) =>
+                        new Date(String(a.fecha)).getTime() -
+                        new Date(String(b.fecha)).getTime()
+                    )[pagosMes.length - 1];
 
-            // Si es carteraStatus, usar la lógica derivada
-            if (key === 'carteraStatus') {
-              const base = safeToString(studentValue);
-              let ui = base;
-              if (student.id === currentUserId) {
-                const hoy = new Date();
-                const y = hoy.getFullYear();
-                const m = hoy.getMonth();
-
-                const pagosMes = (editablePagos ?? []).filter((p) => {
-                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
-                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
-                });
-
-                if (pagosMes.length > 0) {
-                  const ultimo = [...pagosMes].sort(
-                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
-                  )[pagosMes.length - 1];
-
-                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
-                    ui = 'no verificado';
+                    if (
+                      ultimo?.receiptUrl &&
+                      ultimo?.receiptVerified === false
+                    ) {
+                      ui = 'no verificado';
+                    }
                   }
                 }
+
+                return selectedValues.some((v) =>
+                  ui.toLowerCase().includes(v.toLowerCase())
+                );
               }
 
-              return selectedValues.some(v => ui.toLowerCase().includes(v.toLowerCase()));
+              return selectedValues.some((v) =>
+                safeStudentValue.toLowerCase().includes(v.toLowerCase())
+              );
             }
-
-            return selectedValues.some(v =>
-              safeStudentValue.toLowerCase().includes(v.toLowerCase())
-            );
-          });
+          );
 
           return passesTextFilters && passesMultiFilters;
         })
@@ -2492,46 +2730,67 @@ export default function EnrolledUsersPage() {
 
         // ✅ FILTROS AVANZADOS tipo Excel
         .filter((student) => {
-          return Object.entries(advancedFilters).every(([colId, selectedValues]) => {
-            if (!selectedValues || selectedValues.length === 0) return true;
+          return Object.entries(advancedFilters).every(
+            ([colId, selectedValues]) => {
+              if (!selectedValues || selectedValues.length === 0) return true;
 
-            const studentValue = getValueForColumn(student, colId);
-            const safeStudentValue = safeToString(studentValue).trim();
+              const studentValue = getValueForColumn(student, colId);
+              const safeStudentValue = safeToString(studentValue).trim();
 
-            // Si es carteraStatus, usar la lógica derivada
-            if (colId === 'carteraStatus') {
-              const base = safeToString(studentValue);
-              let ui = base;
-              if (student.id === currentUserId) {
-                const hoy = new Date();
-                const y = hoy.getFullYear();
-                const m = hoy.getMonth();
+              // Si es carteraStatus, usar la lógica derivada
+              if (colId === 'carteraStatus') {
+                const base = safeToString(studentValue);
+                let ui = base;
+                if (student.id === currentUserId) {
+                  const hoy = new Date();
+                  const y = hoy.getFullYear();
+                  const m = hoy.getMonth();
 
-                const pagosMes = (editablePagos ?? []).filter((p) => {
-                  const f = p?.fecha ? new Date(String(p.fecha)) : null;
-                  const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-                  return f && !isNaN(f.getTime()) && f.getFullYear() === y && f.getMonth() === m && v > 0;
-                });
+                  const pagosMes = (editablePagos ?? []).filter((p) => {
+                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const v =
+                      typeof p?.valor === 'number'
+                        ? p.valor
+                        : Number(p?.valor ?? 0);
+                    return (
+                      f &&
+                      !isNaN(f.getTime()) &&
+                      f.getFullYear() === y &&
+                      f.getMonth() === m &&
+                      v > 0
+                    );
+                  });
 
-                if (pagosMes.length > 0) {
-                  const ultimo = [...pagosMes].sort(
-                    (a, b) => new Date(String(a.fecha)).getTime() - new Date(String(b.fecha)).getTime()
-                  )[pagosMes.length - 1];
+                  if (pagosMes.length > 0) {
+                    const ultimo = [...pagosMes].sort(
+                      (a, b) =>
+                        new Date(String(a.fecha)).getTime() -
+                        new Date(String(b.fecha)).getTime()
+                    )[pagosMes.length - 1];
 
-                  if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
-                    ui = 'no verificado';
+                    if (
+                      ultimo?.receiptUrl &&
+                      ultimo?.receiptVerified === false
+                    ) {
+                      ui = 'no verificado';
+                    }
                   }
                 }
+
+                return selectedValues.some((v) =>
+                  ui.toLowerCase().includes(v.toLowerCase())
+                );
               }
 
-              return selectedValues.some(v => ui.toLowerCase().includes(v.toLowerCase()));
+              return selectedValues.some(
+                (filterVal) =>
+                  safeStudentValue.toLowerCase() === filterVal.toLowerCase() ||
+                  safeStudentValue
+                    .toLowerCase()
+                    .includes(filterVal.toLowerCase())
+              );
             }
-
-            return selectedValues.some((filterVal) =>
-              safeStudentValue.toLowerCase() === filterVal.toLowerCase() ||
-              safeStudentValue.toLowerCase().includes(filterVal.toLowerCase())
-            );
-          });
+          );
         })
 
         // Ordenar activos primero
@@ -2689,10 +2948,17 @@ export default function EnrolledUsersPage() {
     field: string,
     value: string
   ) => {
-    console.log('🔧 [updateStudentField] Iniciando actualización:', { userId, field, value });
+    console.log('🔧 [updateStudentField] Iniciando actualización:', {
+      userId,
+      field,
+      value,
+    });
     const student = students.find((s) => s.id === userId);
     if (!student) {
-      console.error('❌ [updateStudentField] Estudiante no encontrado:', userId);
+      console.error(
+        '❌ [updateStudentField] Estudiante no encontrado:',
+        userId
+      );
       return;
     }
     const updatedStudent = { ...student };
@@ -2711,9 +2977,13 @@ export default function EnrolledUsersPage() {
       (updatedStudent as Record<string, unknown>)[field] = value;
     }
 
-    const nameParts = String(updatedStudent.name ?? '').trim().split(/\s+/).filter(Boolean);
+    const nameParts = String(updatedStudent.name ?? '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
     const firstNameVal = nameParts.length > 0 ? nameParts[0] : '';
-    const lastNameVal = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    const lastNameVal =
+      nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
     const payload: Record<string, unknown> = {
       userId: updatedStudent.id,
@@ -2735,7 +3005,9 @@ export default function EnrolledUsersPage() {
       planType: updatedStudent.planType,
       purchaseDate: updatedStudent.purchaseDate,
       subscriptionEndDate: updatedStudent.subscriptionEndDate
-        ? new Date(updatedStudent.subscriptionEndDate).toISOString().split('T')[0]
+        ? new Date(updatedStudent.subscriptionEndDate)
+          .toISOString()
+          .split('T')[0]
         : null,
 
       // 🔽 AHORA los de inscripción (users.*)
@@ -2772,7 +3044,6 @@ export default function EnrolledUsersPage() {
     };
     // Inyectar dinámicos en el payload
 
-
     // Mantén la lógica de programTitle / courseTitle tal cual
     if (field === 'programTitle') {
       const prog = programs.find((p) => p.title === value);
@@ -2783,7 +3054,10 @@ export default function EnrolledUsersPage() {
       if (curso) payload.courseId = Number(curso.id);
     }
 
-    console.log('📤 [updateStudentField] Payload completo:', JSON.stringify(payload, null, 2));
+    console.log(
+      '📤 [updateStudentField] Payload completo:',
+      JSON.stringify(payload, null, 2)
+    );
     console.log('📧 [updateStudentField] Email en payload:', payload.email);
 
     if (field === 'programTitle') {
@@ -2814,7 +3088,10 @@ export default function EnrolledUsersPage() {
     if (!res.ok) {
       const data: unknown = await res.json();
       const errorData = errorResponseSchema.parse(data);
-      console.error('❌ [updateStudentField] Error del servidor:', errorData.error);
+      console.error(
+        '❌ [updateStudentField] Error del servidor:',
+        errorData.error
+      );
       alert(`❌ Error al guardar: ${errorData.error}`);
     } else {
       console.log('✅ [updateStudentField] Actualización exitosa');
@@ -2908,7 +3185,7 @@ export default function EnrolledUsersPage() {
         onClose={() => setInfoDialogOpen(false)}
       />
 
-      <div className="print:hidden min-h-screen space-y-8 bg-gray-900 p-6 text-white">
+      <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white print:hidden">
         <div
           ref={headerRef}
           className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
@@ -3037,7 +3314,9 @@ export default function EnrolledUsersPage() {
 
           {/* Filtro: Programas (multiselect con búsqueda y chips) */}
           <div ref={programRef} className="relative">
-            <label className="mb-1 block text-sm text-gray-300">Programas</label>
+            <label className="mb-1 block text-sm text-gray-300">
+              Programas
+            </label>
 
             {/* “Input” con chips + búsqueda */}
             <div
@@ -3045,7 +3324,9 @@ export default function EnrolledUsersPage() {
               className="flex min-h-[40px] w-full cursor-text flex-wrap items-center gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500"
             >
               {selectedPrograms.length === 0 && (
-                <span className="px-1 text-sm text-gray-400">Selecciona programas…</span>
+                <span className="px-1 text-sm text-gray-400">
+                  Selecciona programas…
+                </span>
               )}
 
               {/* Chips seleccionados (reducidos / truncados) */}
@@ -3085,7 +3366,9 @@ export default function EnrolledUsersPage() {
             {programOpen && (
               <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-gray-700 bg-gray-800 shadow-xl">
                 {filteredProgramOptions.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-400">Sin resultados</div>
+                  <div className="px-3 py-2 text-sm text-gray-400">
+                    Sin resultados
+                  </div>
                 ) : (
                   filteredProgramOptions.map((opt) => (
                     <button
@@ -3115,16 +3398,16 @@ export default function EnrolledUsersPage() {
               </button>
             )}
           </div>
-
         </div>
 
         <div>
           <h2 className="mb-2 text-xl font-semibold">
             Seleccionar Estudiantes
           </h2>
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-300">
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300 sm:text-sm">
             <span>
-              Seleccionados: <strong>{selectedStudents.length}</strong> / {sortedStudents.length}
+              Seleccionados: <strong>{selectedStudents.length}</strong> /{' '}
+              {sortedStudents.length}
             </span>
             <span className="opacity-70">
               (Visibles: {displayedStudents.length})
@@ -3139,18 +3422,19 @@ export default function EnrolledUsersPage() {
                 Limpiar
               </button>
             )}
-            {Object.keys(advancedFilters).some((k) => (advancedFilters[k]?.length ?? 0) > 0) && (
-              <button
-                type="button"
-                onClick={() => setAdvancedFilters({})}
-                className="rounded bg-blue-700 px-2 py-1 text-xs hover:bg-blue-600 font-medium"
-                title="Limpiar filtros avanzados"
-              >
-                ✓ Limpiar filtros avanzados
-              </button>
-            )}
+            {Object.keys(advancedFilters).some(
+              (k) => (advancedFilters[k]?.length ?? 0) > 0
+            ) && (
+                <button
+                  type="button"
+                  onClick={() => setAdvancedFilters({})}
+                  className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
+                  title="Limpiar filtros avanzados"
+                >
+                  ✓ Limpiar filtros avanzados
+                </button>
+              )}
           </div>
-
 
           <div
             className="max-h-[60vh] w-full overflow-auto rounded-lg border border-gray-700"
@@ -3165,7 +3449,9 @@ export default function EnrolledUsersPage() {
                       type="checkbox"
                       checked={
                         displayedStudents.length > 0 &&
-                        displayedStudents.every((s) => selectedStudents.includes(s.id))
+                        displayedStudents.every((s) =>
+                          selectedStudents.includes(s.id)
+                        )
                       }
                       onChange={(e) => {
                         if (e.target.checked) {
@@ -3174,13 +3460,15 @@ export default function EnrolledUsersPage() {
                         } else {
                           // ✅ Mantiene el comportamiento actual: deselecciona SOLO lo visible
                           setSelectedStudents((prev) =>
-                            prev.filter((id) => !displayedStudents.some((s) => s.id === id))
+                            prev.filter(
+                              (id) =>
+                                !displayedStudents.some((s) => s.id === id)
+                            )
                           );
                         }
                       }}
                       className="rounded border-white/20"
                     />
-
                   </th>
                   {totalColumns
                     .filter((col) => visibleColumns.includes(col.id))
@@ -3194,7 +3482,8 @@ export default function EnrolledUsersPage() {
                             <span className="truncate">{col.label}</span>
                             <button
                               onClick={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
                                 setAdvancedFilterMenuPos({
                                   top: rect.bottom + 4,
                                   left: rect.left,
@@ -3221,19 +3510,26 @@ export default function EnrolledUsersPage() {
                               {/* Input que muestra chips seleccionados */}
                               <div
                                 onClick={(e) => {
-                                  const elem = document.getElementById(`multi-${col.id}`);
+                                  const elem = document.getElementById(
+                                    `multi-${col.id}`
+                                  );
                                   if (!elem) return;
 
-                                  const isHidden = elem.classList.contains('hidden');
+                                  const isHidden =
+                                    elem.classList.contains('hidden');
 
                                   // Cerrar todos los demás dropdowns
-                                  document.querySelectorAll('[id^="multi-"]').forEach((el) => {
-                                    if (el.id !== `multi-${col.id}`) el.classList.add('hidden');
-                                  });
+                                  document
+                                    .querySelectorAll('[id^="multi-"]')
+                                    .forEach((el) => {
+                                      if (el.id !== `multi-${col.id}`)
+                                        el.classList.add('hidden');
+                                    });
 
                                   if (isHidden) {
                                     // Posicionar el dropdown justo debajo del input
-                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const rect =
+                                      e.currentTarget.getBoundingClientRect();
                                     elem.style.top = `${rect.bottom + 4}px`;
                                     elem.style.left = `${rect.left}px`;
                                     elem.style.width = `${rect.width}px`;
@@ -3244,25 +3540,30 @@ export default function EnrolledUsersPage() {
                                 }}
                                 className="flex min-h-[32px] w-full cursor-pointer flex-wrap items-center gap-1 rounded bg-gray-700 px-2 py-1 text-xs sm:text-sm"
                               >
-                                {(columnFiltersMulti[col.id] || []).length === 0 && (
-                                  <span className="text-gray-400">Todos</span>
+                                {(columnFiltersMulti[col.id] || []).length ===
+                                  0 && (
+                                    <span className="text-gray-400">Todos</span>
+                                  )}
+                                {(columnFiltersMulti[col.id] || []).map(
+                                  (val) => (
+                                    <span
+                                      key={val}
+                                      className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-0.5 text-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setColumnFiltersMulti((prev) => ({
+                                          ...prev,
+                                          [col.id]: (prev[col.id] || []).filter(
+                                            (v) => v !== val
+                                          ),
+                                        }));
+                                      }}
+                                    >
+                                      {val}
+                                      <span className="cursor-pointer">×</span>
+                                    </span>
+                                  )
                                 )}
-                                {(columnFiltersMulti[col.id] || []).map((val) => (
-                                  <span
-                                    key={val}
-                                    className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-0.5 text-xs"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setColumnFiltersMulti((prev) => ({
-                                        ...prev,
-                                        [col.id]: (prev[col.id] || []).filter((v) => v !== val),
-                                      }));
-                                    }}
-                                  >
-                                    {val}
-                                    <span className="cursor-pointer">×</span>
-                                  </span>
-                                ))}
                               </div>
 
                               {/* Dropdown de opciones - AHORA CON POSITION FIXED */}
@@ -3272,7 +3573,9 @@ export default function EnrolledUsersPage() {
                                 style={{ minWidth: '200px' }}
                               >
                                 {col.options?.map((opt) => {
-                                  const isSelected = (columnFiltersMulti[col.id] || []).includes(opt);
+                                  const isSelected = (
+                                    columnFiltersMulti[col.id] || []
+                                  ).includes(opt);
                                   return (
                                     <button
                                       key={opt}
@@ -3338,10 +3641,13 @@ export default function EnrolledUsersPage() {
                     {totalColumns
                       .filter((col) => visibleColumns.includes(col.id))
                       .map((col) => {
-                        let raw = safeToString(getValueForColumn(student, col.id));
+                        let raw = safeToString(
+                          getValueForColumn(student, col.id)
+                        );
                         if (col.type === 'date' && raw) {
                           const d = new Date(raw);
-                          if (!isNaN(d.getTime())) raw = d.toISOString().split('T')[0];
+                          if (!isNaN(d.getTime()))
+                            raw = d.toISOString().split('T')[0];
                         }
                         if (col.id === 'programTitle') {
                           return (
@@ -3394,8 +3700,13 @@ export default function EnrolledUsersPage() {
                           const m = hoy.getMonth();
 
                           const pagosMes = pagosParaEvaluar.filter((p) => {
-                            const f = p?.fecha ? new Date(String(p.fecha)) : null;
-                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                            const f = p?.fecha
+                              ? new Date(String(p.fecha))
+                              : null;
+                            const v =
+                              typeof p?.valor === 'number'
+                                ? p.valor
+                                : Number(p?.valor ?? 0);
                             return (
                               f &&
                               !isNaN(f.getTime()) &&
@@ -3405,8 +3716,12 @@ export default function EnrolledUsersPage() {
                             );
                           });
 
-                          let etiqueta: 'Al día' | 'En cartera' | 'No verificado' =
-                            esAlDiaBase ? 'Al día' : 'En cartera';
+                          let etiqueta:
+                            | 'Al día'
+                            | 'En cartera'
+                            | 'No verificado' = esAlDiaBase
+                              ? 'Al día'
+                              : 'En cartera';
 
                           if (pagosMes.length > 0) {
                             const ultimo = [...pagosMes].sort(
@@ -3416,7 +3731,10 @@ export default function EnrolledUsersPage() {
                             )[pagosMes.length - 1];
 
                             // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
-                            if (ultimo?.receiptUrl && ultimo?.receiptVerified === false) {
+                            if (
+                              ultimo?.receiptUrl &&
+                              ultimo?.receiptVerified === false
+                            ) {
                               etiqueta = 'No verificado';
                             }
                           }
@@ -3429,7 +3747,10 @@ export default function EnrolledUsersPage() {
                                 : 'bg-red-600';
 
                           return (
-                            <td key={col.id} className="px-4 py-2 align-top whitespace-nowrap">
+                            <td
+                              key={col.id}
+                              className="px-4 py-2 align-top whitespace-nowrap"
+                            >
                               <span
                                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
                                 title={etiqueta}
@@ -3445,7 +3766,6 @@ export default function EnrolledUsersPage() {
                             </td>
                           );
                         }
-
 
                         // 2) columna Último curso
                         if (col.id === 'courseTitle') {
@@ -3836,7 +4156,9 @@ export default function EnrolledUsersPage() {
               {!sendWhatsapp && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Agregar correo manual</label>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Agregar correo manual
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="email"
@@ -3864,8 +4186,10 @@ export default function EnrolledUsersPage() {
 
                   {/* Correos finales */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Correos destinatarios:</h3>
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <h3 className="mb-2 text-lg font-semibold">
+                      Correos destinatarios:
+                    </h3>
+                    <div className="mb-4 flex flex-wrap gap-2">
                       {buildEmailsList().map((email, idx) => (
                         <span
                           key={idx}
@@ -3885,7 +4209,9 @@ export default function EnrolledUsersPage() {
                         </span>
                       ))}
                       {buildEmailsList().length === 0 && (
-                        <div className="text-gray-400">Sin correos seleccionados</div>
+                        <div className="text-gray-400">
+                          Sin correos seleccionados
+                        </div>
                       )}
                     </div>
                   </div>
@@ -3910,7 +4236,9 @@ export default function EnrolledUsersPage() {
 
                   {/* Adjuntos */}
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Adjuntos (opcional)</label>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Adjuntos (opcional)
+                    </label>
                     <input
                       type="file"
                       multiple
@@ -3925,7 +4253,10 @@ export default function EnrolledUsersPage() {
                     {attachments.length > 0 && (
                       <div className="mt-2 space-y-1">
                         {attachments.map((file, idx) => (
-                          <div key={idx} className="flex items-center justify-between rounded bg-gray-800 p-2">
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between rounded bg-gray-800 p-2"
+                          >
                             <span className="text-sm">{file.name}</span>
                             <button
                               onClick={() =>
@@ -3966,7 +4297,9 @@ export default function EnrolledUsersPage() {
               {sendWhatsapp && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Código de país</label>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Código de país
+                    </label>
                     <input
                       type="text"
                       placeholder="+57"
@@ -3977,7 +4310,9 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Números de WhatsApp (separados por coma)</label>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Números de WhatsApp (separados por coma)
+                    </label>
                     <textarea
                       placeholder="3001234567, 3007654321"
                       value={numerosLocales}
@@ -3988,7 +4323,9 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-2">O agregar teléfono manual</label>
+                    <label className="mb-2 block text-sm font-semibold">
+                      O agregar teléfono manual
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -4017,8 +4354,10 @@ export default function EnrolledUsersPage() {
 
                   {/* Números finales procesados */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Números finales de WhatsApp:</h3>
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <h3 className="mb-2 text-lg font-semibold">
+                      Números finales de WhatsApp:
+                    </h3>
+                    <div className="mb-4 flex flex-wrap gap-2">
                       {buildWhatsappNumbers().length > 0 ? (
                         buildWhatsappNumbers().map((phone, idx) => (
                           <span
@@ -4036,31 +4375,39 @@ export default function EnrolledUsersPage() {
 
                   {/* Seleccionar plantilla de WhatsApp */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold">Seleccionar plantilla (opcional)</label>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="block text-sm font-semibold">
+                        Seleccionar plantilla (opcional)
+                      </label>
                       {waError && (
                         <button
                           onClick={() => void loadWhatsAppTemplates()}
-                          className="text-xs bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded transition"
+                          className="rounded bg-yellow-600 px-2 py-1 text-xs transition hover:bg-yellow-700"
                         >
                           🔄 Reintentar
                         </button>
                       )}
                     </div>
                     {waLoading ? (
-                      <div className="text-gray-400 text-sm p-3 bg-gray-800 rounded">⏳ Cargando plantillas...</div>
+                      <div className="rounded bg-gray-800 p-3 text-sm text-gray-400">
+                        ⏳ Cargando plantillas...
+                      </div>
                     ) : waError ? (
-                      <div className="text-red-400 text-sm p-3 bg-red-900/30 rounded border border-red-600/50">
+                      <div className="rounded border border-red-600/50 bg-red-900/30 p-3 text-sm text-red-400">
                         ⚠️ {waError}
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <select
                           value={waSelectedTemplate}
-                          onChange={(e) => setWaSelectedTemplate(e.target.value)}
+                          onChange={(e) =>
+                            setWaSelectedTemplate(e.target.value)
+                          }
                           className="w-full rounded bg-gray-800 p-2 text-white"
                         >
-                          <option value="__TEXT_ONLY__">Texto personalizado</option>
+                          <option value="__TEXT_ONLY__">
+                            Texto personalizado
+                          </option>
                           {waTemplates.length > 0 && (
                             <>
                               <optgroup label="Plantillas disponibles">
@@ -4076,7 +4423,7 @@ export default function EnrolledUsersPage() {
                         {waSelectedTemplate !== '__TEXT_ONLY__' && (
                           <button
                             onClick={() => setShowTemplatePreview(true)}
-                            className="w-full text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded transition"
+                            className="w-full rounded bg-blue-600 px-3 py-1.5 text-sm transition hover:bg-blue-700"
                           >
                             👁️ Ver preview
                           </button>
@@ -4110,7 +4457,9 @@ export default function EnrolledUsersPage() {
                       className="rounded bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                       disabled={loadingWhatsApp}
                     >
-                      {loadingWhatsApp ? '⏳ Enviando...' : '💬 Enviar WhatsApp'}
+                      {loadingWhatsApp
+                        ? '⏳ Enviando...'
+                        : '💬 Enviar WhatsApp'}
                     </button>
                     <button
                       onClick={() => setShowPhoneModal(false)}
@@ -4434,19 +4783,20 @@ export default function EnrolledUsersPage() {
 
               {/* TABLA DE PAGOS */}
               <div className="p-4 sm:p-6">
-                <h4 className="mb-3 text-base font-semibold flex items-center justify-between">
+                <h4 className="mb-3 flex items-center justify-between text-base font-semibold">
                   <span>Detalle de pagos</span>
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Valor restante a pagar:{' '}
                     <strong className="text-red-600 dark:text-red-400">
                       {formatCOP(
                         price -
-                        editablePagos
-                          .slice(0, 12)
-                          .reduce((sum, p) => {
-                            const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-                            return sum + (Number.isFinite(v) ? v : 0);
-                          }, 0)
+                        editablePagos.slice(0, 12).reduce((sum, p) => {
+                          const v =
+                            typeof p?.valor === 'number'
+                              ? p.valor
+                              : Number(p?.valor ?? 0);
+                          return sum + (Number.isFinite(v) ? v : 0);
+                        }, 0)
                       )}
                     </strong>
                   </span>
@@ -4459,7 +4809,8 @@ export default function EnrolledUsersPage() {
                           PRODUCTO
                         </th>
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
-                          N° PAGO	                        </th>
+                          N° PAGO{' '}
+                        </th>
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
                           FECHA DE PAGO
                         </th>
@@ -4504,7 +4855,11 @@ export default function EnrolledUsersPage() {
                                 type="text"
                                 value={row.concepto ?? `Cuota ${cuotaNum}`}
                                 onChange={(e) =>
-                                  handleCuotaChange(idx, 'concepto', e.target.value)
+                                  handleCuotaChange(
+                                    idx,
+                                    'concepto',
+                                    e.target.value
+                                  )
                                 }
                                 className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
@@ -4514,9 +4869,15 @@ export default function EnrolledUsersPage() {
                             <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
                               <input
                                 type="text"
-                                value={String(row.nro_pago ?? row.nroPago ?? cuotaNum)}
+                                value={String(
+                                  row.nro_pago ?? row.nroPago ?? cuotaNum
+                                )}
                                 onChange={(e) =>
-                                  handleCuotaChange(idx, 'nro_pago', e.target.value)
+                                  handleCuotaChange(
+                                    idx,
+                                    'nro_pago',
+                                    e.target.value
+                                  )
                                 }
                                 className="w-24 rounded border border-gray-300 bg-white p-1 text-center text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
@@ -4532,7 +4893,11 @@ export default function EnrolledUsersPage() {
                                     : toISODateLike(editablePagos[idx]?.fecha)
                                 }
                                 onChange={(e) =>
-                                  handleCuotaChange(idx, 'fecha', e.target.value)
+                                  handleCuotaChange(
+                                    idx,
+                                    'fecha',
+                                    e.target.value
+                                  )
                                 }
                                 className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
@@ -4543,12 +4908,18 @@ export default function EnrolledUsersPage() {
                               <select
                                 value={row.metodo ?? ''}
                                 onChange={(e) =>
-                                  handleCuotaChange(idx, 'metodo', e.target.value)
+                                  handleCuotaChange(
+                                    idx,
+                                    'metodo',
+                                    e.target.value
+                                  )
                                 }
                                 className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               >
                                 <option value="">—</option>
-                                <option value="Transferencia">Transferencia</option>
+                                <option value="Transferencia">
+                                  Transferencia
+                                </option>
                                 <option value="Artiefy">Artiefy</option>
                               </select>
                             </td>
@@ -4561,7 +4932,11 @@ export default function EnrolledUsersPage() {
                                   inputMode="numeric"
                                   value={rawValor.toString()}
                                   onChange={(e) =>
-                                    handleCuotaChange(idx, 'valor', e.target.value)
+                                    handleCuotaChange(
+                                      idx,
+                                      'valor',
+                                      e.target.value
+                                    )
                                   }
                                   className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                 />
@@ -4578,17 +4953,23 @@ export default function EnrolledUsersPage() {
                                     }`}
                                   title="Estado de verificación del comprobante"
                                 >
-                                  {editablePagos[idx]?.receiptVerified ? 'Verificado' : 'No verificado'}
+                                  {editablePagos[idx]?.receiptVerified
+                                    ? 'Verificado'
+                                    : 'No verificado'}
                                 </span>
 
                                 {editablePagos[idx]?.verifiedReceiptUrl && (
                                   <a
-                                    href={editablePagos[idx].verifiedReceiptUrl as string}
+                                    href={
+                                      editablePagos[idx]
+                                        .verifiedReceiptUrl as string
+                                    }
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-[11px] underline"
                                     title={
-                                      editablePagos[idx]?.verifiedReceiptName ?? 'Comprobante verificado'
+                                      editablePagos[idx]?.verifiedReceiptName ??
+                                      'Comprobante verificado'
                                     }
                                   >
                                     Ver verificado
@@ -4603,10 +4984,14 @@ export default function EnrolledUsersPage() {
                                 <button
                                   type="button"
                                   onClick={() => savePagoRow(idx)}
-                                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-400/60 focus:outline-none"
                                   title="Guardar cambios de esta cuota"
                                 >
-                                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                  <svg
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className="h-3.5 w-3.5"
+                                  >
                                     <path d="M3 4a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4zM5 4v4h6V4H5z" />
                                   </svg>
                                   Guardar
@@ -4619,11 +5004,14 @@ export default function EnrolledUsersPage() {
                                     setPendingRowForReceipt(idx);
                                     fileInputPagoRef.current?.click();
                                   }}
-
-                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-400/60 focus:outline-none"
                                   title="Subir comprobante"
                                 >
-                                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                  <svg
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className="h-3.5 w-3.5"
+                                  >
                                     <path d="M3 16a2 2 0 002 2h10a2 2 0 002-2v-5h-2v5H5V5h5V3H5a2 2 0 00-2 2v11z" />
                                     <path d="M15 3h-3V1h5v5h-2V3z" />
                                     <path d="M10 14l4-4h-3V5H9v5H6l4 4z" />
@@ -4638,23 +5026,35 @@ export default function EnrolledUsersPage() {
                                     onClick={() =>
                                       openReceiptPreview(
                                         editablePagos[idx].receiptUrl!,
-                                        editablePagos[idx]?.receiptName ?? 'Comprobante'
+                                        editablePagos[idx]?.receiptName ??
+                                        'Comprobante'
                                       )
                                     }
                                     className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700/60"
-                                    title={editablePagos[idx]?.receiptName ?? 'Ver comprobante'}
+                                    title={
+                                      editablePagos[idx]?.receiptName ??
+                                      'Ver comprobante'
+                                    }
                                   >
-                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <svg
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                      className="h-3.5 w-3.5"
+                                    >
                                       <path d="M10 3c-5 0-8 7-8 7s3 7 8 7 8-7 8-7-3-7-8-7zm0 2a5 5 0 110 10A5 5 0 0110 5zm0 2a3 3 0 100 6 3 3 0 000-6z" />
                                     </svg>
                                     Ver
                                   </button>
                                 ) : (
                                   <span
-                                    className="inline-flex items-center gap-1 cursor-not-allowed rounded-md border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
+                                    className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
                                     title="Sin comprobante"
                                   >
-                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <svg
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                      className="h-3.5 w-3.5"
+                                    >
                                       <path d="M10 3c-5 0-8 7-8 7l2 2s3-7 6-7 6 7 6 7l2-2s-3-7-8-7z" />
                                     </svg>
                                     Ver
@@ -4681,7 +5081,9 @@ export default function EnrolledUsersPage() {
                                       <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-5H9v2h2v-2zm0-8H9v6h2V5z" />
                                     )}
                                   </svg>
-                                  {editablePagos[idx]?.receiptVerified ? 'Verificado' : 'No verificado'}
+                                  {editablePagos[idx]?.receiptVerified
+                                    ? 'Verificado'
+                                    : 'No verificado'}
                                 </span>
 
                                 {/* Verificar (solo si hay comprobante) */}
@@ -4692,16 +5094,20 @@ export default function EnrolledUsersPage() {
                                       const nro_pago = Number(
                                         editablePagos[idx]?.nro_pago ??
                                         editablePagos[idx]?.nroPago ??
-                                        (idx + 1)
+                                        idx + 1
                                       );
                                       const verifiedBy = clerkUser?.id ?? null; // ID real del admin (o null si no está logueado)
-                                      const programIdNum = currentProgramId ? Number(currentProgramId) : null;
+                                      const programIdNum = currentProgramId
+                                        ? Number(currentProgramId)
+                                        : null;
 
                                       const res = await fetch(
                                         '/api/super-admin/enroll_user_program/programsUser/pagos/verify',
                                         {
                                           method: 'POST',
-                                          headers: { 'Content-Type': 'application/json' },
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
                                           body: JSON.stringify({
                                             userId: carteraUserId,
                                             programId: programIdNum,
@@ -4713,34 +5119,44 @@ export default function EnrolledUsersPage() {
                                       );
 
                                       if (!res.ok) {
-                                        const data = await res.json().catch(() => ({}));
-                                        alert(isErrorResponse(data) ? data.error : 'No se pudo verificar');
+                                        const data = await res
+                                          .json()
+                                          .catch(() => ({}));
+                                        alert(
+                                          isErrorResponse(data)
+                                            ? data.error
+                                            : 'No se pudo verificar'
+                                        );
                                         return;
                                       }
 
-                                      const pagosRefrescados = await fetchPagosUsuarioPrograma(
-                                        carteraUserId!,
-                                        String(currentProgramId)
+                                      const pagosRefrescados =
+                                        await fetchPagosUsuarioPrograma(
+                                          carteraUserId!,
+                                          String(currentProgramId)
+                                        );
+                                      setEditablePagos(
+                                        mapPagosToEditable(pagosRefrescados)
                                       );
-                                      setEditablePagos(mapPagosToEditable(pagosRefrescados));
                                       alert('✅ Comprobante verificado');
                                     }}
-                                    className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+                                    className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 focus:ring-2 focus:ring-amber-400/60 focus:outline-none"
                                     title="Marcar como verificado"
                                   >
-                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                                    <svg
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                      className="h-3.5 w-3.5"
+                                    >
                                       <path d="M10 2l2.39 4.84 5.34.78-3.86 3.76.91 5.31L10 14.77 4.22 16.7l.91-5.31L1.27 7.62l5.34-.78L10 2z" />
                                     </svg>
                                     Verificar
                                   </button>
                                 )}
-
                               </div>
                             </td>
-
                           </tr>
                         );
-
                       })}
                     </tbody>
 
@@ -4748,44 +5164,47 @@ export default function EnrolledUsersPage() {
                       {/* Encabezado plan */}
                       <tr>
                         <td colSpan={5} className="px-3 py-3">
-                          <div className="flex justify-between items-center rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                             <span className="font-semibold text-gray-700 dark:text-gray-200">
                               PLAN / VALOR PROGRAMA
                             </span>
                             <input
                               type="text"
                               inputMode="numeric"
-                              className="w-32 text-right font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border rounded px-2 py-1"
-                              value={price ? String(price) : ''}             // muestra 150000
+                              className="w-32 rounded border bg-gray-50 px-2 py-1 text-right font-semibold text-gray-900 dark:bg-gray-800 dark:text-white"
+                              value={price ? String(price) : ''} // muestra 150000
                               onChange={(e) => {
                                 // acepta 150000, 150.000, 150,000 → siempre queda 150000
-                                const onlyDigits = e.target.value.replace(/\D/g, '');
-                                setPrice(onlyDigits ? parseInt(onlyDigits, 10) : 0);
+                                const onlyDigits = e.target.value.replace(
+                                  /\D/g,
+                                  ''
+                                );
+                                setPrice(
+                                  onlyDigits ? parseInt(onlyDigits, 10) : 0
+                                );
                               }}
                               onBlur={handleSavePrice}
                             />
-
                           </div>
                         </td>
-
                       </tr>
 
                       {/* Valor pagado */}
                       <tr>
                         <td colSpan={5} className="px-3 py-3">
-                          <div className="flex justify-between items-center rounded-lg bg-green-50 dark:bg-green-900/30 p-3">
+                          <div className="flex items-center justify-between rounded-lg bg-green-50 p-3 dark:bg-green-900/30">
                             <span className="font-semibold text-green-700 dark:text-green-400">
                               VALOR PAGADO
                             </span>
                             <span className="font-semibold text-green-700 dark:text-green-400">
                               {formatCOP(
-
-                                editablePagos
-                                  .slice(0, 12)
-                                  .reduce((sum, p) => {
-                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
-                                    return sum + (Number.isFinite(v) ? v : 0);
-                                  }, 0)
+                                editablePagos.slice(0, 12).reduce((sum, p) => {
+                                  const v =
+                                    typeof p?.valor === 'number'
+                                      ? p.valor
+                                      : Number(p?.valor ?? 0);
+                                  return sum + (Number.isFinite(v) ? v : 0);
+                                }, 0)
                               )}
                             </span>
                           </div>
@@ -4795,7 +5214,7 @@ export default function EnrolledUsersPage() {
                       {/* Deuda restante */}
                       <tr>
                         <td colSpan={5} className="px-3 py-3">
-                          <div className="flex justify-between items-center rounded-lg bg-red-50 dark:bg-red-900/30 p-3">
+                          <div className="flex items-center justify-between rounded-lg bg-red-50 p-3 dark:bg-red-900/30">
                             <span className="font-semibold text-red-700 dark:text-red-400">
                               DEUDA RESTANTE
                             </span>
@@ -4805,18 +5224,18 @@ export default function EnrolledUsersPage() {
                                 editablePagos
                                   .slice(0, 12)
                                   .reduce((sum, p) => {
-                                    const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+                                    const v =
+                                      typeof p?.valor === 'number'
+                                        ? p.valor
+                                        : Number(p?.valor ?? 0);
                                     return sum + (Number.isFinite(v) ? v : 0);
                                   }, 0)
                               )}
                             </span>
-
                           </div>
                         </td>
                       </tr>
                     </tfoot>
-
-
                   </table>
                   {/* ───────────────────────────────────────────────────────── */}
                   {/* TABLA APARTE: Conceptos especiales (13, 14, 15) */}
@@ -4968,15 +5387,20 @@ export default function EnrolledUsersPage() {
 
                                       {editablePagos[idxBase]?.receiptUrl && (
                                         <a
-                                          href={editablePagos[idxBase].receiptUrl as string}
+                                          href={
+                                            editablePagos[idxBase]
+                                              .receiptUrl as string
+                                          }
                                           target="_blank"
                                           rel="noreferrer"
                                           className="ml-1 text-xs underline"
-                                          title={editablePagos[idxBase]?.receiptName ?? 'Comprobante'}
+                                          title={
+                                            editablePagos[idxBase]
+                                              ?.receiptName ?? 'Comprobante'
+                                          }
                                         >
                                           Ver
                                         </a>
-
                                       )}
                                     </div>
                                   </div>
@@ -4997,7 +5421,6 @@ export default function EnrolledUsersPage() {
                     className="hidden"
                     onChange={onReceiptChange}
                   />
-
                 </div>
                 {/* Acciones de cartera (cuando NO está al día) */}
                 {currentUser.carteraStatus !== 'activo' && (
@@ -5024,11 +5447,12 @@ export default function EnrolledUsersPage() {
                           const f = e.target.files?.[0] ?? null;
                           setCarteraReceipt(f);
                           if (f && pendingRowForReceipt !== null) {
-                            uploadCarteraReceipt().then(() => setPendingRowForReceipt(null));
+                            uploadCarteraReceipt().then(() =>
+                              setPendingRowForReceipt(null)
+                            );
                           }
                         }}
                       />
-
 
                       <div className="flex flex-wrap items-center gap-2">
                         <button
@@ -5059,10 +5483,13 @@ export default function EnrolledUsersPage() {
                   </div>
                 )}
                 {/* Contenido específico para impresión - agregarlo después del botón imprimir */}
-                <div id="printable-invoice" className="hidden print:block pointer-events-none">
-                  <div className="bg-white text-black p-8">
+                <div
+                  id="printable-invoice"
+                  className="pointer-events-none hidden print:block"
+                >
+                  <div className="bg-white p-8 text-black">
                     {/* Cabecera */}
-                    <div className="flex items-center justify-between mb-6 border-b border-black pb-4">
+                    <div className="mb-6 flex items-center justify-between border-b border-black pb-4">
                       <div className="flex items-center gap-4">
                         <Image
                           src="/artiefy-logo.png"
@@ -5084,45 +5511,79 @@ export default function EnrolledUsersPage() {
                         <p className="text-xs font-semibold tracking-wide text-black">
                           POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                         </p>
-                        <h3 className="text-lg font-bold text-black">FACTURA PAGO DE MATRÍCULA</h3>
+                        <h3 className="text-lg font-bold text-black">
+                          FACTURA PAGO DE MATRÍCULA
+                        </h3>
                       </div>
                     </div>
 
                     {/* Info estudiante */}
-                    <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
+                    <div className="mb-6 grid grid-cols-2 gap-6 text-sm">
                       <div className="space-y-2">
-                        <p className="text-black"><strong>NOMBRE ESTUDIANTE:</strong> {currentUser?.name ?? '-'}</p>
-                        <p className="text-black"><strong>CC:</strong> {currentUser?.document ?? currentUser?.id ?? '-'}</p>
-                        <p className="text-black"><strong>CELULAR:</strong> {currentUser?.phone ?? '-'}</p>
-                        <p className="text-black"><strong>PROGRAMA:</strong> {userPrograms?.[0]?.title ?? '—'}</p>
-                        <p className="text-black"><strong>FECHA:</strong> {new Date().toISOString().split('T')[0]}</p>
+                        <p className="text-black">
+                          <strong>NOMBRE ESTUDIANTE:</strong>{' '}
+                          {currentUser?.name ?? '-'}
+                        </p>
+                        <p className="text-black">
+                          <strong>CC:</strong>{' '}
+                          {currentUser?.document ?? currentUser?.id ?? '-'}
+                        </p>
+                        <p className="text-black">
+                          <strong>CELULAR:</strong> {currentUser?.phone ?? '-'}
+                        </p>
+                        <p className="text-black">
+                          <strong>PROGRAMA:</strong>{' '}
+                          {userPrograms?.[0]?.title ?? '—'}
+                        </p>
+                        <p className="text-black">
+                          <strong>FECHA:</strong>{' '}
+                          {new Date().toISOString().split('T')[0]}
+                        </p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-black"><strong>DIRECCIÓN:</strong> {currentUser?.address ?? '-'}</p>
-                        <p className="text-black"><strong>CIUDAD:</strong> {currentUser?.city ?? '-'}</p>
-                        <p className="text-black"><strong>EMAIL:</strong> {currentUser?.email ?? '-'}</p>
+                        <p className="text-black">
+                          <strong>DIRECCIÓN:</strong>{' '}
+                          {currentUser?.address ?? '-'}
+                        </p>
+                        <p className="text-black">
+                          <strong>CIUDAD:</strong> {currentUser?.city ?? '-'}
+                        </p>
+                        <p className="text-black">
+                          <strong>EMAIL:</strong> {currentUser?.email ?? '-'}
+                        </p>
                         <p className="text-black">
                           <strong>ESTADO:</strong> {estadoCarteraUI}
                         </p>
                         <p className="text-black">
                           <strong>FIN SUSCRIPCIÓN:</strong>{' '}
                           {currentUser?.subscriptionEndDate
-                            ? new Date(currentUser.subscriptionEndDate).toISOString().split('T')[0]
-                            : '-'
-                          }
+                            ? new Date(currentUser.subscriptionEndDate)
+                              .toISOString()
+                              .split('T')[0]
+                            : '-'}
                         </p>
                       </div>
                     </div>
 
                     {/* Tabla de pagos solo con información, sin inputs */}
-                    <table className="w-full border-collapse border border-black text-sm mb-6">
+                    <table className="mb-6 w-full border-collapse border border-black text-sm">
                       <thead>
                         <tr className="bg-white">
-                          <th className="border border-black px-3 py-2 text-left text-black font-bold">PRODUCTO</th>
-                          <th className="border border-black px-3 py-2 text-center text-black font-bold">N° PAGO</th>
-                          <th className="border border-black px-3 py-2 text-left text-black font-bold">FECHA DE PAGO</th>
-                          <th className="border border-black px-3 py-2 text-left text-black font-bold">MÉTODO DE PAGO</th>
-                          <th className="border border-black px-3 py-2 text-right text-black font-bold">VALOR</th>
+                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                            PRODUCTO
+                          </th>
+                          <th className="border border-black px-3 py-2 text-center font-bold text-black">
+                            N° PAGO
+                          </th>
+                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                            FECHA DE PAGO
+                          </th>
+                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                            MÉTODO DE PAGO
+                          </th>
+                          <th className="border border-black px-3 py-2 text-right font-bold text-black">
+                            VALOR
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -5130,10 +5591,16 @@ export default function EnrolledUsersPage() {
                         {Array.from({ length: 12 }, (_, idx) => {
                           const cuotaNum = idx + 1;
                           const row = editablePagos[idx] ?? {};
-                          const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+                          const valor =
+                            typeof row.valor === 'number'
+                              ? row.valor
+                              : Number(row.valor ?? 0);
 
                           return (
-                            <tr key={`print-cuota-${cuotaNum}`} className="bg-white">
+                            <tr
+                              key={`print-cuota-${cuotaNum}`}
+                              className="bg-white"
+                            >
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.concepto ?? `Cuota ${cuotaNum}`}
                               </td>
@@ -5141,7 +5608,11 @@ export default function EnrolledUsersPage() {
                                 {row.nro_pago ?? row.nroPago ?? cuotaNum}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
-                                {row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}
+                                {row.fecha
+                                  ? new Date(row.fecha).toLocaleDateString(
+                                    'es-CO'
+                                  )
+                                  : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.metodo ?? '-'}
@@ -5160,18 +5631,28 @@ export default function EnrolledUsersPage() {
                           { label: 'DERECHOS DE GRADO', idxBase: 14 },
                         ].map(({ label, idxBase }) => {
                           const row = editablePagos[idxBase] ?? {};
-                          const valor = typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
+                          const valor =
+                            typeof row.valor === 'number'
+                              ? row.valor
+                              : Number(row.valor ?? 0);
 
                           return (
-                            <tr key={`print-especial-${idxBase}`} className="bg-white">
-                              <td className="border border-black px-3 py-2 text-black font-semibold">
+                            <tr
+                              key={`print-especial-${idxBase}`}
+                              className="bg-white"
+                            >
+                              <td className="border border-black px-3 py-2 font-semibold text-black">
                                 {row.concepto ?? label}
                               </td>
                               <td className="border border-black px-3 py-2 text-center text-black">
                                 {idxBase + 1}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
-                                {row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}
+                                {row.fecha
+                                  ? new Date(row.fecha).toLocaleDateString(
+                                    'es-CO'
+                                  )
+                                  : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.metodo ?? '-'}
@@ -5186,40 +5667,54 @@ export default function EnrolledUsersPage() {
                     </table>
 
                     {/* Totales */}
-                    <div className="border-t border-black pt-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-black">PLAN / VALOR PROGRAMA:</span>
-                        <span className="font-semibold text-black">{formatCOP(price)}</span>
+                    <div className="space-y-3 border-t border-black pt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-black">
+                          PLAN / VALOR PROGRAMA:
+                        </span>
+                        <span className="font-semibold text-black">
+                          {formatCOP(price)}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-black">VALOR PAGADO:</span>
-                        <span className="font-semibold text-black">{formatCOP(carteraInfo?.totalPagado ?? 0)}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-black">
+                          VALOR PAGADO:
+                        </span>
+                        <span className="font-semibold text-black">
+                          {formatCOP(carteraInfo?.totalPagado ?? 0)}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center border-t border-black pt-2">
-                        <span className="font-bold text-black text-lg">DEUDA RESTANTE:</span>
-                        <span className="font-bold text-black text-lg">{formatCOP(carteraInfo?.deuda ?? 0)}</span>
+                      <div className="flex items-center justify-between border-t border-black pt-2">
+                        <span className="text-lg font-bold text-black">
+                          DEUDA RESTANTE:
+                        </span>
+                        <span className="text-lg font-bold text-black">
+                          {formatCOP(carteraInfo?.deuda ?? 0)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Pie de página opcional */}
-                    <div className="mt-8 pt-4 border-t border-black text-center text-xs text-black">
-                      <p>Este documento es un comprobante de los pagos registrados</p>
-                      <p>Fecha de impresión: {new Date().toLocaleString('es-CO')}</p>
+                    <div className="mt-8 border-t border-black pt-4 text-center text-xs text-black">
+                      <p>
+                        Este documento es un comprobante de los pagos
+                        registrados
+                      </p>
+                      <p>
+                        Fecha de impresión: {new Date().toLocaleString('es-CO')}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
               {/* FOOTER / BOTONES */}
               <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
-
                 <button
                   onClick={handlePrint}
                   className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                   Imprimir / Guardar PDF
                 </button>
-
-
 
                 <button
                   onClick={() => setShowCarteraModal(false)}
@@ -5230,10 +5725,7 @@ export default function EnrolledUsersPage() {
               </div>
             </div>
           </div>
-
         )}
-
-
 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -5348,7 +5840,8 @@ export default function EnrolledUsersPage() {
             <div className="mb-4">
               <h3 className="text-lg font-semibold">Seleccionar estudiantes</h3>
               <p className="mt-1 text-sm text-neutral-300">
-                ¿Quieres seleccionar <strong>todos los filtrados</strong> o solo los <strong>visibles</strong>?
+                ¿Quieres seleccionar <strong>todos los filtrados</strong> o solo
+                los <strong>visibles</strong>?
               </p>
             </div>
 
@@ -5356,11 +5849,15 @@ export default function EnrolledUsersPage() {
             <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-neutral-300">
               <div className="rounded-lg border border-white/10 p-3">
                 <div className="opacity-75">Visibles</div>
-                <div className="text-base font-semibold">{displayedStudents.length}</div>
+                <div className="text-base font-semibold">
+                  {displayedStudents.length}
+                </div>
               </div>
               <div className="rounded-lg border border-white/10 p-3">
                 <div className="opacity-75">Filtrados (total)</div>
-                <div className="text-base font-semibold">{sortedStudents.length}</div>
+                <div className="text-base font-semibold">
+                  {sortedStudents.length}
+                </div>
               </div>
             </div>
 
@@ -5482,7 +5979,9 @@ export default function EnrolledUsersPage() {
                       WA
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-semibold text-white">Plantilla</div>
+                      <div className="text-sm font-semibold text-white">
+                        Plantilla
+                      </div>
                       <div className="text-xs text-gray-300">vista previa</div>
                     </div>
                     <div className="text-xl text-gray-300">⋮</div>
@@ -5513,13 +6012,23 @@ export default function EnrolledUsersPage() {
                 {/* Detalles de la plantilla */}
                 <div className="space-y-2 border-t border-gray-700 pt-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-400">Nombre</label>
-                    <p className="text-white">{selectedWaTemplate.label || selectedWaTemplate.name}</p>
+                    <label className="text-xs font-semibold text-gray-400">
+                      Nombre
+                    </label>
+                    <p className="text-white">
+                      {selectedWaTemplate.label || selectedWaTemplate.name}
+                    </p>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-400">Idioma</label>
-                    <p className="text-white">{selectedWaTemplate.language === 'es' ? 'Español' : 'Inglés'}</p>
+                    <label className="text-xs font-semibold text-gray-400">
+                      Idioma
+                    </label>
+                    <p className="text-white">
+                      {selectedWaTemplate.language === 'es'
+                        ? 'Español'
+                        : 'Inglés'}
+                    </p>
                   </div>
 
                   <div>
@@ -5527,26 +6036,33 @@ export default function EnrolledUsersPage() {
                     <p className="text-white">{selectedWaTemplate.status ?? 'N/A'}</p>
                   </div>
 
-                  {selectedWaTemplate.example && selectedWaTemplate.example.length > 0 && (
-                    <div>
-                      <label className="text-xs font-semibold text-gray-400">Ejemplos</label>
-                      <p className="text-xs text-gray-300">{selectedWaTemplate.example.join(', ')}</p>
-                    </div>
-                  )}
-                </div>
+                  {
+                    selectedWaTemplate.example &&
+                    selectedWaTemplate.example.length > 0 && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-400">
+                          Ejemplos
+                        </label>
+                        <p className="text-xs text-gray-300">
+                          {selectedWaTemplate.example.join(', ')}
+                        </p>
+                      </div>
+                    )
+                  }
+                </div >
 
                 <button
                   onClick={() => setShowTemplatePreview(false)}
-                  className="w-full rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700 transition"
+                  className="w-full rounded bg-blue-600 px-4 py-2 font-semibold transition hover:bg-blue-700"
                 >
                   Cerrar
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
+              </div >
+            )
+            }
+          </div >
+        </div >
       )}
-
     </>
   );
 }

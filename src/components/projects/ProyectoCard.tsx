@@ -10,16 +10,16 @@ export default function ProyectoCard() {
       <p className="mb-4">Descripcion del proyecto</p>
 
       <div className="mb-2">
-        <span className="font-semibold rounded bg-cyan-900 px-3 py-1 text-cyan-300">
+        <span className="rounded bg-cyan-900 px-3 py-1 font-semibold text-cyan-300">
           Rama de investigacion
         </span>
       </div>
 
-      <div className="font-semibold mt-4 flex items-center gap-4">
+      <div className="mt-4 flex items-center gap-4 font-semibold">
         <span className="rounded bg-gray-800 px-3 py-1 text-purple-400">
           # Integrantes
         </span>
-        <button className="font-semibold rounded bg-cyan-300 px-3 py-1 text-black hover:bg-cyan-200">
+        <button className="rounded bg-cyan-300 px-3 py-1 font-semibold text-black hover:bg-cyan-200">
           <a href=""> Ver más</a>
         </button>
       </div>

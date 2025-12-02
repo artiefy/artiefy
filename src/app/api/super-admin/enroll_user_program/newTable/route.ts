@@ -23,8 +23,24 @@ function sanitizeColumnName(raw: string): string {
   }
   // Evita algunos nombres reservados comunes
   const reserved = new Set([
-    'select', 'from', 'where', 'table', 'user', 'users', 'order', 'group', 'by',
-    'insert', 'update', 'delete', 'and', 'or', 'not', 'null', 'true', 'false'
+    'select',
+    'from',
+    'where',
+    'table',
+    'user',
+    'users',
+    'order',
+    'group',
+    'by',
+    'insert',
+    'update',
+    'delete',
+    'and',
+    'or',
+    'not',
+    'null',
+    'true',
+    'false',
   ]);
   if (reserved.has(norm)) {
     throw new Error('Nombre de columna inválido (reservado).');
@@ -58,8 +74,7 @@ export async function POST(req: Request) {
     console.error(err);
 
     // Si el error viene de Zod o del sanitizado, devolvemos 400
-    const message =
-      err instanceof Error ? err.message : 'Solicitud inválida';
+    const message = err instanceof Error ? err.message : 'Solicitud inválida';
     if (
       message.includes('requerido') ||
       message.includes('inválido') ||

@@ -669,7 +669,7 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           <Button
             variant="destructive"
             onClick={onClose}
-            className="order-2 rounded px-3 py-2 font-bold text-white sm:order-2 sm:px-4 hover:underline"
+            className="order-2 rounded px-3 py-2 font-bold text-white hover:underline sm:order-2 sm:px-4"
           >
             Cancelar
           </Button>

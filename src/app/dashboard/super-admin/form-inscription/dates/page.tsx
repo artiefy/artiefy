@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-interface DateRow { id: number; startDate: string } // startDate viene como 'YYYY-MM-DD'
+interface DateRow {
+  id: number;
+  startDate: string;
+} // startDate viene como 'YYYY-MM-DD'
 
 export default function DatesPage() {
   const [date, setDate] = useState('');
@@ -12,7 +15,7 @@ export default function DatesPage() {
   const [error, setError] = useState<string | null>(null);
   // --- NUEVO: estados para editar / borrar ---
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState('');        // YYYY-MM-DD
+  const [editValue, setEditValue] = useState(''); // YYYY-MM-DD
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -36,11 +39,14 @@ export default function DatesPage() {
     }
     try {
       setUpdatingId(id);
-      const res = await fetch(`/api/super-admin/form-inscription/dates?id=${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startDate: value }),
-      });
+      const res = await fetch(
+        `/api/super-admin/form-inscription/dates?id=${id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startDate: value }),
+        }
+      );
       if (!res.ok) throw new Error('HTTP ' + res.status);
       setEditingId(null);
       setEditValue('');
@@ -57,9 +63,12 @@ export default function DatesPage() {
     if (!confirm('¿Eliminar esta fecha?')) return;
     try {
       setDeletingId(id);
-      const res = await fetch(`/api/super-admin/form-inscription/dates?id=${id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `/api/super-admin/form-inscription/dates?id=${id}`,
+        {
+          method: 'DELETE',
+        }
+      );
       if (!res.ok) throw new Error('HTTP ' + res.status);
       await load();
     } catch {
@@ -68,7 +77,6 @@ export default function DatesPage() {
       setDeletingId(null);
     }
   };
-
 
   const load = async () => {
     try {
@@ -169,13 +177,13 @@ export default function DatesPage() {
                         <button
                           onClick={() => void handleUpdate(row.id)}
                           disabled={isUpdating || !editValue}
-                          className="rounded bg-green-500 px-3 py-1 text-black font-semibold hover:bg-green-400 disabled:opacity-60"
+                          className="rounded bg-green-500 px-3 py-1 font-semibold text-black hover:bg-green-400 disabled:opacity-60"
                         >
                           {isUpdating ? 'Guardando…' : 'Guardar'}
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded bg-gray-600 px-3 py-1 text-white font-semibold hover:bg-gray-500"
+                          className="rounded bg-gray-600 px-3 py-1 font-semibold text-white hover:bg-gray-500"
                         >
                           Cancelar
                         </button>
@@ -184,14 +192,14 @@ export default function DatesPage() {
                       <>
                         <button
                           onClick={() => startEdit(row)}
-                          className="rounded bg-blue-500 px-3 py-1 text-black font-semibold hover:bg-blue-400"
+                          className="rounded bg-blue-500 px-3 py-1 font-semibold text-black hover:bg-blue-400"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => void handleDelete(row.id)}
                           disabled={isDeleting}
-                          className="rounded bg-red-500 px-3 py-1 text-black font-semibold hover:bg-red-400 disabled:opacity-60"
+                          className="rounded bg-red-500 px-3 py-1 font-semibold text-black hover:bg-red-400 disabled:opacity-60"
                         >
                           {isDeleting ? 'Eliminando…' : 'Eliminar'}
                         </button>

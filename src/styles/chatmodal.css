@@ -206,6 +206,36 @@
   overflow: hidden;
 }
 
+/* Optimización para móvil: asegurar que el ResizableBox use 100dvh */
+@media (max-width: 768px) {
+  .react-resizable {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    width: 100vw !important;
+    border-radius: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Asegurar que el contenedor del chat ocupe toda la pantalla */
+  .chat-container,
+  .chat-resizable {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+}
+
 /* Update resize handle styles */
 .react-resizable-handle {
   position: absolute;
@@ -276,7 +306,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  --color: #212121;
+  --color: #f7fbff;
   --animation: 2s ease-in-out infinite;
 }
 
@@ -418,29 +448,104 @@
   }
 
   .chat-container {
-    width: 100%;
-    max-width: calc(100vw - 20px);
-    height: calc(100vh - 120px);
-    margin: 10px;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    overflow: hidden;
   }
 
   .chat-resizable {
-    font-size: 14px; /* Smaller font for mobile */
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
   }
 
-  /* Adjust message bubbles for mobile */
+  /* Área de mensajes con scroll independiente */
   .messages-container {
-    padding: 0.75rem;
+    padding: 0.5rem;
+    font-size: 13px;
+    position: absolute;
+    top: 50px; /* Altura del header */
+    bottom: 70px; /* Altura del input */
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
-  /* Adjust input area for mobile */
+  /* Input fijo que sube con el teclado usando position fixed */
   .input-container {
-    padding: 0.75rem;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #071024;
+    border-top: 1px solid #374151;
+    z-index: 50;
+    min-height: 70px;
   }
 
-  /* Make header more compact on mobile */
   .chat-header {
-    padding: 0.75rem;
+    padding: 0.5rem;
+    font-size: 13px;
+  }
+
+  /* Input form optimization para móvil */
+  .chat-resizable input[type='text'] {
+    font-size: 16px;
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+
+  .chat-resizable button[type='submit'] {
+    min-width: 48px;
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+
+  /* Botones del menú del bot IA */
+  .chatbot-menu-btn {
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
+    margin-right: 4px !important;
+    margin-bottom: 2px !important;
+    border-radius: 6px !important;
+    max-width: 90vw !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #eaf7fa !important;
+    color: #00a5c0 !important;
+    border: 1px solid #00bdd8 !important;
+    box-shadow: none !important;
+  }
+  .chatbot-menu-btn:last-child {
+    margin-right: 0 !important;
   }
 }
 

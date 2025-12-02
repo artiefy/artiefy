@@ -483,7 +483,7 @@ export function Header({
               </div>
             )}
           </div>
-          <div className="flex w-full items-center justify-between md:hidden">
+          <div className="relative flex w-full items-center justify-between md:hidden">
             <div className="shrink-0">
               <Link href="/estudiantes">
                 <div className="relative size-[100px] md:size-[150px]">
@@ -492,13 +492,13 @@ export function Header({
                     alt="Logo Artiefy"
                     fill
                     priority
-                    className="ml-2 object-contain md:ml-6"
+                    className="object-contain"
                     sizes="(max-width: 768px) 100px, 150px"
                   />
                 </div>
               </Link>
             </div>
-            <label className="hamburger mr-2 flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
+            <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
               <input
                 type="checkbox"
                 checked={mobileMenuOpen}
@@ -521,9 +521,9 @@ export function Header({
           className="fixed inset-0 z-[99999] md:hidden" // z-index alto para estar por encima de todo
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-          <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl">
-            <div className="mt-9 flex shrink-0 items-center justify-between">
-              <div className="relative size-[150px]">
+          <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl">
+            <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
+              <div className="mx-auto w-fit">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
                     <Image
@@ -539,16 +539,16 @@ export function Header({
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="ml-5 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
+                className="absolute top-3 right-3 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
                 aria-label="Close menu"
               >
                 <XMarkIconSolid className="size-8" />
               </button>
             </div>
             {/* Scrollable content container */}
-            <div className="flex-1 overflow-y-auto overscroll-contain pb-24">
-              <nav className="pb-7">
-                <ul className="space-y-12">
+            <div className="flex-1 overflow-y-auto overscroll-contain pb-12">
+              <nav className="pb-4">
+                <ul className="space-y-6">
                   {navItems.map((item) => {
                     const isActive =
                       pathname === item.href ||
@@ -599,7 +599,7 @@ export function Header({
                   })}
                 </ul>
               </nav>
-              <div className="div-auth mt-6 flex items-center justify-center">
+              <div className="div-auth mt-5 flex items-center justify-center">
                 <Suspense
                   fallback={
                     <div className="flex min-w-[180px] items-center justify-start">
