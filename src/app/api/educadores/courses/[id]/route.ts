@@ -13,11 +13,15 @@ import {
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
 import {
+  categories,
   classMeetings,
   courseCourseTypes,
   courses,
   courseTypes,
   materias,
+  modalidades,
+  nivel,
+  users,
 } from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
@@ -85,6 +89,58 @@ export async function getCourseByIdWithTypes(courseId: number) {
     .then((res) => res[0]);
 
   console.log('✅ Curso obtenido:', course);
+
+  // Obtener nombres de categoría, nivel y modalidad
+  let categoryName: string | undefined;
+  let nivelName: string | undefined;
+  let modalidadesName: string | undefined;
+
+  if (course?.categoryid) {
+    const cat = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, course.categoryid))
+      .then((res) => res[0]);
+    categoryName = cat?.name;
+  }
+
+  if (course?.nivelid) {
+    const niv = await db
+      .select()
+      .from(nivel)
+      .where(eq(nivel.id, course.nivelid))
+      .then((res) => res[0]);
+    nivelName = niv?.name;
+  }
+
+  if (course?.modalidadesid) {
+    const mod = await db
+      .select()
+      .from(modalidades)
+      .where(eq(modalidades.id, course.modalidadesid))
+      .then((res) => res[0]);
+    modalidadesName = mod?.name;
+  }
+
+  // Obtener nombre completo del instructor si está disponible
+  let instructorName: string | undefined;
+  try {
+    if (course?.instructor) {
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, course.instructor))
+        .then((res) => res[0]);
+
+      if (user) {
+        // Use the `users.name` field from the schema. If it's empty/null, leave instructorName undefined.
+        const nm = (user.name!) ?? '';
+        instructorName = nm.trim() ? nm.trim() : undefined;
+      }
+    }
+  } catch (e) {
+    console.warn('No se pudo obtener instructorName:', e);
+  }
 
   const meetings = await db
     .select()
@@ -177,10 +233,9 @@ export async function getCourseByIdWithTypes(courseId: number) {
     }
   }
 
+
   const meetingsWithVideo = meetingsFixed.map((meeting) => {
-    let match = meeting.meetingId
-      ? videosById.get(meeting.meetingId)
-      : undefined;
+    let match = meeting.meetingId ? videosById.get(meeting.meetingId) : undefined;
 
     if (!match && meeting.joinUrl) {
       const decodedJoin = decodeURIComponent(meeting.joinUrl ?? '');
@@ -194,8 +249,8 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
     type ClassMeetingRow =
       (typeof classMeetings)['_']['columns'] extends infer _Cols
-        ? typeof classMeetings.$inferSelect & { video_key?: string | null }
-        : typeof classMeetings.$inferSelect & { video_key?: string | null };
+      ? typeof classMeetings.$inferSelect & { video_key?: string | null }
+      : typeof classMeetings.$inferSelect & { video_key?: string | null };
 
     const existingKey = (meeting as ClassMeetingRow).video_key ?? null;
 
@@ -230,6 +285,7 @@ export async function getCourseByIdWithTypes(courseId: number) {
     };
   });
 
+
   const courseTypesList = await db
     .select({
       typeId: courseTypes.id,
@@ -243,6 +299,10 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   return {
     ...course,
+    categoryName,
+    nivelName,
+    modalidadesName,
+    instructorName,
     courseTypes: courseTypesList,
     meetings: meetingsWithVideo,
   };

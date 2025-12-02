@@ -82,6 +82,8 @@ export default function Page() {
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
+  const [horario, setHorario] = useState<string | null>(null);
+  const [espacios, setEspacios] = useState<string | null>(null);
 
   // ✅ Obtener cursos, totales y categorías con lazy loading
   useEffect(() => {
@@ -225,7 +227,9 @@ export default function Page() {
       name: string;
       description: string;
       porcentaje: number;
-    }[] // ← 👈 nuevo
+    }[], // ← 👈 nuevo
+    horario: string | null,
+    espacios: string | null
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -334,6 +338,8 @@ export default function Page() {
             courseTypeId, // <-- incluir si tu modelo lo soporta
             isActive,
             individualPrice,
+            horario,
+            espacios,
           }),
         });
 
@@ -568,11 +574,10 @@ export default function Page() {
             setShowProgramCourses(false);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            !showProgramCourses
+          className={`rounded-md px-4 py-2 ${!showProgramCourses
               ? 'bg-primary text-white'
               : 'bg-gray-800 text-gray-300'
-          }`}
+            }`}
         >
           Cursos Independientes
         </button>
@@ -581,11 +586,10 @@ export default function Page() {
             setShowProgramCourses(true);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            showProgramCourses
+          className={`rounded-md px-4 py-2 ${showProgramCourses
               ? 'bg-primary text-background'
               : 'bg-gray-800 text-gray-300'
-          }`}
+            }`}
         >
           Cursos en Programas
         </button>
@@ -716,6 +720,10 @@ export default function Page() {
               prev ? { ...prev, coverVideoCourseKey: val } : null
             );
           }}
+          horario={horario}
+          setHorario={setHorario}
+          espacios={espacios}
+          setEspacios={setEspacios}
         />
       )}
     </div>

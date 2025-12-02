@@ -7,6 +7,7 @@ import {
   lessons,
   typeActi,
   userActivitiesProgress,
+  users,
 } from '~/server/db/schema';
 
 // Interfaces
@@ -47,6 +48,7 @@ export interface ActivityDetails {
       title: string | null;
       description: string | null;
       instructor: string | null;
+      instructorName?: string | null;
     };
   };
   fechaMaximaEntrega: Date | null;
@@ -119,6 +121,7 @@ export const getActivityById = async (activityId: number) => {
           courseTitle: courses.title,
           courseDescription: courses.description,
           courseInstructor: courses.instructor,
+          courseInstructorName: users.name,
         },
         fechaMaximaEntrega: activities.fechaMaximaEntrega,
       })
@@ -126,6 +129,7 @@ export const getActivityById = async (activityId: number) => {
       .leftJoin(typeActi, eq(activities.typeid, typeActi.id))
       .leftJoin(lessons, eq(activities.lessonsId, lessons.id))
       .leftJoin(courses, eq(lessons.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructor, users.id))
       .where(eq(activities.id, activityId))
       .limit(1);
 
@@ -169,6 +173,7 @@ export const getActivitiesByLessonId = async (
           courseTitle: courses.title,
           courseDescription: courses.description,
           courseInstructor: courses.instructor,
+          courseInstructorName: users.name,
         },
         fechaMaximaEntrega: activities.fechaMaximaEntrega,
       })
@@ -176,6 +181,7 @@ export const getActivitiesByLessonId = async (
       .leftJoin(typeActi, eq(activities.typeid, typeActi.id))
       .leftJoin(lessons, eq(activities.lessonsId, lessons.id))
       .leftJoin(courses, eq(lessons.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructor, users.id))
       .where(eq(activities.lessonsId, lessonId));
 
     return actividades.map((actividad) => ({
@@ -199,6 +205,7 @@ export const getActivitiesByLessonId = async (
           title: actividad.lesson.courseTitle,
           description: actividad.lesson.courseDescription,
           instructor: actividad.lesson.courseInstructor,
+          instructorName: actividad.lesson.courseInstructorName ?? null,
         },
       },
       fechaMaximaEntrega: actividad.fechaMaximaEntrega ?? null,
@@ -241,8 +248,7 @@ export const updateActivity = async (
       .where(eq(activities.id, activityId));
   } catch (error) {
     throw new Error(
-      `Error al actualizar la actividad: ${
-        error instanceof Error ? error.message : 'Error desconocido'
+      `Error al actualizar la actividad: ${error instanceof Error ? error.message : 'Error desconocido'
       }`
     );
   }

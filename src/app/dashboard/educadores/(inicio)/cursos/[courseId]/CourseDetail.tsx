@@ -430,6 +430,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       createdAt?: string;
     }[]
   >([]);
+  const [editHorario, setEditHorario] = useState<string | null>(null);
+  const [editEspacios, setEditEspacios] = useState<string | null>(null);
   void videosByMeetingId;
 
   const { user } = useUser(); // Ya está dentro del componente
@@ -638,10 +640,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const videos: VideoIdxItem[] =
           isRecord(raw) &&
-          Array.isArray((raw as Record<string, unknown>).videos)
+            Array.isArray((raw as Record<string, unknown>).videos)
             ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-                isVideoIdxItem
-              )
+              isVideoIdxItem
+            )
             : [];
 
         setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
@@ -786,6 +788,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
         parametros,
+        horario: editHorario,
+        espacios: editEspacios,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -1167,11 +1171,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
+                    className={`size-8 border ${selectedColor === '#FFFFFF'
                         ? 'border-black'
                         : 'border-white'
-                    } `}
+                      } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -1222,9 +1225,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Curso:
                   </h2>
@@ -1234,9 +1236,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Categoría:
                   </h2>
@@ -1247,28 +1248,53 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {course.categoryid}
                   </Badge>
                 </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
+                  >
+                    Horario:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  >
+                    {course.horario ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
+                  >
+                    Espacios:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  >
+                    {course.espacios ?? 'No asignado'}
+                  </Badge>
+                </div>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1285,9 +1311,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     educador:
                   </h2>
@@ -1328,9 +1353,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Nivel:
                   </h2>
@@ -1343,9 +1367,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Modalidad:
                   </h2>
@@ -1358,9 +1381,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1389,19 +1411,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${
-                      course.isActive
+                    className={`ml-1 w-fit border ${course.isActive
                         ? 'border-green-500 text-green-500'
                         : 'border-red-500 text-red-500'
-                    } bg-background hover:bg-black/70`}
+                      } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -1555,6 +1575,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setCoverVideoCourseKey={setEditCoverVideoCourseKey}
         individualPrice={individualPrice}
         setIndividualPrice={setIndividualPrice}
+        horario={editHorario}
+        setHorario={setEditHorario}
+        espacios={editEspacios}
+        setEspacios={setEditEspacios}
       />
     </div>
   );

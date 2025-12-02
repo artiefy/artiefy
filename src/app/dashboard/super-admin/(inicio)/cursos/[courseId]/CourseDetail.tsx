@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -49,8 +48,11 @@ interface Course {
   title: string;
   description: string;
   categoryid: string;
+  categoryName?: string;
   nivelid: string; // Replaced  with nivelid
+  nivelName?: string;
   modalidadesid: string;
+  modalidadesName?: string;
   instructor: string;
   coverImageKey: string;
   creatorId: string;
@@ -65,10 +67,21 @@ interface Course {
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
   meetings?: ScheduledMeeting[];
+  horario?: string | null;
+  espacios?: string | null;
 }
 interface Materia {
   id: number;
   title: string;
+}
+
+interface VideoData {
+  videos?: unknown[];
+}
+
+interface SyncResponse {
+  error?: string;
+  hasMore?: boolean;
 }
 
 // Definir la interfaz de las propiedades del componente
@@ -92,9 +105,10 @@ type UIMeeting = ScheduledMeeting & {
   recordingContentUrl?: string;
   videoUrl?: string;
   video_key?: string;
-  video_key_2?: string; // ✅ nuevo
-  videoUrl2?: string; // ✅ nuevo opcional
+  video_key_2?: string;     // ✅ nuevo
+  videoUrl2?: string;       // ✅ nuevo opcional
 };
+
 
 // Add these interfaces after the existing interfaces
 interface Educator {
@@ -183,6 +197,7 @@ interface VideoIdxItem {
   isSecondary?: boolean;
 }
 
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
@@ -266,22 +281,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isSyncingVideos, setIsSyncingVideos] = useState(false);
-  const [videos, setVideos] = useState<any[]>([]);
+  const [_videos, setVideos] = useState<unknown[]>([]);
+  const [editHorario, setEditHorario] = useState<string | null>(null);
+  const [editEspacios, setEditEspacios] = useState<string | null>(null);
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
   async function fetchVideosList(aadUserId: string = MAIN_AAD_USER_ID) {
     if (!aadUserId) return;
 
-    const res = await fetch(
-      `/api/super-admin/teams/video?userId=${aadUserId}`,
-      {
-        cache: 'no-store',
-      }
-    );
+    const res = await fetch(`/api/super-admin/teams/video?userId=${aadUserId}`, {
+      cache: 'no-store',
+    });
 
-    const data = await res.json();
-    setVideos(data.videos ?? []);
+    const data = (await res.json()) as VideoData;
+    const videoList = Array.isArray(data.videos) ? data.videos : [];
+    setVideos(videoList);
   }
 
   async function handleSyncVideos(aadUserId: string = MAIN_AAD_USER_ID) {
@@ -295,13 +310,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
       });
 
-      const syncData = await syncRes.json();
-      if (!syncRes.ok) throw new Error(syncData?.error ?? 'Sync error');
+      const syncData = (await syncRes.json()) as SyncResponse;
+      if (!syncRes.ok) {
+        const errorMsg = typeof syncData.error === 'string' ? syncData.error : 'Sync error';
+        throw new Error(errorMsg);
+      }
 
       await fetchVideosList(aadUserId);
 
       let rounds = 0;
-      while (syncData.hasMore && rounds < 4) {
+      while (syncData.hasMore === true && rounds < 4) {
         rounds += 1;
         const r = await fetch('/api/super-admin/teams/video/sync', {
           method: 'POST',
@@ -309,19 +327,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           body: JSON.stringify({ userId: aadUserId, maxUploads: 3 }),
         });
 
-        const d = await r.json();
+        const d = (await r.json()) as SyncResponse;
         if (!r.ok) break;
 
         await fetchVideosList(aadUserId);
-        if (!d.hasMore) break;
+        if (d.hasMore !== true) break;
       }
     } catch (e) {
-      console.error(e);
+      const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
+      console.error(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSyncingVideos(false);
     }
   }
-
   const { user } = useUser(); // Ya está dentro del componente
 
   // Estado para meetings ya poblados desde backend
@@ -376,7 +395,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             v &&
             typeof v === 'object' &&
             typeof (v as { toISOString?: () => string }).toISOString ===
-              'function'
+            'function'
           ) {
             try {
               return (v as { toISOString: () => string }).toISOString();
@@ -454,9 +473,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const errorMessage =
           typeof responseData === 'object' &&
-          responseData !== null &&
-          'error' in responseData &&
-          typeof (responseData as { error?: unknown }).error === 'string'
+            responseData !== null &&
+            'error' in responseData &&
+            typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
             : 'Error al matricular';
 
@@ -591,18 +610,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         // Obtener también del coorganizador si existe
         const coOrganizerIds = course?.meetings
-          ?.map((m) => m.joinUrl)
+          ?.map(m => m.joinUrl)
           .filter(Boolean)
-          .map((url) => {
+          .map(url => {
             // Extraer ID de organizador alternativo de la URL si existe
             const match = /organizer=([^&]+)/.exec(url ?? '');
             return match?.[1];
           })
           .filter((id, idx, arr) => id && arr.indexOf(id) === idx);
 
-        const userIds = [organizerAadUserId, ...(coOrganizerIds ?? [])].filter(
-          Boolean
-        );
+        const userIds = [organizerAadUserId, ...(coOrganizerIds ?? [])].filter(Boolean);
 
         const allVideos: VideoIdxItem[] = [];
 
@@ -618,10 +635,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           const videos: VideoIdxItem[] =
             isRecord(raw) &&
-            Array.isArray((raw as Record<string, unknown>).videos)
+              Array.isArray((raw as Record<string, unknown>).videos)
               ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-                  isVideoIdxItem
-                )
+                isVideoIdxItem
+              )
               : [];
 
           allVideos.push(...videos);
@@ -629,24 +646,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         // Deduplicar por videoKey
         const uniqueVideos = Array.from(
-          new Map(allVideos.map((v) => [v.videoKey, v])).values()
+          new Map(allVideos.map(v => [v.videoKey, v])).values()
         );
 
         setVideosRaw(uniqueVideos);
 
-        console.log(
-          `🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`
-        );
+        console.log(`🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`);
         for (const v of uniqueVideos) {
           console.log(
             `  • videoKey=${v.videoKey} createdAt=${v.createdAt ?? '-'} meetingId=${v.meetingId || '-'}`
           );
         }
 
-        const map = new Map<
-          string,
-          { videoKey: string; videoUrl: string; createdAt?: string }
-        >();
+        const map = new Map
+          <string,
+            { videoKey: string; videoUrl: string; createdAt?: string }
+          >();
         for (const v of uniqueVideos) {
           const prev = map.get(v.meetingId);
           if (!prev) {
@@ -773,6 +788,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
         parametros,
+        horario: editHorario,
+        espacios: editEspacios,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -898,6 +915,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
+    setEditHorario(course.horario ?? null);
+    setEditEspacios(course.espacios ?? null);
     setIsModalOpen(true);
   };
 
@@ -1054,222 +1073,188 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     onSaveChange,
     isUpdating,
   }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const currentEducator = educators.find((e) => e.id === course.instructor);
-    const displayEducator = educators.find(
-      (e) => e.id === (selectedInstructor || course.instructor)
-    );
-    void currentEducator;
+      const [isOpen, setIsOpen] = useState(false);
+      const [searchTerm, setSearchTerm] = useState('');
+      const currentEducator = educators.find((e) => e.id === course.instructor);
+      const displayEducator = educators.find(
+        (e) => e.id === (selectedInstructor ?? course.instructor)
+      );
+      void currentEducator;
 
-    // Filtrar educadores por búsqueda
-    const filteredEducators = educators.filter(
-      (educator) =>
-        educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        educator.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      // Filtrar educadores por búsqueda
+      const filteredEducators = educators.filter((educator) =>
+        (educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (educator.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      );
 
-    // Función para copiar al portapapeles
-    const copyToClipboard = (text: string, type: string) => {
-      navigator.clipboard.writeText(text);
-      toast.success(`${type} copiado al portapapeles`);
-    };
+      // Función para copiar al portapapeles
+      const copyToClipboard = (text: string, type: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success(`${type} copiado al portapapeles`);
+      };
 
-    return (
-      <div className="flex flex-col gap-3">
-        {/* Dropdown personalizado */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="border-primary bg-background text-primary hover:border-primary/60 focus:border-primary focus:ring-primary/20 w-full rounded-md border p-3 text-left text-sm transition-colors focus:ring-2 focus:outline-none"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">
-                  {displayEducator?.name ?? 'Sin nombre'}
-                </p>
-                {displayEducator?.email && (
-                  <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
-                    <span>✉️</span>
-                    <span>{displayEducator.email}</span>
-                  </p>
-                )}
-                {!displayEducator?.email && (
-                  <p className="text-primary/50 mt-1 text-xs italic">
-                    Sin correo disponible
-                  </p>
-                )}
-              </div>
-              <svg
-                className={`h-5 w-5 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </button>
-
-          {/* Lista desplegable */}
-          {isOpen && (
-            <>
-              {/* Overlay para cerrar al hacer clic afuera */}
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsOpen(false)}
-              />
-
-              <div className="bg-background border-primary absolute z-20 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
-                {/* Campo de búsqueda */}
-                <div className="border-primary/10 border-b p-2">
-                  <input
-                    type="text"
-                    placeholder="Buscar por nombre o correo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-primary/30 bg-background text-primary placeholder:text-primary/50 focus:border-primary focus:ring-primary/20 w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                    onClick={(e) => e.stopPropagation()}
-                  />
+      return (
+        <div className="flex flex-col gap-3">
+          {/* Dropdown personalizado */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="border-primary bg-background text-primary w-full rounded-md border p-3 text-left text-sm transition-colors hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="font-medium">{displayEducator?.name ?? 'Sin nombre'}</p>
+                  {displayEducator?.email && (
+                    <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
+                      <span>✉️</span>
+                      <span>{displayEducator.email}</span>
+                    </p>
+                  )}
+                  {!displayEducator?.email && (
+                    <p className="text-primary/50 mt-1 text-xs italic">
+                      Sin correo disponible
+                    </p>
+                  )}
                 </div>
+                <svg
+                  className={`h-5 w-5 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
 
-                {/* Lista de educadores */}
-                <div className="max-h-60 overflow-auto">
-                  {filteredEducators.length > 0 ? (
-                    filteredEducators.map((educator) => (
-                      <div
-                        key={educator.id}
-                        className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 ${
-                          educator.id ===
-                          (selectedInstructor || course.instructor)
-                            ? 'bg-primary/20'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectEducator(educator.id);
-                              setIsOpen(false);
-                              setSearchTerm('');
-                            }}
-                            className="text-primary flex-1 text-left"
-                          >
-                            <p className="text-sm font-medium">
-                              {educator.name}
-                            </p>
-                            {educator.email ? (
-                              <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
-                                <span>✉️</span>
-                                <span>{educator.email}</span>
-                              </p>
-                            ) : (
-                              <p className="text-primary/50 mt-1 text-xs italic">
-                                Sin correo
-                              </p>
-                            )}
-                          </button>
+            {/* Lista desplegable */}
+            {isOpen && (
+              <>
+                {/* Overlay para cerrar al hacer clic afuera */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsOpen(false)}
+                />
 
-                          {/* Botones de copiar */}
-                          <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="bg-background border-primary absolute z-20 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
+                  {/* Campo de búsqueda */}
+                  <div className="border-primary/10 border-b p-2">
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre o correo..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border-primary/30 bg-background text-primary placeholder:text-primary/50 w-full rounded border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {/* Lista de educadores */}
+                  <div className="max-h-60 overflow-auto">
+                    {filteredEducators.length > 0 ? (
+                      filteredEducators.map((educator) => (
+                        <div
+                          key={educator.id}
+                          className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 
+                            ${educator.id === (selectedInstructor ?? course.instructor)
+                              ? 'bg-primary/20'
+                              : ''
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyToClipboard(educator.name ?? '', 'Nombre');
+                              onClick={() => {
+                                onSelectEducator(educator.id);
+                                setIsOpen(false);
+                                setSearchTerm('');
                               }}
-                              className="text-primary/60 hover:text-primary hover:bg-primary/10 rounded p-1"
-                              title="Copiar nombre"
+                              className="text-primary flex-1 text-left"
                             >
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                />
-                              </svg>
+                              <p className="font-medium text-sm">{educator.name}</p>
+                              {educator.email ? (
+                                <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
+                                  <span>✉️</span>
+                                  <span>{educator.email}</span>
+                                </p>
+                              ) : (
+                                <p className="text-primary/50 mt-1 text-xs italic">
+                                  Sin correo
+                                </p>
+                              )}
                             </button>
-                            {educator.email && (
+
+                            {/* Botones de copiar */}
+                            <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  copyToClipboard(
-                                    educator.email ?? '',
-                                    'Correo'
-                                  );
+                                  copyToClipboard(educator.name ?? '', 'Nombre');
                                 }}
-                                className="text-primary/60 hover:text-primary hover:bg-primary/10 rounded p-1"
-                                title="Copiar correo"
+                                className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
+                                title="Copiar nombre"
                               >
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                  />
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
                               </button>
-                            )}
+                              {educator.email && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(educator.email ?? '', 'Correo');
+                                  }}
+                                  className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
+                                  title="Copiar correo"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-primary/50 p-4 text-center text-sm">
+                        No se encontraron educadores
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-primary/50 p-4 text-center text-sm">
-                      No se encontraron educadores
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Botón de guardado */}
-        {selectedInstructor && selectedInstructor !== course.instructor && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSaveChange}
-            className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
-            disabled={isUpdating}
-          >
-            {isUpdating ? (
-              <>
-                <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <span className="mr-2">💾</span>
-                Guardar cambio de educador
               </>
             )}
-          </Button>
-        )}
-      </div>
-    );
-  };
+          </div>
+
+          {/* Botón de guardado */}
+          {selectedInstructor && selectedInstructor !== course.instructor && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSaveChange}
+              className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">💾</span>
+                  Guardar cambio de educador
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      );
+    };
   const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(
     /\/+$/,
     ''
@@ -1375,7 +1360,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     const [first, second] = candidates;
 
-    const alreadyHasFirst = Boolean(meeting.video_key || meeting.videoUrl);
+    const alreadyHasFirst = Boolean(meeting.video_key ?? meeting.videoUrl);
     const alreadyHasSecond = Boolean(meeting.video_key_2);
 
     // Si no tiene nada, setear ambos (si existen)
@@ -1405,11 +1390,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return meeting;
   });
 
+
   const meetingsForList: UIMeeting[] = [...enrichedMeetings].sort((a, b) => {
     const aMs = toMsFlexible(a.startDateTime);
     const bMs = toMsFlexible(b.startDateTime);
     return (aMs || 0) - (bMs || 0);
   });
+
 
   // Renderizar el componente
   return (
@@ -1450,29 +1437,33 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-            <CardTitle className="text-primary text-xl font-bold sm:text-2xl">
-              Curso: {course.title}
-            </CardTitle>
-            <div className="flex flex-col">
+          <CardHeader className="grid w-full grid-cols-1 gap-4 p-0 md:grid-cols-2 md:gap-8">
+            <div>
+              <CardTitle className="text-primary text-2xl font-bold md:text-3xl lg:text-4xl">
+                {course.title}
+              </CardTitle>
+              <p className={`mt-2 text-xs font-semibold uppercase tracking-widest md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/60' : 'text-white/60'}`}>
+                Detalles Completos del Curso
+              </p>
+            </div>
+            <div className="flex flex-col justify-start gap-3">
               <Label
-                className={
-                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                }
+                className={`text-xs font-bold uppercase tracking-wider md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                  }`}
               >
-                Seleccione el color deseado
+                🎨 Tema del Curso
               </Label>
-              <div className="mt-2 flex space-x-2">
+              <div className="flex gap-2 flex-wrap">
                 {predefinedColors.map((color) => (
-                  <Button
+                  <button
                     key={color}
-                    style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
-                    } `}
                     onClick={() => handlePredefinedColorChange(color)}
+                    style={{ backgroundColor: color }}
+                    className={`size-10 rounded-lg border-2 transition-all duration-300 hover:scale-110 ${selectedColor === color
+                      ? `border-${selectedColor === '#FFFFFF' ? 'black' : 'white'} ring-2 ring-offset-2 ring-primary`
+                      : 'border-gray-300 hover:border-gray-500'
+                      }`}
+                    title={`Cambiar tema a ${color}`}
                   />
                 ))}
               </div>
@@ -1492,29 +1483,34 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   quality={75}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+              <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                 <Button
                   onClick={handleEnrollAndRedirect}
-                  className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto"
+                  className="w-full bg-green-500 px-3 py-2 text-xs font-semibold hover:bg-green-600 md:px-4 md:py-2.5 md:text-sm"
                 >
-                  Visualizar curso
+                  👁️ Ver Curso
                 </Button>
                 <Button
                   onClick={handleEditCourse}
-                  className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
+                  className="w-full bg-yellow-500 px-3 py-2 text-xs font-semibold text-white hover:bg-yellow-600 md:px-4 md:py-2.5 md:text-sm"
                 >
-                  Editar curso
+                  ✏️ Editar
                 </Button>
-                <Button className="border-primary bg-primary hover:bg-primary/90 text-white">
+                <Button className="w-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 md:px-4 md:py-2.5 md:text-sm">
                   <Link
                     href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
                   >
-                    Estadisticas
+                    📊 Stats
                   </Link>
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Eliminar</Button>
+                    <Button
+                      variant="destructive"
+                      className="w-full px-3 py-2 text-xs font-semibold md:px-4 md:py-2.5 md:text-sm"
+                    >
+                      🗑️ Eliminar
+                    </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -1544,76 +1540,131 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <h2 className="text-primary text-xl font-bold sm:text-2xl">
                 Información del curso
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
                   >
-                    Curso:
+                    Nombre del Curso
                   </h2>
-                  <h1 className="text-primary text-xl font-bold sm:text-2xl">
+                  <h1 className="text-primary text-lg font-bold md:text-xl">
                     {course.title}
                   </h1>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
                   >
-                    Categoría:
+                    Categoría
                   </h2>
                   <Badge
                     variant="outline"
                     className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
                   >
-                    {course.categoryid}
+                    {course.categoryName ?? course.categoryid}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Nivel
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.nivelName ?? course.nivelid}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Modalidad
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.modalidadesName ?? course.modalidadesid}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Horario
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.horario ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Espacios
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.espacios ?? 'No asignado'}
                   </Badge>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                    }`}
                 >
-                  Descripción:
+                  Descripción del Curso
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-justify text-sm leading-relaxed md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/90' : 'text-white/90'
+                    }`}
                 >
                   {course.description}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                    }`}
                 >
-                  Precio Individual:
+                  Precio Individual
                 </h2>
-                <Badge
-                  variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                >
-                  {individualPrice !== null
-                    ? `$${individualPrice}`
-                    : 'No asignado'}
-                </Badge>
+                <div className="inline-block">
+                  <Badge
+                    variant="outline"
+                    className={`border-2 px-4 py-2 text-base font-semibold ${selectedColor === '#FFFFFF'
+                      ? 'border-black/30 text-black'
+                      : 'border-white/30 text-white'
+                      } bg-background/50`}
+                  >
+                    {individualPrice !== null
+                      ? `$${individualPrice.toLocaleString()}`
+                      : 'No asignado'}
+                  </Badge>
+                </div>
               </div>
 
               <div className="space-y-6">
                 {/* Educador - Sección destacada */}
-                <div className="border-primary/20 bg-background/50 rounded-lg border p-4 backdrop-blur-sm">
+                <div className="rounded-lg border-2 border-primary/30 bg-background/70 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:bg-background/90">
                   <h2
-                    className={`mb-3 text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`mb-4 text-sm font-bold uppercase tracking-wider md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/80' : 'text-white/80'
+                      }`}
                   >
                     👨‍🏫 Educador Asignado
                   </h2>
@@ -1627,113 +1678,35 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   />
                 </div>
 
-                {/* Grid de información del curso */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {/* Nivel */}
-                  <div className="group border-primary/20 bg-background/30 hover:border-primary/40 hover:bg-background/50 rounded-lg border p-4 transition-all">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">📊</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${
-                          selectedColor === '#FFFFFF'
-                            ? 'text-black'
-                            : 'text-white'
-                        }`}
-                      >
-                        Nivel
-                      </h2>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
-                    >
-                      {course.nivelid}
-                    </Badge>
-                  </div>
-
-                  {/* Modalidad */}
-                  <div className="group border-primary/20 bg-background/30 hover:border-primary/40 hover:bg-background/50 rounded-lg border p-4 transition-all">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">🎯</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${
-                          selectedColor === '#FFFFFF'
-                            ? 'text-black'
-                            : 'text-white'
-                        }`}
-                      >
-                        Modalidad
-                      </h2>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary w-full justify-center py-2 text-sm hover:bg-black/70"
-                    >
-                      {course.modalidadesid}
-                    </Badge>
-                  </div>
-
-                  {/* Tipos de curso */}
-                  <div className="group border-primary/20 bg-background/30 hover:border-primary/40 hover:bg-background/50 rounded-lg border p-4 transition-all sm:col-span-2 lg:col-span-1">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xl">🏷️</span>
-                      <h2
-                        className={`text-sm font-semibold sm:text-base ${
-                          selectedColor === '#FFFFFF'
-                            ? 'text-black'
-                            : 'text-white'
-                        }`}
-                      >
-                        Tipos de Curso
-                      </h2>
-                    </div>
-                    {course.courseTypes && course.courseTypes.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {course.courseTypes.map((type) => (
-                          <Badge
-                            key={type.id}
-                            variant="outline"
-                            className="border-primary bg-background text-primary hover:bg-black/70"
-                          >
-                            {type.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="border-primary bg-background text-primary w-full justify-center py-2 text-sm opacity-50"
-                      >
-                        No especificado
-                      </Badge>
-                    )}
-                  </div>
-                </div>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+                {/* Estado */}
+                <div className="space-y-3">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
                   >
-                    Estado:
+                    Estado del Curso
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${
-                      course.isActive
-                        ? 'border-green-500 text-green-500'
-                        : 'border-red-500 text-red-500'
-                    } bg-background hover:bg-black/70`}
+                    className={`inline-block border-2 px-4 py-2 font-semibold text-base transition-all ${course.isActive
+                      ? 'border-green-500/70 text-green-600 bg-green-50/20'
+                      : 'border-red-500/70 text-red-600 bg-red-50/20'
+                      }`}
                   >
-                    {course.isActive ? 'Activo' : 'Inactivo'}
+                    {course.isActive ? '✓ Activo' : '✕ Inactivo'}
                   </Badge>
                 </div>
-                <div className="materias-container col-span-1 sm:col-span-2">
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
-                    Materias:
-                  </h3>
+
+                {/* Materias */}
+                <div className="space-y-3">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Materias Asociadas
+                  </h2>
                   {materias.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {[
@@ -1742,14 +1715,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <Badge
                           key={materia.id}
                           variant="secondary"
-                          className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+                          className={`bg-gradient-to-r ${getBadgeGradient()} px-3 py-1.5 text-white text-xs md:text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg`}
                         >
                           {materia.title}
                         </Badge>
                       ))}
                     </div>
                   ) : (
-                    <p>No hay materias asociadas a este curso.</p>
+                    <p className={`text-sm italic ${selectedColor === '#FFFFFF' ? 'text-black/50' : 'text-white/50'}`}>
+                      No hay materias asociadas
+                    </p>
                   )}
                 </div>
               </div>
@@ -1764,24 +1739,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <>
             {/* NUEVO BLOQUE PARA SIMULAR CLASES EN TEAMS */}
             <div className="mt-12 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-primary text-xl font-bold">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <h2 className="text-primary text-xl font-bold md:text-2xl">
                   Clases agendadas
                 </h2>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row w-full md:w-auto">
                   <Button
-                    onClick={() => void handleSyncVideos()} // 👈 aquí
+                    onClick={() => void handleSyncVideos()}
                     disabled={isSyncingVideos}
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
                   >
-                    {isSyncingVideos
-                      ? '🔄 Sincronizando...'
-                      : '🎥 Sincronizar Videos'}
+                    {isSyncingVideos ? '🔄 Sincronizando...' : '🎥 Sincronizar Videos'}
                   </Button>
 
                   <Button
                     onClick={() => setIsMeetingModalOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-black"
+                    className="bg-primary hover:bg-primary/90 text-black w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
                   >
                     + Agendar clase en Teams
                   </Button>
@@ -1892,6 +1865,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setCoverVideoCourseKey={setEditCoverVideoCourseKey}
         individualPrice={individualPrice}
         setIndividualPrice={setIndividualPrice}
+        horario={editHorario}
+        setHorario={setEditHorario}
+        espacios={editEspacios}
+        setEspacios={setEditEspacios}
       />
     </div>
   );

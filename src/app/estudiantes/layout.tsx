@@ -1,9 +1,9 @@
 import React from 'react';
 
 import Providers from '~/app/providers';
-import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
+import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
 import '~/styles/ticketSupportButton.css';
 

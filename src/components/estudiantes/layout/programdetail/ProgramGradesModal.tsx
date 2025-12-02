@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 
 import { FaTrophy } from 'react-icons/fa';
 
@@ -38,12 +37,8 @@ export function ProgramGradesModal({
   finalGrade,
   isLoading,
   coursesGrades = [],
-  programId,
-  hasAllMateriasPassed = false,
-  materias = [],
 }: GradeModalProps & {
   programId?: string | number;
-  hasAllMateriasPassed?: boolean;
   materias?: Materia[];
 }) {
   return (
@@ -67,9 +62,8 @@ export function ProgramGradesModal({
               <Icons.spinner className="text-background mx-auto h-6 w-6" />
             ) : (
               <span
-                className={`text-3xl font-bold ${
-                  finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
-                }`}
+                className={`text-3xl font-bold ${finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
+                  }`}
               >
                 {formatScore(finalGrade)}
               </span>
@@ -100,11 +94,10 @@ export function ProgramGradesModal({
                     </div>
                     <div className="text-center">
                       <span
-                        className={`font-semibold ${
-                          course.finalGrade >= 3
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
+                        className={`font-semibold ${course.finalGrade >= 3
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                          }`}
                       >
                         {formatScore(course.finalGrade)}
                       </span>

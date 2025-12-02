@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+
 import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 
 export default function DashboardLayout({

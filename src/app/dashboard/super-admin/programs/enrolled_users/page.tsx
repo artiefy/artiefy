@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,18 +7,12 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import {
-  Loader2,
-  Mail,
-  MessageCircle,
-  UserPlus,
-  X,
-  ChevronDown,
-} from 'lucide-react';
+import { ChevronDown, Loader2, Mail, MessageCircle, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
+
 import { AdvancedFilterMenu } from './AdvancedFilterMenu';
 
 // helpers
@@ -538,7 +532,7 @@ export default function EnrolledUsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [codigoPais, setCodigoPais] = useState('+57');
-  const [manualPhones, setManualPhones] = useState<string[]>([]);
+
   const [manualEmails, setManualEmails] = useState<string[]>([]);
   const [newManualPhone, setNewManualPhone] = useState('');
   const [newManualEmail, setNewManualEmail] = useState('');
@@ -1148,8 +1142,8 @@ export default function EnrolledUsersPage() {
       (especial ? labelForIndex(index) : `Cuota ${index + 1}`);
     const nro_pago = Number(
       row.nro_pago ??
-        row.nroPago ??
-        (especial ? nroPagoForIndex(index) : index + 1)
+      row.nroPago ??
+      (especial ? nroPagoForIndex(index) : index + 1)
     );
 
     try {
@@ -1595,50 +1589,50 @@ export default function EnrolledUsersPage() {
 
     const pagos = Array.isArray((json as { pagos?: unknown }).pagos)
       ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p): Pago => {
-          const r = p as Record<string, unknown>;
-          return {
-            concepto: typeof r.concepto === 'string' ? r.concepto : null,
-            nro_pago:
-              typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
-                ? r.nro_pago
-                : null,
-            nroPago:
-              typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
-                ? r.nroPago
-                : null,
-            fecha:
-              typeof r.fecha === 'string' ||
+        const r = p as Record<string, unknown>;
+        return {
+          concepto: typeof r.concepto === 'string' ? r.concepto : null,
+          nro_pago:
+            typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
+              ? r.nro_pago
+              : null,
+          nroPago:
+            typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
+              ? r.nroPago
+              : null,
+          fecha:
+            typeof r.fecha === 'string' ||
               typeof r.fecha === 'number' ||
               r.fecha instanceof Date
-                ? r.fecha
-                : null,
-            metodo: typeof r.metodo === 'string' ? r.metodo : null,
-            valor:
-              typeof r.valor === 'string' || typeof r.valor === 'number'
-                ? r.valor
-                : null,
+              ? r.fecha
+              : null,
+          metodo: typeof r.metodo === 'string' ? r.metodo : null,
+          valor:
+            typeof r.valor === 'string' || typeof r.valor === 'number'
+              ? r.valor
+              : null,
 
-            // 👇 campos del comprobante original
-            receiptUrl:
-              typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
-            receiptName:
-              typeof r.receiptName === 'string' ? r.receiptName : undefined,
+          // 👇 campos del comprobante original
+          receiptUrl:
+            typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
+          receiptName:
+            typeof r.receiptName === 'string' ? r.receiptName : undefined,
 
-            // 👇 NUEVOS: verificación + archivo verificado
-            receiptVerified:
-              typeof r.receiptVerified === 'boolean'
-                ? (r.receiptVerified as boolean)
-                : false,
-            verifiedReceiptUrl:
-              typeof r.verifiedReceiptUrl === 'string'
-                ? (r.verifiedReceiptUrl as string)
-                : undefined,
-            verifiedReceiptName:
-              typeof r.verifiedReceiptName === 'string'
-                ? (r.verifiedReceiptName as string)
-                : undefined,
-          };
-        })
+          // 👇 NUEVOS: verificación + archivo verificado
+          receiptVerified:
+            typeof r.receiptVerified === 'boolean'
+              ? (r.receiptVerified as boolean)
+              : false,
+          verifiedReceiptUrl:
+            typeof r.verifiedReceiptUrl === 'string'
+              ? (r.verifiedReceiptUrl as string)
+              : undefined,
+          verifiedReceiptName:
+            typeof r.verifiedReceiptName === 'string'
+              ? (r.verifiedReceiptName as string)
+              : undefined,
+        };
+      })
       : [];
 
     return pagos;
@@ -1861,25 +1855,25 @@ export default function EnrolledUsersPage() {
 
         const body = useTemplate
           ? {
-              to,
-              forceTemplate: true,
-              templateName: waSelectedTemplate,
-              languageCode:
-                selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
-              variables: waVariables,
-            }
+            to,
+            forceTemplate: true,
+            templateName: waSelectedTemplate,
+            languageCode:
+              selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+            variables: waVariables,
+          }
           : textOnly
             ? {
-                to,
-                text: textMessage,
-              }
+              to,
+              text: textMessage,
+            }
             : {
-                to,
-                text: textMessage,
-                ensureSession: true,
-                sessionTemplate: 'hello_world',
-                sessionLanguage: 'en_US',
-              };
+              to,
+              text: textMessage,
+              ensureSession: true,
+              sessionTemplate: 'hello_world',
+              sessionLanguage: 'en_US',
+            };
 
         const resp = await fetch('/api/super-admin/whatsapp', {
           method: 'POST',
@@ -1923,7 +1917,10 @@ export default function EnrolledUsersPage() {
     }
   };
 
-  const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
+  const totalColumns: Column[] = useMemo(
+    () => [...columnsWithOptions, ...dynamicColumns],
+    [columnsWithOptions, dynamicColumns]
+  );
   const [successMessage, setSuccessMessage] = useState('');
   void successMessage;
   const [searchFieldTerm, setSearchFieldTerm] = useState('');
@@ -2029,11 +2026,11 @@ export default function EnrolledUsersPage() {
           prev.map((s) =>
             s.id === userId
               ? {
-                  ...s,
-                  carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
-                    ? 'no verificado'
-                    : s.carteraStatus,
-                }
+                ...s,
+                carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
+                  ? 'no verificado'
+                  : s.carteraStatus,
+              }
               : s
           )
         );
@@ -2334,7 +2331,7 @@ export default function EnrolledUsersPage() {
 
           const computedByDate: 'activo' | 'inactivo' =
             s.subscriptionEndDate &&
-            new Date(s.subscriptionEndDate) >= new Date()
+              new Date(s.subscriptionEndDate) >= new Date()
               ? 'activo'
               : 'inactivo';
 
@@ -2358,10 +2355,10 @@ export default function EnrolledUsersPage() {
             // Aseguramos que subscriptionEndDate sea string o null (no undefined)
             subscriptionEndDate:
               typeof s.subscriptionEndDate === 'string' &&
-              s.subscriptionEndDate.trim() !== ''
+                s.subscriptionEndDate.trim() !== ''
                 ? s.subscriptionEndDate
                 : Object.prototype.toString.call(s.subscriptionEndDate) ===
-                    '[object Date]'
+                  '[object Date]'
                   ? (s.subscriptionEndDate as unknown as Date).toISOString()
                   : s.subscriptionEndDate != null
                     ? String(s.subscriptionEndDate)
@@ -2509,6 +2506,8 @@ export default function EnrolledUsersPage() {
         `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
+      void showWhatsAppModal;
+
 
       // ✅ Cerrar el modal después de crear el usuario
       setShowCreateForm(false);
@@ -2568,8 +2567,8 @@ export default function EnrolledUsersPage() {
         .filter((student) =>
           selectedPrograms.length
             ? (student.programTitles ?? []).some((t) =>
-                selectedPrograms.includes(String(t).trim())
-              )
+              selectedPrograms.includes(String(t).trim())
+            )
             : true
         )
 
@@ -2719,13 +2718,13 @@ export default function EnrolledUsersPage() {
         .filter((s) =>
           filters.purchaseDateFrom
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
-              filters.purchaseDateFrom
+            filters.purchaseDateFrom
             : true
         )
         .filter((s) =>
           filters.purchaseDateTo
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
-              filters.purchaseDateTo
+            filters.purchaseDateTo
             : true
         )
 
@@ -2811,7 +2810,6 @@ export default function EnrolledUsersPage() {
     );
   };
 
-  // ✅ Generar opciones únicas para TODOS los estudiantes (para filtros avanzados)
   const columnFilterOptions = useMemo(() => {
     const options: Record<string, (string | null | undefined)[]> = {};
 
@@ -2827,7 +2825,7 @@ export default function EnrolledUsersPage() {
     });
 
     return options;
-  }, [students]);
+  }, [students, totalColumns]);
 
   const sortedStudents = getFilteredSortedStudents();
   // — Hooks para infinite scroll
@@ -3008,8 +3006,8 @@ export default function EnrolledUsersPage() {
       purchaseDate: updatedStudent.purchaseDate,
       subscriptionEndDate: updatedStudent.subscriptionEndDate
         ? new Date(updatedStudent.subscriptionEndDate)
-            .toISOString()
-            .split('T')[0]
+          .toISOString()
+          .split('T')[0]
         : null,
 
       // 🔽 AHORA los de inscripción (users.*)
@@ -3427,15 +3425,15 @@ export default function EnrolledUsersPage() {
             {Object.keys(advancedFilters).some(
               (k) => (advancedFilters[k]?.length ?? 0) > 0
             ) && (
-              <button
-                type="button"
-                onClick={() => setAdvancedFilters({})}
-                className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
-                title="Limpiar filtros avanzados"
-              >
-                ✓ Limpiar filtros avanzados
-              </button>
-            )}
+                <button
+                  type="button"
+                  onClick={() => setAdvancedFilters({})}
+                  className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
+                  title="Limpiar filtros avanzados"
+                >
+                  ✓ Limpiar filtros avanzados
+                </button>
+              )}
           </div>
 
           <div
@@ -3493,11 +3491,10 @@ export default function EnrolledUsersPage() {
                                 });
                                 setAdvancedFilterOpen(col.id);
                               }}
-                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs transition ${
-                                (advancedFilters[col.id]?.length ?? 0) > 0
-                                  ? 'bg-blue-600 hover:bg-blue-700'
-                                  : 'bg-gray-700 hover:bg-gray-600'
-                              }`}
+                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition text-xs ${(advancedFilters[col.id]?.length ?? 0) > 0
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-gray-700 hover:bg-gray-600'
+                                }`}
                               title="Filtro avanzado"
                             >
                               <ChevronDown className="size-3.5" />
@@ -3545,8 +3542,8 @@ export default function EnrolledUsersPage() {
                               >
                                 {(columnFiltersMulti[col.id] || []).length ===
                                   0 && (
-                                  <span className="text-gray-400">Todos</span>
-                                )}
+                                    <span className="text-gray-400">Todos</span>
+                                  )}
                                 {(columnFiltersMulti[col.id] || []).map(
                                   (val) => (
                                     <span
@@ -3723,8 +3720,8 @@ export default function EnrolledUsersPage() {
                             | 'Al día'
                             | 'En cartera'
                             | 'No verificado' = esAlDiaBase
-                            ? 'Al día'
-                            : 'En cartera';
+                              ? 'Al día'
+                              : 'En cartera';
 
                           if (pagosMes.length > 0) {
                             const ultimo = [...pagosMes].sort(
@@ -3880,19 +3877,15 @@ export default function EnrolledUsersPage() {
           </div>
         </div>
 
-        {/* ✅ Componente de Filtro Avanzado tipo Excel */}
         {advancedFilterOpen && (
           <AdvancedFilterMenu
             columnId={advancedFilterOpen}
             columnLabel={
-              totalColumns.find((c) => c.id === advancedFilterOpen)?.label ||
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.label ??
               advancedFilterOpen
             }
             columnType={
-              (totalColumns.find((c) => c.id === advancedFilterOpen)?.type as
-                | 'text'
-                | 'date'
-                | 'select') || 'text'
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.type ?? 'text'
             }
             allValues={columnFilterOptions[advancedFilterOpen] || []}
             currentFilters={advancedFilters[advancedFilterOpen] || []}
@@ -3904,10 +3897,9 @@ export default function EnrolledUsersPage() {
               setAdvancedFilterOpen(null);
             }}
             onClose={() => setAdvancedFilterOpen(null)}
-            position={advancedFilterMenuPos || undefined}
+            position={advancedFilterMenuPos ?? undefined}
           />
         )}
-
         {/* Paginación 
 
        <div className="flex items-center gap-2 text-sm">
@@ -4142,21 +4134,19 @@ export default function EnrolledUsersPage() {
               <div className="mb-6 flex gap-2 border-b border-gray-700">
                 <button
                   onClick={() => setSendWhatsapp(false)}
-                  className={`px-4 py-2 font-semibold transition ${
-                    !sendWhatsapp
-                      ? 'border-b-2 border-blue-500 text-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 font-semibold transition ${!sendWhatsapp
+                    ? 'border-b-2 border-blue-500 text-blue-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
                   📧 Correo
                 </button>
                 <button
                   onClick={() => setSendWhatsapp(true)}
-                  className={`px-4 py-2 font-semibold transition ${
-                    sendWhatsapp
-                      ? 'border-b-2 border-green-500 text-green-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 font-semibold transition ${sendWhatsapp
+                    ? 'border-b-2 border-green-500 text-green-400'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                 >
                   📱 WhatsApp
                 </button>
@@ -4541,11 +4531,10 @@ export default function EnrolledUsersPage() {
                                   : [...prev, col.id]
                               )
                             }
-                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
-                              isSelected
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-300 hover:bg-gray-600'
-                            }`}
+                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${isSelected
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-300 hover:bg-gray-600'
+                              }`}
                           >
                             {col.label}
                           </div>
@@ -4779,8 +4768,8 @@ export default function EnrolledUsersPage() {
                     <span className="font-semibold">FIN SUSCRIPCIÓN: </span>
                     {currentUser.subscriptionEndDate
                       ? new Date(currentUser.subscriptionEndDate)
-                          .toISOString()
-                          .split('T')[0]
+                        .toISOString()
+                        .split('T')[0]
                       : '-'}
                   </p>
                   <p>
@@ -4801,13 +4790,13 @@ export default function EnrolledUsersPage() {
                     <strong className="text-red-600 dark:text-red-400">
                       {formatCOP(
                         price -
-                          editablePagos.slice(0, 12).reduce((sum, p) => {
-                            const v =
-                              typeof p?.valor === 'number'
-                                ? p.valor
-                                : Number(p?.valor ?? 0);
-                            return sum + (Number.isFinite(v) ? v : 0);
-                          }, 0)
+                        editablePagos.slice(0, 12).reduce((sum, p) => {
+                          const v =
+                            typeof p?.valor === 'number'
+                              ? p.valor
+                              : Number(p?.valor ?? 0);
+                          return sum + (Number.isFinite(v) ? v : 0);
+                        }, 0)
                       )}
                     </strong>
                   </span>
@@ -4958,11 +4947,10 @@ export default function EnrolledUsersPage() {
                             <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
                               <div className="flex flex-col items-center gap-1">
                                 <span
-                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                                    editablePagos[idx]?.receiptVerified
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-gray-500 text-white'
-                                  }`}
+                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-500 text-white'
+                                    }`}
                                   title="Estado de verificación del comprobante"
                                 >
                                   {editablePagos[idx]?.receiptVerified
@@ -5039,7 +5027,7 @@ export default function EnrolledUsersPage() {
                                       openReceiptPreview(
                                         editablePagos[idx].receiptUrl!,
                                         editablePagos[idx]?.receiptName ??
-                                          'Comprobante'
+                                        'Comprobante'
                                       )
                                     }
                                     className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700/60"
@@ -5075,11 +5063,10 @@ export default function EnrolledUsersPage() {
 
                                 {/* Badge de verificación (compacto) */}
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                    editablePagos[idx]?.receiptVerified
-                                      ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
-                                      : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
-                                  }`}
+                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
+                                    ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
+                                    : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                   title="Estado de verificación del comprobante"
                                 >
                                   <svg
@@ -5106,8 +5093,8 @@ export default function EnrolledUsersPage() {
                                     onClick={async () => {
                                       const nro_pago = Number(
                                         editablePagos[idx]?.nro_pago ??
-                                          editablePagos[idx]?.nroPago ??
-                                          idx + 1
+                                        editablePagos[idx]?.nroPago ??
+                                        idx + 1
                                       );
                                       const verifiedBy = clerkUser?.id ?? null; // ID real del admin (o null si no está logueado)
                                       const programIdNum = currentProgramId
@@ -5234,15 +5221,15 @@ export default function EnrolledUsersPage() {
                             <span className="font-semibold text-red-700 dark:text-red-400">
                               {formatCOP(
                                 price -
-                                  editablePagos
-                                    .slice(0, 12)
-                                    .reduce((sum, p) => {
-                                      const v =
-                                        typeof p?.valor === 'number'
-                                          ? p.valor
-                                          : Number(p?.valor ?? 0);
-                                      return sum + (Number.isFinite(v) ? v : 0);
-                                    }, 0)
+                                editablePagos
+                                  .slice(0, 12)
+                                  .reduce((sum, p) => {
+                                    const v =
+                                      typeof p?.valor === 'number'
+                                        ? p.valor
+                                        : Number(p?.valor ?? 0);
+                                    return sum + (Number.isFinite(v) ? v : 0);
+                                  }, 0)
                               )}
                             </span>
                           </div>
@@ -5319,12 +5306,12 @@ export default function EnrolledUsersPage() {
                                     type="date"
                                     value={
                                       typeof editablePagos[idxBase]?.fecha ===
-                                      'string'
+                                        'string'
                                         ? (editablePagos[idxBase]!
-                                            .fecha as string)
+                                          .fecha as string)
                                         : toISODateLike(
-                                            editablePagos[idxBase]?.fecha
-                                          )
+                                          editablePagos[idxBase]?.fecha
+                                        )
                                     }
                                     onChange={(e) =>
                                       handleCuotaChange(
@@ -5571,8 +5558,8 @@ export default function EnrolledUsersPage() {
                           <strong>FIN SUSCRIPCIÓN:</strong>{' '}
                           {currentUser?.subscriptionEndDate
                             ? new Date(currentUser.subscriptionEndDate)
-                                .toISOString()
-                                .split('T')[0]
+                              .toISOString()
+                              .split('T')[0]
                             : '-'}
                         </p>
                       </div>
@@ -5623,8 +5610,8 @@ export default function EnrolledUsersPage() {
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.fecha
                                   ? new Date(row.fecha).toLocaleDateString(
-                                      'es-CO'
-                                    )
+                                    'es-CO'
+                                  )
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -5663,8 +5650,8 @@ export default function EnrolledUsersPage() {
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.fecha
                                   ? new Date(row.fecha).toLocaleDateString(
-                                      'es-CO'
-                                    )
+                                    'es-CO'
+                                  )
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -6045,15 +6032,12 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-400">
-                      Estado
-                    </label>
-                    <p className="text-white">
-                      {selectedWaTemplate.status || 'N/A'}
-                    </p>
+                    <label className="text-xs font-semibold text-gray-400">Estado</label>
+                    <p className="text-white">{selectedWaTemplate.status ?? 'N/A'}</p>
                   </div>
 
-                  {selectedWaTemplate.example &&
+                  {
+                    selectedWaTemplate.example &&
                     selectedWaTemplate.example.length > 0 && (
                       <div>
                         <label className="text-xs font-semibold text-gray-400">
@@ -6063,8 +6047,9 @@ export default function EnrolledUsersPage() {
                           {selectedWaTemplate.example.join(', ')}
                         </p>
                       </div>
-                    )}
-                </div>
+                    )
+                  }
+                </div >
 
                 <button
                   onClick={() => setShowTemplatePreview(false)}
@@ -6072,10 +6057,11 @@ export default function EnrolledUsersPage() {
                 >
                   Cerrar
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
+              </div >
+            )
+            }
+          </div >
+        </div >
       )}
     </>
   );
