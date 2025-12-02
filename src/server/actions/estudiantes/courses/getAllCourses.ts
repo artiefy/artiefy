@@ -51,6 +51,8 @@ const baseCoursesQuery = {
   individualPrice: courses.individualPrice,
   is_featured: courses.is_featured, // Add this field
   is_top: courses.is_top, // Add this field
+  horario: courses.horario,
+  espacios: courses.espacios,
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -184,6 +186,8 @@ export async function getAllCourses(): Promise<Course[]> {
       requiresProgram: Boolean(course.requiresProgram),
       is_featured: course.is_featured ?? false,
       is_top: course.is_top ?? false,
+      horario: course.horario ?? null,
+      espacios: course.espacios ?? null,
       // Añadir classMeetings para que esté disponible en el front
       classMeetings: classMeetingsMap[course.id] ?? [],
     }));

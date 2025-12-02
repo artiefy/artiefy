@@ -8,19 +8,12 @@ import {
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
-import { MdOutlineLockClock } from 'react-icons/md';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/estudiantes/ui/card';
+import { Card } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
@@ -546,18 +539,20 @@ export default async function StudentListCourses({
       }
       const badges =
         includedInPlans.length > 0 ? (
-          <div className="mt-0.5">
-            <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-              Incluido en:{' '}
-              <span className="font-bold">{includedInPlans.join(', ')}</span>
-            </Badge>
-          </div>
+          <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+            Incluido en:{' '}
+            <span className="font-bold">{includedInPlans.join(', ')}</span>
+          </Badge>
         ) : null;
 
+      // En móvil mostrar el tipo principal y el texto "Incluido en" en una sola línea,
+      // justificados a la izquierda. En dispositivos sm+ el layout original se mantiene.
       return (
-        <div className="flex w-full flex-col items-end">
-          <div className="flex w-full justify-end">{principalType}</div>
-          {badges}
+        <div className="w-full">
+          <div className="flex w-full items-center justify-start gap-2">
+            <div className="flex items-center">{principalType}</div>
+            {badges && <div className="flex items-center">{badges}</div>}
+          </div>
         </div>
       );
     }
@@ -583,155 +578,148 @@ export default async function StudentListCourses({
             nextLiveClassDate,
           }) => (
             <div key={course.id} className="group relative">
-              <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
-              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
-                {/* Badge "Muy pronto" para cursos desactivados */}
-                {!course.isActive && (
-                  <div className="absolute top-2 right-2 z-10 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-gray-900 shadow">
-                    Muy pronto
-                  </div>
-                )}
-                <CardHeader className="">
-                  <AspectRatio ratio={16 / 9}>
-                    <div className="relative size-full">
-                      <Image
-                        src={imageUrl}
-                        alt={course.title || 'Imagen del curso'}
-                        className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
-                        fill
-                        blurDataURL={blurDataURL}
-                        placeholder={blurDataURL ? 'blur' : 'empty'}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        quality={75}
-                      />
-                    </div>
-                  </AspectRatio>
-                </CardHeader>
-
-                <CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
-                  <CardTitle className="text-background rounded text-lg">
-                    <div
-                      className="text-primary font-bold"
-                      title={course.title}
-                    >
-                      {course.title}
-                    </div>
-                  </CardTitle>
-                  <div className="flex items-center justify-between">
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary hover:bg-black/70"
-                    >
-                      {course.category?.name}
-                    </Badge>
-                    {isEnrolled && (
-                      <div className="flex items-center text-green-500">
-                        <CheckCircleIcon className="size-5" />
-                        <span className="ml-1 text-sm font-bold">Inscrito</span>
+              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-200 ease-in-out hover:scale-105">
+                {/* Imagen grande superior con padding igual en todos los lados */}
+                <div className="-mb-4 px-4 sm:-mb-4 sm:px-4">
+                  <div className="overflow-hidden rounded-xl bg-gray-700">
+                    <AspectRatio ratio={16 / 9}>
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={imageUrl}
+                          alt={course.title || 'Imagen del curso'}
+                          className="object-cover transition-transform duration-300 hover:scale-105"
+                          fill
+                          blurDataURL={blurDataURL}
+                          placeholder={blurDataURL ? 'blur' : 'empty'}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          quality={75}
+                        />
                       </div>
-                    )}
+                    </AspectRatio>
                   </div>
-                  <p
-                    className="line-clamp-2 text-sm text-gray-300"
-                    title={course.description ?? ''}
-                  >
-                    {course.description}
-                  </p>
-                  {/* MOBILE: Modalidad (izq) y tipo de curso (der) en la misma fila */}
-                  <div className="flex w-full items-center justify-between sm:hidden">
-                    <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
-                      {course.modalidad?.name}
-                    </p>
-                    {/* Tipo principal alineado al borde derecho, badges debajo */}
-                    <div className="ml-auto flex w-fit flex-shrink-0 justify-end">
-                      {getCourseTypeLabelMobile(course)}
+                </div>
+
+                <div className="p-4">
+                  {/* Título en caja (mantener estilo original pero más compacto) */}
+                  <div className="w-full rounded-md border border-white/20 bg-gray-800 p-2 text-base font-bold text-white">
+                    {course.title}
+                  </div>
+
+                  {/* Educador y tipo de curso. En móvil se muestran en filas separadas; en sm+ quedan en la misma línea (izq/der). */}
+                  <div className="mt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-300">
+                          Educador:
+                        </span>
+                        <div className="rounded-md border border-white/20 bg-gray-800 px-2 py-1 text-sm font-medium text-white">
+                          {course.instructorName ?? 'Educador'}
+                        </div>
+                        {isEnrolled && (
+                          <div className="ml-1 flex items-center text-green-400">
+                            <CheckCircleIcon className="h-4 w-4" />
+                            <span className="ml-1 text-xs font-semibold">
+                              Inscrito
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-2 ml-0 flex items-center text-sm sm:mt-0 sm:ml-2">
+                        <div className="hidden sm:block">
+                          {getCourseTypeLabel(course)}
+                        </div>
+                        <div className="block w-full sm:hidden">
+                          {getCourseTypeLabelMobile(course)}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {/* DESKTOP: Modalidad y tipo de curso como antes */}
-                  <div className="-mb-4 hidden items-start justify-between sm:flex">
-                    <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
-                      {course.modalidad?.name}
-                    </p>
-                    <div className="ml-auto flex w-full justify-end">
-                      {getCourseTypeLabel(course)}
+
+                  {/* Tags/Badges: modalidad + horario + espacios. Rating en línea separada abajo */}
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-1 lg:flex-nowrap lg:gap-1">
+                      <Badge
+                        variant="outline"
+                        className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                      >
+                        {course.modalidad?.name ?? 'Asistida Virtual'}
+                      </Badge>
+
+                      {course.horario ? (
+                        <Badge
+                          variant="outline"
+                          className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                        >
+                          {course.horario}
+                        </Badge>
+                      ) : null}
+
+                      {course.espacios ? (
+                        <Badge
+                          variant="outline"
+                          className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                        >
+                          {course.espacios}
+                        </Badge>
+                      ) : null}
+                    </div>
+
+                    {/* Rating separado en su propia línea */}
+                    <div className="mt-1 lg:mt-2">
+                      <Badge
+                        variant="outline"
+                        className="flex w-max items-center gap-1 border-white/20 bg-gray-800 px-1 py-0.5 text-xs text-white"
+                      >
+                        <StarIcon className="h-4 w-4 text-yellow-400" />
+                        <span className="font-bold text-yellow-400">
+                          {(course.rating ?? 0).toFixed(1)}
+                        </span>
+                      </Badge>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="flex flex-col items-start justify-between space-y-2">
-                  <div className="-mt-4 flex w-full justify-between md:mt-0">
-                    <p className="text-sm font-bold text-gray-300 italic">
-                      Educador:{' '}
-                      <span className="font-bold italic">
-                        {course.instructorName ?? 'No tiene'}
-                      </span>
-                    </p>
-                    <div className="flex items-center">
-                      <StarIcon className="size-5 text-yellow-500" />
-                      <span className="ml-1 text-sm font-bold text-yellow-500">
-                        {(course.rating ?? 0).toFixed(1)}
-                      </span>
+
+                  {/* Fecha de primera clase en línea compacta con brillo neón si existe fecha */}
+                  <div className="mt-3 text-sm text-gray-300">
+                    <div className="font-medium text-gray-300">
+                      Fecha de primera clase
                     </div>
-                  </div>
-                  {/* Mostrar solo si el curso tiene próxima clase en vivo */}
-                  {nextLiveClassDate && (
-                    <div className="mt-1 mb-1 flex items-center">
-                      <span
-                        className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_2px_#22c55e]"
-                        aria-label="Clase en vivo pronto"
-                      />
-                      <span className="text-[13px] font-bold sm:text-sm">
+                    <div className="mt-1 text-sm">
+                      {nextLiveClassDate ? (
                         <span
                           className="text-primary font-bold"
                           style={{
-                            // Efecto glow azul
                             textShadow:
                               '0 0 6px #3AF4EF, 0 0 12px #00BDD8, 0 0 18px #3AF4EF, 0 0 24px #00BDD8',
-                            background: 'none',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'unset',
-                            filter: 'none',
                           }}
                         >
-                          {/* Cambiado el texto aquí */}
-                          Primera Clase: {formatSpanishDate(nextLiveClassDate)}
+                          {formatSpanishDate(nextLiveClassDate)}
                         </span>
-                      </span>
-                    </div>
-                  )}
-                  <Button
-                    asChild
-                    disabled={!course.isActive}
-                    className={`mt-2 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
-                  >
-                    <Link
-                      href={`/estudiantes/cursos/${course.id}`}
-                      className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 ${
-                        !course.isActive
-                          ? 'pointer-events-none bg-gray-600 text-white'
-                          : 'bg-background text-primary active:scale-95'
-                      }`}
-                    >
-                      <span className="font-bold">
-                        {!course.isActive ? (
-                          <span className="flex items-center justify-center text-white">
-                            <MdOutlineLockClock className="mr-1.5 size-5" />
-                            Muy pronto
-                          </span>
-                        ) : (
-                          'Ver Curso'
-                        )}
-                      </span>
-                      {course.isActive && (
-                        <>
-                          <ArrowRightCircleIcon className="animate-bounce-right ml-2 size-5" />
-                          <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                            <div className="relative h-full w-10 bg-white/30" />
-                          </div>
-                        </>
+                      ) : (
+                        'Sin fecha programada'
                       )}
-                    </Link>
-                  </Button>
-                </CardFooter>
+                    </div>
+                  </div>
+
+                  {/* Botón compacto */}
+                  <div className="mt-2 -mb-6 sm:mt-3 sm:-mb-5">
+                    <Button
+                      asChild
+                      disabled={!course.isActive}
+                      className="w-full"
+                    >
+                      <Link
+                        href={`/estudiantes/cursos/${course.id}`}
+                        className={`inline-flex h-9 w-full items-center justify-center rounded-md px-3 text-sm font-semibold ${!course.isActive ? 'pointer-events-none bg-gray-600 text-white' : 'bg-background text-primary hover:bg-black/70'}`}
+                      >
+                        {course.isActive ? 'Ver Curso' : 'Muy pronto'}
+                        {course.isActive && (
+                          <ArrowRightCircleIcon className="ml-2 h-4 w-4" />
+                        )}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </Card>
             </div>
           )

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -106,6 +106,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
   // Cuando el teclado está abierto ajustamos el padding inferior del área de mensajes
   const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
     useKeyboardViewport();
+  // Header ref + state para mantener el header fijo en iPhone cuando el teclado se abre
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [forceFixedHeader, setForceFixedHeader] = useState(false);
   const defaultInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef ?? defaultInputRef;
   interface BlurGestureState {
@@ -324,29 +328,29 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
                 : isEnrolled == true
                   ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
-                  courseTitle +
-                  ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
+                    courseTitle +
+                    ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
                   : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
             sender: 'bot',
             buttons:
               chatMode.type === 'ticket'
                 ? [
-                  { label: '🐛 Reportar Error', action: 'report_bug' },
-                  {
-                    label: '❓ Pregunta General',
-                    action: 'general_question',
-                  },
-                  { label: '🔧 Problema Técnico', action: 'technical_issue' },
-                  {
-                    label: '💰 Consulta de Pagos',
-                    action: 'payment_inquiry',
-                  },
-                ]
+                    { label: '🐛 Reportar Error', action: 'report_bug' },
+                    {
+                      label: '❓ Pregunta General',
+                      action: 'general_question',
+                    },
+                    { label: '🔧 Problema Técnico', action: 'technical_issue' },
+                    {
+                      label: '💰 Consulta de Pagos',
+                      action: 'payment_inquiry',
+                    },
+                  ]
                 : [
-                  { label: '📚 Crear Proyecto', action: 'new_project' },
-                  { label: '💬 Nueva Idea', action: 'new_idea' },
-                  { label: '🛠 Soporte Técnico', action: 'contact_support' },
-                ],
+                    { label: '📚 Crear Proyecto', action: 'new_project' },
+                    { label: '💬 Nueva Idea', action: 'new_idea' },
+                    { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                  ],
           };
 
           const alreadyHasBot = loadedMessages.some(
@@ -464,8 +468,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
   const dynamicBottomPadding = isKeyboardOpen
     ? _keyboardHeight + INPUT_BAR_HEIGHT + 24
     : INPUT_BAR_HEIGHT + 24;
+  // Ajustar padding-top cuando fijemos el header (evitar que el contenido quede debajo)
   const messageAreaStyle: CSSProperties = {
     paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${dynamicBottomPadding}px)`,
+    paddingTop:
+      forceFixedHeader && headerHeight ? `${headerHeight}px` : undefined,
   };
   const inputBarStyle: CSSProperties = {
     padding: '12px 16px',
@@ -487,6 +494,30 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
   const actualInputBarStyle = isDesktop ? inputBarStyleDesktop : inputBarStyle;
 
+  // Detectar iPhone (incluye iPhone 15 Pro Max) y forzar header fijo cuando teclado esté abierto
+  useEffect(() => {
+    const isIos =
+      typeof navigator !== 'undefined' &&
+      /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isIos) {
+      setForceFixedHeader(false);
+      return;
+    }
+    // Si el teclado está abierto en iOS, fijar header para que no se mueva
+    setForceFixedHeader(Boolean(isKeyboardOpen));
+  }, [isKeyboardOpen]);
+
+  // Medir la altura del header para ajustar el padding del contenedor de mensajes
+  useEffect(() => {
+    const measure = () => {
+      const h = headerRef.current?.offsetHeight ?? 0;
+      setHeaderHeight(h);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
   return (
     <div
       className="relative flex h-full min-h-0 flex-col overflow-hidden"
@@ -496,7 +527,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
       onPointerCancel={handlePointerCancel}
     >
       <div
-        className="sticky top-0 left-0 z-20 flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5"
+        ref={headerRef}
+        className={`${
+          forceFixedHeader
+            ? 'fixed right-0 left-0 z-30'
+            : 'sticky top-0 left-0 z-20'
+        } flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5`}
         style={{ top: 'env(safe-area-inset-top, 0px)' }}
       >
         <button
@@ -525,10 +561,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-1' : 'mb-2'}`}
             >
               <div
-                className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user'
-                  ? 'flex-row-reverse space-x-reverse'
-                  : 'flex-row'
-                  }`}
+                className={`flex max-w-[80%] items-start space-x-2 ${
+                  message.sender === 'user'
+                    ? 'flex-row-reverse space-x-reverse'
+                    : 'flex-row'
+                }`}
               >
                 {message.sender === 'bot' ? (
                   <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
