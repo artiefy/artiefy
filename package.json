@@ -20,7 +20,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "preview": "next build && next start",
     "embeddings:regen": "tsx scripts/regen-embeddings.ts",
-    "prepare": "node .husky/install.mjs"
+    "prepare": "node .husky/install.mjs",
+    "setup:hooks": "node .husky/install.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

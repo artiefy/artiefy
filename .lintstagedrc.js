@@ -1,9 +1,2 @@
-module.exports = {
-  '*.{js,jsx,ts,tsx}': [
-    'eslint --fix --max-warnings 0', // Corrige errores automáticamente
-    'prettier --write', // Formatea código
-  ],
-  '*.{json,md,mdx,css,yml,yaml}': [
-    'prettier --write', // Formatea otros archivos
-  ],
-};
+// Deprecated: lint-staged config moved to .lintstagedrc.cjs and package.json
+// This file is kept for compatibility but should not be used.
