@@ -257,34 +257,34 @@ export const getCourseById = async (courseId: number) => {
     // Obtener los nombres adicionales
     const category = course.categoryid
       ? await db
-          .select({ name: categories.name })
-          .from(categories)
-          .where(eq(categories.id, course.categoryid))
-          .then((rows) => rows[0]?.name ?? null)
+        .select({ name: categories.name })
+        .from(categories)
+        .where(eq(categories.id, course.categoryid))
+        .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const modalidad = course.modalidadesid
       ? await db
-          .select({ name: modalidades.name })
-          .from(modalidades)
-          .where(eq(modalidades.id, course.modalidadesid))
-          .then((rows) => rows[0]?.name ?? null)
+        .select({ name: modalidades.name })
+        .from(modalidades)
+        .where(eq(modalidades.id, course.modalidadesid))
+        .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const nivelName = course.nivelid
       ? await db
-          .select({ name: nivel.name })
-          .from(nivel)
-          .where(eq(nivel.id, course.nivelid))
-          .then((rows) => rows[0]?.name ?? null)
+        .select({ name: nivel.name })
+        .from(nivel)
+        .where(eq(nivel.id, course.nivelid))
+        .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const courseTypeName = course.courseTypeId
       ? await db
-          .select({ name: courseTypes.name })
-          .from(courseTypes)
-          .where(eq(courseTypes.id, course.courseTypeId))
-          .then((rows) => rows[0]?.name ?? null)
+        .select({ name: courseTypes.name })
+        .from(courseTypes)
+        .where(eq(courseTypes.id, course.courseTypeId))
+        .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const totalStudents = await getTotalStudents(courseId);
@@ -347,6 +347,8 @@ export const updateCourse = async (
     coverVideoCourseKey?: string;
     individualPrice?: number | null;
     courseTypeId?: number[];
+    horario?: string | undefined;
+    espacios?: string | undefined;
   }
 ) => {
   try {

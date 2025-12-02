@@ -67,6 +67,8 @@ interface Course {
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
   meetings?: ScheduledMeeting[];
+  horario?: string | null;
+  espacios?: string | null;
 }
 interface Materia {
   id: number;
@@ -280,6 +282,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isSyncingVideos, setIsSyncingVideos] = useState(false);
   const [_videos, setVideos] = useState<unknown[]>([]);
+  const [editHorario, setEditHorario] = useState<string | null>(null);
+  const [editEspacios, setEditEspacios] = useState<string | null>(null);
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
@@ -784,6 +788,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
         parametros,
+        horario: editHorario,
+        espacios: editEspacios,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -909,6 +915,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
+    setEditHorario(course.horario ?? null);
+    setEditEspacios(course.espacios ?? null);
     setIsModalOpen(true);
   };
 
@@ -1586,6 +1594,34 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {course.modalidadesName ?? course.modalidadesid}
                   </Badge>
                 </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Horario
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.horario ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
+                    Espacios
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {course.espacios ?? 'No asignado'}
+                  </Badge>
+                </div>
               </div>
               <div className="space-y-3">
                 <h2
@@ -1829,6 +1865,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setCoverVideoCourseKey={setEditCoverVideoCourseKey}
         individualPrice={individualPrice}
         setIndividualPrice={setIndividualPrice}
+        horario={editHorario}
+        setHorario={setEditHorario}
+        espacios={editEspacios}
+        setEspacios={setEditEspacios}
       />
     </div>
   );

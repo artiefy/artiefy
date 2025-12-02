@@ -124,6 +124,8 @@ export async function POST(request: NextRequest) {
       courseTypeId?: number[]; // ahora array
       individualPrice?: number | null;
       subjects?: { id: number }[]; // ✅ añadimos subjects
+      horario?: string | null;
+      espacios?: string | null;
     };
 
     const {
@@ -138,6 +140,8 @@ export async function POST(request: NextRequest) {
       courseTypeId = [],
       individualPrice = null,
       subjects = [], // ✅ default vacío
+      horario = null,
+      espacios = null,
     } = body;
 
     const normalizedTypes = Array.isArray(courseTypeId) ? courseTypeId : [];
@@ -172,6 +176,8 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       courseTypeId: normalizedTypes.length > 0 ? normalizedTypes[0] : null, // ✅ Guarda el primero
       individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
+      horario: horario ?? null,
+      espacios: espacios ?? null,
     };
 
     const createdCourse = await db
@@ -245,6 +251,8 @@ export async function PUT(request: NextRequest) {
       subjects?: { id: number }[];
       courseTypeId?: number | null; // <-- nuevo
       individualPrice?: number | null;
+      horario?: string | null;
+      espacios?: string | null;
     };
 
     const {
@@ -259,6 +267,8 @@ export async function PUT(request: NextRequest) {
       subjects = [],
       courseTypeId = null as number | number[] | null, // para ser explícitos
       individualPrice = null,
+      horario = null,
+      espacios = null,
     } = body;
     const normalizedTypes = Array.isArray(courseTypeId)
       ? courseTypeId
@@ -282,6 +292,8 @@ export async function PUT(request: NextRequest) {
       nivelid,
       courseTypeId: normalizedTypes,
       individualPrice,
+      horario: horario ?? undefined,
+      espacios: espacios ?? undefined,
     });
 
     // Manejar las materias

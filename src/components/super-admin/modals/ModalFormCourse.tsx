@@ -50,7 +50,9 @@ interface CourseFormProps {
       name: string;
       description: string;
       porcentaje: number;
-    }[]
+    }[],
+    horario: string | null,
+    espacios: string | null
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -98,6 +100,10 @@ interface CourseFormProps {
   subjects: { id: number }[];
   setSubjects: (subjects: { id: number }[]) => void;
   defaultAddParametros?: boolean; // Agregar esta prop
+  horario: string | null;
+  setHorario: (horario: string | null) => void;
+  espacios: string | null;
+  setEspacios: (espacios: string | null) => void;
 }
 
 // Interfaz para los niveles
@@ -167,6 +173,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   individualPrice,
   setIndividualPrice,
   defaultAddParametros = false,
+  horario,
+  setHorario,
+  espacios,
+  setEspacios,
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -215,6 +225,19 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
   void validFile;
+
+  // Opciones para horarios y espacios
+  const horariosOptions = [
+    'Sábado Mañana',
+    'Sábado Tarde',
+    'Lunes y Martes',
+  ];
+
+  const espaciosOptions = [
+    'Florencia',
+    'Cali',
+    'Virtual',
+  ];
 
   const handleFrameImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -617,7 +640,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         subjects,
         finalVideoKey,
         individualPrice,
-        parametros // 👈 AÑADIDO AQUÍ
+        parametros, // 👈 AÑADIDO AQUÍ
+        horario,
+        espacios
       );
 
       if (controller.signal.aborted) {
@@ -806,6 +831,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setIndividualPrice(null);
       setCourseTypeId([]); // ✅ FIXED
       setIsActive(true);
+      setHorario(null);
+      setEspacios(null);
     }
   }, [isOpen, editingCourseId]);
 
@@ -965,6 +992,40 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   </p>
                 )}
               </div>
+              <div className="w-full">
+                <label className="text-primary text-sm font-medium md:text-lg">
+                  Horario
+                </label>
+                <select
+                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  value={horario ?? ''}
+                  onChange={(e) => setHorario(e.target.value || null)}
+                >
+                  <option value="">Seleccionar horario</option>
+                  {horariosOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-full">
+                <label className="text-primary text-sm font-medium md:text-lg">
+                  Espacios
+                </label>
+                <select
+                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  value={espacios ?? ''}
+                  onChange={(e) => setEspacios(e.target.value || null)}
+                >
+                  <option value="">Seleccionar espacio</option>
+                  {espaciosOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <>
                 <div className="w-full">
                   <label className="text-primary text-sm font-medium md:text-lg">
@@ -1040,7 +1101,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
               >
                 <option value="">Seleccionar instructor</option>
-                {educators.map((educator) => (
+                {educators.map((educator: { id: string; name: string }) => (
                   <option key={educator.id} value={educator.id}>
                     {educator.name}
                   </option>
@@ -1053,13 +1114,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 Imagen de portada
               </label>
               <div
-                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
-                  isDragging
+                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${isDragging
                     ? 'border-blue-500 bg-blue-50'
                     : errors.file
                       ? 'border-red-500 bg-red-50'
                       : 'border-gray-300 bg-gray-50'
-                }`}
+                  }`}
               >
                 <div className="text-center text-white">
                   {!file && (coverVideoCourseKey || coverImage) ? (

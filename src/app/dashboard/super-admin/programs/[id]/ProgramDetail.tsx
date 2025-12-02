@@ -145,6 +145,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
   void setEditSubjects;
+  const [horario, setHorario] = useState<string | null>(null);
+  const [espacios, setEspacios] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEducators = async () => {
@@ -474,9 +476,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     } catch (error) {
       console.error('Error during course creation:', error);
       toast.error('Error', {
-        description: `Error al crear curso: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
+        description: `Error al crear curso: ${error instanceof Error ? error.message : 'Unknown error'
+          }`,
       });
     } finally {
       setUploading(false);
@@ -607,11 +608,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
+                    className={`size-8 border ${selectedColor === '#FFFFFF'
                         ? 'border-black'
                         : 'border-white'
-                    }`}
+                      }`}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -657,9 +657,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Programa:
                   </h2>
@@ -669,9 +668,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
                   >
                     Categoría:
                   </h2>
@@ -686,16 +684,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                 >
                   {program.description}
                 </p>
@@ -754,6 +750,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         instructor={instructor}
         setInstructor={setInstructor}
         educators={educators}
+        horario={horario}
+        setHorario={setHorario}
+        espacios={espacios}
+        setEspacios={setEspacios}
       />
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
