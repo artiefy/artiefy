@@ -1,12 +1,6 @@
 module.exports = {
-  // Run Prettier first, then ESLint autofix for JS/TS files
-  '*.{js,jsx,ts,tsx}': ['prettier --write', 'eslint --fix --max-warnings 0'],
-
-  // Format common text/config files
-  '*.{json,md,mdx,css,yml,yaml}': ['prettier --write'],
-
-  // Run full TypeScript typecheck when there are TS files staged.
-  // Use a function so lint-staged won't append file paths to the command
-  // (tsc ignores tsconfig.json when files are passed as CLI args).
-  // Type check is performed at pre-push to avoid blocking small commits.
+  // Ejecuta ESLint con --max-warnings=0 para bloquear errores y warnings, luego Prettier para formatear
+  '*.{js,jsx,ts,tsx}': ['eslint --max-warnings=0 --fix', 'prettier --write'],
+  // Formatea archivos de texto y config
+  '*.{json,md,mdx,css,yml,yaml,html}': 'prettier --write',
 };
