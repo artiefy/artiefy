@@ -188,7 +188,7 @@ export default function MyCoursesPreview() {
                             <div className="flex justify-end">
                               <Link
                                 href={`/estudiantes/clases/${targetLessonId}`}
-                                className="bg-primary hover:bg-primary/90 pointer-events-auto rounded-lg px-3 py-1.5 transition-colors"
+                                className="bg-primary hover:bg-primary/90 pointer-events-auto rounded-2xl px-6 py-2 transition-colors"
                               >
                                 <div className="text-xs leading-tight font-bold whitespace-nowrap text-black">
                                   Continuar
