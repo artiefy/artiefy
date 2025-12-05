@@ -181,9 +181,9 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        'absolute size-8 rounded-full',
+        'pointer-events-none absolute hidden size-12 rounded-full !opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:!opacity-100 group-hover/carousel:pointer-events-auto group-hover/carousel:!opacity-100 disabled:pointer-events-none sm:flex sm:size-14',
         orientation === 'horizontal'
-          ? 'top-1/2 -left-12 -translate-y-1/2'
+          ? 'top-1/2 left-0 -translate-y-1/2 sm:-left-2 md:-left-4 lg:-left-7 xl:-left-10'
           : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className
       )}
@@ -211,9 +211,9 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        'absolute size-8 rounded-full',
+        'pointer-events-none absolute hidden size-12 rounded-full opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-hover/carousel:pointer-events-auto group-hover/carousel:opacity-100 disabled:pointer-events-none disabled:opacity-0 sm:flex sm:size-14',
         orientation === 'horizontal'
-          ? 'top-1/2 -right-12 -translate-y-1/2'
+          ? 'top-1/2 right-0 -translate-y-1/2 sm:-right-2 md:-right-4 lg:-right-7 xl:-right-10'
           : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className
       )}

@@ -51,6 +51,7 @@ export const env = createEnv({
     // Optional: OpenAI Assistant ID (asst_...)
     OPENAI_ASSISTANT_ID: z.string().min(1).optional(),
     N8N_WEBHOOK_ID: z.string().min(1),
+    NEON_API_KEY: z.string().min(1),
   },
   /*
    * Environment variables available on the client (and server).
@@ -124,6 +125,7 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_ASSISTANT_ID: process.env.OPENAI_ASSISTANT_ID,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
+    NEON_API_KEY: process.env.NEON_API_KEY,
     OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),

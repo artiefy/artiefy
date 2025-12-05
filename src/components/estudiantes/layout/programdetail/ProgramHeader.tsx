@@ -120,11 +120,11 @@ export function ProgramHeader({
   const programAverage =
     coursesGrades.length > 0
       ? Number(
-        (
-          coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
-          coursesGrades.length
-        ).toFixed(2)
-      )
+          (
+            coursesGrades.reduce((a, b) => a + (b.finalGrade ?? 0), 0) /
+            coursesGrades.length
+          ).toFixed(2)
+        )
       : 0;
 
   // Verificar si el usuario tiene nota para todas las materias del programa
@@ -188,7 +188,7 @@ export function ProgramHeader({
   const canAccessGrades = isEnrolled;
 
   // Renderizar un botón simplificado en SSR, para evitar diferencias de hidratación
-  const renderEnrollmentButton = (showCertificate = true) => {
+  const renderEnrollmentButton = (_showCertificate = true) => {
     // Si estamos en el servidor o no se ha hidratado aún, mostrar un botón estático básico
     if (!isClient) {
       return (
@@ -222,23 +222,6 @@ export function ProgramHeader({
     } else if (isEnrolled) {
       return (
         <div className="flex w-full flex-col space-y-4">
-          {/* Botón Ver Certificado en la fila superior (controlado por showCertificate) */}
-          {showCertificate && hasAllMateriasPassed && programAverage >= 3 && (
-            <div className="flex items-center justify-center gap-4">
-              <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
-              <Button
-                onClick={() => setIsCertModalOpen(true)}
-                className="cert2-button h-10 w-40 text-white sm:h-12 sm:w-48"
-                aria-label="Ver Certificado"
-              >
-                <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
-                <span className="text-xs font-semibold text-white sm:text-sm">
-                  Ver Certificado
-                </span>
-              </Button>
-              <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 rotate-180 transform sm:h-12 sm:w-12" />
-            </div>
-          )}
           {/* Botones de inscripción en fila horizontal */}
           <div className="flex flex-col items-center space-y-2 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
             <Button
@@ -407,10 +390,11 @@ export function ProgramHeader({
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${index < Math.floor(program.rating ?? 0)
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                    index < Math.floor(program.rating ?? 0)
                       ? 'text-yellow-400'
                       : 'text-gray-300'
-                    }`}
+                  }`}
                 />
               ))}
               <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
@@ -428,21 +412,59 @@ export function ProgramHeader({
               {program.description ?? 'No hay descripción disponible.'}
             </p>
           </div>
-          <div className="flex flex-col gap-2">
-            {/* Botón Mis Resultados */}
-            <Button
-              onClick={() => setIsGradeModalOpen(true)}
-              disabled={!canAccessGrades}
-              className="h-9 bg-blue-500 px-4 font-semibold text-white hover:bg-blue-600"
-              aria-label={
-                !isEnrolled
-                  ? 'Debes inscribirte al programa'
-                  : 'Ver tus resultados'
-              }
-            >
-              <FaTrophy className="mr-2 h-4 w-4" />
-              <span className="text-sm font-semibold">Mis Resultados</span>
-            </Button>
+          {/* Desktop: Ver Certificado left of Mis Resultados; Mobile: Ver Certificado above */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {/* Right-pointing arrow and Ver Certificado button left of Mis Resultados in desktop */}
+            {isEnrolled && hasAllMateriasPassed && programAverage >= 3 && (
+              <>
+                {/* Mobile: arrows both sides, Desktop: left only */}
+                <div className="flex items-center gap-2 sm:hidden">
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7 -scale-x-100" />
+                  <Button
+                    onClick={() => setIsCertModalOpen(true)}
+                    className="cert2-button h-9 w-36 text-white"
+                    aria-label="Ver Certificado"
+                  >
+                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <span className="text-xs font-semibold text-white sm:text-sm">
+                      Ver Certificado
+                    </span>
+                  </Button>
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7" />
+                </div>
+                <div className="hidden items-center gap-2 sm:flex">
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-8 w-8" />
+                  <Button
+                    onClick={() => setIsCertModalOpen(true)}
+                    className="cert2-button h-9 w-36 text-white sm:mr-2"
+                    aria-label="Ver Certificado"
+                  >
+                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <span className="text-xs font-semibold text-white sm:text-sm">
+                      Ver Certificado
+                    </span>
+                  </Button>
+                </div>
+              </>
+            )}
+            {(() => {
+              const isDisabled = !isSignedIn || !canAccessGrades;
+              return (
+                <Button
+                  onClick={() => setIsGradeModalOpen(true)}
+                  disabled={isDisabled}
+                  className={`h-9 px-4 font-semibold text-white ${isDisabled ? 'cursor-not-allowed bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  aria-label={
+                    !isEnrolled
+                      ? 'Debes inscribirte al programa'
+                      : 'Ver tus resultados'
+                  }
+                >
+                  <FaTrophy className="mr-2 h-4 w-4" />
+                  <span className="text-sm font-semibold">Mis Resultados</span>
+                </Button>
+              );
+            })()}
           </div>
         </div>
 

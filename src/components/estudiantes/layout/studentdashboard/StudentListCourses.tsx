@@ -1,18 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  ArrowRightCircleIcon,
-  CheckCircleIcon,
-  StarIcon,
-} from '@heroicons/react/24/solid';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
 import { Card } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
@@ -265,7 +260,7 @@ export default async function StudentListCourses({
               <>
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -274,7 +269,7 @@ export default async function StudentListCourses({
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -299,14 +294,14 @@ export default async function StudentListCourses({
               <>
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
@@ -329,14 +324,14 @@ export default async function StudentListCourses({
               <>
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">{otherPlans.join(', ')}</span>
                   </Badge>
@@ -576,72 +571,72 @@ export default async function StudentListCourses({
             blurDataURL,
             isEnrolled,
             nextLiveClassDate,
-          }) => (
-            <div key={course.id} className="group relative">
-              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-200 ease-in-out hover:scale-105">
-                {/* Imagen grande superior con padding igual en todos los lados */}
-                <div className="-mb-4 px-4 sm:-mb-4 sm:px-4">
-                  <div className="overflow-hidden rounded-xl bg-gray-700">
-                    <AspectRatio ratio={16 / 9}>
-                      <div className="relative h-full w-full">
-                        <Image
-                          src={imageUrl}
-                          alt={course.title || 'Imagen del curso'}
-                          className="object-cover transition-transform duration-300 hover:scale-105"
-                          fill
-                          blurDataURL={blurDataURL}
-                          placeholder={blurDataURL ? 'blur' : 'empty'}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          quality={75}
-                        />
-                      </div>
-                    </AspectRatio>
-                  </div>
+          }) => {
+            const cardContent = (
+              <Card
+                className={`artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden border bg-[#1e2939] p-4 text-white transition-all duration-200 ease-in-out ${
+                  course.isActive
+                    ? 'hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(58,244,239,0.5)]'
+                    : 'cursor-not-allowed'
+                }`}
+              >
+                <div className="-mx-4 -mt-4 overflow-hidden rounded-t-4xl bg-[#0b2238]">
+                  <AspectRatio ratio={16 / 9}>
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={imageUrl}
+                        alt={course.title || 'Imagen del curso'}
+                        className="rounded-t-4xl object-cover"
+                        fill
+                        blurDataURL={blurDataURL}
+                        placeholder={blurDataURL ? 'blur' : 'empty'}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        quality={75}
+                      />
+                    </div>
+                  </AspectRatio>
                 </div>
 
-                <div className="p-4">
-                  {/* Título en caja (mantener estilo original pero más compacto) */}
-                  <div className="w-full rounded-md border border-white/20 bg-gray-800 p-2 text-base font-bold text-white">
+                <div className="flex h-full flex-1 flex-col gap-3">
+                  <div className="text-primary text-base font-bold">
                     {course.title}
                   </div>
 
-                  {/* Educador y tipo de curso. En móvil se muestran en filas separadas; en sm+ quedan en la misma línea (izq/der). */}
-                  <div className="mt-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-300">
-                          Educador:
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-400">
+                        <span className="mr-1 text-sm text-gray-200">
+                          Por :
                         </span>
-                        <div className="rounded-md border border-white/20 bg-gray-800 px-2 py-1 text-sm font-medium text-white">
+                        <span className="font-semibold text-gray-200 italic">
                           {course.instructorName ?? 'Educador'}
+                        </span>
+                      </span>
+                      {isEnrolled && (
+                        <div className="ml-1 flex items-center text-green-400">
+                          <CheckCircleIcon className="h-4 w-4" />
+                          <span className="ml-1 text-xs font-semibold">
+                            Inscrito
+                          </span>
                         </div>
-                        {isEnrolled && (
-                          <div className="ml-1 flex items-center text-green-400">
-                            <CheckCircleIcon className="h-4 w-4" />
-                            <span className="ml-1 text-xs font-semibold">
-                              Inscrito
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      )}
+                    </div>
 
-                      <div className="mt-2 ml-0 flex items-center text-sm sm:mt-0 sm:ml-2">
-                        <div className="hidden sm:block">
-                          {getCourseTypeLabel(course)}
-                        </div>
-                        <div className="block w-full sm:hidden">
-                          {getCourseTypeLabelMobile(course)}
-                        </div>
+                    <div className="mt-2 ml-0 flex items-center text-sm sm:mt-0 sm:ml-2">
+                      <div className="hidden sm:block">
+                        {getCourseTypeLabel(course)}
+                      </div>
+                      <div className="block w-full sm:hidden">
+                        {getCourseTypeLabelMobile(course)}
                       </div>
                     </div>
                   </div>
 
-                  {/* Tags/Badges: modalidad + horario + espacios. Rating en línea separada abajo */}
-                  <div className="mt-3">
+                  <div className="mt-1">
                     <div className="flex flex-wrap items-center gap-1 lg:flex-nowrap lg:gap-1">
                       <Badge
                         variant="outline"
-                        className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                        className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
                       >
                         {course.modalidad?.name ?? 'Asistida Virtual'}
                       </Badge>
@@ -649,7 +644,7 @@ export default async function StudentListCourses({
                       {course.horario ? (
                         <Badge
                           variant="outline"
-                          className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                          className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
                         >
                           {course.horario}
                         </Badge>
@@ -658,33 +653,26 @@ export default async function StudentListCourses({
                       {course.espacios ? (
                         <Badge
                           variant="outline"
-                          className="border-white/20 bg-gray-800 px-2 py-0.5 text-xs whitespace-nowrap text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
+                          className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
                         >
                           {course.espacios}
                         </Badge>
                       ) : null}
                     </div>
 
-                    {/* Rating separado en su propia línea */}
-                    <div className="mt-1 lg:mt-2">
+                    <div className="mt-4 flex items-center gap-2">
                       <Badge
                         variant="outline"
-                        className="flex w-max items-center gap-1 border-white/20 bg-gray-800 px-1 py-0.5 text-xs text-white"
+                        className="border-primary bg-secondary rounded-full px-2 py-0.5 text-xs text-black"
                       >
-                        <StarIcon className="h-4 w-4 text-yellow-400" />
-                        <span className="font-bold text-yellow-400">
-                          {(course.rating ?? 0).toFixed(1)}
-                        </span>
+                        {course.category?.name ?? 'Sin categoría'}
                       </Badge>
                     </div>
                   </div>
 
-                  {/* Fecha de primera clase en línea compacta con brillo neón si existe fecha */}
-                  <div className="mt-3 text-sm text-gray-300">
-                    <div className="font-medium text-gray-300">
-                      Fecha de primera clase
-                    </div>
-                    <div className="mt-1 text-sm">
+                  <div className="text-sm">
+                    <div className="text-gray-400">
+                      <span className="mr-1 text-gray-200">Empieza :</span>
                       {nextLiveClassDate ? (
                         <span
                           className="text-primary font-bold"
@@ -696,33 +684,40 @@ export default async function StudentListCourses({
                           {formatSpanishDate(nextLiveClassDate)}
                         </span>
                       ) : (
-                        'Sin fecha programada'
+                        <span className="text-primary font-bold">
+                          Clases Virtuales
+                        </span>
                       )}
                     </div>
                   </div>
-
-                  {/* Botón compacto */}
-                  <div className="mt-2 -mb-6 sm:mt-3 sm:-mb-5">
-                    <Button
-                      asChild
-                      disabled={!course.isActive}
-                      className="w-full"
-                    >
-                      <Link
-                        href={`/estudiantes/cursos/${course.id}`}
-                        className={`inline-flex h-9 w-full items-center justify-center rounded-md px-3 text-sm font-semibold ${!course.isActive ? 'pointer-events-none bg-gray-600 text-white' : 'bg-background text-primary hover:bg-black/70'}`}
-                      >
-                        {course.isActive ? 'Ver Curso' : 'Muy pronto'}
-                        {course.isActive && (
-                          <ArrowRightCircleIcon className="ml-2 h-4 w-4" />
-                        )}
-                      </Link>
-                    </Button>
-                  </div>
                 </div>
               </Card>
-            </div>
-          )
+            );
+
+            const cardWrapperClass =
+              'block h-full rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010b16]';
+
+            return (
+              <div key={course.id} className="relative">
+                {course.isActive ? (
+                  <Link
+                    href={`/estudiantes/cursos/${course.id}`}
+                    aria-label={`Ver detalles del curso ${course.title}`}
+                    className={`group ${cardWrapperClass}`}
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div className="group relative h-full rounded-4xl opacity-80">
+                    {cardContent}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-4xl bg-black/40 text-lg font-semibold text-white">
+                      Muy pronto
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
         )}
       </div>
       <StudentPagination

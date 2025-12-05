@@ -198,6 +198,32 @@
 }
 
 /* Base Styles */
+
+.artiefy-course-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 75% 25%,
+      rgba(58, 244, 239, 0.35),
+      transparent 55%
+    ),
+    radial-gradient(circle at 20% 75%, rgba(0, 189, 216, 0.25), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.artiefy-course-card:hover {
+  border-color: rgba(58, 244, 239, 0.6);
+  box-shadow: 0 0 25px rgba(0, 189, 216, 0.35);
+}
+
+.artiefy-course-card:hover::before {
+  opacity: 0.4;
+}
 @layer base {
   body {
     background-color: var(--color-background) !important;

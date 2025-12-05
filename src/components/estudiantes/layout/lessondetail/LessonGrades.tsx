@@ -12,12 +12,14 @@ interface LessonGradesProps {
   finalGrade: number | null;
   onViewHistoryAction: () => void; // Renamed to indicate Server Action
   isLoading?: boolean;
+  isDisabled?: boolean;
 }
 
 export function LessonGrades({
   finalGrade,
   onViewHistoryAction, // Updated prop name
   isLoading,
+  isDisabled = false,
 }: LessonGradesProps) {
   // Add useMemo to prevent unnecessary re-renders
   const displayGrade = React.useMemo(() => {
@@ -32,15 +34,18 @@ export function LessonGrades({
       </div>
 
       <div className="mb-4 flex min-h-[40px] items-center justify-center">
-        {isLoading ? (
+        {isDisabled ? (
+          <div className="flex items-center">
+            <StarIcon className="size-8 text-yellow-500" />
+            <span className="ml-2 text-3xl font-bold text-gray-400">0.0</span>
+          </div>
+        ) : isLoading ? (
           <Icons.spinner className="text-background h-6 w-6" />
         ) : (
           <div className="flex items-center">
             <StarIcon className="size-8 text-yellow-500" />
             <span
-              className={`ml-2 text-3xl font-bold ${
-                Number(displayGrade) < 3 ? 'text-red-600' : 'text-green-600'
-              }`}
+              className={`ml-2 text-3xl font-bold ${Number(displayGrade) < 3 ? 'text-red-600' : 'text-green-600'}`}
             >
               {displayGrade}
             </span>
@@ -49,8 +54,9 @@ export function LessonGrades({
       </div>
 
       <Button
-        onClick={onViewHistoryAction} // Updated prop name usage
-        className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
+        onClick={onViewHistoryAction}
+        className={`w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        disabled={isDisabled}
       >
         <FaTrophy className="mr-2" />
         Ver Historial Completo

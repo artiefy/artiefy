@@ -125,8 +125,14 @@ export default function CourseDetails({
       startY = e.touches[0].clientY;
       lastX = startX;
       lastY = startY;
+      // Evitar trackear si la interacción inicia sobre un elemento interactivo (links, botones, inputs)
+      const target = e.target as HTMLElement | null;
+      const startedOnInteractive = !!target?.closest?.(
+        'a,button,input,textarea,select,label'
+      );
       // Solo empezar a trackear si el gesto inicia cerca del borde izquierdo (edge swipe)
-      tracking = startX <= 40;
+      // y NO proviene de un elemento interactivo. Reducimos el umbral de borde para evitar falsos positivos.
+      tracking = !startedOnInteractive && startX <= 24;
     }
 
     function onTouchMove(e: TouchEvent) {
@@ -141,10 +147,11 @@ export default function CourseDetails({
       const dy = lastY - startY;
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
-      // Requisitos para considerar swipe-back:
-      // - swipe horizontal a la derecha mayor a 80px
+      // Requisitos reforzados para considerar swipe-back:
+      // - swipe horizontal a la derecha mayor a 100px
       // - movimiento horizontal claramente mayor que el vertical (factor 1.5)
-      if (dx > 80 && absDx > absDy * 1.5) {
+      // Esto evita que taps o pequeños movimientos ocasionen navegaciones hacia atrás.
+      if (dx > 100 && absDx > absDy * 1.5) {
         router.back();
       }
       tracking = false;

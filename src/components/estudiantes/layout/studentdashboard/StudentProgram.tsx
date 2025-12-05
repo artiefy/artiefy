@@ -23,8 +23,8 @@ interface StudenProgramProps {
 
 export function StudentProgram({ program }: StudenProgramProps) {
   return (
-    <div className="group relative m-2 sm:m-2">
-      <div className="animate-gradient absolute -inset-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
+    <div className="group/card relative m-2 sm:m-2">
+      <div className="animate-gradient absolute -inset-1.5 rounded-4xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
       <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white">
         <CardHeader className="-mb-2">
           <div className="relative aspect-video overflow-hidden">

@@ -223,15 +223,14 @@ export async function POST(req: Request) {
           `Hola, necesito ayuda (${reason}): ${userMessage}`
         );
         return NextResponse.json({
-          response:
-            'Te conecto con un asesor humano de Artiefy para continuar por WhatsApp. 👇',
+          response: '¿Prefieres hablar directo con nuestro equipo?',
           whatsapp_action: {
             type: 'whatsapp_contact',
             phone: '573241149554',
             message: userMessage,
             reason,
             url: `https://wa.me/573241149554?text=${encodedMessage}`,
-            button_text: '💬 Chatear por WhatsApp',
+            button_text: 'WhatsApp 🚀',
           },
         });
       } catch (e) {

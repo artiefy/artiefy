@@ -198,9 +198,6 @@
       ]
     }
   },
-  "mcp.env": {
-    "NEON_API_KEY": "${env:NEON_API_KEY}"
-  },
   "chat.mcp.autostart": true,
   "chatgpt.openOnStartup": true
 }

@@ -116,9 +116,8 @@ export default function StudentDetails({
     }
     const timeout = setTimeout(async () => {
       try {
-        const { searchCoursesPreview } = await import(
-          '~/server/actions/estudiantes/courses/searchCoursesPreview'
-        );
+        const { searchCoursesPreview } =
+          await import('~/server/actions/estudiantes/courses/searchCoursesPreview');
         const results = await searchCoursesPreview(searchQuery);
         setPreviewCourses(results);
         setShowPreview(true);
@@ -542,62 +541,53 @@ export default function StudentDetails({
                   Top Cursos
                 </StudentGradientText>
               </div>
-              <div>
+              <div className="group/carousel relative">
                 <Carousel className="w-full" setApi={setTopCoursesApi}>
                   {/* Agrega gap-x-4 para más espacio entre los cursos */}
                   <CarouselContent className="gap-x-2">
                     {latestTenCourses.length > 0 ? (
-                      latestTenCourses.map((course) => (
+                      latestTenCourses.map((course, idx) => (
                         <CarouselItem
                           key={course.id}
-                          // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
-                          className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
+                          className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
                         >
-                          <div className="relative aspect-[4/3] w-full">
-                            <Image
-                              src={
-                                course.coverImageKey &&
-                                course.coverImageKey !== 'NULL'
-                                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                              }
-                              alt={course.title}
-                              fill
-                              className="rounded-lg object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              quality={85}
-                              placeholder="blur"
-                              blurDataURL={blurDataURL}
-                            />
-                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
-                              <Link href={`/estudiantes/cursos/${course.id}`}>
-                                <h3
-                                  className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg"
-                                  title={course.title}
-                                >
-                                  {course.title}
-                                </h3>
-                              </Link>
-                              <div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
-                                <Badge
-                                  variant="outline"
-                                  className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
-                                >
-                                  {course.category?.name}
-                                </Badge>
-                                <span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
-                                  {course.modalidad?.name}
+                          <div className="group/card relative overflow-hidden rounded-4xl">
+                            <div className="relative h-56 w-full">
+                              <Image
+                                src={getImageUrl(course.coverImageKey)}
+                                alt={course.title}
+                                fill
+                                className="h-full w-full rounded-4xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                                sizes="(max-width: 768px) 100vw, 420px"
+                                quality={85}
+                                placeholder="blur"
+                                blurDataURL={blurDataURL}
+                              />
+                              <div className="from-background/90 via-background/20 absolute inset-0 bg-gradient-to-t to-transparent" />
+
+                              {/* Number badge top-left */}
+                              <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
+                                <span className="text-sm font-bold text-black">
+                                  {idx + 1}
                                 </span>
                               </div>
-                              <div className="mt-2 flex items-center justify-between">
-                                <p className="text-primary text-xs font-semibold italic sm:text-base">
-                                  Educador: <span>{course.instructorName}</span>
-                                </p>
-                                <div className="flex items-center">
-                                  <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                                  <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-                                    {(course.rating ?? 0).toFixed(1)}
-                                  </span>
+
+                              {/* Bottom overlay: full-width translucent background for contrast */}
+                              <div className="absolute right-0 bottom-0 left-0 pb-0">
+                                <div className="w-full rounded-b-4xl bg-white/1 px-4 py-3 backdrop-blur-sm">
+                                  <Link
+                                    href={`/estudiantes/cursos/${course.id}`}
+                                  >
+                                    <h3
+                                      className="text-foreground line-clamp-2 text-sm font-semibold"
+                                      title={course.title}
+                                    >
+                                      {course.title}
+                                    </h3>
+                                  </Link>
+                                  <p className="text-primary mt-1 text-xs">
+                                    {course.instructorName}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -605,7 +595,7 @@ export default function StudentDetails({
                         </CarouselItem>
                       ))
                     ) : (
-                      <CarouselItem className="flex h-40 items-center justify-center">
+                      <CarouselItem className="flex h-56 items-center justify-center">
                         <p className="text-lg text-gray-500">
                           No hay cursos top disponibles
                         </p>
@@ -614,8 +604,8 @@ export default function StudentDetails({
                   </CarouselContent>
                   {latestTenCourses.length > 0 && (
                     <>
-                      <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
-                      <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
+                      <CarouselPrevious />
+                      <CarouselNext />
                     </>
                   )}
                 </Carousel>
@@ -655,7 +645,7 @@ export default function StudentDetails({
                   Programas
                 </StudentGradientText>
               </div>
-              <div>
+              <div className="group/carousel relative">
                 <Carousel className="w-full" setApi={setProgramsApi}>
                   <CarouselContent className="my-6 gap-x-2">
                     {sortedPrograms.map((program) => (
@@ -668,8 +658,8 @@ export default function StudentDetails({
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
-                  <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
+                  <CarouselPrevious />
+                  <CarouselNext />
                 </Carousel>
 
                 {/* Flechas funcionales solo en móvil */}
