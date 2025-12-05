@@ -270,8 +270,11 @@ export async function GET(req: Request) {
       .select({
         id: sql<string>`CAST(${courses.id} AS TEXT)`.as('id'),
         title: courses.title,
+        instructor: users.name, // ✅ Ahora trae el NOMBRE del instructor
+        instructorId: courses.instructor, // ✅ El ID del instructor (para referencia)
       })
-      .from(courses);
+      .from(courses)
+      .leftJoin(users, eq(courses.instructor, users.id)); // ✅ JOIN para obtener el nombre
 
     // Reemplaza tu versión actual por esta:
     const enrolledUsers = Array.from(programsMap.entries()).map(

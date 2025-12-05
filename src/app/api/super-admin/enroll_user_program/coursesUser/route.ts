@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, enrollments } from '~/server/db/schema';
+import { courses, enrollments, users } from '~/server/db/schema';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -15,9 +15,12 @@ export async function GET(req: Request) {
     .select({
       id: courses.id,
       title: courses.title,
+      instructor: users.name, // ✅ Ahora trae el NOMBRE del instructor
+      instructorId: courses.instructor, // ✅ El ID del instructor (para referencia)
     })
     .from(enrollments)
     .leftJoin(courses, eq(enrollments.courseId, courses.id))
+    .leftJoin(users, eq(courses.instructor, users.id)) // ✅ JOIN para obtener el nombre
     .where(eq(enrollments.userId, userId))
     .execute();
 

@@ -432,36 +432,40 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   quality={75}
                 />
               </div>
-              {/* Columna derecha - Video */}
-              <div className="relative w-full order-1 md:order-2">
-                {lessons.coverVideoKey ? (
-                  <video
-                    className="w-full h-auto rounded-lg object-cover aspect-video"
-                    controls
-                  >
-                    <source
-                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
-                    />
-                  </video>
-                ) : (
-                  <>
-                    <h4 className="hidden">No hay videos por el momento!.</h4>
-                    <Image
-                      src={'/NoHayVideos.jpg'}
-                      className="mx-auto rounded-lg object-cover w-full h-auto"
-                      alt="No hay imagen o video disponible actualmente"
-                      width={400}
-                      height={300}
-                      quality={75}
-                    />
-                  </>
-                )}
-              </div>
-              <div className="col-span-full mt-4 sm:mt-6 flex justify-center">
+              {/* Columna derecha - Video y botón */}
+              <div className="relative w-full order-1 md:order-2 flex flex-col gap-4">
+                <div>
+                  {lessons.coverVideoKey ? (
+                    <video
+                      className="w-full h-auto rounded-lg object-cover aspect-video"
+                      controls
+                      aria-label={`Video de ${lessons.title}`}
+                    >
+                      <source
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
+                        type="video/mp4"
+                      />
+                      Tu navegador no soporta la reproducción de videos.
+                    </video>
+                  ) : (
+                    <>
+                      <h4 className="hidden">No hay videos por el momento!.</h4>
+                      <Image
+                        src={'/NoHayVideos.jpg'}
+                        className="mx-auto rounded-lg object-cover w-full h-auto"
+                        alt="No hay imagen o video disponible actualmente"
+                        width={400}
+                        height={300}
+                        quality={75}
+                      />
+                    </>
+                  )}
+                </div>
+                {/* Botón de descarga */}
                 <a
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
-                  className="bg-primary hover:bg-[#00A5C0] focus:ring-secondary rounded-lg px-4 sm:px-6 py-2 sm:py-3 text-black text-sm sm:text-base transition duration-300 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                  className="inline-block bg-primary hover:bg-[#00A5C0] text-black text-sm sm:text-base font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 text-center"
                 >
                   📄 Descargar transcripción (.txt)
                 </a>
