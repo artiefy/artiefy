@@ -406,64 +406,70 @@ const Page: React.FC = () => {
       </Breadcrumb>
       <div className="group relative h-auto w-full">
         <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+
         <div
           className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-4 sm:p-6 lg:p-8 shadow-lg"
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
-          <div className="mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl sm:text-3xl md:text-3xl font-semibold md:grid-cols-2">
-            <h2 className="text-primary flex flex-col text-2xl sm:text-3xl md:text-4xl font-extrabold">
-              Actividad: <b>{actividad.name}</b>
+          <div className="mb-6 space-y-3">
+            <h2 className="text-primary text-2xl sm:text-3xl lg:text-4xl font-bold">
+              {actividad.name}
             </h2>
-            <h3 className="text-primary text-base sm:text-lg md:text-xl md:mr-8 lg:mr-24">
-              Perteneciente a la clase: {actividad.lesson?.title}
-            </h3>
+            <p className="text-primary text-sm sm:text-base lg:text-lg font-medium opacity-90">
+              Lección: {actividad.lesson?.title}
+            </p>
           </div>
-          <div className="my-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-            <div className="space-y-5 text-base sm:text-lg">
-              <p className="font-semibold">
-                Del docente:{' '}
+
+          <div className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="space-y-4 text-sm sm:text-base">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide opacity-70">Docente</span>
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="border-primary bg-background text-primary w-fit hover:bg-black/70 font-medium"
                 >
                   {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
                 </Badge>
-              </p>
-              <p className="font-semibold">
-                Tipo de actividad:{' '}
-                <b className="text-primary">{actividad.type?.name}</b>
-              </p>
-              <p className="font-semibold">
-                Permite: <b>{actividad.type?.description}</b>
-              </p>
-              <p className="w-full sm:w-11/12 font-semibold">
-                Descripción de la actividad:{' '}
-                <b className="block">{actividad.description}.</b>
-              </p>
-              <p className="font-semibold">
-                ¿La actividad es calificable?:{' '}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide opacity-70">Tipo de actividad</span>
+                <p className="text-primary font-medium">{actividad.type?.name}</p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide opacity-70">Descripción</span>
+                <p className="font-normal">{actividad.description}</p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide opacity-70">Calificable</span>
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                 >
-                  {actividad.revisada ? 'Si' : 'No'}.
+                  {actividad.revisada ? 'Sí' : 'No'}
                 </Badge>
-              </p>
-              <p className="font-semibold">
-                Fecha máxima de entrega:{' '}
-                <Badge
-                  variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                >
-                  {actividad.fechaMaximaEntrega
-                    ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
-                    : 'No tiene fecha máxima de entrega'}
-                  .
-                </Badge>
-              </p>
+              </div>
+
+              {actividad.fechaMaximaEntrega && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs uppercase tracking-wide opacity-70">Fecha de entrega</span>
+                  <p className="font-medium">
+                    {new Date(actividad.fechaMaximaEntrega).toLocaleString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="flex items-center justify-center">
-              <div className="text-center">
+
+            <div className="flex items-center justify-center lg:col-span-1">
+              <div className="w-full max-w-xs sm:max-w-sm">
                 <Image
                   src={
                     actividad.lesson.coverImageKey
@@ -473,29 +479,30 @@ const Page: React.FC = () => {
                   alt="Imagen de la lección"
                   width={400}
                   height={400}
-                  className="rounded-lg shadow-md w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-cover"
+                  className="rounded-lg shadow-lg w-full h-auto object-cover"
                 />
               </div>
             </div>
           </div>
-          <div className="mx-auto flex w-full flex-col sm:flex-row flex-wrap justify-center gap-3 sm:justify-evenly md:gap-6">
+
+          <div className="my-6 flex flex-col sm:flex-row gap-3 flex-wrap justify-center lg:justify-start">
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
+              className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors duration-200 text-center text-sm sm:text-base"
             >
               Realizar Actividad
             </Link>
 
             <Link
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
+              className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors duration-200 text-center text-sm sm:text-base"
             >
               Editar Actividad
             </Link>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-white hover:text-red-600">
+                <Button className="px-6 py-2 rounded-lg border border-red-600 bg-red-600 hover:bg-white hover:text-red-600 text-white font-medium transition-colors duration-200 text-sm sm:text-base">
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -503,20 +510,15 @@ const Page: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará
-                    permanentemente la actividad
-                    <span className="font-bold">
-                      {' '}
-                      {actividad?.name}, del tipo: {actividad?.type?.name}
-                    </span>{' '}
-                    y todos los datos asociados a este.
+                    Esta acción no se puede deshacer. Se eliminará permanentemente la actividad
+                    <span className="font-bold"> {actividad?.name}</span> y todos los datos asociados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAct}
-                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                    className="rounded-lg border border-red-600 bg-red-600 hover:border-red-700 hover:bg-transparent hover:text-red-700 text-white font-medium transition-colors duration-200"
                   >
                     Eliminar
                   </AlertDialogAction>
@@ -528,19 +530,17 @@ const Page: React.FC = () => {
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="rounded-lg bg-white shadow-md">
                 <div className="space-y-4">
                   {actividadIdNumber !== null && (
                     <>
-                      <div className="rounded-lg border border-gray-200 bg-white">
-                        <div className="rounded-lg bg-blue-50 p-4">
-                          <h2 className="text-center text-2xl font-bold text-gray-800">
+                      <div className="rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100 p-4 sm:p-6">
+                          <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
                             Gestión de Archivos y Calificaciones
                           </h2>
-                          <p className="text-center text-sm text-black">
-                            En esta sección puedes gestionar los archivos
-                            subidos por los estudiantes y asignar
-                            calificaciones.
+                          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                            Administra los archivos subidos y asigna calificaciones
                           </p>
                         </div>
                         <VerRespuestasArchivos
@@ -597,29 +597,40 @@ const Page: React.FC = () => {
                 onSelectChange={setSelectedActivityType}
               />
               <div
-                className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`mt-4 p-4 sm:p-6 rounded-lg border ${color === '#FFFFFF'
+                    ? 'bg-gray-50 border-gray-200 text-gray-800'
+                    : 'bg-black/10 border-white/20'
+                  } text-sm sm:text-base`}
               >
-                <p>
-                  <strong>Porcentaje usado por tipo de pregunta:</strong>
-                </p>
-                <p>
-                  🟡 Opción Múltiple: {resumenPorTipo.opcionMultiple}%, 🔵
-                  Verdadero/Falso: {resumenPorTipo.verdaderoFalso}%, 🟢
-                  Completar: {resumenPorTipo.completar}%
-                </p>
-                <hr className="my-2" />
-                <p>
-                  Total usado: <strong>{porcentajeUsado}%</strong>
-                </p>
-                <p>
-                  Porcentaje disponible:{' '}
-                  <strong>{porcentajeDisponible}%</strong>
-                </p>
+                <p className="font-semibold mb-3">Distribución de preguntas:</p>
+                <div className="space-y-2 text-xs sm:text-sm">
+                  <div className="flex justify-between items-center">
+                    <span>Opción Múltiple</span>
+                    <span className="font-medium">{resumenPorTipo.opcionMultiple}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Verdadero/Falso</span>
+                    <span className="font-medium">{resumenPorTipo.verdaderoFalso}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Completar</span>
+                    <span className="font-medium">{resumenPorTipo.completar}%</span>
+                  </div>
+                  <div className="border-t border-current/20 pt-2 mt-2 flex justify-between items-center font-semibold">
+                    <span>Total usado</span>
+                    <span>{porcentajeUsado}%</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs sm:text-sm opacity-80">
+                    <span>Disponible</span>
+                    <span>{porcentajeDisponible}%</span>
+                  </div>
+                </div>
               </div>
 
               {selectedActivityType && (
                 <Button
-                  className={`mx-auto mb-4 w-full sm:w-2/4 md:w-1/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`mx-auto block mt-4 px-6 py-2 border border-slate-300 bg-transparent hover:bg-gray-300/20 font-medium text-sm sm:text-base ${color === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta

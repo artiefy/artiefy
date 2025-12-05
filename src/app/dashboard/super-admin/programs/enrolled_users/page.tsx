@@ -1,4 +1,4 @@
- 
+
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -116,9 +116,12 @@ const studentSchema = z
   })
   .passthrough(); // 👈 MUY IMPORTANTE
 
-const courseSchema = z.object({ id: z.string(), title: z.string() });
-
-const enrolledUserSchema = z.object({
+const courseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  instructor: z.string().nullable().optional(),
+  instructorName: z.string().nullable().optional()
+}); const enrolledUserSchema = z.object({
   id: z.string(),
   programTitle: z.string().nullish(),
 });
@@ -205,6 +208,8 @@ interface CreateUserResponse {
 interface Course {
   id: string;
   title: string;
+  instructor?: string | null;
+  instructorName?: string | null;
 }
 
 interface ProgramsResponse {
@@ -1387,7 +1392,7 @@ export default function EnrolledUsersPage() {
   }, [editablePagos, currentUser?.carteraStatus]);
 
   const [userCourses, setUserCourses] = useState<
-    { id: string; title: string }[]
+    { id: string; title: string; instructor?: string | null; instructorName?: string | null }[]
   >([]);
   const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -1502,12 +1507,17 @@ export default function EnrolledUsersPage() {
     );
     if (!res.ok) throw new Error('Error cargando cursos');
     const data = (await res.json()) as {
-      courses: { id: string; title: string }[];
+      courses: { id: string; title: string; instructor?: string | null; instructorName?: string | null }[];
     };
-    // des-duplicar
+    // des-duplicar y sanitizar
     const unique = Array.from(
       new Map(data.courses.map((c) => [c.id, c])).values()
-    );
+    ).map(c => ({
+      id: c.id,
+      title: c.title,
+      instructor: c.instructor ?? undefined,
+      instructorName: c.instructorName ?? undefined
+    }));
     setUserCourses(unique);
   }
 
@@ -4019,11 +4029,15 @@ export default function EnrolledUsersPage() {
                 {userCourses.length === 0 ? (
                   <li className="text-gray-500">No inscrito en ningún curso</li>
                 ) : (
-                  userCourses.map((c) => (
-                    <li key={c.id} className="text-gray-900 dark:text-gray-100">
-                      • {c.title}
-                    </li>
-                  ))
+                  userCourses.map((c) => {
+                    const instructorName = c.instructorName ?? c.instructor ?? 'Sin instructor';
+                    return (
+                      <li key={c.id} className="text-gray-900 dark:text-gray-100">
+                        <div>• {c.title}</div>
+                        <div className="mt-0.5 ml-4 text-xs text-emerald-600 dark:text-emerald-400">👨‍🏫 {instructorName}</div>
+                      </li>
+                    );
+                  })
                 )}
               </ul>
               <button
@@ -5778,6 +5792,7 @@ export default function EnrolledUsersPage() {
                     : availableCourses
                   ).map((c) => {
                     const isSelected = selectedCourses.includes(c.id);
+                    const instructorName = c.instructorName ?? c.instructor ?? 'Sin instructor';
                     return (
                       <div
                         key={c.id}
@@ -5788,9 +5803,12 @@ export default function EnrolledUsersPage() {
                               : [...prev, c.id]
                           )
                         }
-                        className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 transition ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
+                        className={`flex cursor-pointer items-start justify-between rounded px-3 py-2 transition ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
                       >
-                        <span>{c.title}</span>
+                        <div className="flex-1">
+                          <div>{c.title}</div>
+                          <div className="mt-0.5 text-xs text-emerald-400">👨‍🏫 {instructorName}</div>
+                        </div>
                         {isSelected && <span className="ml-2">✅</span>}
                       </div>
                     );
