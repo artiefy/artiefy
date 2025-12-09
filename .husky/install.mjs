@@ -11,10 +11,10 @@ try {
   // Husky devuelve un mensaje; lo mostramos por información
   // En caso de error, no fallamos la instalación de dependencias
   // para evitar bloquear `npm install` si algo raro sucede.
-  // eslint-disable-next-line no-console
+   
   console.log(await husky());
 } catch (err) {
-  // eslint-disable-next-line no-console
+   
   console.warn(
     'Husky install skipped or failed silently:',
     err?.message || err

@@ -225,14 +225,14 @@ export default function BuscarSuscripcionPage() {
 
     if (!result.found) {
       return (
-        <div className="mt-6 rounded-lg border border-red-500/30 bg-red-950/20 p-4 sm:mt-8 sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <AlertCircle className="h-6 w-6 flex-shrink-0 text-red-400" />
+        <div className="mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3 xs:mt-5 xs:p-4 sm:mt-6 sm:p-6">
+          <div className="flex flex-col gap-3 xs:gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-400 xs:h-6 xs:w-6 sm:h-6 sm:w-6" />
             <div className="flex-1">
-              <h3 className="text-base font-semibold text-red-400 sm:text-lg">
+              <h3 className="text-sm font-semibold text-red-400 xs:text-base sm:text-lg">
                 Usuario no encontrado
               </h3>
-              <p className="mt-1 text-xs text-gray-400 sm:text-sm">
+              <p className="mt-1 text-xs text-gray-400 xs:text-xs sm:text-sm">
                 {result.message ??
                   'No se encontró ningún usuario con los datos proporcionados'}
               </p>
@@ -247,13 +247,13 @@ export default function BuscarSuscripcionPage() {
     const daysRemaining = user?.daysRemaining ?? 0;
 
     return (
-      <div className="mt-6 space-y-3 sm:mt-8 sm:space-y-4">
+      <div className="mt-4 space-y-2 xs:mt-5 xs:space-y-3 sm:mt-6 sm:space-y-4 md:space-y-5">
         {/* Información del usuario */}
-        <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4 sm:p-6">
-          <h3 className="mb-3 text-lg font-bold text-cyan-400 sm:mb-4 sm:text-xl">
+        <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-3 xs:p-4 sm:p-6">
+          <h3 className="mb-2 text-base font-bold text-cyan-400 xs:mb-3 xs:text-lg sm:mb-4 sm:text-xl">
             Información del Usuario
           </h3>
-          <div className="space-y-2 text-sm text-gray-300 sm:text-base">
+          <div className="space-y-1.5 text-xs text-gray-300 xs:space-y-2 xs:text-sm sm:text-base">
             <p className="break-words">
               <span className="font-semibold text-gray-400">Nombre:</span>{' '}
               {user?.name ?? 'N/A'}
@@ -273,17 +273,17 @@ export default function BuscarSuscripcionPage() {
 
         {/* Estado de suscripción */}
         {isActive ? (
-          <div className="rounded-lg border border-green-500/30 bg-green-950/20 p-4 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-              <CheckCircle className="h-6 w-6 flex-shrink-0 text-green-400" />
+          <div className="rounded-lg border border-green-500/30 bg-green-950/20 p-3 xs:p-4 sm:p-6">
+            <div className="flex flex-col gap-3 xs:gap-3 sm:flex-row sm:items-start sm:gap-4">
+              <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-400 xs:h-6 xs:w-6 sm:h-6 sm:w-6" />
               <div className="flex-1">
-                <h3 className="mb-2 text-base font-semibold text-green-400 sm:text-lg">
+                <h3 className="mb-2 text-sm font-semibold text-green-400 xs:mb-2 xs:text-base sm:text-lg">
                   Suscripción Activa
                 </h3>
-                <div className="space-y-2 text-sm text-gray-300">
+                <div className="space-y-1.5 text-xs text-gray-300 xs:space-y-2 xs:text-sm sm:text-base">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 flex-shrink-0 text-cyan-400" />
-                    <span className="text-xs sm:text-sm">
+                    <Clock className="h-3.5 w-3.5 flex-shrink-0 text-cyan-400 xs:h-4 xs:w-4 sm:h-5 sm:w-5" />
+                    <span className="text-xs xs:text-xs sm:text-sm">
                       <span className="font-semibold text-cyan-400">
                         {daysRemaining}
                       </span>{' '}
@@ -291,7 +291,7 @@ export default function BuscarSuscripcionPage() {
                     </span>
                   </div>
                   {user?.subscriptionEndDate && (
-                    <p className="text-xs text-gray-400 sm:text-sm">
+                    <p className="text-xs text-gray-400 xs:text-xs sm:text-sm">
                       Vence el:{' '}
                       {new Date(user.subscriptionEndDate).toLocaleDateString(
                         'es-ES',
@@ -305,7 +305,7 @@ export default function BuscarSuscripcionPage() {
                   )}
                 </div>
                 {esp32Message && (
-                  <div className={`mt-3 rounded border p-2 sm:p-3 ${esp32MessageType === 'success'
+                  <div className={`mt-2 rounded border p-2 xs:mt-2.5 xs:p-2.5 sm:mt-3 sm:p-3 ${esp32MessageType === 'success'
                     ? 'border-green-500/30 bg-green-950/20'
                     : esp32MessageType === 'warning'
                       ? 'border-blue-500/30 bg-blue-950/20'
@@ -325,18 +325,18 @@ export default function BuscarSuscripcionPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-4 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <AlertCircle className="h-6 w-6 flex-shrink-0 text-yellow-400" />
+          <div className="rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3 xs:p-4 sm:p-6">
+            <div className="flex flex-col gap-3 xs:gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-yellow-400 xs:h-6 xs:w-6 sm:h-6 sm:w-6" />
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-yellow-400 sm:text-lg">
+                <h3 className="text-sm font-semibold text-yellow-400 xs:text-base sm:text-lg">
                   Suscripción Vencida o Inactiva
                 </h3>
-                <p className="mt-1 text-xs text-gray-400 sm:text-sm">
+                <p className="mt-1 text-xs text-gray-400 xs:mt-1 xs:text-xs sm:text-sm">
                   Este usuario no tiene una suscripción activa
                 </p>
                 {user?.subscriptionEndDate && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-1.5 text-xs text-gray-500 xs:mt-2 sm:text-sm">
                     Venció el:{' '}
                     {new Date(user.subscriptionEndDate).toLocaleDateString(
                       'es-ES',
@@ -382,63 +382,63 @@ export default function BuscarSuscripcionPage() {
         }
       `}</style>
 
-      <div className="">
-        <div className="mx-auto w-full max-w-7xl -translate-x-8 rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-xl shadow-cyan-500/10 sm:p-8 md:p-10">
+      <div className="min-h-screen w-full bg-gray-950 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
+        <div className="mx-auto w-full max-w-4xl rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-xl shadow-cyan-500/10 xs:p-5 sm:p-6 md:p-8 lg:p-10">
           {/* Logo */}
-          <div className="mb-6 sm:mb-8">
-            <div className="mx-auto flex max-w-xs items-center justify-center sm:max-w-md">
+          <div className="mb-4 xs:mb-5 sm:mb-6 md:mb-8">
+            <div className="mx-auto flex max-w-xs items-center justify-center">
               <Image
                 src="/artiefy-logo.png"
                 alt="Artiefy"
                 width={220}
                 height={64}
-                className="h-auto w-[140px] object-contain sm:w-[180px] md:w-[200px]"
+                className="h-auto w-[120px] object-contain xs:w-[140px] sm:w-[160px] md:w-[200px]"
                 priority
               />
             </div>
           </div>
 
           {/* Título */}
-          <h1 className="mb-2 text-center text-2xl font-extrabold tracking-tight text-cyan-400 sm:mb-3 sm:text-3xl md:text-4xl">
+          <h1 className="mb-2 text-center text-xl font-extrabold tracking-tight text-cyan-400 xs:text-2xl sm:mb-3 sm:text-3xl md:text-4xl">
             Verificación de Suscripción
           </h1>
-          <p className="mx-auto mb-6 max-w-3xl text-center text-sm text-gray-300 sm:mb-8 sm:text-base">
+          <p className="mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300 xs:mb-5 xs:text-sm sm:mb-6 sm:text-base md:mb-8">
             Busca un usuario por correo electrónico, número de documento o
             nombre para verificar el estado de su suscripción.
           </p>
 
           {/* Formulario de búsqueda */}
-          <form onSubmit={handleSearch} className="space-y-5 sm:space-y-6">
+          <form onSubmit={handleSearch} className="space-y-3 xs:space-y-4 sm:space-y-5 md:space-y-6">
             {/* Selector de tipo de búsqueda */}
             <div>
-              <label className="mb-2 block text-xs font-medium text-gray-300 sm:text-sm">
+              <label className="mb-2 block text-xs font-medium text-gray-300">
                 Buscar por:
               </label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+              <div className="flex flex-col gap-2 xs:gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setSearchType('email')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'email'
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition xs:py-2.5 xs:px-4 sm:w-auto sm:text-sm ${searchType === 'email'
                     ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                     : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
                     }`}
                 >
-                  Correo electrónico
+                  Correo
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('document')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'document'
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition xs:py-2.5 xs:px-4 sm:w-auto sm:text-sm ${searchType === 'document'
                     ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                     : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
                     }`}
                 >
-                  Número de documento
+                  Documento
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('name')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'name'
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition xs:py-2.5 xs:px-4 sm:w-auto sm:text-sm ${searchType === 'name'
                     ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                     : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
                     }`}
@@ -452,7 +452,7 @@ export default function BuscarSuscripcionPage() {
             <div>
               <label
                 htmlFor="search"
-                className="mb-2 block text-xs font-medium text-gray-300 sm:text-sm"
+                className="mb-2 block text-xs font-medium text-gray-300"
               >
                 {searchType === 'email'
                   ? 'Correo electrónico'
@@ -473,30 +473,30 @@ export default function BuscarSuscripcionPage() {
                         ? '1234567890'
                         : 'Juan Pérez'
                   }
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 pr-10 text-sm text-white placeholder-gray-500 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none sm:py-3 sm:pr-12 sm:text-base"
+                  className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 pr-9 text-sm text-white placeholder-gray-500 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none xs:px-4 xs:py-2.5 xs:pr-11 sm:py-3 sm:pr-12 sm:text-base"
                 />
-                <Search className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-500 sm:right-4 sm:h-5 sm:w-5" />
+                <Search className="absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-500 xs:right-3 sm:right-4 sm:h-5 sm:w-5" />
               </div>
             </div>
 
             {/* Error */}
             {error && (
-              <div className="rounded-lg border border-red-500/30 bg-red-950/20 p-3 sm:p-4">
-                <p className="text-xs text-red-400 sm:text-sm">{error}</p>
+              <div className="rounded-lg border border-red-500/30 bg-red-950/20 p-3 xs:p-3.5 sm:p-4">
+                <p className="text-xs text-red-400 xs:text-xs sm:text-sm">{error}</p>
               </div>
             )}
 
             {/* Botón de búsqueda */}
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-2 xs:pt-3 sm:pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-cyan-500 px-6 py-2.5 text-base font-semibold text-black shadow-md transition hover:bg-cyan-400 hover:shadow-cyan-300 focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8 sm:py-3 sm:text-lg"
+                className="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400 hover:shadow-cyan-300 focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 xs:px-5 xs:py-2.5 sm:w-auto sm:px-8 sm:py-3 sm:text-lg"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg
-                      className="h-4 w-4 animate-spin sm:h-5 sm:w-5"
+                      className="h-4 w-4 animate-spin xs:h-4 xs:w-4 sm:h-5 sm:w-5"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -528,6 +528,29 @@ export default function BuscarSuscripcionPage() {
           {renderResult()}
         </div>
       </div>
+
+      <style jsx global>{`
+        body.no-chrome nav.bg-background,
+        body.no-chrome aside[aria-label='Sidebar'] {
+          display: none !important;
+        }
+        body.no-chrome .with-sidebar,
+        body.no-chrome .content-with-sidebar,
+        body.no-chrome .pt-20,
+        body.no-chrome .pl-64 {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        body.no-chrome {
+          overflow: auto !important;
+          height: auto !important;
+        }
+        html,
+        body {
+          overflow-x: hidden;
+          overflow-y: auto;
+        }
+      `}</style>
     </>
   );
 }
