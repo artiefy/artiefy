@@ -528,14 +528,33 @@ export default function StudentDetails({
                 <CarouselContent className="gap-x-2">
                   {latestTenCourses.length > 0 ? (
                     latestTenCourses.map((course, idx) => {
-                      const isShortTitle = course.title.length < 34;
+                      const titleText = course.title ?? '';
+                      const titleLength = titleText.length;
+                      const titleWordCount = titleText
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length;
+                      const isShortTitle =
+                        titleLength <= 50 && titleWordCount <= 6;
+                      const titleSpacingClass = isShortTitle
+                        ? 'min-h-[1.8rem]'
+                        : 'min-h-[2.4rem]';
+                      const titleLineHeightClass = isShortTitle
+                        ? 'leading-snug'
+                        : 'leading-[1.70]';
+                      const instructorSpacingClass = isShortTitle
+                        ? 'mb-5'
+                        : 'mt-0.5';
 
                       return (
                         <CarouselItem
                           key={course.id}
                           className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
                         >
-                          <div className="group/card relative overflow-hidden rounded-2xl">
+                          <Link
+                            href={`/estudiantes/cursos/${course.id}`}
+                            className="group/card focus-visible:outline-primary relative block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-offset-2"
+                          >
                             <div className="relative h-56 w-full">
                               <Image
                                 src={getImageUrl(course.coverImageKey)}
@@ -549,7 +568,7 @@ export default function StudentDetails({
                               />
                               {/* Number badge top-left */}
                               <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
-                                <span className="text-sm font-bold text-black">
+                                <span className="text-xs font-bold text-black">
                                   {idx + 1}
                                 </span>
                               </div>
@@ -560,25 +579,25 @@ export default function StudentDetails({
                               {/* Bottom overlay: full-width content area */}
                               <div className="absolute right-0 bottom-0 left-0 pb-0">
                                 <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
-                                  <Link
-                                    href={`/estudiantes/cursos/${course.id}`}
+                                  <h3
+                                    className={`text-foreground line-clamp-2 text-[13px] font-semibold sm:text-[15px] ${titleSpacingClass} ${titleLineHeightClass}`}
+                                    title={course.title}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                    }}
                                   >
-                                    <h3
-                                      className={`text-foreground line-clamp-2 text-sm leading-tight font-semibold ${isShortTitle ? '' : 'min-h-[2.4rem]'}`}
-                                      title={course.title}
-                                    >
-                                      {course.title}
-                                    </h3>
-                                  </Link>
+                                    {course.title}
+                                  </h3>
                                   <p
-                                    className={`${isShortTitle ? 'mt-0' : 'mt-2'} text-xs text-gray-200`}
+                                    className={`${instructorSpacingClass} text-[13px] text-gray-200 sm:text-[13px]`}
                                   >
                                     {course.instructorName}
                                   </p>
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         </CarouselItem>
                       );
                     })

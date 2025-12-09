@@ -377,7 +377,7 @@ export function Header2({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 w-full border-b border-gray-700 bg-[#00152B] transition-all duration-300 md:border-none md:bg-transparent ${
+        className={`sticky top-0 mt-0 w-full border-b border-gray-700 bg-[#00152B] transition-all duration-300 sm:mt-12 md:border-none md:bg-transparent ${
           isScrolled
             ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
             : 'md:py-3'

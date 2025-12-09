@@ -1735,42 +1735,44 @@ export function CourseHeader({
                 </Badge>
               </div>
               {/* Duplicated LessonGrades button below modalidad badge, aligned right */}
-              <div className="mt-2 mb-0 flex w-full justify-end sm:-mt-1 sm:mb-3">
-                <button
-                  onClick={async () => {
-                    if (!user?.id) {
-                      toast.error(
-                        'Debes iniciar sesión para ver tu historial de notas'
-                      );
-                      return;
-                    }
-                    try {
-                      setIsGradeSummaryLoading(true);
-                      const res = await fetch(
-                        `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
-                      );
-                      if (!res.ok)
-                        throw new Error('Error fetching grade summary');
-                      const data = (await res.json()) as GradeSummaryType;
-                      setGradeSummary(data);
-                      setIsGradeHistoryOpen(true);
-                    } catch (e) {
-                      console.error('Failed to load grade summary', e);
-                      toast.error('No se pudo cargar el historial de notas');
-                    } finally {
-                      setIsGradeSummaryLoading(false);
-                    }
-                  }}
-                  disabled={!isSignedIn}
-                  className={`grades-button flex h-9 items-center rounded px-4 font-semibold ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}`}
-                >
-                  <FaTrophy className="mr-2 h-4 w-4" />
-                  <span className="text-sm font-semibold">
-                    Ver Resultados De Notas
-                  </span>
-                  <PiNote className="ml-2 h-4 w-4" />
-                </button>
-              </div>
+              {localIsEnrolled && (
+                <div className="mt-2 mb-0 flex w-full justify-end sm:-mt-1 sm:mb-3">
+                  <button
+                    onClick={async () => {
+                      if (!user?.id) {
+                        toast.error(
+                          'Debes iniciar sesión para ver tu historial de notas'
+                        );
+                        return;
+                      }
+                      try {
+                        setIsGradeSummaryLoading(true);
+                        const res = await fetch(
+                          `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                        );
+                        if (!res.ok)
+                          throw new Error('Error fetching grade summary');
+                        const data = (await res.json()) as GradeSummaryType;
+                        setGradeSummary(data);
+                        setIsGradeHistoryOpen(true);
+                      } catch (e) {
+                        console.error('Failed to load grade summary', e);
+                        toast.error('No se pudo cargar el historial de notas');
+                      } finally {
+                        setIsGradeSummaryLoading(false);
+                      }
+                    }}
+                    disabled={!isSignedIn}
+                    className={`grades-button flex h-9 items-center rounded px-4 font-semibold ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    <FaTrophy className="mr-2 h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Ver Resultados De Notas
+                    </span>
+                    <PiNote className="ml-2 h-4 w-4" />
+                  </button>
+                </div>
+              )}
               {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
               {isEnrolled &&
                 (forumId || course.forumId ? (
@@ -1811,43 +1813,45 @@ export function CourseHeader({
                   <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7" />
                 </div>
               )}
-              {/* On mobile, LessonGrades below modalidad, centered */}
-              <div className="mb-2 flex w-full justify-center sm:hidden">
-                <button
-                  onClick={async () => {
-                    if (!user?.id) {
-                      toast.error(
-                        'Debes iniciar sesión para ver tu historial de notas'
-                      );
-                      return;
-                    }
-                    try {
-                      setIsGradeSummaryLoading(true);
-                      const res = await fetch(
-                        `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
-                      );
-                      if (!res.ok)
-                        throw new Error('Error fetching grade summary');
-                      const data = (await res.json()) as GradeSummaryType;
-                      setGradeSummary(data);
-                      setIsGradeHistoryOpen(true);
-                    } catch (e) {
-                      console.error('Failed to load grade summary', e);
-                      toast.error('No se pudo cargar el historial de notas');
-                    } finally {
-                      setIsGradeSummaryLoading(false);
-                    }
-                  }}
-                  disabled={!isSignedIn}
-                  className={`grades-button flex w-full items-center justify-center whitespace-nowrap ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
-                >
-                  <FaTrophy className="mr-2 inline-block" />
-                  <span className="whitespace-nowrap">
-                    Ver Resultados De Notas
-                  </span>
-                  <PiNote className="ml-2 inline-block h-4 w-4" />
-                </button>
-              </div>
+              {/* On mobile, LessonGrades below modalidad, centered (solo si está inscrito) */}
+              {localIsEnrolled && (
+                <div className="mb-2 flex w-full justify-center sm:hidden">
+                  <button
+                    onClick={async () => {
+                      if (!user?.id) {
+                        toast.error(
+                          'Debes iniciar sesión para ver tu historial de notas'
+                        );
+                        return;
+                      }
+                      try {
+                        setIsGradeSummaryLoading(true);
+                        const res = await fetch(
+                          `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                        );
+                        if (!res.ok)
+                          throw new Error('Error fetching grade summary');
+                        const data = (await res.json()) as GradeSummaryType;
+                        setGradeSummary(data);
+                        setIsGradeHistoryOpen(true);
+                      } catch (e) {
+                        console.error('Failed to load grade summary', e);
+                        toast.error('No se pudo cargar el historial de notas');
+                      } finally {
+                        setIsGradeSummaryLoading(false);
+                      }
+                    }}
+                    disabled={!isSignedIn}
+                    className={`grades-button flex w-full items-center justify-center whitespace-nowrap ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
+                  >
+                    <FaTrophy className="mr-2 inline-block" />
+                    <span className="whitespace-nowrap">
+                      Ver Resultados De Notas
+                    </span>
+                    <PiNote className="ml-2 inline-block h-4 w-4" />
+                  </button>
+                </div>
+              )}
               {localIsEnrolled ? (
                 <div className="flex flex-col items-center space-y-4">
                   {/* Botones de inscripción en la fila inferior */}

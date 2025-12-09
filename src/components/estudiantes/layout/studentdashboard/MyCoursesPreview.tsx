@@ -177,7 +177,7 @@ export default function MyCoursesPreview() {
                 Math.max(Math.round(course.progress ?? 0), 0),
                 100
               );
-              const badgeHeading = 'Continuar:';
+              const badgeHeading = 'Continuar :';
               const badgeSubtitle = targetLessonTitle ?? 'Ir al curso';
               const titleText = course.title ?? '';
               const titleLength = titleText.length;
