@@ -24,10 +24,10 @@ interface StudenProgramProps {
 export function StudentProgram({ program }: StudenProgramProps) {
   return (
     <div className="group/card relative m-2 sm:m-2">
-      <div className="animate-gradient absolute -inset-1.5 rounded-4xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
+      <div className="animate-gradient absolute -inset-1.5 rounded-2xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
       <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-[#061C37] text-white">
         <CardHeader className="-mb-2">
-          <div className="relative aspect-video overflow-hidden">
+          <div className="relative aspect-video overflow-hidden rounded-t-2xl">
             <Image
               src={
                 program.coverImageKey && program.coverImageKey !== 'NULL'
@@ -36,7 +36,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
               }
               alt={program.title}
               fill
-              className="rounded-lg object-cover transition-transform duration-300 hover:scale-105"
+              className="object-cover transition-transform duration-300 hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               quality={85}
               placeholder="blur"

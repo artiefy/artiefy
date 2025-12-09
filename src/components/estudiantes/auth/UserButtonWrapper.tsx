@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 
 import { UserButton, useUser } from '@clerk/nextjs';
@@ -32,6 +34,7 @@ export function UserButtonWrapper() {
 
   // Badge visual para planType
   const renderPlanBadge = () => {
+    if (isMobile) return null;
     if (planType === 'Premium') {
       return (
         <span
@@ -49,7 +52,9 @@ export function UserButtonWrapper() {
         >
           <FaCrown className="mr-1 text-yellow-300" />
           <span
-            className={isExpired ? 'relative' : ''}
+            className={
+              isExpired ? 'relative hidden md:inline' : 'hidden md:inline'
+            }
             style={
               isExpired
                 ? {
@@ -82,7 +87,9 @@ export function UserButtonWrapper() {
         >
           <FaCrown className="mr-1 text-yellow-300" />
           <span
-            className={isExpired ? 'relative' : ''}
+            className={
+              isExpired ? 'relative hidden md:inline' : 'hidden md:inline'
+            }
             style={
               isExpired
                 ? {
@@ -110,6 +117,15 @@ export function UserButtonWrapper() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [profilePageOpen, setProfilePageOpen] = useState(false);
 
+  // Detect screen size for responsive behavior
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   // Cargar los datos desde la API cuando la página personalizada está abierta
   useEffect(() => {
     if (!profilePageOpen) return;
@@ -134,7 +150,7 @@ export function UserButtonWrapper() {
   return (
     <div className="flex items-center">
       <UserButton
-        showName
+        showName={!isMobile}
         userProfileMode="modal"
         userProfileProps={{
           appearance: {

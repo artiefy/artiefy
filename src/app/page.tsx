@@ -104,7 +104,7 @@ export default function HomePage() {
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header2 />
         <main className="mt-[-10vh] flex grow items-center justify-center">
-          <section className="container mx-auto px-4 py-12 text-center">
+          <section className="container mx-auto px-4 pt-18 pb-12 text-center sm:pt-12">
             <h1 className="mb-5 text-5xl leading-snug font-bold text-white">
               Únete a nosotros y transforma tus ideas en
               <br /> realidades con el {''}

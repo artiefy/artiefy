@@ -5,9 +5,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useAuth,
+  useUser,
+} from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
+import { Search, X } from 'lucide-react';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -35,6 +42,7 @@ export function Header2({
   const [searchQuery, setSearchQuery] = useState('');
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   // Debounce para evitar demasiadas llamadas
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
@@ -72,6 +80,7 @@ export function Header2({
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
+  const { user } = useUser();
   const pathname = usePathname();
   const navItems = [
     { href: '/', label: 'Inicio' },
@@ -80,6 +89,72 @@ export function Header2({
     { href: '/comunidad', label: 'Espacios' },
     { href: '/planes', label: 'Planes' },
   ];
+
+  const planType = user?.publicMetadata?.planType as string | undefined;
+  const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
+    | string
+    | undefined;
+  const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+    | string
+    | undefined;
+
+  const isPlanExpired = () => {
+    if (!planType) return false;
+    const requiresActive =
+      planType === 'Premium' || planType === 'Pro' || planType === 'Enterprise';
+    if (!requiresActive) return false;
+    if (subscriptionStatus && subscriptionStatus !== 'active') return true;
+    if (subscriptionEndDate) {
+      const end = new Date(subscriptionEndDate);
+      if (!Number.isNaN(end.getTime()) && end < new Date()) return true;
+    }
+    return false;
+  };
+
+  const getMobilePlanBadgeStyle = (
+    type?: string,
+    expired?: boolean
+  ): { bg: string; textColor: string; label: string } => {
+    if (!type) {
+      return { bg: 'bg-gray-200', textColor: 'text-gray-800', label: 'Plan' };
+    }
+    switch (type) {
+      case 'Premium':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-purple-500',
+          textColor: 'text-white',
+          label: 'Premium',
+        };
+      case 'Pro':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-orange-500',
+          textColor: 'text-white',
+          label: 'Pro',
+        };
+      case 'Enterprise':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-blue-800',
+          textColor: 'text-white',
+          label: 'Enterprise',
+        };
+      default:
+        return { bg: 'bg-gray-300', textColor: 'text-gray-900', label: type };
+    }
+  };
+
+  const renderMobilePlanBadge = () => {
+    if (!planType) return null;
+    const expired = isPlanExpired();
+    const style = getMobilePlanBadgeStyle(planType, expired);
+    return (
+      <span
+        className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${style.bg} ${style.textColor}`}
+        title={expired ? 'Suscripcion vencida' : `${style.label} activo`}
+      >
+        {style.label}
+      </span>
+    );
+  };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -210,7 +285,25 @@ export function Header2({
             </SignedOut>
 
             <SignedIn>
-              <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 md:flex">
+                <div className="perfil-header">
+                  <Suspense
+                    fallback={
+                      <div className="flex min-w-[180px] items-center justify-start">
+                        <Icons.spinner className="text-primary ml-2 h-5 w-5" />
+                      </div>
+                    }
+                  >
+                    <UserButtonWrapper />
+                  </Suspense>
+                </div>
+                {/* Solo contorno negro en mobile, blanco en desktop */}
+                <div className="campana-header relative md:text-white">
+                  <NotificationHeader />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 md:hidden">
+                {renderMobilePlanBadge()}
                 <div className="perfil-header">
                   <Suspense
                     fallback={
@@ -284,7 +377,7 @@ export function Header2({
         </DialogPanel>
       </Dialog>
       <header
-        className={`sticky top-0 w-full transition-all duration-300 ${
+        className={`sticky top-0 w-full border-b border-gray-700 bg-[#00152B] transition-all duration-300 md:border-none md:bg-transparent ${
           isScrolled
             ? 'bg-opacity-80 bg-[#01142B] shadow-md backdrop-blur-sm'
             : 'md:py-3'
@@ -292,7 +385,7 @@ export function Header2({
           isActivityModalOpen ? 'z-40' : 'z-[9999]'
         }`}
       >
-        <div className="container mx-auto max-w-7xl px-4">
+        <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="hidden w-full items-center md:flex md:justify-between">
             {!isScrolled ? (
               <div className="flex w-full items-center justify-between">
@@ -467,36 +560,104 @@ export function Header2({
             )}
           </div>
           <div className="relative flex w-full items-center justify-between md:hidden">
-            <div className="shrink-0">
-              <Link href="/estudiantes">
-                <div className="relative size-[100px] md:size-[150px]">
-                  <Image
-                    src="/artiefy-logo.png"
-                    alt="Logo Artiefy"
-                    fill
-                    priority
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100px, 150px"
-                  />
-                </div>
-              </Link>
-            </div>
-            <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-              <input
-                type="checkbox"
-                checked={mobileMenuOpen}
-                onChange={(e) => setMobileMenuOpen(e.target.checked)}
-              />
-              <svg viewBox="0 0 32 32">
-                <path
-                  className="line line-top-bottom"
-                  d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
+            <Link href="/estudiantes">
+              <div className="relative size-[110px] md:size-[150px]">
+                <Image
+                  src="/artiefy-logo.png"
+                  alt="Logo Artiefy"
+                  fill
+                  priority
+                  className="object-contain"
+                  sizes="(max-width: 768px) 110px, 150px"
                 />
-                <path className="line" d="M7 16 27 16" />
-              </svg>
-            </label>
+              </div>
+            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                aria-label="Buscar"
+                className="rounded-full p-1 text-white transition hover:text-orange-500"
+                onClick={() => {
+                  setShowMobileSearch((prev) => !prev);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Search className="h-5 w-5" />
+              </button>
+              <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
+                <input
+                  type="checkbox"
+                  checked={mobileMenuOpen}
+                  onChange={(e) => {
+                    setMobileMenuOpen(e.target.checked);
+                    if (e.target.checked) setShowMobileSearch(false);
+                  }}
+                />
+                <svg viewBox="0 0 32 32">
+                  <path
+                    className="line line-top-bottom"
+                    d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
+                  />
+                  <path className="line" d="M7 16 27 16" />
+                </svg>
+              </label>
+            </div>
           </div>
         </div>
+        {showMobileSearch && (
+          <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#00152B] p-4 md:hidden">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+                setShowMobileSearch(false);
+              }}
+              className="relative w-full"
+            >
+              <input
+                type="search"
+                placeholder="Aprende con IA !"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-12 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+                autoComplete="off"
+                autoFocus
+              />
+              <button
+                type="button"
+                className="absolute top-1/2 right-10 -translate-y-1/2"
+                onClick={() => {
+                  if (!searchQuery.trim()) return;
+                  handleSearch();
+                  setShowMobileSearch(false);
+                }}
+                aria-label="Buscar"
+              >
+                <Search className="text-primary/70 h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="absolute top-1/2 right-3 -translate-y-1/2"
+                onClick={() => setShowMobileSearch(false)}
+                aria-label="Cerrar búsqueda"
+              >
+                <X className="text-primary/70 h-4 w-4" />
+              </button>
+              {showPreview && previewCourses.length > 0 && (
+                <div className="mt-3 w-full">
+                  <Suspense fallback={null}>
+                    <CourseSearchPreview
+                      courses={previewCourses}
+                      onSelectCourse={(courseId: number) => {
+                        window.location.href = `/estudiantes/cursos/${courseId}`;
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              )}
+            </form>
+          </div>
+        )}
         <Dialog
           as="div"
           open={mobileMenuOpen}
@@ -505,7 +666,7 @@ export function Header2({
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
           <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl">
-            <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
+            <div className="relative mt-8 -mb-4 flex w-full items-center justify-center">
               <div className="mx-auto w-fit">
                 <Link href="/estudiantes">
                   <div className="relative size-[150px]">
