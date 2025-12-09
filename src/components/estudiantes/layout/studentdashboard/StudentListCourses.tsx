@@ -634,7 +634,6 @@ export default async function StudentListCourses({
                   </div>
 
                   <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
-                    <span className="text-primary">📅</span>
                     Empieza:{' '}
                     {nextLiveClassDate ? (
                       <span className="text-primary animate-pulse font-medium drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">

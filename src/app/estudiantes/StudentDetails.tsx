@@ -531,20 +531,18 @@ export default function StudentDetails({
                         key={course.id}
                         className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
                       >
-                        <div className="group/card relative overflow-hidden rounded-4xl">
+                        <div className="group/card relative overflow-hidden rounded-2xl">
                           <div className="relative h-56 w-full">
                             <Image
                               src={getImageUrl(course.coverImageKey)}
                               alt={course.title}
                               fill
-                              className="h-full w-full rounded-4xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                              className="h-full w-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
                               sizes="(max-width: 768px) 100vw, 420px"
                               quality={85}
                               placeholder="blur"
                               blurDataURL={blurDataURL}
                             />
-                            <div className="from-background/90 via-background/20 absolute inset-0 bg-gradient-to-t to-transparent" />
-
                             {/* Number badge top-left */}
                             <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
                               <span className="text-sm font-bold text-black">
@@ -552,9 +550,12 @@ export default function StudentDetails({
                               </span>
                             </div>
 
-                            {/* Bottom overlay: full-width translucent background for contrast */}
+                            {/* Bottom gradient overlay: subtle fade from bottom to top */}
+                            <div className="absolute right-0 bottom-0 left-0 h-28 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+
+                            {/* Bottom overlay: full-width content area */}
                             <div className="absolute right-0 bottom-0 left-0 pb-0">
-                              <div className="w-full rounded-b-4xl bg-white/1 px-4 py-3 backdrop-blur-sm">
+                              <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
                                 <Link href={`/estudiantes/cursos/${course.id}`}>
                                   <h3
                                     className="text-foreground line-clamp-2 text-sm font-semibold"
