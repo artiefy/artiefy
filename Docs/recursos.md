@@ -96,7 +96,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 
 Tecnologias Que Se Usan:
 
-- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
+- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Husky, Lint-Staged, Upstash.
 
 ---
 
@@ -126,7 +126,7 @@ blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
 
 Tutorial UPDATE DEPENDENCIES:
 
-1. `npm install -g npm-check-updates` // Instala de manera global la herramienta npm-check-updates
+1. `npm install -g npm-check-updates@latest` // Instala de manera global la herramienta npm-check-updates
 2. `ncu` // Muestra las dependencias que tienen nuevas versiones
 3. `ncu -u` // Actualiza el archivo package.json con las últimas versiones de las dependencias
 4. `npm install` // Instala las dependencias actualizadas según el archivo package.json
@@ -428,6 +428,20 @@ git config credential.helper store
      '*.{js,jsx,ts,tsx}': ['eslint --fix --max-warnings 0', 'prettier --write'],
      '*.{json,md,mdx,css,yml,yaml}': ['prettier --write'],
    };
+   ```
+
+   ```js
+    "prepare": "husky",
+    ...
+   "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx,css,yml,yaml}": [
+      "prettier --write"
+    ]
+    }
    ```
 
 6. ¡Listo! Al hacer `git commit`, se bloquea el commit si hay errores de formato, lint o tipos.

@@ -54,6 +54,7 @@ export const env = createEnv({
 
     ESP32_HTTP_URL: z.string().url().optional(),
     ESP32_AUTH_TOKEN: z.string().optional(),
+    NEON_API_KEY: z.string().min(1),
   },
   /*
    * Environment variables available on the client (and server).
@@ -127,6 +128,7 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_ASSISTANT_ID: process.env.OPENAI_ASSISTANT_ID,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
+    NEON_API_KEY: process.env.NEON_API_KEY,
     OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
 
     ESP32_HTTP_URL: process.env.ESP32_HTTP_URL,

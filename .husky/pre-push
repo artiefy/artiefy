@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Run TypeScript typecheck before allowing a push. This may take longer,
+# so we run it on pre-push instead of pre-commit to keep commits fast.
+
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "Error: Push aborted because TypeScript typecheck failed."
+  exit 1
+fi

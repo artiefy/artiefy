@@ -33,6 +33,8 @@ export interface BaseCourse {
   isActive: boolean | null; // Changed from optional boolean to nullable boolean
   is_featured: boolean | null; // Add this new field
   is_top: boolean | null; // Add this new field
+  horario?: string | null;
+  espacios?: string | null;
 }
 
 // Add this type
@@ -75,6 +77,8 @@ export interface Course extends BaseCourse {
   requiresProgram: boolean;
   isActive: boolean;
   metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por curso
+  horario?: string | null;
+  espacios?: string | null;
 }
 
 // Add new interface for course materias

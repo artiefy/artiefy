@@ -1,4 +1,7 @@
-export const formatScore = (score: number): string => {
+export const formatScore = (score: number | undefined | null): string => {
+  if (typeof score !== 'number' || isNaN(score)) {
+    return '0.0';
+  }
   const formattedScore = score.toFixed(2);
   if (formattedScore.endsWith('00')) {
     return score.toFixed(1); // For scores like 5.00 -> "5.0"

@@ -10,8 +10,9 @@ import React, {
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { StarIcon } from '@heroicons/react/24/solid';
+import { FaArrowTrendUp } from 'react-icons/fa6';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { IoLibrarySharp } from 'react-icons/io5';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
@@ -19,7 +20,6 @@ import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import {
   Carousel,
   type CarouselApi,
@@ -56,7 +56,7 @@ export default function StudentDetails({
       return dateB - dateA;
     });
   });
-  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const [_currentSlide, setCurrentSlide] = useState<number>(0);
   const [chatbotKey, setChatbotKey] = useState<number>(0);
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
   const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
@@ -116,9 +116,8 @@ export default function StudentDetails({
     }
     const timeout = setTimeout(async () => {
       try {
-        const { searchCoursesPreview } = await import(
-          '~/server/actions/estudiantes/courses/searchCoursesPreview'
-        );
+        const { searchCoursesPreview } =
+          await import('~/server/actions/estudiantes/courses/searchCoursesPreview');
         const results = await searchCoursesPreview(searchQuery);
         setPreviewCourses(results);
         setShowPreview(true);
@@ -294,7 +293,7 @@ export default function StudentDetails({
     return () => clearTimeout(timeout);
   }, [subIndex, index, reverse, delay, placeHolderText]);
 
-  const truncateDescription = (description: string, maxLength: number) => {
+  const _truncateDescription = (description: string, maxLength: number) => {
     if (description.length <= maxLength) return description;
     return description.slice(0, maxLength) + '...';
   };
@@ -312,185 +311,120 @@ export default function StudentDetails({
   return (
     <div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
       <main className="grow">
-        <div className="container mx-auto">
-          <div className="flex flex-col space-y-12 sm:space-y-16">
-            <div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4">
-              <div className="flex items-center">
-                <Image
-                  src="/artiefy-icon.png"
-                  alt="Artiefy Icon"
-                  width={62}
-                  height={62}
-                  className="size-[62px] sm:size-14"
-                  style={{ width: 'auto', height: 'auto' }}
-                  priority
-                />
-                <div className="ml-2">
-                  <StudentArtieIa />
-                </div>
-              </div>
-
-              <form
-                onSubmit={handleSearch}
-                className="relative flex w-full flex-col items-center space-y-2"
-              >
-                <div className="header-search-container relative">
-                  <input
-                    required
-                    className={`header-input border-primary ${
-                      searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''
-                    }`}
-                    name="search"
-                    placeholder={
-                      searchBarDisabled ? 'Procesando consulta...' : _text
-                    }
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    disabled={searchBarDisabled}
-                    autoComplete="off"
-                  />
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="header-search__icon"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (!searchQuery.trim()) return;
-                      handleSearch();
-                    }}
-                    role="button"
-                    aria-label="Buscar"
-                  >
-                    <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-                  </svg>
-                  {/* Preview de cursos debajo del input */}
-                  {showPreview && previewCourses.length > 0 && (
-                    <div className="z-50 w-full">
-                      <Suspense fallback={null}>
-                        <CourseSearchPreview
-                          courses={previewCourses}
-                          onSelectCourse={(courseId: number) => {
-                            window.location.href = `/estudiantes/cursos/${courseId}`;
-                          }}
-                        />
-                      </Suspense>
-                    </div>
-                  )}
-                </div>
-              </form>
+        <div className="flex flex-col space-y-12 sm:space-y-16">
+          <div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4">
+            <div className="flex items-center justify-center">
+              <StudentArtieIa />
             </div>
 
-            {/* Sección: cursos en los que estoy inscrito - vista previa */}
-            <MyCoursesPreview />
-
-            <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
-              {/* Carousel grande - Featured Courses */}
-              {latestFiveCourses.length > 0 ? (
-                latestFiveCourses.map((course, index) => (
-                  <div
-                    key={course.id}
-                    className={`absolute inset-0 transform transition-all duration-500 ${
-                      index === currentSlide
-                        ? 'translate-x-0 opacity-100'
-                        : 'translate-x-full opacity-0'
-                    }`}
-                  >
-                    <div className="relative size-full">
-                      <Image
-                        src={getImageUrl(course.coverImageKey)}
-                        alt={course.title}
-                        fill
-                        className="object-cover"
-                        priority={index === currentSlide}
-                        sizes="100vw"
-                        quality={100} // <-- quality 100 is now allowed in config
-                      />
-                    </div>
-                    <div className="text-primary absolute inset-0 flex items-center justify-start p-4">
-                      <div
-                        className="ml-2 w-[350px] max-w-[90%] rounded-xl bg-white/10 p-4 backdrop-blur-md sm:ml-8 sm:w-[400px] sm:p-6"
-                        style={{
-                          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                          border: '1px solid rgba(255, 255, 255, 0.18)',
+            <form
+              onSubmit={handleSearch}
+              className="relative flex w-full flex-col items-center space-y-2"
+            >
+              <div className="header-search-container relative">
+                <input
+                  required
+                  className={`header-input pl-6 ${
+                    searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''
+                  }`}
+                  name="search"
+                  placeholder={
+                    searchBarDisabled ? 'Procesando consulta...' : _text
+                  }
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  disabled={searchBarDisabled}
+                  autoComplete="off"
+                />
+                <svg
+                  viewBox="0 0 24 24"
+                  className="header-search__icon"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!searchQuery.trim()) return;
+                    handleSearch();
+                  }}
+                  role="button"
+                  aria-label="Buscar"
+                >
+                  <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                </svg>
+                {/* Preview de cursos debajo del input */}
+                {showPreview && previewCourses.length > 0 && (
+                  <div className="z-50 w-full">
+                    <Suspense fallback={null}>
+                      <CourseSearchPreview
+                        courses={previewCourses}
+                        onSelectCourse={(courseId: number) => {
+                          window.location.href = `/estudiantes/cursos/${courseId}`;
                         }}
-                      >
-                        {/* Mobile view (sm:hidden) */}
-                        <div className="flex flex-col space-y-2 sm:hidden">
-                          <h2
-                            className="line-clamp-2 text-xl font-semibold"
-                            title={course.title}
-                          >
-                            {course.title}
-                          </h2>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <StarIcon className="size-4 text-yellow-500" />
-                              <span className="ml-1 text-sm text-yellow-500">
-                                {(course.rating ?? 0).toFixed(1)}
-                              </span>
-                            </div>
-                            <span className="text-xs font-bold text-red-500">
-                              {course.modalidad?.name}
-                            </span>
-                          </div>
-                          <div className="flex justify-center pt-2">
-                            <Link href={`/estudiantes/cursos/${course.id}`}>
-                              <button className="uiverse">
-                                <div className="wrapper">
-                                  <span className="text-white">
-                                    Ir al Curso
-                                  </span>
-                                  <div className="circle circle-12" />
-                                  <div className="circle circle-11" />
-                                  <div className="circle circle-10" />
-                                  <div className="circle circle-9" />
-                                  <div className="circle circle-8" />
-                                  <div className="circle circle-7" />
-                                  <div className="circle circle-6" />
-                                  <div className="circle circle-5" />
-                                  <div className="circle circle-4" />
-                                  <div className="circle circle-3" />
-                                  <div className="circle circle-2" />
-                                  <div className="circle circle-1" />
-                                </div>
-                              </button>
-                            </Link>
-                          </div>
-                        </div>
+                      />
+                    </Suspense>
+                  </div>
+                )}
+              </div>
 
-                        {/* Desktop view (hidden sm:block) */}
-                        <div className="hidden sm:block">
-                          <h2
-                            className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl"
-                            title={course.title}
-                          >
-                            {course.title}
-                          </h2>
-                          <Badge
-                            variant="outline"
-                            className="border-primary text-primary mb-2"
-                          >
-                            {course.category?.name ?? 'Sin categoría'}
-                          </Badge>
-                          <p
-                            className="mb-2 line-clamp-2 text-sm sm:text-base"
-                            title={course.description ?? ''}
-                          >
-                            {truncateDescription(course.description ?? '', 150)}
-                          </p>
-                          <p className="mb-1 text-sm font-bold sm:text-base">
-                            Educador: {course.instructorName}
-                          </p>
-                          <p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
-                            {course.modalidad?.name ??
-                              'Modalidad no especificada'}
-                          </p>
-                          <div className="mb-4 flex items-center">
-                            <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                            <span className="ml-1 text-sm text-yellow-500 sm:text-base">
+              {/* Text with sparkles icon below search bar */}
+              <p className="text-muted-foreground mt-3 flex items-center justify-center gap-2 text-center text-sm">
+                <span className="text-gray-400">
+                  Aprende con{' '}
+                  <span className="text-primary font-medium">IA</span> y
+                  construye proyectos reales
+                </span>
+              </p>
+            </form>
+          </div>
+
+          {/* Sección: cursos en los que estoy inscrito - vista previa */}
+          <MyCoursesPreview />
+
+          {/* Carousel grande - Featured Courses - TEMPORALMENTE OCULTO 
+          <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+            {latestFiveCourses.length > 0 ? (
+              latestFiveCourses.map((course, index) => (
+                <div
+                  key={course.id}
+                  className={`absolute inset-0 transform transition-all duration-500 ${index === currentSlide
+                    ? 'translate-x-0 opacity-100'
+                    : 'translate-x-full opacity-0'
+                    }`}
+                >
+                  <div className="relative size-full">
+                    <Image
+                      src={getImageUrl(course.coverImageKey)}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                      priority={index === currentSlide}
+                      sizes="100vw"
+                      quality={100}
+                    />
+                  </div>
+                  <div className="text-primary absolute inset-0 flex items-center justify-start p-4">
+                    <div
+                      className="ml-2 w-[350px] max-w-[90%] rounded-xl bg-white/10 p-4 backdrop-blur-md sm:ml-8 sm:w-[400px] sm:p-6"
+                      style={{
+                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                      }}
+                    >
+                      <div className="flex flex-col space-y-2 sm:hidden">
+                        <h2 className="line-clamp-2 text-xl font-semibold" title={course.title}>
+                          {course.title}
+                        </h2>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <StarIcon className="size-4 text-yellow-500" />
+                            <span className="ml-1 text-sm text-yellow-500">
                               {(course.rating ?? 0).toFixed(1)}
                             </span>
                           </div>
+                          <span className="text-xs font-bold text-red-500">
+                            {course.modalidad?.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-center pt-2">
                           <Link href={`/estudiantes/cursos/${course.id}`}>
                             <button className="uiverse">
                               <div className="wrapper">
@@ -512,192 +446,228 @@ export default function StudentDetails({
                           </Link>
                         </div>
                       </div>
+                      <div className="hidden sm:block">
+                        <h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl" title={course.title}>
+                          {course.title}
+                        </h2>
+                        <Badge variant="outline" className="border-primary text-primary mb-2">
+                          {course.category?.name ?? 'Sin categoría'}
+                        </Badge>
+                        <p className="mb-2 line-clamp-2 text-sm sm:text-base" title={course.description ?? ''}>
+                          {truncateDescription(course.description ?? '', 150)}
+                        </p>
+                        <p className="mb-1 text-sm font-bold sm:text-base">
+                          Educador: {course.instructorName}
+                        </p>
+                        <p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
+                          {course.modalidad?.name ?? 'Modalidad no especificada'}
+                        </p>
+                        <div className="mb-4 flex items-center">
+                          <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                          <span className="ml-1 text-sm text-yellow-500 sm:text-base">
+                            {(course.rating ?? 0).toFixed(1)}
+                          </span>
+                        </div>
+                        <Link href={`/estudiantes/cursos/${course.id}`}>
+                          <button className="uiverse">
+                            <div className="wrapper">
+                              <span className="text-white">Ir al Curso</span>
+                              <div className="circle circle-12" />
+                              <div className="circle circle-11" />
+                              <div className="circle circle-10" />
+                              <div className="circle circle-9" />
+                              <div className="circle circle-8" />
+                              <div className="circle circle-7" />
+                              <div className="circle circle-6" />
+                              <div className="circle circle-5" />
+                              <div className="circle circle-4" />
+                              <div className="circle circle-3" />
+                              <div className="circle circle-2" />
+                              <div className="circle circle-1" />
+                            </div>
+                          </button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <p className="text-lg text-gray-500">
-                    No hay cursos destacados disponibles
-                  </p>
                 </div>
-              )}
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-                {latestFiveCourses.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`size-3 rounded-full ${
-                      index === currentSlide ? 'bg-primary' : 'bg-gray-300'
-                    }`}
-                    onClick={() => setCurrentSlide(index)}
-                  />
-                ))}
+              ))
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <p className="text-lg text-gray-500">
+                  No hay cursos destacados disponibles
+                </p>
               </div>
+            )}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
+              {latestFiveCourses.map((_, index) => (
+                <button
+                  key={index}
+                  className={`size-3 rounded-full ${index === currentSlide ? 'bg-primary' : 'bg-gray-300'}`}
+                  onClick={() => setCurrentSlide(index)}
+                />
+              ))}
             </div>
+          </div>
+          FIN Carousel grande - TEMPORALMENTE OCULTO */}
 
-            {/* Top Cursos section */}
-            <div className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24">
-              <div className="flex justify-center pr-4 sm:pr-0">
-                <StudentGradientText className="mb-6 text-3xl sm:text-5xl">
+          {/* Top Cursos section */}
+          <div className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24">
+            <div className="mb-4 flex justify-start pr-4 sm:pr-0">
+              <div className="flex items-center gap-2">
+                <FaArrowTrendUp className="text-xl text-white" />
+                <StudentGradientText className="text-2xl sm:text-3xl">
                   Top Cursos
                 </StudentGradientText>
               </div>
-              <div>
-                <Carousel className="w-full" setApi={setTopCoursesApi}>
-                  {/* Agrega gap-x-4 para más espacio entre los cursos */}
-                  <CarouselContent className="gap-x-2">
-                    {latestTenCourses.length > 0 ? (
-                      latestTenCourses.map((course) => (
-                        <CarouselItem
-                          key={course.id}
-                          // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
-                          className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
-                        >
-                          <div className="relative aspect-[4/3] w-full">
+            </div>
+            <div className="group/carousel relative">
+              <Carousel className="w-full" setApi={setTopCoursesApi}>
+                {/* Agrega gap-x-4 para más espacio entre los cursos */}
+                <CarouselContent className="gap-x-2">
+                  {latestTenCourses.length > 0 ? (
+                    latestTenCourses.map((course, idx) => (
+                      <CarouselItem
+                        key={course.id}
+                        className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
+                      >
+                        <div className="group/card relative overflow-hidden rounded-4xl">
+                          <div className="relative h-56 w-full">
                             <Image
-                              src={
-                                course.coverImageKey &&
-                                course.coverImageKey !== 'NULL'
-                                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                              }
+                              src={getImageUrl(course.coverImageKey)}
                               alt={course.title}
                               fill
-                              className="rounded-lg object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="h-full w-full rounded-4xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                              sizes="(max-width: 768px) 100vw, 420px"
                               quality={85}
                               placeholder="blur"
                               blurDataURL={blurDataURL}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
-                              <Link href={`/estudiantes/cursos/${course.id}`}>
-                                <h3
-                                  className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg"
-                                  title={course.title}
-                                >
-                                  {course.title}
-                                </h3>
-                              </Link>
-                              <div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
-                                <Badge
-                                  variant="outline"
-                                  className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
-                                >
-                                  {course.category?.name}
-                                </Badge>
-                                <span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
-                                  {course.modalidad?.name}
-                                </span>
-                              </div>
-                              <div className="mt-2 flex items-center justify-between">
-                                <p className="text-primary text-xs font-semibold italic sm:text-base">
-                                  Educador: <span>{course.instructorName}</span>
+                            <div className="from-background/90 via-background/20 absolute inset-0 bg-gradient-to-t to-transparent" />
+
+                            {/* Number badge top-left */}
+                            <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
+                              <span className="text-sm font-bold text-black">
+                                {idx + 1}
+                              </span>
+                            </div>
+
+                            {/* Bottom overlay: full-width translucent background for contrast */}
+                            <div className="absolute right-0 bottom-0 left-0 pb-0">
+                              <div className="w-full rounded-b-4xl bg-white/1 px-4 py-3 backdrop-blur-sm">
+                                <Link href={`/estudiantes/cursos/${course.id}`}>
+                                  <h3
+                                    className="text-foreground line-clamp-2 text-sm font-semibold"
+                                    title={course.title}
+                                  >
+                                    {course.title}
+                                  </h3>
+                                </Link>
+                                <p className="mt-1 text-xs text-gray-200">
+                                  {course.instructorName}
                                 </p>
-                                <div className="flex items-center">
-                                  <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                                  <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-                                    {(course.rating ?? 0).toFixed(1)}
-                                  </span>
-                                </div>
                               </div>
                             </div>
                           </div>
-                        </CarouselItem>
-                      ))
-                    ) : (
-                      <CarouselItem className="flex h-40 items-center justify-center">
-                        <p className="text-lg text-gray-500">
-                          No hay cursos top disponibles
-                        </p>
+                        </div>
                       </CarouselItem>
-                    )}
-                  </CarouselContent>
-                  {latestTenCourses.length > 0 && (
-                    <>
-                      <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
-                      <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
-                    </>
+                    ))
+                  ) : (
+                    <CarouselItem className="flex h-56 items-center justify-center">
+                      <p className="text-lg text-gray-500">
+                        No hay cursos top disponibles
+                      </p>
+                    </CarouselItem>
                   )}
-                </Carousel>
-
-                {/* Flechas funcionales solo en móvil */}
+                </CarouselContent>
                 {latestTenCourses.length > 0 && (
                   <>
-                    {canScrollPrevTop && (
-                      <button
-                        onClick={() => topCoursesApi?.scrollPrev()}
-                        className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
-                        aria-label="Anterior"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                          <IoIosArrowBack className="text-2xl text-white" />
-                        </div>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => topCoursesApi?.scrollNext()}
-                      className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
-                      aria-label="Siguiente"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                        <IoIosArrowForward className="text-2xl text-white" />
-                      </div>
-                    </button>
+                    <CarouselPrevious />
+                    <CarouselNext />
                   </>
                 )}
-              </div>
-            </div>
+              </Carousel>
 
-            {/* Programas section */}
-            <div className="animation-delay-300 animate-zoom-in relative pr-0 pl-4 sm:px-24">
-              <div className="flex justify-center pr-4 sm:pr-0">
-                <StudentGradientText className="text-3xl sm:text-5xl">
+              {/* Flechas funcionales solo en móvil */}
+              {latestTenCourses.length > 0 && (
+                <>
+                  {canScrollPrevTop && (
+                    <button
+                      onClick={() => topCoursesApi?.scrollPrev()}
+                      className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                      aria-label="Anterior"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <IoIosArrowBack className="text-2xl text-white" />
+                      </div>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => topCoursesApi?.scrollNext()}
+                    className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                    aria-label="Siguiente"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                      <IoIosArrowForward className="text-2xl text-white" />
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Programas section */}
+          <div className="animation-delay-300 animate-zoom-in relative pr-0 pl-4 sm:px-24">
+            <div className="mb-4 flex justify-start pr-4 sm:pr-0">
+              <div className="flex items-center gap-2">
+                <IoLibrarySharp className="text-xl text-white" />
+                <StudentGradientText className="text-2xl sm:text-3xl">
                   Programas
                 </StudentGradientText>
               </div>
-              <div>
-                <Carousel className="w-full" setApi={setProgramsApi}>
-                  <CarouselContent className="my-6 gap-x-2">
-                    {sortedPrograms.map((program) => (
-                      <CarouselItem
-                        key={program.id}
-                        // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
-                        className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
-                      >
-                        <StudentProgram program={program} />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
-                  <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
-                </Carousel>
+            </div>
+            <div className="group/carousel relative">
+              <Carousel className="w-full" setApi={setProgramsApi}>
+                <CarouselContent className="my-6 gap-x-2">
+                  {sortedPrograms.map((program) => (
+                    <CarouselItem
+                      key={program.id}
+                      // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
+                      className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
+                    >
+                      <StudentProgram program={program} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
 
-                {/* Flechas funcionales solo en móvil */}
-                {sortedPrograms.length > 0 && (
-                  <>
-                    {canScrollPrevPrograms && (
-                      <button
-                        onClick={() => programsApi?.scrollPrev()}
-                        className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
-                        aria-label="Anterior"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                          <IoIosArrowBack className="text-2xl text-white" />
-                        </div>
-                      </button>
-                    )}
+              {/* Flechas funcionales solo en móvil */}
+              {sortedPrograms.length > 0 && (
+                <>
+                  {canScrollPrevPrograms && (
                     <button
-                      onClick={() => programsApi?.scrollNext()}
-                      className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
-                      aria-label="Siguiente"
+                      onClick={() => programsApi?.scrollPrev()}
+                      className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                      aria-label="Anterior"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                        <IoIosArrowForward className="text-2xl text-white" />
+                        <IoIosArrowBack className="text-2xl text-white" />
                       </div>
                     </button>
-                  </>
-                )}
-              </div>
+                  )}
+                  <button
+                    onClick={() => programsApi?.scrollNext()}
+                    className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                    aria-label="Siguiente"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                      <IoIosArrowForward className="text-2xl text-white" />
+                    </div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

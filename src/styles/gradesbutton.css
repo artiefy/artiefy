@@ -1,0 +1,89 @@
+/* From Uiverse.io by adamgiebl */
+.grades-button {
+  --green: #1bfd9c;
+  font-size: 15px;
+  padding: 0.7em 2.7em;
+  letter-spacing: 0.06em;
+  position: relative;
+  font-family: inherit;
+  border-radius: 0.6em;
+  overflow: hidden;
+  transition: all 0.3s;
+  line-height: 1.4em;
+  border: 2px solid var(--green);
+  background: linear-gradient(
+    to right,
+    rgba(27, 253, 156, 0.1) 1%,
+    transparent 40%,
+    transparent 60%,
+    rgba(27, 253, 156, 0.1) 100%
+  );
+  color: var(--green);
+  box-shadow:
+    inset 0 0 10px rgba(27, 253, 156, 0.4),
+    0 0 9px 3px rgba(27, 253, 156, 0.1);
+  min-width: 280px;
+  white-space: nowrap;
+}
+
+.grades-button:hover {
+  color: #82ffc9;
+  box-shadow:
+    inset 0 0 10px rgba(27, 253, 156, 0.6),
+    0 0 9px 3px rgba(27, 253, 156, 0.2);
+}
+
+/* Pseudo-element used as the sweeping highlight. Start fully hidden to the left
+   so no visible 'padding' is seen on the left when idle. */
+.grades-button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: translateX(-100%);
+  opacity: 0;
+  /* Slower sweep: lengthened transform duration and slightly longer opacity fade */
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1),
+    opacity 0.25s ease;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(27, 253, 156, 0.12) 34%,
+    rgba(27, 253, 156, 0.28) 50%,
+    rgba(27, 253, 156, 0.12) 66%,
+    transparent 100%
+  );
+}
+
+/* On hover slide the highlight fully across and fade it in */
+.grades-button:hover::before {
+  transform: translateX(100%);
+  opacity: 1;
+}
+
+/* Click / active (zoom-out) effect: scale down slightly on press/click. */
+.grades-button:active,
+.grades-button.is-active {
+  transform: scale(0.98);
+  transition: transform 0.12s ease-out;
+  will-change: transform;
+}
+
+/* Also provide a focus-visible scale for keyboard users (subtle) */
+.grades-button:focus-visible {
+  outline: none;
+  transform: scale(0.995);
+  transition: transform 0.14s ease-out;
+}
+
+/* Disabled buttons should not scale */
+.grades-button[disabled],
+.grades-button:disabled {
+  transform: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}

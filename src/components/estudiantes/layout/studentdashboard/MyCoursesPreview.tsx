@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { useAuth } from '@clerk/nextjs';
+import { GrOverview } from 'react-icons/gr';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import useSWR from 'swr';
 
+import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { type CarouselApi } from '~/components/estudiantes/ui/carousel';
 import {
   Carousel,
@@ -17,6 +19,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 import type { EnrolledCourse } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 
@@ -24,13 +27,18 @@ export default function MyCoursesPreview() {
   const { isSignedIn } = useAuth();
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const carouselOptions = {
+    align: 'start' as const,
+    containScroll: 'trimSnaps' as const,
+  };
 
-  // SWR para cursos inscritos - solo si está autenticado
+  // SWR para cursos inscritos - solo si esta autenticado
   const fetcher = (url: string) =>
     fetch(url).then((r) => {
       if (!r.ok) throw new Error('No se pudo cargar los cursos');
       return r.json();
     });
+
   const { data, error, isLoading } = useSWR<{ courses?: EnrolledCourse[] }>(
     isSignedIn ? '/api/enrolled-courses' : null,
     fetcher,
@@ -40,14 +48,13 @@ export default function MyCoursesPreview() {
   );
   const courses = data?.courses ?? [];
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!carouselApi) return;
 
     const updateScrollState = () => {
       setCanScrollPrev(carouselApi.canScrollPrev());
     };
 
-    // Actualizar al montar y cuando cambie el scroll
     updateScrollState();
     carouselApi.on('scroll', updateScrollState);
     carouselApi.on('select', updateScrollState);
@@ -60,13 +67,13 @@ export default function MyCoursesPreview() {
 
   function getImageUrl(coverImageKey: string | null | undefined) {
     if (!coverImageKey || coverImageKey === 'NULL') {
-      return 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+      return 'https://placehold.co/600x400/01152D/3AF4EF?text=Artiefy&font=MONTSERRAT';
     }
     const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`;
     return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
   }
 
-  // Si no está autenticado, no mostrar nada (ocultar la sección)
+  // Si no esta autenticado, no mostrar nada (ocultar la seccion)
   if (!isSignedIn) {
     return null;
   }
@@ -74,33 +81,37 @@ export default function MyCoursesPreview() {
   // Skeleton while loading
   if (isLoading) {
     return (
-      <section className="mb-8 px-12 sm:px-24">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-primary text-2xl font-bold">Seguir viendo</h3>
+      <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+        <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+          <div className="flex items-center gap-2">
+            <GrOverview className="text-xl text-white" />
+            <StudentGradientText className="text-2xl sm:text-3xl">
+              Seguir viendo
+            </StudentGradientText>
+          </div>
         </div>
 
-        <div className="relative">
-          <Carousel>
-            <CarouselContent className="gap-x-4">
-              {Array.from({ length: 3 }).map((_, i) => (
+        <div className="group/carousel relative">
+          <Carousel opts={carouselOptions}>
+            <CarouselContent className="gap-4 pt-3 pb-2">
+              {Array.from({ length: 4 }).map((_, i) => (
                 <CarouselItem
                   key={i}
-                  // Mobile: smaller cards to show 1.5, tablet: 2 cards, desktop: 3 cards + peek
-                  className="max-w-[220px] basis-auto px-2 sm:max-w-[400px] sm:basis-1/2 lg:max-w-[430px] lg:basis-[30%]"
+                  className="basis-[280px] px-1 sm:basis-[320px] sm:px-2"
                 >
-                  <div className="block animate-pulse overflow-hidden rounded-lg bg-[#071827] p-0 shadow-md">
-                    <div className="h-56 w-full rounded-t-lg bg-gray-800" />
-                    <div className="p-4">
-                      <div className="h-4 w-3/4 rounded bg-gray-700" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-700" />
-                      <div className="mt-4 h-3 w-full rounded bg-gray-700" />
+                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#123055] bg-[#061C37]">
+                    <Skeleton className="h-40 w-full rounded-none" />
+                    <div className="flex-1 space-y-3 p-4">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3 w-full" />
                     </div>
                   </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
-            <CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
+            <CarouselPrevious />
+            <CarouselNext />
           </Carousel>
         </div>
       </section>
@@ -109,13 +120,18 @@ export default function MyCoursesPreview() {
 
   if (error) {
     return (
-      <section className="mb-8 px-12 sm:px-24">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-primary text-2xl font-bold">Seguir viendo</h3>
+      <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+        <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+          <div className="flex items-center gap-2">
+            <GrOverview className="text-xl text-white" />
+            <StudentGradientText className="text-2xl sm:text-3xl">
+              Seguir viendo
+            </StudentGradientText>
+          </div>
         </div>
         <div className="p-6 text-center text-red-400">
-          Error al cargar tus cursos. Por favor, recarga la página o verifica tu
-          conexión.
+          Error al cargar tus cursos. Por favor, recarga la pagina o verifica tu
+          conexion.
         </div>
       </section>
     );
@@ -124,124 +140,121 @@ export default function MyCoursesPreview() {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="mb-8 pr-0 pl-4 sm:px-24">
+    <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
       <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
-        <h3 className="text-primary text-2xl font-bold">Seguir viendo</h3>
+        <div className="flex items-center gap-2">
+          <GrOverview className="text-xl text-white" />
+          <StudentGradientText className="text-2xl sm:text-3xl">
+            Seguir viendo
+          </StudentGradientText>
+        </div>
         <Link
           href="/estudiantes/myaccount"
-          className="text-sm text-gray-300 underline"
+          className="text-primary text-sm underline"
         >
           Ver todos
         </Link>
       </div>
 
-      <div className="relative">
-        <Carousel setApi={setCarouselApi}>
-          <CarouselContent className="gap-x-2">
-            {courses.slice(0, 8).map((course) => (
-              <CarouselItem
-                key={course.id}
-                // Mobile: 85% width to show peek, tablet: 2 cards, desktop: 3 cards + peek
-                className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
-              >
-                <div className="group relative block h-56 w-full overflow-hidden rounded-lg bg-[#071827] shadow-md">
-                  {/* Imagen de fondo con link */}
+      <div className="group/carousel relative z-20 overflow-visible">
+        <Carousel opts={carouselOptions} setApi={setCarouselApi}>
+          <CarouselContent className="gap-4 pt-3 pb-2">
+            {courses.slice(0, 8).map((course) => {
+              const targetLessonId =
+                course.lastUnlockedLessonId ??
+                course.continueLessonId ??
+                course.firstLessonId ??
+                null;
+              const targetLessonTitle =
+                course.lastUnlockedLessonTitle ??
+                course.continueLessonTitle ??
+                null;
+
+              const courseHref = targetLessonId
+                ? `/estudiantes/clases/${targetLessonId}`
+                : `/estudiantes/cursos/${course.id}`;
+              const progress = Math.min(
+                Math.max(Math.round(course.progress ?? 0), 0),
+                100
+              );
+              const badgeHeading = 'Continuar:';
+              const badgeSubtitle = targetLessonTitle ?? 'Ir al curso';
+              const titleText = course.title ?? '';
+              const titleLength = titleText.length;
+              const titleWordCount = titleText.trim().split(/\s+/).length;
+              const isShortTitle = titleLength <= 32 && titleWordCount <= 6;
+              const categorySpacingClass = isShortTitle ? '-mt-4 mb-0' : 'mb-1';
+              const progressSpacingClass = isShortTitle ? 'mt-2' : 'mt-0.5';
+
+              return (
+                <CarouselItem
+                  key={course.id}
+                  className="basis-[280px] px-1 sm:basis-[320px] sm:px-2"
+                >
                   <Link
-                    href={`/estudiantes/cursos/${course.id}`}
-                    className="absolute inset-0 block"
+                    href={courseHref}
+                    className="group relative flex h-full transform-gpu flex-col overflow-hidden rounded-2xl bg-[#061C37] shadow-none transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform hover:-translate-y-2 hover:shadow-[0_18px_32px_-10px_rgba(0,0,0,0.65)]"
                   >
-                    <Image
-                      src={getImageUrl(course.coverImageKey)}
-                      alt={course.title}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 420px"
-                    />
-                    {/* Overlay gradient for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                  </Link>
+                    <div className="relative h-40 w-full overflow-hidden bg-[#061C37] will-change-transform">
+                      <Image
+                        src={getImageUrl(course.coverImageKey)}
+                        alt={course.title}
+                        fill
+                        className="h-full w-full object-cover"
+                        sizes="(max-width: 768px) 100vw, 420px"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
 
-                  {/* Content overlay */}
-                  <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
-                    {/* Top right: Continue lesson button */}
-                    {(() => {
-                      const targetLessonId =
-                        course.lastUnlockedLessonId ??
-                        course.continueLessonId ??
-                        course.firstLessonId ??
-                        null;
-                      const targetLessonNumber =
-                        course.lastUnlockedLessonNumber ??
-                        course.continueLessonNumber ??
-                        1;
-                      const targetLessonTitle =
-                        course.lastUnlockedLessonTitle ??
-                        course.continueLessonTitle ??
-                        null;
-
-                      if (!targetLessonId) return null;
-                      return (
-                        <div className="flex justify-end">
-                          <Link
-                            href={`/estudiantes/clases/${targetLessonId}`}
-                            className="bg-primary/90 hover:bg-primary pointer-events-auto rounded px-3 py-2 backdrop-blur-sm transition-colors"
-                          >
-                            <div className="font-semibold whitespace-nowrap text-gray-800">
-                              Seguir: Clase {targetLessonNumber}
-                            </div>
-                            {targetLessonTitle && (
-                              <div
-                                title={targetLessonTitle}
-                                className="mt-1 max-w-[160px] truncate text-[11px] font-bold text-black"
-                              >
-                                {targetLessonTitle}
-                              </div>
-                            )}
-                          </Link>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Bottom: Title, category and progress bar */}
-                    <div className="space-y-2">
-                      <div>
-                        <h4 className="line-clamp-2 text-base font-semibold text-white drop-shadow-lg">
-                          {course.title}
-                        </h4>
-                        <p className="mt-1 text-sm text-gray-200 drop-shadow">
-                          {course.category?.name ?? 'Sin categoría'}
+                      <div className="bg-primary absolute top-3 right-3 rounded-lg px-3 py-1.5 text-[#0b1220] shadow-lg">
+                        <p className="text-xs leading-tight font-semibold text-[#0b1220]">
+                          {badgeHeading}
+                        </p>
+                        <p
+                          className="max-w-[140px] truncate text-[10px] leading-tight font-normal text-[#0b1220] opacity-90"
+                          title={badgeSubtitle}
+                        >
+                          {badgeSubtitle}
                         </p>
                       </div>
+                    </div>
 
-                      {/* Progress bar */}
-                      <div className="flex w-full items-center gap-3">
-                        <div className="flex-1">
-                          <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-700/50 backdrop-blur-sm">
-                            <div
-                              className="bg-primary absolute top-0 left-0 h-2 rounded-full shadow-inner"
-                              style={{
-                                width: `${Math.min(Math.max(course.progress ?? 0, 0), 100)}%`,
-                              }}
-                            />
-                          </div>
+                    <div className="flex flex-1 flex-col bg-[#061C37] p-4">
+                      <h4
+                        className="mb-1 line-clamp-2 min-h-[38px] text-sm leading-snug font-semibold text-white"
+                        title={course.title}
+                      >
+                        {course.title}
+                      </h4>
+
+                      <p
+                        className={`${categorySpacingClass} text-xs text-[#94A3B8]`}
+                      >
+                        {course.category?.name ?? 'Sin categoria'}
+                      </p>
+
+                      <div
+                        className={`${progressSpacingClass} flex items-center gap-3`}
+                      >
+                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]">
+                          <div
+                            className="bg-primary h-full rounded-full transition-all duration-500"
+                            style={{ width: `${progress}%` }}
+                          />
                         </div>
-                        <div className="w-12 text-right">
-                          <span className="text-sm font-semibold text-white drop-shadow">
-                            {Math.round(course.progress ?? 0)}%
-                          </span>
-                        </div>
+                        <span className="text-muted-foreground text-xs font-medium">
+                          {progress}%
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </CarouselItem>
-            ))}
+                  </Link>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
-          <CarouselPrevious className="-left-9 hidden size-8 bg-black/50 text-white sm:-left-20 sm:flex sm:size-12" />
-          <CarouselNext className="-right-9 hidden size-8 bg-black/50 text-white sm:-right-20 sm:flex sm:size-12" />
+          <CarouselPrevious />
+          <CarouselNext />
         </Carousel>
 
-        {/* Flechas funcionales solo en móvil */}
         {canScrollPrev && (
           <button
             onClick={() => carouselApi?.scrollPrev()}

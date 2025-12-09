@@ -20,16 +20,18 @@ import {
   FaExpand,
   FaStar,
   FaTimes,
+  FaTrophy,
   FaUserGraduate,
   FaVolumeMute,
   FaVolumeUp,
 } from 'react-icons/fa';
 import { IoCloseOutline, IoGiftOutline } from 'react-icons/io5';
 import { MdKeyboardDoubleArrowRight } from 'react-icons/md';
-import { PiCertificateFill } from 'react-icons/pi';
+import { PiCertificateFill, PiNote } from 'react-icons/pi';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import { GradeHistory } from '~/components/estudiantes/layout/lessondetail/LessonGradeHistory';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm'; // Agrega este import
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -56,6 +58,18 @@ import '~/styles/certificado-modal.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 import '~/styles/buttonforum.css';
+import '~/styles/gradesbutton.css';
+
+interface GradeSummaryType {
+  finalGrade: number;
+  courseCompleted?: boolean;
+  parameters: {
+    name: string;
+    grade: number;
+    weight: number;
+    activities: { id: number; name: string; grade: number }[];
+  }[];
+}
 
 export const revalidate = 3600;
 
@@ -1131,6 +1145,13 @@ export function CourseHeader({
   // --- NUEVO: Estado para forumId ---
   const [forumId, setForumId] = useState<number | null>(null);
 
+  // Grade history modal state
+  const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
+  const [gradeSummary, setGradeSummary] = useState<GradeSummaryType | null>(
+    null
+  );
+  const [_isGradeSummaryLoading, setIsGradeSummaryLoading] = useState(false);
+
   // --- NUEVO: Obtener forumId por curso ---
   useEffect(() => {
     const fetchForum = async () => {
@@ -1476,7 +1497,7 @@ export function CourseHeader({
             </h1>
           </div>
           {/* MOVED: Mobile metadata section - now below title in mobile view */}
-          <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
+          <div className="relative z-10 -mt-2 -mb-2 block w-full sm:mb-2 sm:hidden">
             <div className="flex items-center justify-between gap-2">
               {/* Categoría alineada a la izquierda */}
               <Badge
@@ -1615,7 +1636,7 @@ export function CourseHeader({
               <div
                 className={`${isEnrolled ? 'flex' : 'hidden sm:flex'} flex-col gap-2 sm:flex-row sm:items-center`}
               >
-                <div className="flex items-center">
+                <div className="mt-3 flex items-center sm:mt-0">
                   <FaCalendar className="mr-2 text-white" />
                   <span className="text-xs text-white sm:text-sm">
                     Creado: {formatDateString(course.createdAt)}
@@ -1629,39 +1650,37 @@ export function CourseHeader({
                 </div>
               </div>
             </div>
-            {/* Ocultar número de estudiantes en mobile si no está logueado */}
-            {(isSignedIn ?? window.innerWidth >= 640) && (
-              <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-                <div className="flex items-center sm:-mt-1">
-                  <FaUserGraduate className="mr-2 text-blue-600" />
-                  <span className="text-sm font-semibold text-blue-600 sm:text-base">
-                    {Math.max(0, totalStudents)}{' '}
-                    {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
-                  </span>
-                </div>
-                <div className="flex items-center sm:-mt-1">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <StarIcon
-                      key={index}
-                      className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                        index < Math.floor(course.rating ?? 0)
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-                    {course.rating?.toFixed(1)}
-                  </span>
-                </div>
+            {/* Mostrar número de estudiantes y rating en desktop y mobile */}
+            <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
+              <div className="flex items-center sm:-mt-1">
+                <FaUserGraduate className="mr-2 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-600 sm:text-base">
+                  {Math.max(0, totalStudents)}{' '}
+                  {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
+                </span>
               </div>
-            )}
+              <div className="flex items-center sm:-mt-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <StarIcon
+                    key={index}
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      index < Math.floor(course.rating ?? 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+                  {course.rating?.toFixed(1)}
+                </span>
+              </div>
+            </div>
           </div>
           {/* Course type and instructor info */}
           <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
             <div className="w-full space-y-4">
               <div className="-mt-3 -mb-9 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
-                <div className="flex w-full items-center">
+                <div className="flex w-full items-center justify-between">
                   <div>
                     <h3 className="text-base font-extrabold text-white sm:text-lg">
                       {course.instructorName ?? 'Instructor no encontrado'}
@@ -1670,6 +1689,12 @@ export function CourseHeader({
                       Educador
                     </em>
                   </div>
+                  {/* Modalidad badge in mobile, right side, same line as educator */}
+                  <span className="ml-2 sm:hidden">
+                    <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+                      {course.modalidad?.name}
+                    </Badge>
+                  </span>
                 </div>
               </div>
               {/* Elimina el botón duplicado en mobile, solo se muestra en el bloque principal */}
@@ -1687,14 +1712,65 @@ export function CourseHeader({
                 </div>
               )}
             </div>
-            {/* Modalidad badge solo visible en desktop */}
+            {/* Modalidad badge y Ver Certificado en desktop (right arrow, right of button) */}
             <div className="hidden flex-col items-end gap-4 sm:flex">
               <div className="flex items-center gap-2">
+                {canAccessCertificate && (
+                  <>
+                    <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-8 w-8" />
+                    <Button
+                      onClick={() => setIsCertModalOpen(true)}
+                      className="cert2-button h-10 w-40 text-white"
+                      aria-label="Ver Certificado"
+                    >
+                      <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                      <span className="text-xs font-semibold text-white sm:text-sm">
+                        Ver Certificado
+                      </span>
+                    </Button>
+                  </>
+                )}
                 <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                   {course.modalidad?.name}
                 </Badge>
               </div>
-
+              {/* Duplicated LessonGrades button below modalidad badge, aligned right */}
+              <div className="mt-2 mb-0 flex w-full justify-end sm:-mt-1 sm:mb-3">
+                <button
+                  onClick={async () => {
+                    if (!user?.id) {
+                      toast.error(
+                        'Debes iniciar sesión para ver tu historial de notas'
+                      );
+                      return;
+                    }
+                    try {
+                      setIsGradeSummaryLoading(true);
+                      const res = await fetch(
+                        `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                      );
+                      if (!res.ok)
+                        throw new Error('Error fetching grade summary');
+                      const data = (await res.json()) as GradeSummaryType;
+                      setGradeSummary(data);
+                      setIsGradeHistoryOpen(true);
+                    } catch (e) {
+                      console.error('Failed to load grade summary', e);
+                      toast.error('No se pudo cargar el historial de notas');
+                    } finally {
+                      setIsGradeSummaryLoading(false);
+                    }
+                  }}
+                  disabled={!isSignedIn}
+                  className={`grades-button flex h-9 items-center rounded px-4 font-semibold ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+                >
+                  <FaTrophy className="mr-2 h-4 w-4" />
+                  <span className="text-sm font-semibold">
+                    Ver Resultados De Notas
+                  </span>
+                  <PiNote className="ml-2 h-4 w-4" />
+                </button>
+              </div>
               {/* Botón foro SOLO aquí, alineado a la derecha y abajo de la modalidad */}
               {isEnrolled &&
                 (forumId || course.forumId ? (
@@ -1717,27 +1793,63 @@ export function CourseHeader({
           <div
             className={`flex justify-center ${localIsEnrolled ? 'mb-4' : 'mb-2'}`}
           >
-            {/* Escala completa más pequeña en pantallas móviles, restaurada en sm+ */}
             <div className="relative h-auto origin-center scale-90 transform-gpu sm:scale-100">
+              {/* On mobile, Ver Certificado above enrollment buttons with arrows on both sides */}
+              {localIsEnrolled && canAccessCertificate && (
+                <div className="mb-2 flex w-full items-center justify-center gap-2 sm:hidden">
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7 -scale-x-100" />
+                  <Button
+                    onClick={() => setIsCertModalOpen(true)}
+                    className="cert2-button h-10 w-40 text-white"
+                    aria-label="Ver Certificado"
+                  >
+                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <span className="text-xs font-semibold text-white sm:text-sm">
+                      Ver Certificado
+                    </span>
+                  </Button>
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7" />
+                </div>
+              )}
+              {/* On mobile, LessonGrades below modalidad, centered */}
+              <div className="mb-2 flex w-full justify-center sm:hidden">
+                <button
+                  onClick={async () => {
+                    if (!user?.id) {
+                      toast.error(
+                        'Debes iniciar sesión para ver tu historial de notas'
+                      );
+                      return;
+                    }
+                    try {
+                      setIsGradeSummaryLoading(true);
+                      const res = await fetch(
+                        `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                      );
+                      if (!res.ok)
+                        throw new Error('Error fetching grade summary');
+                      const data = (await res.json()) as GradeSummaryType;
+                      setGradeSummary(data);
+                      setIsGradeHistoryOpen(true);
+                    } catch (e) {
+                      console.error('Failed to load grade summary', e);
+                      toast.error('No se pudo cargar el historial de notas');
+                    } finally {
+                      setIsGradeSummaryLoading(false);
+                    }
+                  }}
+                  disabled={!isSignedIn}
+                  className={`grades-button flex w-full items-center justify-center whitespace-nowrap ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
+                >
+                  <FaTrophy className="mr-2 inline-block" />
+                  <span className="whitespace-nowrap">
+                    Ver Resultados De Notas
+                  </span>
+                  <PiNote className="ml-2 inline-block h-4 w-4" />
+                </button>
+              </div>
               {localIsEnrolled ? (
                 <div className="flex flex-col items-center space-y-4">
-                  {/* Botón Ver Certificado en la fila superior */}
-                  {canAccessCertificate && (
-                    <div className="flex items-center justify-center gap-4">
-                      <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 sm:h-12 sm:w-12" />
-                      <Button
-                        onClick={() => setIsCertModalOpen(true)}
-                        className="cert2-button h-10 w-40 text-white sm:h-12 sm:w-48"
-                        aria-label="Ver Certificado"
-                      >
-                        <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
-                        <span className="text-xs font-semibold text-white sm:text-sm">
-                          Ver Certificado
-                        </span>
-                      </Button>
-                      <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-10 w-10 rotate-180 transform sm:h-12 sm:w-12" />
-                    </div>
-                  )}
                   {/* Botones de inscripción en la fila inferior */}
                   <div className="flex flex-col items-center space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
                     <Button
@@ -1905,6 +2017,13 @@ export function CourseHeader({
               </div>
             </div>
           )}
+          {isGradeHistoryOpen && (
+            <GradeHistory
+              isOpen={isGradeHistoryOpen}
+              onClose={() => setIsGradeHistoryOpen(false)}
+              gradeSummary={gradeSummary}
+            />
+          )}
           {/* Add Materias section below description */}
           {course.materias && course.materias.length > 0 && (
             <div className="space-y-2">
@@ -1915,7 +2034,10 @@ export function CourseHeader({
                 {/* Filter to only show unique materia titles */}
                 {Array.from(
                   new Map(
-                    course.materias.map((materia) => [materia.title, materia])
+                    course.materias.map((materia: CourseMateria) => [
+                      materia.title,
+                      materia,
+                    ])
                   ).values()
                 ).map((materia: CourseMateria, index: number) => (
                   <Badge

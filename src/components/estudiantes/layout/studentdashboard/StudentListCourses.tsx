@@ -1,26 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  ArrowRightCircleIcon,
-  CheckCircleIcon,
-  StarIcon,
-} from '@heroicons/react/24/solid';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { AiOutlineFire } from 'react-icons/ai';
 import { FaCrown, FaStar } from 'react-icons/fa';
+import { HiLibrary } from 'react-icons/hi';
 import { IoGiftOutline } from 'react-icons/io5';
-import { MdOutlineLockClock } from 'react-icons/md';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '~/components/estudiantes/ui/card';
+import { Card } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
@@ -205,27 +195,27 @@ export default async function StudentListCourses({
         // PREMIUM
         if (userPlanType === 'Premium' && hasPremium) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <FaCrown className="h-3 w-3" />
+              Premium
             </div>
           );
         }
         // PRO
         if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+              <FaStar className="h-3 w-3" />
+              Pro
             </div>
           );
         }
         // GRATUITO
         if (hasFree) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              <IoGiftOutline className="h-3 w-3" />
+              Gratuito
             </div>
           );
         }
@@ -235,16 +225,13 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         }
@@ -257,22 +244,19 @@ export default async function StudentListCourses({
         );
         return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
             {includedInPlans.length > 0 && (
               <>
                 {/* Mobile view */}
                 <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -281,7 +265,7 @@ export default async function StudentListCourses({
                 </div>
                 {/* Desktop view as badge */}
                 <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -295,91 +279,61 @@ export default async function StudentListCourses({
       }
       // 2. Premium (si existe)
       if (hasPremium) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'PREMIUM');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+            <FaCrown className="h-3 w-3" />
+            Premium
           </div>
         );
       }
       // 3. Pro (si existe)
       if (hasPro) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'PRO');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+            <FaStar className="h-3 w-3" />
+            Pro
           </div>
         );
       }
       // 4. Free (si existe)
       if (hasFree) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+            <IoGiftOutline className="h-3 w-3" />
+            Gratuito
           </div>
         );
       }
@@ -392,33 +346,33 @@ export default async function StudentListCourses({
     // Mostrar el precio individual cuando el curso es tipo 4
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
-        <div className="mt-1 flex items-center gap-1">
-          <FaStar className="text-lg text-blue-500" />
-          <span className="text-sm font-bold text-blue-500">
-            ${course.individualPrice.toLocaleString('es-ES')}
-          </span>
+        <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+          <FaStar className="h-3 w-3" />${' '}
+          {course.individualPrice.toLocaleString('es-CO')}
         </div>
       );
     }
     const { requiredSubscriptionLevel } = courseType;
     if (requiredSubscriptionLevel === 'none') {
       return (
-        <div className="mt-1 flex items-center gap-1">
-          <IoGiftOutline className="text-lg text-green-500" />
-          <span className="text-sm font-bold text-green-500">GRATUITO</span>
+        <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+          <IoGiftOutline className="h-3 w-3" />
+          Gratuito
         </div>
       );
     }
-    const color =
-      requiredSubscriptionLevel === 'premium'
-        ? 'text-purple-500'
-        : 'text-orange-500';
+    if (requiredSubscriptionLevel === 'premium') {
+      return (
+        <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+          <FaCrown className="h-3 w-3" />
+          Premium
+        </div>
+      );
+    }
     return (
-      <div className={`mt-1 flex items-center gap-1 ${color}`}>
-        <FaCrown className="text-lg" />
-        <span className="text-sm font-bold">
-          {requiredSubscriptionLevel.toUpperCase()}
-        </span>
+      <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+        <FaStar className="h-3 w-3" />
+        Pro
       </div>
     );
   };
@@ -450,14 +404,22 @@ export default async function StudentListCourses({
           !type.isPurchasableIndividually
       );
 
+      // Crear un array con los tipos adicionales
+      const includedInPlans: string[] = [];
+      if (course.courseTypes.length > 1) {
+        if (hasPremium) includedInPlans.push('PREMIUM');
+        if (hasPro) includedInPlans.push('PRO');
+        if (hasFree) includedInPlans.push('GRATUITO');
+      }
+
       // Principal type
       let principalType: React.ReactNode = null;
       if (hasActiveSubscription) {
         if (userPlanType === 'Premium' && hasPremium) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <FaCrown className="h-3 w-3" />
+              Premium
             </div>
           );
         } else if (
@@ -465,16 +427,16 @@ export default async function StudentListCourses({
           hasPro
         ) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+              <FaCrown className="h-3 w-3" />
+              Pro
             </div>
           );
         } else if (hasFree) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              <IoGiftOutline className="h-3 w-3" />
+              Gratuito
             </div>
           );
         } else if (hasPurchasable) {
@@ -482,16 +444,13 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         }
@@ -501,65 +460,76 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         } else if (hasPremium) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                <FaCrown className="h-3 w-3" />
+                Premium
+              </div>
+            );
+          }
         } else if (hasPro) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+                <FaCrown className="h-3 w-3" />
+                Pro
+              </div>
+            );
+          }
         } else if (hasFree) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                <IoGiftOutline className="h-3 w-3" />
+                Gratuito
+              </div>
+            );
+          }
         }
       }
 
-      // Badges "Incluido en"
-      const includedInPlans: string[] = [];
-      if (course.courseTypes.length > 1) {
-        if (hasPremium) includedInPlans.push('PREMIUM');
-        if (hasPro) includedInPlans.push('PRO');
-        if (hasFree) includedInPlans.push('GRATUITO');
-      }
-      const badges =
-        includedInPlans.length > 0 ? (
-          <div className="mt-0.5">
-            <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-              Incluido en:{' '}
-              <span className="font-bold">{includedInPlans.join(', ')}</span>
-            </Badge>
-          </div>
-        ) : null;
-
-      return (
-        <div className="flex w-full flex-col items-end">
-          <div className="flex w-full justify-end">{principalType}</div>
-          {badges}
-        </div>
-      );
+      return principalType;
     }
     // Fallback a la lógica original para compatibilidad
     return getCourseTypeLabel(course);
@@ -568,10 +538,13 @@ export default async function StudentListCourses({
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
-      <div className="flex justify-center">
-        <GradientText className="my-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
-          Cursos Artie
-        </GradientText>
+      <div className="mt-8 mb-4 flex justify-start px-8 lg:px-20">
+        <div className="flex items-center gap-2">
+          <HiLibrary className="text-xl text-white" />
+          <GradientText className="text-2xl sm:text-3xl">
+            Cursos Artie
+          </GradientText>
+        </div>
       </div>
       <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
         {processedCourses.map(
@@ -581,160 +554,124 @@ export default async function StudentListCourses({
             blurDataURL,
             isEnrolled,
             nextLiveClassDate,
-          }) => (
-            <div key={course.id} className="group relative">
-              <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
-              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
-                {/* Badge "Muy pronto" para cursos desactivados */}
-                {!course.isActive && (
-                  <div className="absolute top-2 right-2 z-10 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-gray-900 shadow">
-                    Muy pronto
-                  </div>
-                )}
-                <CardHeader className="">
+          }) => {
+            const cardContent = (
+              <Card
+                className={`artiefy-course-card zoom-in text-foreground relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 shadow-md transition-all duration-300 ${
+                  course.isActive
+                    ? 'hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-xl'
+                    : 'cursor-not-allowed'
+                }`}
+              >
+                <div className="relative -mx-4 -mt-4 overflow-hidden">
                   <AspectRatio ratio={16 / 9}>
-                    <div className="relative size-full">
+                    <div className="relative h-full w-full">
                       <Image
                         src={imageUrl}
                         alt={course.title || 'Imagen del curso'}
-                        className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
+                        className="object-cover"
                         fill
                         blurDataURL={blurDataURL}
                         placeholder={blurDataURL ? 'blur' : 'empty'}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={75}
                       />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
                     </div>
                   </AspectRatio>
-                </CardHeader>
+                </div>
 
-                <CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
-                  <CardTitle className="text-background rounded text-lg">
-                    <div
-                      className="text-primary font-bold"
-                      title={course.title}
-                    >
-                      {course.title}
-                    </div>
-                  </CardTitle>
-                  <div className="flex items-center justify-between">
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-primary hover:bg-black/70"
-                    >
-                      {course.category?.name}
-                    </Badge>
-                    {isEnrolled && (
-                      <div className="flex items-center text-green-500">
-                        <CheckCircleIcon className="size-5" />
-                        <span className="ml-1 text-sm font-bold">Inscrito</span>
-                      </div>
-                    )}
-                  </div>
-                  <p
-                    className="line-clamp-2 text-sm text-gray-300"
-                    title={course.description ?? ''}
-                  >
-                    {course.description}
-                  </p>
-                  {/* MOBILE: Modalidad (izq) y tipo de curso (der) en la misma fila */}
-                  <div className="flex w-full items-center justify-between sm:hidden">
-                    <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
-                      {course.modalidad?.name}
-                    </p>
-                    {/* Tipo principal alineado al borde derecho, badges debajo */}
-                    <div className="ml-auto flex w-fit flex-shrink-0 justify-end">
-                      {getCourseTypeLabelMobile(course)}
-                    </div>
-                  </div>
-                  {/* DESKTOP: Modalidad y tipo de curso como antes */}
-                  <div className="-mb-4 hidden items-start justify-between sm:flex">
-                    <p className="max-w-[60%] text-sm font-bold break-words text-red-500">
-                      {course.modalidad?.name}
-                    </p>
-                    <div className="ml-auto flex w-full justify-end">
-                      {getCourseTypeLabel(course)}
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex flex-col items-start justify-between space-y-2">
-                  <div className="-mt-4 flex w-full justify-between md:mt-0">
-                    <p className="text-sm font-bold text-gray-300 italic">
-                      Educador:{' '}
-                      <span className="font-bold italic">
-                        {course.instructorName ?? 'No tiene'}
-                      </span>
-                    </p>
-                    <div className="flex items-center">
-                      <StarIcon className="size-5 text-yellow-500" />
-                      <span className="ml-1 text-sm font-bold text-yellow-500">
-                        {(course.rating ?? 0).toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Mostrar solo si el curso tiene próxima clase en vivo */}
-                  {nextLiveClassDate && (
-                    <div className="mt-1 mb-1 flex items-center">
-                      <span
-                        className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_2px_#22c55e]"
-                        aria-label="Clase en vivo pronto"
-                      />
-                      <span className="text-[13px] font-bold sm:text-sm">
-                        <span
-                          className="text-primary font-bold"
-                          style={{
-                            // Efecto glow azul
-                            textShadow:
-                              '0 0 6px #3AF4EF, 0 0 12px #00BDD8, 0 0 18px #3AF4EF, 0 0 24px #00BDD8',
-                            background: 'none',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'unset',
-                            filter: 'none',
-                          }}
-                        >
-                          {/* Cambiado el texto aquí */}
-                          Primera Clase: {formatSpanishDate(nextLiveClassDate)}
+                <div className="flex h-full flex-1 flex-col gap-3">
+                  <h3 className="line-clamp-2 text-base leading-snug font-semibold text-white md:text-lg">
+                    {course.title}
+                  </h3>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-row">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-[#94A3B8]">
+                        Por:{' '}
+                        <span className="text-primary font-medium">
+                          {course.instructorName ?? 'Educador'}
                         </span>
-                      </span>
-                    </div>
-                  )}
-                  <Button
-                    asChild
-                    disabled={!course.isActive}
-                    className={`mt-2 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
-                  >
-                    <Link
-                      href={`/estudiantes/cursos/${course.id}`}
-                      className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 ${
-                        !course.isActive
-                          ? 'pointer-events-none bg-gray-600 text-white'
-                          : 'bg-background text-primary active:scale-95'
-                      }`}
-                    >
-                      <span className="font-bold">
-                        {!course.isActive ? (
-                          <span className="flex items-center justify-center text-white">
-                            <MdOutlineLockClock className="mr-1.5 size-5" />
-                            Muy pronto
+                      </p>
+                      {isEnrolled && (
+                        <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-green-400">
+                          <CheckCircleIcon className="h-3 w-3" />
+                          <span className="text-[10px] font-medium">
+                            Inscrito
                           </span>
-                        ) : (
-                          'Ver Curso'
-                        )}
-                      </span>
-                      {course.isActive && (
-                        <>
-                          <ArrowRightCircleIcon className="animate-bounce-right ml-2 size-5" />
-                          <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                            <div className="relative h-full w-10 bg-white/30" />
-                          </div>
-                        </>
+                        </div>
                       )}
-                    </Link>
-                  </Button>
-                </CardFooter>
+                    </div>
+
+                    <div className="flex items-center text-sm">
+                      <div className="hidden sm:block">
+                        {getCourseTypeLabel(course)}
+                      </div>
+                      <div className="block sm:hidden">
+                        {getCourseTypeLabelMobile(course)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="chip chip-modalidad">
+                      {course.modalidad?.name ?? 'Asistida Virtual'}
+                    </span>
+                    {course.horario && (
+                      <span className="chip chip-horario">
+                        {course.horario}
+                      </span>
+                    )}
+                    {course.espacios && (
+                      <span className="chip chip-espacios">
+                        {course.espacios}
+                      </span>
+                    )}
+                    <span className="chip chip-categoria">
+                      {course.category?.name ?? 'Sin categoría'}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                    <span className="text-primary">📅</span>
+                    Empieza:{' '}
+                    {nextLiveClassDate ? (
+                      <span className="text-primary animate-pulse font-medium drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">
+                        {formatSpanishDate(nextLiveClassDate)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-100">Clases Virtuales</span>
+                    )}
+                  </p>
+                </div>
               </Card>
-            </div>
-          )
+            );
+
+            const cardWrapperClass =
+              'block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2';
+
+            return (
+              <div key={course.id} className="relative">
+                {course.isActive ? (
+                  <Link
+                    href={`/estudiantes/cursos/${course.id}`}
+                    aria-label={`Ver detalles del curso ${course.title}`}
+                    className={`group ${cardWrapperClass}`}
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div className="group relative h-full rounded-2xl opacity-80">
+                    {cardContent}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 text-lg font-semibold">
+                      Muy pronto
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
         )}
       </div>
       <StudentPagination
