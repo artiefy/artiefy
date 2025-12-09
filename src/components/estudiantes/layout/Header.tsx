@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
-import { Search } from 'lucide-react';
+import { Dialog, DialogPanel } from '@headlessui/react';
+import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
+import { Search, X } from 'lucide-react';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -16,16 +18,21 @@ import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import type { Course } from '~/types';
 
+import '~/styles/barsicon.css';
+
 export function Header({
-  onEspaciosClickAction: _onEspaciosClickAction,
+  onEspaciosClickAction,
 }: {
   onEspaciosClickAction?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
+  const [showEspaciosModal, setShowEspaciosModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const pathname = usePathname();
@@ -99,14 +106,28 @@ export function Header({
           <>
             <SignedOut>
               <SignInButton>
-                <Button className="bg-primary hover:bg-primary/90 ml-2 inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap text-black transition-colors">
-                  Acceder
-                </Button>
+                <div className="flex items-center">
+                  <Button className="bg-primary hover:bg-primary/90 ml-2 hidden h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap text-black transition-colors md:inline-flex">
+                    Acceder
+                  </Button>
+
+                  <Button
+                    className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
+                    style={{
+                      transition: '0.5s',
+                      width: '180px',
+                    }}
+                  >
+                    <span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+                      Iniciar Sesión
+                    </span>
+                  </Button>
+                </div>
               </SignInButton>
             </SignedOut>
 
             <SignedIn>
-              <div className="flex items-center gap-2">
+              <div className="mr-4 flex items-center gap-2 md:mr-6">
                 <Suspense
                   fallback={
                     <div className="flex items-center">
@@ -124,48 +145,239 @@ export function Header({
     );
   };
 
+  const handleEspaciosClick = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setShowEspaciosModal(true);
+    onEspaciosClickAction?.();
+  };
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-700 bg-[#00152B] backdrop-blur-md">
-      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-12">
-        {/* Logo */}
-        <Link href="/" className="-ml-8 flex shrink-0 items-center gap-2">
-          <div className="relative h-8 w-32">
-            <Image
-              src="/artiefy-logo.svg"
-              alt="Logo Artiefy"
-              fill
-              unoptimized
-              className="object-contain"
-              sizes="128px"
-            />
-          </div>
-        </Link>
+      <Dialog
+        open={showEspaciosModal}
+        onClose={() => setShowEspaciosModal(false)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
+          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+              />
+            </svg>
+          </span>
+          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+            ¡Disponible muy pronto!
+          </h2>
+          <p className="mb-4 text-center text-gray-600">
+            La sección de{' '}
+            <span className="text-secondary font-semibold">Espacios</span>{' '}
+            estará habilitada próximamente.
+            <br />
+            ¡Gracias por tu interés!
+          </p>
+          <button
+            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={() => setShowEspaciosModal(false)}
+          >
+            Cerrar
+          </button>
+        </DialogPanel>
+      </Dialog>
+      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-12 px-4 sm:px-6">
+        <div className="hidden w-full items-center justify-between gap-12 md:flex">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="ml-0 flex shrink-0 items-center gap-2 md:-ml-8"
+          >
+            <div className="relative h-8 w-32">
+              <Image
+                src="/artiefy-logo.svg"
+                alt="Logo Artiefy"
+                fill
+                unoptimized
+                className="object-contain"
+                sizes="128px"
+              />
+            </div>
+          </Link>
 
-        {/* Search Bar - Hidden on mobile */}
-        <form
-          onSubmit={handleSearch}
-          className="hidden max-w-xl flex-1 md:block"
-        >
-          <div className="relative">
+          {/* Search Bar - Hidden on mobile */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden max-w-xl flex-1 md:block"
+          >
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Aprende con IA !"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+                autoComplete="off"
+              />
+              <Search
+                className="text-primary/70 hover:text-primary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 cursor-pointer transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!searchQuery.trim()) return;
+                  handleSearch();
+                }}
+              />
+              {/* Preview de cursos debajo del input */}
+              {showPreview && previewCourses.length > 0 && (
+                <div className="absolute z-50 w-full">
+                  <Suspense fallback={null}>
+                    <CourseSearchPreview
+                      courses={previewCourses}
+                      onSelectCourse={(courseId: number) => {
+                        window.location.href = `/estudiantes/cursos/${courseId}`;
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              )}
+            </div>
+          </form>
+
+          {/* Navigation & Auth */}
+          <div className="mr-0 flex items-center gap-4 md:-mr-8">
+            {/* Desktop Navigation */}
+            <ul className="hidden items-center gap-1 lg:flex">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/' && pathname.startsWith(item.href));
+
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium text-[#94A3B8] transition-colors focus:text-white ${
+                        isActive
+                          ? 'bg-[#1D283A80] hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
+                          : 'hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Auth Button */}
+            {renderAuthButton()}
+          </div>
+        </div>
+
+        <div className="flex w-full items-center justify-between md:hidden">
+          <div className="shrink-0">
+            <Link href="/">
+              <div className="relative h-8 w-32">
+                <Image
+                  src="/artiefy-logo.svg"
+                  alt="Logo Artiefy"
+                  fill
+                  priority
+                  className="object-contain"
+                  sizes="128px"
+                />
+              </div>
+            </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Buscar"
+              className="rounded-full p-1 text-white transition hover:text-orange-500"
+              onClick={() =>
+                setShowMobileSearch((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    setMobileMenuOpen(false);
+                  }
+                  return next;
+                })
+              }
+            >
+              <Search className="h-5 w-5" />
+            </button>
+            <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
+              <input
+                type="checkbox"
+                checked={mobileMenuOpen}
+                onChange={(e) => {
+                  setMobileMenuOpen(e.target.checked);
+                  if (e.target.checked) {
+                    setShowMobileSearch(false);
+                  }
+                }}
+              />
+              <svg viewBox="0 0 32 32">
+                <path
+                  className="line line-top-bottom"
+                  d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
+                />
+                <path className="line" d="M7 16 27 16" />
+              </svg>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile search overlay */}
+      {showMobileSearch && (
+        <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#00152B] p-4 md:hidden">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearch();
+              setShowMobileSearch(false);
+            }}
+            className="relative w-full"
+          >
             <input
               type="search"
-              placeholder="¿Qué quieres aprender?"
+              placeholder="Aprende con IA !"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-[hsl(210,40%,98%)] hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-12 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
               autoComplete="off"
+              autoFocus
             />
-            <Search
-              className="text-primary/70 hover:text-primary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 cursor-pointer transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
+            <button
+              type="button"
+              className="absolute top-1/2 right-10 -translate-y-1/2"
+              onClick={() => {
                 if (!searchQuery.trim()) return;
                 handleSearch();
+                setShowMobileSearch(false);
               }}
-            />
-            {/* Preview de cursos debajo del input */}
+              aria-label="Buscar"
+            >
+              <Search className="text-primary/70 h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="absolute top-1/2 right-3 -translate-y-1/2"
+              onClick={() => setShowMobileSearch(false)}
+              aria-label="Cerrar búsqueda"
+            >
+              <X className="text-primary/70 h-4 w-4" />
+            </button>
             {showPreview && previewCourses.length > 0 && (
-              <div className="absolute z-50 w-full">
+              <div className="mt-3 w-full">
                 <Suspense fallback={null}>
                   <CourseSearchPreview
                     courses={previewCourses}
@@ -176,39 +388,107 @@ export function Header({
                 </Suspense>
               </div>
             )}
-          </div>
-        </form>
-
-        {/* Navigation & Auth */}
-        <div className="-mr-8 flex items-center gap-4">
-          {/* Desktop Navigation */}
-          <ul className="hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/' && pathname.startsWith(item.href));
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium text-[#94A3B8] transition-colors focus:text-white ${
-                      isActive
-                        ? 'bg-[#1D283A80] hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
-                        : 'hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Auth Button */}
-          {renderAuthButton()}
+          </form>
         </div>
-      </div>
+      )}
+      <Dialog
+        as="div"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        className="fixed inset-0 z-[99999] md:hidden"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl">
+          <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
+            <div className="mx-auto w-fit">
+              <Link href="/">
+                <div className="relative h-10 w-36">
+                  <Image
+                    src="/artiefy-logo.svg"
+                    alt="Logo Artiefy Mobile"
+                    fill
+                    unoptimized
+                    className="object-contain"
+                    sizes="144px"
+                  />
+                </div>
+              </Link>
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute top-3 right-3 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
+              aria-label="Close menu"
+            >
+              <XMarkIconSolid className="size-8" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-12">
+            <nav className="pb-4">
+              <ul className="space-y-6">
+                {navItems.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== '/' && pathname.startsWith(item.href));
+                  const activeClass = isActive
+                    ? 'text-orange-500 after:block after:h-0.5 after:bg-orange-500 after:w-full after:mx-auto after:mt-1 after:rounded-full'
+                    : '';
+                  if (item.label === 'Proyectos') {
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <span className="relative">{item.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  }
+                  if (item.label === 'Espacios') {
+                    return (
+                      <li key={item.href}>
+                        <button
+                          type="button"
+                          className={`mx-auto block w-fit cursor-pointer border-0 bg-transparent text-left text-lg transition-colors outline-none active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                          onClick={(e) => {
+                            setMobileMenuOpen(false);
+                            handleEspaciosClick(e);
+                          }}
+                        >
+                          <span className="relative">{item.label}</span>
+                        </button>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span className="relative">{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+            <div className="div-auth mt-5 flex items-center justify-center">
+              <Suspense
+                fallback={
+                  <div className="flex min-w-[180px] items-center justify-start">
+                    <Icons.spinner className="text-background h-5 w-5" />
+                  </div>
+                }
+              >
+                {renderAuthButton()}
+              </Suspense>
+            </div>
+          </div>
+        </DialogPanel>
+      </Dialog>
     </nav>
   );
 }
