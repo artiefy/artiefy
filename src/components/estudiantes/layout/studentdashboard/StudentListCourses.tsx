@@ -2,7 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { AiOutlineFire } from 'react-icons/ai';
 import { FaCrown, FaStar } from 'react-icons/fa';
+import { HiLibrary } from 'react-icons/hi';
 import { IoGiftOutline } from 'react-icons/io5';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -193,27 +195,27 @@ export default async function StudentListCourses({
         // PREMIUM
         if (userPlanType === 'Premium' && hasPremium) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <FaCrown className="h-3 w-3" />
+              Premium
             </div>
           );
         }
         // PRO
         if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+              <FaStar className="h-3 w-3" />
+              Pro
             </div>
           );
         }
         // GRATUITO
         if (hasFree) {
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              <IoGiftOutline className="h-3 w-3" />
+              Gratuito
             </div>
           );
         }
@@ -223,16 +225,13 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         }
@@ -245,16 +244,13 @@ export default async function StudentListCourses({
         );
         return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
             {includedInPlans.length > 0 && (
               <>
@@ -283,91 +279,61 @@ export default async function StudentListCourses({
       }
       // 2. Premium (si existe)
       if (hasPremium) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'PREMIUM');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+            <FaCrown className="h-3 w-3" />
+            Premium
           </div>
         );
       }
       // 3. Pro (si existe)
       if (hasPro) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'PRO');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+            <FaStar className="h-3 w-3" />
+            Pro
           </div>
         );
       }
       // 4. Free (si existe)
       if (hasFree) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="mt-1 flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+        if (includedInPlans.length > 1) {
+          const formattedPlans = includedInPlans
+            .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+            .join(' + ');
+          return (
+            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+              <AiOutlineFire className="h-3 w-3" />
+              {formattedPlans}
             </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-                    Incluido en:{' '}
-                    <span className="font-bold">{otherPlans.join(', ')}</span>
-                  </Badge>
-                </div>
-              </>
-            )}
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+            <IoGiftOutline className="h-3 w-3" />
+            Gratuito
           </div>
         );
       }
@@ -380,33 +346,33 @@ export default async function StudentListCourses({
     // Mostrar el precio individual cuando el curso es tipo 4
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
-        <div className="mt-1 flex items-center gap-1">
-          <FaStar className="text-lg text-blue-500" />
-          <span className="text-sm font-bold text-blue-500">
-            ${course.individualPrice.toLocaleString('es-ES')}
-          </span>
+        <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+          <FaStar className="h-3 w-3" />${' '}
+          {course.individualPrice.toLocaleString('es-CO')}
         </div>
       );
     }
     const { requiredSubscriptionLevel } = courseType;
     if (requiredSubscriptionLevel === 'none') {
       return (
-        <div className="mt-1 flex items-center gap-1">
-          <IoGiftOutline className="text-lg text-green-500" />
-          <span className="text-sm font-bold text-green-500">GRATUITO</span>
+        <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+          <IoGiftOutline className="h-3 w-3" />
+          Gratuito
         </div>
       );
     }
-    const color =
-      requiredSubscriptionLevel === 'premium'
-        ? 'text-purple-500'
-        : 'text-orange-500';
+    if (requiredSubscriptionLevel === 'premium') {
+      return (
+        <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+          <FaCrown className="h-3 w-3" />
+          Premium
+        </div>
+      );
+    }
     return (
-      <div className={`mt-1 flex items-center gap-1 ${color}`}>
-        <FaCrown className="text-lg" />
-        <span className="text-sm font-bold">
-          {requiredSubscriptionLevel.toUpperCase()}
-        </span>
+      <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+        <FaStar className="h-3 w-3" />
+        Pro
       </div>
     );
   };
@@ -438,14 +404,22 @@ export default async function StudentListCourses({
           !type.isPurchasableIndividually
       );
 
+      // Crear un array con los tipos adicionales
+      const includedInPlans: string[] = [];
+      if (course.courseTypes.length > 1) {
+        if (hasPremium) includedInPlans.push('PREMIUM');
+        if (hasPro) includedInPlans.push('PRO');
+        if (hasFree) includedInPlans.push('GRATUITO');
+      }
+
       // Principal type
       let principalType: React.ReactNode = null;
       if (hasActiveSubscription) {
         if (userPlanType === 'Premium' && hasPremium) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <FaCrown className="h-3 w-3" />
+              Premium
             </div>
           );
         } else if (
@@ -453,16 +427,16 @@ export default async function StudentListCourses({
           hasPro
         ) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+              <FaCrown className="h-3 w-3" />
+              Pro
             </div>
           );
         } else if (hasFree) {
           principalType = (
-            <div className="flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              <IoGiftOutline className="h-3 w-3" />
+              Gratuito
             </div>
           );
         } else if (hasPurchasable) {
@@ -470,16 +444,13 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         }
@@ -489,67 +460,76 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice
-                  ? course.individualPrice.toLocaleString('es-ES')
-                  : purchasableType?.price
-                    ? purchasableType.price.toLocaleString('es-ES')
-                    : 'Comprar'}
-              </span>
+            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
+              <FaStar className="h-3 w-3" />${' '}
+              {course.individualPrice
+                ? course.individualPrice.toLocaleString('es-CO')
+                : purchasableType?.price
+                  ? purchasableType.price.toLocaleString('es-CO')
+                  : 'Comprar'}
             </div>
           );
         } else if (hasPremium) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                <FaCrown className="h-3 w-3" />
+                Premium
+              </div>
+            );
+          }
         } else if (hasPro) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
+                <FaCrown className="h-3 w-3" />
+                Pro
+              </div>
+            );
+          }
         } else if (hasFree) {
-          principalType = (
-            <div className="flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-sm font-bold text-green-500">GRATUITO</span>
-            </div>
-          );
+          if (includedInPlans.length > 1) {
+            const formattedPlans = includedInPlans
+              .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
+              .join(' + ');
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                <AiOutlineFire className="h-3 w-3" />
+                {formattedPlans}
+              </div>
+            );
+          } else {
+            principalType = (
+              <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                <IoGiftOutline className="h-3 w-3" />
+                Gratuito
+              </div>
+            );
+          }
         }
       }
 
-      // Badges "Incluido en"
-      const includedInPlans: string[] = [];
-      if (course.courseTypes.length > 1) {
-        if (hasPremium) includedInPlans.push('PREMIUM');
-        if (hasPro) includedInPlans.push('PRO');
-        if (hasFree) includedInPlans.push('GRATUITO');
-      }
-      const badges =
-        includedInPlans.length > 0 ? (
-          <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
-            Incluido en:{' '}
-            <span className="font-bold">{includedInPlans.join(', ')}</span>
-          </Badge>
-        ) : null;
-
-      // En móvil mostrar el tipo principal y el texto "Incluido en" en una sola línea,
-      // justificados a la izquierda. En dispositivos sm+ el layout original se mantiene.
-      return (
-        <div className="w-full">
-          <div className="flex w-full items-center justify-start gap-2">
-            <div className="flex items-center">{principalType}</div>
-            {badges && <div className="flex items-center">{badges}</div>}
-          </div>
-        </div>
-      );
+      return principalType;
     }
     // Fallback a la lógica original para compatibilidad
     return getCourseTypeLabel(course);
@@ -558,10 +538,13 @@ export default async function StudentListCourses({
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
-      <div className="flex justify-center">
-        <GradientText className="my-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
-          Cursos Artie
-        </GradientText>
+      <div className="mt-8 mb-4 flex justify-start px-8 lg:px-20">
+        <div className="flex items-center gap-2">
+          <HiLibrary className="text-xl text-white" />
+          <GradientText className="text-2xl sm:text-3xl">
+            Cursos Artie
+          </GradientText>
+        </div>
       </div>
       <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
         {processedCourses.map(
@@ -574,128 +557,99 @@ export default async function StudentListCourses({
           }) => {
             const cardContent = (
               <Card
-                className={`artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden border bg-[#1e2939] p-4 text-white transition-all duration-200 ease-in-out ${
+                className={`artiefy-course-card zoom-in text-foreground relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 shadow-md transition-all duration-300 ${
                   course.isActive
-                    ? 'hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(58,244,239,0.5)]'
+                    ? 'hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-xl'
                     : 'cursor-not-allowed'
                 }`}
               >
-                <div className="-mx-4 -mt-4 overflow-hidden rounded-t-4xl bg-[#0b2238]">
+                <div className="relative -mx-4 -mt-4 overflow-hidden">
                   <AspectRatio ratio={16 / 9}>
                     <div className="relative h-full w-full">
                       <Image
                         src={imageUrl}
                         alt={course.title || 'Imagen del curso'}
-                        className="rounded-t-4xl object-cover"
+                        className="object-cover"
                         fill
                         blurDataURL={blurDataURL}
                         placeholder={blurDataURL ? 'blur' : 'empty'}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={75}
                       />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
                     </div>
                   </AspectRatio>
                 </div>
 
                 <div className="flex h-full flex-1 flex-col gap-3">
-                  <div className="text-primary text-base font-bold">
+                  <h3 className="line-clamp-2 text-base leading-snug font-semibold text-white md:text-lg">
                     {course.title}
-                  </div>
+                  </h3>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-400">
-                        <span className="mr-1 text-sm text-gray-200">
-                          Por :
-                        </span>
-                        <span className="font-semibold text-gray-200 italic">
+                  <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-row">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-[#94A3B8]">
+                        Por:{' '}
+                        <span className="text-primary font-medium">
                           {course.instructorName ?? 'Educador'}
                         </span>
-                      </span>
+                      </p>
                       {isEnrolled && (
-                        <div className="ml-1 flex items-center text-green-400">
-                          <CheckCircleIcon className="h-4 w-4" />
-                          <span className="ml-1 text-xs font-semibold">
+                        <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-green-400">
+                          <CheckCircleIcon className="h-3 w-3" />
+                          <span className="text-[10px] font-medium">
                             Inscrito
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-2 ml-0 flex items-center text-sm sm:mt-0 sm:ml-2">
+                    <div className="flex items-center text-sm">
                       <div className="hidden sm:block">
                         {getCourseTypeLabel(course)}
                       </div>
-                      <div className="block w-full sm:hidden">
+                      <div className="block sm:hidden">
                         {getCourseTypeLabelMobile(course)}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-1">
-                    <div className="flex flex-wrap items-center gap-1 lg:flex-nowrap lg:gap-1">
-                      <Badge
-                        variant="outline"
-                        className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
-                      >
-                        {course.modalidad?.name ?? 'Asistida Virtual'}
-                      </Badge>
-
-                      {course.horario ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
-                        >
-                          {course.horario}
-                        </Badge>
-                      ) : null}
-
-                      {course.espacios ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white sm:text-sm lg:px-1 lg:py-0.5 lg:text-xs"
-                        >
-                          {course.espacios}
-                        </Badge>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className="border-primary bg-secondary rounded-full px-2 py-0.5 text-xs text-black"
-                      >
-                        {course.category?.name ?? 'Sin categoría'}
-                      </Badge>
-                    </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="chip chip-modalidad">
+                      {course.modalidad?.name ?? 'Asistida Virtual'}
+                    </span>
+                    {course.horario && (
+                      <span className="chip chip-horario">
+                        {course.horario}
+                      </span>
+                    )}
+                    {course.espacios && (
+                      <span className="chip chip-espacios">
+                        {course.espacios}
+                      </span>
+                    )}
+                    <span className="chip chip-categoria">
+                      {course.category?.name ?? 'Sin categoría'}
+                    </span>
                   </div>
 
-                  <div className="text-sm">
-                    <div className="text-gray-400">
-                      <span className="mr-1 text-gray-200">Empieza :</span>
-                      {nextLiveClassDate ? (
-                        <span
-                          className="text-primary font-bold"
-                          style={{
-                            textShadow:
-                              '0 0 6px #3AF4EF, 0 0 12px #00BDD8, 0 0 18px #3AF4EF, 0 0 24px #00BDD8',
-                          }}
-                        >
-                          {formatSpanishDate(nextLiveClassDate)}
-                        </span>
-                      ) : (
-                        <span className="text-primary font-bold">
-                          Clases Virtuales
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                    <span className="text-primary">📅</span>
+                    Empieza:{' '}
+                    {nextLiveClassDate ? (
+                      <span className="text-primary animate-pulse font-medium drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">
+                        {formatSpanishDate(nextLiveClassDate)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-100">Clases Virtuales</span>
+                    )}
+                  </p>
                 </div>
               </Card>
             );
 
             const cardWrapperClass =
-              'block h-full rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#010b16]';
+              'block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2';
 
             return (
               <div key={course.id} className="relative">
@@ -708,9 +662,9 @@ export default async function StudentListCourses({
                     {cardContent}
                   </Link>
                 ) : (
-                  <div className="group relative h-full rounded-4xl opacity-80">
+                  <div className="group relative h-full rounded-2xl opacity-80">
                     {cardContent}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-4xl bg-black/40 text-lg font-semibold text-white">
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 text-lg font-semibold">
                       Muy pronto
                     </div>
                   </div>

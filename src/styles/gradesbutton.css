@@ -22,6 +22,8 @@
   box-shadow:
     inset 0 0 10px rgba(27, 253, 156, 0.4),
     0 0 9px 3px rgba(27, 253, 156, 0.1);
+  min-width: 280px;
+  white-space: nowrap;
 }
 
 .grades-button:hover {

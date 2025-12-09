@@ -87,6 +87,10 @@
   --color-chart-4: oklch(0.828 0.189 84.429);
   --color-chart-5: oklch(0.769 0.188 70.08);
 
+  /* Chip Colors (custom badges) */
+  --chip-bg: 187 100% 42%;
+  --chip-text: 222 47% 6%;
+
   /* Border & Input */
   --color-border: oklch(0.922 0 0);
   --color-input: oklch(0.922 0 0);
@@ -224,6 +228,45 @@
 .artiefy-course-card:hover::before {
   opacity: 0.4;
 }
+
+/* Chip Badge Styles (from example) */
+.chip {
+  display: inline-block;
+  width: fit-content;
+  white-space: nowrap;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: hsl(var(--chip-bg));
+  color: hsl(var(--chip-text));
+}
+
+/* Chip variations with brand colors */
+.chip-modalidad {
+  background-color: rgba(58, 244, 239, 0.15);
+  color: rgb(58, 244, 239);
+  border: 1px solid rgba(58, 244, 239, 0.3);
+}
+
+.chip-horario {
+  background-color: rgba(0, 189, 216, 0.15);
+  color: rgb(100, 220, 240);
+  border: 1px solid rgba(0, 189, 216, 0.3);
+}
+
+.chip-espacios {
+  background-color: rgba(100, 180, 255, 0.15);
+  color: rgb(150, 200, 255);
+  border: 1px solid rgba(100, 180, 255, 0.3);
+}
+
+.chip-categoria {
+  background-color: rgba(115, 185, 230, 0.2);
+  color: rgb(180, 220, 255);
+  border: 1px solid rgba(115, 185, 230, 0.35);
+}
+
 @layer base {
   body {
     background-color: var(--color-background) !important;

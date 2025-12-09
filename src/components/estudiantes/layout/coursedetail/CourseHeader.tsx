@@ -1713,7 +1713,7 @@ export function CourseHeader({
               )}
             </div>
             {/* Modalidad badge y Ver Certificado en desktop (right arrow, right of button) */}
-            <div className="hidden flex-col items-start gap-4 sm:flex">
+            <div className="hidden flex-col items-end gap-4 sm:flex">
               <div className="flex items-center gap-2">
                 {canAccessCertificate && (
                   <>
@@ -1730,9 +1730,7 @@ export function CourseHeader({
                     </Button>
                   </>
                 )}
-                <Badge
-                  className={`bg-red-500 text-sm text-white hover:bg-red-700 ${!isSignedIn ? 'ml-20 sm:ml-32' : 'ml-0'}`}
-                >
+                <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                   {course.modalidad?.name}
                 </Badge>
               </div>
@@ -1841,10 +1839,13 @@ export function CourseHeader({
                     }
                   }}
                   disabled={!isSignedIn}
-                  className={`grades-button flex w-full items-center justify-center ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
+                  className={`grades-button flex w-full items-center justify-center whitespace-nowrap ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
                 >
-                  <FaTrophy className="mr-2 inline-block" /> Ver Resultados De
-                  Notas <PiNote className="ml-2 inline-block h-4 w-4" />
+                  <FaTrophy className="mr-2 inline-block" />
+                  <span className="whitespace-nowrap">
+                    Ver Resultados De Notas
+                  </span>
+                  <PiNote className="ml-2 inline-block h-4 w-4" />
                 </button>
               </div>
               {localIsEnrolled ? (
