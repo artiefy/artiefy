@@ -5,7 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useAuth,
+  useUser,
+} from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import { Search, X } from 'lucide-react';
@@ -15,6 +21,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
+
+import { NotificationHeader } from './NotificationHeader';
 
 import type { Course } from '~/types';
 
@@ -35,6 +43,7 @@ export function Header({
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
+  const { user } = useUser();
   const pathname = usePathname();
 
   const navItems = [
@@ -44,6 +53,72 @@ export function Header({
     { href: '/comunidad', label: 'Espacios' },
     { href: '/planes', label: 'Planes' },
   ];
+
+  const planType = user?.publicMetadata?.planType as string | undefined;
+  const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
+    | string
+    | undefined;
+  const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+    | string
+    | undefined;
+
+  const isPlanExpired = () => {
+    if (!planType) return false;
+    const requiresActive =
+      planType === 'Premium' || planType === 'Pro' || planType === 'Enterprise';
+    if (!requiresActive) return false;
+    if (subscriptionStatus && subscriptionStatus !== 'active') return true;
+    if (subscriptionEndDate) {
+      const end = new Date(subscriptionEndDate);
+      if (!Number.isNaN(end.getTime()) && end < new Date()) return true;
+    }
+    return false;
+  };
+
+  const getMobilePlanBadgeStyle = (
+    type?: string,
+    expired?: boolean
+  ): { bg: string; textColor: string; label: string } => {
+    if (!type) {
+      return { bg: 'bg-gray-200', textColor: 'text-gray-800', label: 'Plan' };
+    }
+    switch (type) {
+      case 'Premium':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-purple-500',
+          textColor: 'text-white',
+          label: 'Premium',
+        };
+      case 'Pro':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-orange-500',
+          textColor: 'text-white',
+          label: 'Pro',
+        };
+      case 'Enterprise':
+        return {
+          bg: expired ? 'bg-gray-500' : 'bg-blue-800',
+          textColor: 'text-white',
+          label: 'Enterprise',
+        };
+      default:
+        return { bg: 'bg-gray-300', textColor: 'text-gray-900', label: type };
+    }
+  };
+
+  const renderMobilePlanBadge = () => {
+    if (!planType) return null;
+    const expired = isPlanExpired();
+    const style = getMobilePlanBadgeStyle(planType, expired);
+    return (
+      <span
+        className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${style.bg} ${style.textColor}`}
+        title={expired ? 'Suscripcion vencida' : `${style.label} activo`}
+      >
+        {style.label}
+      </span>
+    );
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -127,7 +202,7 @@ export function Header({
             </SignedOut>
 
             <SignedIn>
-              <div className="mr-4 flex items-center gap-2 md:mr-6">
+              <div className="mr-4 hidden items-center gap-2 md:mr-6 md:flex">
                 <Suspense
                   fallback={
                     <div className="flex items-center">
@@ -137,6 +212,24 @@ export function Header({
                 >
                   <UserButtonWrapper />
                 </Suspense>
+              </div>
+
+              <div className="flex items-center gap-2 md:hidden">
+                {renderMobilePlanBadge()}
+                <div className="perfil-header">
+                  <Suspense
+                    fallback={
+                      <div className="flex min-w-[180px] items-center justify-start">
+                        <Icons.spinner className="text-primary ml-2 h-5 w-5" />
+                      </div>
+                    }
+                  >
+                    <UserButtonWrapper />
+                  </Suspense>
+                </div>
+                <div className="campana-header relative md:text-white">
+                  <NotificationHeader />
+                </div>
               </div>
             </SignedIn>
           </>
@@ -263,10 +356,10 @@ export function Header({
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`rounded-lg px-3 py-2 text-sm font-medium text-[#94A3B8] transition-colors focus:text-white ${
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         isActive
-                          ? 'bg-[#1D283A80] hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
-                          : 'hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
+                          ? 'bg-[#1D283A80] text-white hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
+                          : 'text-[#94A3B8] hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
                       }`}
                     >
                       {item.label}
@@ -281,35 +374,28 @@ export function Header({
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-between md:hidden">
-          <div className="shrink-0">
-            <Link href="/">
-              <div className="relative h-8 w-32">
-                <Image
-                  src="/artiefy-logo.svg"
-                  alt="Logo Artiefy"
-                  fill
-                  priority
-                  className="object-contain"
-                  sizes="128px"
-                />
-              </div>
-            </Link>
-          </div>
+        <div className="relative flex w-full items-center justify-between md:hidden">
+          <Link href="/">
+            <div className="relative size-[110px] md:size-[150px]">
+              <Image
+                src="/artiefy-logo.png"
+                alt="Logo Artiefy"
+                fill
+                priority
+                className="object-contain"
+                sizes="(max-width: 768px) 110px, 150px"
+              />
+            </div>
+          </Link>
           <div className="flex items-center gap-3">
             <button
               type="button"
               aria-label="Buscar"
               className="rounded-full p-1 text-white transition hover:text-orange-500"
-              onClick={() =>
-                setShowMobileSearch((prev) => {
-                  const next = !prev;
-                  if (next) {
-                    setMobileMenuOpen(false);
-                  }
-                  return next;
-                })
-              }
+              onClick={() => {
+                setShowMobileSearch((prev) => !prev);
+                setMobileMenuOpen(false);
+              }}
             >
               <Search className="h-5 w-5" />
             </button>
@@ -319,9 +405,7 @@ export function Header({
                 checked={mobileMenuOpen}
                 onChange={(e) => {
                   setMobileMenuOpen(e.target.checked);
-                  if (e.target.checked) {
-                    setShowMobileSearch(false);
-                  }
+                  if (e.target.checked) setShowMobileSearch(false);
                 }}
               />
               <svg viewBox="0 0 32 32">
@@ -335,8 +419,6 @@ export function Header({
           </div>
         </div>
       </div>
-
-      {/* Mobile search overlay */}
       {showMobileSearch && (
         <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#00152B] p-4 md:hidden">
           <form
@@ -400,11 +482,11 @@ export function Header({
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl">
           <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
-            <div className="mx-auto w-fit">
+            <div className="mx-auto mt-16 w-fit">
               <Link href="/">
                 <div className="relative h-10 w-36">
                   <Image
-                    src="/artiefy-logo.svg"
+                    src="/artiefy-logo2.png"
                     alt="Logo Artiefy Mobile"
                     fill
                     unoptimized
@@ -423,7 +505,7 @@ export function Header({
             </button>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain pb-12">
-            <nav className="pb-4">
+            <nav className="mt-4 pt-4">
               <ul className="space-y-6">
                 {navItems.map((item) => {
                   const isActive =
@@ -475,7 +557,7 @@ export function Header({
                 })}
               </ul>
             </nav>
-            <div className="div-auth mt-5 flex items-center justify-center">
+            <div className="div-auth mt-14 flex items-center justify-center">
               <Suspense
                 fallback={
                   <div className="flex min-w-[180px] items-center justify-start">
