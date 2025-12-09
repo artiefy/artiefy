@@ -6,6 +6,15 @@ import Image from 'next/image';
 
 import { AlertCircle, CheckCircle, Clock, Search } from 'lucide-react';
 
+import { NotificationToast, type ToastType } from './notification-toast';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+}
+
 interface SearchResult {
   found: boolean;
   user?: {
@@ -20,28 +29,32 @@ interface SearchResult {
   message?: string;
 }
 
-// Tipo para la respuesta de error
-interface ErrorResponse {
-  error: string;
+interface WebhookSuccessResponse {
+  success: true;
+  message: string;
+  payload: {
+    userId: string;
+    email: string;
+    name: string;
+    daysRemaining: number;
+    subscriptionEndDate: string;
+    timestamp: string;
+  };
+  esp32?: {
+    ok: boolean;
+    status?: number;
+    reason?: 'not_configured' | 'timeout' | 'error' | 'success';
+  };
 }
 
-// Type guard para verificar si es un ErrorResponse
-function isErrorResponse(data: unknown): data is ErrorResponse {
+
+// Type guard para verificar si es un WebhookSuccessResponse
+function isWebhookSuccessResponse(data: unknown): data is WebhookSuccessResponse {
   return (
     typeof data === 'object' &&
     data !== null &&
-    'error' in data &&
-    typeof (data as ErrorResponse).error === 'string'
-  );
-}
-
-// Type guard para verificar si es un SearchResult
-function isSearchResult(data: unknown): data is SearchResult {
-  return (
-    typeof data === 'object' &&
-    data !== null &&
-    'found' in data &&
-    typeof (data as SearchResult).found === 'boolean'
+    'success' in data &&
+    (data as WebhookSuccessResponse).success === true
   );
 }
 
@@ -53,6 +66,9 @@ export default function BuscarSuscripcionPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [esp32Message, setEsp32Message] = useState<string | null>(null);
+  const [esp32MessageType, setEsp32MessageType] = useState<'success' | 'warning' | 'error'>('success');
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
     document.body.classList.add('no-chrome');
@@ -62,6 +78,15 @@ export default function BuscarSuscripcionPage() {
       document.body.style.overflow = '';
     };
   }, []);
+
+  const addToast = (message: string, type: ToastType, duration = 5000, subtitle?: string) => {
+    const id = `toast-${Date.now()}`;
+    setToasts((prev) => [...prev, { id, message, type, duration, subtitle }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +99,7 @@ export default function BuscarSuscripcionPage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setEsp32Message(null);
 
     try {
       const response = await fetch('/api/super-admin/search-user', {
@@ -90,37 +116,105 @@ export default function BuscarSuscripcionPage() {
       const data: unknown = await response.json();
 
       if (!response.ok) {
-        const errorMessage = isErrorResponse(data)
-          ? data.error
-          : 'Error en la búsqueda';
+        const errorMessage =
+          typeof data === 'object' && data !== null && 'error' in data
+            ? (data as { error: string }).error
+            : 'Error en la búsqueda';
         throw new Error(errorMessage);
       }
 
       // Validar que data sea un SearchResult
-      if (!isSearchResult(data)) {
+      if (
+        typeof data !== 'object' ||
+        data === null ||
+        !('found' in data)
+      ) {
         throw new Error('Respuesta inválida del servidor');
       }
 
-      setResult(data);
+      const searchResult = data as SearchResult;
+      setResult(searchResult);
+
+      // Mostrar notificación según el resultado
+      if (!searchResult.found) {
+        // Usuario no encontrado
+        addToast('Usuario no encontrado', 'error', 4000, 'Verifica email, documento o nombre');
+      } else if (searchResult.user?.subscriptionStatus === 'active') {
+        // Usuario con suscripción activa - notificación ya se envía después del webhook
+      } else {
+        // Usuario encontrado pero suscripción vencida/inactiva
+        const endDate = searchResult.user?.subscriptionEndDate
+          ? new Date(searchResult.user.subscriptionEndDate).toLocaleDateString('es-ES')
+          : 'N/A';
+        addToast('Suscripción vencida', 'warning', 4000, `Vencimiento: ${endDate}`);
+      }
 
       // Si tiene suscripción activa, enviar webhook
-      if (data.found && data.user?.subscriptionStatus === 'active') {
-        await fetch('/api/super-admin/webhook-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            daysRemaining: data.user.daysRemaining,
-            subscriptionEndDate: data.user.subscriptionEndDate,
-          }),
-        });
+      if (searchResult.found && searchResult.user?.subscriptionStatus === 'active') {
+        // Notificación de usuario verificado
+        const daysRemaining = searchResult.user?.daysRemaining ?? 0;
+        addToast('✓ Usuario verificado', 'success', 3000, `${daysRemaining} días restantes`);
+
+        try {
+          const webhookResponse = await fetch('/api/super-admin/webhook-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: searchResult.user.id,
+              email: searchResult.user.email,
+              name: searchResult.user.name,
+              daysRemaining: searchResult.user.daysRemaining,
+              subscriptionEndDate: searchResult.user.subscriptionEndDate,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+
+          if (webhookResponse.ok) {
+            const webhookData: unknown = await webhookResponse.json();
+
+            if (isWebhookSuccessResponse(webhookData)) {
+              if (webhookData.esp32?.ok) {
+                // Éxito: puerta abierta
+                setEsp32MessageType('success');
+                setEsp32Message('✓ Señal enviada al ESP32 - Puerta abierta 5s');
+                addToast('✓ Puerta abierta - Acceso permitido', 'success', 5000, 'Webhook: Exitoso • Sensor: Activo');
+                // Auto-desaparecer en 5 segundos (tipo Django)
+                setTimeout(() => setEsp32Message(null), 5000);
+              } else if (webhookData.esp32?.reason === 'timeout') {
+                // Timeout
+                setEsp32MessageType('error');
+                setEsp32Message('⚠ Timeout: ESP32 no responde. Revisa conexión.');
+                addToast('Timeout: ESP32 no responde. Revisa la conexión.', 'error', 6000, 'Webhook: Exitoso • Sensor: Timeout (1500ms)');
+                setTimeout(() => setEsp32Message(null), 6000);
+              } else if (webhookData.esp32?.reason === 'error') {
+                // Error de conexión
+                setEsp32MessageType('error');
+                setEsp32Message('⚠ Error conectando a ESP32. Verifica red/URL.');
+                addToast('Error conectando a ESP32. Verifica red/URL.', 'error', 6000, 'Webhook: Exitoso • Sensor: Error de conexión');
+                setTimeout(() => setEsp32Message(null), 6000);
+              } else {
+                // ESP32 no configurado (sin esp32 en respuesta)
+                setEsp32MessageType('warning');
+                setEsp32Message('ℹ ESP32 no configurado. Usuario verificado.');
+                addToast('Usuario verificado correctamente', 'info', 4000, 'Webhook: Exitoso • Sensor: No configurado');
+                setTimeout(() => setEsp32Message(null), 4000);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error webhook:', err);
+          setEsp32MessageType('error');
+          setEsp32Message('⚠ Error enviando comando. Intenta de nuevo.');
+          addToast('Error enviando comando. Intenta de nuevo.', 'error', 5000, 'Webhook: Fallido • Razón: Error de red');
+          setTimeout(() => setEsp32Message(null), 5000);
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al buscar usuario');
+      const errorMsg = err instanceof Error ? err.message : 'Error al buscar usuario';
+      setError(errorMsg);
+      addToast('Error en la búsqueda', 'error', 5000, errorMsg);
     } finally {
       setLoading(false);
     }
@@ -210,11 +304,23 @@ export default function BuscarSuscripcionPage() {
                     </p>
                   )}
                 </div>
-                <div className="mt-3 rounded border border-cyan-500/30 bg-cyan-950/20 p-2 sm:p-3">
-                  <p className="text-xs text-cyan-300">
-                    ✓ Webhook enviado exitosamente
-                  </p>
-                </div>
+                {esp32Message && (
+                  <div className={`mt-3 rounded border p-2 sm:p-3 ${esp32MessageType === 'success'
+                    ? 'border-green-500/30 bg-green-950/20'
+                    : esp32MessageType === 'warning'
+                      ? 'border-blue-500/30 bg-blue-950/20'
+                      : 'border-red-500/30 bg-red-950/20'
+                    }`}>
+                    <p className={`text-xs ${esp32MessageType === 'success'
+                      ? 'text-green-300'
+                      : esp32MessageType === 'warning'
+                        ? 'text-blue-300'
+                        : 'text-red-300'
+                      }`}>
+                      {esp32Message}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -252,6 +358,7 @@ export default function BuscarSuscripcionPage() {
 
   return (
     <>
+      <NotificationToast toasts={toasts} onRemove={removeToast} />
       <style jsx global>{`
         body.no-chrome nav.bg-background,
         body.no-chrome aside[aria-label='Sidebar'] {
@@ -311,33 +418,30 @@ export default function BuscarSuscripcionPage() {
                 <button
                   type="button"
                   onClick={() => setSearchType('email')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'email'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'email'
+                    ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                    : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
+                    }`}
                 >
                   Correo electrónico
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('document')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'document'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'document'
+                    ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                    : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
+                    }`}
                 >
                   Número de documento
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('name')}
-                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'name'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`w-full rounded-lg px-4 py-2.5 text-xs font-medium transition sm:w-auto sm:text-sm ${searchType === 'name'
+                    ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                    : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
+                    }`}
                 >
                   Nombre
                 </button>

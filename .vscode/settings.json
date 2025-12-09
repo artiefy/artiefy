@@ -198,6 +198,9 @@
       ]
     }
   },
+  "mcp.env": {
+    "NEON_API_KEY": "napi_in4xzzd1ulhrb3ic79j2wjtsk6d9p4akp785dhvvey83dm2po2cqch67wh31hnhb"
+  },
   "chat.mcp.autostart": true,
-  "chatgpt.openOnStartup": true
+  "C_Cpp.errorSquiggles": "disabled"
 }

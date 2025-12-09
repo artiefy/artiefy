@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { z } from 'zod';
+
+import { sendDoorAccessSignal } from '~/server/services/esp32/door-access.service';
+import { normalizeEsp32User } from '~/server/utils/esp32/normalize-user';
+
+export const runtime = 'nodejs';
+
 interface WebhookPayload {
   userId: string;
   email: string;
@@ -9,17 +16,50 @@ interface WebhookPayload {
   timestamp: string;
 }
 
-export async function POST(request: NextRequest) {
+interface ESP32Response {
+  ok: boolean;
+  status?: number;
+  reason?: string; // 'not_configured' | 'timeout' | 'error' | 'success'
+}
+
+interface SuccessResponse {
+  success: true;
+  message: string;
+  payload: WebhookPayload;
+  esp32?: ESP32Response;
+}
+
+interface ErrorResponse {
+  success: false;
+  error: string;
+  details?: string;
+  fallback?: string;
+}
+
+// Schema de validación para el payload de entrada
+const webhookPayloadSchema = z.object({
+  userId: z.string().min(1),
+  email: z.string().email(),
+  name: z.string().optional(),
+  daysRemaining: z.number().optional(),
+  subscriptionEndDate: z.string().optional(),
+  timestamp: z.string().optional(),
+});
+
+export async function POST(request: NextRequest): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
   try {
     const body = await request.json();
-    const { userId, email, name, daysRemaining, subscriptionEndDate } = body;
 
-    if (!userId || !email) {
+    // Validar payload con Zod
+    const validation = webhookPayloadSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Datos de usuario requeridos' },
+        { success: false, error: 'Validación fallida: datos de usuario incompletos o inválidos' },
         { status: 400 }
       );
     }
+
+    const { userId, email, name, daysRemaining, subscriptionEndDate } = validation.data;
 
     // Payload del webhook
     const payload: WebhookPayload = {
@@ -31,70 +71,55 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    // URL del webhook (configurable via variable de entorno)
-    const webhookUrl = process.env.SUBSCRIPTION_WEBHOOK_URL;
+    // Intentar enviar señal al ESP32 (si está configurado)
+    let esp32Result: ESP32Response | undefined;
+    const esp32Username = normalizeEsp32User(name ?? email.split('@')[0]);
 
-    // Si no hay URL configurada, solo registrar en logs
-    if (!webhookUrl) {
-      console.log('Webhook de suscripción activa:', payload);
-      return NextResponse.json({
-        success: true,
-        message: 'Webhook registrado en logs (no hay URL configurada)',
-        payload,
-      });
-    }
-
-    // Enviar webhook al endpoint configurado
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Artiefy-Subscription-Checker/1.0',
-        // Agregar autenticación si es necesaria
-        ...(process.env.WEBHOOK_AUTH_TOKEN && {
-          Authorization: `Bearer ${process.env.WEBHOOK_AUTH_TOKEN}`,
-        }),
-      },
-      body: JSON.stringify(payload),
+    const doorAccessResult = await sendDoorAccessSignal({
+      usuario: esp32Username,
+      estado: 'activo',
     });
 
-    if (!webhookResponse.ok) {
-      throw new Error(
-        `Webhook falló: ${webhookResponse.status} ${webhookResponse.statusText}`
-      );
+    if (doorAccessResult.ok) {
+      esp32Result = {
+        ok: true,
+        status: doorAccessResult.status,
+        reason: 'success',
+      };
+    } else if (doorAccessResult.error?.includes('no configurada')) {
+      // ESP32 no está configurado - no incluir en respuesta
+      esp32Result = undefined;
+    } else if (doorAccessResult.error?.includes('Timeout')) {
+      // Timeout esperando respuesta
+      esp32Result = {
+        ok: false,
+        reason: 'timeout',
+      };
+    } else {
+      // Error genérico de conexión
+      esp32Result = {
+        ok: false,
+        reason: 'error',
+      };
     }
 
-    const responseData = await webhookResponse.json().catch(() => ({}));
-
-    // Log exitoso
-    console.log('Webhook enviado exitosamente:', {
-      url: webhookUrl,
-      userId,
-      email,
-      status: webhookResponse.status,
-    });
-
-    return NextResponse.json({
+    const response: SuccessResponse = {
       success: true,
-      message: 'Webhook enviado exitosamente',
-      webhookResponse: {
-        status: webhookResponse.status,
-        data: responseData,
-      },
-    });
-  } catch (error) {
-    console.error('Error al enviar webhook:', error);
+      message: 'Webhook procesado exitosamente',
+      payload,
+      ...(esp32Result && { esp32: esp32Result }),
+    };
 
-    // Registrar el error pero no fallar completamente
+    return NextResponse.json(response);
+  } catch (error) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Error al enviar webhook',
+        error: 'Error al procesar webhook',
         details: error instanceof Error ? error.message : 'Error desconocido',
-        // Aún así, el usuario verá que la búsqueda fue exitosa
-        fallback: 'El webhook no se pudo enviar pero la búsqueda fue exitosa',
       },
       { status: 500 }
     );
   }
 }
+
