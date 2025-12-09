@@ -324,7 +324,7 @@ export default function StudentDetails({
               <div className="header-search-container relative">
                 <input
                   required
-                  className={`header-input border-primary pl-6 ${
+                  className={`header-input pl-6 ${
                     searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''
                   }`}
                   name="search"

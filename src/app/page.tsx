@@ -9,7 +9,7 @@ import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
-import { Header } from '~/components/estudiantes/layout/Header';
+import { Header2 } from '~/components/estudiantes/layout/Header2';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
@@ -102,7 +102,7 @@ export default function HomePage() {
 
       <SmoothGradient />
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Header />
+        <Header2 />
         <main className="mt-[-10vh] flex grow items-center justify-center">
           <section className="container mx-auto px-4 py-12 text-center">
             <h1 className="mb-5 text-5xl leading-snug font-bold text-white">
