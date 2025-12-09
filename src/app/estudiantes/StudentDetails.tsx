@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { FaArrowTrendUp } from 'react-icons/fa6';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { IoLibrarySharp } from 'react-icons/io5';
+import { MdCategory } from 'react-icons/md';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
@@ -526,53 +527,61 @@ export default function StudentDetails({
                 {/* Agrega gap-x-4 para más espacio entre los cursos */}
                 <CarouselContent className="gap-x-2">
                   {latestTenCourses.length > 0 ? (
-                    latestTenCourses.map((course, idx) => (
-                      <CarouselItem
-                        key={course.id}
-                        className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
-                      >
-                        <div className="group/card relative overflow-hidden rounded-2xl">
-                          <div className="relative h-56 w-full">
-                            <Image
-                              src={getImageUrl(course.coverImageKey)}
-                              alt={course.title}
-                              fill
-                              className="h-full w-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
-                              sizes="(max-width: 768px) 100vw, 420px"
-                              quality={85}
-                              placeholder="blur"
-                              blurDataURL={blurDataURL}
-                            />
-                            {/* Number badge top-left */}
-                            <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
-                              <span className="text-sm font-bold text-black">
-                                {idx + 1}
-                              </span>
-                            </div>
+                    latestTenCourses.map((course, idx) => {
+                      const isShortTitle = course.title.length < 34;
 
-                            {/* Bottom gradient overlay: subtle fade from bottom to top */}
-                            <div className="absolute right-0 bottom-0 left-0 h-28 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+                      return (
+                        <CarouselItem
+                          key={course.id}
+                          className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
+                        >
+                          <div className="group/card relative overflow-hidden rounded-2xl">
+                            <div className="relative h-56 w-full">
+                              <Image
+                                src={getImageUrl(course.coverImageKey)}
+                                alt={course.title}
+                                fill
+                                className="h-full w-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                                sizes="(max-width: 768px) 100vw, 420px"
+                                quality={85}
+                                placeholder="blur"
+                                blurDataURL={blurDataURL}
+                              />
+                              {/* Number badge top-left */}
+                              <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
+                                <span className="text-sm font-bold text-black">
+                                  {idx + 1}
+                                </span>
+                              </div>
 
-                            {/* Bottom overlay: full-width content area */}
-                            <div className="absolute right-0 bottom-0 left-0 pb-0">
-                              <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
-                                <Link href={`/estudiantes/cursos/${course.id}`}>
-                                  <h3
-                                    className="text-foreground line-clamp-2 text-sm font-semibold"
-                                    title={course.title}
+                              {/* Bottom gradient overlay: subtle fade from bottom to top */}
+                              <div className="absolute right-0 bottom-0 left-0 h-28 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+
+                              {/* Bottom overlay: full-width content area */}
+                              <div className="absolute right-0 bottom-0 left-0 pb-0">
+                                <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
+                                  <Link
+                                    href={`/estudiantes/cursos/${course.id}`}
                                   >
-                                    {course.title}
-                                  </h3>
-                                </Link>
-                                <p className="mt-1 text-xs text-gray-200">
-                                  {course.instructorName}
-                                </p>
+                                    <h3
+                                      className={`text-foreground line-clamp-2 text-sm leading-tight font-semibold ${isShortTitle ? '' : 'min-h-[2.4rem]'}`}
+                                      title={course.title}
+                                    >
+                                      {course.title}
+                                    </h3>
+                                  </Link>
+                                  <p
+                                    className={`${isShortTitle ? 'mt-0' : 'mt-2'} text-xs text-gray-200`}
+                                  >
+                                    {course.instructorName}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </CarouselItem>
-                    ))
+                        </CarouselItem>
+                      );
+                    })
                   ) : (
                     <CarouselItem className="flex h-56 items-center justify-center">
                       <p className="text-lg text-gray-500">
@@ -618,8 +627,8 @@ export default function StudentDetails({
           </div>
 
           {/* Programas section */}
-          <div className="animation-delay-300 animate-zoom-in relative pr-0 pl-4 sm:px-24">
-            <div className="mb-4 flex justify-start pr-4 sm:pr-0">
+          <div className="animation-delay-300 animate-zoom-in relative -mt-0 pr-0 pl-4 sm:-mt-5 sm:px-24">
+            <div className="flex justify-start pr-4 sm:pr-0">
               <div className="flex items-center gap-2">
                 <IoLibrarySharp className="text-xl text-white" />
                 <StudentGradientText className="text-2xl sm:text-3xl">
@@ -671,6 +680,21 @@ export default function StudentDetails({
               )}
             </div>
           </div>
+
+          {/* Áreas de conocimiento section below Programas and above categories */}
+          <div className="animation-delay-150 animate-zoom-in relative -mt-0 -mb-0 px-0 pr-0 pl-4 sm:-mt-14 sm:-mb-8 sm:px-20">
+            <div className="flex justify-start pr-4 sm:pr-0">
+              <div className="flex items-center gap-2">
+                <MdCategory className="text-xl text-white" />
+                <StudentGradientText className="text-2xl sm:text-3xl">
+                  Áreas de conocimiento
+                </StudentGradientText>
+              </div>
+            </div>
+          </div>
+
+          {/* Categorías de cursos */}
+          {/* <StudentCategories allCategories={allCategories} featuredCategories={featuredCategories} /> */}
         </div>
       </main>
       <StudentChatbot
