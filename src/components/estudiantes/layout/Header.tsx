@@ -245,7 +245,7 @@ export function Header({
   };
 
   return (
-    <nav className="sticky top-0 z-50 mb-8 w-full border-b border-gray-700 bg-[#00152B] backdrop-blur-md sm:mb-8">
+    <nav className="sticky top-0 z-50 mb-8 w-full border-b border-[#00152B] bg-[#00152B] backdrop-blur-md sm:mb-8">
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}

@@ -1,0 +1,83 @@
+.student-searchbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  position: relative;
+  margin-left: 12px;
+}
+
+.student-searchbar__input {
+  border-style: none;
+  height: 44px;
+  width: 44px;
+  padding: 8px;
+  outline: none;
+  border-radius: 50%;
+  transition: 0.5s ease-in-out;
+  background-color: #18181b; /* Fondo igual al fondo de la página */
+  box-shadow: 0 0 1px #0b0b0f;
+  padding-right: 36px;
+  color: #fff;
+}
+
+.student-searchbar__input::placeholder,
+.student-searchbar__input {
+  font-family:
+    'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans',
+    Arial, sans-serif;
+  font-size: 17px;
+}
+
+.student-searchbar__input::placeholder {
+  color: #8f8f8f;
+}
+
+.student-searchbar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 0px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  outline: none;
+  border-style: none;
+  border-radius: 50%;
+  pointer-events: painted;
+  background-color: transparent;
+  box-shadow: 0 0 16px 10px rgba(167, 139, 250, 0.3);
+  transition:
+    0.2s linear,
+    box-shadow 0.2s ease;
+}
+
+.student-searchbar__icon svg {
+  stroke: #fff !important;
+  /* Asegura que la lupa sea blanca como en el ejemplo */
+}
+
+.student-searchbar__icon:focus ~ .student-searchbar__input,
+.student-searchbar__input:focus {
+  box-shadow: none;
+  width: 250px;
+  border-radius: 0px;
+  background-color: transparent;
+  border-bottom: 3px solid #a78bfa;
+  transition: all 500ms cubic-bezier(0, 0.11, 0.35, 2);
+}
+
+.student-searchbar__input:focus ~ .student-searchbar__icon {
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.student-searchbar:focus-within .student-searchbar__icon {
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}

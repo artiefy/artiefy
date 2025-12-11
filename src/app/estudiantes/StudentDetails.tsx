@@ -17,7 +17,7 @@ import { HiLibrary } from 'react-icons/hi';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { IoGiftOutline } from 'react-icons/io5';
 import { IoLibrarySharp } from 'react-icons/io5';
-import { MdCategory, MdFilterAlt } from 'react-icons/md';
+import { MdFilterAlt } from 'react-icons/md';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
@@ -1131,20 +1131,6 @@ export default function StudentDetails({
                 )}
               </div>
             )}
-
-          {/* Áreas de conocimiento section below Programas and above categories */}
-          {activeFilter === 'todos' && !isNavigating && (
-            <div className="animation-delay-150 animate-zoom-in relative -mt-0 -mb-0 px-0 pr-0 pl-4 sm:-mt-14 sm:-mb-8 sm:px-20">
-              <div className="flex justify-start pr-4 sm:pr-0">
-                <div className="flex items-center gap-2">
-                  <MdCategory className="text-xl text-white" />
-                  <StudentGradientText className="text-2xl sm:text-3xl">
-                    Áreas de conocimiento
-                  </StudentGradientText>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Categorías de cursos */}
           {/* <StudentCategories allCategories={allCategories} featuredCategories={featuredCategories} /> */}
