@@ -140,7 +140,7 @@ export default function MyCoursesPreview() {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+    <section className="-mt-12 mb-8 overflow-visible pr-4 pl-4 sm:px-24">
       <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
