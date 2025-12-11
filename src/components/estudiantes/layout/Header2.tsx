@@ -616,7 +616,7 @@ export function Header2({
             >
               <input
                 type="search"
-                placeholder="Aprende con IA !"
+                placeholder="¡Aprende con IA!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-12 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"

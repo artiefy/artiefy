@@ -66,7 +66,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   const isTicketClosed = Boolean(
     ticketStatus &&
-      ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
+    ['cerrado', 'solucionado'].includes(ticketStatus.toLowerCase())
   );
 
   useEffect(() => {
@@ -143,10 +143,31 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
     void fetchInitialMessages();
   }, [setMessages, user, skipInitialLoad]);
-  // Filtrar el mensaje de asignación automática
-  const filteredMessages = messages.filter(
-    (message) => message.text !== 'Ticket asignado a 1 usuario(s).'
-  );
+  // Filtrar la asignación automática y deduplicar mensajes de asignación
+  const filteredMessages = (() => {
+    const seenAssignments = new Set<string>();
+    const assignmentCountRegex = /^Ticket asignado a \d+ usuario\(s\)\./;
+
+    return messages.filter((message) => {
+      const text = message.text ?? '';
+
+      // Ocultar asignaciones automáticas y mensajes solo con conteo
+      if (
+        text === 'Ticket asignado a 1 usuario(s).' ||
+        assignmentCountRegex.test(text)
+      ) {
+        return false;
+      }
+
+      // Mostrar una sola vez las asignaciones con nombres
+      if (text.startsWith('Ticket asignado a ')) {
+        if (seenAssignments.has(text)) return false;
+        seenAssignments.add(text);
+      }
+
+      return true;
+    });
+  })();
 
   return (
     <>
@@ -165,13 +186,16 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       )}
 
       {/* Mensajes */}
-      <div className="support-chat-messages bg-[#050c1b] text-white">
+      <div className="bg-[#050c1b] text-white">
         {filteredMessages.map((message) => (
           <div key={message.id}>
             {/* Timestamp arriba de la burbuja */}
             {message.createdAt && (
               <div
-                className={`mb-1 flex text-xs text-white/40 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={
+                  `mb-1 flex text-xs text-white/40 ` +
+                  (message.sender === 'user' ? 'justify-end' : 'justify-start')
+                }
               >
                 {formatDateColombia(message.createdAt)}
               </div>
@@ -221,7 +245,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       </div>
 
       {/* Input Form - compacto en móvil */}
-      <form onSubmit={handleSendMessage} className="support-chat-input">
+      <form onSubmit={handleSendMessage} className="mt-2 flex w-full gap-2">
         <input
           ref={actualInputRef}
           type="text"
