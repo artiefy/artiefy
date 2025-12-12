@@ -347,8 +347,8 @@ export const updateCourse = async (
     coverVideoCourseKey?: string;
     individualPrice?: number | null;
     courseTypeId?: number[];
-    horario?: string | undefined;
-    espacios?: string | undefined;
+    scheduleOptionId?: number | undefined;
+    spaceOptionId?: number | undefined;
   }
 ) => {
   try {

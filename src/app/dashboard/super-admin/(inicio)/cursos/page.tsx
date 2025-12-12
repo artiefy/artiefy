@@ -227,7 +227,7 @@ export default function Page() {
       name: string;
       description: string;
       porcentaje: number;
-    }[], // ← 👈 nuevo
+    }[],
     horario: string | null,
     espacios: string | null
   ) => {
@@ -575,8 +575,8 @@ export default function Page() {
             setCurrentPage(1);
           }}
           className={`rounded-md px-4 py-2 ${!showProgramCourses
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
+            ? 'bg-primary text-white'
+            : 'bg-gray-800 text-gray-300'
             }`}
         >
           Cursos Independientes
@@ -587,8 +587,8 @@ export default function Page() {
             setCurrentPage(1);
           }}
           className={`rounded-md px-4 py-2 ${showProgramCourses
-              ? 'bg-primary text-background'
-              : 'bg-gray-800 text-gray-300'
+            ? 'bg-primary text-background'
+            : 'bg-gray-800 text-gray-300'
             }`}
         >
           Cursos en Programas

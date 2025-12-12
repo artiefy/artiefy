@@ -138,8 +138,12 @@ export const courses = pgTable('courses', {
   // 👉 Agrega la columna embedding para pgvector (usa 1536 dimensiones para OpenAI)
   embedding: vector('embedding', { dimensions: 1536 }),
   metaPixelId: text('meta_pixel_id'), // Pixel Meta/Facebook dinámico por curso
-  horario: text('horario'), 
-  espacios: text('espacios'), 
+  scheduleOptionId: integer('schedule_option_id')
+    .references(() => scheduleOptions.id)
+    .default(sql`NULL`),
+  spaceOptionId: integer('space_option_id')
+    .references(() => spaceOptions.id)
+    .default(sql`NULL`),
 });
 
 // Tabla de tipos de actividades
@@ -1305,6 +1309,30 @@ export const userInscriptionDetails = pgTable('user_inscription_details', {
 export const horario = pgTable('horario', {
   id: serial('id').primaryKey(),
   schedule: text('contact').notNull(),
+});
+
+// ✅ Nueva tabla para opciones de horarios (reemplaza texto simple)
+export const scheduleOptions = pgTable('schedule_options', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(), // ej: "Mañana (8:00 - 12:00)"
+  description: text('description'),
+  startTime: varchar('start_time', { length: 5 }), // ej: "08:00"
+  endTime: varchar('end_time', { length: 5 }), // ej: "12:00"
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ✅ Nueva tabla para opciones de espacios (reemplaza texto simple)
+export const spaceOptions = pgTable('space_options', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(), // ej: "Sede Centro"
+  description: text('description'),
+  location: text('location'), // ej: "Calle 10 # 5-50, Bogotá"
+  capacity: integer('capacity'), // Capacidad máxima
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const projectInvitations = pgTable('project_invitations', {

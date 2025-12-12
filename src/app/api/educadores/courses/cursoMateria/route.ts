@@ -111,8 +111,8 @@ export async function POST(request: Request) {
       isActive: boolean;
       individualPrice?: number; // ✅ se añade acá para que no rompa TS
       videoKey?: string; // ✅ igual que el frontend
-      horario?: string | null;
-      espacios?: string | null;
+      scheduleOptionId?: number | null;
+      spaceOptionId?: number | null;
     };
     console.log('📽️ Video key recibida:', data.videoKey);
 
@@ -159,8 +159,8 @@ export async function POST(request: Request) {
           isActive: data.isActive,
           requiresProgram: false,
           individualPrice: null, // <--- siempre null al inicio
-          horario: data.horario ?? null,
-          espacios: data.espacios ?? null,
+          scheduleOptionId: data.scheduleOptionId ?? null,
+          spaceOptionId: data.spaceOptionId ?? null,
         })
         .returning();
 
@@ -244,8 +244,8 @@ export async function PUT(request: NextRequest) {
       nivelid: number;
       instructor: string;
       subjects: { id: number; courseId: number | null }[]; // ✅ Solo actualizar `courseId`
-      horario?: string | null;
-      espacios?: string | null;
+      scheduleOptionId?: number | null;
+      spaceOptionId?: number | null;
     };
     const {
       id,
@@ -256,8 +256,8 @@ export async function PUT(request: NextRequest) {
       nivelid,
       categoryid,
       instructor,
-      horario,
-      espacios,
+      scheduleOptionId,
+      spaceOptionId,
     } = body;
 
     const course = await getCourseById(id);
@@ -277,8 +277,8 @@ export async function PUT(request: NextRequest) {
       modalidadesid,
       instructor,
       nivelid,
-      horario: horario ?? undefined,
-      espacios: espacios ?? undefined,
+      scheduleOptionId: scheduleOptionId ?? undefined,
+      spaceOptionId: spaceOptionId ?? undefined,
     });
 
     // ✅ Actualizar las materias asignadas a este curso
