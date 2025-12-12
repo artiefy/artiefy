@@ -136,3 +136,173 @@ function ClientSection({ fallbackData }) {
 ```
 
 **Nota**: Todas las respuestas y comunicaciones deben darse en español.
+
+## Ejecución automática de MCP Tools
+
+Los siguientes servidores MCP están configurados y deben usarse automáticamente en los contextos indicados:
+
+### Context7 (Documentación actualizada)
+
+**Cuándo usar automáticamente:**
+
+- ANTES de implementar features con librerías externas (React, Next.js, Clerk, Drizzle, SWR, etc.)
+- Cuando el usuario pregunte sobre APIs o funcionalidades de una librería
+- Al encontrar código deprecated o patrones obsoletos
+- Para verificar la sintaxis correcta de versiones específicas
+
+**Herramientas disponibles:**
+
+- `mcp_context7_resolve-library-id`: Primero para obtener el ID de la librería
+- `mcp_context7_get-library-docs`: Luego para obtener la documentación actualizada
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "Quiero agregar autenticación con Clerk"
+→ Ejecutar automáticamente: resolve-library-id para Clerk
+→ Luego: get-library-docs con el ID obtenido
+→ Implementar según la documentación más reciente
+```
+
+### Shadcn (Componentes UI)
+
+**Cuándo usar automáticamente:**
+
+- Al crear nuevos componentes de UI (botones, forms, modals, cards, etc.)
+- Cuando el usuario solicite agregar componentes de la UI
+- Antes de crear componentes personalizados que puedan existir en shadcn
+- Para mantener consistencia con el design system
+
+**Herramientas disponibles:**
+
+- `mcp_shadcn_list_items_in_registries`: Listar componentes disponibles
+- `mcp_shadcn_get_add_command_for_items`: Obtener comando de instalación
+- `mcp_shadcn_get_item_examples_from_registries`: Ver ejemplos de uso
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "Necesito un botón con dropdown"
+→ Ejecutar: list_items_in_registries buscando "button", "dropdown"
+→ Si existe: get_add_command_for_items
+→ Si no existe: crear componente personalizado
+```
+
+### Next-Devtools (Diagnóstico y desarrollo)
+
+**Cuándo usar automáticamente:**
+
+- Al detectar errores de compilación o runtime en Next.js
+- Cuando el usuario reporte problemas en el servidor de desarrollo
+- Para verificar el estado del build antes de implementar cambios críticos
+- Al trabajar con cache y optimizaciones de Next.js 16
+
+**Herramientas disponibles:**
+
+- `mcp_next-devtools_nextjs_index`: Descubrir servidores y herramientas disponibles
+- `mcp_next-devtools_nextjs_call`: Ejecutar herramientas específicas del servidor Next.js
+- `mcp_next-devtools_browser_eval`: Automatización de pruebas en navegador
+- `mcp_next-devtools_upgrade_nextjs_16`: Guía de actualización a Next.js 16
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "El servidor no compila"
+→ Ejecutar: nextjs_index para descubrir el servidor
+→ Ejecutar: nextjs_call con toolName="get_errors"
+→ Analizar y mostrar errores específicos
+```
+
+### Neon Database (Base de datos)
+
+**Cuándo usar automáticamente:**
+
+- Al crear o modificar esquemas de base de datos
+- Cuando se requieran migraciones de datos
+- Para ejecutar queries o transacciones complejas
+- Al optimizar queries con EXPLAIN
+- Para comparar schemas entre branches
+
+**Herramientas disponibles:**
+
+- `mcp_neondatabase__run_sql`: Ejecutar SQL individual
+- `mcp_neondatabase__run_sql_transaction`: Ejecutar múltiples statements
+- `mcp_neondatabase__explain_sql_statement`: Analizar performance de queries
+- `mcp_neondatabase__get_connection_string`: Obtener string de conexión
+- `mcp_neondatabase__get_database_tables`: Listar tablas
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "Agrega una columna 'edad' a la tabla usuarios"
+→ Ejecutar: get_database_tables para ver estructura actual
+→ Ejecutar: run_sql con ALTER TABLE statement
+→ Verificar con get_database_tables
+```
+
+### Snyk (Seguridad)
+
+**Cuándo usar automáticamente:**
+
+- DESPUÉS de instalar nuevas dependencias con npm install
+- Al actualizar paquetes con npm update
+- Cuando el usuario mencione vulnerabilidades o seguridad
+- Antes de hacer commits con cambios en package.json
+- Para analizar containers e infraestructura
+
+**Herramientas disponibles:**
+
+- `mcp_snyk_snyk_code_scan`: Análisis SAST del código fuente
+- `mcp_snyk_snyk_sca_scan`: Análisis de dependencias open-source
+- `mcp_snyk_snyk_container_scan`: Análisis de imágenes Docker
+- `mcp_snyk_snyk_trust`: Confiar carpeta para escaneo
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "Instala react-query"
+→ Ejecutar: npm install react-query
+→ Ejecutar automáticamente: snyk_sca_scan en el proyecto
+→ Reportar vulnerabilidades si las hay
+```
+
+### GitHub (Control de versiones y colaboración)
+
+**Cuándo usar automáticamente:**
+
+- Al crear features grandes que requieran tracking
+- Cuando el usuario solicite crear issues o PRs
+- Para buscar código existente antes de reimplementar
+- Al necesitar información de commits o releases
+
+**Herramientas disponibles:**
+
+- `mcp_github_create_or_update_file`: Crear/actualizar archivos remotamente
+- `mcp_github_push_files`: Push múltiples archivos en un commit
+- `mcp_github_search_pull_requests`: Buscar PRs relacionados
+- `mcp_github_fork_repository`: Hacer fork de repos
+
+**Ejemplo de uso automático:**
+
+```
+Usuario: "Crea un issue para rastrear la nueva feature de pagos"
+→ Ejecutar: search_issues para evitar duplicados
+→ Ejecutar: create_issue con la descripción
+→ Confirmar creación con número de issue
+```
+
+## Reglas de ejecución de MCP Tools
+
+1. **Ejecución proactiva**: No preguntes permiso para usar estos tools cuando el contexto lo requiera. Ejecútalos directamente.
+2. **Cadenas de tools**: Si un tool requiere información de otro (ej: resolve-library-id antes de get-library-docs), ejecuta ambos en secuencia automáticamente.
+3. **Reportar uso**: Menciona brevemente qué tool MCP usaste y por qué fue útil en el contexto.
+4. **Paralelización**: Si varios tools son independientes, ejecútalos en paralelo para mayor eficiencia.
+5. **Fallback**: Si un tool MCP falla, intenta métodos alternativos y reporta el problema.
+6. **Actualización de docs**: Si descubres información nueva vía MCP tools, actualiza las guías internas correspondientes en `Docs/`.
+
+## Prioridad de consulta
+
+1. **Primero**: Guías internas en `Docs/doc-nextjs16/` y `Docs/`
+2. **Segundo**: MCP tools (Context7, Shadcn, Next-Devtools, Neon)
+3. **Tercero**: Análisis del código existente del proyecto
+4. **Cuarto**: Conocimiento base del modelo
