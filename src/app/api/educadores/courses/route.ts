@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
       courseTypeId?: number[]; // ahora array
       individualPrice?: number | null;
       subjects?: { id: number }[]; // ✅ añadimos subjects
-      horario?: string | null;
-      espacios?: string | null;
+      horario?: number | null;
+      espacios?: number | null;
     };
 
     const {
@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       courseTypeId: normalizedTypes.length > 0 ? normalizedTypes[0] : null, // ✅ Guarda el primero
       individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
-      horario: horario ?? null,
-      espacios: espacios ?? null,
+      scheduleOptionId: horario ?? null,
+      spaceOptionId: espacios ?? null,
     };
 
     const createdCourse = await db
@@ -251,8 +251,8 @@ export async function PUT(request: NextRequest) {
       subjects?: { id: number }[];
       courseTypeId?: number | null; // <-- nuevo
       individualPrice?: number | null;
-      horario?: string | null;
-      espacios?: string | null;
+      horario?: number | null;
+      espacios?: number | null;
     };
 
     const {
@@ -292,8 +292,8 @@ export async function PUT(request: NextRequest) {
       nivelid,
       courseTypeId: normalizedTypes,
       individualPrice,
-      horario: horario ?? undefined,
-      espacios: espacios ?? undefined,
+      scheduleOptionId: horario ?? undefined,
+      spaceOptionId: espacios ?? undefined,
     });
 
     // Manejar las materias

@@ -51,8 +51,8 @@ const baseCoursesQuery = {
   individualPrice: courses.individualPrice,
   is_featured: courses.is_featured, // Add this field
   is_top: courses.is_top, // Add this field
-  horario: courses.horario,
-  espacios: courses.espacios,
+  scheduleOptionId: courses.scheduleOptionId,
+  spaceOptionId: courses.spaceOptionId,
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -171,14 +171,14 @@ export async function getAllCourses(): Promise<Course[]> {
       courseTypeId: course.courseTypeId ?? null,
       courseType: course.courseTypeId
         ? {
-            name: course.courseTypeName ?? '',
-            requiredSubscriptionLevel:
-              course.requiredSubscriptionLevel! || 'none',
-            isPurchasableIndividually: Boolean(
-              course.isPurchasableIndividually
-            ),
-            price: course.courseTypeId === 4 ? course.individualPrice : null,
-          }
+          name: course.courseTypeName ?? '',
+          requiredSubscriptionLevel:
+            course.requiredSubscriptionLevel! || 'none',
+          isPurchasableIndividually: Boolean(
+            course.isPurchasableIndividually
+          ),
+          price: course.courseTypeId === 4 ? course.individualPrice : null,
+        }
         : undefined,
       courseTypes: courseTypesMap[course.id] ?? [],
       individualPrice: course.individualPrice ?? null,
@@ -186,8 +186,8 @@ export async function getAllCourses(): Promise<Course[]> {
       requiresProgram: Boolean(course.requiresProgram),
       is_featured: course.is_featured ?? false,
       is_top: course.is_top ?? false,
-      horario: course.horario ?? null,
-      espacios: course.espacios ?? null,
+      scheduleOptionId: course.scheduleOptionId,
+      spaceOptionId: course.spaceOptionId,
       // Añadir classMeetings para que esté disponible en el front
       classMeetings: classMeetingsMap[course.id] ?? [],
     }));

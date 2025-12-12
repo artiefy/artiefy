@@ -173,9 +173,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   individualPrice,
   setIndividualPrice,
   defaultAddParametros = false,
-  horario,
   setHorario,
-  espacios,
   setEspacios,
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
@@ -219,25 +217,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null);
 
+  // ✅ New states for schedule and space options
+  const [scheduleOptions, setScheduleOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [spaceOptions, setSpaceOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+  const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
+
   void isLoadingCategories;
   void isLoadingModalidades;
+  void isLoadingSchedules;
+  void isLoadingSpaces;
   const isVideo = file instanceof File && file.type.startsWith('video/');
   const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
   void validFile;
-
-  // Opciones para horarios y espacios
-  const horariosOptions = [
-    'Sábado Mañana',
-    'Sábado Tarde',
-    'Lunes y Martes',
-  ];
-
-  const espaciosOptions = [
-    'Florencia',
-    'Cali',
-    'Virtual',
-  ];
 
   const handleFrameImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -396,6 +395,62 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchModalidades();
+  }, []);
+
+  // ✅ Fetch schedule options
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      setIsLoadingSchedules(true);
+      try {
+        const response = await fetch('/api/super-admin/schedule-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los horarios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as { data: { id: number; name: string }[] };
+        setScheduleOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error detallado:', error);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    void fetchSchedules();
+  }, []);
+
+  // ✅ Fetch space options
+  useEffect(() => {
+    const fetchSpaces = async () => {
+      setIsLoadingSpaces(true);
+      try {
+        const response = await fetch('/api/super-admin/space-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los espacios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as { data: { id: number; name: string }[] };
+        setSpaceOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error detallado:', error);
+      } finally {
+        setIsLoadingSpaces(false);
+      }
+    };
+
+    void fetchSpaces();
   }, []);
 
   // Función para manejar el cambio de parámetros
@@ -640,9 +695,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         subjects,
         finalVideoKey,
         individualPrice,
-        parametros, // 👈 AÑADIDO AQUÍ
-        horario,
-        espacios
+        parametros,
+        selectedScheduleId,
+        selectedSpaceId
       );
 
       if (controller.signal.aborted) {
@@ -998,13 +1053,17 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </label>
                 <select
                   className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
-                  value={horario ?? ''}
-                  onChange={(e) => setHorario(e.target.value || null)}
+                  value={selectedScheduleId ?? ''}
+                  onChange={(e) =>
+                    setSelectedScheduleId(
+                      e.target.value || null
+                    )
+                  }
                 >
                   <option value="">Seleccionar horario</option>
-                  {horariosOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  {scheduleOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
                     </option>
                   ))}
                 </select>
@@ -1015,13 +1074,17 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </label>
                 <select
                   className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
-                  value={espacios ?? ''}
-                  onChange={(e) => setEspacios(e.target.value || null)}
+                  value={selectedSpaceId ?? ''}
+                  onChange={(e) =>
+                    setSelectedSpaceId(
+                      e.target.value || null
+                    )
+                  }
                 >
                   <option value="">Seleccionar espacio</option>
-                  {espaciosOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  {spaceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
                     </option>
                   ))}
                 </select>
@@ -1115,10 +1178,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </label>
               <div
                 className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${isDragging
-                    ? 'border-blue-500 bg-blue-50'
-                    : errors.file
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-300 bg-gray-50'
+                  ? 'border-blue-500 bg-blue-50'
+                  : errors.file
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-300 bg-gray-50'
                   }`}
               >
                 <div className="text-center text-white">
