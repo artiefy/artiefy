@@ -15,8 +15,8 @@
   outline: none;
   border-radius: 50%;
   transition: 0.5s ease-in-out;
-  background-color: #18181b; /* Fondo igual al fondo de la página */
-  box-shadow: 0 0 1px #0b0b0f;
+  background-color: transparent;
+  box-shadow: none;
   padding-right: 36px;
   color: #fff;
 }
@@ -38,9 +38,7 @@
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 0px;
-  top: 50%;
-  transform: translateY(-50%);
+  /* position controlled via Tailwind utilities on the element */
   cursor: pointer;
   width: 44px;
   height: 44px;
@@ -51,6 +49,7 @@
   background-color: transparent;
   box-shadow: none;
   transition:
+    right 0.3s ease,
     0.2s linear,
     box-shadow 0.2s ease;
 }
@@ -80,11 +79,12 @@
   border-radius: 0;
   background-color: transparent;
   box-shadow: none;
+  right: 4px;
 }
 
 @media (min-width: 641px) {
   .student-searchbar__icon {
-    box-shadow: 0 0 16px 10px rgba(167, 139, 250, 0.3);
+    box-shadow: none;
   }
 }
 
@@ -102,7 +102,8 @@
     padding: 10px 40px 10px 12px;
     font-size: 15px;
     box-shadow: none;
-    background-color: #0f172a;
+    /* Slightly lighter translucent background on mobile */
+    background-color: rgba(255, 255, 255, 0.04);
   }
 
   .student-searchbar__input:focus,
@@ -117,6 +118,8 @@
     width: 32px;
     height: 32px;
     right: 8px;
+    top: 90%;
+    transform: translateY(-50%);
     box-shadow: none;
   }
 }

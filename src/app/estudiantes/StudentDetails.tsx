@@ -858,7 +858,7 @@ export default function StudentDetails({
               id="courses-filter-section"
               className="animation-delay-250 animate-zoom-in relative -mt-4 px-4 sm:-mt-6 sm:px-8 lg:px-20"
             >
-              <div className="mb-8 flex justify-start">
+              <div className="mb-4 flex justify-start sm:mb-8">
                 <div className="flex items-center gap-2">
                   <HiLibrary className="text-xl text-white" />
                   <StudentGradientText className="text-2xl sm:text-3xl">
@@ -1068,7 +1068,7 @@ export default function StudentDetails({
                 className={`animation-delay-300 animate-zoom-in relative ${activeFilter === 'programas' ? '-mt-2 sm:-mt-4' : '-mt-8 sm:-mt-10'} pr-0 pl-4 sm:px-24`}
               >
                 <div className="flex justify-start pr-4 sm:pr-0">
-                  <div className="flex items-center gap-2">
+                  <div className="-mb-5 flex items-center gap-2">
                     <IoLibrarySharp className="text-xl text-white" />
                     <StudentGradientText className="text-2xl sm:text-3xl">
                       Programas

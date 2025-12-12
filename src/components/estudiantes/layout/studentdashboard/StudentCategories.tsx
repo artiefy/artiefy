@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { MdCategory } from 'react-icons/md';
 import useSWR from 'swr';
 
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -128,12 +127,11 @@ export default function StudentCategories({
     setLoadingCategory(null);
     // setIsSearching(false); // Eliminado: ya no se usa
     stop();
-
-    // Skip the restoreScrollPosition since we're going to scroll to the results
-    // restoreScrollPosition();
-
-    // If we've completed a search or category filter, scroll to the results
-    if (searchParams?.has('query') || searchParams?.has('category')) {
+    // Behavior:
+    // - If it's a search (`query`), scroll to the results section.
+    // - If it's a category filter (no `query`), restore previously saved scroll
+    //   position so the viewport remains where the user was (no jump to top).
+    if (searchParams?.has('query')) {
       // Use setTimeout to ensure the DOM has been updated with results first
       setTimeout(() => {
         const resultsSection = document.getElementById('courses-list-section');
@@ -141,6 +139,23 @@ export default function StudentCategories({
           resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 300);
+    } else if (
+      searchParams?.has('category') ||
+      (!searchParams?.has('query') &&
+        !searchParams?.has('category') &&
+        typeof window !== 'undefined' &&
+        sessionStorage.getItem('scrollPosition'))
+    ) {
+      // Restore previous scroll position saved before navigating to the category
+      // This covers both: specific category filters and the "Todos" case
+      // where the query string is cleared.
+      setTimeout(() => {
+        try {
+          _restoreScrollPosition();
+        } catch (_err) {
+          // ignore
+        }
+      }, 100);
     }
   }, [searchParams, stop]);
 
@@ -158,11 +173,10 @@ export default function StudentCategories({
     >
       <div className="container mx-auto">
         {/* Title and Search Bar */}
-        <div className="mt-4 mb-8 ml-0 flex flex-col gap-3 sm:mt-0 sm:pl-3 lg:flex-row lg:items-center lg:justify-start lg:gap-3">
+        <div className="mt-4 mb-2 ml-0 flex flex-col gap-2 sm:mt-0 sm:pl-3 lg:flex-row lg:items-center lg:justify-start lg:gap-2">
           {/* Title */}
           <div className="flex w-full items-center justify-start gap-1 sm:gap-1.5 lg:w-auto">
-            <MdCategory className="text-xl text-white" />
-            <StudentGradientText className="mt-1 mr-10 text-xl whitespace-nowrap sm:mt-0 sm:mr-0 sm:text-2xl lg:text-3xl">
+            <StudentGradientText className="mt-2 mr-10 text-lg whitespace-nowrap sm:mt-1 sm:mr-0 sm:text-xl lg:mt-3 lg:text-2xl">
               Areas de conocimiento
             </StudentGradientText>
           </div>
@@ -172,7 +186,7 @@ export default function StudentCategories({
             <div className="student-searchbar w-full max-w-[280px] sm:max-w-[340px] lg:max-w-[260px]">
               <button
                 type="button"
-                className="student-searchbar__icon"
+                className="student-searchbar__icon absolute top-[60%] right-6 -translate-y-1/2 text-white"
                 tabIndex={-1}
                 aria-label="Buscar cursos"
                 onClick={() => {
@@ -194,20 +208,20 @@ export default function StudentCategories({
                     strokeLinejoin="round"
                     strokeLinecap="round"
                     strokeWidth="1.5"
-                    stroke="#a78bfa"
+                    stroke="currentColor"
                     d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z"
                   />
                   <path
                     strokeLinejoin="round"
                     strokeLinecap="round"
                     strokeWidth="1.5"
-                    stroke="#a78bfa"
+                    stroke="currentColor"
                     d="M22 22L20 20"
                   />
                 </svg>
               </button>
               <input
-                placeholder="Buscar..."
+                placeholder="Buscar Cursos..."
                 className="student-searchbar__input"
                 name="text"
                 type="text"
@@ -221,7 +235,7 @@ export default function StudentCategories({
         </div>
 
         {/* Categories - Horizontal Scroll */}
-        <div className="group/categories relative -mb-6 -ml-4 sm:-mb-0 sm:-ml-0">
+        <div className="group/categories relative -mb-6 -ml-4 pt-3 sm:-mb-0 sm:-ml-0 sm:pt-0">
           {/* Left Arrow - Visible on hover */}
           {showLeftArrow && (
             <button

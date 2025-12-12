@@ -141,7 +141,7 @@ export default function MyCoursesPreview() {
 
   return (
     <section className="-mt-12 mb-8 overflow-visible pr-4 pl-4 sm:px-24">
-      <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+      <div className="flex items-center justify-between pr-4 sm:pr-0">
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
           <StudentGradientText className="text-2xl sm:text-3xl">
@@ -150,9 +150,9 @@ export default function MyCoursesPreview() {
         </div>
         <Link
           href="/estudiantes/myaccount"
-          className="text-primary text-sm underline"
+          className="text-primary text-sm no-underline hover:underline"
         >
-          Ver todos
+          Ver Todos
         </Link>
       </div>
 
