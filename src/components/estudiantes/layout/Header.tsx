@@ -14,7 +14,7 @@ import {
 } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -434,7 +434,7 @@ export function Header({
               placeholder="!Aprende con Artie!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-12 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
               autoComplete="off"
               autoFocus
             />
@@ -449,6 +449,14 @@ export function Header({
               aria-label="Buscar"
             >
               <Search className="text-primary/70 h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="absolute top-1/2 left-3 -translate-y-1/2"
+              onClick={() => setShowMobileSearch(false)}
+              aria-label="Cerrar búsqueda"
+            >
+              <X className="text-primary/70 h-4 w-4" />
             </button>
             {showPreview && previewCourses.length > 0 && (
               <div className="mt-3 w-full">

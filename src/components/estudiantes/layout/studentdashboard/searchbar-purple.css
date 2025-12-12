@@ -59,6 +59,66 @@
   /* Asegura que la lupa sea blanca como en el ejemplo */
 }
 
+/* Glow / pulse effect similar to live-class date highlight */
+/* Glow only on larger screens and only when the input is not expanded (collapsed state) */
+@media (min-width: 641px) {
+  .student-searchbar__icon::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle,
+      rgba(167, 139, 250, 0.45) 0%,
+      rgba(167, 139, 250, 0.15) 30%,
+      rgba(17, 24, 39, 0) 70%
+    );
+    filter: blur(8px);
+    /* Visible by default on large screens (collapsed state) */
+    opacity: 0.95;
+    transition:
+      opacity 0.25s ease,
+      transform 0.3s ease;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Show glow on hover only when the searchbar is NOT focused (collapsed) */
+  .student-searchbar__icon:hover::after {
+    opacity: 1;
+    transform: scale(1.02);
+    animation: search-glow-pulse 2.2s ease-in-out infinite;
+  }
+
+  /* When the input expands (focus-within) hide the glow */
+  .student-searchbar:focus-within .student-searchbar__icon::after {
+    opacity: 0 !important;
+    animation: none !important;
+    transform: scale(1) !important;
+  }
+
+  .student-searchbar__icon {
+    /* keep icon above the glow */
+    position: absolute;
+    z-index: 2;
+  }
+
+  @keyframes search-glow-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.95;
+    }
+    50% {
+      transform: scale(1.12);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.95;
+    }
+  }
+}
+
 .student-searchbar__icon:focus ~ .student-searchbar__input,
 .student-searchbar__input:focus {
   box-shadow: none;
@@ -121,5 +181,10 @@
     top: 90%;
     transform: translateY(-50%);
     box-shadow: none;
+  }
+
+  /* Disable glow on small screens entirely */
+  .student-searchbar__icon::after {
+    display: none;
   }
 }
