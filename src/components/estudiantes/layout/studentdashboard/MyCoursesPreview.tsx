@@ -140,8 +140,8 @@ export default function MyCoursesPreview() {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
-      <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+    <section className="-mt-12 mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+      <div className="flex items-center justify-between pr-4 sm:pr-0">
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
           <StudentGradientText className="text-2xl sm:text-3xl">
@@ -150,9 +150,9 @@ export default function MyCoursesPreview() {
         </div>
         <Link
           href="/estudiantes/myaccount"
-          className="text-primary text-sm underline"
+          className="text-primary text-sm no-underline hover:underline"
         >
-          Ver todos
+          Ver Todos
         </Link>
       </div>
 
@@ -177,7 +177,7 @@ export default function MyCoursesPreview() {
                 Math.max(Math.round(course.progress ?? 0), 0),
                 100
               );
-              const badgeHeading = 'Continuar:';
+              const badgeHeading = 'Continuar :';
               const badgeSubtitle = targetLessonTitle ?? 'Ir al curso';
               const titleText = course.title ?? '';
               const titleLength = titleText.length;

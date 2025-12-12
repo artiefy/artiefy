@@ -60,6 +60,8 @@ const TicketSupportChatbot = () => {
   const [currentTicketStatus, setCurrentTicketStatus] = useState<string | null>(
     null
   );
+  // Evita crear tickets duplicados mientras esperamos el ID creado externamente
+  const [awaitingTicketId, setAwaitingTicketId] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   // Evitar bucles de render: rastrear último estado sincronizado
   const lastSyncedCountRef = useRef(0);
@@ -184,6 +186,7 @@ const TicketSupportChatbot = () => {
         try {
           if (e.detail !== null && user?.id) {
             setCurrentTicketId(e.detail.id); // Establecer el ID del ticket actual
+            setAwaitingTicketId(false);
 
             const ticketData = await getTicketWithMessages(
               e.detail.id
@@ -255,6 +258,7 @@ const TicketSupportChatbot = () => {
           } else {
             // Si no hay detail o es null, estamos creando un nuevo ticket (menú principal)
             setCurrentTicketId(null);
+            setAwaitingTicketId(true);
           }
         } catch (error) {
           console.error('Error al obtener los mensajes:', error);
@@ -277,6 +281,7 @@ const TicketSupportChatbot = () => {
         try {
           if (e.detail?.ticketId && user?.id) {
             setCurrentTicketId(e.detail.ticketId);
+            setAwaitingTicketId(false);
 
             const ticketData = await getTicketWithMessages(e.detail.ticketId);
 
@@ -408,6 +413,11 @@ const TicketSupportChatbot = () => {
   };
 
   const saveUserMessage = async (trimmedInput: string, sender: string) => {
+    if (awaitingTicketId && !currentTicketId) {
+      toast.warning('Estamos creando tu ticket, espera un momento...');
+      return;
+    }
+
     if (isOpen && isSignedIn && user?.id) {
       console.log('📤 Guardando mensaje del usuario:', {
         userId: user.id,
@@ -425,6 +435,7 @@ const TicketSupportChatbot = () => {
       );
       if (!currentTicketId && result?.ticketId) {
         setCurrentTicketId(result.ticketId);
+        setAwaitingTicketId(false);
         setMessages((prev) => [
           ...prev,
           {
@@ -498,6 +509,10 @@ const TicketSupportChatbot = () => {
   };
 
   const handleBotButtonClick = async (action: string) => {
+    if (awaitingTicketId && !currentTicketId) {
+      toast.warning('Estamos creando tu ticket, espera un momento...');
+      return;
+    }
     if (!isSignedIn || !user?.id) return;
 
     // Definir textos según la acción
@@ -550,6 +565,7 @@ const TicketSupportChatbot = () => {
     const ticketIdToUse = currentTicketId ?? userResult?.ticketId ?? null;
     if (!currentTicketId && ticketIdToUse) {
       setCurrentTicketId(ticketIdToUse);
+      setAwaitingTicketId(false);
       // Mensaje automático de aviso ya lo agrega saveUserMessage antes; aquí no repetimos.
     }
 
@@ -580,8 +596,14 @@ const TicketSupportChatbot = () => {
     <>
       {/* Chatbot solo si está logueado */}
       {isOpen && isSignedIn && (
-        <div className="fixed top-1/2 left-1/2 z-50 h-[100%] w-[100%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-gray-700 bg-[#050c1b] text-white shadow-[0_25px_80px_rgba(3,6,20,0.85)] sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-x-0 sm:translate-y-0 md:w-[500px]">
-          <div className="support-chat bg-transparent text-white">
+        <div
+          className={[
+            'fixed top-1/2 left-1/2 z-50 size-[100%] -translate-1/2 overflow-hidden rounded-lg border border-gray-700 bg-[#050c1b] text-white shadow-[0_25px_80px_rgba(3,6,20,0.85)]',
+            'sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-0',
+            'md:w-[500px]',
+          ].join(' ')}
+        >
+          <div className="bg-transparent text-white">
             {/* Header */}
             <div className="relative z-[5] flex flex-col bg-[#050c1b]/95 backdrop-blur-lg">
               <div className="flex items-center justify-between border-b border-gray-700 p-4">
@@ -595,8 +617,8 @@ const TicketSupportChatbot = () => {
                       {user?.fullName}
                     </em>
                     <div className="relative inline-flex">
-                      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-400/20" />
-                      <div className="relative h-2.5 w-2.5 rounded-full bg-green-400" />
+                      <div className="absolute top-1/2 left-1/2 size-4 -translate-1/2 animate-pulse rounded-full bg-green-400/20" />
+                      <div className="relative size-2.5 rounded-full bg-green-400" />
                     </div>
                   </div>
                 </div>

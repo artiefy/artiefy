@@ -538,7 +538,7 @@ export default async function StudentListCourses({
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
-      <div className="mt-8 mb-4 flex justify-start px-8 lg:px-20">
+      <div className="mt-8 mb-3 flex justify-start px-8 sm:mb-3 lg:px-20">
         <div className="flex items-center gap-2">
           <HiLibrary className="text-xl text-white" />
           <GradientText className="text-2xl sm:text-3xl">

@@ -245,7 +245,7 @@ export function Header({
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-700 bg-[#00152B] backdrop-blur-md">
+    <nav className="sticky top-0 z-50 mb-8 w-full border-b border-[#00152B] bg-[#00152B] backdrop-blur-md sm:mb-8">
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}
@@ -313,7 +313,7 @@ export function Header({
             <div className="relative">
               <input
                 type="search"
-                placeholder="Aprende con IA !"
+                placeholder="!Aprende con Artie!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
@@ -431,16 +431,16 @@ export function Header({
           >
             <input
               type="search"
-              placeholder="Aprende con IA !"
+              placeholder="!Aprende con Artie!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-12 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
               autoComplete="off"
               autoFocus
             />
             <button
               type="button"
-              className="absolute top-1/2 right-10 -translate-y-1/2"
+              className="absolute top-1/2 right-3 -translate-y-1/2"
               onClick={() => {
                 if (!searchQuery.trim()) return;
                 handleSearch();
@@ -452,7 +452,7 @@ export function Header({
             </button>
             <button
               type="button"
-              className="absolute top-1/2 right-3 -translate-y-1/2"
+              className="absolute top-1/2 left-3 -translate-y-1/2"
               onClick={() => setShowMobileSearch(false)}
               aria-label="Cerrar búsqueda"
             >

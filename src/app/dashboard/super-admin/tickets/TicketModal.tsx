@@ -588,7 +588,7 @@ export default function TicketModal({
                     comments
                       .filter(
                         (comment) =>
-                          comment.content !== 'Ticket asignado a 1 usuario(s).'
+                          !comment.content?.startsWith('Ticket asignado a ')
                       )
                       .map((comment, index) => (
                         <div

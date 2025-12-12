@@ -1113,26 +1113,31 @@ export default function TicketsPage() {
                           <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                         </div>
                       ) : comments.length > 0 ? (
-                        comments.map((comment, index) => (
-                          <div
-                            key={index}
-                            className="rounded-lg border border-gray-700 bg-gray-800/80 p-4 backdrop-blur-sm"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="font-medium text-blue-400">
-                                {comment.user?.name || 'Usuario'}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                {formatDateColombiaShort(
-                                  new Date(comment.createdAt)
-                                )}
-                              </span>
+                        comments
+                          .filter(
+                            (comment) =>
+                              !comment.content?.startsWith('Ticket asignado a ')
+                          )
+                          .map((comment, index) => (
+                            <div
+                              key={index}
+                              className="rounded-lg border border-gray-700 bg-gray-800/80 p-4 backdrop-blur-sm"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="font-medium text-blue-400">
+                                  {comment.user?.name || 'Usuario'}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {formatDateColombiaShort(
+                                    new Date(comment.createdAt)
+                                  )}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-gray-300">
+                                {comment.content}
+                              </p>
                             </div>
-                            <p className="mt-2 text-gray-300">
-                              {comment.content}
-                            </p>
-                          </div>
-                        ))
+                          ))
                       ) : (
                         <p className="text-center text-gray-500">
                           No hay comentarios

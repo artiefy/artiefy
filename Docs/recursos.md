@@ -1,3 +1,43 @@
+---
+
+## Mini tutorial: Guardar y exportar variables de entorno (ejemplo SNYK_TOKEN)
+
+### Windows (PowerShell, recomendado)
+
+1. Abre PowerShell como administrador.
+2. Ejecuta:
+  ```powershell
+  [System.Environment]::SetEnvironmentVariable("SNYK_TOKEN", "TU_TOKEN_AQUI", "User")
+  ```
+  (Reemplaza TU_TOKEN_AQUI por tu token real)
+3. Cierra y vuelve a abrir tu terminal/editor para que la variable esté disponible.
+
+### Windows (CMD)
+1. Abre CMD como administrador.
+2. Ejecuta:
+  ```cmd
+  setx SNYK_TOKEN "TU_TOKEN_AQUI"
+  ```
+3. Cierra y vuelve a abrir tu terminal/editor.
+
+### Linux/macOS (bash/zsh)
+1. Abre tu terminal.
+2. Agrega al final de tu archivo `~/.bashrc`, `~/.zshrc` o `~/.profile`:
+  ```bash
+  export SNYK_TOKEN="TU_TOKEN_AQUI"
+  ```
+3. Guarda y ejecuta:
+  ```bash
+  source ~/.bashrc
+  ```
+  (o el archivo que editaste)
+
+### Verificar que la variable esté configurada
+4. echo $CONTEXT7_API_KEY
+  (Debería mostrar tu token)
+
+---
+
 # Herramientas y Comandos
 
 ## GITHUB RECONECTARSE A OTROS REPOSITORIOS
@@ -96,7 +136,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 
 Tecnologias Que Se Usan:
 
-- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Husky, Lint-Staged, Upstash.
+- Next.js 16, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Husky, Lint-Staged, Upstash.
 
 ---
 

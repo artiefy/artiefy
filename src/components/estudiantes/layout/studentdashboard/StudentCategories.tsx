@@ -1,23 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
-import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { FiCode } from 'react-icons/fi';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import useSWR from 'swr';
 
+import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { Input } from '~/components/estudiantes/ui/input';
 import {
   restoreScrollPosition as _restoreScrollPosition,
   saveScrollPosition,
 } from '~/utils/scrollPosition';
 
 import type { Category } from '~/types';
+
+import './search-input.css';
+import './searchbar-purple.css';
 
 interface CourseCategoriesProps {
   allCategories: Category[];
@@ -38,10 +39,16 @@ export default function StudentCategories({
   const pathname = usePathname();
   const { start, stop } = useProgress();
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState(
     searchParams?.get('query') ?? ''
   );
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    searchParams?.get('category') ?? null
+  );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
 
   // Usar SWR para el fetching y caching de datos
   const { data: categoriesData } = useSWR<CategoriesData>('/api/categories', {
@@ -50,10 +57,52 @@ export default function StudentCategories({
     revalidateOnReconnect: false,
   });
 
+  // Check if arrows should be shown
+  const checkScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftArrow(scrollLeft > 0);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', checkScroll);
+      }
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll, categoriesData]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = 300;
+    const newScrollLeft =
+      direction === 'left'
+        ? container.scrollLeft - scrollAmount
+        : container.scrollLeft + scrollAmount;
+
+    container.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth',
+    });
+  };
+
   const handleCategorySelect = (category: string | null) => {
     saveScrollPosition();
     start();
     setLoadingCategory(category ?? 'all');
+    setSelectedCategory(category);
     const params = new URLSearchParams();
     if (category) {
       params.set('category', category);
@@ -63,25 +112,26 @@ export default function StudentCategories({
 
   const handleSearch = useCallback(() => {
     saveScrollPosition();
-    const params = new URLSearchParams();
-    if (searchQuery) {
-      params.set('query', searchQuery);
-    }
     start();
-    setIsSearching(true);
-    router.push(`${pathname}?${params.toString()}`);
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      const params = new URLSearchParams();
+      params.set('query', trimmed);
+      router.push(`${pathname}?${params.toString()}`);
+    } else {
+      router.push(pathname);
+    }
   }, [searchQuery, pathname, router, start]);
 
   useEffect(() => {
     setLoadingCategory(null);
-    setIsSearching(false);
+    // setIsSearching(false); // Eliminado: ya no se usa
     stop();
-
-    // Skip the restoreScrollPosition since we're going to scroll to the results
-    // restoreScrollPosition();
-
-    // If we've completed a search or category filter, scroll to the results
-    if (searchParams?.has('query') || searchParams?.has('category')) {
+    // Behavior:
+    // - If it's a search (`query`), scroll to the results section.
+    // - If it's a category filter (no `query`), restore previously saved scroll
+    //   position so the viewport remains where the user was (no jump to top).
+    if (searchParams?.has('query')) {
       // Use setTimeout to ensure the DOM has been updated with results first
       setTimeout(() => {
         const resultsSection = document.getElementById('courses-list-section');
@@ -89,6 +139,23 @@ export default function StudentCategories({
           resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 300);
+    } else if (
+      searchParams?.has('category') ||
+      (!searchParams?.has('query') &&
+        !searchParams?.has('category') &&
+        typeof window !== 'undefined' &&
+        sessionStorage.getItem('scrollPosition'))
+    ) {
+      // Restore previous scroll position saved before navigating to the category
+      // This covers both: specific category filters and the "Todos" case
+      // where the query string is cleared.
+      setTimeout(() => {
+        try {
+          _restoreScrollPosition();
+        } catch (_err) {
+          // ignore
+        }
+      }, 100);
     }
   }, [searchParams, stop]);
 
@@ -100,154 +167,193 @@ export default function StudentCategories({
   };
 
   return (
-    <section className="div-filters mt-16 px-8 sm:px-12 md:px-10 lg:px-20">
+    <section
+      id="student-categories-section"
+      className="div-filters px-8 sm:px-12 md:px-10 lg:px-20"
+    >
       <div className="container mx-auto">
-        <div className="mb-8 flex flex-col items-center justify-between lg:flex-row">
-          <div className="relative mb-4 w-full sm:w-3/4 md:w-1/3 lg:mb-0 lg:w-1/3">
-            <FunnelIcon className="absolute top-1/2 left-3 size-5 -translate-y-1/2 fill-gray-500" />
-            <select
-              className="focus:border-primary focus:ring-primary block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900"
-              onChange={(e) => handleCategorySelect(e.target.value || null)}
-              value={searchParams?.get('category') ?? ''}
-              aria-label="Seleccionar categoría"
-            >
-              <option value="">Todas las categorías</option>
-              {categoriesData?.allCategories?.map((category) => (
-                <option key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="w-full lg:ml-auto lg:w-1/3">
-            <div className="relative w-full max-w-lg">
-              <Input
-                type="search"
-                placeholder="Buscar cursos..."
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearchQuery(e.target.value)
-                }
-                onKeyDown={handleKeyDown}
-                className="text-background w-full bg-white pr-10"
-                aria-label="Buscar cursos"
-              />
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                {isSearching ? (
-                  <Icons.spinner
-                    className="text-background size-4"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <MagnifyingGlassIcon
-                    className="size-4 fill-gray-400"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="hidden grid-cols-2 gap-3 sm:grid sm:grid-cols-4 lg:grid-cols-8">
-          {/* Botón "Todos los cursos" solo visible en desktop */}
-          <div
-            className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 ${
-              loadingCategory === 'all' ? 'pr-4' : ''
-            }`}
-            onClick={() => handleCategorySelect(null)}
-            role="button"
-            tabIndex={0}
-            aria-label="Mostrar todos los cursos"
-          >
-            <div className="flex h-full flex-col items-center justify-center">
-              {loadingCategory === 'all' ? (
-                <>
-                  <Icons.spinner
-                    className="text-background size-8"
-                    aria-hidden="true"
-                  />
-                  <p className="text-background mt-2 text-xs">
-                    Buscando Cursos...
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="mb-3 text-2xl text-blue-600">
-                    <FiCode className="size-6" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-background text-sm font-semibold">
-                    Todos los cursos
-                  </h3>
-                </>
-              )}
-            </div>
+        {/* Title and Search Bar */}
+        <div className="mt-4 mb-2 ml-0 flex flex-col gap-2 sm:mt-0 sm:pl-3 lg:flex-row lg:items-center lg:justify-start lg:gap-2">
+          {/* Title */}
+          <div className="flex w-full items-center justify-start gap-1 sm:gap-1.5 lg:w-auto">
+            <StudentGradientText className="mt-2 mr-10 text-lg whitespace-nowrap sm:mt-1 sm:mr-0 sm:text-xl lg:mt-3 lg:text-2xl">
+              Areas de conocimiento
+            </StudentGradientText>
           </div>
 
-          {/* Categorías destacadas solo visibles en desktop */}
-          {categoriesData?.featuredCategories
-            ?.filter((category) => category.is_featured)
-            .map((category: Category, index: number) => (
-              <div
+          {/* Search bar stacked below on mobile, right aligned */}
+          <div className="flex w-full justify-center lg:w-auto lg:justify-start">
+            <div className="student-searchbar w-full max-w-[280px] sm:max-w-[340px] lg:max-w-[260px]">
+              <button
+                type="button"
+                className="student-searchbar__icon absolute top-[60%] right-6 -translate-y-1/2 text-white"
+                tabIndex={-1}
+                aria-label="Buscar cursos"
+                onClick={() => {
+                  if (!searchQuery.trim()) {
+                    searchInputRef.current?.focus();
+                    return;
+                  }
+                  handleSearch();
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  height="20px"
+                  width="20px"
+                >
+                  <path
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z"
+                  />
+                  <path
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    d="M22 22L20 20"
+                  />
+                </svg>
+              </button>
+              <input
+                placeholder="Buscar Cursos..."
+                className="student-searchbar__input"
+                name="text"
+                type="text"
+                value={searchQuery}
+                ref={searchInputRef}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Categories - Horizontal Scroll */}
+        <div className="group/categories relative -mb-6 -ml-4 pt-3 sm:-mb-0 sm:-ml-0 sm:pt-0">
+          {/* Left Arrow - Visible on hover */}
+          {showLeftArrow && (
+            <button
+              onClick={() => scroll('left')}
+              className="category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110"
+              aria-label="Scroll left"
+            >
+              <IoIosArrowBack className="h-5 w-5 text-white" />
+            </button>
+          )}
+
+          {/* Right Arrow - Visible on hover */}
+          {showRightArrow && (
+            <button
+              onClick={() => scroll('right')}
+              className="category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110"
+              aria-label="Scroll right"
+            >
+              <IoIosArrowForward className="h-5 w-5 text-white" />
+            </button>
+          )}
+
+          {/* Categories Container */}
+          <div
+            ref={scrollContainerRef}
+            className="scrollbar-hide flex justify-start gap-3 overflow-x-auto pr-4 pb-4 pl-4 sm:pr-3 sm:pl-3"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              scrollPaddingLeft: '12px',
+            }}
+          >
+            {/* "Todos" Button */}
+            <button
+              onClick={() => handleCategorySelect(null)}
+              className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
+                !selectedCategory
+                  ? 'bg-foreground text-background'
+                  : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+              }`}
+              aria-label="Mostrar todos los cursos"
+            >
+              {loadingCategory === 'all' ? (
+                <div className="flex items-center gap-2">
+                  <Icons.spinner className="size-4" aria-hidden="true" />
+                  <span>Cargando...</span>
+                </div>
+              ) : (
+                'Todos'
+              )}
+            </button>
+
+            {/* Category Buttons */}
+            {categoriesData?.allCategories?.map((category) => (
+              <button
                 key={category.id}
-                className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95"
                 onClick={() => handleCategorySelect(category.id.toString())}
-                role="button"
-                tabIndex={0}
+                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
+                  selectedCategory === category.id.toString()
+                    ? 'bg-foreground text-background'
+                    : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                }`}
                 aria-label={`Mostrar cursos de ${category.name}`}
               >
-                <div className="flex h-full flex-col items-center justify-center">
-                  {loadingCategory === category.id.toString() ? (
-                    <>
-                      <Icons.spinner
-                        className="text-background size-8"
-                        aria-hidden="true"
-                      />
-                      <p className="text-background mt-2 text-xs">
-                        Buscando Cursos...
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="mb-3 text-2xl text-blue-600">
-                        <Image
-                          src={`/${
-                            index === 0
-                              ? 'alembic-svgrepo-com.svg'
-                              : index === 1
-                                ? 'list-svgrepo-com.svg'
-                                : index === 2
-                                  ? 'brush-svgrepo-com.svg'
-                                  : index === 3
-                                    ? 'web-page-browser-analysis-screen-svgrepo-com.svg'
-                                    : index === 4
-                                      ? 'database-svgrepo-com.svg'
-                                      : index === 5
-                                        ? 'api-interface-svgrepo-com.png'
-                                        : index === 6
-                                          ? 'cloud-computing-ai-svgrepo-com.png'
-                                          : 'code-svgrepo-com.svg'
-                          }`}
-                          alt={category.name}
-                          width={36}
-                          height={36}
-                          className="size-9"
-                        />
-                      </div>
-                      <h3 className="text-background text-sm font-semibold">
-                        {category.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {`${category.courses?.length ?? 0} curso${
-                          category.courses?.length !== 1 ? 's' : ''
-                        }`}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
+                {loadingCategory === category.id.toString() ? (
+                  <div className="flex items-center gap-2">
+                    <Icons.spinner className="size-4" aria-hidden="true" />
+                    <span>Cargando...</span>
+                  </div>
+                ) : (
+                  category.name
+                )}
+              </button>
             ))}
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+
+        .category-arrow {
+          border: none;
+          outline: none;
+          box-shadow: none;
+          isolation: isolate;
+        }
+
+        .category-arrow::after {
+          content: '';
+          position: absolute;
+          inset: -10px;
+          border-radius: 9999px;
+          background: radial-gradient(
+            circle,
+            rgba(167, 139, 250, 0.4),
+            rgba(17, 24, 39, 0)
+          );
+          filter: blur(10px);
+          opacity: 0.85;
+          transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+          z-index: 0;
+        }
+
+        .category-arrow:hover::after {
+          opacity: 1;
+          transform: scale(1.08);
+        }
+
+        .category-arrow svg {
+          position: relative;
+          z-index: 1;
+        }
+      `}</style>
     </section>
   );
 }

@@ -17,6 +17,7 @@ interface SearchParams {
   category?: string;
   query?: string;
   page?: string;
+  view?: string;
 }
 
 interface APIResponse {
@@ -107,8 +108,13 @@ async function fetchAllCourses(): Promise<Course[]> {
 
 interface PageProps {
   searchParams?:
-    | { category?: string; query?: string; page?: string }
-    | Promise<{ category?: string; query?: string; page?: string }>;
+    | { category?: string; query?: string; page?: string; view?: string }
+    | Promise<{
+        category?: string;
+        query?: string;
+        page?: string;
+        view?: string;
+      }>;
 }
 
 export default async function Page({ searchParams }: PageProps) {
@@ -120,11 +126,13 @@ export default async function Page({ searchParams }: PageProps) {
     category: params?.category,
     query: params?.query,
     page: params?.page,
+    view: params?.view,
   };
 
   try {
     const data = await fetchData(parsedParams);
     const allCourses = await fetchAllCourses();
+    const view = parsedParams.view;
 
     return (
       <>
@@ -137,37 +145,41 @@ export default async function Page({ searchParams }: PageProps) {
             initialCourses={allCourses}
             initialPrograms={data.programs}
           />
-          <StudentCategories
-            allCategories={data.categories}
-            featuredCategories={data.featuredCategories}
-          />
-          <Suspense
-            fallback={
-              <div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div key={i} className="group relative p-4">
-                    <Skeleton className="relative h-40 w-full md:h-56" />
-                    <div className="mt-3 flex flex-col space-y-2">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
+          {!view && (
+            <>
+              <StudentCategories
+                allCategories={data.categories}
+                featuredCategories={data.featuredCategories}
+              />
+              <Suspense
+                fallback={
+                  <div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <div key={i} className="group relative p-4">
+                        <Skeleton className="relative h-40 w-full md:h-56" />
+                        <div className="mt-3 flex flex-col space-y-2">
+                          <Skeleton className="h-6 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-1/2" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            }
-          >
-            <StudentListCourses
-              courses={data.courses}
-              currentPage={data.page}
-              totalPages={data.totalPages}
-              totalCourses={data.total}
-              category={data.categoryId?.toString()}
-              searchTerm={data.searchTerm}
-            />
-          </Suspense>
+                }
+              >
+                <StudentListCourses
+                  courses={data.courses}
+                  currentPage={data.page}
+                  totalPages={data.totalPages}
+                  totalCourses={data.total}
+                  category={data.categoryId?.toString()}
+                  searchTerm={data.searchTerm}
+                />
+              </Suspense>
+            </>
+          )}
           <Footer />
         </div>
       </>

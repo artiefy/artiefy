@@ -17,6 +17,7 @@ import {
   tickets,
   users,
 } from '~/server/db/schema';
+import { SUPPORT_AUTO_ASSIGN_EMAILS } from '~/server/helpers/supportTicketAssignments';
 // Tipos seguros
 interface UpdateTicketBody {
   assignedToId?: string; // (legacy: asignación única)
@@ -161,14 +162,14 @@ export async function PUT(
 
     if (body.assignedToIds) {
       console.log(
-        '🔁 Actualizando asignaciones múltiples:',
+        '🤝 Actualizando asignaciones múltiples:',
         body.assignedToIds
       );
 
       await db
         .delete(ticketAssignees)
         .where(eq(ticketAssignees.ticketId, ticketId));
-      console.log('🧹 Asignaciones anteriores eliminadas');
+      console.log('🗑️ Asignaciones anteriores eliminadas');
 
       if (body.assignedToIds.length > 0) {
         const newAssignments = body.assignedToIds.map((uid) => ({
@@ -181,7 +182,12 @@ export async function PUT(
         );
         console.log('✅ Nuevas asignaciones insertadas');
 
-        // ✉️ Enviar correos a asignados
+        const assignedUsers: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+        }[] = [];
+        // 📧 Enviar correos a asignados
         for (const assignedId of body.assignedToIds) {
           try {
             const assignee = await db.query.users.findFirst({
@@ -189,7 +195,12 @@ export async function PUT(
             });
 
             if (assignee?.email) {
-              console.log('📧 Enviando correo a:', assignee.email);
+              assignedUsers.push({
+                id: assignee.id,
+                email: assignee.email,
+                name: assignee.name,
+              });
+              console.log('📨 Enviando correo a:', assignee.email);
 
               const emailResult = await sendTicketEmail({
                 to: assignee.email,
@@ -200,30 +211,58 @@ export async function PUT(
                 ),
               });
 
-              console.log('✅ Email enviado:', emailResult);
+              console.log('✉️ Email enviado:', emailResult);
             } else {
-              console.log(`⚠️ Usuario ${assignedId} no tiene correo`);
+              console.log(`ℹ️ Usuario ${assignedId} no tiene correo`);
             }
           } catch (error) {
-            console.error(`❌ Error enviando a ${assignedId}:`, error);
+            console.error(`⚠️ Error enviando a ${assignedId}:`, error);
           }
         }
 
-        // 📝 Comentario de asignación automática
-        await db.insert(ticketComments).values({
-          ticketId,
-          userId,
-          content: `Ticket asignado a ${body.assignedToIds.length} usuario(s).`,
-          isRead: false,
-          createdAt: new Date(),
-        });
+        // Solo registrar comentario visible si hay asignación manual (no solo auto)
+        const defaultEmails = new Set(
+          SUPPORT_AUTO_ASSIGN_EMAILS.map((e) => e.toLowerCase())
+        );
 
-        console.log('📝 Comentario automático agregado');
+        const manualAssignees = assignedUsers.filter(
+          (u) => u.email && !defaultEmails.has(u.email.toLowerCase())
+        );
+
+        const shouldCreateAssignmentComment = manualAssignees.length > 0;
+
+        if (shouldCreateAssignmentComment && manualAssignees.length > 0) {
+          const names = manualAssignees.map(
+            (u) => u.name ?? u.email ?? 'Administrador'
+          );
+          await db.insert(ticketComments).values({
+            ticketId,
+            userId,
+            content: `El asesor ${names.join(', ')} ha sido asignado al ticket #${ticketId} para ayudarte con cualquier duda o inconveniente en Artiefy.`,
+            isRead: false,
+            createdAt: new Date(),
+          });
+
+          console.log('✍️ Comentario de asignación agregado con nombre(s)');
+        } else if (shouldCreateAssignmentComment) {
+          await db.insert(ticketComments).values({
+            ticketId,
+            userId,
+            content: `Ticket asignado a ${body.assignedToIds.length} usuario(s).`,
+            isRead: false,
+            createdAt: new Date(),
+          });
+
+          console.log('✍️ Comentario de asignación agregado (conteo)');
+        } else {
+          console.log(
+            'ℹ️ Asignación automática por defecto: sin comentario en historial.'
+          );
+        }
       } else {
-        console.log('ℹ️ No hay asignaciones nuevas para agregar');
+        console.log('🤷 No hay asignaciones nuevas para agregar');
       }
     }
-
     const updateData: Partial<UpdateTicketBody> = {
       estado: body.estado,
       tipo: body.tipo,
