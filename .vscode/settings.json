@@ -83,7 +83,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/5540_1761771951784/node",
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/45036_1765518618387/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -219,6 +219,15 @@
         "copilot/oswe-vscode-prime"
       ]
     }
-  }
-  "chat.mcp.autostart": true
+  },
+  "chat.mcp.autostart": true,
+  // VS Code 1.107 agent + MCP improvements
+  "chat.viewSessions.enabled": true,
+  "chat.viewSessions.orientation": "auto",
+  "chat.agent.thinking.collapsedTools": true,
+  "chat.customAgentInSubagent.enabled": true,
+  "github.copilot.chat.customAgents.showOrganizationAndEnterpriseAgents": true,
+  "github.copilot.chat.cli.customAgents.enabled": true,
+  "github.copilot.chat.githubMcpServer.enabled": true,
+  "github.copilot.chat.githubMcpServer.readonly": false
 }

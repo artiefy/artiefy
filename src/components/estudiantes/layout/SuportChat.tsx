@@ -169,8 +169,9 @@ export const SuportChat: React.FC<SuportChatProps> = ({
     });
   })();
 
+  // Layout: flex-col, mensajes con overflow, input SIEMPRE pegado abajo
   return (
-    <>
+    <div className="flex h-full min-h-0 w-full flex-col">
       {/* Banner de ticket cerrado */}
       {isTicketClosed && (
         <div className="mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3 text-sm text-yellow-100">
@@ -184,9 +185,8 @@ export const SuportChat: React.FC<SuportChatProps> = ({
           </div>
         </div>
       )}
-
       {/* Mensajes */}
-      <div className="bg-[#050c1b] text-white">
+      <div className="flex-1 overflow-y-auto bg-[#050c1b] px-2 pb-2 text-white">
         {filteredMessages.map((message) => (
           <div key={message.id}>
             {/* Timestamp arriba de la burbuja */}
@@ -243,31 +243,32 @@ export const SuportChat: React.FC<SuportChatProps> = ({
         ))}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Input Form - compacto en móvil */}
-      <form onSubmit={handleSendMessage} className="mt-2 flex w-full gap-2">
-        <input
-          ref={actualInputRef}
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder={
-            isTicketClosed
-              ? 'Este ticket está cerrado. Contacta a un administrador para reabrirlo.'
-              : 'Describe el problema...'
-          }
-          disabled={isTicketClosed}
-          className="flex-1 rounded-lg border border-[#1f2c44] bg-[#0b1d36] p-2 text-sm text-white placeholder-white/40 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#1a2a44] disabled:text-white/30 sm:p-3 sm:text-base"
-        />
-        <button
-          type="submit"
-          disabled={isLoading || isTicketClosed}
-          className="rounded-lg bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-2 text-sm font-semibold text-[#041226] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-base"
-        >
-          Enviar
-        </button>
-      </form>
-    </>
+      {/* Input fijo abajo, SIEMPRE visible */}
+      <div className="w-full border-t border-gray-700 bg-[#050c1b] px-2 py-2 backdrop-blur-sm">
+        <form onSubmit={handleSendMessage} className="flex w-full gap-2">
+          <input
+            ref={actualInputRef}
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder={
+              isTicketClosed
+                ? 'Este ticket está cerrado. Contacta a un administrador para reabrirlo.'
+                : 'Describe el problema...'
+            }
+            disabled={isTicketClosed}
+            className="flex-1 rounded-lg border border-[#1f2c44] bg-[#0b1d36] p-2 text-sm text-white placeholder-white/40 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#1a2a44] disabled:text-white/30 sm:p-3 sm:text-base"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || isTicketClosed}
+            className="rounded-lg bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-2 text-sm font-semibold text-[#041226] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-base"
+          >
+            Enviar
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 
