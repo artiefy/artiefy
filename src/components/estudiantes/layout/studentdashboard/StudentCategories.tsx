@@ -47,6 +47,7 @@ export default function StudentCategories({
     searchParams?.get('category') ?? null
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
@@ -157,21 +158,30 @@ export default function StudentCategories({
     >
       <div className="container mx-auto">
         {/* Title and Search Bar */}
-        <div className="mb-8 flex flex-col items-center justify-between gap-4 lg:flex-row">
-          {/* Title + Search icon inline */}
-          <div className="flex items-center gap-2">
+        <div className="mt-4 mb-8 ml-0 flex flex-col gap-3 sm:mt-0 sm:pl-3 lg:flex-row lg:items-center lg:justify-start lg:gap-3">
+          {/* Title */}
+          <div className="flex w-full items-center justify-start gap-1 sm:gap-1.5 lg:w-auto">
             <MdCategory className="text-xl text-white" />
-            <StudentGradientText className="text-2xl sm:text-3xl">
-              Áreas de conocimiento
+            <StudentGradientText className="mt-1 mr-10 text-xl whitespace-nowrap sm:mt-0 sm:mr-0 sm:text-2xl lg:text-3xl">
+              Areas de conocimiento
             </StudentGradientText>
-            {/* Move the search icon right next to the title text */}
-            <div className="student-searchbar">
+          </div>
+
+          {/* Search bar stacked below on mobile, right aligned */}
+          <div className="flex w-full justify-center lg:w-auto lg:justify-start">
+            <div className="student-searchbar w-full max-w-[280px] sm:max-w-[340px] lg:max-w-[260px]">
               <button
                 type="button"
                 className="student-searchbar__icon"
                 tabIndex={-1}
                 aria-label="Buscar cursos"
-                onClick={handleSearch}
+                onClick={() => {
+                  if (!searchQuery.trim()) {
+                    searchInputRef.current?.focus();
+                    return;
+                  }
+                  handleSearch();
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -202,6 +212,7 @@ export default function StudentCategories({
                 name="text"
                 type="text"
                 value={searchQuery}
+                ref={searchInputRef}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
@@ -210,12 +221,12 @@ export default function StudentCategories({
         </div>
 
         {/* Categories - Horizontal Scroll */}
-        <div className="group/categories relative">
+        <div className="group/categories relative -mb-6 -ml-4 sm:-mb-0 sm:-ml-0">
           {/* Left Arrow - Visible on hover */}
           {showLeftArrow && (
             <button
               onClick={() => scroll('left')}
-              className="category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-hover/categories:opacity-95 hover:scale-110"
+              className="category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110"
               aria-label="Scroll left"
             >
               <IoIosArrowBack className="h-5 w-5 text-white" />
@@ -226,7 +237,7 @@ export default function StudentCategories({
           {showRightArrow && (
             <button
               onClick={() => scroll('right')}
-              className="category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-hover/categories:opacity-95 hover:scale-110"
+              className="category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110"
               aria-label="Scroll right"
             >
               <IoIosArrowForward className="h-5 w-5 text-white" />
@@ -236,16 +247,17 @@ export default function StudentCategories({
           {/* Categories Container */}
           <div
             ref={scrollContainerRef}
-            className="scrollbar-hide flex gap-3 overflow-x-auto pb-4"
+            className="scrollbar-hide flex justify-start gap-3 overflow-x-auto pr-4 pb-4 pl-4 sm:pr-3 sm:pl-3"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
+              scrollPaddingLeft: '12px',
             }}
           >
             {/* "Todos" Button */}
             <button
               onClick={() => handleCategorySelect(null)}
-              className={`flex-shrink-0 rounded-full px-5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+              className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                 !selectedCategory
                   ? 'bg-foreground text-background'
                   : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
@@ -267,7 +279,7 @@ export default function StudentCategories({
               <button
                 key={category.id}
                 onClick={() => handleCategorySelect(category.id.toString())}
-                className={`flex-shrink-0 rounded-full px-5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                   selectedCategory === category.id.toString()
                     ? 'bg-foreground text-background'
                     : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'

@@ -507,11 +507,11 @@ export default function StudentDetails({
             id="filters-anchor"
             className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24"
           >
-            <div className="-mt-8 flex w-full justify-start pr-4">
-              <div className="flex items-center gap-2 md:gap-3">
+            <div className="-mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4 sm:-mt-8 sm:mb-0 sm:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start sm:gap-2 md:gap-3">
                 <button
                   onClick={() => handleFilterClick('todos')}
-                  className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'todos'
                       ? 'bg-foreground text-background'
                       : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
@@ -530,7 +530,7 @@ export default function StudentDetails({
                 </button>
                 <button
                   onClick={() => handleFilterClick('cursos')}
-                  className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'cursos'
                       ? 'bg-foreground text-background'
                       : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
@@ -549,7 +549,7 @@ export default function StudentDetails({
                 </button>
                 <button
                   onClick={() => handleFilterClick('programas')}
-                  className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'programas'
                       ? 'bg-foreground text-background'
                       : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
