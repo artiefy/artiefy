@@ -286,9 +286,9 @@ export async function getAdminUsers(query?: string) {
   const clerkIds = allUsers.map((u) => u.id);
   const dbPhones = clerkIds.length
     ? await db
-        .select({ id: users.id, phone: users.phone })
-        .from(users)
-        .where(inArray(users.id, clerkIds))
+      .select({ id: users.id, phone: users.phone })
+      .from(users)
+      .where(inArray(users.id, clerkIds))
     : [];
   const phoneById = new Map<string, string>(
     dbPhones.map((r) => [r.id, (r.phone ?? '').trim()])
@@ -339,10 +339,10 @@ export async function getAdminUsers(query?: string) {
 
   const filtered = query
     ? simplified.filter((user) =>
-        `${user.firstName} ${user.lastName} ${user.email}`
-          .toLowerCase()
-          .includes(query.toLowerCase())
-      )
+      `${user.firstName} ${user.lastName} ${user.email}`
+        .toLowerCase()
+        .includes(query.toLowerCase())
+    )
     : simplified;
 
   console.table(
@@ -713,7 +713,7 @@ export interface CourseData {
   createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
   updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
   rating?: number | null;
-  courseTypeId?: number; // 🔹 Add courseTypeId as an optional property
+  courseTypeId?: number | null; // 🔹 Add courseTypeId as an optional property
   isActive?: boolean | null; // 🔹 Allow null for isActive
   categoryName?: string; // 🔹 Add categoryName as an optional property
   requiresProgram?: boolean | null;
@@ -721,6 +721,9 @@ export interface CourseData {
   instructorName?: string; // Add instructorName as an optional property
   coverVideoCourseKey?: string | null;
   individualPrice?: number | null; // <-- añade esto
+  certificationTypeId?: number | null; // 🔹 Add certificationTypeId as an optional property
+  scheduleOptionId?: number | null; // 🔹 Add scheduleOptionId for horario
+  spaceOptionId?: number | null; // 🔹 Add spaceOptionId for espacios
 }
 
 export interface Materia {
@@ -762,6 +765,12 @@ export async function getCourses(
           rating: courses.rating,
           isActive: courses.isActive,
           createdAt: courses.createdAt,
+          courseTypeId: courses.courseTypeId,
+          certificationTypeId: courses.certificationTypeId,
+          individualPrice: courses.individualPrice,
+          coverVideoCourseKey: courses.coverVideoCourseKey,
+          scheduleOptionId: courses.scheduleOptionId,
+          spaceOptionId: courses.spaceOptionId,
         })
         .from(courses)
         .orderBy(desc(courses.createdAt))
@@ -917,27 +926,51 @@ export async function createCourse(courseData: CourseData) {
 // ✅ Función corregida con `courseId: number`
 export async function updateCourse(courseId: number, courseData: CourseData) {
   try {
-    console.log('📝 Actualizando curso:');
-    console.log('ID:', courseId);
-    console.log('coverImageKey recibido:', courseData.coverImageKey);
-    console.log(
-      'coverVideoCourseKey recibido:',
-      courseData.coverVideoCourseKey
-    );
+    console.log('==== 🟦 INICIANDO updateCourse ====');
+    console.log('courseId:', courseId);
+    console.log('courseData completo:', JSON.stringify(courseData, null, 2));
+    console.log('scheduleOptionId recibido:', courseData.scheduleOptionId, 'tipo:', typeof courseData.scheduleOptionId);
+    console.log('spaceOptionId recibido:', courseData.spaceOptionId, 'tipo:', typeof courseData.spaceOptionId);
+    console.log('certificationTypeId recibido:', courseData.certificationTypeId, 'tipo:', typeof courseData.certificationTypeId);
 
-    return await db
+    const updateData = {
+      title: courseData.title,
+      description: courseData.description ?? null,
+      coverImageKey: courseData.coverImageKey ?? null,
+      coverVideoCourseKey: courseData.coverVideoCourseKey ?? null,
+      categoryid: courseData.categoryid,
+      modalidadesid: courseData.modalidadesid,
+      nivelid: courseData.nivelid,
+      instructor: courseData.instructor,
+      creatorId: courseData.creatorId,
+      rating: courseData.rating ?? 0,
+      courseTypeId: courseData.courseTypeId ?? null,
+      requiresProgram: courseData.requiresProgram ?? false,
+      isActive: courseData.isActive ?? true,
+      createdAt: new Date(courseData.createdAt),
+      updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : undefined,
+      scheduleOptionId: courseData.scheduleOptionId ?? null,
+      spaceOptionId: courseData.spaceOptionId ?? null,
+      certificationTypeId: courseData.certificationTypeId ?? null,
+    };
+
+    console.log('📤 updateData.scheduleOptionId:', updateData.scheduleOptionId);
+    console.log('📤 updateData.spaceOptionId:', updateData.spaceOptionId);
+    console.log('📤 updateData.certificationTypeId:', updateData.certificationTypeId);
+
+    console.log('🚀 Ejecutando db.update(courses).set()...');
+    const result = await db
       .update(courses)
-      .set({
-        ...courseData,
-        createdAt: new Date(courseData.createdAt),
-        updatedAt: courseData.updatedAt
-          ? new Date(courseData.updatedAt)
-          : undefined,
-        coverImageKey: courseData.coverImageKey ?? null,
-        coverVideoCourseKey: courseData.coverVideoCourseKey ?? null,
-      })
+      .set(updateData)
       .where(eq(courses.id, courseId))
       .returning();
+
+    console.log('✅ UPDATE COMPLETADO');
+    console.log('✅ result[0].scheduleOptionId:', result[0]?.scheduleOptionId);
+    console.log('✅ result[0].spaceOptionId:', result[0]?.spaceOptionId);
+    console.log('✅ result[0].certificationTypeId:', result[0]?.certificationTypeId);
+
+    return result;
   } catch (error) {
     console.error('❌ Error al actualizar curso:', error);
     throw new Error('No se pudo actualizar el curso');
@@ -1054,7 +1087,7 @@ export async function updateUserInClerk({
         subscriptionStatus: normalizedStatus,
         planType:
           planType &&
-          ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+            ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
             ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
             : 'none',
         subscriptionEndDate: formattedEndDate
@@ -1120,4 +1153,4 @@ export async function getInstructorNameById(id: string): Promise<string> {
     return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
   }
 }
-export {};
+export { };

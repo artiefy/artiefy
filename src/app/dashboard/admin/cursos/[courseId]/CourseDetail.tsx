@@ -57,6 +57,12 @@ interface Course {
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
+  certificationTypeId?: number | null;
+  certificationTypeName?: string;
+  scheduleOptionId?: number | null;
+  scheduleOptionName?: string;
+  spaceOptionId?: number | null;
+  spaceOptionName?: string;
 }
 interface Materia {
   id: number;
@@ -223,6 +229,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
+  const [scheduleOptionName, setScheduleOptionName] = useState<string | null>(null);
+  const [spaceOptionName, setSpaceOptionName] = useState<string | null>(null);
+  const [certificationTypeName, setCertificationTypeName] = useState<string | null>(null);
 
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
@@ -265,6 +274,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
+          // Set certification type names
+          setCertificationTypeName(data.certificationTypeName ?? null);
+          setScheduleOptionName(data.scheduleOptionName ?? null);
+          setSpaceOptionName(data.spaceOptionName ?? null);
 
           const dataParametros =
             (await responseParametros.json()) as Parametros[]; // Obtener los parámetros
@@ -1027,6 +1040,50 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   )}
                 </div>
               </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <h2
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
+                  >
+                    Tipo de Certificación:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  >
+                    {certificationTypeName ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
+                  >
+                    Opción de Horario:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  >
+                    {scheduleOptionName ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                      }`}
+                  >
+                    Opción de Espacio:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  >
+                    {spaceOptionName ?? 'No asignado'}
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
@@ -1128,6 +1185,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setCoverVideoCourseKey={setEditCoverVideoCourseKey}
         individualPrice={individualPrice}
         setIndividualPrice={setIndividualPrice}
+        certificationTypeId={null}
+        setCertificationTypeId={() => undefined}
+        certificationTypes={[]}
       />
     </div>
   );

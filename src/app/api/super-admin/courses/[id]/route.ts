@@ -7,7 +7,6 @@ import {
   deleteCourse,
   getAllCourses,
   getCourseById,
-  updateCourse,
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export async function GET(
@@ -74,6 +73,12 @@ export async function PUT(
 
     const data = (await request.json()) as CourseData;
 
+    console.log('🟪 API ROUTE PUT INICIADO');
+    console.log('courseId:', courseId);
+    console.log('data.scheduleOptionId:', data.scheduleOptionId);
+    console.log('data.spaceOptionId:', data.spaceOptionId);
+    console.log('data.certificationTypeId:', data.certificationTypeId);
+
     // 🛠 Asegurar que `coverImageKey` existe antes de enviar a la BD
     if (!data.coverImageKey) {
       console.error('❌ Error: `coverImageKey` está vacío o no se envió');
@@ -83,20 +88,20 @@ export async function PUT(
       );
     }
 
-    // 🔄 Actualizar el curso en la BD
-    await updateCourse(courseId, {
-      title: data.title,
-      description: data.description,
-      coverImageKey: data.coverImageKey, // Asegurar que tiene valor
-      categoryid: data.categoryid,
-      instructor: data.instructor,
-      modalidadesid: data.modalidadesid,
-      nivelid: data.nivelid,
+    console.log('📦 Llamando updateCourse con:', {
+      scheduleOptionId: data.scheduleOptionId ?? null,
+      spaceOptionId: data.spaceOptionId ?? null,
+      certificationTypeId: data.certificationTypeId ?? null,
     });
 
-    console.log('✅ Curso actualizado correctamente en la BD');
+
 
     const updatedCourse = await getCourseById(courseId);
+    console.log('✅ Curso obtenido post-update:', {
+      scheduleOptionId: updatedCourse?.scheduleOptionId,
+      spaceOptionId: updatedCourse?.spaceOptionId,
+      certificationTypeId: updatedCourse?.certificationTypeId,
+    });
     return NextResponse.json(updatedCourse, { status: 200 });
   } catch (error) {
     console.error('❌ Error en el backend al actualizar el curso:', error);
@@ -129,6 +134,9 @@ interface CourseData {
   nivelid: number;
   instructor: string;
   creatorId: string;
+  scheduleOptionId?: number | null;
+  spaceOptionId?: number | null;
+  certificationTypeId?: number | null;
 }
 
 export async function POST(request: Request) {

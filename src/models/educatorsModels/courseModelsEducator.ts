@@ -4,6 +4,7 @@ import { db } from '~/server/db/index';
 import {
   categories,
   certificates,
+  certificationTypes,
   courseCourseTypes,
   courses,
   courseTypes,
@@ -12,6 +13,8 @@ import {
   materias,
   modalidades,
   nivel,
+  scheduleOptions,
+  spaceOptions,
   users,
 } from '~/server/db/schema';
 
@@ -243,6 +246,9 @@ export const getCourseById = async (courseId: number) => {
         instructorName: users.name,
         instructorEmail: users.email,
         coverVideoCourseKey: courses.coverVideoCourseKey,
+        certificationTypeId: courses.certificationTypeId,
+        scheduleOptionId: courses.scheduleOptionId,
+        spaceOptionId: courses.spaceOptionId,
       })
       .from(courses)
       .leftJoin(users, eq(courses.instructor, users.id))
@@ -287,9 +293,36 @@ export const getCourseById = async (courseId: number) => {
         .then((rows) => rows[0]?.name ?? null)
       : null;
 
+    const certificationTypeName = course.certificationTypeId
+      ? (
+        await db
+          .select({ name: certificationTypes.name })
+          .from(certificationTypes)
+          .where(eq(certificationTypes.id, course.certificationTypeId))
+      )[0]?.name ?? null
+      : null;
+
+    const scheduleOptionName = course.scheduleOptionId
+      ? (
+        await db
+          .select({ name: scheduleOptions.name })
+          .from(scheduleOptions)
+          .where(eq(scheduleOptions.id, course.scheduleOptionId))
+      )[0]?.name ?? null
+      : null;
+
+    const spaceOptionName = course.spaceOptionId
+      ? (
+        await db
+          .select({ name: spaceOptions.name })
+          .from(spaceOptions)
+          .where(eq(spaceOptions.id, course.spaceOptionId))
+      )[0]?.name ?? null
+      : null;
+
     const totalStudents = await getTotalStudents(courseId);
 
-    return {
+    const result = {
       ...course,
       instructor: course.instructorName ?? 'Sin nombre',
       instructorEmail: course.instructorEmail ?? 'No disponible',
@@ -297,8 +330,22 @@ export const getCourseById = async (courseId: number) => {
       modalidadName: modalidad,
       nivelName,
       courseTypeName,
+      certificationTypeName,
+      scheduleOptionName,
+      spaceOptionName,
       totalStudents,
     };
+
+    console.log('🎓 Retornando curso con:', {
+      certificationTypeId: course.certificationTypeId,
+      certificationTypeName,
+      scheduleOptionId: course.scheduleOptionId,
+      scheduleOptionName,
+      spaceOptionId: course.spaceOptionId,
+      spaceOptionName,
+    });
+
+    return result;
   } catch (err: unknown) {
     console.error(
       `❌ Error al obtener el curso con ID ${courseId}:`,
@@ -347,8 +394,9 @@ export const updateCourse = async (
     coverVideoCourseKey?: string;
     individualPrice?: number | null;
     courseTypeId?: number[];
-    scheduleOptionId?: number | undefined;
-    spaceOptionId?: number | undefined;
+    scheduleOptionId?: number | null;
+    spaceOptionId?: number | null;
+    certificationTypeId?: number | null;
   }
 ) => {
   try {

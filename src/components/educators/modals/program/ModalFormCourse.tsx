@@ -50,7 +50,8 @@ interface CourseFormProps {
     individualPrice: number | null,
     videoKey: string, // ✅ <-- aquí lo agregas
     horario: string | null,
-    espacios: string | null
+    espacios: string | null,
+    certificationTypeId: number | null
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -99,6 +100,9 @@ interface CourseFormProps {
   setHorario: (horario: string | null) => void;
   espacios: string | null;
   setEspacios: (espacios: string | null) => void;
+  certificationTypeId: number | null;
+  setCertificationTypeId: (id: number | null) => void;
+  certificationTypes?: { id: number; name: string; description: string | null }[];
 }
 
 // Componente ModalFormCourse
@@ -135,6 +139,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setHorario,
   espacios,
   setEspacios,
+  certificationTypeId,
+  setCertificationTypeId,
+  certificationTypes = [],
 }) => {
   const [file, setFile] = useState<File | null>(null); // Estado para el archivo
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null); // frame capturado
@@ -168,6 +175,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
   const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
   const [modalidadesid, setModalidadesid] = useState<number[]>([]); // ✅ Ensure it's an array
+  const [localCertificationTypes, setLocalCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >(certificationTypes);
+  const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
+  void isLoadingCertifications;
+  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<number | null>(certificationTypeId);
   // const newCourseId = responseData.id;
   const [allSubjects, setAllSubjects] = useState<
     { id: number; title: string }[]
@@ -269,6 +282,40 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       void fetchCourseTypes();
     }
   }, [isOpen]);
+
+  // ✅ Fetch certification types
+  useEffect(() => {
+    const fetchCertifications = async () => {
+      setIsLoadingCertifications(true);
+      try {
+        const response = await fetch('/api/super-admin/certification-types', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los tipos de certificación: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+        console.log('✅ Tipos de certificación cargados:', data.data);
+        setLocalCertificationTypes(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar certificaciones:', error);
+        // Si el API falla, usa el prop como fallback
+        if (certificationTypes && certificationTypes.length > 0) {
+          console.log('📦 Usando tipos de certificación del prop:', certificationTypes);
+          setLocalCertificationTypes(certificationTypes);
+        }
+      } finally {
+        setIsLoadingCertifications(false);
+      }
+    };
+
+    void fetchCertifications();
+  }, [certificationTypes]);
 
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
@@ -520,7 +567,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         individualPrice,
         videoKey,
         horario,
-        espacios
+        espacios,
+        certificationTypeId
       );
 
       if (controller.signal.aborted) {
@@ -669,6 +717,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setIndividualPrice(null);
       setHorario(null);
       setEspacios(null);
+      setCertificationTypeId(null);
     }
   }, [isOpen, editingCourseId]);
 
@@ -718,6 +767,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     setSubjects(selectedSubjects);
     console.log('Subjects after selection:', selectedSubjects);
   };
+
+  // ✅ Efecto para sincronizar el certificationTypeId local
+  useEffect(() => {
+    if (editingCourseId && certificationTypeId) {
+      console.log('📋 Sincronizando certificationTypeId en program:', certificationTypeId);
+      setLocalCertificationTypeId(certificationTypeId);
+    }
+  }, [editingCourseId, certificationTypeId]);
 
   // Render la vista
   return (
@@ -867,6 +924,38 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     {opt}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            {/* Tipo de Certificación */}
+            <div className="mx-auto flex w-10/12 flex-col gap-2">
+              <label
+                htmlFor="certificationTypes"
+                className="text-primary text-left text-lg font-medium"
+              >
+                Tipo de Certificación
+              </label>
+              <select
+                id="certificationTypes"
+                className="text-primary bg-background rounded border p-2 text-white"
+                value={localCertificationTypeId ?? ''}
+                onChange={(e) => {
+                  const newValue = e.target.value ? Number(e.target.value) : null;
+                  console.log('✅ Seleccionado certification type en programa:', newValue);
+                  setLocalCertificationTypeId(newValue);
+                  setCertificationTypeId(newValue);
+                }}
+              >
+                <option value="">Seleccionar tipo de certificación</option>
+                {(localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes ?? []).map((type) => {
+                  const isSelected = localCertificationTypeId === type.id;
+                  console.log(`Option programa: ${type.name} (id: ${type.id}), Selected: ${isSelected}`);
+                  return (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

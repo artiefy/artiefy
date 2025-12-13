@@ -32,6 +32,9 @@ interface Course {
   instructorName?: string;
   courseTypeId?: number | null;
   programas?: { id: number; title: string }[];
+  certificationTypeId?: number | null;
+  scheduleOptionId?: number | null;
+  spaceOptionId?: number | null;
 }
 
 interface CourseListAdminProps {
@@ -40,7 +43,7 @@ interface CourseListAdminProps {
   onDeleteCourse: (courseId: number) => void; // ✅ También asegurar que esta está definida
 }
 
-export default function CourseListAdmin({ courses }: CourseListAdminProps) {
+export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdminProps) {
   console.log('Courses received in CourseListAdmin:', courses);
 
   return (
@@ -108,22 +111,31 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
                     {course.modalidadesid}
                   </p>
                 </div>
-                <div className="flex w-full items-center justify-between">
+                <div className="flex w-full items-center justify-between gap-2">
+                  <button
+                    onClick={() => onEditCourse(course as CourseData)}
+                    className="group/button bg-primary text-background relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 px-2 py-1 text-xs transition-all hover:bg-primary/90 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
+                  >
+                    <span className="relative z-10 font-bold">Editar</span>
+                    <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+                      <div className="relative h-full w-10 bg-white/30" />
+                    </div>
+                  </button>
                   <Button asChild>
                     <Link
                       href={`/dashboard/super-admin/cursos/${course.id}`}
                       className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
                     >
-                      <p className="font-bold">Ver Curso</p>
-                      <ArrowRightIcon className="animate-bounce-right size-5" />
+                      <p className="text-xs font-bold sm:text-sm">Ver</p>
+                      <ArrowRightIcon className="animate-bounce-right size-4 sm:size-5" />
                       <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>
                     </Link>
                   </Button>
                   <div className="flex items-center">
-                    <StarIcon className="size-5 text-yellow-500" />
-                    <span className="ml-1 text-sm font-bold text-yellow-500">
+                    <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                    <span className="ml-1 text-xs font-bold text-yellow-500 sm:text-sm">
                       {(course.rating ?? 0).toFixed(1)}
                     </span>
                   </div>

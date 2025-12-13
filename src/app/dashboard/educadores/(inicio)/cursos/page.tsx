@@ -63,6 +63,17 @@ export default function Page() {
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [horario, setHorario] = useState<string | null>(null);
+  const [espacios, setEspacios] = useState<string | null>(null);
+  const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
+    null
+  );
+  const [coverVideoCourseKey, setCoverVideoCourseKey] = useState<string | null>(
+    null
+  );
+  const [certificationTypes, setCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
 
   // Función para cargar los cursos by userId
   const fetchCourses = useCallback(async () => {
@@ -143,6 +154,15 @@ export default function Page() {
       fetchSubjects().catch((error) =>
         console.error('Error fetching subjects:', error)
       );
+      // Load certification types
+      fetch('/api/super-admin/certification-types')
+        .then((res) => res.json() as Promise<{ success: boolean; data: { id: number; name: string; description: string | null }[] }>)
+        .then((data) => {
+          if (data.success) {
+            setCertificationTypes(data.data);
+          }
+        })
+        .catch((error) => console.error('Error loading certification types:', error));
     }
   }, [user, fetchCourses, fetchSubjects]);
 
@@ -155,15 +175,33 @@ export default function Page() {
     categoryid: number,
     modalidadesid: number,
     nivelid: number,
-    rating: number, // Añadir esta línea
-    addParametros: boolean, // Cambiar options por addParametros
+    rating: number,
+    addParametros: boolean,
     coverImageKey: string,
-    fileName: string // Nuevo parámetro
+    fileName: string,
+    courseTypeId: number[],
+    isActive: boolean,
+    subjects: { id: number }[],
+    coverVideoCourseKey: string | null,
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[],
+    horario: string | null,
+    espacios: string | null,
+    certificationTypeId: number | null,
   ) => {
     if (!user) return;
-
+    void subjects;
+    void horario;
+    void coverVideoCourseKey;
+    void espacios;
+    void certificationTypeId;
     // Validar que haya al menos un parámetro si addParametros es true
-    if (addParametros && parametrosList.length === 0) {
+    if (addParametros && parametros.length === 0) {
       toast.error('Error', {
         description: 'Debe agregar al menos un parámetro de evaluación',
       });
@@ -179,7 +217,7 @@ export default function Page() {
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
-            fileName: file.name, // Asegúrate de pasar el fileName correcto
+            fileName: file.name,
           }),
         });
 
@@ -220,20 +258,20 @@ export default function Page() {
     }
 
     const response = await fetch('/api/educadores/courses', {
-      method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: editingCourse?.id,
         title,
         description,
         coverImageKey,
-        fileName, // Agregar fileName al cuerpo de la solicitud
+        fileName,
         categoryid,
         modalidadesid,
         instructor: user.fullName,
         creatorId: user.id,
         nivelid,
-        rating, // Añadir esta línea
+        rating,
         courseTypeId: courseTypeId ?? [],
         individualPrice,
         isActive,
@@ -251,7 +289,7 @@ export default function Page() {
 
       // Guardar parámetros en la base de datos si addParametros es true
       if (addParametros) {
-        for (const parametro of parametrosList) {
+        for (const parametro of parametros) {
           try {
             const response = await fetch('/api/educadores/parametros', {
               method: 'POST',
@@ -262,7 +300,7 @@ export default function Page() {
                 name: parametro.name,
                 description: parametro.description,
                 porcentaje: parametro.porcentaje,
-                courseId: responseData.id, // Asegúrate de pasar el courseId aquí
+                courseId: responseData.id,
               }),
             });
 
@@ -451,9 +489,6 @@ export default function Page() {
               setRating={setRating}
               subjects={subjects}
               setSubjects={setSubjects}
-              // --- NUEVOS PROPS ---
-              coverVideoCourseKey={null}
-              setCoverVideoCourseKey={(_val) => null}
               courseTypeId={courseTypeId}
               setCourseTypeId={setCourseTypeId}
               individualPrice={individualPrice}
@@ -467,10 +502,15 @@ export default function Page() {
                 )
               }
               educators={[]}
-              horario={null}
-              setHorario={() => undefined}
-              espacios={null}
-              setEspacios={() => undefined}
+              horario={horario}
+              setHorario={setHorario}
+              espacios={espacios}
+              setEspacios={setEspacios}
+              coverVideoCourseKey={coverVideoCourseKey}
+              setCoverVideoCourseKey={setCoverVideoCourseKey}
+              certificationTypeId={certificationTypeId}
+              setCertificationTypeId={setCertificationTypeId}
+              certificationTypes={certificationTypes}
             />
           )}
         </div>

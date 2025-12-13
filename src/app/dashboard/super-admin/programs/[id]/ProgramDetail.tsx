@@ -147,6 +147,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   void setEditSubjects;
   const [horario, setHorario] = useState<string | null>(null);
   const [espacios, setEspacios] = useState<string | null>(null);
+  const [certificationTypeId, setCertificationTypeId] = useState<number | null>(null);
+  const [certificationTypes, setCertificationTypes] = useState<{ id: number; name: string; description: string | null }[]>([]);
 
   useEffect(() => {
     const loadEducators = async () => {
@@ -164,6 +166,23 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       }
     };
     void loadEducators();
+  }, []);
+
+  useEffect(() => {
+    const loadCertificationTypes = async () => {
+      try {
+        const response = await fetch('/api/super-admin/certification-types');
+        if (response.ok) {
+          const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+          if (data.success) {
+            setCertificationTypes(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de certificación:', error);
+      }
+    };
+    void loadCertificationTypes();
   }, []);
 
   const [newCourse, setNewCourse] = useState<CourseData>({
@@ -315,6 +334,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       rating: 0,
       createdAt: new Date().toISOString(), // Add createdAt property
     });
+    setCertificationTypeId(null);
   };
 
   const handleCreateOrEditCourse = async (
@@ -333,9 +353,16 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     programId: number,
     isActive: boolean,
     courseTypeId: number[],
-    individualPrice: number | null
+    individualPrice: number | null,
+    videoKey: string,
+    horario: string | null,
+    espacios: string | null,
+    certificationTypeId: number | null
   ) => {
     if (!user) return;
+    void videoKey;
+    void horario;
+    void espacios;
 
     try {
       setUploading(true);
@@ -411,6 +438,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           individualPrice,
           programId,
           isActive,
+          certificationTypeId,
         }),
       });
 
@@ -609,8 +637,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
                     key={color}
                     style={{ backgroundColor: color }}
                     className={`size-8 border ${selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
+                      ? 'border-black'
+                      : 'border-white'
                       }`}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
@@ -754,6 +782,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         setHorario={setHorario}
         espacios={espacios}
         setEspacios={setEspacios}
+        certificationTypeId={certificationTypeId}
+        setCertificationTypeId={setCertificationTypeId}
+        certificationTypes={certificationTypes}
       />
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
