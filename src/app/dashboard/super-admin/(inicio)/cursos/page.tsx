@@ -20,6 +20,10 @@ type ExtendedCourseData = CourseData & {
   individualPrice?: number;
   courseTypeId?: number; // ✅
   isActive?: boolean;
+  coverVideoCourseKey?: string | null;
+  scheduleOptionId?: number | null;
+  spaceOptionId?: number | null;
+  certificationTypeId?: number | null;
 };
 
 // Define el modelo de datos del curso
@@ -82,8 +86,14 @@ export default function Page() {
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
-  const [horario, setHorario] = useState<string | null>(null);
-  const [espacios, setEspacios] = useState<string | null>(null);
+  const [horario, setHorario] = useState<number | null>(null);
+  const [espacios, setEspacios] = useState<number | null>(null);
+  const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
+    null
+  );
+  const [certificationTypes, setCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
 
   // ✅ Obtener cursos, totales y categorías con lazy loading
   useEffect(() => {
@@ -113,9 +123,10 @@ export default function Page() {
         setIsLoadingMore(false);
 
         // Get other data in parallel
-        const [totalsResponse, categoriesResponse] = await Promise.all([
+        const [totalsResponse, categoriesResponse, certificationResponse] = await Promise.all([
           fetch('/api/super-admin/courses/totals'),
           fetch('/api/super-admin/categories'),
+          fetch('/api/super-admin/certification-types'),
         ]);
 
         if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
@@ -131,6 +142,16 @@ export default function Page() {
           name: string;
         }[];
         setCategories(categoriesData);
+
+        if (certificationResponse.ok) {
+          const certData = (await certificationResponse.json()) as {
+            success: boolean;
+            data: { id: number; name: string; description: string | null }[];
+          };
+          if (certData.success) {
+            setCertificationTypes(certData.data);
+          }
+        }
       } catch (error) {
         console.error('❌ Error cargando datos:', error);
         toast.error('Error al cargar los datos', {
@@ -228,8 +249,9 @@ export default function Page() {
       description: string;
       porcentaje: number;
     }[],
-    horario: string | null,
-    espacios: string | null
+    horario: number | null,
+    espacios: number | null,
+    certificationTypeId: number | null
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -294,7 +316,13 @@ export default function Page() {
       const instructorName = selectedEducator?.name ?? '';
 
       if (Number(id)) {
-        response = await updateCourse(Number(id), {
+        console.log('🚀 ANTES de updateCourse - Enviando:', {
+          horario,
+          espacios,
+          certificationTypeId,
+        });
+
+        const updatePayload = {
           title,
           description: description ?? '',
           coverImageKey: coverImageKey ?? '',
@@ -304,7 +332,20 @@ export default function Page() {
           nivelid: Number(nivelid),
           rating,
           instructor: instructorName,
-        } as CourseData);
+          scheduleOptionId: horario ?? null,
+          spaceOptionId: espacios ?? null,
+          certificationTypeId: certificationTypeId ?? null,
+        } as CourseData;
+
+        console.log('📦 PAYLOAD QUE SE ENVÍA:', JSON.stringify({
+          scheduleOptionId: updatePayload.scheduleOptionId,
+          spaceOptionId: updatePayload.spaceOptionId,
+          certificationTypeId: updatePayload.certificationTypeId,
+        }));
+
+        response = await updateCourse(Number(id), updatePayload);
+
+        console.log('✅ updateCourse RETORNÓ:', response);
 
         responseData = { id: Number(id) };
       } else {
@@ -340,6 +381,7 @@ export default function Page() {
             individualPrice,
             horario,
             espacios,
+            certificationTypeId,
           }),
         });
 
@@ -600,8 +642,30 @@ export default function Page() {
         courses={displayedCourses}
         onEditCourse={(course) => {
           if (course) {
-            setEditingCourse(course as ExtendedCourseData);
+            const extendedCourse = course as ExtendedCourseData;
+            const certTypeId = extendedCourse.certificationTypeId ?? null;
+            const certTypeName = certTypeId
+              ? certificationTypes.find(ct => ct.id === certTypeId)?.name
+              : null;
+
+            console.log('🔍 onEditCourse - Course data:', {
+              id: course.id,
+              title: course.title,
+              courseTypeId: course.courseTypeId,
+              certificationTypeId: certTypeId,
+              certificationTypeName: certTypeName,
+              scheduleOptionId: extendedCourse.scheduleOptionId,
+              spaceOptionId: extendedCourse.spaceOptionId,
+            });
+            setEditingCourse(extendedCourse);
             setCourseTypeId(course.courseTypeId ? [course.courseTypeId] : []);
+            // Cargar el certificationTypeId del curso
+            setCertificationTypeId(certTypeId);
+            // Cargar el scheduleOptionId (horario) del curso
+            setHorario((extendedCourse.scheduleOptionId ?? null) as number | null);
+            // Cargar el spaceOptionId (espacios) del curso
+            setEspacios((extendedCourse.spaceOptionId ?? null) as number | null);
+            setIsModalOpen(true);
           }
         }}
         onDeleteCourse={(courseId) => {
@@ -724,6 +788,21 @@ export default function Page() {
           setHorario={setHorario}
           espacios={espacios}
           setEspacios={setEspacios}
+          certificationTypeId={
+            editingCourse
+              ? (editingCourse.certificationTypeId ?? null)
+              : certificationTypeId
+          }
+          setCertificationTypeId={(id: number | null) => {
+            if (editingCourse) {
+              setEditingCourse((prev) =>
+                prev ? { ...prev, certificationTypeId: id } : null
+              );
+            } else {
+              setCertificationTypeId(id);
+            }
+          }}
+          certificationTypes={certificationTypes}
         />
       )}
     </div>

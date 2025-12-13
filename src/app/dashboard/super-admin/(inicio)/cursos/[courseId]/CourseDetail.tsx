@@ -67,8 +67,14 @@ interface Course {
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
   meetings?: ScheduledMeeting[];
-  horario?: string | null;
-  espacios?: string | null;
+  horario?: number | null;
+  espacios?: number | null;
+  certificationTypeId?: number | null;
+  certificationTypeName?: string;
+  scheduleOptionId?: number | null;
+  scheduleOptionName?: string;
+  spaceOptionId?: number | null;
+  spaceOptionName?: string;
 }
 interface Materia {
   id: number;
@@ -282,8 +288,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isSyncingVideos, setIsSyncingVideos] = useState(false);
   const [_videos, setVideos] = useState<unknown[]>([]);
-  const [editHorario, setEditHorario] = useState<string | null>(null);
-  const [editEspacios, setEditEspacios] = useState<string | null>(null);
+  const [editHorario, setEditHorario] = useState<number | null>(null);
+  const [editEspacios, setEditEspacios] = useState<number | null>(null);
+  const [scheduleOptionName, setScheduleOptionName] = useState<string | null>(null);
+  const [spaceOptionName, setSpaceOptionName] = useState<string | null>(null);
+  const [certificationTypeName, setCertificationTypeName] = useState<string | null>(null);
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
@@ -531,6 +540,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
+          // Set certification type names
+          setCertificationTypeName(data.certificationTypeName ?? null);
+          setScheduleOptionName(data.scheduleOptionName ?? null);
+          setSpaceOptionName(data.spaceOptionName ?? null);
 
           const dataParametros =
             (await responseParametros.json()) as Parametros[]; // Obtener los parámetros
@@ -712,7 +725,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       description: string;
       porcentaje: number;
     }[],
-    courseTypeName?: string // Add the new argument, optional if not always present
+    horario: number | null,
+    espacios: number | null,
+    certificationTypeId: number | null
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -735,7 +750,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             fileName: file.name,
           }),
         });
-        void courseTypeName; // Use void operator to explicitly ignore the promise
 
         if (!uploadResponse.ok) {
           throw new Error('Error al generar URL de carga');
@@ -788,8 +802,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
         parametros,
-        horario: editHorario,
-        espacios: editEspacios,
+        horario,
+        espacios,
+        certificationTypeId,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -1599,13 +1614,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
                       }`}
                   >
+                    Tipo de Certificación
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                  >
+                    {certificationTypeName ?? 'No asignado'}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <h2
+                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
+                      }`}
+                  >
                     Horario
                   </h2>
                   <Badge
                     variant="outline"
                     className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                   >
-                    {course.horario ?? 'No asignado'}
+                    {scheduleOptionName ?? 'No asignado'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
@@ -1619,7 +1648,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     variant="outline"
                     className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                   >
-                    {course.espacios ?? 'No asignado'}
+                    {spaceOptionName ?? 'No asignado'}
                   </Badge>
                 </div>
               </div>
@@ -1788,28 +1817,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         courseId={courseIdNumber}
         selectedColor={selectedColor}
       />
-      <ModalFormCourse
-        isOpen={isModalOpen}
-        onSubmitAction={(
-          id,
-          title,
-          description,
-          file,
-          categoryid,
-          modalidadesid,
-          nivelid,
-          rating,
-          addParametros,
-          coverImageKey,
-          fileName,
-          courseTypeId,
-          isActive,
-          subjects,
-          coverVideoCourseKey,
-          individualPrice,
-          parametros
-        ) =>
-          handleUpdateCourse(
+      {isModalOpen && (
+        <ModalFormCourse
+          isOpen={isModalOpen}
+          onSubmitAction={(
             id,
             title,
             description,
@@ -1826,50 +1837,81 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             subjects,
             coverVideoCourseKey,
             individualPrice,
-            parametros
-          )
-        }
-        editingCourseId={course.id}
-        title={editTitle}
-        description={editDescription}
-        categoryid={editCategory}
-        modalidadesid={editModalidad}
-        nivelid={editNivel}
-        coverImageKey={editCoverImageKey}
-        parametros={editParametros}
-        rating={editRating}
-        setTitle={setEditTitle}
-        setDescription={setEditDescription}
-        setModalidadesid={(value: number | number[]) =>
-          setEditModalidad(
-            Array.isArray(value) ? Number(value[0]) : Number(value)
-          )
-        }
-        setCategoryid={setEditCategory}
-        setNivelid={setEditNivel}
-        setCoverImageKey={setEditCoverImageKey}
-        setParametrosAction={setEditParametros}
-        setRating={setEditRating}
-        onCloseAction={() => setIsModalOpen(false)}
-        uploading={false}
-        courseTypeId={courseTypeId}
-        setCourseTypeId={setCourseTypeId}
-        isActive={isActive}
-        setIsActive={setIsActive}
-        instructor={currentInstructor}
-        setInstructor={setCurrentInstructor}
-        educators={educators}
-        subjects={currentSubjects}
-        setSubjects={setCurrentSubjects}
-        coverVideoCourseKey={editCoverVideoCourseKey}
-        setCoverVideoCourseKey={setEditCoverVideoCourseKey}
-        individualPrice={individualPrice}
-        setIndividualPrice={setIndividualPrice}
-        horario={editHorario}
-        setHorario={setEditHorario}
-        espacios={editEspacios}
-        setEspacios={setEditEspacios}
-      />
+            parametros,
+            horario,
+            espacios,
+            certificationTypeId
+          ) =>
+            handleUpdateCourse(
+              id,
+              title,
+              description,
+              file,
+              categoryid,
+              modalidadesid,
+              nivelid,
+              rating,
+              addParametros,
+              coverImageKey,
+              fileName,
+              courseTypeId,
+              isActive,
+              subjects,
+              coverVideoCourseKey,
+              individualPrice,
+              parametros,
+              horario,
+              espacios,
+              certificationTypeId
+            )
+          }
+          editingCourseId={course.id}
+          title={editTitle}
+          description={editDescription}
+          categoryid={editCategory}
+          modalidadesid={editModalidad}
+          nivelid={editNivel}
+          coverImageKey={editCoverImageKey}
+          parametros={editParametros}
+          rating={editRating}
+          setTitle={setEditTitle}
+          setDescription={setEditDescription}
+          setModalidadesid={(value: number | number[]) =>
+            setEditModalidad(
+              Array.isArray(value) ? Number(value[0]) : Number(value)
+            )
+          }
+          setCategoryid={setEditCategory}
+          setNivelid={setEditNivel}
+          setCoverImageKey={setEditCoverImageKey}
+          setParametrosAction={setEditParametros}
+          setRating={setEditRating}
+          onCloseAction={() => setIsModalOpen(false)}
+          uploading={false}
+          courseTypeId={courseTypeId}
+          setCourseTypeId={setCourseTypeId}
+          isActive={isActive}
+          setIsActive={setIsActive}
+          instructor={currentInstructor}
+          setInstructor={setCurrentInstructor}
+          educators={educators}
+          subjects={currentSubjects}
+          setSubjects={setCurrentSubjects}
+          coverVideoCourseKey={editCoverVideoCourseKey}
+          setCoverVideoCourseKey={setEditCoverVideoCourseKey}
+          individualPrice={individualPrice}
+          setIndividualPrice={setIndividualPrice}
+          horario={editHorario}
+          setHorario={setEditHorario}
+          espacios={editEspacios}
+          setEspacios={setEditEspacios}
+          certificationTypeId={course.certificationTypeId ?? null}
+          setCertificationTypeId={(id) => {
+            setCourse(prev => prev ? { ...prev, certificationTypeId: id } : null);
+          }}
+          certificationTypes={[]}
+        />
+      )}
     </div>
   );
 };

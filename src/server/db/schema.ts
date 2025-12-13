@@ -144,6 +144,19 @@ export const courses = pgTable('courses', {
   spaceOptionId: integer('space_option_id')
     .references(() => spaceOptions.id)
     .default(sql`NULL`),
+  certificationTypeId: integer('certification_type_id')
+    .references(() => certificationTypes.id)
+    .default(sql`NULL`),
+});
+
+// Tabla de tipos de certificación
+export const certificationTypes = pgTable('certification_types', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabla de tipos de actividades
@@ -659,6 +672,10 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   courseType: one(courseTypes, {
     fields: [courses.courseTypeId],
     references: [courseTypes.id],
+  }),
+  certificationType: one(certificationTypes, {
+    fields: [courses.certificationTypeId],
+    references: [certificationTypes.id],
   }),
 }));
 

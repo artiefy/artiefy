@@ -14,6 +14,7 @@ import {
 import { db } from '~/server/db';
 import {
   categories,
+  certificationTypes,
   classMeetings,
   courseCourseTypes,
   courses,
@@ -21,6 +22,8 @@ import {
   materias,
   modalidades,
   nivel,
+  scheduleOptions,
+  spaceOptions,
   users,
 } from '~/server/db/schema';
 
@@ -49,6 +52,9 @@ interface PutRequestBody {
   isActive?: boolean;
   subjects?: { id: number }[];
   individualPrice?: number | null;
+  scheduleOptionId?: number | null;
+  spaceOptionId?: number | null;
+  certificationTypeId?: number | null;
 }
 
 interface CreatedCourse {
@@ -196,13 +202,16 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
     if (!videoRes.ok) {
       const rawErr = await videoRes.text().catch(() => '');
-      console.error('❌ /teams/video no OK:', videoRes.status, rawErr);
+      void rawErr;
+      console.error(
+        `❌ /teams/video respondió con error: ${videoRes.status} ${videoRes.statusText}`,
+        rawErr ? `Cuerpo: ${rawErr.slice(0, 500)}` : ''
+      );
     } else {
       const raw = await videoRes.text(); // puede venir vacío
       if (raw?.trim()) {
         try {
           const videoData = JSON.parse(raw) as VideoData;
-          console.log('📦 Datos de video recibidos:', videoData);
           videos = videoData?.videos ?? [];
         } catch (e) {
           console.error(
@@ -220,7 +229,6 @@ export async function getCourseByIdWithTypes(courseId: number) {
     console.error('💥 Error haciendo fetch a /teams/video:', e);
   }
 
-  console.log('🎬 Lista de videos extraída:', videos);
 
   // 🔁 De-dup por meetingId (el endpoint a veces repite el mismo ID)
   const videosById = new Map<
@@ -297,6 +305,39 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   console.log('🏷️ Tipos de curso:', courseTypesList);
 
+  // Obtener nombre de certificationTypeId
+  let certificationTypeName: string | undefined;
+  if (course?.certificationTypeId) {
+    const cert = await db
+      .select()
+      .from(certificationTypes)
+      .where(eq(certificationTypes.id, course.certificationTypeId))
+      .then((res) => res[0]);
+    certificationTypeName = cert?.name;
+  }
+
+  // Obtener nombre de scheduleOptionId
+  let scheduleOptionName: string | undefined;
+  if (course?.scheduleOptionId) {
+    const sched = await db
+      .select()
+      .from(scheduleOptions)
+      .where(eq(scheduleOptions.id, course.scheduleOptionId))
+      .then((res) => res[0]);
+    scheduleOptionName = sched?.name;
+  }
+
+  // Obtener nombre de spaceOptionId
+  let spaceOptionName: string | undefined;
+  if (course?.spaceOptionId) {
+    const space = await db
+      .select()
+      .from(spaceOptions)
+      .where(eq(spaceOptions.id, course.spaceOptionId))
+      .then((res) => res[0]);
+    spaceOptionName = space?.name;
+  }
+
   return {
     ...course,
     categoryName,
@@ -305,6 +346,9 @@ export async function getCourseByIdWithTypes(courseId: number) {
     instructorName,
     courseTypes: courseTypesList,
     meetings: meetingsWithVideo,
+    certificationTypeName,
+    scheduleOptionName,
+    spaceOptionName,
   };
 }
 
@@ -396,6 +440,9 @@ export async function PUT(
       courseTypeId: parsedCourseTypeIds, // number[] | undefined
 
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
+      scheduleOptionId: data.scheduleOptionId ?? null,
+      spaceOptionId: data.spaceOptionId ?? null,
+      certificationTypeId: data.certificationTypeId ?? null,
     };
 
     // Update course

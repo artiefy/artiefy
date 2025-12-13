@@ -574,6 +574,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           Espacios
                         </Link>
                       </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/cursos/certification-types"
+                          className={cn(
+                            'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
+                            pathname ===
+                            '/dashboard/super-admin/cursos/certification-types' &&
+                            'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Tipos de Certificación
+                        </Link>
+                      </li>
                     </ul>
                   )}
                 </li>

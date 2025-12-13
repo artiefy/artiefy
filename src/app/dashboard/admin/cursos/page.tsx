@@ -648,6 +648,9 @@ export default function Page() {
           setHorario={() => undefined}
           espacios={null}
           setEspacios={() => undefined}
+          certificationTypeId={null}
+          setCertificationTypeId={() => undefined}
+          certificationTypes={[]}
         />
       )}
     </div>

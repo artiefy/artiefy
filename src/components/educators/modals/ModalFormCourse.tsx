@@ -52,7 +52,8 @@ interface CourseFormProps {
       porcentaje: number;
     }[],
     horario: string | null,
-    espacios: string | null
+    espacios: string | null,
+    certificationTypeId: number | null
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -104,6 +105,9 @@ interface CourseFormProps {
   setHorario: (horario: string | null) => void;
   espacios: string | null;
   setEspacios: (espacios: string | null) => void;
+  certificationTypeId: number | null;
+  setCertificationTypeId: (id: number | null) => void;
+  certificationTypes?: { id: number; name: string; description: string | null }[];
 }
 
 // Interfaz para los niveles
@@ -177,6 +181,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setHorario,
   espacios,
   setEspacios,
+  certificationTypeId,
+  setCertificationTypeId,
+  certificationTypes = [],
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -218,7 +225,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null);
-
+  const [localCertificationTypes, setLocalCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >(certificationTypes);
+  const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
+  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<number | null>(certificationTypeId);
+  void isLoadingCertifications;
   void isLoadingCategories;
   void isLoadingModalidades;
   const isVideo = file instanceof File && file.type.startsWith('video/');
@@ -397,6 +409,40 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
     void fetchModalidades();
   }, []);
+
+  // ✅ Fetch certification types
+  useEffect(() => {
+    const fetchCertifications = async () => {
+      setIsLoadingCertifications(true);
+      try {
+        const response = await fetch('/api/super-admin/certification-types', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los tipos de certificación: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+        console.log('✅ Tipos de certificación cargados:', data.data);
+        setLocalCertificationTypes(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar certificaciones:', error);
+        // Si el API falla, usa el prop como fallback
+        if (certificationTypes && certificationTypes.length > 0) {
+          console.log('📦 Usando tipos de certificación del prop:', certificationTypes);
+          setLocalCertificationTypes(certificationTypes);
+        }
+      } finally {
+        setIsLoadingCertifications(false);
+      }
+    };
+
+    void fetchCertifications();
+  }, [certificationTypes]);
 
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
@@ -649,7 +695,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         individualPrice,
         parametros, // 👈 AÑADIDO AQUÍ
         horario,
-        espacios
+        espacios,
+        certificationTypeId
       );
 
       if (controller.signal.aborted) {
@@ -840,6 +887,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setIsActive(true);
       setHorario(null);
       setEspacios(null);
+      setCertificationTypeId(null);
     }
   }, [isOpen, editingCourseId]);
 
@@ -876,6 +924,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setAddParametros(parametros.length > 0);
     }
   }, [editingCourseId, parametros]);
+
+  // ✅ Efecto para sincronizar el certificationTypeId local
+  useEffect(() => {
+    if (editingCourseId && certificationTypeId) {
+      console.log('📋 Sincronizando certificationTypeId en educadores:', certificationTypeId);
+      console.log('📋 localCertificationTypes disponibles:', localCertificationTypes);
+      const certName = localCertificationTypes.find(ct => ct.id === certificationTypeId)?.name ??
+        certificationTypes?.find(ct => ct.id === certificationTypeId)?.name;
+      console.log('📋 Certification type a mostrar:', { id: certificationTypeId, name: certName });
+      setLocalCertificationTypeId(certificationTypeId);
+    }
+  }, [editingCourseId, certificationTypeId, localCertificationTypes]);
 
   // Render la vista
   return (
@@ -1031,6 +1091,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       {opt}
                     </option>
                   ))}
+                </select>
+              </div>
+              <div className="w-full">
+                <label className="text-primary text-sm font-medium md:text-lg">
+                  Tipo de Certificación
+                </label>
+                <select
+                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  value={localCertificationTypeId ?? ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value ? Number(e.target.value) : null;
+                    console.log('✅ Seleccionado certification type:', newValue);
+                    setLocalCertificationTypeId(newValue);
+                    setCertificationTypeId(newValue);
+                  }}
+                >
+                  <option value="">Seleccionar tipo de certificación</option>
+                  {(localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes ?? []).map((type) => {
+                    const isSelected = localCertificationTypeId === type.id;
+                    console.log(`Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`);
+                    return (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <>

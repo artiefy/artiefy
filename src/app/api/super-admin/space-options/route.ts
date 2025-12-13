@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { spaceOptions } from '~/server/db/schema';
+import { courses,spaceOptions } from '~/server/db/schema';
 
 // GET - Obtener todas las opciones de espacios
 export async function GET() {
@@ -126,6 +126,12 @@ export async function DELETE(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Poner null en spaceOptionId de todos los cursos que usan esta opción
+        await db
+            .update(courses)
+            .set({ spaceOptionId: null })
+            .where(eq(courses.spaceOptionId, id as number));
 
         const deletedSpace = await db
             .delete(spaceOptions)

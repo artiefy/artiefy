@@ -3,10 +3,14 @@ import { count, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
   categories,
+  certificationTypes,
   courses,
+  courseTypes,
   enrollments,
   modalidades,
   nivel as nivel,
+  scheduleOptions,
+  spaceOptions,
   users,
 } from '~/server/db/schema';
 
@@ -123,23 +127,131 @@ export const getTotalStudents = async (course_id: number): Promise<number> => {
 
 // Obtener un curso por ID
 export const getCourseById = async (courseId: number) => {
-  return db
-    .select({
-      id: courses.id,
-      title: courses.title,
-      description: courses.description,
-      coverImageKey: courses.coverImageKey,
-      categoryid: courses.categoryid, // ✅ Ahora devuelve el ID, no el nombre
-      modalidadesid: courses.modalidadesid, // ✅ Ahora devuelve el ID, no el nombre
-      nivelid: courses.nivelid, // ✅ Ahora devuelve el ID, no el nombre
-      instructor: courses.instructor,
-      creatorId: courses.creatorId,
-      createdAt: courses.createdAt,
-      updatedAt: courses.updatedAt,
-    })
-    .from(courses)
-    .where(eq(courses.id, courseId))
-    .then((rows) => rows[0]);
+  try {
+    const course = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        coverImageKey: courses.coverImageKey,
+        categoryid: courses.categoryid,
+        modalidadesid: courses.modalidadesid,
+        nivelid: courses.nivelid,
+        instructor: courses.instructor,
+        creatorId: courses.creatorId,
+        createdAt: courses.createdAt,
+        updatedAt: courses.updatedAt,
+        courseTypeId: courses.courseTypeId,
+        certificationTypeId: courses.certificationTypeId,
+        scheduleOptionId: courses.scheduleOptionId,
+        spaceOptionId: courses.spaceOptionId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .then((rows) => rows[0]);
+
+    if (!course) {
+      console.error(`❌ Curso con ID ${courseId} no encontrado.`);
+      return null;
+    }
+
+    // Get additional names
+    const categoryName = course.categoryid
+      ? await db
+        .select({ name: categories.name })
+        .from(categories)
+        .where(eq(categories.id, course.categoryid))
+        .then((rows) => rows[0]?.name ?? null)
+      : null;
+
+    const modalidadName = course.modalidadesid
+      ? await db
+        .select({ name: modalidades.name })
+        .from(modalidades)
+        .where(eq(modalidades.id, course.modalidadesid))
+        .then((rows) => rows[0]?.name ?? null)
+      : null;
+
+    const nivelName = course.nivelid
+      ? await db
+        .select({ name: nivel.name })
+        .from(nivel)
+        .where(eq(nivel.id, course.nivelid))
+        .then((rows) => rows[0]?.name ?? null)
+      : null;
+
+    const courseTypeName = course.courseTypeId
+      ? await db
+        .select({ name: courseTypes.name })
+        .from(courseTypes)
+        .where(eq(courseTypes.id, course.courseTypeId))
+        .then((rows) => rows[0]?.name ?? null)
+      : null;
+
+    const certificationTypeName = course.certificationTypeId
+      ? (
+        await db
+          .select({ name: certificationTypes.name })
+          .from(certificationTypes)
+          .where(eq(certificationTypes.id, course.certificationTypeId))
+      )[0]?.name ?? null
+      : null;
+
+    const scheduleOptionName = course.scheduleOptionId
+      ? (
+        await db
+          .select({ name: scheduleOptions.name })
+          .from(scheduleOptions)
+          .where(eq(scheduleOptions.id, course.scheduleOptionId))
+      )[0]?.name ?? null
+      : null;
+
+    const spaceOptionName = course.spaceOptionId
+      ? (
+        await db
+          .select({ name: spaceOptions.name })
+          .from(spaceOptions)
+          .where(eq(spaceOptions.id, course.spaceOptionId))
+      )[0]?.name ?? null
+      : null;
+
+    const instructorInfo = course.instructor
+      ? await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, course.instructor))
+        .then((rows) => rows[0]?.name ?? 'Sin nombre')
+      : 'Sin nombre';
+
+    const result = {
+      ...course,
+      categoryName,
+      modalidadName,
+      nivelName,
+      courseTypeName,
+      certificationTypeName,
+      scheduleOptionName,
+      spaceOptionName,
+      instructorName: instructorInfo,
+    };
+
+    console.log('🎓 [Super-Admin] Retornando curso con:', {
+      certificationTypeId: course.certificationTypeId,
+      certificationTypeName,
+      scheduleOptionId: course.scheduleOptionId,
+      scheduleOptionName,
+      spaceOptionId: course.spaceOptionId,
+      spaceOptionName,
+    });
+
+    return result;
+  } catch (err: unknown) {
+    console.error(
+      `❌ Error al obtener el curso con ID ${courseId}:`,
+      err instanceof Error ? err.message : 'Error desconocido'
+    );
+    return null;
+  }
 };
 
 export const getAllCourses = async () => {
@@ -176,6 +288,9 @@ export const updateCourse = async (
     modalidadesid,
     nivelid,
     instructor,
+    scheduleOptionId,
+    spaceOptionId,
+    certificationTypeId,
   }: {
     title: string;
     description: string;
@@ -184,6 +299,9 @@ export const updateCourse = async (
     modalidadesid: number;
     nivelid: number;
     instructor: string;
+    scheduleOptionId?: number | null;
+    spaceOptionId?: number | null;
+    certificationTypeId?: number | null;
   }
 ) => {
   return db
@@ -196,6 +314,9 @@ export const updateCourse = async (
       modalidadesid,
       nivelid,
       instructor,
+      scheduleOptionId: scheduleOptionId ?? null,
+      spaceOptionId: spaceOptionId ?? null,
+      certificationTypeId: certificationTypeId ?? null,
     })
     .where(eq(courses.id, courseId));
 };

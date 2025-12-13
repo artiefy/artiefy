@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
       subjects?: { id: number }[]; // ✅ añadimos subjects
       horario?: number | null;
       espacios?: number | null;
+      certificationTypeId?: number | null;
     };
 
     const {
@@ -142,6 +143,7 @@ export async function POST(request: NextRequest) {
       subjects = [], // ✅ default vacío
       horario = null,
       espacios = null,
+      certificationTypeId = null,
     } = body;
 
     const normalizedTypes = Array.isArray(courseTypeId) ? courseTypeId : [];
@@ -178,6 +180,7 @@ export async function POST(request: NextRequest) {
       individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
       scheduleOptionId: horario ?? null,
       spaceOptionId: espacios ?? null,
+      certificationTypeId: certificationTypeId ?? null,
     };
 
     const createdCourse = await db

@@ -149,17 +149,15 @@ export async function GET(req: Request) {
     signal: AbortSignal.timeout(20_000),
   });
 
-  console.log('📡 Graph status:', listRes.status);
 
   if (!listRes.ok) {
     const raw = await listRes.text().catch(() => '');
-    console.error('❌ Error getAllRecordings:', raw);
+    void raw;
     return NextResponse.json({ error: 'Graph error' }, { status: 500 });
   }
 
   const data = (await listRes.json()) as GetRecordingsResponse;
   const recordings = data.value ?? [];
-  console.log('🎥 Grabaciones encontradas:', recordings.length);
 
   const decodedIds = recordings
     .map((r) => decodeMeetingId(r.meetingId))
@@ -167,7 +165,6 @@ export async function GET(req: Request) {
 
   const uniqueIds = Array.from(new Set(decodedIds));
 
-  console.log('🔍 IDs decodificados de grabaciones:', uniqueIds);
 
   // ✅ Ahora guardamos TODAS las filas por meetingId (no solo una)
   const rowsByMeetingId = new Map<string, ClassMeetingRow[]>();
@@ -190,7 +187,6 @@ export async function GET(req: Request) {
   }
 
   const missingIds = uniqueIds.filter((id) => !rowsByMeetingId.has(id));
-  console.log('⚠️ IDs sin match en BD:', missingIds);
 
   if (missingIds.length) {
     const candidates = (await withDbRetry(() =>
@@ -223,13 +219,8 @@ export async function GET(req: Request) {
           mid,
           matches.map((m) => ({ ...m, meetingId: mid }))
         );
-        console.log(
-          `🧩 Backfill meeting_id por join_url para ${mid} en ids: ${matches
-            .map((m) => m.id)
-            .join(', ')}`
-        );
       } else {
-        console.warn(`⚠️ No encontré class_meetings para ${mid}. Omitiendo...`);
+        rowsByMeetingId.set(mid, []);
       }
     }
 
@@ -260,18 +251,13 @@ export async function GET(req: Request) {
       // b) Obtener TODAS las filas que comparten el meetingId
       const rowsForMeeting = rowsByMeetingId.get(decodedId) ?? [];
       if (!rowsForMeeting.length) {
-        console.warn(
-          `⚠️ No encontré class_meetings para ${decodedId}. Omitiendo...`
-        );
         continue;
       }
 
       // c) Si alguna ya tiene video_key, úsala y no “contamines” otras
       const withKey = rowsForMeeting.find((r) => r.video_key);
       if (withKey?.video_key) {
-        console.log(
-          `✅ Ya tenía video_key (id=${withKey.id}): ${withKey.video_key}`
-        );
+
         videos.push({
           meetingId: decodedId,
           videoKey: withKey.video_key,
@@ -404,10 +390,10 @@ export async function GET(req: Request) {
         const refreshed = rowsForMeeting.map((r) =>
           r.id === targetRow.id
             ? {
-                ...r,
-                video_key: r.video_key ?? videoKey,
-                video_key_2: r.video_key ? videoKey : r.video_key_2,
-              }
+              ...r,
+              video_key: r.video_key ?? videoKey,
+              video_key_2: r.video_key ? videoKey : r.video_key_2,
+            }
             : r
         );
         rowsByMeetingId.set(decodedId, refreshed);

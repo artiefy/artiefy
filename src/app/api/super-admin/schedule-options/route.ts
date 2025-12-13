@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { scheduleOptions } from '~/server/db/schema';
+import { courses,scheduleOptions } from '~/server/db/schema';
 
 // GET - Obtener todas las opciones de horarios
 export async function GET() {
@@ -126,6 +126,12 @@ export async function DELETE(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Poner null en scheduleOptionId de todos los cursos que usan esta opción
+        await db
+            .update(courses)
+            .set({ scheduleOptionId: null })
+            .where(eq(courses.scheduleOptionId, id as number));
 
         const deletedSchedule = await db
             .delete(scheduleOptions)
