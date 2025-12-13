@@ -1,7 +1,9 @@
 // eslint.config.mjs
+
 import next from 'eslint-config-next';
 import prettier from 'eslint-config-prettier/flat';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 
@@ -17,7 +19,7 @@ export default defineConfig([
       },
       globals: { ...globals.browser, ...globals.node },
     },
-    plugins: { 'simple-import-sort': simpleImportSort },
+    plugins: { 'simple-import-sort': simpleImportSort, '@typescript-eslint': typescriptEslint },
     rules: {
       'array-callback-return': 'error',
       eqeqeq: ['error', 'smart'],
