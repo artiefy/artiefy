@@ -603,9 +603,9 @@ const TicketSupportChatbot = () => {
             'md:w-[500px]',
           ].join(' ')}
         >
-          <div className="bg-transparent text-white">
+          <div className="flex h-full flex-col bg-transparent text-white">
             {/* Header */}
-            <div className="relative z-[5] flex flex-col bg-[#050c1b]/95 backdrop-blur-lg">
+            <div className="relative z-[5] flex flex-shrink-0 flex-col bg-[#050c1b]/95 backdrop-blur-lg">
               <div className="flex items-center justify-between border-b border-gray-700 p-4">
                 <MdSupportAgent className="text-4xl text-[#3AF4EF]" />
                 <div className="flex flex-1 flex-col items-center">
@@ -657,24 +657,28 @@ const TicketSupportChatbot = () => {
               </div>
             </div>
 
-            <SuportChat
-              messages={messages}
-              setMessages={setMessages}
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
-              isSignedIn={isSignedIn}
-              handleSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              isTyping={isTyping}
-              messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
-              inputText={inputText}
-              setInputText={setInputText}
-              user={user}
-              inputRef={inputRef as React.RefObject<HTMLInputElement>}
-              skipInitialLoad={true}
-              onBotButtonClick={handleBotButtonClick}
-              ticketStatus={currentTicketStatus}
-            />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <SuportChat
+                messages={messages}
+                setMessages={setMessages}
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                isSignedIn={isSignedIn}
+                handleSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                isTyping={isTyping}
+                messagesEndRef={
+                  messagesEndRef as React.RefObject<HTMLDivElement>
+                }
+                inputText={inputText}
+                setInputText={setInputText}
+                user={user}
+                inputRef={inputRef as React.RefObject<HTMLInputElement>}
+                skipInitialLoad={true}
+                onBotButtonClick={handleBotButtonClick}
+                ticketStatus={currentTicketStatus}
+              />
+            </div>
           </div>
         </div>
       )}
