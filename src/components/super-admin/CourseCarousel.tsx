@@ -43,7 +43,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on('select', onSelect);
-    onSelect();
+    // Ya no llamamos a onSelect() directamente para evitar setState sincrónico
   }, [emblaApi, onSelect]);
 
   return (

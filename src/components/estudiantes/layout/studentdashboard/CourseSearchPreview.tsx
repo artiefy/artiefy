@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import Image from 'next/image';
 
 import type { Course } from '~/types';
@@ -25,7 +23,7 @@ export default function CourseSearchPreview({
 }: CourseSearchPreviewProps) {
   if (!courses || courses.length === 0) return null;
   return (
-    <div className="bg-background/95 absolute right-0 left-0 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg border border-white/10 text-white shadow-lg">
+    <div className="bg-background/95 absolute inset-x-4 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg border border-white/10 text-white shadow-lg sm:inset-x-0">
       {courses.map((course) => (
         <div
           key={course.id}

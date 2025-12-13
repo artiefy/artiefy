@@ -44,14 +44,7 @@ interface User {
   subscriptionEndDate?: string | null;
 }
 
-interface Course {
-  id: string;
-  title: string;
-  coverImage?: string;
-  instructor: string; // ✅ IMPORTANTE: Debe estar presente
-  modalidad?: { name: string };
-  rating?: number;
-}
+// (Removed unused `CourseBrief` type — use `Course` where needed)
 
 type ConfirmationState = {
   isOpen: boolean;

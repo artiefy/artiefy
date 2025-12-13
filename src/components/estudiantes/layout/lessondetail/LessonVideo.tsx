@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Player from 'next-video/player';
 
@@ -30,8 +30,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onTimeUpdate,
   startAt = 0, // <-- NUEVO
 }) => {
-  const [videoUrl, setVideoUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() =>
+    !videoKey || videoKey === 'null' || isLocked ? false : true
+  );
   const [useNativePlayer, setUseNativePlayer] = useState(false);
   const [playerError, setPlayerError] = useState<string | null>(null);
   // Usa el tipo correcto para el ref de Player
@@ -105,25 +106,27 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // Derivar la URL del video del prop en lugar de mantenerla en estado para evitar setState en effects
+  const videoUrl = useMemo(() => {
+    if (!videoKey || videoKey === 'null' || isLocked) return '';
+    return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
+  }, [videoKey, isLocked]);
+
   useEffect(() => {
-    if (!videoKey || videoKey === 'null' || isLocked) {
+    const shouldUseNative = videoKey
+      ? FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.endsWith(v))
+      : false;
+    // Actualizar flags que sí son estados locales (estas actualizaciones pueden ser asíncronas)
+    const t = setTimeout(() => {
+      setUseNativePlayer(shouldUseNative);
+      setPlayerError(
+        shouldUseNative
+          ? 'Usando reproductor nativo para mejor compatibilidad'
+          : null
+      );
       setIsLoading(false);
-      return;
-    }
-
-    // Forzar reproductor nativo solo si el videoKey termina exactamente con alguno de la lista
-    const shouldUseNative = FORCE_NATIVE_PLAYER_VIDEOS.some((v) =>
-      videoKey.endsWith(v)
-    );
-    setUseNativePlayer(shouldUseNative);
-    setPlayerError(
-      shouldUseNative
-        ? 'Usando reproductor nativo para mejor compatibilidad'
-        : null
-    );
-
-    setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
-    setIsLoading(false);
+    }, 0);
+    return () => clearTimeout(t);
   }, [videoKey, isLocked]);
 
   // NUEVO: Saltar al tiempo guardado al cargar el video (nativo y next-video)

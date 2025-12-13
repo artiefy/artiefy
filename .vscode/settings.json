@@ -1,7 +1,7 @@
 {
   // Editor Configuration
   // Ignorar validación de errores JSON en mcp.json
-  "json.validate.enable": false,
+  "json.validate.enable": true,
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -11,8 +11,18 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "never"
+    "source.organizeImports": "explicit"
   },
+  "eslint.rules.customizations": [
+    {
+      "rule": "simple-import-sort/imports",
+      "severity": "off"
+    },
+    {
+      "rule": "simple-import-sort/exports",
+      "severity": "off"
+    }
+  ],
   "editor.linkedEditing": true,
   "editor.stickyScroll.enabled": true,
   // File Configuration
@@ -52,10 +62,10 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[env]": {
     "editor.defaultFormatter": "IronGeek.vscode-env"
@@ -91,24 +101,6 @@
     "typescriptreact"
   ],
   "eslint.codeActionsOnSave.mode": "problems",
-  "eslint.rules.customizations": [
-    {
-      "rule": "import/named",
-      "severity": "off"
-    },
-    {
-      "rule": "no-unused-vars",
-      "severity": "off"
-    },
-    {
-      "rule": "simple-import-sort/imports",
-      "severity": "off"
-    },
-    {
-      "rule": "simple-import-sort/exports",
-      "severity": "off"
-    },
-  ],
   // Tailwind CSS Configuration
   "tailwindCSS.includeLanguages": {
     "typescript": "javascript",
@@ -199,11 +191,11 @@
     },
     "artiefy/.vscode/mcp.json: context7": {
       "allowedModels": [
-        "copilot/claude-sonnet-4.5",
         "copilot/auto",
         "copilot/claude-haiku-4.5",
         "copilot/claude-opus-4.5",
         "copilot/claude-sonnet-4",
+        "copilot/claude-sonnet-4.5",
         "copilot/gemini-2.5-pro",
         "copilot/gemini-3-pro-preview",
         "copilot/gpt-4.1",
@@ -220,14 +212,151 @@
       ]
     }
   },
-  "chat.mcp.autostart": true,
+  "chat.mcp.autostart": "onlyNew",
   // VS Code 1.107 agent + MCP improvements
   "chat.viewSessions.enabled": true,
   "chat.viewSessions.orientation": "auto",
-  "chat.agent.thinking.collapsedTools": true,
+  "chat.agent.thinking.collapsedTools": "withThinking",
   "chat.customAgentInSubagent.enabled": true,
   "github.copilot.chat.customAgents.showOrganizationAndEnterpriseAgents": true,
   "github.copilot.chat.cli.customAgents.enabled": true,
   "github.copilot.chat.githubMcpServer.enabled": true,
-  "github.copilot.chat.githubMcpServer.readonly": false
+  "github.copilot.chat.githubMcpServer.readonly": false,
+  "chat.promptFilesLocations": {
+    ".github/prompts": true,
+    ".vscode/mcp.json": true,
+    "Docs": true,
+    ".github/instructions": true,
+    ".github/instructions/copilot-instructions.md": true
+  },
+  "chat.tools.edits.autoApprove": {
+    "**/*": true,
+    "**/.vscode/*.json": false,
+    "**/.git/**": false,
+    "**/{package.json,package-lock.json,server.xml,build.rs,web.config,.gitattributes,.env}": false,
+    "**/*.{code-workspace,csproj,fsproj,vbproj,vcxproj,proj,targets,props}": false
+  },
+  "chat.tools.eligibleForAutoApproval": {},
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    "Docs": true
+  },
+  "chat.implicitContext.enabled": {
+    "panel": "always"
+  },
+  // Vira theme customization (applied workspace-wide)
+  "editor.fontLigatures": "'ss01','ss05','dlig'",
+  "editor.fontFamily": "JetBrains Mono, 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
+  "editor.fontSize": 14,
+  "editor.letterSpacing": 0.5,
+  "editor.lineHeight": 22,
+  "explorer.decorations.badges": false,
+  // Workbench / UI color adjustments (lighter foregrounds + selection/line highlight)
+  "workbench.colorCustomizations": {
+    "[Vira*]": {
+      "foreground": "#E6E6E6",
+      "editor.foreground": "#E6E6E6",
+      "sideBar.foreground": "#DADADA",
+      "activityBar.foreground": "#DADADA",
+      "editorLineNumber.foreground": "#9AA3B2",
+      "editorLineNumber.activeForeground": "#C8D1DA",
+      "editor.selectionBackground": "#3A3F4B",
+      "editor.selectionForeground": "#FFFFFF",
+      "editor.lineHighlightBackground": "#2B2F36",
+      "editorCursor.foreground": "#FFCC00",
+      "editorIndentGuide.background1": "#2f3540",
+      "editorIndentGuide.activeBackground1": "#39404a",
+      // Sólo línea vertical separadora entre pestañas
+      "tab.border": "#9AA3B2",
+      // Desactivar líneas horizontales bajo/arriba de las pestañas (usar transparente con alpha)
+      "editorGroupHeader.tabsBorder": "#00000000",
+      // Evitar que aparezca la línea horizontal inferior cuando una pestaña recibe focus
+      "tab.activeBorder": "#00000000",
+      "tab.unfocusedActiveBorder": "#00000000",
+      "tab.activeModifiedBorder": "#00000000"
+    }
+  },
+  // Token / syntax color customizations for Vira (TextMate scopes)
+  "editor.tokenColorCustomizations": {
+    "[Vira*]": {
+      "comments": "#7FB07F",
+      "textMateRules": [
+        {
+          "scope": [
+            "string",
+            "constant.other.symbol"
+          ],
+          "settings": {
+            "foreground": "#C3E88D"
+          }
+        },
+        {
+          "scope": [
+            "keyword",
+            "storage.type",
+            "storage.modifier"
+          ],
+          "settings": {
+            "foreground": "#C792EA",
+            "fontStyle": "bold"
+          }
+        },
+        {
+          "scope": [
+            "entity.name.function",
+            "support.function"
+          ],
+          "settings": {
+            "foreground": "#82AAFF"
+          }
+        },
+        {
+          "scope": [
+            "variable",
+            "variable.other.readwrite"
+          ],
+          "settings": {
+            "foreground": "#FFCB6B"
+          }
+        },
+        {
+          "scope": [
+            "entity.name.type",
+            "support.type"
+          ],
+          "settings": {
+            "foreground": "#FFCB6B",
+            "fontStyle": "italic"
+          }
+        }
+      ]
+    },
+    "[Vira Carbon]": {
+      "textMateRules": [
+        {
+          "scope": [
+            "*",
+            "comment",
+            "keyword",
+            "storage",
+            "variable.language",
+            "entity.name.type"
+          ],
+          "settings": {
+            "fontStyle": ""
+          }
+        }
+      ]
+    }
+  },
+  // Semantic token colors
+  "editor.semanticTokenColorCustomizations": {
+    "[Vira*]": {
+      "rules": {
+        "variable": "#ff6600",
+        "property.readonly": "#0055ff",
+        "function": "#82AAFF"
+      }
+    }
+  }
 }

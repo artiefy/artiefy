@@ -41,14 +41,15 @@ function FileBadge({
 
   useEffect(() => {
     if (!file) {
-      setUrl(null);
-      return;
+      const t = setTimeout(() => setUrl(null), 0);
+      return () => clearTimeout(t);
     }
 
     // 1) Intento rápido con objectURL
     try {
       const u = URL.createObjectURL(file);
-      setUrl(u);
+      // Deferir setUrl para evitar setState síncrono dentro del efecto
+      const t = setTimeout(() => setUrl(u), 0);
 
       // 2) Si el tipo viene vacío o es HEIC/HEIF, hacemos fallback a dataURL
       const needsFallback =
@@ -66,11 +67,15 @@ function FileBadge({
         };
         reader.readAsDataURL(file);
         return () => {
+          clearTimeout(t);
           reader.abort?.();
         };
       }
 
-      return () => URL.revokeObjectURL(u);
+      return () => {
+        clearTimeout(t);
+        URL.revokeObjectURL(u);
+      };
     } catch {
       // 3) Último recurso: FileReader para todo lo demás
       const reader = new FileReader();

@@ -39,18 +39,21 @@ const TicketModal = ({
   const [formData, setFormData] = useState<FormData>(initialFormState);
 
   useEffect(() => {
-    if (ticket) {
-      setFormData({
-        email: ticket.email ?? '',
-        tipo: ticket.tipo ?? '',
-        estado: ticket.estado ?? '',
-        assignedToId: ticket.assignedToId ?? '',
-        description: ticket.description ?? '',
-        comments: ticket.comments ?? '',
-      });
-    } else {
-      setFormData(initialFormState);
-    }
+    const t = setTimeout(() => {
+      if (ticket) {
+        setFormData({
+          email: ticket.email ?? '',
+          tipo: ticket.tipo ?? '',
+          estado: ticket.estado ?? '',
+          assignedToId: ticket.assignedToId ?? '',
+          description: ticket.description ?? '',
+          comments: ticket.comments ?? '',
+        });
+      } else {
+        setFormData(initialFormState);
+      }
+    }, 0);
+    return () => clearTimeout(t);
   }, [ticket, isOpen, initialFormState]);
 
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);

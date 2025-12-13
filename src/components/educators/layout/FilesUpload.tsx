@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
 
@@ -30,20 +30,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
   tipo,
   file,
 }) => {
-  const [files, setFiles] = useState<File[]>([]); // Cambiar el estado de files a un array de archivos
-  const [fileNames, setFileNames] = useState<string[]>([]); // Cambiar el estado de fileNames a un array de strings
-  const [fileSizes, setFileSizes] = useState<number[]>([]); // Cambiar el estado de fileSizes a un array de números
+  const [files, setFiles] = useState<File[]>(() => (file ? [file] : [])); // Cambiar el estado de files a un array de archivos
+  const [fileNames, setFileNames] = useState<string[]>(() =>
+    file ? [file.name] : []
+  ); // Cambiar el estado de fileNames a un array de strings
+  const [fileSizes, setFileSizes] = useState<number[]>(() =>
+    file ? [file.size] : []
+  ); // Cambiar el estado de fileSizes a un array de números
   const [isDragging, setIsDragging] = useState(false); // Cambiar el estado de isDragging a un booleano
   const [errors, setErrors] = useState(''); // Cambiar el estado de errors a un string
 
-  // Efecto para manejar el archivo
-  useEffect(() => {
-    if (file) {
-      setFiles([file]);
-      setFileNames([file.name]);
-      setFileSizes([file.size]);
-    }
-  }, [file]);
+  // El estado inicial se calcula desde la prop `file` para evitar setState sincronas en useEffect
 
   // Función para manejar el cambio de archivo en el input y validar el archivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

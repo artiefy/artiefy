@@ -1,4 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
+
+import React from 'react';
+
 import { Merriweather, Montserrat } from 'next/font/google';
 import Script from 'next/script';
 
@@ -139,18 +142,14 @@ export default function RootLayout({
           {/* Microformatos para información de contacto */}
           <div className="h-card" style={{ display: 'none' }}>
             <a className="p-name u-url" href="https://artiefy.com">
-              CCOET
+              artiefy
             </a>
-            <span className="p-org">CCOET Educación</span>
+            <span className="p-org">Artiefy</span>
             <a className="u-email" href="mailto:artiefy4@gmail.com">
               artiefy4@gmail.com
             </a>
             {/* eslint-disable @next/next/no-img-element */}
-            <img
-              className="u-photo"
-              src="https://CCOET.com/CCOET-icon.png"
-              alt="Logo de CCOET"
-            />
+            <img className="u-photo" src="/favicon.ico" alt="Logo de Artiefy" />
           </div>
 
           <Providers>

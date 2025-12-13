@@ -10,6 +10,7 @@ import { FaArrowRight } from 'react-icons/fa';
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
+import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
@@ -101,6 +102,7 @@ export default function HomePage() {
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
       <SmoothGradient />
+      <HeroCanvas />
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
         <main className="mt-[-10vh] flex grow items-center justify-center">

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Player from 'next-video/player';
 
@@ -14,21 +14,22 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
   onProgressUpdate,
   startTime = 0,
 }) => {
-  const [videoUrl, setVideoUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
+  const videoUrl = useMemo(() => {
+    if (!videoKey || videoKey === 'null') return '';
+    return `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`;
+  }, [videoKey]);
+
+  const [isLoading, setIsLoading] = useState(() =>
+    !videoKey || videoKey === 'null' ? false : true
+  );
   const playerRef = useRef<HTMLVideoElement | null>(null);
   const [hasSeeked, setHasSeeked] = useState(false);
 
   useEffect(() => {
-    if (!videoKey || videoKey === 'null') {
-      setIsLoading(false);
-      return;
-    }
-    setVideoUrl(
-      `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`
-    );
-    setIsLoading(false);
-  }, [videoKey]);
+    // Cuando videoUrl cambia, apagar loader de forma asíncrona
+    const t = setTimeout(() => setIsLoading(false), 0);
+    return () => clearTimeout(t);
+  }, [videoUrl]);
 
   // Cuando el video esté listo, busca al tiempo correspondiente
   const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {

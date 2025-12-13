@@ -1,113 +1,83 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
-/backend/node_modules
+node_modules/
 
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
-next-env.d.ts
+.next/
+out/
 
 # production
-/build
-/dist
+build/
 
 # misc
 .DS_Store
 *.pem
+temp.txt
 
 # debug
 npm-debug.log*
-.pnpm-debug.log*
+yarn-debug.log*
 
-# env files
-.env
-.env*.local
-.env.production
-.env.production.local
+# logs
+debug.log
+
+# prettier config (opcional)
+.prettierignore
+
+# husky config (opcional)
+.husky/
+
+# lint-staged config (opcional)
+.lintstagedrc*
+.eslintcache
+
+# editor folders
+yarn-error.log*
+
+# local env files
+.env*
 
 # vercel
-.vercel
-.vercel/project.json
-.vercel/README.txt
-.vercel/*.log
+.vercel/
+
+# OS and editor temp files
+*.swp
+*.swo
+._*
+~$*
+
+# output folders (add if you generate them)
 
 # typescript
 *.tsbuildinfo
-
-# idea files
-.idea
-src/config/credenciales-gmail.json
-
-# Credenciales
-src/config/credenciales-gmail.json
-!src/config/credenciales-gmail.example.json
-
-# Cache directories
-.eslintcache
-.prettiercache
-.cache
-.swc/
-.turbo
-
-# Build & Dependencies
-node_modules/
-.next/
-dist/
-out/
-build/
-coverage/
-
-# Environment & Config
-.env*
-.env.local
-.env.development
-.env.test
-.env.production
-.env.*.local
-
-# TypeScript
-*.tsbuildinfo
 next-env.d.ts
 
-# Debug & Logs
-npm-debug.log*
-.pnpm-debug.log*
-
-# Editor & OS
+# editor folders
 .vscode/
 .idea/
-.DS_Store
-*.pem
-*~
-.vercel
 
-# Project specific
-src/config/credenciales-gmail.json
-!src/config/credenciales-gmail.example.json
+# system files
+Thumbs.db
+ehthumbs.db
 
-# next-video
-/videos/*
-!/videos/*.json
-# next-video
-videos/*
-!videos/*.json
-!videos/*.js
-!videos/*.ts
-public/_next-video
+# git keep for empty folders
+**/.gitkeep
+Desktop.ini
 
-# next-video
-videos/*
-!videos/*.json
-!videos/*.js
-!videos/*.ts
-public/_next-video
+# output folders (add if you generate them)
+dist/
 
-# clerk configuration (can include secrets)
-/.clerk/
+# lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# public assets (uncomment if you want to ignore NAVIDAD folder)
+# public/NAVIDAD/
+
+# scripts output (add if you generate temp files)
+# scripts/output/

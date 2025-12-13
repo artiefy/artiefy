@@ -196,8 +196,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ message: 'Respuesta creada exitosamente' });
-
-    return NextResponse.json({ message: 'Respuesta creada exitosamente' });
   } catch (error) {
     console.error('Error al crear respuesta:', error);
     return respondWithError('Error al crear respuesta', 500);

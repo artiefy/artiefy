@@ -33,9 +33,9 @@ import CourseModalTeams from './CourseModalTeams';
 import type { ClassMeeting, Course } from '~/types';
 
 import '~/styles/buttonclass.css';
+import '~/styles/buttonneon.css';
 import '~/styles/check.css';
 import '~/styles/pattenrliveclass.css';
-import '~/styles/buttonneon.css';
 
 interface CourseContentProps {
   course: Course;
@@ -171,9 +171,21 @@ export function CourseContent({
   const [showRecordedClasses, setShowRecordedClasses] = useState(true);
 
   // Estado local para mantener actualizados los progresos de los videos
+  const computeInitialProgress = () => {
+    if (!Array.isArray(classMeetings)) return {} as Record<number, number>;
+    return classMeetings.reduce(
+      (acc, meeting) => {
+        if (typeof meeting.progress === 'number')
+          acc[meeting.id] = meeting.progress;
+        return acc;
+      },
+      {} as Record<number, number>
+    );
+  };
+
   const [meetingsProgress, setMeetingsProgress] = useState<
     Record<number, number>
-  >({});
+  >(computeInitialProgress);
 
   // Helper para calcular duración en minutos
   const getDurationMinutes = (meeting: ClassMeeting) =>
@@ -259,21 +271,19 @@ export function CourseContent({
     [expandedRecorded]
   );
 
-  // Inicializar el estado con los progresos existentes
+  // Si la prop classMeetings cambia, sincronizar progresos de forma asíncrona
   useEffect(() => {
-    if (Array.isArray(classMeetings)) {
-      const initialProgress = classMeetings.reduce(
-        (acc, meeting) => {
-          if (typeof meeting.progress === 'number') {
-            acc[meeting.id] = meeting.progress;
-          }
-          return acc;
-        },
-        {} as Record<number, number>
-      );
-
-      setMeetingsProgress(initialProgress);
-    }
+    if (!Array.isArray(classMeetings)) return;
+    const initialProgress = classMeetings.reduce(
+      (acc, meeting) => {
+        if (typeof meeting.progress === 'number')
+          acc[meeting.id] = meeting.progress;
+        return acc;
+      },
+      {} as Record<number, number>
+    );
+    const t = setTimeout(() => setMeetingsProgress(initialProgress), 0);
+    return () => clearTimeout(t);
   }, [classMeetings]);
 
   const handleOpenRecordedModal = (meeting: ClassMeeting) => {

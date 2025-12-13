@@ -40,9 +40,11 @@ const PlansPage: React.FC = () => {
       const allPlans = [...plansPersonas, ...plansEmpresas];
       const plan = allPlans.find((p) => String(p.id) === String(planId));
       if (plan) {
-        setSelectedPlan(plan);
-        setShowModal(true);
-        setHasOpenedModal(true);
+        const timer = setTimeout(() => {
+          setSelectedPlan(plan);
+          setShowModal(true);
+          setHasOpenedModal(true);
+        }, 0);
 
         // Limpiar plan_id de la URL para evitar que el modal se vuelva a abrir en reloads
         const params = new URLSearchParams(
@@ -52,6 +54,8 @@ const PlansPage: React.FC = () => {
         const newUrl =
           pathname + (params.toString() ? `?${params.toString()}` : '');
         window.history.replaceState({}, '', newUrl);
+
+        return () => clearTimeout(timer);
       }
     }
   }, [
