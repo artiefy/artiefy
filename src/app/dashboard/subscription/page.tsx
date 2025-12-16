@@ -13,6 +13,7 @@ interface Toast {
   message: string;
   type: ToastType;
   duration?: number;
+  subtitle?: string;
 }
 
 interface SearchResult {
@@ -43,7 +44,7 @@ interface WebhookSuccessResponse {
   esp32?: {
     ok: boolean;
     status?: number;
-    reason?: 'not_configured' | 'timeout' | 'error' | 'success';
+    reason?: 'success' | 'timeout' | 'error' | 'not_configured' | 'inactive' | 'unauthorized';
   };
 }
 
@@ -163,11 +164,6 @@ export default function BuscarSuscripcionPage() {
             },
             body: JSON.stringify({
               userId: searchResult.user.id,
-              email: searchResult.user.email,
-              name: searchResult.user.name,
-              daysRemaining: searchResult.user.daysRemaining,
-              subscriptionEndDate: searchResult.user.subscriptionEndDate,
-              timestamp: new Date().toISOString(),
             }),
           });
 
@@ -194,11 +190,23 @@ export default function BuscarSuscripcionPage() {
                 setEsp32Message('⚠ Error conectando a ESP32. Verifica red/URL.');
                 addToast('Error conectando a ESP32. Verifica red/URL.', 'error', 6000, 'Webhook: Exitoso • Sensor: Error de conexión');
                 setTimeout(() => setEsp32Message(null), 6000);
-              } else {
-                // ESP32 no configurado (sin esp32 en respuesta)
+              } else if (webhookData.esp32?.reason === 'inactive') {
+                // Suscripción no está activa
+                setEsp32MessageType('warning');
+                setEsp32Message('ℹ Suscripción no activa. No se envió comando.');
+                addToast('Suscripción no activa', 'warning', 4000, 'Webhook: Exitoso • Sensor: No se envió');
+                setTimeout(() => setEsp32Message(null), 4000);
+              } else if (webhookData.esp32?.reason === 'not_configured') {
+                // ESP32 no configurado
                 setEsp32MessageType('warning');
                 setEsp32Message('ℹ ESP32 no configurado. Usuario verificado.');
                 addToast('Usuario verificado correctamente', 'info', 4000, 'Webhook: Exitoso • Sensor: No configurado');
+                setTimeout(() => setEsp32Message(null), 4000);
+              } else {
+                // Otro caso (unauthorized, etc.)
+                setEsp32MessageType('warning');
+                setEsp32Message('ℹ Usuario verificado. Sensor: estado desconocido.');
+                addToast('Usuario verificado correctamente', 'info', 4000, 'Webhook: Exitoso • Sensor: Estado desconocido');
                 setTimeout(() => setEsp32Message(null), 4000);
               }
             }
