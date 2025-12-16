@@ -1,6 +1,6 @@
 'use client';
 
-import { type FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 
 import { type Product } from '~/types/payu';
 import { calculateSignature } from '~/utils/paygateway/signature';
@@ -16,13 +16,26 @@ export const PayuForm: FC<PayuFormProps> = ({
   buyerEmail,
   buyerFullName,
 }) => {
-  const signature = calculateSignature(
-    process.env.NEXT_PUBLIC_API_KEY ?? '',
-    process.env.NEXT_PUBLIC_MERCHANT_ID ?? '',
-    product.referenceCode ?? `${product.id}_${Date.now()}`,
-    product.amount,
-    'USD'
-  );
+  const [referenceCode, setReferenceCode] = useState<string>('');
+  const [signature, setSignature] = useState<string>('');
+
+  useEffect(() => {
+    // Defer generation to avoid calling Date.now() during render
+    const t = setTimeout(() => {
+      const ref = product.referenceCode ?? `${product.id}_${Date.now()}`;
+      setReferenceCode(ref);
+      const sig = calculateSignature(
+        process.env.NEXT_PUBLIC_API_KEY ?? '',
+        process.env.NEXT_PUBLIC_MERCHANT_ID ?? '',
+        ref,
+        product.amount,
+        'USD'
+      );
+      setSignature(sig);
+    }, 0);
+
+    return () => clearTimeout(t);
+  }, [product.id, product.referenceCode, product.amount]);
 
   return (
     <form
@@ -41,11 +54,7 @@ export const PayuForm: FC<PayuFormProps> = ({
         value={process.env.NEXT_PUBLIC_ACCOUNT_ID}
       />
       <input name="description" type="hidden" value={product.description} />
-      <input
-        name="referenceCode"
-        type="hidden"
-        value={product.referenceCode ?? `${product.id}_${Date.now()}`}
-      />
+      <input name="referenceCode" type="hidden" value={referenceCode || ''} />
       <input name="amount" type="hidden" value={product.amount} />
       <input name="tax" type="hidden" value="0" />
       <input name="taxReturnBase" type="hidden" value="0" />

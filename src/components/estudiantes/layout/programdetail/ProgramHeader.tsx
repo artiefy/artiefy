@@ -32,9 +32,9 @@ import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { Program } from '~/types';
 
+import '~/styles/certificado-modal.css';
 import '~/styles/certificadobutton.css';
 import '~/styles/certificadobutton2.css';
-import '~/styles/certificado-modal.css';
 
 interface ProgramHeaderProps {
   program: Program;
@@ -72,9 +72,10 @@ export function ProgramHeader({
   // Agregar estado para controlar renderizado después de hidratación
   const [isClient, setIsClient] = useState(false);
 
-  // Establecer isClient en true después del primer renderizado
+  // Establecer isClient en true después del primer renderizado (solo en cliente)
   useEffect(() => {
-    setIsClient(true);
+    if (!isClient) setIsClient(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Replace useEffect with useSWR
@@ -147,7 +148,10 @@ export function ProgramHeader({
   // Update loading state based on SWR
   // Update loading state with proper error handling
   useEffect(() => {
-    setIsLoadingGrade(!gradesData && !gradesError);
+    const shouldBeLoading = !gradesData && !gradesError;
+    setIsLoadingGrade((prev) =>
+      prev !== shouldBeLoading ? shouldBeLoading : prev
+    );
   }, [gradesData, gradesError]);
 
   // Verificar plan Premium y fecha de vencimiento

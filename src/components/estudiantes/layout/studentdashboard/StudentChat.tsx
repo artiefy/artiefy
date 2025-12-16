@@ -326,7 +326,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
             text:
               chatMode.type === 'ticket'
                 ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
-                : isEnrolled == true
+                : isEnrolled === true
                   ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
                     courseTitle +
                     ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎'
@@ -375,7 +375,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               text:
                 chatMode.type === 'ticket'
                   ? '¡Hola! Soy el asistente de soporte técnico de Artiefy 🛠️. Estoy aquí para ayudarte con cualquier problema o pregunta que tengas.'
-                  : isEnrolled == true
+                  : isEnrolled === true
                     ? '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' +
                       courseTitle +
                       ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacérmela! 😎'

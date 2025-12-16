@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { IoMdClose } from 'react-icons/io';
@@ -39,13 +39,7 @@ export const ModalError = ({
     }
   };
 
-  // Efecto para actualizar el ID del usuario
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      userId: user?.id ?? '',
-    }));
-  }, [user]);
+  // Nota: formData se inicializa con user?.id; no se realiza setState síncrono en effects
 
   // Función para validar el formulario
   const validateForm = () => {

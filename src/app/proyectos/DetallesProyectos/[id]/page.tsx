@@ -442,13 +442,7 @@ export default function ProjectDetails() {
     });
 
     return res;
-  }, [
-    cronogramaTipo,
-    project?.fecha_inicio,
-    project?.fecha_fin,
-    project?.actividades,
-    project?.dias_necesarios,
-  ]);
+  }, [cronogramaTipo, project]);
 
   // --- NUEVO: Calcular meses marcados por actividad para el cronograma de meses (igual que resumen) ---
   const mesesPorActividad = React.useMemo(() => {
@@ -556,13 +550,7 @@ export default function ProjectDetails() {
     });
 
     return res;
-  }, [
-    cronogramaTipo,
-    project?.fecha_inicio,
-    project?.fecha_fin,
-    project?.actividades,
-    project?.dias_necesarios,
-  ]);
+  }, [cronogramaTipo, project]);
 
   const unidadesHeader = React.useMemo(() => {
     const unidades = [];
@@ -652,12 +640,7 @@ export default function ProjectDetails() {
       }
     }
     return unidades;
-  }, [
-    cronogramaTipo,
-    project?.fecha_inicio,
-    project?.fecha_fin,
-    project?.actividades,
-  ]);
+  }, [cronogramaTipo, project]);
 
   // --- PERMISOS Y ESTADO DE ACTIVIDAD ---
   function puedeEditarProyecto() {
@@ -704,17 +687,17 @@ export default function ProjectDetails() {
     }
     const tieneArchivos = Boolean(
       entrega?.documentKey ??
-        entrega?.imageKey ??
-        entrega?.videoKey ??
-        entrega?.compressedFileKey
+      entrega?.imageKey ??
+      entrega?.videoKey ??
+      entrega?.compressedFileKey
     );
     const tieneComentario = Boolean(
       entrega?.comentario && entrega.comentario.trim() !== ''
     );
     const marcadoComoEntregado = Boolean(
       entrega?.entregado === true ||
-        entrega?.entregado === 1 ||
-        entrega?.entregado === '1'
+      entrega?.entregado === 1 ||
+      entrega?.entregado === '1'
     );
     const tieneEntrega =
       tieneArchivos || tieneComentario || marcadoComoEntregado;
@@ -1176,21 +1159,21 @@ export default function ProjectDetails() {
                   const tieneId = Boolean('id' in entregaObj && entregaObj.id);
                   const tieneArchivos = Boolean(
                     ('documentKey' in entregaObj && entregaObj.documentKey) ??
-                      ('imageKey' in entregaObj && entregaObj.imageKey) ??
-                      ('videoKey' in entregaObj && entregaObj.videoKey) ??
-                      ('compressedFileKey' in entregaObj &&
-                        entregaObj.compressedFileKey)
+                    ('imageKey' in entregaObj && entregaObj.imageKey) ??
+                    ('videoKey' in entregaObj && entregaObj.videoKey) ??
+                    ('compressedFileKey' in entregaObj &&
+                      entregaObj.compressedFileKey)
                   );
                   const tieneComentario = Boolean(
                     'comentario' in entregaObj &&
-                      typeof entregaObj.comentario === 'string' &&
-                      entregaObj.comentario.trim() !== ''
+                    typeof entregaObj.comentario === 'string' &&
+                    entregaObj.comentario.trim() !== ''
                   );
                   const tieneEstadoEntregado = Boolean(
                     'entregado' in entregaObj &&
-                      (entregaObj.entregado === true ||
-                        entregaObj.entregado === 1 ||
-                        entregaObj.entregado === '1')
+                    (entregaObj.entregado === true ||
+                      entregaObj.entregado === 1 ||
+                      entregaObj.entregado === '1')
                   );
                   const tieneEstadoAprobacion =
                     'aprobado' in entregaObj &&
@@ -1220,10 +1203,10 @@ export default function ProjectDetails() {
                       ...entregaObj,
                       entregado: Boolean(
                         entregaObj.entregado === true ||
-                          entregaObj.entregado === 1 ||
-                          entregaObj.entregado === '1' ||
-                          tieneArchivos ||
-                          tieneComentario
+                        entregaObj.entregado === 1 ||
+                        entregaObj.entregado === '1' ||
+                        tieneArchivos ||
+                        tieneComentario
                       ),
                       aprobado:
                         entregaObj.aprobado === true ||

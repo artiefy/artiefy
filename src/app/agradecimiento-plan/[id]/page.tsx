@@ -22,11 +22,12 @@ export default function AgradecimientoPlanPage({
 
   useEffect(() => {
     if (searchParams && searchParams.get('from') === 'payu') {
-      setShowModal(true);
+      const t = setTimeout(() => setShowModal(true), 0);
       // Consultar el pixel dinámico
       getCourseTypeById(planId).then((plan) => {
         setMetaPixelId(plan?.metaPixelId ?? null);
       });
+      return () => clearTimeout(t);
     } else {
       router.replace('/');
     }

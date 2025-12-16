@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LuInfo } from 'react-icons/lu';
 
@@ -9,17 +9,16 @@ import '~/styles/tourButtonAnimations.css';
 
 export const TourComponent = () => {
   const { showExtras } = useExtras();
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth > 768
+  );
   const [hideButton, setHideButton] = useState(false); // ← visible por defecto
   const [showAnim, setShowAnim] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const ANIMATION_DURATION = 350;
 
   useEffect(() => {
-    // Solo se ejecuta en el cliente
-    setIsDesktop(window.innerWidth > 768);
-
-    // Si quieres que se actualice al redimensionar:
+    // Solo se ejecuta en el cliente: actualizar on resize (no establecer sincronamente)
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -28,15 +27,22 @@ export const TourComponent = () => {
   // Lógica de animación/desmontaje igual que soporte
   useEffect(() => {
     if (showExtras && !hideButton) {
-      setShowAnim(true);
-      setIsExiting(false);
+      // Evitar setState síncrono dentro del effect: hacerlo asíncrono para evitar cascada de renders
+      const t = setTimeout(() => {
+        setShowAnim(true);
+        setIsExiting(false);
+      }, 0);
+      return () => clearTimeout(t);
     } else if (showAnim) {
-      setIsExiting(true);
+      const t = setTimeout(() => setIsExiting(true), 0);
       const timeout = setTimeout(() => {
         setShowAnim(false);
         setIsExiting(false);
       }, ANIMATION_DURATION);
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(t);
+        clearTimeout(timeout);
+      };
     }
   }, [showExtras, hideButton, showAnim]);
 

@@ -15,8 +15,7 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { FaArrowTrendUp } from 'react-icons/fa6';
 import { HiLibrary } from 'react-icons/hi';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { IoGiftOutline } from 'react-icons/io5';
-import { IoLibrarySharp } from 'react-icons/io5';
+import { IoGiftOutline, IoLibrarySharp } from 'react-icons/io5';
 import { MdFilterAlt } from 'react-icons/md';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
@@ -39,12 +38,12 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 
 import type { Course, Program } from '~/types';
 
+import '~/styles/filter-button-loader.css';
+import '~/styles/filter-loader.css';
+import '~/styles/headerSearchBar.css';
 import '~/styles/ia.css';
 import '~/styles/searchBar.css';
 import '~/styles/uiverse-button.css';
-import '~/styles/headerSearchBar.css';
-import '~/styles/filter-loader.css';
-import '~/styles/filter-button-loader.css';
 
 export default function StudentDetails({
   initialCourses,
@@ -438,7 +437,7 @@ export default function StudentDetails({
     >
       <main className="grow">
         <div className="flex flex-col space-y-12 sm:space-y-16">
-          <div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4">
+          <div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4 px-2 sm:px-0">
             <div className="flex items-center justify-center">
               <StudentArtieIa />
             </div>

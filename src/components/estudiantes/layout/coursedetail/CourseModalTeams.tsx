@@ -47,18 +47,17 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
   onProgressUpdated,
 }) => {
   const [videoProgress, setVideoProgress] = useState<number>(progress);
-  const [startTime, setStartTime] = useState<number>(0);
+  const [startTime, _setStartTime] = useState<number>(() => progress ?? 0);
   const lastSavedProgress = useRef<number>(progress);
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Inicializa startTime cuando se abre el modal
+  // Mantener referencias iniciales y actualizar lastSavedProgress cuando cambie progress
   useEffect(() => {
-    if (progress && progress > 0) {
-      setStartTime(progress);
-    }
-    setVideoProgress(progress);
     lastSavedProgress.current = progress;
-  }, [progress, open]);
+    // Actualizar videoProgress si cambia desde el padre
+    const t = setTimeout(() => setVideoProgress(progress), 0);
+    return () => clearTimeout(t);
+  }, [progress]);
 
   // Guarda el progreso periódicamente mientras se ve el video
   useEffect(() => {

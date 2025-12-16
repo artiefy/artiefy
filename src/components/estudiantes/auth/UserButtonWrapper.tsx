@@ -129,7 +129,8 @@ export function UserButtonWrapper() {
   // Cargar los datos desde la API cuando la página personalizada está abierta
   useEffect(() => {
     if (!profilePageOpen) return;
-    setLoadingDetails(true);
+    // Evitar setState síncrono en effect: marcar loading de forma asíncrona
+    const t = setTimeout(() => setLoadingDetails(true), 0);
     fetch(`/api/estudiantes/user-subscription-details`)
       .then(async (res) => {
         if (res.ok) {
@@ -145,6 +146,7 @@ export function UserButtonWrapper() {
       })
       .catch(() => setSubscriptionDetails(null))
       .finally(() => setLoadingDetails(false));
+    return () => clearTimeout(t);
   }, [profilePageOpen]);
 
   return (

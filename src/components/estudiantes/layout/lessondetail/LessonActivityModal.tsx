@@ -481,7 +481,6 @@ export function LessonActivityModal({
       // For revisada activities, need passing score or exhausted attempts
       setCanCloseModal(
         score >= 3 ||
-          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           (activity.revisada && attemptsLeft === 0) ||
           (!activity.revisada && score < 3) || // Allow closing for non-revisada even if failed
           (isLastActivity && isLastLesson)

@@ -30,7 +30,9 @@ interface ChatDetail {
 
 const TicketSupportChatbot = () => {
   const { showExtras } = useExtras();
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth > 768
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<
     {
@@ -82,10 +84,7 @@ const TicketSupportChatbot = () => {
   const [showAnim, setShowAnim] = useState(false);
 
   useEffect(() => {
-    // Solo se ejecuta en el cliente
-    setIsDesktop(window.innerWidth > 768);
-
-    // Si quieres que se actualice al redimensionar:
+    // Solo se ejecuta en el cliente: actualizar on resize
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -105,14 +104,18 @@ const TicketSupportChatbot = () => {
   }, []);
 
   useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
     if (showExtras && !hideButton) {
-      setShowAnim(true);
+      t = setTimeout(() => setShowAnim(true), 0);
     } else if (hideButton) {
-      setShowAnim(false); // Oculta inmediatamente al abrir el chat
+      t = setTimeout(() => setShowAnim(false), 0); // Oculta de forma asíncrona
     } else if (showAnim) {
-      const timeout = setTimeout(() => setShowAnim(false), ANIMATION_DURATION);
-      return () => clearTimeout(timeout);
+      t = setTimeout(() => setShowAnim(false), ANIMATION_DURATION);
     }
+
+    return () => {
+      if (t) clearTimeout(t);
+    };
   }, [showExtras, hideButton, showAnim]);
 
   useEffect(() => {
@@ -122,6 +125,22 @@ const TicketSupportChatbot = () => {
   }, [isOpen]);
 
   // Sincronizar mensajes de SWR con estado local y controlar loader evitando bucles
+  const scrollToBottom = () => {
+    try {
+      // Preferir el contenedor de mensajes si existe
+      const container = document.querySelector(
+        '.support-chat-messages'
+      ) as HTMLElement | null;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } catch (_e) {
+      // fallback silencioso
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   useEffect(() => {
     if (!swrMessages || !currentTicketId) return;
 
@@ -137,47 +156,52 @@ const TicketSupportChatbot = () => {
       return;
     }
 
-    // Actualizar el estado del ticket desde SWR
-    if (ticketStatus) {
-      setCurrentTicketStatus(ticketStatus);
-    }
+    // Ejecutar actualizaciones de estado de forma asíncrona para evitar setState síncrono en effect
+    const t = setTimeout(() => {
+      // Actualizar el estado del ticket desde SWR
+      if (ticketStatus) {
+        setCurrentTicketStatus(ticketStatus);
+      }
 
-    setIsLoading(false);
-    setIsTyping(false);
+      setIsLoading(false);
+      setIsTyping(false);
 
-    const formattedMessages = swrMessages.map((msg) => ({
-      id: msg.id,
-      text: msg.content,
-      sender: msg.sender,
-      createdAt: msg.createdAt,
-    }));
+      const formattedMessages = swrMessages.map((msg) => ({
+        id: msg.id,
+        text: msg.content,
+        sender: msg.sender,
+        createdAt: msg.createdAt,
+      }));
 
-    // Solo agregar mensaje de bienvenida si no existe aún
-    const needsWelcomeMessage = !formattedMessages.some(
-      (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
-    );
+      // Solo agregar mensaje de bienvenida si no existe aún
+      const needsWelcomeMessage = !formattedMessages.some(
+        (m) => m.sender === 'support' && m.text.includes('🎫 ¡Perfecto!')
+      );
 
-    if (needsWelcomeMessage) {
-      const welcomeMessage = {
-        id: Date.now(),
-        text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
-        sender: 'support' as const,
-        createdAt: new Date(),
-        buttons: [
-          { label: '🐛 Reportar Error', action: 'report_bug' },
-          { label: '❓ Pregunta General', action: 'general_question' },
-          { label: '🔧 Problema Técnico', action: 'technical_issue' },
-          { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
-        ],
-      };
-      setMessages([welcomeMessage, ...formattedMessages]);
-    } else {
-      setMessages(formattedMessages);
-    }
+      if (needsWelcomeMessage) {
+        const welcomeMessage = {
+          id: Date.now(),
+          text: '🎫 ¡Perfecto! Vamos a crear un nuevo ticket de soporte. ¿En qué puedo ayudarte?',
+          sender: 'support' as const,
+          createdAt: new Date(),
+          buttons: [
+            { label: '🐛 Reportar Error', action: 'report_bug' },
+            { label: '❓ Pregunta General', action: 'general_question' },
+            { label: '🔧 Problema Técnico', action: 'technical_issue' },
+            { label: '💰 Consulta de Pagos', action: 'payment_inquiry' },
+          ],
+        };
+        setMessages([welcomeMessage, ...formattedMessages]);
+      } else {
+        setMessages(formattedMessages);
+      }
 
-    // Actualizar refs de sincronización
-    lastSyncedCountRef.current = swrMessages.length;
-    lastSyncedLatestIdRef.current = latestId;
+      // Actualizar refs de sincronización
+      lastSyncedCountRef.current = swrMessages.length;
+      lastSyncedLatestIdRef.current = latestId;
+    }, 0);
+
+    return () => clearTimeout(t);
   }, [swrMessages, currentTicketId, ticketStatus]);
 
   useEffect(() => {
@@ -393,24 +417,6 @@ const TicketSupportChatbot = () => {
       return () => clearTimeout(t);
     }
   }, [isOpen]);
-
-  // Ya no es necesario controlar hideButton, la animación depende de showExtras
-
-  const scrollToBottom = () => {
-    try {
-      // Preferir el contenedor de mensajes si existe
-      const container = document.querySelector(
-        '.support-chat-messages'
-      ) as HTMLElement | null;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } catch (_e) {
-      // fallback silencioso
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const saveUserMessage = async (trimmedInput: string, sender: string) => {
     if (awaitingTicketId && !currentTicketId) {
