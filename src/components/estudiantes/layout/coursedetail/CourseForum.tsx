@@ -4,11 +4,14 @@ import { useMemo, useState } from 'react';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
+  Crown,
   Image as ImageIcon,
   MessagesSquare,
   Mic,
   Reply,
   Send,
+  ShieldCheck,
+  Star,
   ThumbsUp,
   Video,
 } from 'lucide-react';
@@ -21,12 +24,12 @@ type Forum = {
   title: string;
   description?: string;
   courseId: { id: number; title: string };
-  userId: { id: string; name: string };
+  userId: { id: string; name: string; role?: string | null };
 };
 
 type Post = {
   id: number;
-  userId: { id: string; name: string };
+  userId: { id: string; name: string; role?: string | null };
   content: string;
   createdAt: string;
   updatedAt: string;
@@ -34,14 +37,23 @@ type Post = {
 
 type PostReply = {
   id: number;
-  userId: { id: string; name: string };
+  userId: { id: string; name: string; role?: string | null };
   postId: number;
   content: string;
   createdAt: string;
   updatedAt: string;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  try {
+    return await res.json();
+  } catch (err) {
+    console.error('fetcher parse error', err);
+    return null;
+  }
+};
 
 interface CourseForumProps {
   courseId: number;
@@ -135,6 +147,46 @@ export function CourseForum({ courseId }: CourseForumProps) {
     return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
   };
 
+  const renderRoleBadge = (role?: string | null) => {
+    if (!role) return null;
+
+    const mapping: Record<
+      string,
+      { label: string; classes: string; icon: JSX.Element }
+    > = {
+      educator: {
+        label: 'Educador',
+        classes: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        icon: <Crown className="mr-1 h-3 w-3" />,
+      },
+      admin: {
+        label: 'Admin',
+        classes: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+        icon: <ShieldCheck className="mr-1 h-3 w-3" />,
+      },
+      'super-admin': {
+        label: 'Super-admin',
+        classes: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+        icon: <Star className="mr-1 h-3 w-3" />,
+      },
+    };
+
+    const item = mapping[role] ?? {
+      label: role,
+      classes: 'bg-slate-700/10 text-slate-300 border-slate-700/30',
+      icon: <Star className="mr-1 h-3 w-3" />,
+    };
+
+    return (
+      <div
+        className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${item.classes} py-0 text-xs`}
+      >
+        {item.icon}
+        {item.label}
+      </div>
+    );
+  };
+
   if (!isSignedIn) {
     return (
       <div
@@ -181,7 +233,23 @@ export function CourseForum({ courseId }: CourseForumProps) {
     );
   }
 
-  const totalComments = (posts?.length ?? 0) + (replies?.length ?? 0);
+  // Si el instructor creó el foro con una descripción, mostrarla como la
+  // primera discusión (pseudo-post) cuando no existen posts registrados.
+  const initialDiscussion = forum?.description
+    ? {
+        id: -forum.id, // id negativo para distinguirlo
+        userId: forum.userId,
+        content: forum.description,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    : null;
+
+  const displayPosts: Post[] = initialDiscussion
+    ? [initialDiscussion, ...(posts ?? [])]
+    : (posts ?? []);
+
+  const totalComments = displayPosts.length + (replies?.length ?? 0);
 
   return (
     <div className="space-y-6">
@@ -197,7 +265,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
       <div className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm">
         <textarea
-          className="text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-[16px] border border-[#1d283a80] bg-[#01152d80] px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-[16px] border border-[#1d283a80] bg-[#01152D80] px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           placeholder="Inicia una nueva discusión o comparte tu avance..."
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
@@ -247,15 +315,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
       <div className="space-y-6">
         {postsLoading ? (
           <div className="text-sm text-[#94a3b8]">Cargando comentarios...</div>
-        ) : posts && posts.length > 0 ? (
-          posts.map((post) => {
+        ) : displayPosts && displayPosts.length > 0 ? (
+          displayPosts.map((post) => {
             const postReplies =
               replies?.filter((r) => r.postId === post.id) ?? [];
             return (
               <div
                 key={post.id}
-                className="border-border/50 space-y-3 rounded-xl border p-4 shadow-sm"
-                style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
+                className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm"
               >
                 <div className="flex gap-3">
                   <span className="bg-accent/20 text-accent flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
@@ -266,6 +333,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                       <span className="text-foreground font-semibold">
                         {post.userId?.name}
                       </span>
+                      {renderRoleBadge(post.userId?.role)}
                       <span className="text-xs text-[#94a3b8]">
                         {formatDate(post.createdAt)}
                       </span>
@@ -349,6 +417,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                             <span className="text-foreground font-semibold">
                               {reply.userId?.name}
                             </span>
+                            {renderRoleBadge(reply.userId?.role)}
                             <span className="text-[11px] text-[#94a3b8]">
                               {formatDate(reply.createdAt)}
                             </span>

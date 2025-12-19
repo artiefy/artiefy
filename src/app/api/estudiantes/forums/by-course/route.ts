@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { getForumByCourseId } from '~/models/super-adminModels/forumAndPosts';
+import { getForumByCourseId } from '~/models/educatorsModels/forumAndPosts';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
