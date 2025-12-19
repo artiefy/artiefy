@@ -175,6 +175,71 @@ export default function CourseDetails({
     }),
     [activitiesStats.total, projectsCount, recordedCount, resourcesCount]
   );
+  // Persistir último conteo visto por sección para calcular "nuevos" desde la última visita
+  const [lastSeenCounts, setLastSeenCounts] = useState<Record<
+    NavKey,
+    number
+  > | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    const storageKey = `course_seen_counts_${course.id}_${userId}`;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        setLastSeenCounts(JSON.parse(raw) as Record<NavKey, number>);
+      } else {
+        // Primera visita: inicializar snapshot con los contadores actuales
+        const initial: Record<NavKey, number> = {
+          curso: unseenCounts.curso,
+          grabadas: unseenCounts.grabadas,
+          proyectos: unseenCounts.proyectos,
+          recursos: unseenCounts.recursos,
+          actividades: unseenCounts.actividades,
+          foro: unseenCounts.foro,
+        };
+        localStorage.setItem(storageKey, JSON.stringify(initial));
+        setLastSeenCounts(initial);
+      }
+    } catch (err) {
+      // Si falló el acceso a localStorage, no bloquear la UI
+      console.warn('No se pudo leer lastSeenCounts:', err);
+      setLastSeenCounts({
+        curso: 0,
+        grabadas: 0,
+        proyectos: 0,
+        recursos: 0,
+        actividades: 0,
+        foro: 0,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.id, userId]);
+
+  // Calcula cuántos items nuevos hay desde la última vez que el usuario vio cada sección
+  const badgeCounts = useMemo<Record<NavKey, number>>(() => {
+    const result: Record<NavKey, number> = {
+      curso: 0,
+      grabadas: 0,
+      proyectos: 0,
+      recursos: 0,
+      actividades: 0,
+      foro: 0,
+    };
+    if (!lastSeenCounts) return result;
+    (Object.keys(unseenCounts) as NavKey[]).forEach((k) => {
+      const prev = lastSeenCounts[k] ?? 0;
+      const cur = unseenCounts[k] ?? 0;
+      const delta = Math.max(0, cur - prev);
+      // Si el usuario ya marcó la sección como vista, ocultar badge
+      result[k] = seenSections[k] ? 0 : delta;
+    });
+    // Solo mostrar badges cuando el usuario esté inscrito
+    if (!isEnrolled) {
+      (Object.keys(result) as NavKey[]).forEach((k) => (result[k] = 0));
+    }
+    return result;
+  }, [unseenCounts, lastSeenCounts, seenSections, isEnrolled]);
   const navItems: Array<{ key: NavKey; label: string; helper?: string }> = [
     {
       key: 'curso',
@@ -216,6 +281,26 @@ export default function CourseDetails({
   const handlePillClick = (key: NavKey) => {
     setActivePill(key);
     setSeenSections((prev) => ({ ...prev, [key]: true }));
+    // Actualizar snapshot en localStorage para que el badge desaparezca y
+    // futuros items se calculen desde este punto.
+    if (userId) {
+      const storageKey = `course_seen_counts_${course.id}_${userId}`;
+      try {
+        const prev = lastSeenCounts ?? {
+          curso: 0,
+          grabadas: 0,
+          proyectos: 0,
+          recursos: 0,
+          actividades: 0,
+          foro: 0,
+        };
+        const updated = { ...prev, [key]: unseenCounts[key] };
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+        setLastSeenCounts(updated);
+      } catch (err) {
+        console.warn('No se pudo actualizar lastSeenCounts:', err);
+      }
+    }
     if (key === 'grabadas') setViewMode('recorded');
     else setViewMode('live');
   };
@@ -860,9 +945,9 @@ export default function CourseDetails({
                       >
                         {navItems.map((item) => {
                           const isActive = activePill === item.key;
-                          const badgeCount = unseenCounts[item.key];
+                          const badgeCount = badgeCounts[item.key] ?? 0;
                           const showBadge =
-                            !seenSections[item.key] && badgeCount > 0;
+                            badgeCount > 0 && !seenSections[item.key];
                           return (
                             <button
                               key={item.key}

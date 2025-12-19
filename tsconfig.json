@@ -3,15 +3,8 @@
   "display": "Next.js",
   "compilerOptions": {
     "target": "ESNext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "types": [
-      "@webgpu/types",
-      "@types/jszip"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["@webgpu/types", "@types/jszip"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -28,9 +21,7 @@
     "allowImportingTsExtensions": false,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./src/*"
-      ]
+      "~/*": ["./src/*"]
     },
     "plugins": [
       {
@@ -54,12 +45,5 @@
     ".next/types/**/*.ts",
     "new-types.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "build",
-    "dist",
-    ".vercel",
-    "coverage"
-  ]
+  "exclude": ["node_modules", ".next", "build", "dist", ".vercel", "coverage"]
 }
