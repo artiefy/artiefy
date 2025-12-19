@@ -12,6 +12,7 @@ import {
   conversations,
   courses,
   coursesTaken,
+  emailLogs,
   enrollmentPrograms,
   enrollments,
   materiaGrades,
@@ -210,7 +211,10 @@ export async function deleteUserWithRelations(userId: string) {
     // 33. Eliminar credenciales
     await db.delete(userCredentials).where(eq(userCredentials.userId, userId));
 
-    // 34. FINALMENTE, eliminar el usuario
+    // 34. Eliminar logs de email
+    await db.delete(emailLogs).where(eq(emailLogs.userId, userId));
+
+    // 35. FINALMENTE, eliminar el usuario
     await db.delete(users).where(eq(users.id, userId));
 
     console.log(
