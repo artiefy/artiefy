@@ -114,8 +114,8 @@ const LessonPlayer = ({
             startAt={
               lesson.porcentajecompletado
                 ? Math.round(
-                  (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
-                )
+                    (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
+                  )
                 : 0
             }
           />
@@ -129,7 +129,9 @@ const LessonPlayer = ({
         <div className="flex flex-col">
           {isLoadingTranscription && (
             <div className="order-2 mt-4 mb-4 flex items-center gap-2 text-indigo-700 md:order-1">
-              <span className="text-base italic">Cargando transcripción...</span>
+              <span className="text-base italic">
+                Cargando transcripción...
+              </span>
               <Icons.spinner className="h-5 w-5 text-indigo-500" />
             </div>
           )}
@@ -142,7 +144,9 @@ const LessonPlayer = ({
                   className="mb-2 rounded bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 transition hover:bg-indigo-200"
                   onClick={() => setShowTranscription((v) => !v)}
                 >
-                  {showTranscription ? 'Ocultar transcripción' : 'Ver transcripción'}
+                  {showTranscription
+                    ? 'Ocultar transcripción'
+                    : 'Ver transcripción'}
                 </button>
                 {showTranscription && (
                   <div
@@ -192,27 +196,36 @@ const LessonPlayer = ({
                             <div
                               key={idx}
                               data-transcription-idx={idx}
-                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${idx === currentTranscriptionIndex
+                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
+                                idx === currentTranscriptionIndex
                                   ? 'font-bold text-indigo-900'
                                   : 'text-indigo-700'
-                                }`}
+                              }`}
                               style={{
                                 background:
-                                  idx === currentTranscriptionIndex ? '#a5b4fc' : '#eef2ff',
-                                opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
+                                  idx === currentTranscriptionIndex
+                                    ? '#a5b4fc'
+                                    : '#eef2ff',
+                                opacity:
+                                  idx === currentTranscriptionIndex ? 1 : 0.7,
                                 textAlign: 'center',
                                 margin: '0.1rem 0',
-                                borderRadius: idx === currentTranscriptionIndex ? '0.5rem' : '',
+                                borderRadius:
+                                  idx === currentTranscriptionIndex
+                                    ? '0.5rem'
+                                    : '',
                                 minHeight: '2.6rem',
                                 maxHeight: '3.4rem',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                zIndex: idx === currentTranscriptionIndex ? 3 : 1,
+                                zIndex:
+                                  idx === currentTranscriptionIndex ? 3 : 1,
                               }}
                             >
                               <span className="mr-2 font-mono text-xs text-indigo-400">
-                                [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                                [{item.start.toFixed(2)}s -{' '}
+                                {item.end.toFixed(2)}s]
                               </span>
                               {item.text}
                             </div>
@@ -225,7 +238,8 @@ const LessonPlayer = ({
                             top: `calc(50% - 1.4rem)`,
                             left: 0,
                             width: '100%',
-                            transition: 'transform 0.4s cubic-bezier(.4,2,.3,1)',
+                            transition:
+                              'transform 0.4s cubic-bezier(.4,2,.3,1)',
                             transform: `translateY(-${currentTranscriptionIndex * 2.8}rem)`,
                             willChange: 'transform',
                           }}
@@ -234,27 +248,36 @@ const LessonPlayer = ({
                             <div
                               key={idx}
                               data-transcription-idx={idx}
-                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${idx === currentTranscriptionIndex
+                              className={`w-full px-2 py-1 text-sm italic transition-all duration-300 ${
+                                idx === currentTranscriptionIndex
                                   ? 'font-bold text-indigo-900'
                                   : 'text-indigo-700'
-                                }`}
+                              }`}
                               style={{
                                 background:
-                                  idx === currentTranscriptionIndex ? '#a5b4fc' : '#eef2ff',
-                                opacity: idx === currentTranscriptionIndex ? 1 : 0.7,
+                                  idx === currentTranscriptionIndex
+                                    ? '#a5b4fc'
+                                    : '#eef2ff',
+                                opacity:
+                                  idx === currentTranscriptionIndex ? 1 : 0.7,
                                 textAlign: 'center',
                                 margin: '0.1rem 0',
-                                borderRadius: idx === currentTranscriptionIndex ? '0.5rem' : '',
+                                borderRadius:
+                                  idx === currentTranscriptionIndex
+                                    ? '0.5rem'
+                                    : '',
                                 minHeight: '2.6rem',
                                 maxHeight: '3.4rem',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                zIndex: idx === currentTranscriptionIndex ? 3 : 1,
+                                zIndex:
+                                  idx === currentTranscriptionIndex ? 3 : 1,
                               }}
                             >
                               <span className="mr-2 font-mono text-xs text-indigo-400">
-                                [{item.start.toFixed(2)}s - {item.end.toFixed(2)}s]
+                                [{item.start.toFixed(2)}s -{' '}
+                                {item.end.toFixed(2)}s]
                               </span>
                               {item.text}
                             </div>
@@ -266,23 +289,15 @@ const LessonPlayer = ({
                 )}
               </div>
             )}
-
-          <div className="order-1 mt-4 md:-mt-2 md:order-2">
+          <div className="order-1 mt-4 md:order-2 md:-mt-2">
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-bold text-gray-700">Progreso de la clase</span>
+              <span className="font-bold text-gray-700">
+                Progreso de la clase
+              </span>
               <span className="text-gray-600">{progress}%</span>
             </div>
             <Progress value={progress} showPercentage={true} />
           </div>
-        </div>
-        <div className="mt-4 md:-mt-2">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-bold text-gray-700">
-              Progreso de la clase
-            </span>
-            <span className="text-gray-600">{progress}%</span>
-          </div>
-          <Progress value={progress} showPercentage={true} />
         </div>
       </div>
     </div>
