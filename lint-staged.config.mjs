@@ -13,7 +13,7 @@ const config = {
   '**/*.{json,md,mdx,css,scss,yml,yaml,html}': ['prettier --write'],
 
   // TypeScript type checking (solo archivos staged)
-  '**/*.{ts,tsx}': () => 'tsc --noEmit',
+  // Type checking moved to pre-push (npm run typecheck) to avoid blocking commits
 };
 
 export default config;
