@@ -8,6 +8,10 @@
       "dom.iterable",
       "esnext"
     ],
+    "types": [
+      "@webgpu/types",
+      "@types/jszip"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -47,7 +51,8 @@
     ".next\\dev/types/**/*.ts",
     ".next\\dev/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "new-types.d.ts"
   ],
   "exclude": [
     "node_modules",

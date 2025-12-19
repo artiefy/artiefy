@@ -19,9 +19,13 @@ export async function GET(req: Request) {
         id: lessons.id,
         title: lessons.title,
         description: lessons.description,
+        order: lessons.orderIndex,
+        resourceKey: lessons.resourceKey,
+        resourceNames: lessons.resourceNames,
       })
       .from(lessons)
-      .where(eq(lessons.courseId, Number(courseId)));
+      .where(eq(lessons.courseId, Number(courseId)))
+      .orderBy(lessons.orderIndex);
 
     return NextResponse.json({ lessons: lessonsList });
   } catch (error) {

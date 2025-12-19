@@ -27,6 +27,7 @@ interface CommentProps {
   courseId: number;
   isEnrolled: boolean;
   onEnrollmentChange?: (enrolled: boolean) => void;
+  onCommentsCountChange?: (count: number) => void;
 }
 
 interface Comment {
@@ -44,6 +45,7 @@ export default function CourseComments({
   courseId,
   isEnrolled,
   onEnrollmentChange,
+  onCommentsCountChange,
 }: CommentProps) {
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
@@ -63,6 +65,9 @@ export default function CourseComments({
       try {
         const response = await getCommentsByCourseId(courseId);
         setComments(response.comments as Comment[]);
+        onCommentsCountChange?.(
+          Array.isArray(response.comments) ? response.comments.length : 0
+        );
       } catch (error) {
         console.error('Error fetching comments:', error);
       } finally {
@@ -71,7 +76,7 @@ export default function CourseComments({
     };
 
     void fetchComments();
-  }, [courseId]);
+  }, [courseId, onCommentsCountChange]);
 
   useEffect(() => {
     setLocalIsEnrolled(isEnrolled);
@@ -137,6 +142,11 @@ export default function CourseComments({
         setEditMode(null); // Reset edit mode
         const updatedComments = await getCommentsByCourseId(courseId);
         setComments(updatedComments.comments as Comment[]);
+        onCommentsCountChange?.(
+          Array.isArray(updatedComments.comments)
+            ? updatedComments.comments.length
+            : 0
+        );
       }
     } catch (error) {
       console.error('Error adding/editing comment:', error);
@@ -151,9 +161,13 @@ export default function CourseComments({
       const response = await deleteComment(commentId);
       setMessage(response.message);
       if (response.success) {
-        setComments((prevComments) =>
-          prevComments.filter((comment) => comment.id !== commentId)
-        );
+        setComments((prevComments) => {
+          const nextComments = prevComments.filter(
+            (comment) => comment.id !== commentId
+          );
+          onCommentsCountChange?.(nextComments.length);
+          return nextComments;
+        });
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -170,6 +184,11 @@ export default function CourseComments({
       if (response.success) {
         const updatedComments = await getCommentsByCourseId(courseId);
         setComments(updatedComments.comments as Comment[]);
+        onCommentsCountChange?.(
+          Array.isArray(updatedComments.comments)
+            ? updatedComments.comments.length
+            : 0
+        );
       }
     } catch (error) {
       console.error('Error liking comment:', error);

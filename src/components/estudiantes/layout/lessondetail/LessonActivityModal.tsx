@@ -258,6 +258,41 @@ export function LessonActivityModal({
     }
   }, [activity]);
 
+  // Al abrir el modal, comprobar si el usuario ya tiene resultados guardados
+  useEffect(() => {
+    if (!isOpen || !activity?.id || !userId) return;
+
+    let mounted = true;
+
+    const fetchSavedAnswers = async () => {
+      try {
+        const resp = await fetch(
+          `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        if (!mounted) return;
+
+        // Si la API indica que ya está completada, mostrar solo la pantalla de resultados
+        if (data?.isAlreadyCompleted) {
+          setFinalScore(data.score ?? 0);
+          setUserAnswers(data.answers ?? {});
+          setShowResults(true);
+          setIsResultsLoaded(true);
+        }
+      } catch (error) {
+        console.error('Error fetching saved answers:', error);
+      }
+    };
+
+    void fetchSavedAnswers();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen, activity?.id, userId]);
+
   useEffect(() => {
     if (savedResults) {
       setFinalScore(savedResults.score ?? 0);

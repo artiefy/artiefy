@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-
 import React from 'react';
 
 import { Merriweather, Montserrat } from 'next/font/google';

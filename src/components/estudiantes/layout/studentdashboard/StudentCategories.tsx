@@ -346,8 +346,9 @@ export default function StudentCategories({
                   container.style.scrollBehavior = 'auto';
                   container.style.overflow = 'hidden';
                   // disable momentum scrolling on iOS
-                  (container.style as any)['-webkit-overflow-scrolling'] =
-                    'auto';
+                  (container.style as unknown as Record<string, string>)[
+                    '-webkit-overflow-scrolling'
+                  ] = 'auto';
                 } catch (_err) {
                   /* ignore */
                 }
@@ -380,7 +381,9 @@ export default function StudentCategories({
                   delete container.dataset.prevScrollBehavior;
                 }
                 // restore webkit momentum
-                (container.style as any)['-webkit-overflow-scrolling'] = '';
+                (container.style as unknown as Record<string, string>)[
+                  '-webkit-overflow-scrolling'
+                ] = '';
               } catch (_err) {
                 /* ignore */
               }

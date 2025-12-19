@@ -16,8 +16,8 @@ import {
   unique,
   uniqueIndex,
   varchar,
+  vector,
 } from 'drizzle-orm/pg-core';
-import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
 export const users = pgTable(
   'users',
@@ -138,6 +138,8 @@ export const courses = pgTable('courses', {
   // 👉 Agrega la columna embedding para pgvector (usa 1536 dimensiones para OpenAI)
   embedding: vector('embedding', { dimensions: 1536 }),
   metaPixelId: text('meta_pixel_id'), // Pixel Meta/Facebook dinámico por curso
+  horario: text('horario'),
+  espacios: text('espacios'),
   scheduleOptionId: integer('schedule_option_id')
     .references(() => scheduleOptions.id)
     .default(sql`NULL`),

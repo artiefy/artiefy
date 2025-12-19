@@ -10,6 +10,8 @@ const getIconForFileType = (fileName: string) => {
   const ext = fileName.split('.').pop()?.toLowerCase();
 
   switch (ext) {
+    case undefined:
+      return <Icons.txt className="size-16" />;
     case 'pdf':
       return <Icons.pdf className="size-16" />;
     case 'docx':

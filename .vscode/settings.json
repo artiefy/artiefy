@@ -112,6 +112,20 @@
   "tailwindCSS.colorDecorators": true,
   "tailwindCSS.lint.recommendedVariantOrder": "warning",
   "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
+  // HTML CSS Support Configuration
+  "css.enabledLanguages": [
+    "html",
+    "typescript",
+    "typescriptreact",
+    "javascript",
+    "javascriptreact"
+  ],
+  "css.styleSheets": [
+    "src/styles/**/*.css",
+    "src/app/**/*.css",
+    "src/components/**/*.css",
+    "**/${fileBasenameNoExtension}.css"
+  ],
   // Search and Performance
   "search.exclude": {
     "/node_modules": true,
@@ -207,6 +221,29 @@
         "copilot/gpt-5.1-codex",
         "copilot/gpt-5.1-codex-max",
         "copilot/gpt-5.1-codex-mini",
+        "copilot/grok-code-fast-1",
+        "copilot/oswe-vscode-prime"
+      ]
+    },
+    "artiefy/.vscode/mcp.json: chrome-devtools": {
+      "allowedModels": [
+        "copilot/claude-sonnet-4.5",
+        "copilot/auto",
+        "copilot/claude-haiku-4.5",
+        "copilot/claude-opus-4.5",
+        "copilot/claude-sonnet-4",
+        "copilot/gemini-2.5-pro",
+        "copilot/gemini-3-pro-preview",
+        "copilot/gpt-4.1",
+        "copilot/gpt-4o",
+        "copilot/gpt-5",
+        "copilot/gpt-5-mini",
+        "copilot/gpt-5-codex",
+        "copilot/gpt-5.1",
+        "copilot/gpt-5.1-codex",
+        "copilot/gpt-5.1-codex-max",
+        "copilot/gpt-5.1-codex-mini",
+        "copilot/gpt-5.2",
         "copilot/grok-code-fast-1",
         "copilot/oswe-vscode-prime"
       ]

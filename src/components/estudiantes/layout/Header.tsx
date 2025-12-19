@@ -202,7 +202,7 @@ export function Header({
             </SignedOut>
 
             <SignedIn>
-              <div className="mr-4 hidden items-center gap-2 md:mr-6 md:flex">
+              <div className="mr-4 hidden items-center gap-3 md:mr-6 md:flex">
                 <Suspense
                   fallback={
                     <div className="flex items-center">
@@ -212,6 +212,9 @@ export function Header({
                 >
                   <UserButtonWrapper />
                 </Suspense>
+                <div className="campana-header relative md:text-white">
+                  <NotificationHeader />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 md:hidden">
@@ -313,7 +316,7 @@ export function Header({
             <div className="relative">
               <input
                 type="search"
-                placeholder="!Aprende con Artie!"
+                placeholder="!Aprende con IA!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
@@ -431,7 +434,7 @@ export function Header({
           >
             <input
               type="search"
-              placeholder="!Aprende con Artie!"
+              placeholder="!Aprende con IA!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"

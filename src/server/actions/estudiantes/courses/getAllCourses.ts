@@ -53,6 +53,8 @@ const baseCoursesQuery = {
   is_top: courses.is_top, // Add this field
   scheduleOptionId: courses.scheduleOptionId,
   spaceOptionId: courses.spaceOptionId,
+  horario: courses.horario,
+  espacios: courses.espacios,
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -171,14 +173,14 @@ export async function getAllCourses(): Promise<Course[]> {
       courseTypeId: course.courseTypeId ?? null,
       courseType: course.courseTypeId
         ? {
-          name: course.courseTypeName ?? '',
-          requiredSubscriptionLevel:
-            course.requiredSubscriptionLevel! || 'none',
-          isPurchasableIndividually: Boolean(
-            course.isPurchasableIndividually
-          ),
-          price: course.courseTypeId === 4 ? course.individualPrice : null,
-        }
+            name: course.courseTypeName ?? '',
+            requiredSubscriptionLevel:
+              course.requiredSubscriptionLevel! || 'none',
+            isPurchasableIndividually: Boolean(
+              course.isPurchasableIndividually
+            ),
+            price: course.courseTypeId === 4 ? course.individualPrice : null,
+          }
         : undefined,
       courseTypes: courseTypesMap[course.id] ?? [],
       individualPrice: course.individualPrice ?? null,
@@ -188,6 +190,11 @@ export async function getAllCourses(): Promise<Course[]> {
       is_top: course.is_top ?? false,
       scheduleOptionId: course.scheduleOptionId,
       spaceOptionId: course.spaceOptionId,
+      horario: course.horario ?? '',
+      espacios:
+        course.espacios !== undefined && course.espacios !== null
+          ? String(course.espacios)
+          : '',
       // Añadir classMeetings para que esté disponible en el front
       classMeetings: classMeetingsMap[course.id] ?? [],
     }));

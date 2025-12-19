@@ -73,9 +73,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         email: email_buyer,
         role: 'estudiante',
         subscriptionStatus: 'active',
-        subscriptionEndDate: new Date(subscriptionEndBogota),
+        subscriptionEndDate: subscriptionEndDate,
         planType: planType,
-        purchaseDate: new Date(bogotaNow),
+        purchaseDate: now,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -88,9 +88,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         .update(users)
         .set({
           subscriptionStatus: 'active',
-          subscriptionEndDate: new Date(subscriptionEndBogota),
+          subscriptionEndDate: subscriptionEndDate,
           planType: planType,
-          purchaseDate: new Date(bogotaNow),
+          purchaseDate: now,
           updatedAt: new Date(),
         })
         .where(and(eq(users.email, email_buyer), eq(users.role, 'estudiante')));

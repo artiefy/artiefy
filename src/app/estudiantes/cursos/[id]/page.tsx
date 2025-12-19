@@ -10,6 +10,7 @@ import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { getCourseTypeCounts } from '~/server/actions/estudiantes/courses/getCourseTypeCounts';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 
 import CourseDetails from './CourseDetails';
@@ -166,6 +167,8 @@ async function CourseContent({ id }: { id: string }) {
         isNew: lesson.isNew,
       })) ?? [];
 
+    const courseTypeCounts = await getCourseTypeCounts();
+
     // Fetch class meetings for this course
     const rawClassMeetings = await getClassMeetingsByCourseId(courseId);
 
@@ -208,6 +211,7 @@ async function CourseContent({ id }: { id: string }) {
         <CourseDetails
           course={courseForDetails}
           classMeetings={classMeetings}
+          courseTypeCounts={courseTypeCounts}
         />
       </section>
     );
