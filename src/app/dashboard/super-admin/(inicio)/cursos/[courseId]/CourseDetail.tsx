@@ -111,10 +111,9 @@ type UIMeeting = ScheduledMeeting & {
   recordingContentUrl?: string;
   videoUrl?: string;
   video_key?: string;
-  video_key_2?: string;     // ✅ nuevo
-  videoUrl2?: string;       // ✅ nuevo opcional
+  video_key_2?: string; // ✅ nuevo
+  videoUrl2?: string; // ✅ nuevo opcional
 };
-
 
 // Add these interfaces after the existing interfaces
 interface Educator {
@@ -123,7 +122,7 @@ interface Educator {
   email?: string;
 }
 // Función para obtener el contraste de un color
-const getContrastYIQ = (hexcolor: string) => {
+const _getContrastYIQ = (hexcolor: string) => {
   if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
   hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
@@ -175,6 +174,84 @@ const styles = `
       transform: rotate(360deg);
       }
     }
+
+    @keyframes slideInFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInFromBottom {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .animate-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .slide-in-from-left-4 {
+      animation: slideInFromLeft 0.5s ease-out forwards;
+    }
+
+    .slide-in-from-right-4 {
+      animation: slideInFromRight 0.5s ease-out forwards;
+    }
+
+    .slide-in-from-left-8 {
+      animation: slideInFromLeft 0.7s ease-out forwards;
+    }
+
+    .slide-in-from-right-8 {
+      animation: slideInFromRight 0.7s ease-out forwards;
+    }
+
+    .slide-in-from-bottom-8 {
+      animation: slideInFromBottom 0.7s ease-out forwards;
+    }
+
+    .delay-150 {
+      animation-delay: 150ms;
+    }
+
+    .duration-500 {
+      animation-duration: 500ms;
+    }
+
+    .duration-700 {
+      animation-duration: 700ms;
+    }
     `;
 
 // Replace the stylesheet append code
@@ -202,7 +279,6 @@ interface VideoIdxItem {
   createdAt?: string;
   isSecondary?: boolean;
 }
-
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -254,11 +330,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   type BadgeGradientFunction = () => string;
 
-  const getBadgeGradient: BadgeGradientFunction = () => {
+  const _getBadgeGradient: BadgeGradientFunction = () => {
     return BADGE_GRADIENTS[Math.floor(Math.random() * BADGE_GRADIENTS.length)];
   };
 
   const [isActive, setIsActive] = useState<boolean>(true);
+
+  // Estados para los tabs desplegables
+  const [activeTab, setActiveTab] = useState<string>('curso');
+  const [_expandedSections, _setExpandedSections] = useState<{
+    curso: boolean;
+    grabadas: boolean;
+    proyectos: boolean;
+    recursos: boolean;
+    actividades: boolean;
+  }>({
+    curso: true,
+    grabadas: false,
+    proyectos: false,
+    recursos: false,
+    actividades: false,
+  });
 
   const [editParametros, setEditParametros] = useState<
     {
@@ -290,18 +382,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [_videos, setVideos] = useState<unknown[]>([]);
   const [editHorario, setEditHorario] = useState<number | null>(null);
   const [editEspacios, setEditEspacios] = useState<number | null>(null);
-  const [scheduleOptionName, setScheduleOptionName] = useState<string | null>(null);
-  const [spaceOptionName, setSpaceOptionName] = useState<string | null>(null);
-  const [certificationTypeName, setCertificationTypeName] = useState<string | null>(null);
+  const [_scheduleOptionName, setScheduleOptionName] = useState<string | null>(
+    null
+  );
+  const [_spaceOptionName, setSpaceOptionName] = useState<string | null>(null);
+  const [certificationTypeName, setCertificationTypeName] = useState<
+    string | null
+  >(null);
+
+  // Estado para el scroll y la tarjeta mini sticky
+  const [showStickyCard, setShowStickyCard] = useState(false);
+
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
   async function fetchVideosList(aadUserId: string = MAIN_AAD_USER_ID) {
     if (!aadUserId) return;
 
-    const res = await fetch(`/api/super-admin/teams/video?userId=${aadUserId}`, {
-      cache: 'no-store',
-    });
+    const res = await fetch(
+      `/api/super-admin/teams/video?userId=${aadUserId}`,
+      {
+        cache: 'no-store',
+      }
+    );
 
     const data = (await res.json()) as VideoData;
     const videoList = Array.isArray(data.videos) ? data.videos : [];
@@ -321,7 +424,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       const syncData = (await syncRes.json()) as SyncResponse;
       if (!syncRes.ok) {
-        const errorMsg = typeof syncData.error === 'string' ? syncData.error : 'Sync error';
+        const errorMsg =
+          typeof syncData.error === 'string' ? syncData.error : 'Sync error';
         throw new Error(errorMsg);
       }
 
@@ -404,7 +508,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             v &&
             typeof v === 'object' &&
             typeof (v as { toISOString?: () => string }).toISOString ===
-            'function'
+              'function'
           ) {
             try {
               return (v as { toISOString: () => string }).toISOString();
@@ -482,9 +586,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const errorMessage =
           typeof responseData === 'object' &&
-            responseData !== null &&
-            'error' in responseData &&
-            typeof (responseData as { error?: unknown }).error === 'string'
+          responseData !== null &&
+          'error' in responseData &&
+          typeof (responseData as { error?: unknown }).error === 'string'
             ? (responseData as { error: string }).error
             : 'Error al matricular';
 
@@ -623,16 +727,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         // Obtener también del coorganizador si existe
         const coOrganizerIds = course?.meetings
-          ?.map(m => m.joinUrl)
+          ?.map((m) => m.joinUrl)
           .filter(Boolean)
-          .map(url => {
+          .map((url) => {
             // Extraer ID de organizador alternativo de la URL si existe
             const match = /organizer=([^&]+)/.exec(url ?? '');
             return match?.[1];
           })
           .filter((id, idx, arr) => id && arr.indexOf(id) === idx);
 
-        const userIds = [organizerAadUserId, ...(coOrganizerIds ?? [])].filter(Boolean);
+        const userIds = [organizerAadUserId, ...(coOrganizerIds ?? [])].filter(
+          Boolean
+        );
 
         const allVideos: VideoIdxItem[] = [];
 
@@ -648,10 +754,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           const videos: VideoIdxItem[] =
             isRecord(raw) &&
-              Array.isArray((raw as Record<string, unknown>).videos)
+            Array.isArray((raw as Record<string, unknown>).videos)
               ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-                isVideoIdxItem
-              )
+                  isVideoIdxItem
+                )
               : [];
 
           allVideos.push(...videos);
@@ -659,22 +765,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         // Deduplicar por videoKey
         const uniqueVideos = Array.from(
-          new Map(allVideos.map(v => [v.videoKey, v])).values()
+          new Map(allVideos.map((v) => [v.videoKey, v])).values()
         );
 
         setVideosRaw(uniqueVideos);
 
-        console.log(`🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`);
+        console.log(
+          `🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`
+        );
         for (const v of uniqueVideos) {
           console.log(
             `  • videoKey=${v.videoKey} createdAt=${v.createdAt ?? '-'} meetingId=${v.meetingId || '-'}`
           );
         }
 
-        const map = new Map
-          <string,
-            { videoKey: string; videoUrl: string; createdAt?: string }
-          >();
+        const map = new Map<
+          string,
+          { videoKey: string; videoUrl: string; createdAt?: string }
+        >();
         for (const v of uniqueVideos) {
           const prev = map.get(v.meetingId);
           if (!prev) {
@@ -700,6 +808,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setSelectedColor(savedColor);
     }
   }, [courseIdNumber]);
+
+  // Listener para mostrar/ocultar la tarjeta sticky según el scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      // Mostrar la tarjeta mini cuando el scroll es mayor a 300px
+      setShowStickyCard(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Manejo de actualizar
   const handleUpdateCourse = async (
@@ -1088,188 +1207,223 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     onSaveChange,
     isUpdating,
   }) => {
-      const [isOpen, setIsOpen] = useState(false);
-      const [searchTerm, setSearchTerm] = useState('');
-      const currentEducator = educators.find((e) => e.id === course.instructor);
-      const displayEducator = educators.find(
-        (e) => e.id === (selectedInstructor ?? course.instructor)
-      );
-      void currentEducator;
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const currentEducator = educators.find((e) => e.id === course.instructor);
+    const displayEducator = educators.find(
+      (e) => e.id === (selectedInstructor ?? course.instructor)
+    );
+    void currentEducator;
 
-      // Filtrar educadores por búsqueda
-      const filteredEducators = educators.filter((educator) =>
-        (educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-        (educator.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-      );
+    // Filtrar educadores por búsqueda
+    const filteredEducators = educators.filter(
+      (educator) =>
+        (educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+          false) ||
+        (educator.email?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+          false)
+    );
 
-      // Función para copiar al portapapeles
-      const copyToClipboard = (text: string, type: string) => {
-        navigator.clipboard.writeText(text);
-        toast.success(`${type} copiado al portapapeles`);
-      };
+    // Función para copiar al portapapeles
+    const copyToClipboard = (text: string, type: string) => {
+      navigator.clipboard.writeText(text);
+      toast.success(`${type} copiado al portapapeles`);
+    };
 
-      return (
-        <div className="flex flex-col gap-3">
-          {/* Dropdown personalizado */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="border-primary bg-background text-primary w-full rounded-md border p-3 text-left text-sm transition-colors hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="font-medium">{displayEducator?.name ?? 'Sin nombre'}</p>
-                  {displayEducator?.email && (
-                    <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
-                      <span>✉️</span>
-                      <span>{displayEducator.email}</span>
-                    </p>
-                  )}
-                  {!displayEducator?.email && (
-                    <p className="text-primary/50 mt-1 text-xs italic">
-                      Sin correo disponible
-                    </p>
-                  )}
-                </div>
-                <svg
-                  className={`h-5 w-5 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Dropdown personalizado */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full rounded-md border border-cyan-500/50 bg-slate-900 p-3 text-left text-sm text-cyan-400 transition-colors hover:border-cyan-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="font-medium">
+                  {displayEducator?.name ?? 'Sin nombre'}
+                </p>
+                {displayEducator?.email && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
+                    <span>✉️</span>
+                    <span>{displayEducator.email}</span>
+                  </p>
+                )}
+                {!displayEducator?.email && (
+                  <p className="mt-1 text-xs text-cyan-400/50 italic">
+                    Sin correo disponible
+                  </p>
+                )}
               </div>
-            </button>
-
-            {/* Lista desplegable */}
-            {isOpen && (
-              <>
-                {/* Overlay para cerrar al hacer clic afuera */}
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsOpen(false)}
+              <svg
+                className={`h-5 w-5 flex-shrink-0 text-cyan-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
                 />
+              </svg>
+            </div>
+          </button>
 
-                <div className="bg-background border-primary absolute z-20 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
-                  {/* Campo de búsqueda */}
-                  <div className="border-primary/10 border-b p-2">
-                    <input
-                      type="text"
-                      placeholder="Buscar por nombre o correo..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="border-primary/30 bg-background text-primary placeholder:text-primary/50 w-full rounded border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
+          {/* Lista desplegable */}
+          {isOpen && (
+            <>
+              {/* Overlay para cerrar al hacer clic afuera */}
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setIsOpen(false)}
+              />
 
-                  {/* Lista de educadores */}
-                  <div className="max-h-60 overflow-auto">
-                    {filteredEducators.length > 0 ? (
-                      filteredEducators.map((educator) => (
-                        <div
-                          key={educator.id}
-                          className={`border-primary/10 hover:bg-primary/10 group border-b p-3 transition-colors last:border-b-0 
-                            ${educator.id === (selectedInstructor ?? course.instructor)
-                              ? 'bg-primary/20'
-                              : ''
-                            }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
+              <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-cyan-500/50 bg-slate-900 shadow-lg">
+                {/* Campo de búsqueda */}
+                <div className="border-b border-cyan-500/30 p-2">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o correo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full rounded border border-cyan-500/40 bg-slate-900 px-3 py-2 text-sm text-cyan-400 placeholder:text-cyan-400/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 focus:outline-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                {/* Lista de educadores */}
+                <div className="max-h-60 overflow-auto">
+                  {filteredEducators.length > 0 ? (
+                    filteredEducators.map((educator) => (
+                      <div
+                        key={educator.id}
+                        className={`group border-b border-cyan-500/20 p-3 transition-colors last:border-b-0 hover:bg-cyan-500/10 ${
+                          educator.id ===
+                          (selectedInstructor ?? course.instructor)
+                            ? 'bg-cyan-500/20'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelectEducator(educator.id);
+                              setIsOpen(false);
+                              setSearchTerm('');
+                            }}
+                            className="flex-1 text-left text-cyan-400"
+                          >
+                            <p className="text-sm font-medium">
+                              {educator.name}
+                            </p>
+                            {educator.email ? (
+                              <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
+                                <span>✉️</span>
+                                <span>{educator.email}</span>
+                              </p>
+                            ) : (
+                              <p className="mt-1 text-xs text-cyan-400/50 italic">
+                                Sin correo
+                              </p>
+                            )}
+                          </button>
+
+                          {/* Botones de copiar */}
+                          <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                             <button
                               type="button"
-                              onClick={() => {
-                                onSelectEducator(educator.id);
-                                setIsOpen(false);
-                                setSearchTerm('');
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(educator.name ?? '', 'Nombre');
                               }}
-                              className="text-primary flex-1 text-left"
+                              className="rounded p-1 text-cyan-400/60 hover:bg-cyan-400/10 hover:text-cyan-400"
+                              title="Copiar nombre"
                             >
-                              <p className="font-medium text-sm">{educator.name}</p>
-                              {educator.email ? (
-                                <p className="text-primary/70 mt-1 flex items-center gap-1 text-xs">
-                                  <span>✉️</span>
-                                  <span>{educator.email}</span>
-                                </p>
-                              ) : (
-                                <p className="text-primary/50 mt-1 text-xs italic">
-                                  Sin correo
-                                </p>
-                              )}
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                              </svg>
                             </button>
-
-                            {/* Botones de copiar */}
-                            <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            {educator.email && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  copyToClipboard(educator.name ?? '', 'Nombre');
+                                  copyToClipboard(
+                                    educator.email ?? '',
+                                    'Correo'
+                                  );
                                 }}
-                                className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
-                                title="Copiar nombre"
+                                className="rounded p-1 text-cyan-400/60 hover:bg-cyan-400/10 hover:text-cyan-400"
+                                title="Copiar correo"
                               >
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                  />
                                 </svg>
                               </button>
-                              {educator.email && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    copyToClipboard(educator.email ?? '', 'Correo');
-                                  }}
-                                  className="text-primary/60 hover:text-primary rounded p-1 hover:bg-primary/10"
-                                  title="Copiar correo"
-                                >
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-primary/50 p-4 text-center text-sm">
-                        No se encontraron educadores
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-cyan-400/50">
+                      No se encontraron educadores
+                    </div>
+                  )}
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Botón de guardado */}
-          {selectedInstructor && selectedInstructor !== course.instructor && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onSaveChange}
-              className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <>
-                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <span className="mr-2">💾</span>
-                  Guardar cambio de educador
-                </>
-              )}
-            </Button>
+              </div>
+            </>
           )}
         </div>
-      );
-    };
+
+        {/* Botón de guardado */}
+        {selectedInstructor && selectedInstructor !== course.instructor && (
+          <Button
+            size="sm"
+            onClick={onSaveChange}
+            className="relative w-full border-cyan-500 bg-cyan-500/20 text-cyan-400 transition-colors hover:bg-cyan-500/40"
+            disabled={isUpdating}
+          >
+            {isUpdating ? (
+              <>
+                <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <span className="mr-2">💾</span>
+                Guardar Cambio
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  };
   const awsBase = (process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').replace(
     /\/+$/,
     ''
@@ -1405,22 +1559,70 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return meeting;
   });
 
-
   const meetingsForList: UIMeeting[] = [...enrichedMeetings].sort((a, b) => {
     const aMs = toMsFlexible(a.startDateTime);
     const bMs = toMsFlexible(b.startDateTime);
     return (aMs || 0) - (bMs || 0);
   });
 
-
   // Renderizar el componente
   return (
-    <div className="bg-background h-auto w-full rounded-lg p-4">
-      <Breadcrumb className="mb-4">
+    <div className="h-auto w-full p-4">
+      {/* Tarjeta Mini Sticky - Aparece al hacer scroll */}
+      {showStickyCard && course && (
+        <div className="animate-in fade-in slide-in-from-top-4 fixed top-4 right-4 left-4 z-50 mx-auto flex max-w-2xl items-center justify-between gap-4 rounded-xl border border-cyan-500/40 bg-slate-950 p-4 shadow-2xl shadow-cyan-500/20 backdrop-blur-sm duration-500 md:right-8 md:left-8">
+          {/* Mini Imagen y Info */}
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            {/* Mini Imagen */}
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+              <Image
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
+                alt={course.title}
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+                quality={60}
+              />
+            </div>
+
+            {/* Información compacta */}
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-bold text-white">
+                {course.title}
+              </h3>
+              <p className="truncate text-xs font-semibold text-cyan-400">
+                {course.categoryName ?? 'Curso'} • {course.nivelName ?? 'Nivel'}
+              </p>
+              <div className="mt-1 flex gap-2">
+                <Badge className="border-cyan-500/50 bg-cyan-500/30 text-xs text-cyan-300">
+                  {course.modalidadesName ?? 'Modalidad'}
+                </Badge>
+                {course.instructorName && (
+                  <Badge className="border-purple-500/50 bg-purple-500/30 text-xs text-purple-300">
+                    👨‍🏫 {course.instructorName}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Botón Volver arriba */}
+          <Button
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex-shrink-0 bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 transition-all hover:bg-cyan-600"
+          >
+            ↑ Arriba
+          </Button>
+        </div>
+      )}
+
+      <Breadcrumb className="animate-in fade-in slide-in-from-top-4 mb-8 duration-500">
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
               href="/dashboard/super-admin"
             >
               Inicio
@@ -1429,71 +1631,61 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
               href="/dashboard/super-admin/cursos"
             >
-              Lista de cursos
+              Cursos
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="text-primary hover:text-gray-300">
-              Detalles del curso
-            </BreadcrumbLink>
+            <BreadcrumbLink className="text-white/60">Detalles</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
-        <Card
-          className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
-          style={{
-            backgroundColor: selectedColor,
-            color: getContrastYIQ(selectedColor),
-          }}
-        >
-          <CardHeader className="grid w-full grid-cols-1 gap-4 p-0 md:grid-cols-2 md:gap-8">
-            <div>
-              <CardTitle className="text-primary text-2xl font-bold md:text-3xl lg:text-4xl">
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all duration-700 group-hover:opacity-100" />
+        <Card className="zoom-in relative sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2 border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all duration-500 ease-out hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
+          <CardHeader className="grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8 md:grid-cols-2 md:gap-12">
+            <div className="animate-in fade-in slide-in-from-left-4 space-y-3 duration-500">
+              <p className="text-sm font-semibold tracking-widest text-cyan-400 uppercase">
+                Detalles del Curso
+              </p>
+              <CardTitle className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
                 {course.title}
               </CardTitle>
-              <p className={`mt-2 text-xs font-semibold uppercase tracking-widest md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/60' : 'text-white/60'}`}>
-                Detalles Completos del Curso
-              </p>
             </div>
-            <div className="flex flex-col justify-start gap-3">
-              <Label
-                className={`text-xs font-bold uppercase tracking-wider md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                  }`}
-              >
-                🎨 Tema del Curso
+            <div className="animate-in fade-in slide-in-from-right-4 flex flex-col justify-start gap-4 duration-500">
+              <Label className="flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+                Tema Visual
               </Label>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-3">
                 {predefinedColors.map((color) => (
                   <button
                     key={color}
                     onClick={() => handlePredefinedColorChange(color)}
                     style={{ backgroundColor: color }}
-                    className={`size-10 rounded-lg border-2 transition-all duration-300 hover:scale-110 ${selectedColor === color
-                      ? `border-${selectedColor === '#FFFFFF' ? 'black' : 'white'} ring-2 ring-offset-2 ring-primary`
-                      : 'border-gray-300 hover:border-gray-500'
-                      }`}
+                    className={`h-12 w-12 rounded-xl border-2 transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50 ${
+                      selectedColor === color
+                        ? `scale-110 border-white shadow-lg ring-2 ring-cyan-400 ring-offset-2`
+                        : 'border-white/20 hover:border-cyan-400'
+                    }`}
                     title={`Cambiar tema a ${color}`}
                   />
                 ))}
               </div>
             </div>
           </CardHeader>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
             {/* Left Column - Image */}
-            <div className="flex w-full flex-col space-y-4">
-              <div className="relative aspect-video w-full">
+            <div className="animate-in fade-in slide-in-from-left-8 flex w-full flex-col space-y-5 duration-700">
+              <div className="relative aspect-video w-full overflow-hidden rounded-2xl">
                 <Image
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                   alt={course.title}
                   width={300}
                   height={100}
-                  className="mx-auto rounded-lg object-contain"
+                  className="mx-auto h-full w-full rounded-2xl object-contain"
                   priority
                   quality={75}
                 />
@@ -1501,28 +1693,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                 <Button
                   onClick={handleEnrollAndRedirect}
-                  className="w-full bg-green-500 px-3 py-2 text-xs font-semibold hover:bg-green-600 md:px-4 md:py-2.5 md:text-sm"
+                  className="w-full bg-cyan-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-cyan-600 md:px-4 md:py-3 md:text-sm"
                 >
-                  👁️ Ver Curso
+                  Ver
                 </Button>
                 <Button
                   onClick={handleEditCourse}
-                  className="w-full bg-yellow-500 px-3 py-2 text-xs font-semibold text-white hover:bg-yellow-600 md:px-4 md:py-2.5 md:text-sm"
+                  className="w-full bg-yellow-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-yellow-600 md:px-4 md:py-3 md:text-sm"
                 >
                   ✏️ Editar
                 </Button>
-                <Button className="w-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 md:px-4 md:py-2.5 md:text-sm">
+                <Button className="w-full bg-blue-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-blue-600 md:px-4 md:py-3 md:text-sm">
                   <Link
                     href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
                   >
-                    📊 Stats
+                    Stats
                   </Link>
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      className="w-full px-3 py-2 text-xs font-semibold md:px-4 md:py-2.5 md:text-sm"
+                      className="w-full bg-red-500 px-3 py-2 text-xs font-semibold transition-all duration-300 hover:bg-red-600 md:px-4 md:py-3 md:text-sm"
                     >
                       🗑️ Eliminar
                     </Button>
@@ -1551,211 +1743,73 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
             </div>
             {/* Right Column - Information */}
-            <div className="space-y-6">
-              <h2 className="text-primary text-xl font-bold sm:text-2xl">
-                Información del curso
+            <div className="animate-in fade-in slide-in-from-right-8 space-y-6 duration-700">
+              <h2 className="text-2xl font-bold text-white md:text-3xl">
+                Información del Curso
               </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Nombre del Curso
-                  </h2>
-                  <h1 className="text-primary text-lg font-bold md:text-xl">
-                    {course.title}
-                  </h1>
-                </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
+
+              {/* Grid de información rápida */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                     Categoría
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
+                  </p>
+                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
                     {course.categoryName ?? course.categoryid}
                   </Badge>
                 </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
+
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                     Nivel
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                  >
+                  </p>
+                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
                     {course.nivelName ?? course.nivelid}
                   </Badge>
                 </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
+
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                     Modalidad
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                  >
+                  </p>
+                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
                     {course.modalidadesName ?? course.modalidadesid}
                   </Badge>
                 </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Tipo de Certificación
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                  >
+
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                    Certificación
+                  </p>
+                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
                     {certificationTypeName ?? 'No asignado'}
                   </Badge>
                 </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Horario
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                  >
-                    {scheduleOptionName ?? 'No asignado'}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Espacios
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-                  >
-                    {spaceOptionName ?? 'No asignado'}
-                  </Badge>
-                </div>
               </div>
-              <div className="space-y-3">
-                <h2
-                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                    }`}
-                >
-                  Descripción del Curso
-                </h2>
-                <p
-                  className={`text-justify text-sm leading-relaxed md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/90' : 'text-white/90'
-                    }`}
-                >
+
+              {/* Descripción */}
+              <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                <h3 className="mb-3 text-sm font-bold tracking-wide text-cyan-400 uppercase">
+                  Descripción
+                </h3>
+                <p className="text-sm leading-relaxed text-white/80">
                   {course.description}
                 </p>
               </div>
-              <div className="space-y-3">
-                <h2
-                  className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                    }`}
-                >
-                  Precio Individual
+
+              {/* Educador */}
+              <div className="rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/70">
+                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+                  Educador Asignado
                 </h2>
-                <div className="inline-block">
-                  <Badge
-                    variant="outline"
-                    className={`border-2 px-4 py-2 text-base font-semibold ${selectedColor === '#FFFFFF'
-                      ? 'border-black/30 text-black'
-                      : 'border-white/30 text-white'
-                      } bg-background/50`}
-                  >
-                    {individualPrice !== null
-                      ? `$${individualPrice.toLocaleString()}`
-                      : 'No asignado'}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {/* Educador - Sección destacada */}
-                <div className="rounded-lg border-2 border-primary/30 bg-background/70 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:bg-background/90">
-                  <h2
-                    className={`mb-4 text-sm font-bold uppercase tracking-wider md:text-base ${selectedColor === '#FFFFFF' ? 'text-black/80' : 'text-white/80'
-                      }`}
-                  >
-                    👨‍🏫 Educador Asignado
-                  </h2>
-                  <EducatorsList
-                    educators={educators}
-                    course={course}
-                    onSelectEducator={setSelectedInstructor}
-                    selectedInstructor={selectedInstructor}
-                    onSaveChange={handleChangeInstructor}
-                    isUpdating={isUpdating}
-                  />
-                </div>
-
-              </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
-                {/* Estado */}
-                <div className="space-y-3">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Estado del Curso
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className={`inline-block border-2 px-4 py-2 font-semibold text-base transition-all ${course.isActive
-                      ? 'border-green-500/70 text-green-600 bg-green-50/20'
-                      : 'border-red-500/70 text-red-600 bg-red-50/20'
-                      }`}
-                  >
-                    {course.isActive ? '✓ Activo' : '✕ Inactivo'}
-                  </Badge>
-                </div>
-
-                {/* Materias */}
-                <div className="space-y-3">
-                  <h2
-                    className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${selectedColor === '#FFFFFF' ? 'text-black/70' : 'text-white/70'
-                      }`}
-                  >
-                    Materias Asociadas
-                  </h2>
-                  {materias.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        ...new Map(materias.map((m) => [m.title, m])).values(),
-                      ].map((materia) => (
-                        <Badge
-                          key={materia.id}
-                          variant="secondary"
-                          className={`bg-gradient-to-r ${getBadgeGradient()} px-3 py-1.5 text-white text-xs md:text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg`}
-                        >
-                          {materia.title}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className={`text-sm italic ${selectedColor === '#FFFFFF' ? 'text-black/50' : 'text-white/50'}`}>
-                      No hay materias asociadas
-                    </p>
-                  )}
-                </div>
+                <EducatorsList
+                  educators={educators}
+                  course={course}
+                  onSelectEducator={setSelectedInstructor}
+                  selectedInstructor={selectedInstructor}
+                  onSaveChange={handleChangeInstructor}
+                  isUpdating={isUpdating}
+                />
               </div>
             </div>
           </div>
@@ -1765,41 +1819,215 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <LoadingCourses />
       ) : (
         courseIdNumber !== null && (
-          <>
-            {/* NUEVO BLOQUE PARA SIMULAR CLASES EN TEAMS */}
-            <div className="mt-12 space-y-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <h2 className="text-primary text-xl font-bold md:text-2xl">
-                  Clases agendadas
-                </h2>
-                <div className="flex flex-col gap-2 sm:flex-row w-full md:w-auto">
-                  <Button
-                    onClick={() => void handleSyncVideos()}
-                    disabled={isSyncingVideos}
-                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
+          <div className="mt-16 space-y-8">
+            {/* TABS MENU HORIZONTAL */}
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+              {/* Tabs Navigation */}
+              <div className="mb-8 border-b border-cyan-500/20">
+                <div className="flex gap-8 overflow-x-auto pb-4">
+                  <button
+                    onClick={() => setActiveTab('curso')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'curso'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
                   >
-                    {isSyncingVideos ? '🔄 Sincronizando...' : '🎥 Sincronizar Videos'}
-                  </Button>
-
-                  <Button
-                    onClick={() => setIsMeetingModalOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-black w-full sm:w-auto text-sm md:text-base px-3 py-2 md:px-4 md:py-2"
+                    Curso
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('lecciones')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'lecciones'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
                   >
-                    + Agendar clase en Teams
-                  </Button>
+                    Lista de Clases
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('estudiantes')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'estudiantes'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Estudiantes
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('grabadas')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'grabadas'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Clases grabadas{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      {meetingsForList.length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('proyectos')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'proyectos'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Proyectos{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      1
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('recursos')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'recursos'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Recursos{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      3
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('actividades')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'actividades'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Actividades{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      5
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              <ScheduledMeetingsList
-                meetings={meetingsForList}
-                color={selectedColor}
-              />
+              {/* TAB CONTENT */}
+              <div className="space-y-6">
+                {/* Curso Tab - Solo Clase en Vivo */}
+                {activeTab === 'curso' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      Clase en Vivo
+                    </h2>
+
+                    {/* Clases agendadas */}
+                    <div className="mb-6 space-y-4">
+                      <ScheduledMeetingsList
+                        meetings={meetingsForList}
+                        color={selectedColor}
+                      />
+                    </div>
+
+                    {/* Botones de acción */}
+                    <div className="flex w-full flex-col gap-3 sm:flex-row">
+                      <Button
+                        onClick={() => void handleSyncVideos()}
+                        disabled={isSyncingVideos}
+                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 disabled:opacity-50 sm:w-auto md:px-6 md:py-3 md:text-base"
+                      >
+                        {isSyncingVideos
+                          ? 'Sincronizando...'
+                          : 'Sincronizar Videos'}
+                      </Button>
+
+                      <Button
+                        onClick={() => setIsMeetingModalOpen(true)}
+                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 sm:w-auto md:px-6 md:py-3 md:text-base"
+                      >
+                        Agendar Clase
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de Clases Tab */}
+                {activeTab === 'lecciones' && (
+                  <div className="animate-in fade-in duration-500">
+                    <LessonsListEducator
+                      courseId={courseIdNumber}
+                      selectedColor={selectedColor}
+                    />
+                  </div>
+                )}
+
+                {/* Estudiantes Tab */}
+                {activeTab === 'estudiantes' && (
+                  <div className="animate-in fade-in duration-500">
+                    <DashboardEstudiantes
+                      courseId={courseIdNumber}
+                      selectedColor={selectedColor}
+                    />
+                  </div>
+                )}
+
+                {/* Clases Grabadas Tab */}
+                {activeTab === 'grabadas' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      Clases Grabadas ({meetingsForList.length})
+                    </h2>
+                    <div className="space-y-4">
+                      <ScheduledMeetingsList
+                        meetings={meetingsForList}
+                        color={selectedColor}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Proyectos Tab */}
+                {activeTab === 'proyectos' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      Proyectos
+                    </h2>
+                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+                      <p className="text-white/60">
+                        Aquí irán los proyectos del curso...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recursos Tab */}
+                {activeTab === 'recursos' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      Recursos
+                    </h2>
+                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+                      <p className="text-white/60">
+                        Aquí irán los recursos del curso...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actividades Tab */}
+                {activeTab === 'actividades' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      Actividades
+                    </h2>
+                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+                      <p className="text-white/60">
+                        Aquí irán las actividades del curso...
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <LessonsListEducator
-              courseId={courseIdNumber}
-              selectedColor={selectedColor}
-            />
-          </>
+          </div>
         )
       )}
 
@@ -1813,10 +2041,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         courseId={courseIdNumber} // <-- aquí lo pasas
       />
 
-      <DashboardEstudiantes
-        courseId={courseIdNumber}
-        selectedColor={selectedColor}
-      />
       {isModalOpen && (
         <ModalFormCourse
           isOpen={isModalOpen}
@@ -1907,7 +2131,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setEspacios={setEditEspacios}
           certificationTypeId={course.certificationTypeId ?? null}
           setCertificationTypeId={(id) => {
-            setCourse(prev => prev ? { ...prev, certificationTypeId: id } : null);
+            setCourse((prev) =>
+              prev ? { ...prev, certificationTypeId: id } : null
+            );
           }}
           certificationTypes={[]}
         />
