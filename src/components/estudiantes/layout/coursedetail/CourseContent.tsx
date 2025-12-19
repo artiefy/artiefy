@@ -1526,7 +1526,7 @@ export function CourseContent({
                 <div>
                   {/* Header con variantes responsive para grabadas */}
                   <div
-                    className="mb-3 flex flex-col items-center rounded-2xl border sm:hidden"
+                    className="mb-3 flex flex-col items-start rounded-2xl sm:hidden"
                     style={{ backgroundColor: '#01152d' }}
                   >
                     <div className="flex items-center gap-3">
@@ -1537,19 +1537,6 @@ export function CourseContent({
                         Clases Grabadas
                       </h3>
                     </div>
-                    <button
-                      onClick={toggleRecordedClasses}
-                      className="mt-1 flex items-center gap-1 text-xs font-medium text-cyan-200 underline-offset-4 hover:text-cyan-100"
-                    >
-                      <span>
-                        {showRecordedClasses ? 'Ver menos' : 'Ver más'}
-                      </span>
-                      {showRecordedClasses ? (
-                        <FaChevronUp className="size-3" />
-                      ) : (
-                        <FaChevronDown className="size-3" />
-                      )}
-                    </button>
                   </div>
 
                   <div

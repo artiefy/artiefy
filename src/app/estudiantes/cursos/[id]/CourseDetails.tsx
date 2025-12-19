@@ -723,10 +723,10 @@ export default function CourseDetails({
   return (
     <>
       <div className="bg-background min-h-screen">
-        <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
+        <main className="mx-auto -mt-6 max-w-7xl px-4 py-2 sm:-mt-0 md:px-6 md:py-8 lg:px-8">
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
-            className="relative rounded-2xl border p-6 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
+            className="relative rounded-2xl border p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
             style={{
               backgroundColor: '#010b17',
               borderColor: '#061c37cc',
@@ -739,6 +739,233 @@ export default function CourseDetails({
           >
             <div className="from-background via-background/95 to-background/80 absolute inset-0 rounded-2xl bg-gradient-to-r"></div>
             <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
+              {/* Mini tarjeta estática para móviles: mismo contenido y estilo que el CTA lateral de escritorio */}
+              <div className="lg:hidden">
+                <div
+                  className="border-border relative overflow-hidden rounded-2xl border bg-[#061c37]"
+                  style={{ borderColor: '#1d283a', borderWidth: '1px' }}
+                >
+                  <div className="relative">
+                    <AspectRatio ratio={16 / 9}>
+                      <div className="relative h-full w-full overflow-hidden">
+                        {course.coverImageKey && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                            alt={course.title}
+                            className="h-full w-full object-cover"
+                          />
+                        )}
+                        <div
+                          className="pointer-events-none absolute inset-0 z-10"
+                          style={{
+                            background:
+                              'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
+                            willChange: 'transform',
+                          }}
+                        />
+                      </div>
+                    </AspectRatio>
+                  </div>
+                  <div className="relative z-20 space-y-5 p-5">
+                    {courseTypes.length > 0 &&
+                      (() => {
+                        const primaryType = courseTypes[0];
+                        if (!primaryType) return null;
+
+                        const isPremium =
+                          primaryType.requiredSubscriptionLevel === 'premium';
+                        const isPro =
+                          primaryType.requiredSubscriptionLevel === 'pro';
+                        const isFree =
+                          primaryType.requiredSubscriptionLevel === 'none' &&
+                          !primaryType.isPurchasableIndividually;
+                        const label = isPremium
+                          ? 'Premium'
+                          : isPro
+                            ? 'Pro'
+                            : isFree
+                              ? 'Gratis'
+                              : 'Compra única';
+                        const styleMap: Record<
+                          string,
+                          { bg: string; border: string; text: string }
+                        > = {
+                          Premium: {
+                            bg: 'rgba(251, 191, 36, 0.15)',
+                            border: '#f59e0b',
+                            text: '#fef3c7',
+                          },
+                          Pro: {
+                            bg: 'rgba(59, 130, 246, 0.15)',
+                            border: '#60a5fa',
+                            text: '#dbeafe',
+                          },
+                          Gratis: {
+                            bg: 'rgba(34, 197, 94, 0.18)',
+                            border: '#22c55e',
+                            text: '#16a34a',
+                          },
+                          'Compra única': {
+                            bg: 'rgba(37, 99, 235, 0.15)',
+                            border: '#60a5fa',
+                            text: '#dbeafe',
+                          },
+                        };
+
+                        if (label === 'Pro') return null;
+                        if (label === 'Premium') return null;
+                        if (label === 'Compra única') return null;
+
+                        const styles =
+                          styleMap[label] ?? styleMap['Compra única'];
+                        return (
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide uppercase"
+                              style={{
+                                backgroundColor: styles.bg,
+                                borderColor: styles.border,
+                                color: styles.text,
+                              }}
+                            >
+                              {label}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    {includedPlans.length > 0 && (
+                      <div className="space-y-1">
+                        {includedPlans.includes('Premium') &&
+                        includedPlans.includes('Pro') ? (
+                          <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
+                            <AiFillFire className="h-4 w-4 text-red-400" />
+                            <span>Premium + Pro</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-2">
+                            {includedPlans.includes('Premium') && (
+                              <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
+                                <FaCrown className="h-3 w-3" />
+                                <span>Premium</span>
+                              </div>
+                            )}
+                            {includedPlans.includes('Pro') && (
+                              <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
+                                <FaStar className="h-3 w-3" />
+                                <span>Pro</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {(_hasPurchasable || course.individualPrice) && (
+                      <div className="space-y-1">
+                        <p className="text-foreground text-2xl font-bold">
+                          ${' '}
+                          {formatPrice(
+                            course.individualPrice ?? course.courseType?.price
+                          )}
+                        </p>
+                        <p className="text-xs text-[#94A3B8]">
+                          Precio individual del curso
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      {includedPlans.length > 0 && (
+                        <div>
+                          <p className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#22C4D3]">
+                            {includedPlans.includes('Premium') &&
+                            includedPlans.includes('Pro')
+                              ? 'Incluido en tu plan Premium y Pro'
+                              : userIncludedPlanLabel
+                                ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
+                                : `Incluido en ${
+                                    includedPlans.length > 1
+                                      ? 'los planes'
+                                      : 'el plan'
+                                  } ${includedPlans.join(' + ')}`}
+                            {includedPlans.includes('Pro') &&
+                            !includedPlans.includes('Premium') ? (
+                              <FaStar className="h-4 w-4 text-blue-400" />
+                            ) : includedPlans.includes('Premium') &&
+                              !includedPlans.includes('Pro') ? (
+                              <FaCrown className="h-4 w-4 text-amber-400" />
+                            ) : (
+                              <AiFillFire className="h-4 w-4 text-red-400" />
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {isEnrolled ? (
+                        <div className="space-y-2">
+                          <div className="group relative">
+                            <button
+                              type="button"
+                              className="ring-offset-background focus-visible:ring-ring group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                            >
+                              <FaCheck
+                                className="mr-2 h-5 w-5"
+                                style={{ color: 'rgb(52 211 153)' }}
+                              />
+                              Suscrito
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Cancelar suscripción al curso"
+                              onClick={() => setShowUnenrollDialog(true)}
+                              disabled={isUnenrolling}
+                              className="hover:bg-destructive/20 group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                            >
+                              <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleContinueCourse}
+                            disabled={!continueLessonId}
+                            className="ring-offset-background focus-visible:ring-ring hover:bg-primary/90 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-sm font-medium text-[#080c16] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0"
+                          >
+                            <IoPlayOutline className="mr-2 text-black" />
+                            Continuar curso
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={handleStartNow}
+                            disabled={isEnrolling}
+                            className="ring-offset-background focus-visible:ring-ring hover:shadow-primary/20 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-semibold whitespace-nowrap transition-all hover:shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                            style={{
+                              color: '#080C16',
+                              backgroundColor: '#22c4d3e6',
+                            }}
+                          >
+                            {isEnrolling ? 'Inscribiendo…' : 'Empezar Ahora'}
+                          </button>
+                          <p className="text-center text-xs text-[#94A3B8]">
+                            Accede a este y a más de{' '}
+                            <span className="font-medium text-white">
+                              {totalSimilarCourses}{' '}
+                              {totalSimilarCourses === 1 ? 'curso' : 'cursos'}
+                            </span>{' '}
+                            con {planPhrase}.{' '}
+                            <a
+                              href="/planes"
+                              className="text-white hover:underline"
+                            >
+                              Ver planes
+                            </a>
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div className="space-y-8 lg:col-span-2">
                 <div className="space-y-6">
                   {/* Categoria encima del título */}
@@ -1383,90 +1610,6 @@ export default function CourseDetails({
       </Dialog>
 
       {/* Comentarios: show at bottom */}
-      {/* CTA móvil: visible solo en pantallas pequeñas, no afecta pantallas lg+ */}
-      <div className="fixed inset-x-4 bottom-4 z-[1400] lg:hidden">
-        <div className="rounded-2xl border border-[#1D283A] bg-[#061c37] p-3 shadow-xl">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              {course.coverImageKey ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                  alt={course.title}
-                  className="h-12 w-12 rounded-md object-cover"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-md bg-[#01142B]" />
-              )}
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-white">
-                  {course.title}
-                </div>
-                <div className="text-xs text-gray-300">
-                  {course.lessons?.length ?? 0} clases
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isEnrolled ? (
-                <button
-                  type="button"
-                  onClick={handleContinueCourse}
-                  className="h-10 rounded-full bg-emerald-400 px-4 text-sm font-semibold text-black shadow-sm"
-                >
-                  Continuar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleStartNow}
-                  className="h-10 rounded-full bg-[#22c4d3] px-4 text-sm font-semibold text-[#080c16] shadow-sm"
-                >
-                  Empezar ahora
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 border-t border-[#0b2636] pt-3">
-            {(_hasPurchasable || course.individualPrice) && (
-              <div className="flex items-baseline gap-2">
-                <div className="text-lg font-bold text-white">
-                  ${' '}
-                  {formatPrice(
-                    course.individualPrice ?? course.courseType?.price
-                  )}
-                </div>
-                <div className="text-xs text-[#94A3B8]">
-                  Precio individual del curso
-                </div>
-              </div>
-            )}
-
-            {includedPlans.length > 0 && (
-              <div className="mt-2 text-xs text-[#22C4D3]">
-                {includedPlans.includes('Premium') &&
-                includedPlans.includes('Pro')
-                  ? 'Incluido en tu plan Premium y Pro'
-                  : userIncludedPlanLabel
-                    ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
-                    : `Incluido en ${includedPlans.length > 1 ? 'los planes' : 'el plan'} ${includedPlans.join(' + ')}`}
-              </div>
-            )}
-
-            <p className="mt-2 text-xs text-[#94A3B8]">
-              Accede a este y a más de{' '}
-              <span className="font-medium text-white">
-                {totalSimilarCourses}
-              </span>{' '}
-              cursos con {planPhrase}.{' '}
-              <a href="/planes" className="text-white underline">
-                Ver planes
-              </a>
-            </p>
-          </div>
-        </div>
-      </div>
 
       <div className="mx-auto -mt-8 max-w-5xl px-4 pb-8">
         <CourseComments
