@@ -1383,6 +1383,91 @@ export default function CourseDetails({
       </Dialog>
 
       {/* Comentarios: show at bottom */}
+      {/* CTA móvil: visible solo en pantallas pequeñas, no afecta pantallas lg+ */}
+      <div className="fixed inset-x-4 bottom-4 z-[1400] lg:hidden">
+        <div className="rounded-2xl border border-[#1D283A] bg-[#061c37] p-3 shadow-xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {course.coverImageKey ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                  alt={course.title}
+                  className="h-12 w-12 rounded-md object-cover"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-md bg-[#01142B]" />
+              )}
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-white">
+                  {course.title}
+                </div>
+                <div className="text-xs text-gray-300">
+                  {course.lessons?.length ?? 0} clases
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isEnrolled ? (
+                <button
+                  type="button"
+                  onClick={handleContinueCourse}
+                  className="h-10 rounded-full bg-emerald-400 px-4 text-sm font-semibold text-black shadow-sm"
+                >
+                  Continuar
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStartNow}
+                  className="h-10 rounded-full bg-[#22c4d3] px-4 text-sm font-semibold text-[#080c16] shadow-sm"
+                >
+                  Empezar ahora
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 border-t border-[#0b2636] pt-3">
+            {(_hasPurchasable || course.individualPrice) && (
+              <div className="flex items-baseline gap-2">
+                <div className="text-lg font-bold text-white">
+                  ${' '}
+                  {formatPrice(
+                    course.individualPrice ?? course.courseType?.price
+                  )}
+                </div>
+                <div className="text-xs text-[#94A3B8]">
+                  Precio individual del curso
+                </div>
+              </div>
+            )}
+
+            {includedPlans.length > 0 && (
+              <div className="mt-2 text-xs text-[#22C4D3]">
+                {includedPlans.includes('Premium') &&
+                includedPlans.includes('Pro')
+                  ? 'Incluido en tu plan Premium y Pro'
+                  : userIncludedPlanLabel
+                    ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
+                    : `Incluido en ${includedPlans.length > 1 ? 'los planes' : 'el plan'} ${includedPlans.join(' + ')}`}
+              </div>
+            )}
+
+            <p className="mt-2 text-xs text-[#94A3B8]">
+              Accede a este y a más de{' '}
+              <span className="font-medium text-white">
+                {totalSimilarCourses}
+              </span>{' '}
+              cursos con {planPhrase}.{' '}
+              <a href="/planes" className="text-white underline">
+                Ver planes
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="mx-auto -mt-8 max-w-5xl px-4 pb-8">
         <CourseComments
           courseId={course.id}

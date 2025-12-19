@@ -795,7 +795,7 @@ export function CourseContent({
   return (
     <div
       className={cn(
-        'relative',
+        'relative px-4 sm:px-0',
         viewMode === 'recorded' || upcomingMeetings.length === 0
           ? 'pt-0'
           : 'pt-6'

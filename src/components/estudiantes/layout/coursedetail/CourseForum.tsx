@@ -139,12 +139,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
     return (
       <div
         className="border-border/50 flex flex-col items-center gap-2 rounded-xl border p-6 text-center"
-        style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
+        style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
         <h3 className="text-foreground text-lg font-semibold">
           Inicia sesión para participar
         </h3>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-[#94a3b8]">
           Este foro es exclusivo para estudiantes inscritos.
         </p>
       </div>
@@ -154,8 +154,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
   if (forumLoading) {
     return (
       <div
-        className="border-border/50 text-muted-foreground rounded-xl border p-4 text-sm"
-        style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
+        className="border-border/50 rounded-xl border p-4 text-sm text-[#94a3b8]"
+        style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
         Cargando foro...
       </div>
@@ -166,7 +166,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
     return (
       <div
         className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center"
-        style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
+        style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
         <div className="bg-muted/50 mb-4 flex h-16 w-16 items-center justify-center rounded-full text-black">
           <MessagesSquare className="h-8 w-8" />
@@ -189,28 +189,24 @@ export function CourseForum({ courseId }: CourseForumProps) {
         <h3 className="text-foreground text-xl font-semibold">
           Foro del curso
         </h3>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-1 text-sm text-[#94a3b8]">
           {totalComments} comentarios · Comparte dudas y avances con tus
           compañeros
         </p>
       </div>
 
-      <div
-        className="border-border/50 space-y-3 rounded-xl border p-4 shadow-sm"
-        style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
-      >
+      <div className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm">
         <textarea
-          className="border-border/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          style={{ backgroundColor: 'rgba(6, 28, 55, 0.45)' }}
+          className="text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-[16px] border border-[#1d283a80] bg-[#01152d80] px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           placeholder="Inicia una nueva discusión o comparte tu avance..."
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
         />
         <div className="flex items-center justify-between">
-          <div className="text-muted-foreground flex items-center gap-1">
+          <div className="flex items-center gap-1 text-[#94a3b8]">
             <button
               type="button"
-              className="hover:bg-accent inline-flex h-8 w-8 items-center justify-center rounded-md transition"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar imagen"
               disabled
             >
@@ -218,7 +214,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
             </button>
             <button
               type="button"
-              className="hover:bg-accent inline-flex h-8 w-8 items-center justify-center rounded-md transition"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar video"
               disabled
             >
@@ -226,7 +222,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
             </button>
             <button
               type="button"
-              className="hover:bg-accent inline-flex h-8 w-8 items-center justify-center rounded-md transition"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar audio"
               disabled
             >
@@ -238,8 +234,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
             onClick={handlePublish}
             disabled={!newPost.trim() || isPublishing}
             className={cn(
-              'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-              'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary focus-visible:ring-offset-background',
+              'ring-offset-background focus-visible:ring-ring hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-[14px] bg-[#22C4D3] px-3 text-sm font-medium whitespace-nowrap text-[#080C16] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
               (!newPost.trim() || isPublishing) && 'opacity-60'
             )}
           >
@@ -251,9 +246,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
       <div className="space-y-6">
         {postsLoading ? (
-          <div className="text-muted-foreground text-sm">
-            Cargando comentarios...
-          </div>
+          <div className="text-sm text-[#94a3b8]">Cargando comentarios...</div>
         ) : posts && posts.length > 0 ? (
           posts.map((post) => {
             const postReplies =
@@ -273,14 +266,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
                       <span className="text-foreground font-semibold">
                         {post.userId?.name}
                       </span>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-xs text-[#94a3b8]">
                         {formatDate(post.createdAt)}
                       </span>
                     </div>
                     <p className="text-foreground/90 text-sm whitespace-pre-wrap">
                       {post.content}
                     </p>
-                    <div className="text-muted-foreground flex items-center gap-4 pt-1 text-xs">
+                    <div className="flex items-center gap-4 pt-1 text-xs text-[#94a3b8]">
                       <button
                         type="button"
                         className="flex items-center gap-1 transition hover:text-white"
@@ -301,7 +294,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         <Reply className="h-4 w-4" />
                         Responder
                       </button>
-                      <span className="text-muted-foreground/80 ml-auto">
+                      <span className="ml-auto text-[#94a3b8]/80">
                         {postReplies.length} respuestas
                       </span>
                     </div>
@@ -311,7 +304,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                 {replyingTo === post.id && (
                   <div className="ml-12 space-y-2">
                     <textarea
-                      className="border-border/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[70px] w-full resize-none rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                      className="border-border/50 text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[70px] w-full resize-none rounded-md border px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       style={{ backgroundColor: 'rgba(6, 28, 55, 0.45)' }}
                       placeholder="Escribe una respuesta..."
                       value={replyDrafts[post.id] ?? ''}
@@ -356,7 +349,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                             <span className="text-foreground font-semibold">
                               {reply.userId?.name}
                             </span>
-                            <span className="text-muted-foreground text-[11px]">
+                            <span className="text-[11px] text-[#94a3b8]">
                               {formatDate(reply.createdAt)}
                             </span>
                           </div>
