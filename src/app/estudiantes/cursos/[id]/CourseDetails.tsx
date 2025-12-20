@@ -1141,14 +1141,16 @@ export default function CourseDetails({
                           : course.modalidad.name}
                       </span>
                     )}
-                    {/* Badge de horario al lado derecho de modalidad */}
-                    <span
-                      style={{ backgroundColor: '#1A2333' }}
-                      className="text-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
-                    >
-                      <AiOutlineCalendar className="h-3 w-3" />
-                      Lunes a Viernes · 7:00 p.m. - 9:00 p.m.
-                    </span>
+                    {/* Badge de horario al lado derecho de modalidad (solo si existe) */}
+                    {course.horario && (
+                      <span
+                        style={{ backgroundColor: '#1A2333' }}
+                        className="text-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
+                      >
+                        <AiOutlineCalendar className="h-3 w-3" />
+                        {course.horario}
+                      </span>
+                    )}
                   </div>
                   <p className="max-w-2xl text-lg text-[#94A3B8]">
                     {course.description}

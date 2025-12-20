@@ -203,26 +203,29 @@ export function CourseActivities({
           {stats.total} en total
         </p>
 
-        <div className="my-6 flex items-center gap-4">
+        <div className="my-6 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-purple-400/10 p-1.5 text-purple-400">
               <CircleHelp className="h-3.5 w-3.5" />
             </div>
-            <span className="text-[#94A3B8]">Cuestionario</span>
+            <span className="text-xs text-[#94A3B8]">Cuestionario</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-blue-400/10 p-1.5 text-blue-400">
               <FileUp className="h-3.5 w-3.5" />
             </div>
-            <span className="text-[#94A3B8]">Entrega de documento</span>
+            <span className="text-xs text-[#94A3B8]">Entrega de documento</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-emerald-400/10 p-1.5 text-emerald-400">
               <Rocket className="h-3.5 w-3.5" />
             </div>
-            <span className="text-[#94A3B8]">Autocompletado</span>
+            {/* On small screens move this item to its own line */}
+            <span className="w-full text-xs text-[#94A3B8] sm:w-auto">
+              Autocompletado
+            </span>
           </div>
         </div>
       </div>
@@ -241,18 +244,20 @@ export function CourseActivities({
 
           return (
             <div key={lesson.id} className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="bg-accent/20 flex h-6 w-6 items-center justify-center rounded-full">
                   <span className="text-accent text-xs font-medium">
                     {lessonIndex + 1}
                   </span>
                 </div>
-                <h4 className="text-sm font-medium text-[#f8fafc]">
-                  {lesson.title}
-                </h4>
-                <span className="text-xs text-[#94A3B8]">
-                  {completedActivities}/{totalActivities} completadas
-                </span>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-medium break-words text-[#f8fafc]">
+                    {lesson.title}
+                  </h4>
+                  <span className="block text-xs text-[#94A3B8] sm:inline">
+                    {completedActivities}/{totalActivities} completadas
+                  </span>
+                </div>
               </div>
 
               <div className="grid gap-2 pl-8">
