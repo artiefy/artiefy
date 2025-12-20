@@ -1645,7 +1645,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       </Breadcrumb>
       <div className="group relative h-auto w-full">
         <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all duration-700 group-hover:opacity-100" />
-        <Card className="zoom-in relative sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2 border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all duration-500 ease-out hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
+        <Card className="zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2 border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all duration-500 ease-out hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
           <CardHeader className="grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8 md:grid-cols-2 md:gap-12">
             <div className="animate-in fade-in slide-in-from-left-4 space-y-3 duration-500">
               <p className="text-sm font-semibold tracking-widest text-cyan-400 uppercase">

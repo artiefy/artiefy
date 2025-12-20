@@ -415,7 +415,10 @@ export function CourseContent({
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
             <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
-              <p className="mb-4 text-gray-300">
+              <p
+                className="mb-4 max-w-full break-words whitespace-pre-wrap text-gray-300"
+                style={{ overflowWrap: 'anywhere' }}
+              >
                 {lesson.description ??
                   'No hay descripción disponible para esta clase.'}
               </p>

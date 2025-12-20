@@ -29,6 +29,7 @@ import { updateLessonProgress } from '~/server/actions/estudiantes/progress/upda
 import {
   type Activity,
   type Course,
+  type CourseType,
   type Lesson,
   type LessonWithProgress,
   type UserActivitiesProgress,
@@ -520,7 +521,7 @@ export default function LessonDetails({
 
   // Verificar acceso a la lección según el tipo de curso
   useEffect(() => {
-    if (!user || !course.courseType) return;
+    if (!user) return;
 
     const metadata = user.publicMetadata as {
       planType?: string;
@@ -528,19 +529,39 @@ export default function LessonDetails({
       subscriptionEndDate?: string;
     };
 
-    const courseTypeName = course.courseType.name;
-    const requiredLevel = course.courseType.requiredSubscriptionLevel;
-    const isIndividual = courseTypeName === 'Individual';
-    const isFree = courseTypeName === 'Free';
-    const isSubscription =
-      requiredLevel === 'pro' || requiredLevel === 'premium';
+    // Combine course.courseType and course.courseTypes (join table) and dedupe
+    const combinedTypes: CourseType[] = [];
+    if (course.courseType) combinedTypes.push(course.courseType);
+    if (Array.isArray(course.courseTypes))
+      combinedTypes.push(...course.courseTypes);
+
+    const keySet = new Set<string>();
+    const uniqueTypes = combinedTypes.filter((t) => {
+      const key = `${t.requiredSubscriptionLevel ?? 'none'}::${t.isPurchasableIndividually ? '1' : '0'}::${t.name ?? ''}`;
+      if (keySet.has(key)) return false;
+      keySet.add(key);
+      return true;
+    });
+
+    const hasIndividual = uniqueTypes.some(
+      (t) => (t.name ?? '').toLowerCase() === 'individual'
+    );
+    const hasFree = uniqueTypes.some(
+      (t) => (t.requiredSubscriptionLevel ?? 'none') === 'none'
+    );
+    const hasPro = uniqueTypes.some(
+      (t) => (t.requiredSubscriptionLevel ?? '') === 'pro'
+    );
+    const hasPremium = uniqueTypes.some(
+      (t) => (t.requiredSubscriptionLevel ?? '') === 'premium'
+    );
+    const isSubscription = hasPro || hasPremium;
 
     // Si es Free, dejar pasar
-    if (isFree) return;
+    if (hasFree) return;
 
     // Si es Individual, verificar inscripción individual
-    if (isIndividual) {
-      // Tipar enrollments correctamente
+    if (hasIndividual) {
       const enrollmentsArr = Array.isArray(course.enrollments)
         ? (course.enrollments as { userId: string; isPermanent: boolean }[])
         : [];
@@ -771,7 +792,10 @@ export default function LessonDetails({
                 <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
                   {lesson.title}
                 </h1>
-                <p className="mb-6 font-semibold text-gray-600">
+                <p
+                  className="mb-6 max-w-full font-semibold break-words whitespace-pre-wrap text-gray-600"
+                  style={{ overflowWrap: 'anywhere' }}
+                >
                   {lesson.description}
                 </p>
 

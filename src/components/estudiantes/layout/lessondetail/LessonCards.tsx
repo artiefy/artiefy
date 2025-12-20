@@ -104,10 +104,14 @@ const LessonCards = ({
         : false;
 
       const shouldUnlock =
+        // Video lesson completed (and activities completed if present)
         (isVideoLesson &&
           currentLesson.porcentajecompletado === 100 &&
           (!hasActivities || allActivitiesCompleted)) ||
-        (!isVideoLesson && hasActivities && allActivitiesCompleted);
+        // No video but has activities and they're all completed
+        (!isVideoLesson && hasActivities && allActivitiesCompleted) ||
+        // Neither video nor activities => unlock automatically
+        (!isVideoLesson && !hasActivities);
 
       if (!shouldUnlock) return;
 

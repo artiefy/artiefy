@@ -125,7 +125,12 @@ const LessonPlayer = ({
         <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
           {lesson.title}
         </h1>
-        <p className="font-semibold text-gray-600">{lesson.description}</p>
+        <p
+          className="mb-4 max-w-full font-semibold break-words whitespace-pre-wrap text-gray-600"
+          style={{ overflowWrap: 'anywhere' }}
+        >
+          {lesson.description}
+        </p>
         <div className="flex flex-col">
           {isLoadingTranscription && (
             <div className="order-2 mt-4 mb-4 flex items-center gap-2 text-indigo-700 md:order-1">

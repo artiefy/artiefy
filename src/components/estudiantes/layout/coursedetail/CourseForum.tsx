@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
@@ -152,7 +152,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
     const mapping: Record<
       string,
-      { label: string; classes: string; icon: JSX.Element }
+      { label: string; classes: string; icon: ReactNode }
     > = {
       educator: {
         label: 'Educador',

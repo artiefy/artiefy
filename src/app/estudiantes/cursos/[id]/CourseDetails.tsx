@@ -101,11 +101,22 @@ export default function CourseDetails({
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
 
   const courseTypes = useMemo<CourseTypeLike[]>(() => {
+    // Combine the main course.courseType (from course_type_id) with any
+    // related course.courseTypes from the join table and remove duplicates.
+    const combined: CourseTypeLike[] = [];
+    if (course.courseType) combined.push(course.courseType as CourseTypeLike);
     const fromArray = (course as { courseTypes?: CourseTypeLike[] })
       .courseTypes;
-    if (Array.isArray(fromArray)) return fromArray;
-    if (course.courseType) return [course.courseType as CourseTypeLike];
-    return [];
+    if (Array.isArray(fromArray)) combined.push(...fromArray);
+
+    // Deduplicate by requiredSubscriptionLevel + isPurchasableIndividually + price
+    const map = new Map<string, CourseTypeLike>();
+    combined.forEach((t) => {
+      const key = `${t.requiredSubscriptionLevel ?? 'none'}::${t.isPurchasableIndividually ? '1' : '0'}::${t.price ?? ''}`;
+      if (!map.has(key)) map.set(key, t);
+    });
+
+    return Array.from(map.values());
   }, [course]);
 
   const programInfo = useMemo(() => {
