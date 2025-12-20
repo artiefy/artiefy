@@ -294,11 +294,22 @@ export default function LessonDetails({
 
   // Verificar si el usuario está inscrito en el curso
   useEffect(() => {
+    if (!userId || !lesson.courseId) return;
+
     const checkEnrollment = async () => {
-      const isEnrolled = await isUserEnrolled(lesson.courseId, userId);
-      if (!isEnrolled) {
-        toast.error('Debes estar inscrito en el curso para ver esta lección.');
-        void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+      try {
+        const isEnrolled = await isUserEnrolled(lesson.courseId, userId);
+        if (!isEnrolled) {
+          toast.error(
+            'Debes estar inscrito en el curso para ver esta lección.',
+            {
+              id: 'not-enrolled-lesson',
+            }
+          );
+          void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+        }
+      } catch (error) {
+        console.error('Error checking enrollment:', error);
       }
     };
 
