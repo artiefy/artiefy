@@ -14,9 +14,6 @@ build/
 .env*
 !.env.example
 
-# React Bits Components (installed from registry)
-src/components/reactbits/
-
 # Debug logs
 npm-debug.log*
 yarn-debug.log*

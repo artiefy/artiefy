@@ -104,7 +104,7 @@ export function useUser(): UserContextType {
 
 export function UserProvider({
   children,
-  userPromise
+  userPromise,
 }: {
   children: ReactNode;
   userPromise: Promise<User | null>;

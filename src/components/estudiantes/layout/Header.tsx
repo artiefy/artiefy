@@ -24,7 +24,7 @@ import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import { NotificationHeader } from './NotificationHeader';
 
-import type { Course } from '~/types';
+import type { Course, Program } from '~/types';
 
 import '~/styles/barsicon.css';
 
@@ -38,6 +38,7 @@ export function Header({
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
+  const [previewPrograms, setPreviewPrograms] = useState<Program[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
@@ -128,18 +129,27 @@ export function Header({
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setPreviewCourses([]);
+      setPreviewPrograms([]);
       setShowPreview(false);
       return;
     }
     const timeout = setTimeout(async () => {
       try {
-        const { searchCoursesPreview } =
-          await import('~/server/actions/estudiantes/courses/searchCoursesPreview');
-        const results = await searchCoursesPreview(searchQuery);
-        setPreviewCourses(results);
-        setShowPreview(true);
+        const [{ searchCoursesPreview }, { searchProgramsPreview }] =
+          await Promise.all([
+            import('~/server/actions/estudiantes/courses/searchCoursesPreview'),
+            import('~/server/actions/estudiantes/programs/searchProgramsPreview'),
+          ]);
+        const [courseResults, programResults] = await Promise.all([
+          searchCoursesPreview(searchQuery),
+          searchProgramsPreview(searchQuery),
+        ]);
+        setPreviewCourses(courseResults);
+        setPreviewPrograms(programResults);
+        setShowPreview(courseResults.length > 0 || programResults.length > 0);
       } catch (_err) {
         setPreviewCourses([]);
+        setPreviewPrograms([]);
         setShowPreview(false);
       }
     }, 350);
@@ -316,7 +326,7 @@ export function Header({
             <div className="relative">
               <input
                 type="search"
-                placeholder="!Aprende con IA!"
+                placeholder="¡Aprende con IA!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
@@ -331,18 +341,23 @@ export function Header({
                 }}
               />
               {/* Preview de cursos debajo del input */}
-              {showPreview && previewCourses.length > 0 && (
-                <div className="absolute z-50 w-full">
-                  <Suspense fallback={null}>
-                    <CourseSearchPreview
-                      courses={previewCourses}
-                      onSelectCourse={(courseId: number) => {
-                        window.location.href = `/estudiantes/cursos/${courseId}`;
-                      }}
-                    />
-                  </Suspense>
-                </div>
-              )}
+              {showPreview &&
+                (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                  <div className="absolute z-50 w-full">
+                    <Suspense fallback={null}>
+                      <CourseSearchPreview
+                        courses={previewCourses}
+                        programs={previewPrograms}
+                        onSelectCourse={(courseId: number) => {
+                          window.location.href = `/estudiantes/cursos/${courseId}`;
+                        }}
+                        onSelectProgram={(programId: string | number) => {
+                          window.location.href = `/estudiantes/programas/${programId}`;
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                )}
             </div>
           </form>
 
@@ -434,7 +449,7 @@ export function Header({
           >
             <input
               type="search"
-              placeholder="!Aprende con IA!"
+              placeholder="¡Aprende con IA!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
@@ -461,18 +476,23 @@ export function Header({
             >
               <X className="text-primary/70 h-4 w-4" />
             </button>
-            {showPreview && previewCourses.length > 0 && (
-              <div className="mt-3 w-full">
-                <Suspense fallback={null}>
-                  <CourseSearchPreview
-                    courses={previewCourses}
-                    onSelectCourse={(courseId: number) => {
-                      window.location.href = `/estudiantes/cursos/${courseId}`;
-                    }}
-                  />
-                </Suspense>
-              </div>
-            )}
+            {showPreview &&
+              (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                <div className="mt-3 w-full">
+                  <Suspense fallback={null}>
+                    <CourseSearchPreview
+                      courses={previewCourses}
+                      programs={previewPrograms}
+                      onSelectCourse={(courseId: number) => {
+                        window.location.href = `/estudiantes/cursos/${courseId}`;
+                      }}
+                      onSelectProgram={(programId: string | number) => {
+                        window.location.href = `/estudiantes/programas/${programId}`;
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              )}
           </form>
         </div>
       )}

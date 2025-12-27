@@ -20,22 +20,9 @@ export default defineConfig([
   ...baseConfig,
   {
     files: ['**/*.ts', '**/*.tsx'],
-    // Este override agrega reglas type-checked.
-    // El linting con reglas type-checked es muy lento y consume mucha memoria,
-    // por lo que excluimos archivos no esenciales.
-    ignores: [
-      'test/**/*',
-      '**/*.d.ts',
-      'drizzle/**/*',
-      'scripts/**/*',
-      '.next/**/*',
-      'Docs/**/*',
-      'public/**/*',
-      'videos/**/*',
-    ],
     languageOptions: {
       parserOptions: {
-        project: true, // Usa el tsconfig.json más cercano
+        project: './tsconfig.eslint.json', // Usa el tsconfig específico para ESLint
         tsconfigRootDir: import.meta.dirname,
       },
     },

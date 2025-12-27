@@ -4,7 +4,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["@webgpu/types", "@types/jszip"],
+    "types": ["@webgpu/types"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -33,7 +33,6 @@
     "**/*",
     ".*/**/*",
     "./**/.*",
-    "drizzle.config.ts",
     "next-env.d.ts",
     "next-video.config.js",
     "src/types/**/*.d.ts",

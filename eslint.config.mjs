@@ -14,7 +14,7 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 'latest',
       parserOptions: {
-        project: true,
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
@@ -27,11 +27,6 @@ export default defineConfig([
       '@typescript-eslint': typescriptEslint,
     },
     rules: {
-      // ==========================================
-      // REGLAS PERSONALIZADAS DEL PROYECTO
-      // ==========================================
-      // (Reglas básicas ya incluidas en eslint-config-next)
-
       // TypeScript
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -103,6 +98,8 @@ export default defineConfig([
       '.turbo/**',
       'videos/**',
       'drizzle/**',
+      'test/**',
+      'scripts/**',
       '**/.git/**',
       '**/.husky/**',
       '**/.lintstagedrc*',
