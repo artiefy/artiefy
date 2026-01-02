@@ -396,10 +396,10 @@ export function CourseContent({
                     <FaLock className="mr-2 size-5 text-gray-400" />
                   )}
                   <span className="font-medium text-white">{lesson.title}</span>
+                  <span className="text-sm text-gray-300 ml-2">
+                    ({lesson.duration} mins)
+                  </span>
                 </div>
-                <span className="text-sm text-gray-300">
-                  ({lesson.duration} mins)
-                </span>
               </div>
               <div className="flex items-center space-x-2">
                 {isUnlocked &&
