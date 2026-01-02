@@ -14,6 +14,7 @@ import {
   FaVideo,
 } from 'react-icons/fa';
 import { IoIosSave } from 'react-icons/io';
+import { IoPlayCircleOutline } from 'react-icons/io5';
 import { LuSquareArrowOutUpRight, LuVideo } from 'react-icons/lu';
 import { MdVideoLibrary } from 'react-icons/md';
 
@@ -24,6 +25,11 @@ import {
 } from '~/components/estudiantes/ui/alert';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Progress } from '~/components/estudiantes/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/estudiantes/ui/tooltip';
 import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
 
@@ -368,13 +374,12 @@ export function CourseContent({
         <div
           key={lesson.id}
           className={cn(
-            'overflow-hidden text-white transition-colors',
+            'overflow-hidden text-white transition-colors border rounded-lg',
             isUnlocked ? 'sm:hover:neon-live-class' : 'opacity-75'
           )}
           style={{
-            backgroundColor: '#061c37',
-            borderColor: 'hsla(217, 33%, 17%, 0.5)',
-            borderRadius: '0.5rem',
+            backgroundColor: '#1a233366',
+            borderColor: '#1d283a',
           }}
         >
           <button
@@ -383,17 +388,17 @@ export function CourseContent({
             disabled={!isUnlocked}
           >
             <div className="flex w-full items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {isUnlocked ? (
-                  <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                ) : (
-                  <FaLock className="mr-2 size-5 text-gray-400" />
-                )}
-                <span className="font-medium text-white">
-                  {lesson.title}{' '}
-                  <span className="ml-2 text-sm text-gray-300">
-                    ({lesson.duration} mins)
-                  </span>
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-2">
+                  {isUnlocked ? (
+                    <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                  ) : (
+                    <FaLock className="mr-2 size-5 text-gray-400" />
+                  )}
+                  <span className="font-medium text-white">{lesson.title}</span>
+                </div>
+                <span className="text-sm text-gray-300">
+                  ({lesson.duration} mins)
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -414,14 +419,30 @@ export function CourseContent({
             </div>
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
-            <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
-              <p
-                className="mb-4 max-w-full break-words whitespace-pre-wrap text-gray-300"
-                style={{ overflowWrap: 'anywhere' }}
-              >
-                {lesson.description ??
-                  'No hay descripción disponible para esta clase.'}
-              </p>
+            <div
+              className="border-t px-6 py-4 bg-[#1a233366] hover:bg-[#01152d] transition-colors"
+              style={{
+                borderColor: '#1d283a',
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p
+                    className="mb-4 max-w-full break-words whitespace-pre-wrap text-gray-300 line-clamp-3"
+                    style={{ overflowWrap: 'anywhere' }}
+                  >
+                    <IoPlayCircleOutline className="inline mr-2 text-white w-4 h-4 -mt-1" />
+                    {lesson.description ??
+                      'No hay descripción disponible para esta clase.'}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="whitespace-pre-wrap break-words">
+                    {lesson.description ??
+                      'No hay descripción disponible para esta clase.'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-300">
@@ -1756,14 +1777,25 @@ export function CourseContent({
 
       {/* Regular lessons - Now with white container */}
       {viewMode !== 'recorded' && (
-        <div>
+        <div
+          className="rounded-lg border p-4"
+          style={{
+            backgroundColor: '#061c37',
+            borderColor: '#1d283a',
+          }}
+        >
           <h2
-            className={`${lessonsSectionTopMargin} mb-4 flex items-center gap-3 text-xl font-bold text-white`}
+            className={`${lessonsSectionTopMargin} mb-4 flex items-center justify-between text-xl font-bold text-white`}
           >
-            <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-blue-500/20 p-2 text-blue-300">
-              <MdVideoLibrary className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-blue-500/20 p-2 text-blue-300">
+                <MdVideoLibrary className="h-4 w-4" />
+              </span>
+              Clases del Curso
+            </div>
+            <span className="text-sm font-light text-[#94a3b8]">
+              {course.lessons?.length || 0} Clases
             </span>
-            Clases del Curso
           </h2>
           <div
             className={cn(

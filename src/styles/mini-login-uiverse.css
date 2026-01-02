@@ -25,6 +25,25 @@
   border-radius: 12px;
 }
 
+/* Responsive adjustments for mobile */
+@media (max-width: 640px) {
+  .mini-login .form {
+    background:
+      linear-gradient(
+        14deg,
+        rgba(2, 0, 36, 0.9) 0%,
+        rgba(24, 24, 65, 0.8) 66%,
+        rgb(20, 76, 99) 100%
+      ),
+      radial-gradient(
+        circle,
+        rgba(2, 0, 36, 0.6) 0%,
+        rgba(32, 15, 53, 0.3) 65%,
+        rgba(14, 29, 28, 1) 100%
+      );
+  }
+}
+
 .mini-login .input-container {
   position: relative;
 }
@@ -32,20 +51,39 @@
 .mini-login .input-container input,
 .mini-login .form button {
   outline: none;
+  margin: 0;
+  font-family: monospace;
+}
+
+.mini-login .form button {
   border: 2px solid #ffffff;
   margin: 8px 0;
-  font-family: monospace;
+}
+
+.mini-login .input-container {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
 }
 
 .mini-login .input-container input {
   background-color: #fff;
-  color: #0b0b0b;
   padding: 6px;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  width: 100%;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border-radius: 6px;
+  width: 250px;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.mini-login .input-container input:focus {
+  outline: none !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 .mini-login .input-container input::placeholder {

@@ -278,34 +278,36 @@ export default function MiniLoginModal({
 
           {!successfulCreation && !isForgotPassword ? (
             <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="input-container">
-                <input
-                  onChange={(e) => setEmail(e.target.value)}
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  placeholder="Correo electrónico"
-                  required
-                  className={`input-mail ${
-                    emailError ? 'border-red-300 focus:border-red-500' : ''
-                  }`}
-                />
-              </div>
+              <div>
+                <div className="input-container">
+                  <input
+                    onChange={(e) => setEmail(e.target.value)}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    placeholder="Correo electrónico"
+                    required
+                    className={`input-mail ${
+                      emailError ? 'border-red-300 focus:border-red-500' : ''
+                    }`}
+                  />
+                </div>
 
-              <div className="input-container">
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  placeholder="Contraseña"
-                  required
-                  className={`input-pwd ${
-                    passwordError ? 'border-red-300 focus:border-red-500' : ''
-                  }`}
-                />
+                <div className="input-container">
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    placeholder="Contraseña"
+                    required
+                    className={`input-pwd ${
+                      passwordError ? 'border-red-300 focus:border-red-500' : ''
+                    }`}
+                  />
+                </div>
               </div>
 
               <section className="bg-stars" aria-hidden="true">

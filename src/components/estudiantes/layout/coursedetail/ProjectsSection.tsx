@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import {
   FaCalendarAlt,
   FaClock,
@@ -37,6 +39,7 @@ export function ProjectsSection({
   isSubscriptionActive,
   onProjectsChange,
 }: ProjectsSectionProps) {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -72,35 +75,10 @@ export function ProjectsSection({
       toast.error('Debes estar inscrito en el curso para crear proyectos');
       return;
     }
-
+    // Redirige a MisProyectos y abre el modal de creación
+    setIsCreating(true);
     try {
-      setIsCreating(true);
-      const response = await fetch('/api/estudiantes/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          courseId,
-          name: `Proyecto ${projects.length + 1}`,
-          planteamiento: 'Define el planteamiento de tu proyecto aquí...',
-          type_project: 'individual',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear proyecto');
-      }
-
-      const data = await response.json();
-      setProjects((prev) => [data.project, ...prev]);
-      toast.success('Proyecto creado exitosamente');
-
-      // Notificar al componente padre que los proyectos cambiaron
-      onProjectsChange?.();
-    } catch (error) {
-      console.error('Error creating project:', error);
-      toast.error('Error al crear el proyecto');
+      router.push('/proyectos/MisProyectos?start=create');
     } finally {
       setIsCreating(false);
     }

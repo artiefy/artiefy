@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
@@ -135,6 +135,19 @@ export default function ProyectosPage() {
     useState<ProyectoGenerado | null>(null);
   const [modalResumenGeneradoOpen, setModalResumenGeneradoOpen] =
     useState(false);
+
+  // Lee parámetros de la URL para abrir el modal de creación
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const start = searchParams.get('start');
+    if (start === 'create') {
+      // Resetea el flujo y abre el primer modal
+      limpiarFlujoCreacion();
+      setFechaInicioProyecto(getTodayDateString());
+      setPlanteamientoOpen(true);
+    }
+    // Solo cuando cambian los params
+  }, [searchParams]);
 
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [editingProjectDetails, setEditingProjectDetails] =

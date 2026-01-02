@@ -26,6 +26,13 @@
   ],
   "editor.linkedEditing": true,
   "editor.stickyScroll.enabled": true,
+  // Material Icon Theme - Custom Icons
+  "workbench.iconTheme": "material-icon-theme",
+  "material-icon-theme.files.associations": {
+    "*.css": "../../icons/reacttemplate",
+    "*.ts": "../../icons/file-ts-svgrepo-com",
+    "*.tsx": "../../icons/file-tsx-svgrepo-com"
+  },
   // File Configuration
   "files.autoSave": "afterDelay",
   "files.associations": {
