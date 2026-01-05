@@ -73,6 +73,7 @@ export default function StudentDetails({
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
+  const [previewPrograms, setPreviewPrograms] = useState<Program[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [topCoursesApi, setTopCoursesApi] = useState<CarouselApi>();
   const [programsApi, setProgramsApi] = useState<CarouselApi>();
@@ -234,18 +235,27 @@ export default function StudentDetails({
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setPreviewCourses([]);
+      setPreviewPrograms([]);
       setShowPreview(false);
       return;
     }
     const timeout = setTimeout(async () => {
       try {
-        const { searchCoursesPreview } =
-          await import('~/server/actions/estudiantes/courses/searchCoursesPreview');
-        const results = await searchCoursesPreview(searchQuery);
-        setPreviewCourses(results);
-        setShowPreview(true);
+        const [{ searchCoursesPreview }, { searchProgramsPreview }] =
+          await Promise.all([
+            import('~/server/actions/estudiantes/courses/searchCoursesPreview'),
+            import('~/server/actions/estudiantes/programs/searchProgramsPreview'),
+          ]);
+        const [courseResults, programResults] = await Promise.all([
+          searchCoursesPreview(searchQuery),
+          searchProgramsPreview(searchQuery),
+        ]);
+        setPreviewCourses(courseResults);
+        setPreviewPrograms(programResults);
+        setShowPreview(courseResults.length > 0 || programResults.length > 0);
       } catch (_err) {
         setPreviewCourses([]);
+        setPreviewPrograms([]);
         setShowPreview(false);
       }
     }, 350);
@@ -476,18 +486,23 @@ export default function StudentDetails({
                   <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
                 </svg>
                 {/* Preview de cursos debajo del input */}
-                {showPreview && previewCourses.length > 0 && (
-                  <div className="z-50 w-full">
-                    <Suspense fallback={null}>
-                      <CourseSearchPreview
-                        courses={previewCourses}
-                        onSelectCourse={(courseId: number) => {
-                          window.location.href = `/estudiantes/cursos/${courseId}`;
-                        }}
-                      />
-                    </Suspense>
-                  </div>
-                )}
+                {showPreview &&
+                  (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                    <div className="z-50 w-full">
+                      <Suspense fallback={null}>
+                        <CourseSearchPreview
+                          courses={previewCourses}
+                          programs={previewPrograms}
+                          onSelectCourse={(courseId: number) => {
+                            window.location.href = `/estudiantes/cursos/${courseId}`;
+                          }}
+                          onSelectProgram={(programId: string | number) => {
+                            window.location.href = `/estudiantes/programas/${programId}`;
+                          }}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
               </div>
 
               {/* Text with sparkles icon below search bar */}

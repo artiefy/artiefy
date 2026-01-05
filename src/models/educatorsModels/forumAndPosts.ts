@@ -129,6 +129,7 @@ export async function getForumByCourseId(courseId: number) {
         courseInstructor: courses.instructor,
         courseCoverImageKey: courses.coverImageKey,
         userName: users.name, // Unir con la tabla de usuarios para obtener el nombre del usuario
+        userRole: users.role,
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
@@ -162,6 +163,7 @@ export async function getForumByCourseId(courseId: number) {
       userId: {
         id: forumData.userId,
         name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
+        role: forumData.userRole ?? null,
       },
     };
   } catch (error: unknown) {

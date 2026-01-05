@@ -4,7 +4,7 @@ Codex configuration gives you fine-grained control over the model, execution env
 
 ## Quick navigation
 
-- [Feature flags](#feature-flags)
+- [Feature flags] (#feature-flags)
 - [Model selection](#model-selection)
 - [Execution environment](#execution-environment)
 - [MCP integration](#mcp-integration)

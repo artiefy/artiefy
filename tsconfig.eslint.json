@@ -1,6 +1,12 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["**/*", ".*/**/*", "./**/.*"],
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "next-env.d.ts",
+    "drizzle.config.ts",
+    "video.d.ts"
+  ],
   "exclude": [
     "node_modules",
     ".next",

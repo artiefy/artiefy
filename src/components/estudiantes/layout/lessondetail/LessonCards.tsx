@@ -104,10 +104,14 @@ const LessonCards = ({
         : false;
 
       const shouldUnlock =
+        // Video lesson completed (and activities completed if present)
         (isVideoLesson &&
           currentLesson.porcentajecompletado === 100 &&
           (!hasActivities || allActivitiesCompleted)) ||
-        (!isVideoLesson && hasActivities && allActivitiesCompleted);
+        // No video but has activities and they're all completed
+        (!isVideoLesson && hasActivities && allActivitiesCompleted) ||
+        // Neither video nor activities => unlock automatically
+        (!isVideoLesson && !hasActivities);
 
       if (!shouldUnlock) return;
 
@@ -171,8 +175,26 @@ const LessonCards = ({
       };
     }
 
-    // Si no está bloqueada, verificar si está completada
-    if (lessonItem.porcentajecompletado === 100) {
+    const hasVideo =
+      !!lessonItem.coverVideoKey && lessonItem.coverVideoKey !== 'none';
+    const hasActivities = (lessonItem.activities?.length ?? 0) > 0;
+    const activitiesCompleted =
+      lessonItem.activities?.every(
+        (a) => a.isCompleted || (a.userProgress ?? 0) >= 100
+      ) ?? false;
+
+    // Determinar si la clase está considerada completa:
+    // - Si tiene video: completada cuando porcentajecompletado === 100 y (si tiene actividades, además que todas las actividades estén completadas)
+    // - Si no tiene video pero sí actividades: completada cuando todas las actividades están completadas
+    // - Si no tiene video ni actividades: no está completada
+    const completed = hasVideo
+      ? lessonItem.porcentajecompletado === 100 &&
+        (!hasActivities || activitiesCompleted)
+      : hasActivities
+        ? activitiesCompleted
+        : false;
+
+    if (completed) {
       return {
         icon: <FaCheckCircle className="text-green-500" />,
         isAccessible: true,
@@ -181,7 +203,8 @@ const LessonCards = ({
       };
     }
 
-    // Desbloqueada pero no completada
+    // Si hay video y no está completado => mostrar reloj
+    // Si no hay video pero hay actividad y no está completada => mostrar reloj también (pendiente)
     return {
       icon: <FaClock className="text-gray-400" />,
       isAccessible: true,
@@ -241,12 +264,17 @@ const LessonCards = ({
   const renderLessonCard = (lessonItem: LessonWithProgress) => {
     const isCurrentLesson = lessonItem.id === selectedLessonId;
     const status = getActivityStatus(lessonItem);
+    const activitiesCompleted =
+      lessonItem.activities?.some(
+        (a) => a.isCompleted || (a.userProgress ?? 0) > 0
+      ) ?? false;
+
+    const hasSeenOrInteracted =
+      (isCurrentLesson ? progress > 0 : lessonItem.porcentajecompletado > 0) ||
+      activitiesCompleted;
+
     const shouldShowNew =
-      lessonItem.isLocked === false &&
-      lessonItem.isNew &&
-      (isCurrentLesson
-        ? progress === 0
-        : lessonItem.porcentajecompletado === 0);
+      lessonItem.isLocked === false && lessonItem.isNew && !hasSeenOrInteracted;
 
     // Calcular el progreso a mostrar
     const displayProgress = isCurrentLesson
@@ -344,24 +372,27 @@ const LessonCards = ({
           <SelectContent>
             {sortedLessons.map((lesson) => {
               const isCurrentLesson = lesson.id === selectedLessonId;
+              const activitiesCompleted =
+                lesson.activities?.some(
+                  (a) => a.isCompleted || (a.userProgress ?? 0) > 0
+                ) ?? false;
+
+              const hasSeenOrInteracted =
+                (isCurrentLesson
+                  ? progress > 0
+                  : lesson.porcentajecompletado > 0) || activitiesCompleted;
+
               const shouldShowNew =
                 lesson.isLocked === false &&
                 lesson.isNew &&
-                (isCurrentLesson
-                  ? progress === 0
-                  : lesson.porcentajecompletado === 0);
+                !hasSeenOrInteracted;
+
+              const status = getActivityStatus(lesson);
 
               return (
                 <SelectItem key={lesson.id} value={String(lesson.id)}>
                   <span className="flex items-center gap-2">
-                    {/* Candado si está bloqueada */}
-                    {lesson.isLocked ? (
-                      <FaLock className="text-gray-400" />
-                    ) : lesson.porcentajecompletado === 100 ? (
-                      <FaCheckCircle className="text-green-500" />
-                    ) : (
-                      <FaClock className="text-gray-400" />
-                    )}
+                    {status.icon}
                     <span className="truncate">{lesson.title}</span>
                     {/* Badge Nueva */}
                     {shouldShowNew && (

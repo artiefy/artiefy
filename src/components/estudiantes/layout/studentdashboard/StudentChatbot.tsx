@@ -31,8 +31,8 @@ import { ChatList } from './ChatList';
 import { ChatNavigation } from './ChatNavigation';
 import { ChatMessages } from './StudentChat';
 
-import '~/styles/chatmodal.css';
 import 'react-resizable/css/styles.css';
+import '~/styles/chatmodal.css';
 import '~/styles/ticketSupportButton.css';
 
 interface StudentChatbotProps {
@@ -135,6 +135,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   isEnrolled,
   initialSection = 'chatia',
 }) => {
+  const [_isMounted, setIsMounted] = useState(false);
   const [activeSection, setActiveSection] = useState<
     'tickets' | 'chatia' | 'projects'
   >(initialSection);
@@ -142,7 +143,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [isDesktop, setIsDesktop] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: Date.now(),
+      id: 1,
       text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
       sender: 'bot',
       buttons: [
@@ -186,6 +187,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const router = useRouter();
 
   const initialSearchDone = useRef(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // El estado activeSection ya está definido arriba
 
@@ -1246,9 +1251,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 console.log('Respuesta del Assistant:', text);
 
                 // Detectar si hay una acción de WhatsApp con type guard seguro
-                function isWhatsAppAction(
-                  obj: unknown
-                ): obj is {
+                function isWhatsAppAction(obj: unknown): obj is {
                   url: string;
                   phone: string;
                   button_text?: string;
@@ -1827,9 +1830,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 const minuto = String(fecha.getMinutes()).padStart(2, '0');
                 const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
 
-                const mod = await import(
-                  '~/server/actions/estudiantes/chats/saveChat'
-                );
+                const mod =
+                  await import('~/server/actions/estudiantes/chats/saveChat');
                 const fn = mod.getOrCreateConversation as (args: {
                   senderId: string;
                   cursoId: number | null;
@@ -3155,7 +3157,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     <>
       <Tooltip.Provider>
         <div
-          className={`${className} fixed`}
+          className={`${className ?? ''} fixed`}
           style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
         >
           {isAlwaysVisible && (

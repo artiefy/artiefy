@@ -52,13 +52,13 @@ import { CourseContent } from './CourseContent';
 
 import type { ClassMeeting, Course, CourseMateria, Enrollment } from '~/types';
 
+import '~/styles/buttonforum.css';
+import '~/styles/certificado-modal.css';
 import '~/styles/certificadobutton.css';
 import '~/styles/certificadobutton2.css';
-import '~/styles/certificado-modal.css';
+import '~/styles/gradesbutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
-import '~/styles/buttonforum.css';
-import '~/styles/gradesbutton.css';
 
 interface GradeSummaryType {
   finalGrade: number;
@@ -1324,7 +1324,7 @@ export function CourseHeader({
 
   return (
     <>
-      <Card className="overflow-hidden bg-gray-800 p-0 text-white">
+      <Card className="overflow-hidden bg-gray-800 p-0 px-4 text-white sm:px-0">
         {/* Cambia el CardHeader para reducir el espacio en móviles */}
         <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
           <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">

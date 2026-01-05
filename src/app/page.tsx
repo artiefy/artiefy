@@ -150,7 +150,7 @@ export default function HomePage() {
         </main>
       </div>
       <div className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-32 sm:bottom-20 sm:translate-x-0">
-        {/* Triángulo tipo burbuja */}
+        {/* Triangulo tipo burbuja */}
         <span className="absolute bottom-[63px] left-1/2 inline h-0 w-0 translate-x-[75px] rotate-[360deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:bottom-[63px] sm:translate-x-[250px]" />
       </div>
 

@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm'; // Quitar inArray
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import {
+  courseCourseTypes,
   courses,
   enrollments,
   lessons,
@@ -50,10 +51,42 @@ export async function enrollInCourse(
       return { success: false, message: 'Curso no encontrado' };
     }
 
+    const courseTypesFromJoin = await db.query.courseCourseTypes.findMany({
+      where: eq(courseCourseTypes.courseId, courseId),
+      with: {
+        courseType: true,
+      },
+    });
+
+    const extraTypes = courseTypesFromJoin
+      .map((item) => item.courseType)
+      .filter((ct): ct is NonNullable<typeof ct> => !!ct);
+
+    const allCourseTypes = [
+      ...(course.courseType ? [course.courseType] : []),
+      ...extraTypes,
+    ];
+
+    const hasPremium = allCourseTypes.some(
+      (t) => t.requiredSubscriptionLevel === 'premium'
+    );
+    const hasPro = allCourseTypes.some(
+      (t) => t.requiredSubscriptionLevel === 'pro'
+    );
+    const _hasFree = allCourseTypes.some(
+      (t) => t.requiredSubscriptionLevel === 'none'
+    );
+
+    const effectiveRequiredLevel = hasPremium
+      ? hasPro
+        ? 'pro' // Mixto premium + pro: permitir ambos planes
+        : 'premium'
+      : hasPro
+        ? 'pro'
+        : (course.courseType?.requiredSubscriptionLevel ?? 'none');
+
     // Determine subscription status based on course type
-    const subscriptionLevel =
-      course.courseType?.requiredSubscriptionLevel ?? 'none';
-    const shouldBeActive = subscriptionLevel !== 'none';
+    const shouldBeActive = effectiveRequiredLevel !== 'none';
 
     // Check if user exists
     let dbUser = await db.query.users.findFirst({
@@ -119,18 +152,8 @@ export async function enrollInCourse(
     }
 
     // Verify subscription level requirements
-    const userPlanType = user.publicMetadata?.planType as string;
-    const courseRequiredLevel = course.courseType?.requiredSubscriptionLevel;
-
-    if (courseRequiredLevel === 'premium' && userPlanType === 'Pro') {
-      return {
-        success: false,
-        message:
-          'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
-        requiresSubscription: true,
-      };
-    }
-
+    const userPlanType = user.publicMetadata?.planType as string | undefined;
+    const normalizedPlan = (userPlanType ?? '').toLowerCase();
     const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
     const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
       | string
@@ -140,10 +163,35 @@ export async function enrollInCourse(
       subscriptionStatus === 'active' &&
       (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
-    if (courseRequiredLevel !== 'none' && !isSubscriptionValid) {
+    const requiresSubscription =
+      effectiveRequiredLevel !== 'none' || hasPremium || hasPro;
+
+    if (requiresSubscription && !isSubscriptionValid) {
       return {
         success: false,
         message: 'Se requiere una suscripción activa',
+        requiresSubscription: true,
+      };
+    }
+
+    const hasPlanAccess =
+      (hasPremium &&
+        hasPro &&
+        (normalizedPlan === 'premium' || normalizedPlan === 'pro')) ||
+      (hasPremium && !hasPro && normalizedPlan === 'premium') ||
+      (!hasPremium &&
+        hasPro &&
+        (normalizedPlan === 'pro' || normalizedPlan === 'premium'));
+
+    if (requiresSubscription && !hasPlanAccess) {
+      const message =
+        hasPremium && !hasPro
+          ? 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.'
+          : 'Este curso requiere una suscripción Pro o Premium. Actualiza tu plan para acceder.';
+
+      return {
+        success: false,
+        message,
         requiresSubscription: true,
       };
     }

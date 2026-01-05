@@ -4,7 +4,7 @@
 
 Esta integración permite que cuando se verifica una suscripción activa en Artiefy, automáticamente se envíe una señal HTTP al ESP32 para abrir la puerta por 5 segundos.
 
-## Arquitectura de la Solución
+# # Arquitectura de la Solución
 
 ### Backend (Next.js)
 

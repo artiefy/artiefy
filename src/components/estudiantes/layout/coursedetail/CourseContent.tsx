@@ -1,30 +1,35 @@
 'use client';
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { PencilRuler } from 'lucide-react';
 import {
-  FaCheck,
   FaCheckCircle,
   FaChevronDown,
   FaChevronUp,
+  FaClock,
   FaLock,
-  FaTimes,
-  FaVideo, // Para el icono del botón grabado
+  FaVideo,
 } from 'react-icons/fa';
+import { IoIosSave } from 'react-icons/io';
+import { IoPlayCircleOutline } from 'react-icons/io5';
+import { LuSquareArrowOutUpRight, LuVideo } from 'react-icons/lu';
+import { MdVideoLibrary } from 'react-icons/md';
 
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from '~/components/estudiantes/ui/alert';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Progress } from '~/components/estudiantes/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/estudiantes/ui/tooltip';
 import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
 
@@ -44,13 +49,14 @@ interface CourseContentProps {
   subscriptionEndDate: string | null;
   isSignedIn: boolean;
   classMeetings?: import('~/types').ClassMeeting[]; // <-- Añade classMeetings aquí
+  viewMode?: 'live' | 'recorded';
 }
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Mueve la función formatDuration al principio para asegurar su disponibilidad
-function formatDuration(minutes: number): string {
+function _formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours === 0) {
@@ -63,29 +69,24 @@ function formatDuration(minutes: number): string {
 }
 
 // Nuevo formateador para el estilo solicitado
-function formatMeetingDateTimeModern(startDate: string, endDate: string) {
+function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
   if (!startDate) return '';
   // Ajustar hora restando 5 horas manualmente
   const start = new Date(startDate);
   start.setHours(start.getHours() - 5);
   const end = endDate ? new Date(endDate) : null;
   if (end) end.setHours(end.getHours() - 5);
-  const meses = [
-    'Ene',
-    'Feb',
-    'Mar',
-    'Abr',
-    'May',
-    'Jun',
-    'Jul',
-    'Ago',
-    'Sept',
-    'Oct',
-    'Nov',
-    'Dic',
-  ];
-  const mesNombre = meses[start.getMonth()];
+  const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(
+    start
+  );
+  const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  const mesNombre = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(
+    start
+  );
+  const mesNombreCapitalized =
+    mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
   const day = start.getDate();
+  const year = start.getFullYear();
   // Hora inicio
   let hour12 = start.getHours() % 12;
   if (hour12 === 0) hour12 = 12;
@@ -105,7 +106,7 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
       <div className="block sm:hidden">
         <span className="block text-sm font-bold text-yellow-400">
-          {mesNombre} {String(day)},
+          {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>
         <span className="block text-sm font-bold text-cyan-400">
           {hour12}:{minStr} {ampm}
@@ -115,7 +116,7 @@ function formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En desktop: mantener diseño inline original */}
       <div className="hidden sm:block">
         <span className="text-base font-bold text-yellow-400">
-          {mesNombre} {String(day)},
+          {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>{' '}
         <span className="text-base font-bold text-cyan-400">
           {hour12}:{minStr} {ampm}
@@ -152,6 +153,7 @@ export function CourseContent({
   subscriptionEndDate,
   isSignedIn,
   classMeetings = [],
+  viewMode = 'live',
 }: CourseContentProps) {
   // --- Clases grabadas y en vivo ---
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
@@ -166,9 +168,20 @@ export function CourseContent({
   const router = useRouter();
   const { user } = useUser();
 
-  // New state variables to track section visibility
-  const [showLiveClasses, setShowLiveClasses] = useState(true);
-  const [showRecordedClasses, setShowRecordedClasses] = useState(true);
+  // Section visibility: recorded keeps local state (can be toggled),
+  // live is derived from the external `viewMode` to avoid setState inside an effect.
+  const [showRecordedClasses, setShowRecordedClasses] = useState<boolean>(
+    () => viewMode === 'recorded'
+  );
+
+  const showLiveClasses = useMemo(
+    () => (viewMode === 'recorded' ? false : true),
+    [viewMode]
+  );
+
+  useEffect(() => {
+    setShowRecordedClasses(viewMode === 'recorded');
+  }, [viewMode]);
 
   // Estado local para mantener actualizados los progresos de los videos
   const computeInitialProgress = () => {
@@ -201,17 +214,22 @@ export function CourseContent({
   const formatMobileDate = (start?: string) => {
     if (!start) return '';
     const d = new Date(start);
+    // Ajustar a -5 horas para mostrar en zona deseada
+    d.setHours(d.getHours() - 5);
     try {
       const weekday = new Intl.DateTimeFormat('es-ES', {
-        weekday: 'short',
-      })
-        .format(d)
-        .replace('.', ''); // remover punto abreviatura
-      const month = new Intl.DateTimeFormat('es-ES', { month: 'short' })
-        .format(d)
-        .replace('.', '');
+        weekday: 'long',
+      }).format(d);
+      const month = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(
+        d
+      );
       const day = d.getDate();
-      return `${capitalize(weekday)}, ${capitalize(month)} ${day}`;
+      const year = d.getFullYear();
+      // Capitalizar primera letra: Martes, 15 de Diciembre, 2025
+      const weekdayCapitalized =
+        weekday.charAt(0).toUpperCase() + weekday.slice(1);
+      const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
+      return `${weekdayCapitalized}, ${day} de ${monthCapitalized}, ${year}`;
     } catch {
       return `${d.getFullYear()}/${String(d.getDate()).padStart(2, '0')}/${String(
         d.getMonth() + 1
@@ -220,10 +238,11 @@ export function CourseContent({
   };
 
   // Helper para capitalizar abreviaturas (lun -> Lun)
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const _capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // NUEVO: Formato rango horario "12:30 p.m. – 5:30 p.m." en es-CO
-  const formatTimeRange = (start?: string, end?: string) => {
+  // Prefijado con _ porque actualmente no se usa y ESLint lo reclama.
+  const _formatTimeRange = (start?: string, end?: string) => {
     if (!start || !end) return '';
     const s = new Date(start);
     const e = new Date(end);
@@ -239,18 +258,40 @@ export function CourseContent({
     return `${formatPart(s)} – ${formatPart(e)}`;
   };
 
+  // Nuevo: formatea solo la hora de inicio (ej: "7:00 p.m.")
+  const formatStartTime = (start?: string) => {
+    if (!start) return '';
+    const d = new Date(start);
+    // Ajustar a -5 horas para mostrar en zona deseada
+    d.setHours(d.getHours() - 5);
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const isPM = d.getHours() >= 12;
+    const suffix = isPM ? 'p.m.' : 'a.m.';
+    const hours = d.getHours() % 12 || 12;
+    return `${hours}:${minutes} ${suffix}`;
+  };
+
+  // Nuevo: etiqueta legible para duración con pluralización correcta
+  const formatDurationLabel = (minutes: number) => {
+    if (minutes < 60) return `${minutes} min`;
+    if (minutes % 60 === 0) {
+      const h = minutes / 60;
+      return `${h} ${h === 1 ? 'hora' : 'horas'}`;
+    }
+    // Mostrar horas con un decimal cuando no es entero
+    return `${(minutes / 60).toFixed(1)} horas`;
+  };
+
   // NUEVO: Duración en horas redondeada a 1 decimal si no es entera
-  const formatDurationHours = (minutes: number) => {
+  // Prefijado con _ porque actualmente no se usa y ESLint lo reclama.
+  const _formatDurationHours = (minutes: number) => {
     const hours = minutes / 60;
     if (Number.isInteger(hours)) return `${hours} h`;
     return `${hours.toFixed(1)} h`;
   };
 
   // Add toggle functions for sections
-  const toggleLiveClasses = useCallback(() => {
-    setShowLiveClasses((prev) => !prev);
-  }, []);
-
+  // NOTE: live visibility is derived from `viewMode` so there's no local toggle.
   const toggleRecordedClasses = useCallback(() => {
     setShowRecordedClasses((prev) => !prev);
   }, []);
@@ -332,11 +373,14 @@ export function CourseContent({
       return (
         <div
           key={lesson.id}
-          className={`overflow-hidden rounded-lg border-0 transition-colors ${
-            isUnlocked
-              ? 'bg-gray-800 hover:bg-gray-700'
-              : 'bg-gray-800 opacity-75'
-          } text-white`}
+          className={cn(
+            'overflow-hidden text-white transition-colors border rounded-lg',
+            isUnlocked ? 'sm:hover:neon-live-class' : 'opacity-75'
+          )}
+          style={{
+            backgroundColor: '#1a233366',
+            borderColor: '#1d283a',
+          }}
         >
           <button
             className="flex w-full items-center justify-between px-6 py-4"
@@ -344,17 +388,17 @@ export function CourseContent({
             disabled={!isUnlocked}
           >
             <div className="flex w-full items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {isUnlocked ? (
-                  <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                ) : (
-                  <FaLock className="mr-2 size-5 text-gray-400" />
-                )}
-                <span className="font-medium text-white">
-                  {lesson.title}{' '}
-                  <span className="ml-2 text-sm text-gray-300">
-                    ({lesson.duration} mins)
-                  </span>
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-2">
+                  {isUnlocked ? (
+                    <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                  ) : (
+                    <FaLock className="mr-2 size-5 text-gray-400" />
+                  )}
+                  <span className="font-medium text-white">{lesson.title}</span>
+                </div>
+                <span className="text-sm text-gray-300">
+                  ({lesson.duration} mins)
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -375,11 +419,30 @@ export function CourseContent({
             </div>
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
-            <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
-              <p className="mb-4 text-gray-300">
-                {lesson.description ??
-                  'No hay descripción disponible para esta clase.'}
-              </p>
+            <div
+              className="border-t px-6 py-4 bg-[#1a233366] hover:bg-[#01152d] transition-colors"
+              style={{
+                borderColor: '#1d283a',
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p
+                    className="mb-4 max-w-full break-words whitespace-pre-wrap text-gray-300 line-clamp-3"
+                    style={{ overflowWrap: 'anywhere' }}
+                  >
+                    <IoPlayCircleOutline className="inline mr-2 text-white w-4 h-4 -mt-1" />
+                    {lesson.description ??
+                      'No hay descripción disponible para esta clase.'}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="whitespace-pre-wrap break-words">
+                    {lesson.description ??
+                      'No hay descripción disponible para esta clase.'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-300">
@@ -524,7 +587,7 @@ export function CourseContent({
     course.courseType?.requiredSubscriptionLevel,
   ]);
 
-  const formatDate = (dateString: string | null) => {
+  const _formatDate = (dateString: string | null) => {
     if (!dateString) return '';
 
     const date = new Date(dateString);
@@ -592,7 +655,7 @@ export function CourseContent({
   };
 
   // Determina si la suscripción está activa según los metadatos
-  const subscriptionStatusInfo = useMemo(() => {
+  const _subscriptionStatusInfo = useMemo(() => {
     if (!isSignedIn) return null;
 
     // Check subscription status from metadata first
@@ -675,11 +738,61 @@ export function CourseContent({
       : [];
   }, [classMeetings]);
 
+  const lessonsSectionTopMargin =
+    upcomingMeetings.length === 0 ? 'mt-2' : 'mt-6';
+
+  const recordedSectionTopMargin =
+    upcomingMeetings.length === 0 ? 'mt-2' : 'mt-6';
+
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
   const nextMeetingId = useMemo(() => {
     if (upcomingMeetings.length === 0) return null;
     return upcomingMeetings[0].id; // La primera clase después de ordenar
   }, [upcomingMeetings]);
+
+  const featuredLiveMeeting = upcomingMeetings[0];
+
+  const featuredLiveDetails =
+    featuredLiveMeeting && featuredLiveMeeting.startDateTime
+      ? (() => {
+          const start = new Date(featuredLiveMeeting.startDateTime!);
+          start.setHours(start.getHours() - 5);
+          const end = featuredLiveMeeting.endDateTime
+            ? new Date(featuredLiveMeeting.endDateTime)
+            : null;
+          if (end) end.setHours(end.getHours() - 5);
+
+          const month = new Intl.DateTimeFormat('es-ES', {
+            month: 'long',
+          }).format(start);
+          const monthCapitalized =
+            month.charAt(0).toUpperCase() + month.slice(1);
+          const day = start.getDate();
+          const year = start.getFullYear();
+
+          return {
+            dateLabel: `${day} de ${monthCapitalized}, ${year}`,
+            timeRangeLabel: `${start.toLocaleTimeString('es-CO', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })}${
+              end
+                ? ` - ${end.toLocaleTimeString('es-CO', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}`
+                : ''
+            }`,
+            durationLabel: formatDurationLabel(
+              getDurationMinutes(featuredLiveMeeting)
+            ),
+            compactDateLabel:
+              formatMobileDate(featuredLiveMeeting.startDateTime) ?? undefined,
+          };
+        })()
+      : null;
 
   // Add this helper function to check if a meeting is scheduled for today or is next
   const isMeetingAvailable = useCallback(
@@ -704,36 +817,15 @@ export function CourseContent({
   );
 
   return (
-    <div className="relative px-6 pt-6">
+    <div
+      className={cn(
+        'relative px-4 sm:px-0',
+        viewMode === 'recorded' || upcomingMeetings.length === 0
+          ? 'pt-0'
+          : 'pt-6'
+      )}
+    >
       {/* Removed bg-white class from the main container */}
-      <div className="mb-6">
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-primary mt-2 text-2xl font-bold sm:mt-0">
-            Contenido Del Curso
-          </h2>
-          {isSignedIn && subscriptionStatusInfo && (
-            <div className="flex flex-col items-end gap-1">
-              {subscriptionStatusInfo.active && (
-                <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-6">
-                  <FaCheck className="size-4" />
-                  <span className="font-medium">Suscripción Activa</span>
-                </div>
-              )}
-              {!subscriptionStatusInfo.active && (
-                <div className="mt-0 flex items-center gap-2 text-red-500 sm:mt-6">
-                  <FaTimes className="size-4" />
-                  <span className="font-medium">Suscripción Inactiva</span>
-                </div>
-              )}
-              {subscriptionStatusInfo.endDate && (
-                <p className="text-sm text-red-500">
-                  Finaliza: {formatDate(subscriptionEndDate)}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
 
       {isEnrolled && isFullyCompleted && (
         <div className="artiefy-check-container mb-4">
@@ -743,12 +835,6 @@ export function CourseContent({
           <div className="artiefy-static-checkmark" />
         </div>
       )}
-
-      <PencilRuler
-        className={`text-primary absolute top-4 right-7 transition-colors ${
-          expandedLesson !== null ? 'text-orange-500' : 'text-primary'
-        }`}
-      />
 
       {isEnrolled &&
         !isSubscriptionReallyActive &&
@@ -781,231 +867,173 @@ export function CourseContent({
 
       {/* --- Clases en Vivo y Grabadas --- */}
       {(upcomingMeetings.length > 0 || recordedMeetings.length > 0) && (
-        <div className="bg-background mb-8 rounded-lg border p-6 shadow-sm">
+        <>
           {/* Fondo animado SOLO para el bloque interno de bienvenida/no inscrito */}
-          {!isSignedIn || !isEnrolled ? (
+          {upcomingMeetings.length > 0 && (!isSignedIn || !isEnrolled) ? (
             <div
-              className="border-secondary overflow-hidden rounded-2xl border p-0 text-center shadow-lg"
-              style={{ background: '#1e2939', position: 'relative' }}
+              className="mb-6 rounded-[12px] border p-4 sm:p-5"
+              style={{
+                backgroundColor: '#061c3799',
+                borderColor: 'hsla(217, 33%, 17%, 0.5)',
+              }}
             >
-              <div className="pattenrs" style={{ zIndex: 0 }} />
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <div className="flex flex-col items-center gap-2 px-8 pt-8 pb-4 sm:px-8 sm:pt-8 sm:pb-4">
-                  <span className="mb-2 inline-block rounded-full border border-cyan-300 bg-cyan-200 px-4 py-1 text-xs font-semibold text-cyan-800 shadow-sm sm:text-sm">
-                    <FaVideo className="mr-2 inline-block text-cyan-600" />
-                    Clase en Vivo
-                  </span>
-                  {/* Responsive: frase y fecha en líneas separadas solo en móvil, en desktop como antes */}
-                  <h3
-                    className="relative mb-2 text-xs leading-tight font-extrabold drop-shadow-sm sm:text-2xl"
-                    style={{
-                      color: '#fff',
-                      zIndex: 2,
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {upcomingMeetings.length > 0 ? (
-                      <>
-                        {/* Móvil: frase y fecha en líneas separadas, letra pequeña */}
-                        <span className="block text-xs sm:hidden">
-                          La primera clase en vivo del curso es el
-                        </span>
-                        <span
-                          className="mt-1 block text-xs font-extrabold underline underline-offset-2 sm:hidden"
-                          style={{
-                            color: '#00BDD8', // secondary
-                          }}
+              <div className="flex w-full flex-col items-stretch gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                      EN VIVO
+                    </span>
+                    <span className="text-base font-semibold text-slate-100 sm:text-lg">
+                      Clase en vivo
+                    </span>
+                  </div>
+                  {featuredLiveDetails && (
+                    <span className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                      Próxima
+                    </span>
+                  )}
+                </div>
+
+                {featuredLiveDetails && (
+                  <>
+                    <p className="text-xs text-slate-300 sm:text-sm">
+                      La primera clase en vivo del curso es el{' '}
+                      <span className="font-semibold text-white">
+                        {featuredLiveDetails.dateLabel}
+                      </span>
+                      {featuredLiveDetails.timeRangeLabel && (
+                        <>
+                          {' '}
+                          a las{' '}
+                          <span className="font-semibold text-white">
+                            {featuredLiveDetails.timeRangeLabel}
+                          </span>
+                        </>
+                      )}
+                    </p>
+                    <div className="flex flex-col gap-2 text-xs text-slate-300 sm:flex-row sm:items-center sm:text-sm">
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
                         >
-                          {new Date(
-                            upcomingMeetings[0].startDateTime
-                          ).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </span>
-                        {upcomingMeetings[0].startDateTime && (
-                          <span className="mt-1 block sm:hidden">
-                            <span
-                              className="inline-block rounded-full border border-cyan-300 bg-cyan-200 px-3 py-0.5 text-[11px] font-bold"
-                              style={{
-                                color: '#006b7a',
-                                textDecoration: 'none',
-                              }}
-                            >
-                              {(() => {
-                                const start = new Date(
-                                  upcomingMeetings[0].startDateTime
-                                );
-                                start.setHours(start.getHours() - 5);
-                                const end = upcomingMeetings[0].endDateTime
-                                  ? new Date(upcomingMeetings[0].endDateTime)
-                                  : null;
-                                if (end) end.setHours(end.getHours() - 5);
-                                return `${start.toLocaleTimeString('es-CO', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                })} - ${
-                                  end
-                                    ? end.toLocaleTimeString('es-CO', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true,
-                                      })
-                                    : ''
-                                }`;
-                              })()}
+                          <path d="M8 2v4"></path>
+                          <path d="M16 2v4"></path>
+                          <rect
+                            width="18"
+                            height="18"
+                            x="3"
+                            y="4"
+                            rx="2"
+                          ></rect>
+                          <path d="M3 10h18"></path>
+                        </svg>
+                        {featuredLiveDetails.compactDateLabel ||
+                          featuredLiveDetails.dateLabel}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                        >
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>
+                          {featuredLiveDetails.timeRangeLabel}
+                          {featuredLiveDetails.durationLabel && (
+                            <span className="ml-1 text-[11px] text-slate-400">
+                              ({featuredLiveDetails.durationLabel})
                             </span>
-                          </span>
-                        )}
-                        {/* Desktop: frase y fecha como antes, en una sola línea */}
-                        <span className="hidden sm:inline">
-                          La primera clase en vivo del curso es el{' '}
-                          <span
-                            className="font-extrabold underline underline-offset-2"
-                            style={{ color: '#00BDD8' }}
-                          >
-                            {new Date(
-                              upcomingMeetings[0].startDateTime
-                            ).toLocaleDateString('es-ES', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            })}
-                          </span>
-                          {upcomingMeetings[0].startDateTime && (
-                            <>
-                              {' '}
-                              <span
-                                className="ml-1 inline-block rounded border border-cyan-300 bg-cyan-200 px-1.5 py-0.5 text-base font-bold"
-                                style={{
-                                  color: '#006b7a',
-                                  textDecoration: 'none',
-                                }}
-                              >
-                                {(() => {
-                                  const start = new Date(
-                                    upcomingMeetings[0].startDateTime
-                                  );
-                                  start.setHours(start.getHours() - 5);
-                                  const end = upcomingMeetings[0].endDateTime
-                                    ? new Date(upcomingMeetings[0].endDateTime)
-                                    : null;
-                                  if (end) end.setHours(end.getHours() - 5);
-                                  return `${start.toLocaleTimeString('es-CO', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                  })} - ${
-                                    end
-                                      ? end.toLocaleTimeString('es-CO', {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                          hour12: true,
-                                        })
-                                      : ''
-                                  }`;
-                                })()}
-                              </span>
-                            </>
                           )}
                         </span>
-                      </>
-                    ) : (
-                      <span className="block text-xs sm:text-base">
-                        Próximamente clases en vivo
                       </span>
-                    )}
-                  </h3>
+                    </div>
+                  </>
+                )}
+
+                <div className="text-xs text-slate-300 sm:text-sm">
+                  {!isSignedIn ? (
+                    <>
+                      <span className="font-semibold text-white">
+                        Inicia sesión
+                      </span>{' '}
+                      para ver todas las clases disponibles.
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-white">
+                        Inscríbete al curso
+                      </span>{' '}
+                      para acceder a todas las clases.
+                    </>
+                  )}
                 </div>
-                <div className="flex flex-col items-center gap-2 px-4 pb-6 sm:px-8 sm:pb-8">
-                  <p
-                    className="text-xs font-medium sm:text-lg"
-                    style={{ color: '#fff' }}
+
+                {!isSignedIn ? (
+                  <Link
+                    href="/sign-in"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 sm:w-auto"
                   >
-                    {!isSignedIn ? (
-                      <>
-                        <Link
-                          href="/sign-in"
-                          className="mb-1 inline-block rounded border border-yellow-300 bg-[#00BDD8] px-2 py-1 text-xs font-semibold underline underline-offset-2 hover:bg-[#0097a7] hover:[text-decoration-line:underline] sm:text-base"
-                          style={{
-                            backgroundColor: '#00BDD8',
-                            borderColor: '#0097a7',
-                            color: '#006b7a', // secondary más oscuro
-                            textDecorationLine: 'none',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <FaLock
-                            className="mr-1 inline-block"
-                            style={{ color: '#006b7a' }}
-                          />
-                          Inicia sesión
-                        </Link>
-                        <br />
-                        <span style={{ color: '#fff' }}>
-                          para ver todas las clases disponibles
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="mb-1 inline-block rounded border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 sm:text-base">
-                          <FaLock className="mr-1 inline-block" />
-                          Inscríbete al curso
-                        </span>
-                        <br />
-                        para acceder a todas las clases
-                      </>
-                    )}
-                  </p>
-                </div>
+                    <FaLock className="h-4 w-4" />
+                    Inicia sesión
+                  </Link>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-200">
+                    <FaLock className="h-3.5 w-3.5" />
+                    Acceso restringido para estudiantes inscritos
+                  </div>
+                )}
               </div>
             </div>
           ) : (
             <>
               {/* Clases en vivo - Sección con su propio toggle */}
-              {upcomingMeetings.length > 0 && (
+              {upcomingMeetings.length > 0 && viewMode !== 'recorded' && (
                 <div className={cn('mb-6')}>
                   {/* Header con variantes responsive */}
-                  {/* Mobile: título centrado y toggle pequeño sin burbuja */}
-                  <div className="mb-3 flex flex-col items-center sm:hidden">
-                    <h2 className="text-center text-lg font-bold text-white">
-                      Clases en Vivo
-                    </h2>
-                    <button
-                      onClick={toggleLiveClasses}
-                      className="mt-1 flex items-center gap-1 text-xs font-medium text-cyan-200 underline-offset-4 hover:text-cyan-100"
-                    >
-                      <span>{showLiveClasses ? 'Ver menos' : 'Ver más'}</span>
-                      {showLiveClasses ? (
-                        <FaChevronUp className="size-3" />
-                      ) : (
-                        <FaChevronDown className="size-3" />
-                      )}
-                    </button>
+                  {/* Mobile: icono videocam + texto centrado */}
+                  <div
+                    className={`${recordedSectionTopMargin} mb-3 flex flex-col items-center rounded-2xl border sm:hidden`}
+                    style={{ backgroundColor: '#01152d' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
+                        <LuVideo className="h-5 w-5 text-red-400" />
+                      </div>
+                      <h2 className="text-lg font-bold text-white">
+                        Clases en Vivo
+                      </h2>
+                    </div>
                   </div>
 
-                  {/* Desktop: distribución original con botón tipo burbuja */}
-                  <div className="mb-4 hidden items-center justify-between sm:flex">
-                    <h2 className="text-xl font-bold text-white">
-                      Clases en Vivo
-                    </h2>
-                    <button
-                      onClick={toggleLiveClasses}
-                      className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
-                    >
-                      <span className="tracking-wide text-white">
-                        {showLiveClasses ? 'Ver menos' : 'Ver más'}
-                      </span>
-                      {showLiveClasses ? (
-                        <FaChevronUp className="text-white transition-transform duration-200" />
-                      ) : (
-                        <FaChevronDown className="text-white transition-transform duration-200" />
-                      )}
-                    </button>
+                  {/* Desktop: icono videocam + texto alineados */}
+                  <div className="mb-4 hidden items-center sm:flex">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
+                        <LuVideo className="h-5 w-5 text-red-400" />
+                      </div>
+                      <h2 className="text-xl font-bold text-white">
+                        Clases en Vivo
+                      </h2>
+                    </div>
                   </div>
 
                   {/* Live classes content - responsive: "ver menos" muestra solo la siguiente clase */}
@@ -1083,11 +1111,7 @@ export function CourseContent({
                           isJoinEnabled = isToday && !isMeetingEnded;
                         }
 
-                        // Badge: Hoy (verde SOLO si botón es "Unirse a la Clase"), gris si "Clase Finalizada"
-                        const badgeHoyClass =
-                          'rounded-full border border-green-500 bg-green-100 px-3 py-1 font-bold text-green-700 shadow-sm sm:ml-auto';
-                        const badgeFinalizadaClass =
-                          'rounded-full border border-gray-400 bg-gray-200 px-3 py-1 font-bold text-gray-700 shadow-sm sm:ml-auto';
+                        // Nota: eliminadas las badges "Hoy" — el estado se muestra vía botón/etiqueta de estado.
 
                         // --- Botón: color según estado ---
                         const buttonClass =
@@ -1103,14 +1127,24 @@ export function CourseContent({
                           buttonBg = 'buttonneon-aqua';
                           buttonDisabled = true;
                           buttonText = 'Próxima Clase';
-                          buttonIcon = <FaLock className="size-4" />;
+                          buttonIcon = (
+                            <FaClock
+                              className="mr-2 inline-block h-4 w-4"
+                              style={{ flexShrink: 0 }}
+                            />
+                          );
                           buttonExtraClass = 'buttonneon';
                         } else if (isToday && isJoinEnabled) {
-                          buttonBg =
-                            'bg-green-600 text-white hover:bg-green-700';
+                          // Botón rojo "Unirse Ahora" con icono de salida
+                          buttonBg = 'bg-red-600 text-white hover:bg-red-700';
                           buttonDisabled = false;
-                          buttonText = 'Unirse a la Clase';
-                          buttonIcon = <FaVideo className="size-4" />;
+                          buttonText = 'Unirse Ahora';
+                          buttonIcon = (
+                            <LuSquareArrowOutUpRight
+                              className="mr-2 inline-block h-4 w-4"
+                              style={{ flexShrink: 0 }}
+                            />
+                          );
                         } else if (
                           isToday &&
                           !isJoinEnabled &&
@@ -1119,41 +1153,56 @@ export function CourseContent({
                           buttonBg = 'bg-gray-400 text-white';
                           buttonDisabled = true;
                           buttonText = 'Clase Finalizada';
-                          buttonIcon = <FaLock className="size-4" />;
+                          buttonIcon = <FaLock className="mr-2 h-4 w-4" />;
                         } else if (!isAvailable && !isNext && !isToday) {
                           buttonBg = 'bg-[#01142B] text-white';
                           buttonDisabled = true;
                           buttonText = 'Clase Bloqueada';
-                          buttonIcon = <FaLock className="size-4" />;
+                          buttonIcon = <FaLock className="mr-2 h-4 w-4" />;
                         }
 
                         return (
                           <div
                             key={meeting.id}
                             className={cn(
-                              // Contenedor base: en mobile solo contorno sin brillo
-                              'relative flex flex-col rounded-lg border-0 p-4 sm:flex-row sm:items-center',
-                              'bg-transparent sm:bg-gray-800',
-                              'ring-1 ring-white sm:ring-0',
-                              'shadow-none sm:shadow',
+                              'relative flex flex-col gap-3 rounded-[12px] border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4',
                               'sm:hover:neon-live-class'
                             )}
+                            style={{
+                              backgroundColor: '#061c3799',
+                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                            }}
                           >
                             {/* MOBILE: layout vertical y centrado */}
                             <div className="block w-full sm:hidden">
                               <div className="flex w-full flex-col items-stretch gap-3">
                                 {/* Header compacto sin fondo, solo texto y chips */}
                                 <div className="flex items-start justify-between gap-2">
-                                  <h3 className="text-base leading-snug font-semibold text-white">
-                                    {meeting.title}
-                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                                      style={{
+                                        backgroundColor: '#061c3799',
+                                        color: '#E6F7F8',
+                                      }}
+                                    >
+                                      <span
+                                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                                        style={{ backgroundColor: '#061c37' }}
+                                      />
+                                      EN VIVO
+                                    </span>
+                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
+                                      {meeting.title}
+                                    </h3>
+                                  </div>
                                   {isToday && (
                                     <span
                                       className={cn(
-                                        'rounded-full px-3 py-1 text-xs font-semibold',
+                                        'rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold',
                                         isJoinEnabled && !isMeetingEnded
-                                          ? 'bg-green-600/90 text-white'
-                                          : 'bg-gray-500/30 text-gray-200'
+                                          ? 'text-emerald-200'
+                                          : 'text-slate-300'
                                       )}
                                     >
                                       {isMeetingEnded
@@ -1162,20 +1211,58 @@ export function CourseContent({
                                     </span>
                                   )}
                                 </div>
-                                {/* Chips fecha+hora en una sola línea y duración */}
-                                <div className="flex flex-nowrap items-center gap-2">
-                                  <span className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-xs font-medium whitespace-nowrap text-cyan-200">
-                                    {formatMobileDate(meeting.startDateTime)} •{' '}
-                                    {formatTimeRange(
-                                      meeting.startDateTime,
-                                      meeting.endDateTime
-                                    )}
+                                {/* Chips fecha+hora y duracion (móvil) en una sola línea */}
+                                <div
+                                  className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                  style={{ color: '#94a3b8' }}
+                                >
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-4 w-4"
+                                    >
+                                      <path d="M8 2v4"></path>
+                                      <path d="M16 2v4"></path>
+                                      <rect
+                                        width="18"
+                                        height="18"
+                                        x="3"
+                                        y="4"
+                                        rx="2"
+                                      ></rect>
+                                      <path d="M3 10h18"></path>
+                                    </svg>
+                                    {formatMobileDate(meeting.startDateTime)}
                                   </span>
-                                  <span className="rounded-lg border border-white/10 bg-transparent px-3 py-1 text-xs font-medium whitespace-nowrap text-cyan-200">
-                                    Duración:{' '}
-                                    {formatDurationHours(
-                                      getDurationMinutes(meeting)
-                                    )}
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-4 w-4"
+                                    >
+                                      <circle cx="12" cy="12" r="10"></circle>
+                                      <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    {formatStartTime(meeting.startDateTime)}{' '}
+                                    {(() => {
+                                      const dm = getDurationMinutes(meeting);
+                                      return `(${formatDurationLabel(dm)})`;
+                                    })()}
                                   </span>
                                 </div>
                                 {/* Botón */}
@@ -1229,9 +1316,11 @@ export function CourseContent({
                                                 'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                             }}
                                           >
-                                            <FaVideo className="size-4" />
+                                            {buttonIcon ?? (
+                                              <FaVideo className="size-4" />
+                                            )}
                                             <span className="relative z-10">
-                                              Unirse a la Clase
+                                              {buttonText}
                                             </span>
                                           </a>
                                         )}
@@ -1280,50 +1369,75 @@ export function CourseContent({
                                 </div>
                               </div>
                             </div>
-                            {/* DESKTOP: layout horizontal como antes */}
-                            <div className="hidden min-w-0 flex-1 items-center gap-3 sm:flex">
-                              <FaVideo
-                                className={cn(
-                                  'h-5 w-5 flex-shrink-0 text-cyan-600'
-                                )}
-                              />
-                              <div>
-                                <div className="mb-1 text-lg leading-tight font-bold text-white">
+                            {/* DESKTOP: badge + title on one line, date/time/duration below */}
+                            <div className="hidden min-w-0 flex-1 flex-col gap-2 sm:flex">
+                              <div className="flex items-center gap-3">
+                                <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                                  EN VIVO
+                                </span>
+                                <div className="text-base leading-tight font-semibold text-slate-100">
                                   {meeting.title}
                                 </div>
-                                <div className="mb-1 flex items-center gap-2 text-base font-medium">
-                                  {formatMeetingDateTimeModern(
-                                    meeting.startDateTime,
-                                    meeting.endDateTime
-                                  )}
-                                  <span className="ml-2 text-sm font-bold text-green-400">
-                                    • Duración:{' '}
-                                    {formatDuration(
-                                      getDurationMinutes(meeting)
-                                    )}
-                                  </span>
-                                </div>
+                              </div>
+                              <div
+                                className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                style={{
+                                  color: '#94a3b8',
+                                  background: '#061c3799',
+                                }}
+                              >
+                                <span className="inline-flex items-center gap-1.5">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-4 w-4"
+                                  >
+                                    <path d="M8 2v4"></path>
+                                    <path d="M16 2v4"></path>
+                                    <rect
+                                      width="18"
+                                      height="18"
+                                      x="3"
+                                      y="4"
+                                      rx="2"
+                                    ></rect>
+                                    <path d="M3 10h18"></path>
+                                  </svg>
+                                  {formatMobileDate(meeting.startDateTime)}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-4 w-4"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                  {formatStartTime(meeting.startDateTime)}{' '}
+                                  {(() => {
+                                    const dm = getDurationMinutes(meeting);
+                                    return `(${formatDurationLabel(dm)})`;
+                                  })()}
+                                </span>
                               </div>
                             </div>
-                            {/* Badges desktop */}
-                            <div className="mt-3 hidden min-w-fit flex-row items-center gap-2 sm:mt-0 sm:ml-4 sm:flex sm:flex-col sm:items-end">
-                              {isToday && isJoinEnabled && (
-                                <Badge
-                                  variant="secondary"
-                                  className={badgeHoyClass}
-                                >
-                                  Hoy
-                                </Badge>
-                              )}
-                              {isToday && !isJoinEnabled && isMeetingEnded && (
-                                <Badge
-                                  variant="secondary"
-                                  className={badgeFinalizadaClass}
-                                >
-                                  Hoy
-                                </Badge>
-                              )}
-                            </div>
+                            {/* Badges desktop removed: 'Hoy' badge disabled per request */}
                             {/* Botón desktop */}
                             <div className="mt-3 hidden min-w-fit flex-col sm:mt-0 sm:ml-4 sm:flex">
                               {meeting.joinUrl && (
@@ -1372,9 +1486,11 @@ export function CourseContent({
                                             'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                         }}
                                       >
-                                        <FaVideo className="size-4" />
+                                        {buttonIcon ?? (
+                                          <FaVideo className="size-4" />
+                                        )}
                                         <span className="relative z-10">
-                                          Unirse a la Clase
+                                          {buttonText}
                                         </span>
                                       </a>
                                     )}
@@ -1429,33 +1545,35 @@ export function CourseContent({
                 </div>
               )}
 
-              {/* Clases Grabadas - Sección con su propio toggle independiente */}
-              {recordedMeetings.length > 0 && (
-                <div className="bg-background mb-6 rounded-lg border p-6 shadow-sm">
+              {/* Clases Grabadas - Sección visible solo cuando la pestaña grabadas está activa */}
+              {recordedMeetings.length > 0 && viewMode === 'recorded' && (
+                <div>
                   {/* Header con variantes responsive para grabadas */}
-                  <div className="mb-3 flex flex-col items-center sm:hidden">
-                    <h3 className="text-center text-lg font-bold text-white">
-                      Clases Grabadas
-                    </h3>
-                    <button
-                      onClick={toggleRecordedClasses}
-                      className="mt-1 flex items-center gap-1 text-xs font-medium text-cyan-200 underline-offset-4 hover:text-cyan-100"
-                    >
-                      <span>
-                        {showRecordedClasses ? 'Ver menos' : 'Ver más'}
-                      </span>
-                      {showRecordedClasses ? (
-                        <FaChevronUp className="size-3" />
-                      ) : (
-                        <FaChevronDown className="size-3" />
-                      )}
-                    </button>
+                  <div
+                    className="mb-3 flex flex-col items-start rounded-2xl sm:hidden"
+                    style={{ backgroundColor: '#01152d' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
+                        <IoIosSave className="h-5 w-5 text-emerald-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">
+                        Clases Grabadas
+                      </h3>
+                    </div>
                   </div>
 
-                  <div className="mb-4 hidden items-center justify-between sm:flex">
-                    <h3 className="text-xl font-bold text-white">
-                      Clases Grabadas
-                    </h3>
+                  <div
+                    className={`${recordedSectionTopMargin} mb-4 hidden items-center justify-between sm:flex`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
+                        <IoIosSave className="h-5 w-5 text-emerald-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white">
+                        Clases Grabadas
+                      </h3>
+                    </div>
                     <button
                       onClick={toggleRecordedClasses}
                       className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
@@ -1483,28 +1601,106 @@ export function CourseContent({
                     <div className="space-y-4">
                       {recordedMeetings.map((meeting: ClassMeeting) => {
                         const isExpanded = expandedRecorded === meeting.id;
-                        const durationMinutes = getDurationMinutes(meeting);
+                        const _durationMinutes = getDurationMinutes(meeting);
                         const currentProgress =
                           meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
 
                         return (
                           <div
                             key={meeting.id}
-                            className={`overflow-hidden rounded-lg border-0 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
+                            className={cn(
+                              'relative overflow-hidden rounded-[12px] border',
+                              'sm:hover:neon-live-class'
+                            )}
+                            style={{
+                              backgroundColor: '#061c37',
+                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                            }}
                           >
                             <button
-                              className="flex w-full items-center justify-between px-6 py-4"
+                              className="flex w-full items-center justify-between px-6 py-4 text-left"
                               onClick={() => toggleRecorded(meeting.id)}
                             >
                               <div className="flex w-full items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <FaCheckCircle className="mr-2 size-5 text-green-500" />
-                                  <span className="font-medium text-white">
-                                    {meeting.title}{' '}
-                                    <span className="ml-2 text-sm text-gray-300">
-                                      ({durationMinutes} mins)
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-200 uppercase"
+                                      style={{ letterSpacing: '0.08em' }}
+                                    >
+                                      Grabada
                                     </span>
-                                  </span>
+                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
+                                      {meeting.title ?? `Clase ${meeting.id}`}
+                                    </h3>
+                                  </div>
+                                  <div
+                                    className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:text-sm"
+                                    style={{ color: '#94a3b8' }}
+                                  >
+                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="h-4 w-4"
+                                        style={{ color: '#94a3b8' }}
+                                      >
+                                        <path d="M8 2v4"></path>
+                                        <path d="M16 2v4"></path>
+                                        <rect
+                                          width="18"
+                                          height="18"
+                                          x="3"
+                                          y="4"
+                                          rx="2"
+                                        ></rect>
+                                        <path d="M3 10h18"></path>
+                                      </svg>
+                                      {formatMobileDate(
+                                        meeting.startDateTime
+                                      ) ||
+                                        (meeting.startDateTime
+                                          ? new Date(
+                                              meeting.startDateTime
+                                            ).toLocaleDateString('es-ES', {
+                                              weekday: 'short',
+                                              month: 'short',
+                                              day: 'numeric',
+                                            })
+                                          : 'Fecha por definir')}
+                                    </span>
+
+                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="h-4 w-4"
+                                        style={{ color: '#94a3b8' }}
+                                      >
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                      </svg>
+                                      <span>
+                                        {formatDurationLabel(
+                                          getDurationMinutes(meeting)
+                                        )}
+                                      </span>
+                                    </span>
+                                  </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   {isExpanded ? (
@@ -1576,23 +1772,42 @@ export function CourseContent({
               )}
             </>
           )}
-        </div>
+        </>
       )}
 
       {/* Regular lessons - Now with white container */}
-      <div className="bg-background mb-8 rounded-lg border p-6 shadow-sm">
-        {/* Increased padding from p-4 to p-6 */}
-        <h2 className="mb-4 text-xl font-bold text-white">Clases del curso</h2>
+      {viewMode !== 'recorded' && (
         <div
-          className={cn(
-            'transition-all duration-300',
-            shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]',
-            !isEnrolled && 'pointer-events-none opacity-100'
-          )}
+          className="rounded-lg border p-4"
+          style={{
+            backgroundColor: '#061c37',
+            borderColor: '#1d283a',
+          }}
         >
-          <div className="space-y-4">{memoizedLessons}</div>
+          <h2
+            className={`${lessonsSectionTopMargin} mb-4 flex items-center justify-between text-xl font-bold text-white`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-blue-500/20 p-2 text-blue-300">
+                <MdVideoLibrary className="h-4 w-4" />
+              </span>
+              Clases del Curso
+            </div>
+            <span className="text-sm font-light text-[#94a3b8]">
+              {course.lessons?.length || 0} Clases
+            </span>
+          </h2>
+          <div
+            className={cn(
+              'transition-all duration-300',
+              shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]',
+              !isEnrolled && 'pointer-events-none opacity-100'
+            )}
+          >
+            <div className="space-y-4">{memoizedLessons}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MODAL para reproducir clase grabada */}
       {openRecordedModal && currentRecordedVideo && (

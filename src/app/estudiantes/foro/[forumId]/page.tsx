@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -48,6 +48,23 @@ export default function StudentForumPage() {
   const [postReplies, setPostReplies] = useState<PostReply[]>([]);
   const [replyMessage, setReplyMessage] = useState<Record<number, string>>({});
   const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null);
+
+  // Combina la descripción del foro (educador) como primer post si existe
+  const displayPosts = useMemo(() => {
+    if (!forum) return posts;
+    const initial: Post[] = forum.description
+      ? [
+          {
+            id: Number(`-${forum.id}`),
+            userId: forum.userId,
+            content: forum.description,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ]
+      : [];
+    return [...initial, ...posts];
+  }, [forum, posts]);
 
   // Verifica inscripción y carga foro
   useEffect(() => {
@@ -183,7 +200,7 @@ export default function StudentForumPage() {
             : `Foro general para estudiantes del curso ${forum.courseId.title}`}
         </p> */}
         <div className="space-y-6">
-          {posts.map((post) => (
+          {displayPosts.map((post) => (
             <div key={post.id} className="mb-2 rounded bg-gray-800 p-4">
               <div className="mb-1 flex items-center gap-2">
                 <span className="font-semibold text-cyan-300">

@@ -153,11 +153,21 @@ export async function checkAndUpdateSubscriptions() {
           });
 
           if (clerkUser?.data?.[0]) {
+            // Formatear subscriptionEndDate al formato deseado sin T ni Z
+            const formattedEndDate =
+              typeof user.subscriptionEndDate === 'string'
+                ? user.subscriptionEndDate
+                : formatInTimeZone(
+                    user.subscriptionEndDate,
+                    TIMEZONE,
+                    'yyyy-MM-dd HH:mm:ss'
+                  );
+
             await clerk.users.updateUser(clerkUser.data[0].id, {
               publicMetadata: {
                 subscriptionStatus: 'inactive',
                 planType: user.planType,
-                subscriptionEndDate: user.subscriptionEndDate, // Mantener formato original
+                subscriptionEndDate: formattedEndDate,
               },
             });
 

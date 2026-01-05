@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
+
 import { useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 import { FaTimes } from 'react-icons/fa';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
+
+import '../../../styles/mini-login-uiverse.css';
 
 interface MiniLoginModalProps {
   isOpen: boolean;
@@ -229,243 +233,247 @@ export default function MiniLoginModal({
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">
-            Iniciar Sesión para Continuar
-          </h3>
+      <div className="mini-login relative w-full max-w-md px-4">
+        <div className="form relative w-full">
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="absolute top-3 right-3 text-white/80 transition hover:text-white"
             type="button"
+            aria-label="Cerrar"
           >
             <FaTimes className="h-5 w-5" />
           </button>
-        </div>
 
-        {/* Error Messages */}
-        {errors && (
-          <div className="mb-4">
-            {errors.map((el, index) => (
-              <p key={index} className="text-sm text-red-500">
-                {el.code === 'form_password_incorrect'
-                  ? 'Contraseña incorrecta. Inténtalo de nuevo.'
-                  : el.code === 'form_identifier_not_found'
-                    ? 'No se pudo encontrar tu cuenta.'
-                    : el.longMessage}
-              </p>
-            ))}
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/artiefy-icon.png"
+              alt="Artiefy"
+              width={72}
+              height={72}
+              className="h-16 w-16 shadow-md"
+              priority
+            />
           </div>
-        )}
 
-        {/* Form Content */}
-        <div className="space-y-4">
+          <div className="form-title">
+            <span>Inicia sesión en</span>
+          </div>
+          <div className="title-2">
+            <span>ARTIEFY</span>
+          </div>
+
+          {errors && (
+            <div className="signup-link mb-3 text-red-300">
+              {errors.map((el, index) => (
+                <p key={index}>
+                  {el.code === 'form_password_incorrect'
+                    ? 'Contraseña incorrecta. Inténtalo de nuevo.'
+                    : el.code === 'form_identifier_not_found'
+                      ? 'No se pudo encontrar tu cuenta.'
+                      : el.longMessage}
+                </p>
+              ))}
+            </div>
+          )}
+
           {!successfulCreation && !isForgotPassword ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <input
-                  onChange={(e) => setEmail(e.target.value)}
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  placeholder="Correo Electrónico"
-                  required
-                  className={`w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none ${
-                    emailError
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-secondary focus:border-secondary'
-                  }`}
-                />
+                <div className="input-container">
+                  <input
+                    onChange={(e) => setEmail(e.target.value)}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    placeholder="Correo electrónico"
+                    required
+                    className={`input-mail ${
+                      emailError ? 'border-red-300 focus:border-red-500' : ''
+                    }`}
+                  />
+                </div>
+
+                <div className="input-container">
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    placeholder="Contraseña"
+                    required
+                    className={`input-pwd ${
+                      passwordError ? 'border-red-300 focus:border-red-500' : ''
+                    }`}
+                  />
+                </div>
               </div>
-              <div>
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  placeholder="Contraseña"
-                  required
-                  className={`w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none ${
-                    passwordError
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-secondary focus:border-secondary'
-                  }`}
-                />
-              </div>
-              <button
-                type="submit"
-                className="border-secondary bg-secondary w-full border px-4 py-2 text-white transition-colors hover:border-[#00A5C0] hover:bg-[#00A5C0] focus:outline-none disabled:opacity-50"
-                disabled={isSubmitting}
-              >
+
+              <section className="bg-stars" aria-hidden="true">
+                <span className="star" />
+                <span className="star" />
+                <span className="star" />
+                <span className="star" />
+              </section>
+
+              <button type="submit" className="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
+                  <Icons.spinner className="mx-auto h-5 w-5" />
                 ) : (
-                  'Iniciar Sesión'
+                  <span className="sign-text">Iniciar sesión</span>
                 )}
               </button>
+
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => signInWith('oauth_google')}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 hover:bg-white"
+                  disabled={!!loadingProvider}
+                  aria-label="Continuar con Google"
+                >
+                  {loadingProvider === 'oauth_google' ? (
+                    <Icons.spinner className="h-5 w-5" />
+                  ) : (
+                    <Icons.google />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => signInWith('oauth_facebook')}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 hover:bg-white"
+                  disabled={!!loadingProvider}
+                  aria-label="Continuar con Facebook"
+                >
+                  {loadingProvider === 'oauth_facebook' ? (
+                    <Icons.spinner className="h-5 w-5" />
+                  ) : (
+                    <Icons.facebook />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => signInWith('oauth_github')}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 hover:bg-white"
+                  disabled={!!loadingProvider}
+                  aria-label="Continuar con GitHub"
+                >
+                  {loadingProvider === 'oauth_github' ? (
+                    <Icons.spinner className="h-5 w-5" />
+                  ) : (
+                    <Icons.gitHub />
+                  )}
+                </button>
+              </div>
+
+              <p className="signup-link">
+                ¿Olvidaste tu contraseña?
+                <button
+                  type="button"
+                  className="up ml-1"
+                  onClick={() => setIsForgotPassword(true)}
+                >
+                  Recuperarla
+                </button>
+              </p>
+
+              <p className="signup-link">
+                ¿No tienes cuenta?
+                <button
+                  type="button"
+                  className="up ml-1"
+                  onClick={() => {
+                    const signUpUrl = `/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}`;
+                    window.location.href = signUpUrl;
+                  }}
+                >
+                  Regístrate aquí
+                </button>
+              </p>
             </form>
           ) : successfulCreation ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
+              <div className="input-container">
                 <input
                   onChange={(e) => setPassword(e.target.value)}
                   id="new-password"
                   name="new-password"
                   type="password"
                   value={password}
-                  placeholder="Nueva Contraseña"
+                  placeholder="Nueva contraseña"
                   required
-                  className="border-secondary focus:border-secondary w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none"
+                  className="input-pwd"
                 />
               </div>
-              <div>
+              <div className="input-container">
                 <input
                   onChange={(e) => setCode(e.target.value)}
                   id="reset-code"
                   name="reset-code"
                   type="text"
                   value={code}
-                  placeholder="Código de Restablecimiento"
+                  placeholder="Código de restablecimiento"
                   required
-                  className="border-secondary focus:border-secondary w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none"
+                  className="input-mail"
                 />
               </div>
-              <button
-                type="submit"
-                className="border-secondary bg-secondary w-full border px-4 py-2 text-white transition-colors hover:border-[#00A5C0] hover:bg-[#00A5C0] focus:outline-none disabled:opacity-50"
-                disabled={isSubmitting}
-              >
+              <button type="submit" className="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
+                  <Icons.spinner className="mx-auto h-5 w-5" />
                 ) : (
-                  'Restablecer Contraseña'
+                  <span className="sign-text">Restablecer contraseña</span>
                 )}
               </button>
+              <p className="signup-link">
+                <button
+                  type="button"
+                  className="up"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setSuccessfulCreation(false);
+                    setErrors(undefined);
+                  }}
+                >
+                  Volver a iniciar sesión
+                </button>
+              </p>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-4">
-              <div>
+              <div className="input-container">
                 <input
                   onChange={(e) => setEmail(e.target.value)}
                   id="forgot-email"
                   name="forgot-email"
                   type="email"
                   value={email}
-                  placeholder="Correo Electrónico"
+                  placeholder="Correo electrónico"
                   required
-                  className="border-secondary focus:border-secondary w-full border px-3 py-2 text-sm text-gray-500 focus:outline-none"
+                  className="input-mail"
                 />
               </div>
-              <button
-                type="submit"
-                className="border-secondary bg-secondary w-full border px-4 py-2 text-white transition-colors hover:border-[#00A5C0] hover:bg-[#00A5C0] focus:outline-none disabled:opacity-50"
-                disabled={isSubmitting}
-              >
+              <button type="submit" className="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <Icons.spinner className="text-background mx-auto h-5 w-5" />
+                  <Icons.spinner className="mx-auto h-5 w-5" />
                 ) : (
-                  'Enviar Código'
+                  <span className="sign-text">Enviar código</span>
                 )}
               </button>
-            </form>
-          )}
-
-          {/* OAuth Providers */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
-                  O continúa con
-                </span>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-center space-x-4">
-              <button
-                type="button"
-                onClick={() => signInWith('oauth_google')}
-                className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
-                disabled={!!loadingProvider}
-              >
-                {loadingProvider === 'oauth_google' ? (
-                  <Icons.spinner className="text-background h-6 w-6" />
-                ) : (
-                  <Icons.google />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => signInWith('oauth_github')}
-                className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
-                disabled={!!loadingProvider}
-              >
-                {loadingProvider === 'oauth_github' ? (
-                  <Icons.spinner className="text-background h-6 w-6" />
-                ) : (
-                  <Icons.gitHub />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => signInWith('oauth_facebook')}
-                className="border-secondary flex items-center justify-center border bg-white p-2 hover:bg-gray-50"
-                disabled={!!loadingProvider}
-              >
-                {loadingProvider === 'oauth_facebook' ? (
-                  <Icons.spinner className="text-background h-6 w-6" />
-                ) : (
-                  <Icons.facebook />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Forgot Password Link */}
-          {!successfulCreation && !isForgotPassword && (
-            <div className="mt-4 space-y-2 text-center">
-              <button
-                type="button"
-                onClick={() => setIsForgotPassword(true)}
-                className="text-secondary text-sm hover:text-[#00A5C0]"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-              <div>
+              <p className="signup-link">
                 <button
                   type="button"
+                  className="up"
                   onClick={() => {
-                    // Redirigir al registro con la URL de redirección actual
-                    const signUpUrl = `/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}`;
-                    window.location.href = signUpUrl;
+                    setIsForgotPassword(false);
+                    setSuccessfulCreation(false);
+                    setErrors(undefined);
                   }}
-                  className="text-secondary text-sm font-medium hover:text-[#00A5C0]"
                 >
-                  ¿No tienes cuenta? Regístrate aquí
+                  Volver a iniciar sesión
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* Back to Login */}
-          {(successfulCreation || isForgotPassword) && (
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setSuccessfulCreation(false);
-                  setErrors(undefined);
-                }}
-                className="text-secondary text-sm hover:text-[#00A5C0]"
-              >
-                Volver al inicio de sesión
-              </button>
-            </div>
+              </p>
+            </form>
           )}
         </div>
       </div>

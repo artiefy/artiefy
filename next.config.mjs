@@ -13,6 +13,9 @@ jiti('./src/env.ts');
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
+  reactCompiler: true,
+  cacheComponents: false,
+  expireTime: 3600,
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -20,42 +23,21 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 14400,
+    // Nueva sintaxis remotePatterns Next.js 16 (usa new URL)
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 's3.us-east-2.amazonaws.com',
-        pathname: '/artiefy-upload/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'img.clerk.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'assets.example.com',
-        pathname: '/**',
-      },
+      new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
+      new URL('https://placehold.co/**'),
+      new URL('https://img.clerk.com/**'),
+      new URL('https://assets.example.com/**'),
     ],
     localPatterns: [
-      {
-        pathname: '/api/image-proxy',
-        search: '?url=*',
-      },
-      {
-        pathname: '/**',
-      },
+      { pathname: '/api/image-proxy', search: '?url=*' },
+      { pathname: '/**' },
     ],
     qualities: [100, 75, 85], // Agregar 85 para evitar warnings de imágenes
     maximumRedirects: 3, // Explicit default in v16 for security
     dangerouslyAllowLocalIP: false, // Default security restriction in v16
   },
-  expireTime: 3600,
 };
 
 export default withNextVideo(withPlaiceholder(nextConfig));

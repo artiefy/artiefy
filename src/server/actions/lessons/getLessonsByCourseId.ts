@@ -19,7 +19,11 @@ export async function getLessonsByCourseId(
     where: eq(lessons.courseId, courseId),
     orderBy: [asc(lessons.title)],
     with: {
-      activities: true,
+      activities: {
+        with: {
+          typeActi: true,
+        },
+      },
     },
   });
 

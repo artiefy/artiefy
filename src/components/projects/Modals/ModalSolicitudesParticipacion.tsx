@@ -162,7 +162,7 @@ export default function ModalSolicitudesParticipacion({
   // Cargar solicitudes cuando se abre el modal
   useEffect(() => {
     if (isOpen && projectId) {
-      fetchSolicitudes();
+      void fetchSolicitudes();
     }
   }, [isOpen, projectId, fetchSolicitudes]);
 
@@ -750,7 +750,9 @@ export default function ModalSolicitudesParticipacion({
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleEliminarTodasLasSolicitudes}
+                  onClick={() => {
+                    void handleEliminarTodasLasSolicitudes();
+                  }}
                   disabled={eliminandoTodas || loading}
                   className="w-full shrink-0 bg-red-600 text-xs hover:bg-red-700 sm:w-auto sm:text-sm"
                 >

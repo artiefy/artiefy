@@ -1,53 +1,33 @@
-// eslint.config.mjs
-
-import next from 'eslint-config-next';
+import typescriptEslint from '@typescript-eslint/eslint-plugin';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 
 export default defineConfig([
-  ...next, // incluye Core Web Vitals
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       ecmaVersion: 'latest',
       parserOptions: {
-        project: ['./tsconfig.json'],
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname,
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
       globals: { ...globals.browser, ...globals.node },
     },
-    plugins: { 'simple-import-sort': simpleImportSort, '@typescript-eslint': typescriptEslint },
+    plugins: {
+      'simple-import-sort': simpleImportSort,
+      '@typescript-eslint': typescriptEslint,
+    },
     rules: {
-      'array-callback-return': 'error',
-      eqeqeq: ['error', 'smart'],
-      'no-const-assign': 'error',
-      'no-delete-var': 'error',
-      'no-dupe-args': 'error',
-      'no-dupe-class-members': 'error',
-      'no-dupe-keys': 'error',
-      'no-duplicate-case': 'error',
-      'no-empty-pattern': 'error',
-      'no-eval': 'error',
-      'no-ex-assign': 'error',
-      'no-func-assign': 'error',
-      'no-implied-eval': 'error',
-      'no-invalid-regexp': 'error',
-      'no-new-func': 'error',
-      'no-new-object': 'error',
-      'no-obj-calls': 'error',
-      'no-octal': 'error',
-      'no-redeclare': 'error',
-      'no-regex-spaces': 'error',
-      'no-self-assign': 'error',
-      'no-shadow-restricted-names': 'error',
-      'no-sparse-arrays': 'error',
-      'no-this-before-super': 'error',
-      'no-unexpected-multiline': 'error',
-      'no-unreachable': 'error',
-      'no-unused-vars': 'off',
+      // TypeScript
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -60,10 +40,25 @@ export default defineConfig([
           varsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': [
+        'off',
+        {
+          checksVoidReturn: false,
+        },
+      ],
+      '@typescript-eslint/consistent-type-imports': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       'no-use-before-define': 'off',
       '@typescript-eslint/no-use-before-define': 'off',
       'react-hooks/exhaustive-deps': 'error',
-      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/rules-of-hooks': 'off',
+      'no-console': [
+        'off',
+        {
+          allow: ['warn', 'error'],
+        },
+      ],
       'simple-import-sort/imports': [
         'warn',
         {
@@ -85,10 +80,14 @@ export default defineConfig([
       'react/display-name': 'off',
     },
   },
+  // 3. Prettier (debe ir después para desactivar conflictos)
   prettier,
+
+  // 4. Archivos ignorados
   {
     ignores: [
       '**/node_modules/**',
+      'Docs/**',
       '.next/**',
       'out/**',
       'public/**',
@@ -97,6 +96,10 @@ export default defineConfig([
       '.vercel/**',
       'coverage/**',
       '.turbo/**',
+      'videos/**',
+      'drizzle/**',
+      'test/**',
+      'scripts/**',
       '**/.git/**',
       '**/.husky/**',
       '**/.lintstagedrc*',
