@@ -16,8 +16,8 @@ import {
   unique,
   uniqueIndex,
   varchar,
+  vector,
 } from 'drizzle-orm/pg-core';
-import { vector } from 'drizzle-orm/pg-core'; // <-- Usa esto, ya que drizzle-orm/pg-core lo soporta
 
 export const users = pgTable(
   'users',
@@ -85,6 +85,11 @@ export const users = pgTable(
     utilityBillKey: text('utility_bill_key'),
     diplomaKey: text('diploma_key'),
     pagareKey: text('pagare_key'),
+
+    // Campos para educadores
+    profesion: text('profesion'),
+    descripcion: text('descripcion'),
+    profileImageKey: text('profile_image_key'),
   },
   (table) => [unique('users_email_role_unique').on(table.email, table.role)]
 );
@@ -1623,3 +1628,33 @@ export const credentialsDeliveryLogs = pgTable(
     index('credentials_delivery_logs_created_idx').on(t.createdAt),
   ]
 );
+
+// ✅ Tabla de registros de acceso (entrada/salida)
+export const accessLogs = pgTable(
+  'access_logs',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    entryTime: timestamp('entry_time', { withTimezone: true }).notNull(),
+    exitTime: timestamp('exit_time', { withTimezone: true }),
+    // Metadata adicional
+    subscriptionStatus: text('subscription_status'), // 'active' | 'inactive' al momento del acceso
+    esp32Status: text('esp32_status'), // 'success' | 'error' | 'timeout' | null
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('access_logs_user_idx').on(t.userId),
+    index('access_logs_entry_idx').on(t.entryTime),
+  ]
+);
+
+export const accessLogsRelations = relations(accessLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [accessLogs.userId],
+    references: [users.id],
+  }),
+}));

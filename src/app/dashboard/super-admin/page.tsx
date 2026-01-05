@@ -238,6 +238,9 @@ export default function AdminDashboard() {
     email: '',
     role: 'estudiante',
     phone: '',
+    profesion: '',
+    descripcion: '',
+    profileImage: null as File | null,
   });
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
@@ -1386,16 +1389,53 @@ export default function AdminDashboard() {
 
     try {
       setCreatingUser(true);
+
+      // Convertir imagen a base64 si existe
+      let profileImageBase64 = undefined;
+      if (newUser.profileImage) {
+        console.log('📸 [Frontend] Imagen detectada:', {
+          name: newUser.profileImage.name,
+          size: newUser.profileImage.size,
+          type: newUser.profileImage.type,
+        });
+        const reader = new FileReader();
+        profileImageBase64 = await new Promise<string>((resolve) => {
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            console.log(
+              '📸 [Frontend] Imagen convertida a base64, tamaño:',
+              result.length
+            );
+            resolve(result);
+          };
+          reader.readAsDataURL(newUser.profileImage!);
+        });
+      } else {
+        console.log('⚠️ [Frontend] No se seleccionó ninguna imagen');
+      }
+
+      const payload = {
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        role: newUser.role,
+        phone: newUser.phone,
+        profesion: newUser.profesion,
+        descripcion: newUser.descripcion,
+        profileImage: profileImageBase64,
+      };
+
+      console.log('📤 [Frontend] Enviando datos:', {
+        ...payload,
+        profileImage: profileImageBase64
+          ? `base64 (${profileImageBase64.length} chars)`
+          : undefined,
+      });
+
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          email: newUser.email,
-          role: newUser.role,
-          phone: newUser.phone,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -1452,6 +1492,9 @@ export default function AdminDashboard() {
         email: '',
         role: 'estudiante',
         phone: '',
+        profesion: '',
+        descripcion: '',
+        profileImage: null,
       });
     } catch {
       showNotification('Error al crear el usuario.', 'error');
@@ -2296,90 +2339,245 @@ export default function AdminDashboard() {
       </div>
       {/* ...existing modals and dialogs... */}
       {showCreateForm && (
-        <div className="bg-opacity-30 fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-2xl">
-            {/* Header del formulario con botón de cierre */}
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-gray-800 shadow-2xl">
+            {/* Header fijo */}
+            <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+              <h2 className="text-xl font-bold text-white sm:text-2xl">
                 Crear Nuevo Usuario
               </h2>
-              <button onClick={() => setShowCreateForm(false)}>
-                <X className="size-6 text-gray-300 hover:text-white" />
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
+              >
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </div>
 
-            {/* Formulario de creación */}
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nombre"
-                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                value={newUser.firstName}
-                onChange={(e) => {
-                  // Eliminar espacios y tomar solo la primera palabra
-                  const singleName = e.target.value.trim().split(' ')[0];
-                  setNewUser({ ...newUser, firstName: singleName });
-                }}
-                onKeyDown={(e) => {
-                  // Prevenir el espacio
-                  if (e.key === ' ') {
-                    e.preventDefault();
-                  }
-                }}
-                maxLength={30} // Opcional: limitar la longitud máxima
-              />
-              <input
-                type="text"
-                placeholder="Apellido"
-                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                value={newUser.lastName}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, lastName: e.target.value })
-                }
-              />
-              <input
-                type="email"
-                placeholder="Correo electrónico"
-                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                value={newUser.email}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
-                }
-              />
-              <input
-                type="tel"
-                placeholder="Teléfono (ej: 3001234567)"
-                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                value={newUser.phone}
-                onChange={(e) => {
-                  // Solo permitir números
-                  const phone = e.target.value.replace(/\D/g, '');
-                  setNewUser({ ...newUser, phone });
-                }}
-                maxLength={10}
-              />
-              <select
-                className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                value={newUser.role}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, role: e.target.value })
-                }
-              >
-                <option value="admin">Admin</option>
-                <option value="super-admin">super-admin</option>
-                <option value="educador">Educador</option>
-                <option value="estudiante">Estudiante</option>
-              </select>
+            {/* Contenido con scroll */}
+            <div className="overflow-y-auto px-6 py-6">
+              <div className="space-y-5">
+                {/* Campos básicos en grid responsive */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                      Nombre *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Juan"
+                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      value={newUser.firstName}
+                      onChange={(e) => {
+                        const singleName = e.target.value.trim().split(' ')[0];
+                        setNewUser({ ...newUser, firstName: singleName });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                        }
+                      }}
+                      maxLength={30}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                      Apellido *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Pérez"
+                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      value={newUser.lastName}
+                      onChange={(e) =>
+                        setNewUser({ ...newUser, lastName: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">
+                    Correo electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="ejemplo@correo.com"
+                    className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                    value={newUser.email}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, email: e.target.value })
+                    }
+                  />
+                </div>
+
+                {/* Teléfono y Rol en grid */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="3001234567"
+                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      value={newUser.phone}
+                      onChange={(e) => {
+                        const phone = e.target.value.replace(/\D/g, '');
+                        setNewUser({ ...newUser, phone });
+                      }}
+                      maxLength={10}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                      Rol *
+                    </label>
+                    <select
+                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      value={newUser.role}
+                      onChange={(e) =>
+                        setNewUser({ ...newUser, role: e.target.value })
+                      }
+                    >
+                      <option value="estudiante">Estudiante</option>
+                      <option value="educador">Educador</option>
+                      <option value="admin">Admin</option>
+                      <option value="super-admin">Super Admin</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Sección de Educador */}
+                {newUser.role === 'educador' && (
+                  <div className="bg-gray-750 space-y-5 rounded-lg border border-gray-700 p-5">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-400">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      Información del Educador
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-300">
+                        Profesión
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Profesor de Arte"
+                        className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                        value={newUser.profesion}
+                        onChange={(e) =>
+                          setNewUser({ ...newUser, profesion: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-300">
+                        <span>Descripción</span>
+                        <span className="text-xs text-gray-400">
+                          {newUser.descripcion.length}/161
+                        </span>
+                      </label>
+                      <textarea
+                        placeholder="Breve descripción sobre su experiencia y especialidad..."
+                        className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                        value={newUser.descripcion}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          if (text.length <= 161) {
+                            setNewUser({ ...newUser, descripcion: text });
+                          }
+                        }}
+                        maxLength={161}
+                        rows={4}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-300">
+                        Foto de perfil
+                      </label>
+                      <div className="space-y-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-sm text-white file:mr-3 file:rounded-md file:border-0 file:bg-blue-500 file:px-4 file:py-1.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-blue-600"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setNewUser({ ...newUser, profileImage: file });
+                          }}
+                        />
+                        {newUser.profileImage && (
+                          <div className="flex items-center gap-3 rounded-lg border border-gray-600 bg-gray-700 p-3">
+                            <Image
+                              src={URL.createObjectURL(newUser.profileImage)}
+                              alt="Vista previa"
+                              width={64}
+                              height={64}
+                              className="h-16 w-16 rounded-full border-2 border-gray-600 object-cover"
+                              unoptimized
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white">
+                                {newUser.profileImage.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {(newUser.profileImage.size / 1024).toFixed(1)}{' '}
+                                KB
+                              </p>
+                            </div>
+                            <button
+                              onClick={() =>
+                                setNewUser({ ...newUser, profileImage: null })
+                              }
+                              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Botón para crear usuario */}
-            <button
-              onClick={handleCreateUser}
-              className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
-              disabled={creatingUser}
-            >
-              {creatingUser ? <Loader2 className="size-5" /> : 'Crear Usuario'}
-            </button>
+            {/* Footer fijo */}
+            <div className="border-t border-gray-700 px-6 py-4">
+              <button
+                onClick={handleCreateUser}
+                disabled={creatingUser}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creatingUser ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Creando usuario...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-5 w-5" />
+                    <span>Crear Usuario</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -29,10 +29,6 @@ interface CoursesModels {
   coverImageKey: string;
 }
 
-const uploadResponseSchema = z.object({
-  fileKey: z.string(),
-});
-
 const ForumHome = () => {
   const { user } = useUser();
   const [courseId, setCourseId] = useState<number | null>(null);
@@ -46,42 +42,32 @@ const ForumHome = () => {
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
-
-  const uploadFileToServer = async (
-    file: File,
-    type: 'image' | 'document'
-  ): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', type);
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    const json: unknown = await res.json();
-    const data = uploadResponseSchema.parse(json);
-    return data.fileKey;
-  };
+  const [searchCourse, setSearchCourse] = useState('');
+  const [showCourseList, setShowCourseList] = useState(false);
 
   const handleCreateForum = async () => {
     if (!user) return;
+
+    // Validar campos obligatorios
+    if (!courseId || courseId <= 0) {
+      toast.error('Debes seleccionar un curso válido');
+      return;
+    }
+    if (!title.trim()) {
+      toast.error('El título es obligatorio');
+      return;
+    }
+    if (!description.trim()) {
+      toast.error('La descripción es obligatoria');
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(25);
 
     const userId = user.id;
-    let coverImageKey = '';
-    let documentKey = '';
 
     try {
-      if (coverImage) {
-        coverImageKey = await uploadFileToServer(coverImage, 'image');
-      }
-      if (documentFile) {
-        documentKey = await uploadFileToServer(documentFile, 'document');
-      }
-
       setUploadProgress(60);
 
       const formData = new FormData();
@@ -89,8 +75,8 @@ const ForumHome = () => {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('userId', userId);
-      formData.append('coverImageKey', coverImageKey);
-      formData.append('documentKey', documentKey);
+      if (coverImage) formData.append('coverImage', coverImage);
+      if (documentFile) formData.append('documentFile', documentFile);
 
       const response = await fetch('/api/forums', {
         method: 'POST',
@@ -122,6 +108,7 @@ const ForumHome = () => {
       setDescription('');
       setCoverImage(null);
       setDocumentFile(null);
+      setSearchCourse('');
     }
   };
 
@@ -189,25 +176,46 @@ const ForumHome = () => {
                   {loadingCourses ? (
                     <p className="text-sm text-gray-400">Cargando cursos...</p>
                   ) : courses.length > 0 ? (
-                    <>
-                      <input
+                    <div className="relative">
+                      <Input
                         type="text"
-                        list="courses-list"
-                        placeholder="Selecciona o escribe un curso"
-                        onChange={(e) => {
-                          const selected = courses.find(
-                            (c) => c.title === e.target.value
-                          );
-                          setCourseId(selected ? selected.id : null);
-                        }}
-                        className="bg-background focus:ring-primary w-full rounded-md border border-white/20 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:ring-2 focus:outline-none"
+                        placeholder="Buscar o seleccionar un curso..."
+                        value={searchCourse}
+                        onChange={(e) => setSearchCourse(e.target.value)}
+                        onFocus={() => setShowCourseList(true)}
+                        className="text-white"
                       />
-                      <datalist id="courses-list">
-                        {courses.map((c) => (
-                          <option key={c.id} value={c.title} />
-                        ))}
-                      </datalist>
-                    </>
+                      {showCourseList && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowCourseList(false)}
+                          />
+                          <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-white/20 bg-[#111] shadow-lg">
+                            {courses
+                              .filter((c) =>
+                                c.title
+                                  .toLowerCase()
+                                  .includes(searchCourse.toLowerCase())
+                              )
+                              .map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setCourseId(c.id);
+                                    setSearchCourse(c.title);
+                                    setShowCourseList(false);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-white transition hover:bg-white/10"
+                                >
+                                  {c.title}
+                                </button>
+                              ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm text-red-500">
                       No tienes cursos disponibles.
@@ -336,6 +344,7 @@ const ForumHome = () => {
                     setCourseId(null);
                     setTitle('');
                     setDescription('');
+                    setSearchCourse('');
                     setIsDialogOpen(false);
                   }}
                 >

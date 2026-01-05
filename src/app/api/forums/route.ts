@@ -74,6 +74,16 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validar que courseId sea un número válido
+    const courseIdNum = Number(courseId);
+    if (isNaN(courseIdNum) || courseIdNum <= 0) {
+      console.error('❌ courseId inválido:', courseId);
+      return NextResponse.json(
+        { message: 'El ID del curso debe ser un número válido' },
+        { status: 400 }
+      );
+    }
+
     let coverImageKey = '';
     let documentKey = '';
 
@@ -88,7 +98,7 @@ export async function POST(req: Request) {
 
     // Crear el foro
     const newForum = await createForum(
-      Number(courseId),
+      courseIdNum,
       title,
       description,
       userId,
@@ -99,8 +109,7 @@ export async function POST(req: Request) {
 
     // Obtener estudiantes inscritos
     const enrolledStudents = await db.query.enrollments.findMany({
-      where: (enrollments, { eq }) =>
-        eq(enrollments.courseId, Number(courseId)),
+      where: (enrollments, { eq }) => eq(enrollments.courseId, courseIdNum),
       with: { user: true },
     });
 
@@ -162,17 +171,20 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    void searchParams.get('userId');
+    const courseId = searchParams.get('courseId');
 
     const instructorUser = alias(users, 'instructorUser');
 
-    const results = await db
+    let query = db
       .select({
         id: forums.id,
         title: forums.title,
         description: forums.description,
         coverImageKey: forums.coverImageKey,
         documentKey: forums.documentKey,
+        courseId: forums.courseId,
+        createdAt: forums.createdAt,
+        updatedAt: forums.updatedAt,
         course: {
           id: courses.id,
           title: courses.title,
@@ -193,18 +205,43 @@ export async function GET(req: Request) {
       .leftJoin(users, eq(forums.userId, users.id))
       .leftJoin(instructorUser, eq(courses.instructor, instructorUser.id));
 
-    return NextResponse.json(
-      results.map((forum) => ({
-        id: forum.id,
-        title: forum.title,
-        description: forum.description ?? '',
-        coverImageKey: forum.coverImageKey ?? '',
-        documentKey: forum.documentKey ?? '',
-        course: forum.course,
-        user: forum.user,
-        instructor: forum.instructor,
-      }))
+    // Si se proporciona courseId, filtrar por ese curso
+    if (courseId) {
+      const courseIdNum = Number(courseId);
+      if (!isNaN(courseIdNum)) {
+        query = query.where(eq(forums.courseId, courseIdNum)) as typeof query;
+      }
+    }
+
+    const results = await query;
+
+    // Obtener conteo de posts para cada foro
+    const forumsWithCounts = await Promise.all(
+      results.map(async (forum) => {
+        const postCount = await db.query.posts.findMany({
+          where: (posts, { eq }) => eq(posts.forumId, forum.id),
+        });
+
+        return {
+          id: forum.id,
+          title: forum.title,
+          description: forum.description ?? '',
+          coverImageKey: forum.coverImageKey ?? '',
+          documentKey: forum.documentKey ?? '',
+          courseId: forum.courseId,
+          createdAt: forum.createdAt,
+          updatedAt: forum.updatedAt,
+          course: forum.course,
+          user: forum.user,
+          instructor: forum.instructor,
+          _count: {
+            posts: postCount.length,
+          },
+        };
+      })
     );
+
+    return NextResponse.json(forumsWithCounts);
   } catch (error) {
     console.error('Error al obtener los foros:', error);
     return NextResponse.json(

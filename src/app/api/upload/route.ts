@@ -29,11 +29,29 @@ function sanitizeFileName(fileName: string): string {
 
 export async function POST(request: Request) {
   try {
-    const { contentType, fileSize, fileName } = (await request.json()) as {
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      console.error('❌ Error al parsear JSON:', jsonError);
+      return NextResponse.json(
+        { error: 'El cuerpo de la solicitud no es un JSON válido' },
+        { status: 400 }
+      );
+    }
+
+    const { contentType, fileSize, fileName } = body as {
       contentType: string;
       fileSize: number;
       fileName: string;
     };
+
+    if (!contentType || !fileSize || !fileName) {
+      return NextResponse.json(
+        { error: 'Se requieren contentType, fileSize y fileName' },
+        { status: 400 }
+      );
+    }
 
     if (!process.env.AWS_BUCKET_NAME) {
       throw new Error('AWS_BUCKET_NAME no está definido');
