@@ -408,7 +408,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
 
   // Estados para los tabs desplegables
-  const [activeTab, setActiveTab] = useState<string>('curso');
+  const [activeTab, setActiveTab] = useState<string>('lecciones');
   const [_expandedSections, _setExpandedSections] = useState<{
     curso: boolean;
     grabadas: boolean;
@@ -2058,16 +2058,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               {/* Tabs Navigation */}
               <div className="mb-8 border-b border-cyan-500/20">
                 <div className="flex gap-8 overflow-x-auto pb-4">
-                  <button
-                    onClick={() => setActiveTab('curso')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'curso'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
-                  >
-                    Curso
-                  </button>
                   <button
                     onClick={() => setActiveTab('lecciones')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
