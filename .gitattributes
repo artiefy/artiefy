@@ -1,7 +1,6 @@
 # Normalize line endings and avoid LF/CRLF warnings on Windows
 * text=auto
 
-# Treat certain binary files as binary (avoid CRLF conversion)
 *.png binary
 *.jpg binary
 *.jpeg binary
