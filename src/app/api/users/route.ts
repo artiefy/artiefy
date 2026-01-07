@@ -2,8 +2,10 @@
 
 import { NextResponse } from 'next/server';
 
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { userCredentials, users } from '~/server/db/schema';
@@ -17,6 +19,63 @@ import {
   updateUserInfo,
   updateUserStatus,
 } from '~/server/queries/queries';
+
+// 📌 Configuración de S3
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+// 📌 Función para subir imagen a S3
+async function uploadImageToS3(
+  base64Data: string,
+  userId: string
+): Promise<string> {
+  console.log('📸 [uploadImageToS3] Iniciando proceso...');
+  console.log('📸 [uploadImageToS3] Datos recibidos:', {
+    userId,
+    base64Length: base64Data.length,
+    tieneDataUri: base64Data.includes(','),
+  });
+
+  // Extraer el data URI si existe
+  const base64Content = base64Data.includes(',')
+    ? base64Data.split(',')[1]
+    : base64Data;
+
+  console.log(
+    '📸 [uploadImageToS3] Base64 limpio, longitud:',
+    base64Content.length
+  );
+
+  const buffer = Buffer.from(base64Content, 'base64');
+  console.log(
+    '📸 [uploadImageToS3] Buffer creado, tamaño:',
+    buffer.length,
+    'bytes'
+  );
+
+  const extension = 'jpg'; // Puedes detectar esto del tipo MIME si lo necesitas
+  const key = `educadores/${userId}/profile-${uuidv4()}.${extension}`;
+  console.log('📸 [uploadImageToS3] Key generado:', key);
+  console.log('📸 [uploadImageToS3] Bucket:', process.env.AWS_BUCKET_NAME);
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key,
+      Body: buffer,
+      ContentType: 'image/jpeg',
+      ACL: 'public-read',
+    })
+  );
+
+  console.log(`✅ [uploadImageToS3] Imagen subida exitosamente a S3: ${key}`);
+  return key;
+}
 
 // 📌 Configuración de Nodemailer
 const transporter = nodemailer.createTransport({
@@ -120,12 +179,23 @@ export async function POST(request: Request) {
       email: string;
       role: AllowedRole;
       phone?: string;
+      profesion?: string;
+      descripcion?: string;
+      profileImage?: string; // base64 string
     }
 
     const body = (await request.json()) as RequestBody;
     console.log('🔍 [POST /api/users] Body recibido:', JSON.stringify(body));
 
-    const { firstName, lastName, email, role } = body;
+    const {
+      firstName,
+      lastName,
+      email,
+      role,
+      profesion,
+      descripcion,
+      profileImage,
+    } = body;
 
     // Validar que el rol sea uno de los permitidos
     const allowedRoles: AllowedRole[] = [
@@ -159,6 +229,33 @@ export async function POST(request: Request) {
     // 3. Guardar usuario en la base de datos con Drizzle
     console.log('🔍 [POST /api/users] Insertando usuario en BD:', user.id);
 
+    // Si es educador y hay imagen, subirla a S3
+    let profileImageKey: string | null = null;
+    if (role === 'educador' && profileImage) {
+      console.log('📸 [Backend] Iniciando subida de imagen a S3...');
+      try {
+        profileImageKey = await uploadImageToS3(profileImage, user.id);
+        console.log(
+          '✅ [Backend] Imagen de perfil subida exitosamente:',
+          profileImageKey
+        );
+        console.log(
+          '🔗 [Backend] URL completa:',
+          `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${profileImageKey}`
+        );
+      } catch (uploadError) {
+        console.error(
+          '❌ [Backend] Error subiendo imagen de perfil:',
+          uploadError
+        );
+      }
+    } else {
+      console.log('ℹ️ [Backend] No se subirá imagen:', {
+        esEducador: role === 'educador',
+        tieneImagen: !!profileImage,
+      });
+    }
+
     await db
       .insert(users)
       .values({
@@ -170,6 +267,9 @@ export async function POST(request: Request) {
             (addr) => addr.id === user.primaryEmailAddressId
           )?.emailAddress ?? email,
         phone: body.phone?.trim() ?? null,
+        profesion: role === 'educador' ? profesion?.trim() || null : null,
+        descripcion: role === 'educador' ? descripcion?.trim() || null : null,
+        profileImageKey: role === 'educador' ? profileImageKey : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -179,6 +279,9 @@ export async function POST(request: Request) {
           id: user.id,
           name: `${firstName} ${lastName}`,
           phone: body.phone?.trim() ?? null,
+          profesion: role === 'educador' ? profesion?.trim() || null : null,
+          descripcion: role === 'educador' ? descripcion?.trim() || null : null,
+          profileImageKey: role === 'educador' ? profileImageKey : null,
           updatedAt: new Date(),
         },
       });

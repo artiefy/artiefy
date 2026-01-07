@@ -1,11 +1,19 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { EllipsisVertical } from 'lucide-react';
+import {
+  CornerDownLeft,
+  ImageIcon,
+  Mic,
+  MoreHorizontal,
+  Send,
+  ThumbsUp,
+  Video,
+} from 'lucide-react';
 
 import {
   Breadcrumb,
@@ -19,14 +27,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '~/components/educators/ui/collapsible';
+import { cn } from '~/lib/utils';
 
 // Interfaces del foro
 interface Foro {
   id: number;
   title: string;
   description: string;
-  coverImageKey?: string; // <--- NUEVO
-  documentKey?: string; // <--- NUEVO
+  coverImageKey?: string;
+  documentKey?: string;
   userId: {
     id: string;
     name: string;
@@ -69,33 +78,82 @@ interface PostReplay {
   updatedAt: string;
 }
 
-// Función para formatear la fecha
-const formatDate = (dateString: string | number | Date) => {
+// Función para formatear la fecha con hora
+const formatDateTime = (dateString: string | number | Date) => {
   const date = new Date(dateString);
-  return isNaN(date.getTime())
-    ? 'Fecha inválida'
-    : date.toISOString().split('T')[0];
+  if (isNaN(date.getTime())) return 'Fecha inválida';
+
+  return date.toLocaleString('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+// Obtener iniciales del nombre
+const getInitials = (name: string) => {
+  if (!name) return '??';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+// Colores para avatares basados en el nombre
+const getAvatarColor = (name: string) => {
+  const colors = [
+    'from-purple-500 to-purple-700',
+    'from-blue-500 to-blue-700',
+    'from-green-500 to-green-700',
+    'from-yellow-500 to-yellow-700',
+    'from-red-500 to-red-700',
+    'from-pink-500 to-pink-700',
+    'from-indigo-500 to-indigo-700',
+    'from-teal-500 to-teal-700',
+  ];
+  const index = name.length % colors.length;
+  return colors[index];
 };
 
 const ForumPage = () => {
   const params = useParams();
   const forumId = params?.forumId;
-  const { user } = useUser(); // Obtener el usuario actual
-  const [forumData, setForumData] = useState<Foro | null>(null); // Estado del foro
-  const [loading, setLoading] = useState(true); // Estado de carga
-  const [posts, setPosts] = useState<Post[]>([]); // Estado de los posts
-  const [postReplays, setPostReplays] = useState<PostReplay[]>([]); // Estado de las respuestas de los posts
-  const [message, setMessage] = useState(''); // Estado del mensaje
-  const [replyMessage, setReplyMessage] = useState(''); // Estado de la respuesta
-  const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null); // Estado de la respuesta
-  const [loadingPosts, setLoadingPosts] = useState(false); // Estado de carga de los posts
-  const [editingPostId, setEditingPostId] = useState<number | null>(null); // Estado de edición del post
-  const [editingReplyId, setEditingReplyId] = useState<number | null>(null); // Estado de edición de la respuesta
-  const [editPostContent, setEditPostContent] = useState<string>(''); // Estado de edición del post
-  const [editReplyContent, setEditReplyContent] = useState<string>(''); // Estado de edición de la respuesta
-  // const [error, setError] = useState(false);
+  const { user } = useUser();
+  const [forumData, setForumData] = useState<Foro | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postReplays, setPostReplays] = useState<PostReplay[]>([]);
+  const [message, setMessage] = useState('');
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [editPostContent, setEditPostContent] = useState<string>('');
+  const [editReplyContent, setEditReplyContent] = useState<string>('');
+  const [expandedPosts, setExpandedPosts] = useState<Set<number>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
   const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
+
+  // Toggle respuestas expandidas
+  const toggleReplies = (postId: number) => {
+    setExpandedPosts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
 
   // Fetch del foro
   const fetchForum = useCallback(async () => {
@@ -176,7 +234,8 @@ const ForumPage = () => {
   }, [fetchPostReplays, posts]);
 
   const handlePostSubmit = async () => {
-    if (!message.trim() || !user) return;
+    if (!message.trim() || !user || isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/forums/posts', {
         method: 'POST',
@@ -193,38 +252,23 @@ const ForumPage = () => {
       if (response.ok) {
         setMessage('');
         await fetchPosts();
-
-        const role = user.publicMetadata?.role;
-        const userEmail = user.emailAddresses[0]?.emailAddress;
-        const uniqueEmails = new Set<string>();
-
-        if (role === 'educador') {
-          // Notificar estudiantes (todos los que participaron)
-          posts.forEach((post) => {
-            if (post.userId.email && post.userId.email !== userEmail) {
-              uniqueEmails.add(post.userId.email);
-            }
-          });
-          postReplays.forEach((reply) => {
-            if (reply.userId.email && reply.userId.email !== userEmail) {
-              uniqueEmails.add(reply.userId.email);
-            }
-          });
-        } else {
-          // Notificar al instructor
-          if (forumData?.userId.email && forumData.userId.email !== userEmail) {
-            uniqueEmails.add(forumData.userId.email);
-          }
-        }
       }
     } catch (error) {
       console.error('Error al enviar el post:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleReplySubmit = async () => {
-    if (!replyMessage.trim() || !user || replyingToPostId === null) return;
-
+    if (
+      !replyMessage.trim() ||
+      !user ||
+      replyingToPostId === null ||
+      isSubmittingReply
+    )
+      return;
+    setIsSubmittingReply(true);
     try {
       const response = await fetch('/api/forums/posts/postReplay', {
         method: 'POST',
@@ -239,38 +283,16 @@ const ForumPage = () => {
       if (response.ok) {
         setReplyMessage('');
         setReplyingToPostId(null);
-        await fetchPostReplays();
-
-        const role = user.publicMetadata?.role;
-        const userEmail = user.emailAddresses[0]?.emailAddress;
-        const uniqueEmails = new Set<string>();
-
-        const originalPost = posts.find((p) => p.id === replyingToPostId);
-
-        if (role === 'educador') {
-          // Notificar a estudiantes que comentaron en este hilo
-          if (
-            originalPost?.userId.email &&
-            originalPost.userId.email !== userEmail
-          ) {
-            uniqueEmails.add(originalPost.userId.email);
-          }
-          postReplays
-            .filter((r) => r.postId === replyingToPostId)
-            .forEach((reply) => {
-              if (reply.userId.email && reply.userId.email !== userEmail) {
-                uniqueEmails.add(reply.userId.email);
-              }
-            });
-        } else {
-          // Notificar al instructor
-          if (forumData?.userId.email && forumData.userId.email !== userEmail) {
-            uniqueEmails.add(forumData.userId.email);
-          }
+        // Expandir automáticamente las respuestas del post
+        if (replyingToPostId !== null) {
+          setExpandedPosts((prev) => new Set(prev).add(replyingToPostId));
         }
+        await fetchPostReplays();
       }
     } catch (error) {
       console.error('Error al enviar la respuesta:', error);
+    } finally {
+      setIsSubmittingReply(false);
     }
   };
 
@@ -363,331 +385,462 @@ const ForumPage = () => {
     }
   };
 
+  // Contar respuestas de un post
+  const getRepliesCount = (postId: number) => {
+    return postReplays.filter((reply) => reply.postId === postId).length;
+  };
+
   // Renderizar respuestas de un post
   const renderPostReplies = (postId: number) => {
     const replies = postReplays.filter((reply) => reply.postId === postId);
+    const isExpanded = expandedPosts.has(postId);
 
-    return replies.map((reply) => (
-      <div
-        key={reply.id}
-        className="relative mt-4 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 shadow sm:ml-10 sm:px-6 sm:py-4"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800" />
-            <span className="text-sm font-medium text-white">
-              {reply.userId.name}
-            </span>
-          </div>
-          <span className="relative -left-3 text-xs text-gray-400">
-            {formatDate(reply.createdAt)}
-          </span>
-        </div>
+    if (replies.length === 0) return null;
 
-        {editingReplyId === reply.id ? (
-          <div className="mt-3">
-            <textarea
-              className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
-              value={editReplyContent}
-              onChange={(e) => setEditReplyContent(e.target.value)}
-            />
-            <div className="mt-2 flex justify-end gap-2">
-              <button
-                className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
-                onClick={() => handleReplyUpdate(reply.id)}
-              >
-                Actualizar
-              </button>
-              <button
-                className="rounded bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-600"
-                onClick={() => setEditingReplyId(null)}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-gray-300">{reply.content}</p>
-        )}
-
-        {/* Menú editar/eliminar */}
-        {reply.userId.id === user?.id && (
-          <Collapsible className="absolute top-5 right-2">
-            <CollapsibleTrigger>
-              <EllipsisVertical className="cursor-pointer text-gray-500 hover:text-white" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-800 shadow-lg">
-              <button
-                className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
-                onClick={() => {
-                  setEditingReplyId(reply.id);
-                  setEditReplyContent(reply.content);
-                }}
-              >
-                Editar
-              </button>
-              <button
-                className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
-                onClick={() => handleDeleteReply(reply.id)}
-              >
-                Eliminar
-              </button>
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-      </div>
-    ));
-  };
-
-  // Renderizar el spinner de carga
-  if (loading) {
     return (
-      <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 animate-spin rounded-full border-y-2">
-          <span className="sr-only" />
-        </div>
-        <span className="text-primary">Cargando...</span>
-      </main>
-    );
-  }
-
-  return (
-    <>
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
-              href="/"
+      <div className="mt-3 border-t border-gray-800 pt-3">
+        {!isExpanded ? (
+          <button
+            onClick={() => toggleReplies(postId)}
+            className="text-sm text-gray-400 hover:text-primary transition-colors"
+          >
+            Ver {replies.length} respuesta{replies.length > 1 ? 's' : ''}
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <button
+              onClick={() => toggleReplies(postId)}
+              className="text-sm text-gray-400 hover:text-primary transition-colors"
             >
-              Inicio
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
-              href={`/dashboard/super-admin/foro`}
-            >
-              Foros
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
-              href={`/dashboard/super-admin/foro/${forumData?.id}`}
-            >
-              Foro: {forumData?.title}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="mx-auto mt-6 w-full max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
-        <div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
-          <div className="mx-auto w-full max-w-7xl rounded-xl border border-gray-700 bg-[#111827] px-6 py-6 shadow-md">
-            {/* Header */}
-            <div className="border-secondary flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-primary text-2xl font-bold break-words sm:text-3xl">
-                  {forumData?.title}
-                </h1>
-                <p className="mt-2 text-base leading-relaxed whitespace-pre-wrap text-white">
-                  {forumData?.description}
-                </p>
-              </div>
-
-              <div className="mt-2 flex-shrink-0 sm:mt-0">
-                <div className="flex max-w-xs items-center gap-2 overflow-hidden">
-                  <span className="text-secondary text-sm whitespace-nowrap">
-                    Educador:
-                  </span>
-                  <span
-                    title={forumData?.userId.name}
-                    className="bg-primary text-background w-full truncate rounded-full px-3 py-1 text-sm font-semibold shadow-sm"
-                  >
-                    {forumData?.userId.name}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {(forumData?.coverImageKey ?? forumData?.documentKey) && (
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
-                {/* Imagen */}
-                {forumData?.coverImageKey && (
-                  <div className="w-full sm:w-1/2">
-                    <p className="text-sm font-medium text-gray-300">
-                      Imagen adjunta
-                    </p>
-                    <div className="mt-2 max-w-md overflow-hidden rounded-lg border border-white/10 shadow-md transition hover:shadow-xl">
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
-                        alt="Imagen adjunta"
-                        width={400}
-                        height={250}
-                        className="h-auto w-full rounded object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Documento */}
-                {forumData?.documentKey && (
-                  <div className="w-full sm:w-1/2">
-                    <p className="text-sm font-medium text-gray-300">
-                      Documento adjunto
-                    </p>
-                    <div className="mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
-                      <span className="text-xl">📄</span>
-                      <a
-                        href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="break-all underline hover:text-green-200"
-                      >
-                        Ver documento
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Renderizar Posts */}
-        <div className="w-full space-y-6">
-          {loadingPosts ? (
-            <p className="text-center text-gray-400">Cargando posts...</p>
-          ) : (
-            posts.map((post) => (
+              Ocultar respuestas
+            </button>
+            {replies.map((reply) => (
               <div
-                key={post.id}
-                className="relative rounded-2xl border border-gray-700 bg-gray-900 p-5 shadow-md transition duration-300 hover:shadow-xl sm:p-6"
+                key={reply.id}
+                className="ml-6 flex gap-3 rounded-xl bg-gray-800/50 p-3"
               >
-                <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-bold text-white">
-                    {post.content}
-                  </h2>
-                  <span className="relative -left-3 text-xs text-gray-400">
-                    {formatDate(post.createdAt)}
-                  </span>
+                {/* Avatar */}
+                <div
+                  className={cn(
+                    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
+                    getAvatarColor(reply.userId.name ?? '')
+                  )}
+                >
+                  {getInitials(reply.userId.name ?? '')}
                 </div>
 
-                {editingPostId === post.id ? (
-                  <div className="mb-3">
-                    <textarea
-                      className="w-full rounded border-gray-700 bg-gray-900 p-3 font-bold text-white"
-                      value={editPostContent}
-                      onChange={(e) => setEditPostContent(e.target.value)}
-                    />
-                    <div className="mt-2 flex justify-end gap-2">
-                      <button
-                        onClick={() => handlePostUpdate(post.id)}
-                        className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
-                      >
-                        Actualizar
-                      </button>
-                      <button
-                        onClick={() => setEditingPostId(null)}
-                        className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-white">
+                      {reply.userId.name}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formatDateTime(reply.createdAt)}
+                    </span>
                   </div>
-                ) : (
-                  <p className="text-xs text-white">{post.userId.name}</p>
-                )}
 
-                {/* Menú editar/eliminar */}
-                {post.userId.id === user?.id && (
-                  <Collapsible className="absolute top-6 right-2">
-                    <CollapsibleTrigger>
-                      <EllipsisVertical className="cursor-pointer text-gray-400 hover:text-white" />
+                  {editingReplyId === reply.id ? (
+                    <div className="mt-2">
+                      <textarea
+                        className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-white resize-none focus:border-primary focus:outline-none"
+                        value={editReplyContent}
+                        onChange={(e) => setEditReplyContent(e.target.value)}
+                        rows={2}
+                      />
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-black hover:opacity-90"
+                          onClick={() => handleReplyUpdate(reply.id)}
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          className="rounded-lg bg-gray-700 px-3 py-1 text-xs font-medium text-white hover:bg-gray-600"
+                          onClick={() => setEditingReplyId(null)}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-300">
+                      {reply.content}
+                    </p>
+                  )}
+                </div>
+
+                {/* Menú */}
+                {reply.userId.id === user?.id && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="rounded-full p-1 hover:bg-gray-700">
+                      <MoreHorizontal className="h-4 w-4 text-gray-500" />
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-900 shadow-lg">
+                    <CollapsibleContent className="absolute right-0 z-10 mt-1 flex flex-col overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
                       <button
-                        className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
+                        className="px-4 py-2 text-left text-sm text-white hover:bg-gray-800"
                         onClick={() => {
-                          setEditingPostId(post.id);
-                          setEditPostContent(post.content);
+                          setEditingReplyId(reply.id);
+                          setEditReplyContent(reply.content);
                         }}
                       >
                         Editar
                       </button>
                       <button
-                        className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
-                        onClick={() => handleDeletePost(post.id)}
+                        className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-800"
+                        onClick={() => handleDeleteReply(reply.id)}
                       >
                         Eliminar
                       </button>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-                {/* Botón responder */}
+  if (loading) {
+    return (
+      <main className="flex h-screen flex-col items-center justify-center">
+        <div className="border-primary h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" />
+        <span className="text-primary mt-4 text-sm">Cargando foro...</span>
+      </main>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Breadcrumb */}
+      <div className="border-b border-gray-800 px-4 py-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="text-primary text-sm hover:text-gray-300"
+                href="/"
+              >
+                Inicio
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="text-primary text-sm hover:text-gray-300"
+                href="/dashboard/super-admin/foro"
+              >
+                Foros
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <span className="text-sm text-gray-400">{forumData?.title}</span>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
+      <div className="mx-auto max-w-4xl p-6">
+        {/* Contenedor principal con marco */}
+        <div className="rounded-3xl border border-gray-700/50 bg-gradient-to-b from-gray-900/90 to-gray-950/95 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm ring-1 ring-white/5">
+          {/* Header del Foro */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-primary">Foro del curso</h1>
+            <p className="mt-1 text-sm text-gray-400">
+              {posts.length} comentarios ·{' '}
+              {forumData?.description ??
+                'Comparte dudas y avances con tus compañeros'}
+            </p>
+          </div>
+
+          {/* Archivos adjuntos del foro */}
+          {(forumData?.coverImageKey ?? forumData?.documentKey) && (
+            <div className="mb-6 flex flex-wrap gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+              {forumData?.coverImageKey && (
+                <div className="max-w-xs">
+                  <p className="mb-2 text-xs font-medium text-gray-400">
+                    Imagen adjunta
+                  </p>
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
+                    alt="Imagen adjunta"
+                    width={200}
+                    height={120}
+                    className="rounded-lg object-cover"
+                  />
+                </div>
+              )}
+              {forumData?.documentKey && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-gray-400">
+                    Documento adjunto
+                  </p>
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm text-primary hover:bg-gray-700"
+                  >
+                    📄 Ver documento
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Caja de nuevo mensaje */}
+          <div className="mb-8 overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/80">
+            <textarea
+              ref={textareaRef}
+              className="min-h-[100px] w-full resize-none bg-transparent p-4 text-sm text-white placeholder:text-gray-500 focus:outline-none"
+              placeholder="Inicia una nueva discusión o comparte tu avance..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  handlePostSubmit();
+                }
+              }}
+            />
+            <div className="flex items-center justify-between border-t border-gray-800 px-4 py-3">
+              <div className="flex gap-2">
                 <button
-                  className="mt-4 text-sm text-blue-400 hover:underline"
-                  onClick={() => setReplyingToPostId(post.id)}
+                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                  title="Adjuntar imagen"
                 >
-                  Responder
+                  <ImageIcon className="h-5 w-5" />
                 </button>
+                <button
+                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                  title="Adjuntar video"
+                >
+                  <Video className="h-5 w-5" />
+                </button>
+                <button
+                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                  title="Grabar audio"
+                >
+                  <Mic className="h-5 w-5" />
+                </button>
+              </div>
+              <button
+                onClick={handlePostSubmit}
+                disabled={!message.trim() || isSubmitting}
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-black transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                    Publicando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Publicar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
 
-                {/* Formulario de respuesta */}
-                {replyingToPostId === post.id && (
-                  <div className="mt-3">
-                    <textarea
-                      className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
-                      placeholder="Escribe tu respuesta..."
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                    />
-                    <div className="mt-2 flex justify-end gap-2">
-                      <button
-                        className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
-                        onClick={handleReplySubmit}
+          {/* Lista de Posts */}
+          <div className="space-y-4">
+            {loadingPosts ? (
+              <div className="flex justify-center py-8">
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-8 text-center">
+                <p className="text-gray-400">
+                  No hay comentarios aún. ¡Sé el primero en participar!
+                </p>
+              </div>
+            ) : (
+              posts.map((post) => {
+                const repliesCount = getRepliesCount(post.id);
+                const userRole =
+                  forumData?.userId.id === post.userId.id ? 'educador' : null;
+
+                return (
+                  <div
+                    key={post.id}
+                    className="rounded-2xl border border-gray-800 bg-gray-900/50 p-4 transition-colors hover:border-gray-700"
+                  >
+                    <div className="flex gap-3">
+                      {/* Avatar */}
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white',
+                          getAvatarColor(post.userId.name ?? '')
+                        )}
                       >
-                        Enviar
-                      </button>
-                      <button
-                        className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-                        onClick={() => setReplyingToPostId(null)}
-                      >
-                        Cancelar
-                      </button>
+                        {getInitials(post.userId.name ?? '')}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-white">
+                            {post.userId.name}
+                          </span>
+                          {userRole && (
+                            <span className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                              ☆ {userRole}
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-500">
+                            {formatDateTime(post.createdAt)}
+                          </span>
+                        </div>
+
+                        {editingPostId === post.id ? (
+                          <div className="mt-3">
+                            <textarea
+                              className="w-full rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white resize-none focus:border-primary focus:outline-none"
+                              value={editPostContent}
+                              onChange={(e) =>
+                                setEditPostContent(e.target.value)
+                              }
+                              rows={3}
+                            />
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                onClick={() => handlePostUpdate(post.id)}
+                                className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-black hover:opacity-90"
+                              >
+                                Guardar
+                              </button>
+                              <button
+                                onClick={() => setEditingPostId(null)}
+                                className="rounded-lg bg-gray-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-600"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-sm leading-relaxed text-primary">
+                            {post.content}
+                          </p>
+                        )}
+
+                        {/* Acciones */}
+                        <div className="mt-3 flex items-center gap-4">
+                          <button className="flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-white">
+                            <ThumbsUp className="h-4 w-4" />
+                            Me gusta
+                          </button>
+                          <button
+                            onClick={() => {
+                              setReplyingToPostId(
+                                replyingToPostId === post.id ? null : post.id
+                              );
+                              setReplyMessage('');
+                            }}
+                            className="flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-white"
+                          >
+                            <CornerDownLeft className="h-4 w-4" />
+                            Responder
+                          </button>
+                          {repliesCount > 0 && (
+                            <span className="ml-auto text-xs text-gray-500">
+                              {repliesCount} respuesta
+                              {repliesCount > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Formulario de respuesta */}
+                        {replyingToPostId === post.id && (
+                          <div className="mt-4 flex gap-3">
+                            <div
+                              className={cn(
+                                'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
+                                getAvatarColor(user?.fullName ?? '')
+                              )}
+                            >
+                              {getInitials(user?.fullName ?? '')}
+                            </div>
+                            <div className="flex-1">
+                              <textarea
+                                className="w-full rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white placeholder:text-gray-500 resize-none focus:border-primary focus:outline-none"
+                                placeholder="Escribe tu respuesta..."
+                                value={replyMessage}
+                                onChange={(e) =>
+                                  setReplyMessage(e.target.value)
+                                }
+                                rows={2}
+                                autoFocus
+                              />
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-black hover:opacity-90 disabled:opacity-50"
+                                  onClick={handleReplySubmit}
+                                  disabled={
+                                    !replyMessage.trim() || isSubmittingReply
+                                  }
+                                >
+                                  {isSubmittingReply ? (
+                                    <>
+                                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                                      Enviando...
+                                    </>
+                                  ) : (
+                                    'Enviar'
+                                  )}
+                                </button>
+                                <button
+                                  className="rounded-lg bg-gray-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-600"
+                                  onClick={() => setReplyingToPostId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Respuestas */}
+                        {renderPostReplies(post.id)}
+                      </div>
+
+                      {/* Menú de opciones */}
+                      {post.userId.id === user?.id && (
+                        <Collapsible className="relative">
+                          <CollapsibleTrigger className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white">
+                            <MoreHorizontal className="h-5 w-5" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="absolute right-0 z-10 mt-1 flex flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
+                            <button
+                              className="px-4 py-2.5 text-left text-sm text-white hover:bg-gray-800"
+                              onClick={() => {
+                                setEditingPostId(post.id);
+                                setEditPostContent(post.content);
+                              }}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800"
+                              onClick={() => handleDeletePost(post.id)}
+                            >
+                              Eliminar
+                            </button>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                     </div>
                   </div>
-                )}
-
-                {/* Respuestas */}
-                <div className="mt-6 space-y-4 border-t border-gray-700 pt-5">
-                  {renderPostReplies(post.id)}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Crear nuevo post */}
-        <div className="mx-full mt-6 max-w-4xl">
-          <textarea
-            className="min-h-[120px] w-full resize-none rounded-lg border border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300"
-            placeholder="Escribe un nuevo mesaje..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <button
-            className="flex flex-col gap-4 border-b border-gray-700 pb-5 sm:flex-row sm:items-center sm:justify-between"
-            onClick={handlePostSubmit}
-          >
-            Enviar
-          </button>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

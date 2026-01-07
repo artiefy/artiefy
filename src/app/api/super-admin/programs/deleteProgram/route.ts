@@ -3,7 +3,12 @@ import { NextResponse } from 'next/server';
 import { inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollmentPrograms, materias, programas } from '~/server/db/schema';
+import {
+  certificates,
+  enrollmentPrograms,
+  materias,
+  programas,
+} from '~/server/db/schema';
 
 export async function DELETE(request: Request) {
   try {
@@ -30,7 +35,12 @@ export async function DELETE(request: Request) {
       })
       .where(inArray(materias.programaId, programIds));
 
-    // 3. Finally delete the programs
+    // 3. Delete certificates associated with the programs
+    await db
+      .delete(certificates)
+      .where(inArray(certificates.programaId, programIds));
+
+    // 4. Finally delete the programs
     await db.delete(programas).where(inArray(programas.id, programIds));
 
     return NextResponse.json({ message: 'Programas eliminados exitosamente' });

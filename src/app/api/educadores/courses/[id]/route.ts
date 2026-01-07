@@ -130,6 +130,10 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   // Obtener nombre completo del instructor si está disponible
   let instructorName: string | undefined;
+  let instructorProfesion: string | undefined;
+  let instructorDescripcion: string | undefined;
+  let instructorProfileImageKey: string | undefined;
+
   try {
     if (course?.instructor) {
       const user = await db
@@ -140,8 +144,11 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
       if (user) {
         // Use the `users.name` field from the schema. If it's empty/null, leave instructorName undefined.
-        const nm = (user.name!) ?? '';
+        const nm = user.name! ?? '';
         instructorName = nm.trim() ? nm.trim() : undefined;
+        instructorProfesion = user.profesion ?? undefined;
+        instructorDescripcion = user.descripcion ?? undefined;
+        instructorProfileImageKey = user.profileImageKey ?? undefined;
       }
     }
   } catch (e) {
@@ -229,7 +236,6 @@ export async function getCourseByIdWithTypes(courseId: number) {
     console.error('💥 Error haciendo fetch a /teams/video:', e);
   }
 
-
   // 🔁 De-dup por meetingId (el endpoint a veces repite el mismo ID)
   const videosById = new Map<
     string,
@@ -241,9 +247,10 @@ export async function getCourseByIdWithTypes(courseId: number) {
     }
   }
 
-
   const meetingsWithVideo = meetingsFixed.map((meeting) => {
-    let match = meeting.meetingId ? videosById.get(meeting.meetingId) : undefined;
+    let match = meeting.meetingId
+      ? videosById.get(meeting.meetingId)
+      : undefined;
 
     if (!match && meeting.joinUrl) {
       const decodedJoin = decodeURIComponent(meeting.joinUrl ?? '');
@@ -257,8 +264,8 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
     type ClassMeetingRow =
       (typeof classMeetings)['_']['columns'] extends infer _Cols
-      ? typeof classMeetings.$inferSelect & { video_key?: string | null }
-      : typeof classMeetings.$inferSelect & { video_key?: string | null };
+        ? typeof classMeetings.$inferSelect & { video_key?: string | null }
+        : typeof classMeetings.$inferSelect & { video_key?: string | null };
 
     const existingKey = (meeting as ClassMeetingRow).video_key ?? null;
 
@@ -292,7 +299,6 @@ export async function getCourseByIdWithTypes(courseId: number) {
       video_key: finalVideoKey,
     };
   });
-
 
   const courseTypesList = await db
     .select({
@@ -344,6 +350,9 @@ export async function getCourseByIdWithTypes(courseId: number) {
     nivelName,
     modalidadesName,
     instructorName,
+    instructorProfesion,
+    instructorDescripcion,
+    instructorProfileImageKey,
     courseTypes: courseTypesList,
     meetings: meetingsWithVideo,
     certificationTypeName,

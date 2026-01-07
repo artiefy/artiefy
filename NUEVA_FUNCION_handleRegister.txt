@@ -1,0 +1,210 @@
+// NOTA: Esta es la nueva función handleRegister que reemplaza handleSearch
+// Copiar este código en page.tsx y reemplazar la función handleSearch existente
+
+const handleRegister = async (action: 'entry' | 'exit') => {
+  if (!searchTerm.trim()) {
+    setError('Por favor ingresa un término de búsqueda');
+    return;
+  }
+
+  setLoading(true);
+  setActionType(action);
+  setError(null);
+  setResult(null);
+  setEsp32Message(null);
+
+  try {
+    // Paso 1: Buscar usuario
+    const searchResponse = await fetch('/api/super-admin/search-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        searchTerm: searchTerm.trim(),
+        searchType,
+      }),
+    });
+
+    const searchData: unknown = await searchResponse.json();
+
+    if (!searchResponse.ok) {
+      const errorMessage =
+        typeof searchData === 'object' &&
+        searchData !== null &&
+        'error' in searchData
+          ? (searchData as { error: string }).error
+          : 'Error en la búsqueda';
+      throw new Error(errorMessage);
+    }
+
+    if (
+      typeof searchData !== 'object' ||
+      searchData === null ||
+      !('found' in searchData)
+    ) {
+      throw new Error('Respuesta inválida del servidor');
+    }
+
+    const searchResult = searchData as SearchResult;
+    setResult(searchResult);
+
+    if (!searchResult.found) {
+      addToast(
+        'Usuario no encontrado',
+        'error',
+        4000,
+        'Verifica email, documento o nombre'
+      );
+      return;
+    }
+
+    // Paso 2: Registrar entrada/salida
+    console.log(`Registrando ${action} para usuario ${searchResult.user!.id}`);
+
+    const registerResponse = await fetch('/api/super-admin/register-access', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: searchResult.user!.id,
+        action,
+      }),
+    });
+
+    const registerData: unknown = await registerResponse.json();
+
+    if (!registerResponse.ok) {
+      const errorMsg =
+        typeof registerData === 'object' &&
+        registerData !== null &&
+        'error' in registerData
+          ? (registerData as { error: string }).error
+          : 'Error al registrar acceso';
+      const errorDetails =
+        typeof registerData === 'object' &&
+        registerData !== null &&
+        'details' in registerData
+          ? (registerData as { details: string }).details
+          : '';
+
+      setEsp32MessageType('error');
+      setEsp32Message(`⚠ ${errorMsg}`);
+      addToast(
+        `Error: ${errorMsg}`,
+        'error',
+        6000,
+        errorDetails || `Status: ${registerResponse.status}`
+      );
+      setTimeout(() => setEsp32Message(null), 6000);
+      return;
+    }
+
+    // Manejar respuesta exitosa
+    if (
+      typeof registerData === 'object' &&
+      registerData !== null &&
+      'success' in registerData &&
+      (registerData as { success: boolean }).success
+    ) {
+      const data = registerData as {
+        success: true;
+        message: string;
+        action: 'entry' | 'exit';
+        timestamp: string;
+        esp32?: {
+          ok: boolean;
+          status?: number;
+          reason?: string;
+        };
+        subscriptionStatus: string;
+      };
+
+      // Manejar ENTRADA
+      if (data.action === 'entry') {
+        if (data.esp32?.ok) {
+          setEsp32MessageType('success');
+          setEsp32Message('✓ Entrada registrada - Puerta abierta');
+          addToast(
+            '✓ Entrada registrada',
+            'success',
+            5000,
+            'Acceso permitido • Puerta abierta'
+          );
+        } else if (data.esp32?.reason === 'timeout') {
+          setEsp32MessageType('error');
+          setEsp32Message('⚠ Entrada registrada pero ESP32 no responde');
+          addToast(
+            'Entrada registrada',
+            'warning',
+            6000,
+            'Timeout ESP32 (5000ms)'
+          );
+        } else if (data.esp32?.reason === 'error') {
+          setEsp32MessageType('error');
+          setEsp32Message('⚠ Entrada registrada pero error con ESP32');
+          addToast(
+            'Entrada registrada',
+            'warning',
+            6000,
+            'Error de conexión ESP32'
+          );
+        }
+        setTimeout(() => setEsp32Message(null), 6000);
+      }
+
+      // Manejar SALIDA
+      if (data.action === 'exit') {
+        if (data.subscriptionStatus === 'inactive') {
+          // Salida sin suscripción activa (solo registro)
+          setEsp32MessageType('warning');
+          setEsp32Message('ℹ Salida registrada (sin abrir puerta)');
+          addToast(
+            'Salida registrada',
+            'info',
+            4000,
+            'Suscripción inactiva • No se abrió puerta'
+          );
+        } else if (data.esp32?.ok) {
+          // Salida con suscripción activa y ESP32 OK
+          setEsp32MessageType('success');
+          setEsp32Message('✓ Salida registrada - Puerta abierta');
+          addToast(
+            '✓ Salida registrada',
+            'success',
+            5000,
+            'Puerta abierta • Hasta pronto'
+          );
+        } else if (data.esp32?.reason === 'timeout') {
+          setEsp32MessageType('error');
+          setEsp32Message('⚠ Salida registrada pero ESP32 no responde');
+          addToast(
+            'Salida registrada',
+            'warning',
+            6000,
+            'Timeout ESP32 (5000ms)'
+          );
+        } else if (data.esp32?.reason === 'error') {
+          setEsp32MessageType('error');
+          setEsp32Message('⚠ Salida registrada pero error con ESP32');
+          addToast(
+            'Salida registrada',
+            'warning',
+            6000,
+            'Error de conexión ESP32'
+          );
+        }
+        setTimeout(() => setEsp32Message(null), 6000);
+      }
+    }
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : 'Error al procesar solicitud';
+    setError(errorMsg);
+    addToast('Error en el proceso', 'error', 5000, errorMsg);
+  } finally {
+    setLoading(false);
+    setActionType(null);
+  }
+};

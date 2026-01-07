@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
+import { Reply, ThumbsUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
@@ -63,6 +64,9 @@ interface Course {
   courseTypeName?: string;
   isActive: boolean;
   instructorName: string;
+  instructorProfesion?: string;
+  instructorDescripcion?: string;
+  instructorProfileImageKey?: string;
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
@@ -120,6 +124,74 @@ interface Educator {
   id: string;
   name: string;
   email?: string;
+}
+
+// Interface para foros
+interface Forum {
+  id: number;
+  title: string;
+  description: string;
+  coverImageKey?: string;
+  documentKey?: string;
+  courseId: number;
+  userId: string;
+  createdAt?: string;
+  _count?: {
+    posts?: number;
+  };
+}
+
+// Interface para posts de foro
+interface ForumPost {
+  id: number;
+  content: string;
+  userId: string;
+  forumId: number;
+  createdAt?: string;
+  updatedAt?: string;
+  repliesCount?: number;
+  user?: {
+    id: string;
+    name: string;
+    role?: string;
+    isEducator?: boolean;
+  };
+}
+
+// Interface para proyectos de estudiantes
+interface StudentProject {
+  id: number;
+  name: string;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivo_general?: string;
+  coverImageKey?: string;
+  coverVideoKey?: string;
+  type_project?: string;
+  userId: string;
+  categoryId?: number;
+  isPublic?: boolean;
+  public_comment?: string;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  tipo_visualizacion?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  horas_por_dia?: number;
+  total_horas?: number;
+  tiempo_estimado?: string;
+  dias_estimados?: number;
+  dias_necesarios?: number;
+  studentName?: string;
+  studentEmail?: string;
+  cover_image_key?: string;
+  cover_video_key?: string;
+  users_name?: string;
+  users_email?: string;
+  user?: {
+    name?: string;
+    email?: string;
+  };
 }
 // Función para obtener el contraste de un color
 const _getContrastYIQ = (hexcolor: string) => {
@@ -317,7 +389,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     string | null
   >(null);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
-
   const BADGE_GRADIENTS = [
     'from-pink-500 via-red-500 to-yellow-500',
     'from-green-300 via-blue-500 to-purple-600',
@@ -337,7 +408,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
 
   // Estados para los tabs desplegables
-  const [activeTab, setActiveTab] = useState<string>('curso');
+  const [activeTab, setActiveTab] = useState<string>('lecciones');
   const [_expandedSections, _setExpandedSections] = useState<{
     curso: boolean;
     grabadas: boolean;
@@ -392,6 +463,51 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
+
+  // Estados para foros
+  const [forums, setForums] = useState<Forum[]>([]);
+  const [newForumTitle, setNewForumTitle] = useState('');
+  const [newForumDescription, setNewForumDescription] = useState('');
+  const [isCreatingForum, setIsCreatingForum] = useState(false);
+  const [selectedForum, setSelectedForum] = useState<number | null>(null);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+
+  // --- Proyectos de estudiantes ---
+  const [studentProjects, setStudentProjects] = useState<StudentProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  // Estado para el modal de proyecto seleccionado
+  const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
+    null
+  );
+
+  // Fetch student projects for all students enrolled in this course
+  useEffect(() => {
+    if (!courseIdNumber) return;
+    setLoadingProjects(true);
+    fetch(`/api/super-admin/proyects?courseId=${courseIdNumber}`)
+      .then(async (res) => {
+        if (!res.ok)
+          throw new Error('Error al obtener proyectos de estudiantes');
+        const data = await res.json();
+        console.log('Proyectos recibidos:', data); // LOG para depuración
+        // Mapear los campos para que el frontend use cover_image_key y cover_video_key
+        const mapped = Array.isArray(data)
+          ? data.map((p) => ({
+              ...p,
+              cover_image_key: p.coverImageKey || p.cover_image_key || '',
+              cover_video_key: p.coverVideoKey || p.cover_video_key || '',
+            }))
+          : [];
+        setStudentProjects(mapped);
+      })
+      .catch((err) => {
+        setStudentProjects([]);
+        console.error('Error fetching student projects:', err);
+      })
+      .finally(() => setLoadingProjects(false));
+  }, [courseIdNumber]);
 
   // 🔑 ID del organizador principal en Azure AD (Graph)
   const MAIN_AAD_USER_ID = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
@@ -709,10 +825,127 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   }, [currentInstructor, educators]);
 
+  // Función para obtener foros
+  const fetchForums = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/forums?courseId=${courseIdNumber}`);
+      if (response.ok) {
+        const data = await response.json();
+        setForums(data);
+      }
+    } catch (error) {
+      console.error('Error fetching forums:', error);
+    }
+  }, [courseIdNumber]);
+
   // Obtener el curso y los parámetros al cargar la página
   useEffect(() => {
     void fetchCourse();
   }, [fetchCourse]);
+
+  // Fetch forums when course loads
+  useEffect(() => {
+    if (courseIdNumber) {
+      void fetchForums();
+    }
+  }, [courseIdNumber, fetchForums]);
+
+  // Función para crear foro
+  const handleCreateForum = async () => {
+    if (!newForumTitle.trim() || !user?.id) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    setIsCreatingForum(true);
+    try {
+      const formData = new FormData();
+      formData.append('courseId', courseIdNumber.toString());
+      formData.append('title', newForumTitle);
+      formData.append('description', newForumDescription);
+      formData.append('userId', user.id);
+
+      const response = await fetch('/api/forums', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast.success('Foro creado exitosamente');
+        setNewForumTitle('');
+        setNewForumDescription('');
+        await fetchForums();
+      } else {
+        // Si el error es por correo, igual mostrar éxito pero advertir en consola
+        const data = await response.json().catch(() => ({}));
+        if (data && data.error && String(data.error).includes('534-5.7.9')) {
+          toast.success('Foro creado (no se pudo notificar por correo)');
+          console.warn('Foro creado pero falló el correo:', data.error);
+          setNewForumTitle('');
+          setNewForumDescription('');
+          await fetchForums();
+        } else {
+          toast.error('Error al crear el foro');
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al crear el foro');
+    } finally {
+      setIsCreatingForum(false);
+    }
+  };
+
+  // Función para obtener posts de un foro
+  const fetchPosts = async (forumId: number) => {
+    setIsLoadingPosts(true);
+    try {
+      const response = await fetch(`/api/forums/${forumId}/posts`);
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
+
+  // Función para crear post
+  const handleCreatePost = async (forumId: number) => {
+    if (!newPostContent.trim() || !user?.id) {
+      toast.error('Por favor escribe un mensaje');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/forums/${forumId}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newPostContent,
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Respuesta publicada');
+        setNewPostContent('');
+        await fetchPosts(forumId);
+      } else {
+        toast.error('Error al publicar');
+      }
+    } catch (error) {
+      toast.error('Error al publicar');
+    }
+  };
+
+  // Seleccionar foro y cargar posts
+  const handleSelectForum = (forumId: number) => {
+    setSelectedForum(forumId);
+    void fetchPosts(forumId);
+  };
 
   // Add this useEffect after the existing useEffects
   useEffect(() => {
@@ -769,15 +1002,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         );
 
         setVideosRaw(uniqueVideos);
-
-        console.log(
-          `🎥 videosRaw=${uniqueVideos.length} (de ${userIds.length} organizadores)`
-        );
-        for (const v of uniqueVideos) {
-          console.log(
-            `  • videoKey=${v.videoKey} createdAt=${v.createdAt ?? '-'} meetingId=${v.meetingId || '-'}`
-          );
-        }
 
         const map = new Map<
           string,
@@ -1272,16 +1496,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </button>
 
-          {/* Lista desplegable */}
+          {/* Lista desplegable con Portal */}
           {isOpen && (
-            <>
+            <Portal>
               {/* Overlay para cerrar al hacer clic afuera */}
               <div
-                className="fixed inset-0 z-10"
+                className="fixed inset-0 z-[9998]"
                 onClick={() => setIsOpen(false)}
               />
 
-              <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-cyan-500/50 bg-slate-900 shadow-lg">
+              <div
+                className="fixed z-[9999] overflow-hidden rounded-md border border-cyan-500/50 bg-slate-900 shadow-2xl"
+                style={{
+                  top: '300px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '90%',
+                  maxWidth: '500px',
+                }}
+              >
                 {/* Campo de búsqueda */}
                 <div className="border-b border-cyan-500/30 p-2">
                   <input
@@ -1396,7 +1629,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   )}
                 </div>
               </div>
-            </>
+            </Portal>
           )}
         </div>
 
@@ -1826,16 +2059,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="mb-8 border-b border-cyan-500/20">
                 <div className="flex gap-8 overflow-x-auto pb-4">
                   <button
-                    onClick={() => setActiveTab('curso')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'curso'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
-                  >
-                    Curso
-                  </button>
-                  <button
                     onClick={() => setActiveTab('lecciones')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
                       activeTab === 'lecciones'
@@ -1869,6 +2092,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </span>
                   </button>
                   <button
+                    onClick={() => setActiveTab('foros')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'foros'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Foros{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      {forums.length}
+                    </span>
+                  </button>
+                  <button
                     onClick={() => setActiveTab('proyectos')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
                       activeTab === 'proyectos'
@@ -1878,7 +2114,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   >
                     Proyectos{' '}
                     <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
-                      1
+                      {Array.isArray(studentProjects)
+                        ? studentProjects.length
+                        : 0}
                     </span>
                   </button>
                   <button
@@ -1894,6 +2132,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       3
                     </span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('actividades')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
@@ -1914,13 +2153,57 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="space-y-6">
                 {/* Curso Tab - Solo Clase en Vivo */}
                 {activeTab === 'curso' && (
-                  <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
+                  <div className="animate-in fade-in space-y-8 duration-500">
+                    {/* Sobre el educador */}
+                    {course.instructorProfileImageKey && (
+                      <div className="group relative overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-8 shadow-xl transition-all duration-300 hover:border-cyan-500/60 hover:shadow-2xl hover:shadow-cyan-500/20">
+                        {/* Efecto de brillo en hover */}
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                        <h2 className="mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-3xl font-bold text-transparent">
+                          Sobre el educador
+                        </h2>
+
+                        <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center">
+                          {/* Foto del educador con efecto */}
+                          <div className="relative">
+                            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-75 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
+                              alt={course.instructorName}
+                              width={128}
+                              height={128}
+                              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              quality={70}
+                            />
+                          </div>
+
+                          {/* Información del educador */}
+                          <div className="relative flex-1">
+                            <h3 className="text-2xl font-bold text-white">
+                              {course.instructorName}
+                            </h3>
+                            {course.instructorProfesion && (
+                              <p className="mt-2 text-base font-semibold text-cyan-400">
+                                {course.instructorProfesion}
+                              </p>
+                            )}
+                            {course.instructorDescripcion && (
+                              <p className="mt-4 leading-relaxed text-white/80">
+                                {course.instructorDescripcion}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <h2 className="text-2xl font-bold text-white">
                       Clase en Vivo
                     </h2>
 
                     {/* Clases agendadas */}
-                    <div className="mb-6 space-y-4">
+                    <div className="space-y-4">
                       <ScheduledMeetingsList
                         meetings={meetingsForList}
                         color={selectedColor}
@@ -1948,7 +2231,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
-
                 {/* Lista de Clases Tab */}
                 {activeTab === 'lecciones' && (
                   <div className="animate-in fade-in duration-500">
@@ -1958,7 +2240,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     />
                   </div>
                 )}
-
                 {/* Estudiantes Tab */}
                 {activeTab === 'estudiantes' && (
                   <div className="animate-in fade-in duration-500">
@@ -1968,7 +2249,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     />
                   </div>
                 )}
-
                 {/* Clases Grabadas Tab */}
                 {activeTab === 'grabadas' && (
                   <div className="animate-in fade-in duration-500">
@@ -1983,21 +2263,595 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
+                {/* Foros Tab */}
+                {activeTab === 'foros' && (
+                  <div className="animate-in fade-in duration-500">
+                    {/* Formulario de creación de foro siempre visible */}
+                    <div className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow">
+                      <h2 className="mb-1 text-xl font-bold text-cyan-300">
+                        Foro del curso
+                      </h2>
+                      <p className="mb-4 text-sm text-white/60">
+                        {forums.length} comentarios · Comparte dudas y avances
+                        con tus compañeros
+                      </p>
+                      <div className="relative">
+                        <textarea
+                          placeholder="Inicia una nueva discusión o comparte tu avance..."
+                          value={newForumTitle}
+                          onChange={(e) => setNewForumTitle(e.target.value)}
+                          rows={3}
+                          className="mb-3 w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          style={{ minHeight: '70px' }}
+                        />
+                        <div className="mt-1 flex items-center justify-between">
+                          <div className="flex gap-4 text-xl text-gray-400">
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar imagen"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <rect
+                                  x="3"
+                                  y="3"
+                                  width="18"
+                                  height="18"
+                                  rx="2"
+                                />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar video"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <rect
+                                  x="2"
+                                  y="7"
+                                  width="20"
+                                  height="10"
+                                  rx="2"
+                                />
+                                <polygon points="10 9 15 12 10 15 10 9" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar audio"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <circle cx="12" cy="11" r="4" />
+                                <path d="M12 15v4" />
+                                <path d="M8 19h8" />
+                              </svg>
+                            </button>
+                          </div>
+                          <Button
+                            onClick={async () => {
+                              if (!newForumTitle.trim()) return;
+                              await handleCreateForum();
+                              setNewForumTitle('');
+                            }}
+                            disabled={isCreatingForum || !newForumTitle.trim()}
+                            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-2 text-base font-semibold hover:bg-cyan-600"
+                          >
+                            <span role="img" aria-label="publicar"></span>{' '}
+                            Publicar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Layout de dos columnas */}
+                    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+                      {/* Columna izquierda - Lista de foros */}
+                      <div className="space-y-4">
+                        {/* Lista de foros */}
+                        <div className="space-y-2">
+                          {forums.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-white/20 bg-slate-900/30 p-8 text-center">
+                              <p className="text-sm text-white/60">
+                                No hay foros aún
+                              </p>
+                            </div>
+                          ) : (
+                            forums.map((forum) => (
+                              <button
+                                key={forum.id}
+                                onClick={() => handleSelectForum(forum.id)}
+                                className={`w-full rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-5 text-left shadow transition-all duration-200 hover:border-cyan-400/60 hover:bg-[#14243a] ${
+                                  selectedForum === forum.id
+                                    ? 'border-cyan-400 bg-[#16263b] shadow-cyan-500/10'
+                                    : ''
+                                }`}
+                                style={{ marginBottom: '18px' }}
+                              >
+                                <div className="mb-2 flex items-center gap-4">
+                                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                    {forum.title?.[0]?.toUpperCase() || '?'}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block truncate text-base font-semibold text-cyan-300">
+                                      {forum.title}
+                                    </span>
+                                    {forum.description && (
+                                      <span className="block truncate text-xs text-white/50">
+                                        {forum.description}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="ml-auto text-xs whitespace-nowrap text-white/40">
+                                    {forum.createdAt
+                                      ? new Date(
+                                          forum.createdAt
+                                        ).toLocaleDateString('es-ES', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        })
+                                      : ''}
+                                  </span>
+                                </div>
+                                <div className="mt-1 flex items-center gap-4 text-xs text-cyan-400">
+                                  <span>
+                                    {forum._count?.posts || 0} comentarios
+                                  </span>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
 
+                      {/* Columna derecha - Contenido del foro */}
+                      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                        {!selectedForum ? (
+                          <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
+                            <div className="mb-4 h-20 w-20 rounded-full bg-white/5" />
+                            <h3 className="mb-2 text-xl font-bold text-white">
+                              Selecciona un foro
+                            </h3>
+                            <p className="text-sm text-white/50">
+                              Elige un foro de la lista para ver las
+                              conversaciones
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {/* Header del foro */}
+                            <div className="border-b border-white/10 pb-4">
+                              <h2 className="mb-1 text-2xl font-bold text-white">
+                                {
+                                  forums.find((f) => f.id === selectedForum)
+                                    ?.title
+                                }
+                              </h2>
+                              <p className="text-sm text-white/50">
+                                {posts.length}{' '}
+                                {posts.length === 1
+                                  ? 'respuesta'
+                                  : 'respuestas'}
+                              </p>
+                            </div>
+
+                            {/* Formulario de respuesta */}
+                            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-4">
+                              <textarea
+                                placeholder="Escribe tu respuesta..."
+                                value={newPostContent}
+                                onChange={(e) =>
+                                  setNewPostContent(e.target.value)
+                                }
+                                rows={3}
+                                className="mb-3 w-full resize-none rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="text-xs text-white/40">
+                                  {newPostContent.length}
+                                </span>
+                                <Button
+                                  onClick={() =>
+                                    handleCreatePost(selectedForum)
+                                  }
+                                  disabled={!newPostContent.trim()}
+                                  size="sm"
+                                  className="bg-cyan-500 hover:bg-cyan-600"
+                                >
+                                  Publicar
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Lista de respuestas */}
+                            <div className="space-y-4">
+                              {isLoadingPosts ? (
+                                <div className="flex items-center justify-center py-12">
+                                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                                </div>
+                              ) : posts.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
+                                  <p className="text-sm text-white/60">
+                                    No hay respuestas aún
+                                  </p>
+                                </div>
+                              ) : (
+                                posts.map((post) => (
+                                  <div
+                                    key={post.id}
+                                    className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow"
+                                  >
+                                    <div className="mb-2 flex items-center gap-4">
+                                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                        {post.user?.name?.[0]?.toUpperCase() ||
+                                          '?'}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <span className="block truncate text-base font-semibold text-cyan-300">
+                                          {post.user?.name || 'Usuario'}
+                                        </span>
+                                        <span className="ml-2 inline-block rounded bg-cyan-900/40 px-2 py-0.5 align-middle text-xs font-semibold text-cyan-300">
+                                          {post.user?.role === 'educador' ||
+                                          post.user?.isEducator
+                                            ? 'educador'
+                                            : ''}
+                                        </span>
+                                        <span className="mt-1 block text-xs text-white/40">
+                                          {post.createdAt
+                                            ? new Date(
+                                                post.createdAt
+                                              ).toLocaleDateString('es-ES', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                              })
+                                            : ''}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="mb-3 text-base text-white/90">
+                                      {post.content}
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-6 text-sm text-white/60">
+                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
+                                        <ThumbsUp className="h-5 w-5" />
+                                        Me gusta
+                                      </button>
+                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
+                                        <Reply className="h-5 w-5" />
+                                        Responder
+                                      </button>
+                                      <span className="ml-auto text-xs text-cyan-400">
+                                        {post.repliesCount || 0} respuestas
+                                      </span>
+                                    </div>
+                                    <div className="mt-2">
+                                      <textarea
+                                        placeholder="Escribe una respuesta..."
+                                        className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                                        rows={2}
+                                        style={{ resize: 'none' }}
+                                      />
+                                      <button className="float-right mt-2 rounded bg-cyan-500 px-4 py-1 font-semibold text-white transition hover:bg-cyan-600">
+                                        Responder
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Modal para crear foro */}
+                    {/* El modal de crear foro ha sido eliminado, ahora el formulario es siempre visible arriba */}
+                  </div>
+                )}{' '}
+                {/* ⬅️ ESTE ES EL CIERRE CORRECTO */}
                 {/* Proyectos Tab */}
                 {activeTab === 'proyectos' && (
                   <div className="animate-in fade-in duration-500">
                     <h2 className="mb-6 text-2xl font-bold text-white">
-                      Proyectos
+                      Proyectos de Estudiantes
                     </h2>
-                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
-                      <p className="text-white/60">
-                        Aquí irán los proyectos del curso...
-                      </p>
-                    </div>
+                    {loadingProjects ? (
+                      <div className="text-white/60">Cargando proyectos...</div>
+                    ) : (
+                      <>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {Array.isArray(studentProjects) &&
+                          studentProjects.length > 0 ? (
+                            studentProjects.map((project) => (
+                              <div
+                                key={project.id}
+                                className="group rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 via-cyan-900/30 to-cyan-950/30 p-6 shadow-xl transition-all duration-300 hover:scale-[1.03] hover:border-cyan-400 hover:shadow-2xl"
+                              >
+                                <div className="mb-4 flex items-center gap-4">
+                                  {project.cover_image_key && (
+                                    <Image
+                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.cover_image_key}`}
+                                      alt={project.name}
+                                      width={64}
+                                      height={64}
+                                      className="h-16 w-16 rounded-xl border border-cyan-500/30 object-cover shadow"
+                                      quality={60}
+                                    />
+                                  )}
+                                  <div>
+                                    <h3 className="mb-1 text-xl font-bold text-cyan-300">
+                                      {project.name}
+                                    </h3>
+                                    <span className="inline-block rounded bg-cyan-500/20 px-2 py-0.5 text-xs font-semibold text-cyan-300">
+                                      {project.type_project}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mb-2 flex flex-col gap-1">
+                                  <span className="text-xs text-cyan-400">
+                                    Estudiante:
+                                  </span>
+                                  <span className="text-xs font-semibold text-white/80">
+                                    {project.studentName ||
+                                      project.users_name ||
+                                      project.user?.name ||
+                                      project.userId}
+                                  </span>
+                                  {(project.studentEmail ||
+                                    project.users_email ||
+                                    project.user?.email) && (
+                                    <span className="text-xs text-cyan-300">
+                                      {project.studentEmail ||
+                                        project.users_email ||
+                                        project.user?.email}
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  className="mt-4 w-full rounded bg-cyan-500/20 px-4 py-2 font-semibold text-cyan-300 transition hover:bg-cyan-500/40 hover:text-white"
+                                  onClick={() => setSelectedProject(project)}
+                                >
+                                  Ver más
+                                </button>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="col-span-full text-white/60">
+                              {loadingProjects
+                                ? 'Cargando proyectos...'
+                                : 'No hay proyectos de estudiantes para este curso o hubo un error al obtenerlos.'}
+                            </div>
+                          )}
+                        </div>
+                        {/* Modal de detalles del proyecto */}
+                        {selectedProject && (
+                          <Portal>
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                              <div
+                                className="relative w-full max-w-2xl rounded-2xl border border-cyan-500/40 bg-slate-900 p-4 shadow-2xl sm:p-8"
+                                style={{
+                                  maxHeight: '90vh',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <button
+                                  className="absolute top-4 right-4 text-cyan-400 hover:text-white"
+                                  onClick={() => setSelectedProject(null)}
+                                >
+                                  ✕
+                                </button>
+                                <h3 className="mb-4 text-center text-2xl font-bold break-words text-cyan-300">
+                                  {selectedProject.name}
+                                </h3>
+                                {/* Imagen y video juntos, una sola vez, lado a lado */}
+                                {(selectedProject.cover_image_key ||
+                                  selectedProject.cover_video_key) && (
+                                  <div className="mb-6 flex w-full flex-row items-center justify-center gap-4">
+                                    {selectedProject.cover_image_key && (
+                                      <div className="flex flex-1 items-center justify-center">
+                                        <Image
+                                          src={
+                                            selectedProject.cover_image_key.startsWith(
+                                              'http'
+                                            )
+                                              ? selectedProject.cover_image_key
+                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_image_key}`
+                                          }
+                                          alt={selectedProject.name}
+                                          width={400}
+                                          height={240}
+                                          className="max-h-60 w-full rounded-xl border border-cyan-500/20 object-contain shadow"
+                                          style={{
+                                            objectFit: 'contain',
+                                            maxWidth: '100%',
+                                          }}
+                                          quality={70}
+                                          unoptimized={selectedProject.cover_image_key.startsWith(
+                                            'http'
+                                          )}
+                                        />
+                                      </div>
+                                    )}
+                                    {selectedProject.cover_video_key && (
+                                      <div className="flex flex-1 items-center justify-center">
+                                        <video
+                                          src={
+                                            selectedProject.cover_video_key.startsWith(
+                                              'http'
+                                            )
+                                              ? selectedProject.cover_video_key
+                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_video_key}`
+                                          }
+                                          controls
+                                          className="max-h-60 w-full rounded-xl border border-cyan-500/20 object-contain shadow"
+                                          style={{
+                                            objectFit: 'contain',
+                                            maxWidth: '100%',
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="mb-2 flex items-center gap-2">
+                                  <span className="font-semibold text-cyan-400">
+                                    Tipo:
+                                  </span>
+                                  <span className="break-words text-cyan-200">
+                                    {selectedProject.type_project}
+                                  </span>
+                                </div>
+                                <div className="mb-2">
+                                  <span className="font-semibold text-cyan-400">
+                                    Estudiante:
+                                  </span>
+                                  <span className="ml-2 break-words text-cyan-200">
+                                    {selectedProject.studentName ||
+                                      selectedProject.users_name ||
+                                      selectedProject.user?.name ||
+                                      selectedProject.userId}
+                                  </span>
+                                  {(selectedProject.studentEmail ||
+                                    selectedProject.users_email ||
+                                    selectedProject.user?.email) && (
+                                    <span className="ml-2 break-words text-cyan-300">
+                                      {selectedProject.studentEmail ||
+                                        selectedProject.users_email ||
+                                        selectedProject.user?.email}
+                                    </span>
+                                  )}
+                                </div>
+                                <div
+                                  className="flex-1 overflow-y-auto pr-1"
+                                  style={{ minHeight: 0 }}
+                                >
+                                  <div className="mb-2">
+                                    <span className="font-semibold text-cyan-400">
+                                      Planteamiento:
+                                    </span>
+                                    <p
+                                      className="break-words whitespace-pre-line text-white/80"
+                                      style={{ wordBreak: 'break-word' }}
+                                    >
+                                      {selectedProject.planteamiento}
+                                    </p>
+                                  </div>
+                                  <div className="mb-2">
+                                    <span className="font-semibold text-cyan-400">
+                                      Justificación:
+                                    </span>
+                                    <p
+                                      className="break-words whitespace-pre-line text-white/80"
+                                      style={{ wordBreak: 'break-word' }}
+                                    >
+                                      {selectedProject.justificacion}
+                                    </p>
+                                  </div>
+                                  <div className="mb-2">
+                                    <span className="font-semibold text-cyan-400">
+                                      Objetivo general:
+                                    </span>
+                                    <p
+                                      className="break-words whitespace-pre-line text-white/80"
+                                      style={{ wordBreak: 'break-word' }}
+                                    >
+                                      {selectedProject.objetivo_general}
+                                    </p>
+                                  </div>
+                                  <div className="mb-2 grid grid-cols-2 gap-2">
+                                    <div>
+                                      <span className="text-xs text-cyan-400">
+                                        Inicio:
+                                      </span>
+                                      <div className="text-xs break-words text-white/60">
+                                        {selectedProject.fecha_inicio}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs text-cyan-400">
+                                        Fin:
+                                      </span>
+                                      <div className="text-xs break-words text-white/60">
+                                        {selectedProject.fecha_fin}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="mb-2 flex flex-wrap gap-2">
+                                    <span className="text-xs text-cyan-400">
+                                      Horas/día:
+                                    </span>
+                                    <span className="text-xs break-words text-white/70">
+                                      {selectedProject.horas_por_dia}
+                                    </span>
+                                    <span className="text-xs text-cyan-400">
+                                      Total horas:
+                                    </span>
+                                    <span className="text-xs break-words text-white/70">
+                                      {selectedProject.total_horas}
+                                    </span>
+                                    <span className="text-xs text-cyan-400">
+                                      Días estimados:
+                                    </span>
+                                    <span className="text-xs break-words text-white/70">
+                                      {selectedProject.dias_estimados}
+                                    </span>
+                                  </div>
+                                  {selectedProject.public_comment && (
+                                    <div className="mb-2">
+                                      <span className="text-xs text-cyan-400">
+                                        Comentario público:
+                                      </span>
+                                      <p
+                                        className="text-xs break-words whitespace-pre-line text-white/60"
+                                        style={{ wordBreak: 'break-word' }}
+                                      >
+                                        {selectedProject.public_comment}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </Portal>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
-
                 {/* Recursos Tab */}
                 {activeTab === 'recursos' && (
                   <div className="animate-in fade-in duration-500">
@@ -2011,7 +2865,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
-
                 {/* Actividades Tab */}
                 {activeTab === 'actividades' && (
                   <div className="animate-in fade-in duration-500">
@@ -2025,6 +2878,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
+                {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
               </div>
             </div>
           </div>

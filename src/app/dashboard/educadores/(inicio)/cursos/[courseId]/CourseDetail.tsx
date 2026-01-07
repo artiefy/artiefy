@@ -49,6 +49,9 @@ interface Course {
   courseTypeName?: string;
   isActive: boolean;
   instructorName: string;
+  instructorProfesion?: string;
+  instructorDescripcion?: string;
+  instructorProfileImageKey?: string;
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
   courseTypes?: { id: number; name: string }[]; // <== añades esto
@@ -440,11 +443,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   >([]);
   const [editHorario, setEditHorario] = useState<number | null>(null);
   const [editEspacios, setEditEspacios] = useState<number | null>(null);
-  const [editCertificationTypeId, setEditCertificationTypeId] = useState<number | null>(null);
-  const [certificationTypes, setCertificationTypes] = useState<{ id: number; name: string; description: string | null }[]>([]);
-  const [scheduleOptionName, setScheduleOptionName] = useState<string | null>(null);
+  const [editCertificationTypeId, setEditCertificationTypeId] = useState<
+    number | null
+  >(null);
+  const [certificationTypes, setCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
+  const [scheduleOptionName, setScheduleOptionName] = useState<string | null>(
+    null
+  );
   const [spaceOptionName, setSpaceOptionName] = useState<string | null>(null);
-  const [certificationTypeName, setCertificationTypeName] = useState<string | null>(null);
+  const [certificationTypeName, setCertificationTypeName] = useState<
+    string | null
+  >(null);
   void videosByMeetingId;
 
   const { user } = useUser(); // Ya está dentro del componente
@@ -630,7 +641,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       try {
         const response = await fetch('/api/super-admin/certification-types');
         if (response.ok) {
-          const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+          const data = (await response.json()) as {
+            success: boolean;
+            data: { id: number; name: string; description: string | null }[];
+          };
           if (data.success) {
             setCertificationTypes(data.data);
           }
@@ -674,10 +688,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
         const videos: VideoIdxItem[] =
           isRecord(raw) &&
-            Array.isArray((raw as Record<string, unknown>).videos)
+          Array.isArray((raw as Record<string, unknown>).videos)
             ? ((raw as Record<string, unknown>).videos as unknown[]).filter(
-              isVideoIdxItem
-            )
+                isVideoIdxItem
+              )
             : [];
 
         setVideosRaw(videos); // ← guardamos la lista completa para el emparejamiento 1:1 por fecha
@@ -1205,10 +1219,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${selectedColor === '#FFFFFF'
-                      ? 'border-black'
-                      : 'border-white'
-                      } `}
+                    className={`size-8 border ${
+                      selectedColor === '#FFFFFF'
+                        ? 'border-black'
+                        : 'border-white'
+                    } `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -1259,8 +1274,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Curso:
                   </h2>
@@ -1270,8 +1286,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Categoría:
                   </h2>
@@ -1284,8 +1301,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Horario:
                   </h2>
@@ -1298,8 +1316,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Espacios:
                   </h2>
@@ -1313,22 +1332,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-justify text-sm sm:text-base ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                  className={`text-base font-semibold sm:text-lg ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
                 >
                   Precio Individual:
                 </h2>
@@ -1345,8 +1367,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     educador:
                   </h2>
@@ -1387,8 +1410,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Nivel:
                   </h2>
@@ -1401,8 +1425,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Modalidad:
                   </h2>
@@ -1415,8 +1440,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Tipos de curso:
                   </h2>
@@ -1445,17 +1471,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${course.isActive
-                      ? 'border-green-500 text-green-500'
-                      : 'border-red-500 text-red-500'
-                      } bg-background hover:bg-black/70`}
+                    className={`ml-1 w-fit border ${
+                      course.isActive
+                        ? 'border-green-500 text-green-500'
+                        : 'border-red-500 text-red-500'
+                    } bg-background hover:bg-black/70`}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -1486,8 +1514,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Tipo de Certificación:
                   </h2>
@@ -1500,8 +1529,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Opción de Horario:
                   </h2>
@@ -1514,8 +1544,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                      }`}
+                    className={`text-base font-semibold sm:text-lg ${
+                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    }`}
                   >
                     Opción de Espacio:
                   </h2>

@@ -5,7 +5,10 @@ import { z } from 'zod';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { esp32Client, type ESP32ResponseData } from '~/server/esp32/esp32-client';
+import {
+  esp32Client,
+  type ESP32ResponseData,
+} from '~/server/esp32/esp32-client';
 
 export const runtime = 'nodejs';
 
@@ -38,7 +41,9 @@ const webhookPayloadSchema = z.object({
   userId: z.string().min(1, 'userId es requerido'),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
   try {
     const body = await request.json();
 
@@ -56,6 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
     }
 
     const { userId } = validation.data;
+    console.log(`🔍 Buscando usuario con ID: ${userId}`);
 
     // Consultar usuario en BD
     const user = await db.query.users.findFirst({
@@ -70,6 +76,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
     });
 
     if (!user) {
+      console.error(`❌ Usuario no encontrado: ${userId}`);
       return NextResponse.json(
         {
           success: false,
@@ -79,6 +86,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
       );
     }
 
+    console.log(`✅ Usuario encontrado: ${user.email}`);
+
     // Validar suscripción activa en servidor
     const now = new Date();
     const isSubscriptionActive =
@@ -86,12 +95,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
       user.subscriptionEndDate &&
       new Date(user.subscriptionEndDate) > now;
 
+    console.log(
+      `📋 Estado suscripción: ${isSubscriptionActive ? 'ACTIVA' : 'INACTIVA'}`
+    );
+    console.log(`📋 subscriptionStatus: ${user.subscriptionStatus}`);
+    if (user.subscriptionEndDate) {
+      console.log(
+        `📋 subscriptionEndDate: ${user.subscriptionEndDate.toISOString()}`
+      );
+    }
+
     // Construir payload de respuesta
     const daysRemaining = isSubscriptionActive
       ? Math.ceil(
-        (new Date(user.subscriptionEndDate!).getTime() - now.getTime()) /
-        (1000 * 60 * 60 * 24)
-      )
+          (new Date(user.subscriptionEndDate!).getTime() - now.getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
       : 0;
 
     const payload: WebhookPayload = {
@@ -99,12 +118,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
       email: user.email,
       name: user.name ?? 'N/A',
       daysRemaining,
-      subscriptionEndDate: user.subscriptionEndDate?.toISOString() ?? new Date().toISOString(),
+      subscriptionEndDate:
+        user.subscriptionEndDate?.toISOString() ?? new Date().toISOString(),
       timestamp: now.toISOString(),
     };
 
     // Si suscripción no está activa, responder sin llamar a ESP32
     if (!isSubscriptionActive) {
+      console.log('🚫 Suscripción inactiva, no se envía comando al ESP32');
       const response: SuccessResponse = {
         success: true,
         message: 'Usuario verificado pero suscripción inactiva',
@@ -118,18 +139,32 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
     }
 
     // Suscripción activa: enviar comando al ESP32
+    console.log('🚀 Suscripción activa, enviando comando al ESP32...');
+
+    // Obtener ESP32_BASE_URL para loguear (sin exponer API key)
+    const esp32BaseUrl = process.env.ESP32_BASE_URL ?? 'NO_CONFIGURADO';
+    console.log(`🌐 ESP32_BASE_URL: ${esp32BaseUrl}`);
+
     const esp32Result = await esp32Client.sendDoorDecision(true);
+
+    console.log(`📡 Resultado ESP32:`, {
+      ok: esp32Result.ok,
+      status: esp32Result.status,
+      reason: esp32Result.reason,
+    });
 
     const response: SuccessResponse = {
       success: true,
-      message: 'Usuario verificado y puerta abierta',
+      message: esp32Result.ok
+        ? 'Usuario verificado y puerta abierta'
+        : 'Usuario verificado pero ESP32 no respondió correctamente',
       payload,
       esp32: esp32Result,
     };
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Error en webhook-subscription:', error);
+    console.error('❌ Error en webhook-subscription:', error);
     return NextResponse.json(
       {
         success: false,
@@ -140,4 +175,3 @@ export async function POST(request: NextRequest): Promise<NextResponse<SuccessRe
     );
   }
 }
-
