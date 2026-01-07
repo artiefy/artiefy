@@ -69,10 +69,10 @@ export async function GET(req: Request) {
         .where(inArray(projects.userId, userIds));
     }
     return NextResponse.json(proyectos);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API /api-super-admin/proyects] Error:', error);
     return NextResponse.json(
-      { error: error && error.message ? error.message : 'Error interno' },
+      { error: error instanceof Error ? error.message : 'Error interno' },
       { status: 500 }
     );
   }

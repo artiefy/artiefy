@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
+import { Reply, ThumbsUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
@@ -123,6 +124,74 @@ interface Educator {
   id: string;
   name: string;
   email?: string;
+}
+
+// Interface para foros
+interface Forum {
+  id: number;
+  title: string;
+  description: string;
+  coverImageKey?: string;
+  documentKey?: string;
+  courseId: number;
+  userId: string;
+  createdAt?: string;
+  _count?: {
+    posts?: number;
+  };
+}
+
+// Interface para posts de foro
+interface ForumPost {
+  id: number;
+  content: string;
+  userId: string;
+  forumId: number;
+  createdAt?: string;
+  updatedAt?: string;
+  repliesCount?: number;
+  user?: {
+    id: string;
+    name: string;
+    role?: string;
+    isEducator?: boolean;
+  };
+}
+
+// Interface para proyectos de estudiantes
+interface StudentProject {
+  id: number;
+  name: string;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivo_general?: string;
+  coverImageKey?: string;
+  coverVideoKey?: string;
+  type_project?: string;
+  userId: string;
+  categoryId?: number;
+  isPublic?: boolean;
+  public_comment?: string;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  tipo_visualizacion?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  horas_por_dia?: number;
+  total_horas?: number;
+  tiempo_estimado?: string;
+  dias_estimados?: number;
+  dias_necesarios?: number;
+  studentName?: string;
+  studentEmail?: string;
+  cover_image_key?: string;
+  cover_video_key?: string;
+  users_name?: string;
+  users_email?: string;
+  user?: {
+    name?: string;
+    email?: string;
+  };
 }
 // Función para obtener el contraste de un color
 const _getContrastYIQ = (hexcolor: string) => {
@@ -396,20 +465,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [showStickyCard, setShowStickyCard] = useState(false);
 
   // Estados para foros
-  const [forums, setForums] = useState<any[]>([]);
+  const [forums, setForums] = useState<Forum[]>([]);
   const [newForumTitle, setNewForumTitle] = useState('');
   const [newForumDescription, setNewForumDescription] = useState('');
   const [isCreatingForum, setIsCreatingForum] = useState(false);
   const [selectedForum, setSelectedForum] = useState<number | null>(null);
   const [newPostContent, setNewPostContent] = useState('');
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
   // --- Proyectos de estudiantes ---
-  const [studentProjects, setStudentProjects] = useState<any[]>([]);
+  const [studentProjects, setStudentProjects] = useState<StudentProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   // Estado para el modal de proyecto seleccionado
-  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
+    null
+  );
 
   // Fetch student projects for all students enrolled in this course
   useEffect(() => {
@@ -805,7 +876,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setNewForumDescription('');
         await fetchForums();
       } else {
-        toast.error('Error al crear el foro');
+        // Si el error es por correo, igual mostrar éxito pero advertir en consola
+        const data = await response.json().catch(() => ({}));
+        if (data && data.error && String(data.error).includes('534-5.7.9')) {
+          toast.success('Foro creado (no se pudo notificar por correo)');
+          console.warn('Foro creado pero falló el correo:', data.error);
+          setNewForumTitle('');
+          setNewForumDescription('');
+          await fetchForums();
+        } else {
+          toast.error('Error al crear el foro');
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -2021,6 +2102,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </span>
                   </button>
                   <button
+                    onClick={() => setActiveTab('foros')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'foros'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Foros{' '}
+                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                      {forums.length}
+                    </span>
+                  </button>
+                  <button
                     onClick={() => setActiveTab('proyectos')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
                       activeTab === 'proyectos'
@@ -2048,19 +2142,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       3
                     </span>
                   </button>
-                  <button
-                    onClick={() => setActiveTab('foros')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'foros'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
-                  >
-                    Foros{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
-                      {forums.length}
-                    </span>
-                  </button>
+
                   <button
                     onClick={() => setActiveTab('actividades')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
@@ -2191,6 +2273,325 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
+                {/* Foros Tab */}
+                {activeTab === 'foros' && (
+                  <div className="animate-in fade-in duration-500">
+                    {/* Formulario de creación de foro siempre visible */}
+                    <div className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow">
+                      <h2 className="mb-1 text-xl font-bold text-cyan-300">
+                        Foro del curso
+                      </h2>
+                      <p className="mb-4 text-sm text-white/60">
+                        {forums.length} comentarios · Comparte dudas y avances
+                        con tus compañeros
+                      </p>
+                      <div className="relative">
+                        <textarea
+                          placeholder="Inicia una nueva discusión o comparte tu avance..."
+                          value={newForumTitle}
+                          onChange={(e) => setNewForumTitle(e.target.value)}
+                          rows={3}
+                          className="mb-3 w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          style={{ minHeight: '70px' }}
+                        />
+                        <div className="mt-1 flex items-center justify-between">
+                          <div className="flex gap-4 text-xl text-gray-400">
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar imagen"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <rect
+                                  x="3"
+                                  y="3"
+                                  width="18"
+                                  height="18"
+                                  rx="2"
+                                />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar video"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <rect
+                                  x="2"
+                                  y="7"
+                                  width="20"
+                                  height="10"
+                                  rx="2"
+                                />
+                                <polygon points="10 9 15 12 10 15 10 9" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="hover:text-cyan-400"
+                              title="Adjuntar audio"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <circle cx="12" cy="11" r="4" />
+                                <path d="M12 15v4" />
+                                <path d="M8 19h8" />
+                              </svg>
+                            </button>
+                          </div>
+                          <Button
+                            onClick={async () => {
+                              if (!newForumTitle.trim()) return;
+                              await handleCreateForum();
+                              setNewForumTitle('');
+                            }}
+                            disabled={isCreatingForum || !newForumTitle.trim()}
+                            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-2 text-base font-semibold hover:bg-cyan-600"
+                          >
+                            <span role="img" aria-label="publicar"></span>{' '}
+                            Publicar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Layout de dos columnas */}
+                    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+                      {/* Columna izquierda - Lista de foros */}
+                      <div className="space-y-4">
+                        {/* Lista de foros */}
+                        <div className="space-y-2">
+                          {forums.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-white/20 bg-slate-900/30 p-8 text-center">
+                              <p className="text-sm text-white/60">
+                                No hay foros aún
+                              </p>
+                            </div>
+                          ) : (
+                            forums.map((forum) => (
+                              <button
+                                key={forum.id}
+                                onClick={() => handleSelectForum(forum.id)}
+                                className={`w-full rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-5 text-left shadow transition-all duration-200 hover:border-cyan-400/60 hover:bg-[#14243a] ${
+                                  selectedForum === forum.id
+                                    ? 'border-cyan-400 bg-[#16263b] shadow-cyan-500/10'
+                                    : ''
+                                }`}
+                                style={{ marginBottom: '18px' }}
+                              >
+                                <div className="mb-2 flex items-center gap-4">
+                                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                    {forum.title?.[0]?.toUpperCase() || '?'}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block truncate text-base font-semibold text-cyan-300">
+                                      {forum.title}
+                                    </span>
+                                    {forum.description && (
+                                      <span className="block truncate text-xs text-white/50">
+                                        {forum.description}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="ml-auto text-xs whitespace-nowrap text-white/40">
+                                    {forum.createdAt
+                                      ? new Date(
+                                          forum.createdAt
+                                        ).toLocaleDateString('es-ES', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        })
+                                      : ''}
+                                  </span>
+                                </div>
+                                <div className="mt-1 flex items-center gap-4 text-xs text-cyan-400">
+                                  <span>
+                                    {forum._count?.posts || 0} comentarios
+                                  </span>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Columna derecha - Contenido del foro */}
+                      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                        {!selectedForum ? (
+                          <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
+                            <div className="mb-4 h-20 w-20 rounded-full bg-white/5" />
+                            <h3 className="mb-2 text-xl font-bold text-white">
+                              Selecciona un foro
+                            </h3>
+                            <p className="text-sm text-white/50">
+                              Elige un foro de la lista para ver las
+                              conversaciones
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {/* Header del foro */}
+                            <div className="border-b border-white/10 pb-4">
+                              <h2 className="mb-1 text-2xl font-bold text-white">
+                                {
+                                  forums.find((f) => f.id === selectedForum)
+                                    ?.title
+                                }
+                              </h2>
+                              <p className="text-sm text-white/50">
+                                {posts.length}{' '}
+                                {posts.length === 1
+                                  ? 'respuesta'
+                                  : 'respuestas'}
+                              </p>
+                            </div>
+
+                            {/* Formulario de respuesta */}
+                            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-4">
+                              <textarea
+                                placeholder="Escribe tu respuesta..."
+                                value={newPostContent}
+                                onChange={(e) =>
+                                  setNewPostContent(e.target.value)
+                                }
+                                rows={3}
+                                className="mb-3 w-full resize-none rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="text-xs text-white/40">
+                                  {newPostContent.length}
+                                </span>
+                                <Button
+                                  onClick={() =>
+                                    handleCreatePost(selectedForum)
+                                  }
+                                  disabled={!newPostContent.trim()}
+                                  size="sm"
+                                  className="bg-cyan-500 hover:bg-cyan-600"
+                                >
+                                  Publicar
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Lista de respuestas */}
+                            <div className="space-y-4">
+                              {isLoadingPosts ? (
+                                <div className="flex items-center justify-center py-12">
+                                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                                </div>
+                              ) : posts.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
+                                  <p className="text-sm text-white/60">
+                                    No hay respuestas aún
+                                  </p>
+                                </div>
+                              ) : (
+                                posts.map((post) => (
+                                  <div
+                                    key={post.id}
+                                    className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow"
+                                  >
+                                    <div className="mb-2 flex items-center gap-4">
+                                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                        {post.user?.name?.[0]?.toUpperCase() ||
+                                          '?'}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <span className="block truncate text-base font-semibold text-cyan-300">
+                                          {post.user?.name || 'Usuario'}
+                                        </span>
+                                        <span className="ml-2 inline-block rounded bg-cyan-900/40 px-2 py-0.5 align-middle text-xs font-semibold text-cyan-300">
+                                          {post.user?.role === 'educador' ||
+                                          post.user?.isEducator
+                                            ? 'educador'
+                                            : ''}
+                                        </span>
+                                        <span className="mt-1 block text-xs text-white/40">
+                                          {post.createdAt
+                                            ? new Date(
+                                                post.createdAt
+                                              ).toLocaleDateString('es-ES', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                              })
+                                            : ''}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="mb-3 text-base text-white/90">
+                                      {post.content}
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-6 text-sm text-white/60">
+                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
+                                        <ThumbsUp className="h-5 w-5" />
+                                        Me gusta
+                                      </button>
+                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
+                                        <Reply className="h-5 w-5" />
+                                        Responder
+                                      </button>
+                                      <span className="ml-auto text-xs text-cyan-400">
+                                        {post.repliesCount || 0} respuestas
+                                      </span>
+                                    </div>
+                                    <div className="mt-2">
+                                      <textarea
+                                        placeholder="Escribe una respuesta..."
+                                        className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                                        rows={2}
+                                        style={{ resize: 'none' }}
+                                      />
+                                      <button className="float-right mt-2 rounded bg-cyan-500 px-4 py-1 font-semibold text-white transition hover:bg-cyan-600">
+                                        Responder
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Modal para crear foro */}
+                    {/* El modal de crear foro ha sido eliminado, ahora el formulario es siempre visible arriba */}
+                  </div>
+                )}{' '}
+                {/* ⬅️ ESTE ES EL CIERRE CORRECTO */}
                 {/* Proyectos Tab */}
                 {activeTab === 'proyectos' && (
                   <div className="animate-in fade-in duration-500">
@@ -2474,269 +2875,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
-                {/* Foros Tab */}
-                {activeTab === 'foros' && (
-                  <div className="animate-in fade-in duration-500">
-                    {/* Layout de dos columnas */}
-                    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-                      {/* Columna izquierda - Lista de foros */}
-                      <div className="space-y-4">
-                        {/* Header y botón crear */}
-                        <div className="rounded-xl border border-white/10 bg-slate-900/50 p-4">
-                          <div className="mb-4 flex items-center justify-between">
-                            <div>
-                              <h3 className="text-lg font-bold text-white">
-                                Foros
-                              </h3>
-                              <p className="text-xs text-white/50">
-                                {forums.length} conversaciones
-                              </p>
-                            </div>
-                            <Button
-                              onClick={() => {
-                                setNewForumTitle('');
-                                setNewForumDescription('');
-                                const modal =
-                                  document.getElementById('create-forum-modal');
-                                if (modal) modal.style.display = 'flex';
-                              }}
-                              className="bg-cyan-500 px-4 py-2 text-sm hover:bg-cyan-600"
-                            >
-                              + Nuevo Foro
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Lista de foros */}
-                        <div className="space-y-2">
-                          {forums.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-white/20 bg-slate-900/30 p-8 text-center">
-                              <p className="text-sm text-white/60">
-                                No hay foros aún
-                              </p>
-                            </div>
-                          ) : (
-                            forums.map((forum) => (
-                              <button
-                                key={forum.id}
-                                onClick={() => handleSelectForum(forum.id)}
-                                className={`w-full rounded-lg border p-4 text-left transition-all ${
-                                  selectedForum === forum.id
-                                    ? 'border-cyan-500 bg-cyan-500/10'
-                                    : 'border-white/10 bg-slate-900/50 hover:border-white/20 hover:bg-slate-900/80'
-                                }`}
-                              >
-                                <h4 className="mb-1 line-clamp-1 font-semibold text-white">
-                                  {forum.title}
-                                </h4>
-                                {forum.description && (
-                                  <p className="mb-2 line-clamp-1 text-xs text-white/50">
-                                    {forum.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-cyan-400">
-                                    {forum._count?.posts || 0} respuestas
-                                  </span>
-                                  <span className="text-white/40">
-                                    {new Date(
-                                      forum.createdAt
-                                    ).toLocaleDateString('es-ES', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                    })}
-                                  </span>
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Columna derecha - Contenido del foro */}
-                      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
-                        {!selectedForum ? (
-                          <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
-                            <div className="mb-4 h-20 w-20 rounded-full bg-white/5" />
-                            <h3 className="mb-2 text-xl font-bold text-white">
-                              Selecciona un foro
-                            </h3>
-                            <p className="text-sm text-white/50">
-                              Elige un foro de la lista para ver las
-                              conversaciones
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-6">
-                            {/* Header del foro */}
-                            <div className="border-b border-white/10 pb-4">
-                              <h2 className="mb-1 text-2xl font-bold text-white">
-                                {
-                                  forums.find((f) => f.id === selectedForum)
-                                    ?.title
-                                }
-                              </h2>
-                              <p className="text-sm text-white/50">
-                                {posts.length}{' '}
-                                {posts.length === 1
-                                  ? 'respuesta'
-                                  : 'respuestas'}
-                              </p>
-                            </div>
-
-                            {/* Formulario de respuesta */}
-                            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-4">
-                              <textarea
-                                placeholder="Escribe tu respuesta..."
-                                value={newPostContent}
-                                onChange={(e) =>
-                                  setNewPostContent(e.target.value)
-                                }
-                                rows={3}
-                                className="mb-3 w-full resize-none rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
-                              />
-                              <div className="flex items-center justify-end gap-2">
-                                <span className="text-xs text-white/40">
-                                  {newPostContent.length}
-                                </span>
-                                <Button
-                                  onClick={() =>
-                                    handleCreatePost(selectedForum)
-                                  }
-                                  disabled={!newPostContent.trim()}
-                                  size="sm"
-                                  className="bg-cyan-500 hover:bg-cyan-600"
-                                >
-                                  Publicar
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Lista de respuestas */}
-                            <div className="space-y-4">
-                              {isLoadingPosts ? (
-                                <div className="flex items-center justify-center py-12">
-                                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-                                </div>
-                              ) : posts.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
-                                  <p className="text-sm text-white/60">
-                                    No hay respuestas aún
-                                  </p>
-                                </div>
-                              ) : (
-                                posts.map((post) => (
-                                  <div
-                                    key={post.id}
-                                    className="rounded-lg border border-white/10 bg-slate-900/80 p-4"
-                                  >
-                                    <div className="mb-3 flex items-start gap-3">
-                                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 text-xs font-bold text-white">
-                                        {post.user?.name?.[0]?.toUpperCase() ||
-                                          '?'}
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="text-sm font-semibold text-white">
-                                          {post.user?.name || 'Usuario'}
-                                        </p>
-                                        <p className="text-xs text-white/40">
-                                          {new Date(
-                                            post.createdAt
-                                          ).toLocaleDateString('es-ES', {
-                                            day: 'numeric',
-                                            month: 'long',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          })}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <p className="text-sm leading-relaxed text-white/90">
-                                      {post.content}
-                                    </p>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Modal para crear foro */}
-                    <div
-                      id="create-forum-modal"
-                      className="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
-                      onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                          e.currentTarget.style.display = 'none';
-                        }
-                      }}
-                    >
-                      <div className="w-full max-w-md rounded-xl border border-white/10 bg-slate-900 p-6">
-                        <h3 className="mb-4 text-xl font-bold text-white">
-                          Crear Nuevo Foro
-                        </h3>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="mb-2 block text-sm text-white/70">
-                              Título
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Escribe el título..."
-                              value={newForumTitle}
-                              onChange={(e) => setNewForumTitle(e.target.value)}
-                              className="w-full rounded-lg border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-2 block text-sm text-white/70">
-                              Descripción (opcional)
-                            </label>
-                            <textarea
-                              placeholder="Describe el tema..."
-                              value={newForumDescription}
-                              onChange={(e) =>
-                                setNewForumDescription(e.target.value)
-                              }
-                              rows={3}
-                              className="w-full resize-none rounded-lg border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => {
-                                const modal =
-                                  document.getElementById('create-forum-modal');
-                                if (modal) modal.style.display = 'none';
-                              }}
-                              variant="outline"
-                              className="flex-1"
-                            >
-                              Cancelar
-                            </Button>
-                            <Button
-                              onClick={async () => {
-                                await handleCreateForum();
-                                const modal =
-                                  document.getElementById('create-forum-modal');
-                                if (modal) modal.style.display = 'none';
-                              }}
-                              disabled={
-                                isCreatingForum || !newForumTitle.trim()
-                              }
-                              className="flex-1 bg-cyan-500 hover:bg-cyan-600"
-                            >
-                              {isCreatingForum ? 'Creando...' : 'Crear'}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}{' '}
-                {/* ⬅️ ESTE ES EL CIERRE CORRECTO */}
                 {/* Actividades Tab */}
                 {activeTab === 'actividades' && (
                   <div className="animate-in fade-in duration-500">

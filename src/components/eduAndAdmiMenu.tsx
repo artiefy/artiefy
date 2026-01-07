@@ -91,6 +91,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'cred-logs',
       link: '/dashboard/super-admin/credentials-logs',
     },
+    {
+      icon: <FiUser size={18} />,
+      title: 'Control de Accesos',
+      id: 'access-control',
+      link: '/dashboard/super-admin/subscription',
+    },
   ];
 
   const navItemsEducator = [
@@ -336,8 +342,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/form-inscription/dates' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/form-inscription/dates' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Fechas inscritas
@@ -349,8 +355,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/form-inscription/comercials' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/form-inscription/comercials' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Comerciales registrados
@@ -362,8 +368,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/form-inscription/horario' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/form-inscription/horario' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Horarios registrados
@@ -375,8 +381,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/form-inscription/sedes' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/form-inscription/sedes' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Sedes
@@ -388,8 +394,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/whatsapp/inbox' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/whatsapp/inbox' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           WhatsApp (Sesión 2)
@@ -433,8 +439,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/whatsapp/soporte' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/whatsapp/soporte' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Soporte
@@ -446,8 +452,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/whatsapp/sesion2' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/whatsapp/sesion2' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Sesión 2
@@ -492,7 +498,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname === '/dashboard/super-admin/cursos' &&
-                            'bg-primary text-[#01142B]'
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Todos los Cursos
@@ -504,8 +510,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/courses/topFeature' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/courses/topFeature' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Top / Destacados
@@ -517,7 +523,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname === '/dashboard/super-admin/categories' &&
-                            'bg-primary text-[#01142B]'
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Categorías
@@ -529,7 +535,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname === '/dashboard/super-admin/modalities' &&
-                            'bg-primary text-[#01142B]'
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Modalidades
@@ -541,8 +547,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/difficulties' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/difficulties' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Niveles
@@ -554,8 +560,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/subscription/schedule-options' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/subscription/schedule-options' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Horarios
@@ -567,8 +573,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/subscription/space-options' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/subscription/space-options' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Espacios
@@ -580,8 +586,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/cursos/certification-types' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/cursos/certification-types' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Tipos de Certificación
@@ -626,7 +632,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname === '/dashboard/super-admin/programs' &&
-                            'bg-primary text-[#01142B]'
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Todos los programas
@@ -638,7 +644,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname === '/dashboard/super-admin/materias' &&
-                            'bg-primary text-[#01142B]'
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Materias
@@ -650,8 +656,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           className={cn(
                             'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
                             pathname ===
-                            '/dashboard/super-admin/programs/enrolled_users' &&
-                            'bg-primary text-[#01142B]'
+                              '/dashboard/super-admin/programs/enrolled_users' &&
+                              'bg-primary text-[#01142B]'
                           )}
                         >
                           Matricular Estudiantes
