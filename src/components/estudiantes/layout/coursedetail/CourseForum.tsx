@@ -25,6 +25,8 @@ type Forum = {
   description?: string;
   courseId: { id: number; title: string };
   userId: { id: string; name: string; role?: string | null };
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type Post = {
@@ -240,8 +242,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
         id: -forum.id, // id negativo para distinguirlo
         userId: forum.userId,
         content: forum.description,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: forum.createdAt ?? new Date().toISOString(),
+        updatedAt: forum.updatedAt ?? new Date().toISOString(),
       }
     : null;
 

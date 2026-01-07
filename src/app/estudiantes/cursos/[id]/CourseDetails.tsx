@@ -1307,6 +1307,16 @@ export default function CourseDetails({
                       />
                     )}
                   </div>
+
+                  {/* Sección de comentarios */}
+                  <div className="mt-8">
+                    <CourseComments
+                      courseId={course.id}
+                      isEnrolled={isEnrolled}
+                      onEnrollmentChange={(enrolled) => setIsEnrolled(enrolled)}
+                      onCommentsCountChange={(n) => setCommentsCount(n)}
+                    />
+                  </div>
                 </div>
               </div>
               {/* LADO DERECHO: Imagen y CTA */}
@@ -1621,17 +1631,6 @@ export default function CourseDetails({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Comentarios: show at bottom */}
-
-      <div className="mx-auto -mt-8 max-w-5xl px-4 pb-8">
-        <CourseComments
-          courseId={course.id}
-          isEnrolled={isEnrolled}
-          onEnrollmentChange={(enrolled) => setIsEnrolled(enrolled)}
-          onCommentsCountChange={(n) => setCommentsCount(n)}
-        />
-      </div>
     </>
   );
 }

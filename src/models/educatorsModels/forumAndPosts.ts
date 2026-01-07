@@ -124,6 +124,8 @@ export async function getForumByCourseId(courseId: number) {
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
+        createdAt: forums.createdAt,
+        updatedAt: forums.updatedAt,
         courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
@@ -136,17 +138,13 @@ export async function getForumByCourseId(courseId: number) {
       .leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
       .where(eq(forums.courseId, courseId));
 
-    if (!forum) {
-      throw new Error('Foro no encontrado');
-    }
-
-    if (forum.length === 0) {
-      throw new Error('Foro no encontrado');
+    if (!forum || forum.length === 0) {
+      return null;
     }
 
     const forumData = forum[0];
     if (!forumData) {
-      throw new Error('Foro no encontrado');
+      return null;
     }
 
     return {
@@ -165,6 +163,8 @@ export async function getForumByCourseId(courseId: number) {
         name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
         role: forumData.userRole ?? null,
       },
+      createdAt: forumData.createdAt,
+      updatedAt: forumData.updatedAt,
     };
   } catch (error: unknown) {
     console.error(error);

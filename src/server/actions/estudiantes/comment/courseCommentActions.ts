@@ -242,3 +242,138 @@ interface Comment {
   userId: string;
   hasLiked: boolean; // Agregar esta propiedad
 }
+
+// Agregar funciones para respuestas
+export async function addReply(
+  commentId: string,
+  content: string
+): Promise<{ success: boolean; message: string }> {
+  const user = await currentUser();
+
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const userId = user.id;
+  const userName =
+    user.username ?? user.emailAddresses[0]?.emailAddress ?? 'Anónimo';
+
+  try {
+    // Verificar que el comentario padre exista
+    const parentComment = await redis.hgetall(commentId);
+    if (!parentComment) {
+      return {
+        success: false,
+        message: 'El comentario no existe',
+      };
+    }
+
+    const replyId = `reply:${commentId}:${userId}:${new Date().toISOString()}`;
+    await redis.hmset(replyId, {
+      userId,
+      userName,
+      parentCommentId: commentId,
+      content,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    return { success: true, message: 'Respuesta agregada exitosamente' };
+  } catch (error: unknown) {
+    console.error('Error al agregar respuesta:', error);
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: `Error al agregar respuesta: ${error.message}`,
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Error desconocido al agregar respuesta',
+      };
+    }
+  }
+}
+
+export async function getRepliesByCommentId(
+  commentId: string
+): Promise<Reply[]> {
+  try {
+    const keys = await redis.keys(`reply:${commentId}:*`);
+
+    const replies = await Promise.all(
+      keys.map(async (key) => {
+        const reply = await redis.hgetall(key);
+        if (!reply) return null;
+
+        return {
+          id: key,
+          content: reply.content as string,
+          createdAt: reply.createdAt as string,
+          userName: reply.userName as string,
+          userId: reply.userId as string,
+          parentCommentId: reply.parentCommentId as string,
+        };
+      })
+    );
+
+    const sortedReplies = replies
+      .filter((reply): reply is Reply => reply !== null)
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+    return sortedReplies;
+  } catch (error: unknown) {
+    console.error('Error al obtener respuestas:', error);
+    return [];
+  }
+}
+
+export async function deleteReply(
+  replyId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const user = await currentUser();
+
+    if (!user?.id) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const reply = await redis.hgetall(replyId);
+
+    if (!reply || reply.userId !== user.id) {
+      return {
+        success: false,
+        message: 'No tienes permiso para eliminar esta respuesta',
+      };
+    }
+
+    await redis.del(replyId);
+
+    return { success: true, message: 'Respuesta eliminada exitosamente' };
+  } catch (error: unknown) {
+    console.error('Error al eliminar respuesta:', error);
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: `Error al eliminar respuesta: ${error.message}`,
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Error desconocido al eliminar respuesta',
+      };
+    }
+  }
+}
+
+interface Reply {
+  id: string;
+  content: string;
+  createdAt: string;
+  userName: string;
+  userId: string;
+  parentCommentId: string;
+}
