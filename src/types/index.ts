@@ -19,6 +19,7 @@ export interface BaseCourse {
   title: string;
   description: string | null;
   coverImageKey: string | null;
+  coverVideoCourseKey?: string | null;
   categoryid: number;
   instructor: string;
   instructorName?: string;
