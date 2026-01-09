@@ -51,15 +51,18 @@ export async function createForum(
   coverImageKey: string,
   documentKey: string
 ) {
-  const newForum = await db.insert(forums).values({
-    courseId,
-    title,
-    description,
-    userId,
-    coverImageKey,
-    documentKey,
-  });
-  return newForum;
+  const [newForum] = await db
+    .insert(forums)
+    .values({
+      courseId,
+      title,
+      description,
+      userId,
+      coverImageKey,
+      documentKey,
+    })
+    .returning();
+  return newForum!;
 }
 
 // Obtener un foro por su id
@@ -306,13 +309,16 @@ export async function createPost(
   userId: string,
   content: string
 ) {
-  const nuevoPost = await db.insert(posts).values({
-    forumId,
-    userId,
-    content,
-  }); // Devuelve todos los datos del post recién creado
+  const [nuevoPost] = await db
+    .insert(posts)
+    .values({
+      forumId,
+      userId,
+      content,
+    })
+    .returning(); // Devuelve todos los datos del post recién creado
 
-  return nuevoPost;
+  return nuevoPost!;
 }
 
 // Obtener todos los posts de un foro específico
@@ -454,8 +460,11 @@ export async function getPostReplyById(replyId: number) {
       content: postReplies.content,
       createdAt: postReplies.createdAt,
       updatedAt: postReplies.updatedAt,
+      userName: users.name,
+      userEmail: users.email,
     })
     .from(postReplies)
+    .leftJoin(users, eq(postReplies.userId, users.id))
     .where(eq(postReplies.id, replyId));
 
   return reply[0];

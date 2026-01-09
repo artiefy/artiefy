@@ -1308,15 +1308,19 @@ export default function CourseDetails({
                     )}
                   </div>
 
-                  {/* Sección de comentarios */}
-                  <div className="mt-8">
-                    <CourseComments
-                      courseId={course.id}
-                      isEnrolled={isEnrolled}
-                      onEnrollmentChange={(enrolled) => setIsEnrolled(enrolled)}
-                      onCommentsCountChange={(n) => setCommentsCount(n)}
-                    />
-                  </div>
+                  {/* Sección de comentarios - Solo en la vista de curso */}
+                  {activePill === 'curso' && (
+                    <div className="mt-8">
+                      <CourseComments
+                        courseId={course.id}
+                        isEnrolled={isEnrolled}
+                        onEnrollmentChange={(enrolled) =>
+                          setIsEnrolled(enrolled)
+                        }
+                        onCommentsCountChange={(n) => setCommentsCount(n)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               {/* LADO DERECHO: Imagen y CTA */}

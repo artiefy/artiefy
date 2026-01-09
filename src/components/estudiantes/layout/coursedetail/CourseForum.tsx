@@ -1,23 +1,29 @@
 'use client';
 
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
-  Crown,
   Image as ImageIcon,
+  Loader2,
   MessagesSquare,
   Mic,
+  MoreHorizontal,
+  Pencil,
   Reply,
   Send,
-  ShieldCheck,
-  Star,
   ThumbsUp,
+  Trash2,
   Video,
 } from 'lucide-react';
+import { FaUserGraduate, FaUserTie } from 'react-icons/fa6';
+import { IoShieldCheckmark } from 'react-icons/io5';
+import { MdOutlineForum } from 'react-icons/md';
 import useSWR from 'swr';
 
 import { cn } from '~/lib/utils';
+
+import type { Roles } from '~/types/globals';
 
 type Forum = {
   id: number;
@@ -63,12 +69,41 @@ interface CourseForumProps {
 
 export function CourseForum({ courseId }: CourseForumProps) {
   const { isSignedIn } = useAuth();
-  const { user: _user } = useUser();
+  const { user } = useUser();
   const [newPost, setNewPost] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isReplying, setIsReplying] = useState<Record<number, boolean>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [showMenuPostId, setShowMenuPostId] = useState<number | null>(null);
+  const [showMenuReplyId, setShowMenuReplyId] = useState<number | null>(null);
+  const [savingPostId, setSavingPostId] = useState<number | null>(null);
+  const [savingReplyId, setSavingReplyId] = useState<number | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [postLikes, setPostLikes] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenuPostId && !(event.target as Element).closest('.menu-post')) {
+        setShowMenuPostId(null);
+      }
+      if (
+        showMenuReplyId &&
+        !(event.target as Element).closest('.menu-reply')
+      ) {
+        setShowMenuReplyId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenuPostId, showMenuReplyId]);
+
+  // Obtener el rol del usuario desde Clerk metadata
+  const userRole = user?.publicMetadata?.role as Roles | undefined;
 
   const { data: forum, isLoading: forumLoading } = useSWR<Forum | null>(
     isSignedIn
@@ -86,6 +121,24 @@ export function CourseForum({ courseId }: CourseForumProps) {
     fetcher
   );
 
+  // Hidratar likes y conteos desde servidor cuando cambian los posts
+  useEffect(() => {
+    const fetchLikes = async () => {
+      if (!posts || posts.length === 0) return;
+      const postIds = posts.map((p) => p.id).join(',');
+      try {
+        const res = await fetch(`/api/forums/posts/likes?postIds=${postIds}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setPostLikes(data.counts ?? {});
+        setLikedPosts(new Set(data.likedIds ?? []));
+      } catch (err) {
+        console.error('Error fetching likes', err);
+      }
+    };
+    fetchLikes();
+  }, [posts]);
+
   const postIds = useMemo(
     () => (posts ?? []).map((p) => p.id).join(','),
     [posts]
@@ -98,6 +151,20 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
   const handlePublish = async () => {
     if (!forum?.id || !newPost.trim()) return;
+
+    // Verificar si es la primera discusión del foro
+    const isFirstPost = !posts || posts.length === 0;
+
+    // Si es la primera discusión y el usuario es estudiante, bloquear
+    if (isFirstPost && userRole === 'estudiante') {
+      setErrorMessage(
+        'Solo educadores, administradores y super-administradores pueden iniciar la discusión del foro.'
+      );
+      setTimeout(() => setErrorMessage(null), 5000); // Ocultar después de 5 segundos
+      return;
+    }
+
+    setErrorMessage(null);
     setIsPublishing(true);
     try {
       await fetch(`/api/estudiantes/forums/${forum.id}/posts`, {
@@ -125,9 +192,121 @@ export function CourseForum({ courseId }: CourseForumProps) {
       });
       setReplyDrafts((prev) => ({ ...prev, [postId]: '' }));
       setReplyingTo(null);
+      await mutatePosts();
       await mutateReplies();
     } finally {
       setIsReplying((prev) => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleEditPost = async (postId: number, newContent: string) => {
+    if (!newContent.trim()) return;
+    setSavingPostId(postId);
+    try {
+      const res = await fetch(
+        `/api/estudiantes/forums/${forum?.id}/posts/${postId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newContent }),
+        }
+      );
+      if (!res.ok) {
+        console.error('Error editing post:', await res.text());
+        return;
+      }
+      setEditingPostId(null);
+      setEditContent('');
+      await mutatePosts();
+    } catch (error) {
+      console.error('Error editing post:', error);
+    } finally {
+      setSavingPostId(null);
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este post?')) return;
+    try {
+      const res = await fetch(
+        `/api/estudiantes/forums/${forum?.id}/posts/${postId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      if (!res.ok) {
+        console.error('Error deleting post:', await res.text());
+        return;
+      }
+      await mutatePosts();
+      await mutateReplies();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const handleEditReply = async (replyId: number, newContent: string) => {
+    if (!newContent.trim()) return;
+    setSavingReplyId(replyId);
+    try {
+      const res = await fetch(`/api/forums/posts/postReplay/${replyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) {
+        console.error('Error editing reply:', await res.text());
+        return;
+      }
+      setEditingReplyId(null);
+      setEditContent('');
+      await mutateReplies();
+    } catch (error) {
+      console.error('Error editing reply:', error);
+    } finally {
+      setSavingReplyId(null);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: number) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta respuesta?'))
+      return;
+    try {
+      const res = await fetch(`/api/forums/posts/postReplay/${replyId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        console.error('Error deleting reply:', await res.text());
+        return;
+      }
+      await mutateReplies();
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+    }
+  };
+
+  const toggleLike = async (postId: number) => {
+    try {
+      const res = await fetch('/api/forums/posts/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId }),
+      });
+      if (!res.ok) {
+        console.error('Error toggling like', await res.text());
+        return;
+      }
+      const data = await res.json();
+      // data: { action: 'liked'|'unliked', count: number }
+      setPostLikes((prev) => ({ ...prev, [postId]: data.count }));
+      setLikedPosts((prev) => {
+        const next = new Set(prev);
+        if (data.action === 'liked') next.add(postId);
+        else next.delete(postId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Error toggling like', err);
     }
   };
 
@@ -150,33 +329,39 @@ export function CourseForum({ courseId }: CourseForumProps) {
   };
 
   const renderRoleBadge = (role?: string | null) => {
-    if (!role) return null;
+    // Si no hay rol, asumimos que es estudiante en este contexto
+    const normalizedRole = role?.toLowerCase() ?? 'estudiante';
 
     const mapping: Record<
       string,
       { label: string; classes: string; icon: ReactNode }
     > = {
-      educator: {
+      estudiante: {
+        label: 'Estudiante',
+        classes: 'bg-blue-500/15 text-blue-400 border-blue-400/40',
+        icon: <FaUserGraduate className="mr-1 h-3 w-3" />,
+      },
+      educador: {
         label: 'Educador',
-        classes: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-        icon: <Crown className="mr-1 h-3 w-3" />,
+        classes: 'bg-emerald-500/15 text-emerald-400 border-emerald-400/40',
+        icon: <FaUserTie className="mr-1 h-3 w-3" />,
       },
       admin: {
         label: 'Admin',
-        classes: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-        icon: <ShieldCheck className="mr-1 h-3 w-3" />,
+        classes: 'bg-purple-500/15 text-purple-400 border-purple-400/40',
+        icon: <IoShieldCheckmark className="mr-1 h-3.5 w-3.5" />,
       },
       'super-admin': {
         label: 'Super-admin',
-        classes: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-        icon: <Star className="mr-1 h-3 w-3" />,
+        classes: 'bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-400/40',
+        icon: <IoShieldCheckmark className="mr-1 h-3.5 w-3.5" />,
       },
     };
 
-    const item = mapping[role] ?? {
-      label: role,
-      classes: 'bg-slate-700/10 text-slate-300 border-slate-700/30',
-      icon: <Star className="mr-1 h-3 w-3" />,
+    const item = mapping[normalizedRole] ?? {
+      label: normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1),
+      classes: 'bg-slate-500/15 text-slate-300 border-slate-400/40',
+      icon: <FaUserGraduate className="mr-1 h-3 w-3" />,
     };
 
     return (
@@ -235,17 +420,17 @@ export function CourseForum({ courseId }: CourseForumProps) {
     );
   }
 
-  // Si el instructor creó el foro con una descripción, mostrarla como la
-  // primera discusión (pseudo-post) cuando no existen posts registrados.
-  const initialDiscussion = forum?.description
-    ? {
-        id: -forum.id, // id negativo para distinguirlo
-        userId: forum.userId,
-        content: forum.description,
-        createdAt: forum.createdAt ?? new Date().toISOString(),
-        updatedAt: forum.updatedAt ?? new Date().toISOString(),
-      }
-    : null;
+  // Mostrar un pseudo-post inicial construido desde la info del foro
+  const initialDiscussion =
+    forum && (!posts || posts.length === 0)
+      ? {
+          id: -forum.id, // id negativo para distinguirlo
+          userId: forum.userId,
+          content: forum.title || forum.description || '',
+          createdAt: forum.createdAt ?? new Date().toISOString(),
+          updatedAt: forum.updatedAt ?? new Date().toISOString(),
+        }
+      : null;
 
   const displayPosts: Post[] = initialDiscussion
     ? [initialDiscussion, ...(posts ?? [])]
@@ -257,6 +442,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
     <div className="space-y-6">
       <div>
         <h3 className="text-foreground text-xl font-semibold">
+          <span className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]">
+            <MdOutlineForum className="h-4 w-4" />
+          </span>
           Foro del curso
         </h3>
         <p className="mt-1 text-sm text-[#94a3b8]">
@@ -266,6 +454,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
       </div>
 
       <div className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm">
+        {errorMessage && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <p className="font-medium">⚠️ {errorMessage}</p>
+          </div>
+        )}
         <textarea
           className="text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-[16px] border border-[#1d283a80] bg-[#01152D80] px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           placeholder="Inicia una nueva discusión o comparte tu avance..."
@@ -340,17 +533,121 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         {formatDate(post.createdAt)}
                       </span>
                     </div>
-                    <p className="text-foreground/90 text-sm whitespace-pre-wrap">
-                      {post.content}
-                    </p>
+                    <div>
+                      {editingPostId === post.id ? (
+                        <div className="space-y-2">
+                          <textarea
+                            className="text-foreground/90 text-sm whitespace-pre-wrap w-full resize-none rounded-md border border-[#1d283a80] bg-[#01152D80] px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            rows={3}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingPostId(null);
+                                setEditContent('');
+                              }}
+                              className="px-3 py-1 text-xs text-[#94a3b8] hover:text-white"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleEditPost(post.id, editContent)
+                              }
+                              disabled={savingPostId === post.id}
+                              aria-busy={savingPostId === post.id}
+                              className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
+                            >
+                              {savingPostId === post.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                'Guardar'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                          {post.content}
+                          {post.userId?.id === user?.id && (
+                            <span className="relative inline-block ml-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowMenuPostId(
+                                    showMenuPostId === post.id ? null : post.id
+                                  )
+                                }
+                                className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                aria-label="Abrir menú"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                              {showMenuPostId === post.id && (
+                                <div
+                                  className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-post"
+                                  style={{
+                                    backgroundColor: '#01152d',
+                                    borderColor: 'hsla(217, 27%, 17%, 0.5)',
+                                  }}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingPostId(post.id);
+                                      setEditContent(post.content);
+                                      setShowMenuPostId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleDeletePost(post.id);
+                                      setShowMenuPostId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                    Eliminar
+                                  </button>
+                                </div>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-4 pt-1 text-xs text-[#94a3b8]">
                       <button
                         type="button"
-                        className="flex items-center gap-1 transition hover:text-white"
-                        disabled
+                        onClick={() => toggleLike(post.id)}
+                        className={cn(
+                          'flex items-center gap-1 transition',
+                          likedPosts.has(post.id)
+                            ? 'text-[#22C4D3] hover:text-[#22C4D3]'
+                            : 'text-[#94a3b8] hover:text-white'
+                        )}
                       >
-                        <ThumbsUp className="h-4 w-4" />
-                        Me gusta
+                        <ThumbsUp
+                          className={cn(
+                            'h-4 w-4',
+                            likedPosts.has(post.id) && 'fill-current'
+                          )}
+                        />
+                        <span>Me gusta</span>
+                        {(postLikes[post.id] ?? 0) > 0 && (
+                          <span className="text-[11px] text-[#94a3b8]">
+                            {postLikes[post.id]}
+                          </span>
+                        )}
                       </button>
                       <button
                         type="button"
@@ -408,13 +705,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
                 )}
 
                 {postReplies.length > 0 && (
-                  <div className="border-border/40 mt-3 space-y-4 border-l-2 pl-6">
+                  <div className="relative mt-3 space-y-4 pl-10">
+                    <span className="pointer-events-none absolute left-4 top-0 h-full w-px bg-[#1f2a3d]" />
                     {postReplies.map((reply) => (
-                      <div key={reply.id} className="flex gap-3">
-                        <span className="bg-accent/20 text-accent flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold">
+                      <div key={reply.id} className="flex gap-3 pl-1">
+                        <span className="bg-accent/20 text-accent mt-1 flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold">
                           {initials(reply.userId?.name)}
                         </span>
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-1 border-l border-[#1f2a3d] pl-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-foreground font-semibold">
                               {reply.userId?.name}
@@ -424,9 +722,103 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               {formatDate(reply.createdAt)}
                             </span>
                           </div>
-                          <p className="text-foreground/90 text-sm whitespace-pre-wrap">
-                            {reply.content}
-                          </p>
+                          <div>
+                            {editingReplyId === reply.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  className="text-foreground/90 text-sm whitespace-pre-wrap w-full resize-none rounded-md border border-[#1d283a80] bg-[#01152D80] px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                                  value={editContent}
+                                  onChange={(e) =>
+                                    setEditContent(e.target.value)
+                                  }
+                                  rows={3}
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingReplyId(null);
+                                      setEditContent('');
+                                    }}
+                                    className="px-3 py-1 text-xs text-[#94a3b8] hover:text-white"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleEditReply(reply.id, editContent)
+                                    }
+                                    disabled={savingReplyId === reply.id}
+                                    aria-busy={savingReplyId === reply.id}
+                                    className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
+                                  >
+                                    {savingReplyId === reply.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      'Guardar'
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                                {reply.content}
+                                {reply.userId?.id === user?.id && (
+                                  <span className="relative inline-block ml-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setShowMenuReplyId(
+                                          showMenuReplyId === reply.id
+                                            ? null
+                                            : reply.id
+                                        )
+                                      }
+                                      className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                      aria-label="Abrir menú"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </button>
+                                    {showMenuReplyId === reply.id && (
+                                      <div
+                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-reply"
+                                        style={{
+                                          backgroundColor: '#01152d',
+                                          borderColor:
+                                            'hsla(217, 27%, 17%, 0.5)',
+                                        }}
+                                      >
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingReplyId(reply.id);
+                                            setEditContent(reply.content);
+                                            setShowMenuReplyId(null);
+                                          }}
+                                          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                        >
+                                          <Pencil className="h-3 w-3" />
+                                          Editar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleDeleteReply(reply.id);
+                                            setShowMenuReplyId(null);
+                                          }}
+                                          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                          Eliminar
+                                        </button>
+                                      </div>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

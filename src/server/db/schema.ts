@@ -102,6 +102,22 @@ export const categories = pgTable('categories', {
   is_featured: boolean('is_featured').default(false),
 });
 
+// tabla para likes en posts
+export const postLikes = pgTable(
+  'post_likes',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .references(() => posts.id)
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [unique('uniq_post_like').on(table.postId, table.userId)]
+);
+
 // Tabla de nivel
 export const nivel = pgTable('nivel', {
   id: serial('id').primaryKey(),

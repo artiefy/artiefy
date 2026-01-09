@@ -544,3 +544,33 @@ export interface ClerkUser {
   };
   // Puedes agregar otros campos si los necesitas
 }
+
+// Tipos para el sistema de posts/likes del foro
+export interface PostLike {
+  id: number;
+  postId: number;
+  userId: string;
+  createdAt: string | Date;
+}
+
+export interface PostReply {
+  id: number;
+  postId: number;
+  userId: string;
+  content: string;
+  createdAt: string | Date;
+  user?: User;
+}
+
+export interface Post {
+  id: number;
+  forumId: number;
+  userId: string;
+  content: string;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  user?: User;
+  likesCount?: number;
+  likedByCurrentUser?: boolean;
+  replies?: PostReply[];
+}

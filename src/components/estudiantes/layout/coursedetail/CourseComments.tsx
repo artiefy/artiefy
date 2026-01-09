@@ -662,67 +662,67 @@ export default function CourseComments({
                   </div>
 
                   {/* Content */}
-                  <div className="group">
-                    <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                  <div className="flex items-start gap-2 group">
+                    <div className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
                       {comment.content}
-
-                      {userId === comment.userId ? (
-                        <span className="relative inline-flex align-middle ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => toggleMenu(comment.id)}
-                            className="text-slate-400 hover:text-slate-100 transition-colors"
+                    </div>
+                    {userId === comment.userId && (
+                      <div className="relative inline-flex">
+                        <button
+                          onClick={() => toggleMenu(comment.id)}
+                          className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                          aria-label="Abrir menú"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-ellipsis w-4 h-4"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-ellipsis w-4 h-4"
-                            >
-                              <circle cx="12" cy="12" r="1"></circle>
-                              <circle cx="19" cy="12" r="1"></circle>
-                              <circle cx="5" cy="12" r="1"></circle>
-                            </svg>
-                          </button>
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                          </svg>
+                        </button>
 
-                          {/* Dropdown Menu */}
-                          {openMenuId === comment.id && (
-                            <div
-                              className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
-                              style={{
-                                backgroundColor: '#01152d',
-                                borderColor: 'hsla(217, 33%, 17%, 0.5)',
-                              }}
+                        {/* Dropdown Menu */}
+                        {openMenuId === comment.id && (
+                          <div
+                            className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
+                            style={{
+                              backgroundColor: '#01152d',
+                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                            }}
+                          >
+                            <button
+                              onClick={() => handleEditFromMenu(comment)}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-700/20 rounded-t-lg transition-colors"
                             >
-                              <button
-                                onClick={() => handleEditFromMenu(comment)}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-700/20 rounded-t-lg transition-colors"
-                              >
-                                <PencilIcon className="w-4 h-4" />
-                                Editar
-                              </button>
-                              <button
-                                onClick={() => handleDeleteFromMenu(comment.id)}
-                                disabled={deletingComment === comment.id}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-b-lg transition-colors"
-                              >
-                                {deletingComment === comment.id ? (
-                                  <Icons.spinner className="w-4 h-4" />
-                                ) : (
-                                  <TrashIcon className="w-4 h-4" />
-                                )}
-                                Eliminar
-                              </button>
-                            </div>
-                          )}
-                        </span>
-                      ) : null}
-                    </p>
+                              <PencilIcon className="w-4 h-4" />
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFromMenu(comment.id)}
+                              disabled={deletingComment === comment.id}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-b-lg transition-colors"
+                            >
+                              {deletingComment === comment.id ? (
+                                <Icons.spinner className="w-4 h-4" />
+                              ) : (
+                                <TrashIcon className="w-4 h-4" />
+                              )}
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -840,8 +840,13 @@ export default function CourseComments({
                                   <span className="text-xs text-slate-400">
                                     {formatDate(reply.createdAt)}
                                   </span>
+                                </div>
+                                <div className="flex items-start gap-2 group mt-1">
+                                  <div className="text-sm text-slate-300 flex-1">
+                                    {reply.content}
+                                  </div>
                                   {userId === reply.userId && (
-                                    <div className="relative ml-auto">
+                                    <div className="relative inline-flex">
                                       <button
                                         onClick={() =>
                                           setOpenReplyMenuId(
@@ -850,7 +855,8 @@ export default function CourseComments({
                                               : reply.id
                                           )
                                         }
-                                        className="text-slate-400 hover:text-slate-100 transition-colors"
+                                        className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                                        aria-label="Abrir menú"
                                       >
                                         <svg
                                           xmlns="http://www.w3.org/2000/svg"
@@ -911,9 +917,6 @@ export default function CourseComments({
                                     </div>
                                   )}
                                 </div>
-                                <p className="text-sm text-slate-300 mt-1">
-                                  {reply.content}
-                                </p>
                               </div>
                             </div>
                           ))}
