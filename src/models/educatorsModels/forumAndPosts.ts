@@ -307,7 +307,8 @@ export async function updateForumById(
 export async function createPost(
   forumId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
   const [nuevoPost] = await db
     .insert(posts)
@@ -315,6 +316,7 @@ export async function createPost(
       forumId,
       userId,
       content,
+      imageKey: imageKey ?? null,
     })
     .returning(); // Devuelve todos los datos del post recién creado
 
@@ -392,12 +394,14 @@ export async function getPostById(postId: number) {
 export async function createPostReply(
   postId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
   const newPostReply = await db.insert(postReplies).values({
     postId,
     userId,
     content,
+    imageKey: imageKey ?? null,
   });
 
   return newPostReply;

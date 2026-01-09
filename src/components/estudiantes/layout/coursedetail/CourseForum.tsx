@@ -2,6 +2,8 @@
 
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
+import Image from 'next/image';
+
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
   Image as ImageIcon,
@@ -39,6 +41,7 @@ type Post = {
   id: number;
   userId: { id: string; name: string; role?: string | null };
   content: string;
+  imageKey?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -48,6 +51,7 @@ type PostReply = {
   userId: { id: string; name: string; role?: string | null };
   postId: number;
   content: string;
+  imageKey?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -85,6 +89,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
   const [savingReplyId, setSavingReplyId] = useState<number | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [postLikes, setPostLikes] = useState<Record<number, number>>({});
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [replyImages, setReplyImages] = useState<Record<number, string | null>>(
+    {}
+  );
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -149,6 +158,55 @@ export function CourseForum({ courseId }: CourseForumProps) {
     fetcher
   );
 
+  const handleImageSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    forReply?: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Por favor selecciona un archivo de imagen válido.');
+      setTimeout(() => setErrorMessage(null), 3000);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      if (forReply) {
+        setReplyImages((prev) => ({ ...prev, [forReply]: base64 }));
+      } else {
+        setSelectedImage(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (base64Image: string): Promise<string | null> => {
+    setUploadingImage(true);
+    try {
+      const res = await fetch('/api/forums/images/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image }),
+      });
+
+      if (!res.ok) {
+        console.error('Error al subir imagen');
+        return null;
+      }
+
+      const data = await res.json();
+      return data.imageKey;
+    } catch (error) {
+      console.error('Error al subir imagen:', error);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!forum?.id || !newPost.trim()) return;
 
@@ -167,12 +225,18 @@ export function CourseForum({ courseId }: CourseForumProps) {
     setErrorMessage(null);
     setIsPublishing(true);
     try {
+      let imageKey: string | null = null;
+      if (selectedImage) {
+        imageKey = await uploadImage(selectedImage);
+      }
+
       await fetch(`/api/estudiantes/forums/${forum.id}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newPost }),
+        body: JSON.stringify({ content: newPost, imageKey }),
       });
       setNewPost('');
+      setSelectedImage(null);
       await mutatePosts();
       await mutateReplies();
     } finally {
@@ -185,12 +249,19 @@ export function CourseForum({ courseId }: CourseForumProps) {
     if (!message) return;
     setIsReplying((prev) => ({ ...prev, [postId]: true }));
     try {
+      let imageKey: string | null = null;
+      const replyImage = replyImages[postId];
+      if (replyImage) {
+        imageKey = await uploadImage(replyImage);
+      }
+
       await fetch('/api/forums/posts/postReplay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: message, postId }),
+        body: JSON.stringify({ content: message, postId, imageKey }),
       });
       setReplyDrafts((prev) => ({ ...prev, [postId]: '' }));
+      setReplyImages((prev) => ({ ...prev, [postId]: null }));
       setReplyingTo(null);
       await mutatePosts();
       await mutateReplies();
@@ -465,16 +536,45 @@ export function CourseForum({ courseId }: CourseForumProps) {
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
         />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-[#94a3b8]">
+        {selectedImage && (
+          <div className="relative inline-block">
+            <Image
+              src={
+                selectedImage.startsWith('data:')
+                  ? selectedImage
+                  : `data:image/jpeg;base64,${selectedImage}`
+              }
+              alt="Vista previa"
+              width={80}
+              height={80}
+              className="h-20 w-20 rounded-lg border border-[#1d283a80] object-cover"
+              unoptimized
+            />
             <button
               type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              onClick={() => setSelectedImage(null)}
+              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-[#94a3b8]">
+            <label
+              htmlFor="forum-image-input"
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar imagen"
-              disabled
             >
               <ImageIcon className="h-4 w-4" />
-            </button>
+              <input
+                id="forum-image-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleImageSelect(e)}
+              />
+            </label>
             <button
               type="button"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
@@ -495,14 +595,23 @@ export function CourseForum({ courseId }: CourseForumProps) {
           <button
             type="button"
             onClick={handlePublish}
-            disabled={!newPost.trim() || isPublishing}
+            disabled={!newPost.trim() || isPublishing || uploadingImage}
             className={cn(
               'ring-offset-background focus-visible:ring-ring hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-[14px] bg-[#22C4D3] px-3 text-sm font-medium whitespace-nowrap text-[#080C16] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-              (!newPost.trim() || isPublishing) && 'opacity-60'
+              (!newPost.trim() || isPublishing || uploadingImage) &&
+                'opacity-60'
             )}
           >
-            <Send className="h-4 w-4" />
-            {isPublishing ? 'Publicando...' : 'Publicar'}
+            {uploadingImage ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {uploadingImage
+              ? 'Subiendo...'
+              : isPublishing
+                ? 'Publicando...'
+                : 'Publicar'}
           </button>
         </div>
       </div>
@@ -571,56 +680,71 @@ export function CourseForum({ courseId }: CourseForumProps) {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
-                          {post.content}
-                          {post.userId?.id === user?.id && (
-                            <span className="relative inline-block ml-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setShowMenuPostId(
-                                    showMenuPostId === post.id ? null : post.id
-                                  )
-                                }
-                                className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
-                                aria-label="Abrir menú"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                              {showMenuPostId === post.id && (
-                                <div
-                                  className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-post"
-                                  style={{
-                                    backgroundColor: '#01152d',
-                                    borderColor: 'hsla(217, 27%, 17%, 0.5)',
-                                  }}
+                        <div className="space-y-2">
+                          <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                            {post.content}
+                            {post.userId?.id === user?.id && (
+                              <span className="relative inline-block ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setShowMenuPostId(
+                                      showMenuPostId === post.id
+                                        ? null
+                                        : post.id
+                                    )
+                                  }
+                                  className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                  aria-label="Abrir menú"
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingPostId(post.id);
-                                      setEditContent(post.content);
-                                      setShowMenuPostId(null);
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                                {showMenuPostId === post.id && (
+                                  <div
+                                    className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-post"
+                                    style={{
+                                      backgroundColor: '#01152d',
+                                      borderColor: 'hsla(217, 27%, 17%, 0.5)',
                                     }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
                                   >
-                                    <Pencil className="h-3 w-3" />
-                                    Editar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleDeletePost(post.id);
-                                      setShowMenuPostId(null);
-                                    }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                    Eliminar
-                                  </button>
-                                </div>
-                              )}
-                            </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingPostId(post.id);
+                                        setEditContent(post.content);
+                                        setShowMenuPostId(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                      Editar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleDeletePost(post.id);
+                                        setShowMenuPostId(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                      Eliminar
+                                    </button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          {post.imageKey && (
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
+                              alt="Imagen del post"
+                              width={640}
+                              height={360}
+                              className="mt-2 max-w-md rounded-lg border border-[#1d283a80] h-auto w-full"
+                              sizes="(max-width: 768px) 100vw, 640px"
+                              unoptimized
+                            />
                           )}
                         </div>
                       )}
@@ -682,23 +806,76 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         }))
                       }
                     />
-                    <div className="flex justify-end">
+                    {replyImages[post.id] && (
+                      <div className="relative inline-block">
+                        <Image
+                          src={
+                            replyImages[post.id]!.startsWith('data:')
+                              ? replyImages[post.id]!
+                              : `data:image/jpeg;base64,${replyImages[post.id]}`
+                          }
+                          alt="Vista previa"
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 rounded-lg border border-[#1d283a80] object-cover"
+                          unoptimized
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setReplyImages((prev) => ({
+                              ...prev,
+                              [post.id]: null,
+                            }))
+                          }
+                          className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <label
+                        htmlFor={`reply-image-input-${post.id}`}
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white text-[#94a3b8]"
+                        aria-label="Adjuntar imagen"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        <input
+                          id={`reply-image-input-${post.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageSelect(e, post.id)}
+                        />
+                      </label>
                       <button
                         type="button"
                         onClick={() => handleReply(post.id)}
                         disabled={
-                          !replyDrafts[post.id]?.trim() || isReplying[post.id]
+                          !replyDrafts[post.id]?.trim() ||
+                          isReplying[post.id] ||
+                          uploadingImage
                         }
                         className={cn(
                           'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                           'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-primary focus-visible:ring-offset-background',
                           (!replyDrafts[post.id]?.trim() ||
-                            isReplying[post.id]) &&
+                            isReplying[post.id] ||
+                            uploadingImage) &&
                             'opacity-60'
                         )}
                       >
-                        <Send className="h-4 w-4" />
-                        {isReplying[post.id] ? 'Respondiendo...' : 'Responder'}
+                        {uploadingImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        {uploadingImage
+                          ? 'Subiendo...'
+                          : isReplying[post.id]
+                            ? 'Respondiendo...'
+                            : 'Responder'}
                       </button>
                     </div>
                   </div>
@@ -762,59 +939,72 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                 </div>
                               </div>
                             ) : (
-                              <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
-                                {reply.content}
-                                {reply.userId?.id === user?.id && (
-                                  <span className="relative inline-block ml-2">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setShowMenuReplyId(
-                                          showMenuReplyId === reply.id
-                                            ? null
-                                            : reply.id
-                                        )
-                                      }
-                                      className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
-                                      aria-label="Abrir menú"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </button>
-                                    {showMenuReplyId === reply.id && (
-                                      <div
-                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-reply"
-                                        style={{
-                                          backgroundColor: '#01152d',
-                                          borderColor:
-                                            'hsla(217, 27%, 17%, 0.5)',
-                                        }}
+                              <div className="space-y-2">
+                                <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                                  {reply.content}
+                                  {reply.userId?.id === user?.id && (
+                                    <span className="relative inline-block ml-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setShowMenuReplyId(
+                                            showMenuReplyId === reply.id
+                                              ? null
+                                              : reply.id
+                                          )
+                                        }
+                                        className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                        aria-label="Abrir menú"
                                       >
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setEditingReplyId(reply.id);
-                                            setEditContent(reply.content);
-                                            setShowMenuReplyId(null);
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </button>
+                                      {showMenuReplyId === reply.id && (
+                                        <div
+                                          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-reply"
+                                          style={{
+                                            backgroundColor: '#01152d',
+                                            borderColor:
+                                              'hsla(217, 27%, 17%, 0.5)',
                                           }}
-                                          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
                                         >
-                                          <Pencil className="h-3 w-3" />
-                                          Editar
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleDeleteReply(reply.id);
-                                            setShowMenuReplyId(null);
-                                          }}
-                                          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                          Eliminar
-                                        </button>
-                                      </div>
-                                    )}
-                                  </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingReplyId(reply.id);
+                                              setEditContent(reply.content);
+                                              setShowMenuReplyId(null);
+                                            }}
+                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                          >
+                                            <Pencil className="h-3 w-3" />
+                                            Editar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleDeleteReply(reply.id);
+                                              setShowMenuReplyId(null);
+                                            }}
+                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                            Eliminar
+                                          </button>
+                                        </div>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                                {reply.imageKey && (
+                                  <Image
+                                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
+                                    alt="Imagen de respuesta"
+                                    width={480}
+                                    height={270}
+                                    className="mt-2 max-w-sm rounded-lg border border-[#1d283a80] h-auto w-full"
+                                    sizes="(max-width: 768px) 100vw, 480px"
+                                    unoptimized
+                                  />
                                 )}
                               </div>
                             )}

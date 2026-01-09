@@ -558,6 +558,7 @@ export interface PostReply {
   postId: number;
   userId: string;
   content: string;
+  imageKey?: string | null;
   createdAt: string | Date;
   user?: User;
 }
@@ -567,6 +568,7 @@ export interface Post {
   forumId: number;
   userId: string;
   content: string;
+  imageKey?: string | null;
   createdAt: string | Date;
   updatedAt?: string | Date;
   user?: User;

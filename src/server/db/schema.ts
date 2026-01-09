@@ -445,6 +445,7 @@ export const posts = pgTable('posts', {
     .references(() => users.id)
     .notNull(), // El usuario que hace el post
   content: text('content').notNull(), // Contenido del post
+  imageKey: text('image_key'), // Clave de imagen en S3 (opcional)
   createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
@@ -458,6 +459,7 @@ export const postReplies = pgTable('post_replies', {
     .references(() => users.id)
     .notNull(), // El usuario que hace la respuesta
   content: text('content').notNull(),
+  imageKey: text('image_key'), // Clave de imagen en S3 (opcional)
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

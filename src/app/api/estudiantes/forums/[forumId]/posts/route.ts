@@ -63,6 +63,7 @@ export async function POST(
   const body = await req.json();
   // Safe access to content property
   let content = '';
+  let imageKey: string | null = null;
   if (
     body &&
     typeof body === 'object' &&
@@ -70,6 +71,14 @@ export async function POST(
     typeof (body as { content?: unknown }).content === 'string'
   ) {
     content = (body as { content: string }).content;
+  }
+  if (
+    body &&
+    typeof body === 'object' &&
+    Object.prototype.hasOwnProperty.call(body, 'imageKey') &&
+    typeof (body as { imageKey?: unknown }).imageKey === 'string'
+  ) {
+    imageKey = (body as { imageKey: string }).imageKey;
   }
 
   // Verifica inscripción
@@ -86,6 +95,6 @@ export async function POST(
   if (!enrollment)
     return NextResponse.json({ error: 'No inscrito' }, { status: 403 });
 
-  const post = await createPost(forumId, userId, content);
+  const post = await createPost(forumId, userId, content, imageKey);
   return NextResponse.json(post);
 }

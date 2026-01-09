@@ -83,9 +83,10 @@ export async function POST(request: NextRequest) {
       content: string;
       postId: number;
       userId: string;
+      imageKey?: string;
     };
 
-    const { content, postId } = body;
+    const { content, postId, imageKey } = body;
 
     // Si el postId es negativo, significa que viene del pseudo-post inicial del foro
     let targetPostId = postId;
@@ -119,12 +120,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await createPostReply(targetPostId, userId, content);
+    await createPostReply(targetPostId, userId, content, imageKey ?? null);
 
     console.log('[FORO][REPLY] ✅ Respuesta creada:', {
       postId,
       userId,
       content,
+      imageKey,
     });
 
     try {

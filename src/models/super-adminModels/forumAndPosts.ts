@@ -235,15 +235,20 @@ export async function updateForumById(
 export async function createPost(
   forumId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
-  const nuevoPost = await db.insert(posts).values({
-    forumId,
-    userId,
-    content,
-  }); // Devuelve todos los datos del post recién creado
+  const [nuevoPost] = await db
+    .insert(posts)
+    .values({
+      forumId,
+      userId,
+      content,
+      imageKey: imageKey ?? null,
+    })
+    .returning(); // Devuelve todos los datos del post recién creado
 
-  return nuevoPost;
+  return nuevoPost!;
 }
 
 // Obtener todos los posts de un foro específico
@@ -255,6 +260,7 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
         forumId: posts.forumId,
         userId: posts.userId,
         content: posts.content,
+        imageKey: posts.imageKey,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         userName: users.name, // Seleccionar el nombre del usuario
@@ -276,6 +282,7 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
         role: post.userRole ?? null,
       },
       content: post.content,
+      imageKey: post.imageKey,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
     }));
