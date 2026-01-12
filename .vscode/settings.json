@@ -7,6 +7,8 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "prettier.requireConfig": true,
   "prettier.useEditorConfig": false,
+  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.enableDebugLogs": true,
   "editor.quickSuggestions": {
     "strings": "on"
   },
@@ -264,7 +266,7 @@
   "chat.mcp.autostart": "onlyNew",
   // VS Code 1.107 agent + MCP improvements
   "chat.viewSessions.enabled": true,
-  "chat.viewSessions.orientation": "auto",
+  "chat.viewSessions.orientation": "sideBySide",
   "chat.agent.thinking.collapsedTools": "withThinking",
   "chat.customAgentInSubagent.enabled": true,
   "github.copilot.chat.customAgents.showOrganizationAndEnterpriseAgents": true,

@@ -191,7 +191,7 @@ export default function StudentCategories({
       <div className="container mx-auto">
         <div className="mt-4 mb-2 ml-0 w-full lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2">
           <div className="relative flex w-full flex-row items-center justify-start lg:w-auto lg:justify-start">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 px-0 sm:px-6">
               <StudentGradientText className="mx-0 justify-start text-left text-2xl whitespace-nowrap sm:text-xl lg:mt-3 lg:text-2xl">
                 Áreas de Conocimiento
               </StudentGradientText>
@@ -404,7 +404,7 @@ export default function StudentCategories({
               checkScroll();
             }
           }}
-          className="group/categories relative -mb-6 -ml-4 pt-3 sm:-mb-0 sm:-ml-0 sm:pt-0"
+          className="group/categories relative -mb-6 -ml-4 px-0 pt-3 sm:-mb-0 sm:-ml-0 sm:px-3 sm:pt-0"
         >
           {(isPressing || showLeftArrow) && (
             <button
@@ -443,8 +443,8 @@ export default function StudentCategories({
               disabled={!selectedCategory}
               className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                 !selectedCategory
-                  ? 'bg-foreground text-background cursor-not-allowed opacity-60'
-                  : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                  ? 'cursor-not-allowed bg-foreground text-background opacity-60'
+                  : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
               }`}
               aria-label="Mostrar todos los cursos"
             >
@@ -465,7 +465,7 @@ export default function StudentCategories({
                 className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                   selectedCategory === category.id.toString()
                     ? 'bg-foreground text-background'
-                    : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                    : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
                 }`}
                 aria-label={`Mostrar cursos de ${category.name}`}
               >

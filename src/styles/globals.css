@@ -21,7 +21,7 @@
   /* Colors */
   --color-background: oklch(19% 0.0542 252.35);
   --color-foreground: oklch(87.88% 0.1409 192.09);
-  --color-primary: oklch(87.88% 0.1409 192.09);
+  --color-primary: oklch(0.7507 0.123 205);
   --color-primary-foreground: oklch(0.985 0 0);
   --color-secondary: oklch(73.32% 0.128083 212.6259);
   --color-secondary-foreground: oklch(0.205 0 0);
@@ -31,8 +31,8 @@
   --color-card-foreground: oklch(0.145 0 0);
   --color-popover: oklch(1 0 0);
   --color-popover-foreground: oklch(0.145 0 0);
-  --color-muted: oklch(0.97 0 0);
-  --color-muted-foreground: oklch(0.556 0 0);
+  --color-muted: oklch(0.7107 0.0351 256.79);
+  --color-muted-foreground: oklch(0.7107 0.0351 256.79);
   --color-accent: oklch(0.97 0 0);
   --color-accent-foreground: oklch(0.205 0 0);
   --color-destructive: oklch(0.577 0.245 27.325);
@@ -50,8 +50,8 @@
   --chip-text: 222 47% 6%;
 
   /* Border & Input */
-  --color-border: oklch(0.922 0 0);
-  --color-input: oklch(0.922 0 0);
+  --color-border: oklch(0.2755 0.037 260.02);
+  --color-input: oklch(0.2755 0.037 260.02);
   --color-ring: oklch(0.708 0 0);
 
   /* Sidebar Theme */
@@ -61,7 +61,7 @@
   --color-sidebar-primary-foreground: oklch(0.985 0 0);
   --color-sidebar-accent: oklch(0.97 0 0);
   --color-sidebar-accent-foreground: oklch(0.205 0 0);
-  --color-sidebar-border: oklch(0.922 0 0);
+  --color-sidebar-border: oklch(0.2755 0.037 260.02);
   --color-sidebar-ring: oklch(0.708 0 0);
 
   /* Radius */
@@ -265,6 +265,51 @@
 .animate-text-gradient {
   animation: var(--animate-text-gradient);
   background-size: 300% 100%;
+}
+
+/* Iluminación estática en fondo de la zona del buscador (una sola capa) */
+.header-search-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.header-search-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 72%; /* más abajo */
+  transform: translate(-50%, -50%);
+  width: 1200px; /* más expandida */
+  height: 720px; /* más alta */
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 56%,
+    rgba(58, 244, 239, 0.44) 0%,
+    rgba(0, 189, 216, 0.14) 30%,
+    rgba(0, 0, 0, 0) 70%
+  );
+  filter: blur(96px);
+  opacity: 0.36; /* estático */
+  z-index: 0; /* detrás del contenido */
+}
+
+/* Texto iluminado: usar sombra estática acorde al fondo */
+.search-illuminate-title {
+  color: var(--color-foreground);
+  text-shadow:
+    0 0 10px rgba(58, 244, 239, 0.7),
+    0 0 24px rgba(0, 189, 216, 0.28);
+  z-index: 2;
+}
+
+@media (max-width: 640px) {
+  .header-search-wrapper::before {
+    width: 720px;
+    height: 420px;
+    filter: blur(60px);
+    top: 72%;
+  }
 }
 
 @layer utilities {

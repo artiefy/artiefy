@@ -13,7 +13,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { FaArrowTrendUp } from 'react-icons/fa6';
-import { HiLibrary } from 'react-icons/hi';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { IoGiftOutline, IoLibrarySharp } from 'react-icons/io5';
 import { MdFilterAlt } from 'react-icons/md';
@@ -268,11 +267,11 @@ export default function StudentDetails({
   const [delay, _setDelay] = useState(40); // velocidad de escritura
   const placeHolderText = useMemo(
     () => [
-      '¿Que Deseas Crear? Escribe Tu Idea...',
+      '¿Qué crear? Escribe tu idea...',
       '¿Qué quieres crear?',
-      'Desarrollemos esa idea que tienes en mente...',
-      'Estoy para ayudarte, Artiefy impulsa tus sueños',
-      '¿Tienes una idea? ¡Vamos a hacerla realidad!',
+      'Desarrolla tu idea...',
+      'Pregúntala a Artie',
+      '¿Idea? ¡Hazla realidad!',
     ],
     []
   );
@@ -447,9 +446,28 @@ export default function StudentDetails({
     >
       <main className="grow">
         <div className="flex flex-col space-y-12 sm:space-y-16">
-          <div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4 px-2 sm:px-0">
-            <div className="flex items-center justify-center">
-              <StudentArtieIa />
+          <div className="-mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2 sm:mt-8 sm:px-0">
+            <div className="header-search-wrapper relative flex w-full flex-col items-center justify-center gap-4">
+              <div className="flex flex-col items-center text-center">
+                <div
+                  role="heading"
+                  aria-level={1}
+                  className="flex items-center justify-center gap-2 sm:gap-4"
+                >
+                  <span className="search-illuminate-title font-display text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+                    Pregúntale a
+                  </span>
+
+                  <div className="inline-block">
+                    <StudentArtieIa />
+                  </div>
+                </div>
+
+                <p className="mt-2 px-4 text-sm text-muted-foreground sm:mt-3 sm:px-0 sm:text-lg">
+                  Tu asistente de IA para encontrar el curso perfecto y comenzar
+                  a crear proyectos increíbles.
+                </p>
+              </div>
             </div>
 
             <form
@@ -506,10 +524,10 @@ export default function StudentDetails({
               </div>
 
               {/* Text with sparkles icon below search bar */}
-              <p className="text-muted-foreground mt-3 flex items-center justify-center gap-2 text-center text-sm">
+              <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
                 <span className="text-gray-400">
                   Aprende con{' '}
-                  <span className="text-primary font-medium">IA</span> y
+                  <span className="font-medium text-primary">IA</span> y
                   construye proyectos reales
                 </span>
               </p>
@@ -519,7 +537,7 @@ export default function StudentDetails({
           {/* Filter buttons above Seguir viendo */}
           <div
             id="filters-anchor"
-            className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24"
+            className="animation-delay-200 relative animate-zoom-in pr-0 pl-4 sm:px-24"
           >
             <div className="-mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4 sm:-mt-8 sm:mb-0 sm:justify-start">
               <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start sm:gap-2 md:gap-3">
@@ -528,7 +546,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'todos'
                       ? 'bg-foreground text-background'
-                      : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'todos'}
                 >
@@ -547,7 +565,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'cursos'
                       ? 'bg-foreground text-background'
-                      : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'cursos'}
                 >
@@ -566,7 +584,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'programas'
                       ? 'bg-foreground text-background'
-                      : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'programas'}
                 >
@@ -733,7 +751,7 @@ export default function StudentDetails({
 
           {/* Top Cursos section */}
           {activeFilter === 'todos' && !isNavigating && (
-            <div className="animation-delay-200 animate-zoom-in relative pr-0 pl-4 sm:px-24">
+            <div className="animation-delay-200 relative animate-zoom-in pr-0 pl-4 sm:px-24">
               <div className="mb-4 flex justify-start pr-4 sm:pr-0">
                 <div className="flex items-center gap-2">
                   <FaArrowTrendUp className="text-xl text-white" />
@@ -773,7 +791,7 @@ export default function StudentDetails({
                           >
                             <Link
                               href={`/estudiantes/cursos/${course.id}`}
-                              className="group/card focus-visible:outline-primary relative block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-offset-2"
+                              className="group/card relative block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary"
                             >
                               <div className="relative h-56 w-full">
                                 <Image
@@ -787,7 +805,7 @@ export default function StudentDetails({
                                   blurDataURL={blurDataURL}
                                 />
                                 {/* Number badge top-left */}
-                                <div className="bg-primary absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full">
+                                <div className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary">
                                   <span className="text-xs font-bold text-black">
                                     {idx + 1}
                                   </span>
@@ -800,7 +818,7 @@ export default function StudentDetails({
                                 <div className="absolute right-0 bottom-0 left-0 pb-0">
                                   <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
                                     <h3
-                                      className={`text-foreground line-clamp-2 text-[13px] font-semibold sm:text-[15px] ${titleSpacingClass} ${titleLineHeightClass}`}
+                                      className={`line-clamp-2 text-[13px] font-semibold text-foreground sm:text-[15px] ${titleSpacingClass} ${titleLineHeightClass}`}
                                       title={course.title}
                                       style={{
                                         display: 'flex',
@@ -870,17 +888,8 @@ export default function StudentDetails({
           {activeFilter === 'cursos' && !isNavigating && (
             <div
               id="courses-filter-section"
-              className="animation-delay-250 animate-zoom-in relative -mt-4 px-4 sm:-mt-6 sm:px-8 lg:px-20"
+              className="animation-delay-250 relative -mt-4 animate-zoom-in px-4 sm:-mt-6 sm:px-8 lg:px-20"
             >
-              <div className="mb-4 flex justify-start sm:mb-8">
-                <div className="flex items-center gap-2">
-                  <HiLibrary className="text-xl text-white" />
-                  <StudentGradientText className="text-2xl sm:text-3xl">
-                    Cursos Artie
-                  </StudentGradientText>
-                </div>
-              </div>
-
               <div className="relative z-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {courses.length > 0 ? (
                   courses.map((course) => {
@@ -950,9 +959,9 @@ export default function StudentDetails({
                           <Link
                             href={`/estudiantes/cursos/${course.id}`}
                             aria-label={`Ver detalles del curso ${course.title}`}
-                            className="group focus-visible:ring-primary/70 block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                            className="group block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:outline-none"
                           >
-                            <Card className="artiefy-course-card zoom-in text-foreground hover:border-primary relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 shadow-md transition-all duration-300 hover:-translate-y-1 hover:cursor-pointer hover:shadow-xl">
+                            <Card className="artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300 hover:-translate-y-1 hover:cursor-pointer hover:border-primary hover:shadow-xl">
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
                                   <div className="relative h-full w-full">
@@ -980,7 +989,7 @@ export default function StudentDetails({
                                   <div className="flex flex-wrap items-center gap-2">
                                     <p className="text-xs text-[#94A3B8]">
                                       Por:{' '}
-                                      <span className="text-primary font-medium">
+                                      <span className="font-medium text-primary">
                                         {course.instructorName ?? 'Educador'}
                                       </span>
                                     </p>
@@ -1031,7 +1040,7 @@ export default function StudentDetails({
                           </Link>
                         ) : (
                           <div className="group relative h-full rounded-2xl opacity-80">
-                            <Card className="artiefy-course-card zoom-in text-foreground relative flex h-full cursor-not-allowed flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 shadow-md transition-all duration-300">
+                            <Card className="artiefy-course-card zoom-in relative flex h-full cursor-not-allowed flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300">
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
                                   <div className="relative h-full w-full">
@@ -1079,7 +1088,7 @@ export default function StudentDetails({
             (activeFilter === 'todos' || activeFilter === 'programas') && (
               <div
                 id="programas-section"
-                className={`animation-delay-300 animate-zoom-in relative ${activeFilter === 'programas' ? '-mt-2 sm:-mt-4' : '-mt-8 sm:-mt-10'} pr-0 pl-4 sm:px-24`}
+                className={`animation-delay-300 relative animate-zoom-in ${activeFilter === 'programas' ? '-mt-2 sm:-mt-4' : '-mt-8 sm:-mt-10'} pr-0 pl-4 sm:px-24`}
               >
                 <div className="flex justify-start pr-4 sm:pr-0">
                   <div className="-mb-5 flex items-center gap-2">
