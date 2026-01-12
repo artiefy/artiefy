@@ -1,5 +1,9 @@
 import type { MetadataRoute } from 'next';
 
+// Forzamos que robots se genere siempre fresco (evita cache viejo con disallow global)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
 
