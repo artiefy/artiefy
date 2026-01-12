@@ -42,6 +42,8 @@ export function Header({
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
@@ -125,6 +127,28 @@ export function Header({
     setMounted(true);
   }, []);
 
+  // Control de visibilidad del header en scroll
+  useEffect(() => {
+    const controlHeader = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY < 10) {
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down & past threshold
+        setIsHeaderVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up
+        setIsHeaderVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', controlHeader, { passive: true });
+    return () => window.removeEventListener('scroll', controlHeader);
+  }, [lastScrollY]);
+
   // Debounce para preview de cursos
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
@@ -176,7 +200,7 @@ export function Header({
     if (!mounted) {
       return (
         <div className="flex items-center">
-          <Icons.spinner className="text-primary h-5 w-5" />
+          <Icons.spinner className="h-5 w-5 text-primary" />
         </div>
       );
     }
@@ -185,19 +209,19 @@ export function Header({
       <>
         {!isAuthLoaded ? (
           <div className="flex items-center">
-            <Icons.spinner className="text-primary h-5 w-5" />
+            <Icons.spinner className="h-5 w-5 text-primary" />
           </div>
         ) : (
           <>
             <SignedOut>
               <SignInButton>
                 <div className="flex items-center">
-                  <Button className="bg-primary hover:bg-primary/90 ml-2 hidden h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap text-black transition-colors md:inline-flex">
+                  <Button className="ml-2 hidden h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium whitespace-nowrap text-black transition-colors hover:bg-primary/90 md:inline-flex">
                     Acceder
                   </Button>
 
                   <Button
-                    className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
+                    className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
                     style={{
                       transition: '0.5s',
                       width: '180px',
@@ -216,7 +240,7 @@ export function Header({
                 <Suspense
                   fallback={
                     <div className="flex items-center">
-                      <Icons.spinner className="text-primary h-5 w-5" />
+                      <Icons.spinner className="h-5 w-5 text-primary" />
                     </div>
                   }
                 >
@@ -233,7 +257,7 @@ export function Header({
                   <Suspense
                     fallback={
                       <div className="flex min-w-[180px] items-center justify-start">
-                        <Icons.spinner className="text-primary ml-2 h-5 w-5" />
+                        <Icons.spinner className="ml-2 h-5 w-5 text-primary" />
                       </div>
                     }
                   >
@@ -258,7 +282,11 @@ export function Header({
   };
 
   return (
-    <nav className="sticky top-0 z-50 mb-8 w-full border-b border-[#00152B] bg-[#00152B] backdrop-blur-md sm:mb-8">
+    <nav
+      className={`sticky top-0 z-50 mb-8 w-full border-b border-[#00152B] bg-[#00152B] backdrop-blur-md transition-transform duration-300 sm:mb-8 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}
@@ -266,7 +294,7 @@ export function Header({
       >
         <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
         <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
-          <span className="from-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr to-blue-400 shadow-lg">
+          <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-lg">
             <svg
               className="h-10 w-10 text-white"
               fill="none"
@@ -281,18 +309,18 @@ export function Header({
               />
             </svg>
           </span>
-          <h2 className="text-secondary mb-2 text-center text-2xl font-bold">
+          <h2 className="mb-2 text-center text-2xl font-bold text-secondary">
             ¡Disponible muy pronto!
           </h2>
           <p className="mb-4 text-center text-gray-600">
             La sección de{' '}
-            <span className="text-secondary font-semibold">Espacios</span>{' '}
+            <span className="font-semibold text-secondary">Espacios</span>{' '}
             estará habilitada próximamente.
             <br />
             ¡Gracias por tu interés!
           </p>
           <button
-            className="bg-secondary mt-2 rounded px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            className="mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
             onClick={() => setShowEspaciosModal(false)}
           >
             Cerrar
@@ -329,11 +357,11 @@ export function Header({
                 placeholder="¡Aprende con IA!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+                className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
                 autoComplete="off"
               />
               <Search
-                className="text-primary/70 hover:text-primary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 cursor-pointer transition-colors"
+                className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 cursor-pointer text-primary/70 transition-colors hover:text-primary"
                 onClick={(e) => {
                   e.preventDefault();
                   if (!searchQuery.trim()) return;
@@ -452,7 +480,7 @@ export function Header({
               placeholder="¡Aprende con IA!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-foreground w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
               autoComplete="off"
               autoFocus
             />
@@ -466,7 +494,7 @@ export function Header({
               }}
               aria-label="Buscar"
             >
-              <Search className="text-primary/70 h-4 w-4" />
+              <Search className="h-4 w-4 text-primary/70" />
             </button>
             <button
               type="button"
@@ -474,7 +502,7 @@ export function Header({
               onClick={() => setShowMobileSearch(false)}
               aria-label="Cerrar búsqueda"
             >
-              <X className="text-primary/70 h-4 w-4" />
+              <X className="h-4 w-4 text-primary/70" />
             </button>
             {showPreview &&
               (previewCourses.length > 0 || previewPrograms.length > 0) && (
@@ -584,7 +612,7 @@ export function Header({
               <Suspense
                 fallback={
                   <div className="flex min-w-[180px] items-center justify-start">
-                    <Icons.spinner className="text-background h-5 w-5" />
+                    <Icons.spinner className="h-5 w-5 text-background" />
                   </div>
                 }
               >

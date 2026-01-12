@@ -467,12 +467,20 @@ export default function CourseDetails({
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
-    if (pendingOpenPayment) {
+
+    // Solo abrir modal de pago si el curso requiere pago individual
+    const hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
+    const isIndividualPurchase =
+      hasPurchasable && course.individualPrice && course.individualPrice > 0;
+
+    if (pendingOpenPayment && isIndividualPurchase) {
       setPendingOpenPayment(false);
       setShowPaymentModal(true);
       return;
     }
-    // Si no había pago pendiente, continuar flujo normal con sesión activa
+
+    // Si no hay pago pendiente o no es curso individual, continuar flujo normal
+    setPendingOpenPayment(false);
     void handleStartNow();
   };
 

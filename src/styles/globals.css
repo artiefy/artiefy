@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
-@config '../../tailwind.config.js';
 
 /* Optimización para teclado táctil en móviles */
 @supports (padding: max(0px)) {
