@@ -21,6 +21,8 @@ export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> },
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
+  const robotsNoIndex: Metadata['robots'] = { index: false, follow: false };
+
   try {
     // Seguir la convención de Next.js: `params` es una Promise
     const { id } = await params;
@@ -30,6 +32,7 @@ export async function generateMetadata(
       return {
         title: 'Programa no encontrado',
         description: 'El programa solicitado no pudo ser encontrado.',
+        robots: robotsNoIndex,
       };
     }
 
@@ -58,6 +61,7 @@ export async function generateMetadata(
       metadataBase,
       title: `${program.title} | Artiefy`,
       description: program.description ?? 'No hay descripción disponible.',
+      robots: robotsNoIndex,
       openGraph: {
         type: 'website',
         locale: 'es_ES',
@@ -93,6 +97,7 @@ export async function generateMetadata(
     return {
       title: 'Error',
       description: 'Error al cargar el programa',
+      robots: robotsNoIndex,
     };
   }
 }

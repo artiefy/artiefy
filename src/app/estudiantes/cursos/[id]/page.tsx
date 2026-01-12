@@ -26,6 +26,8 @@ export async function generateMetadata(
   { params }: { params: { id: string } },
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
+  const robotsNoIndex: Metadata['robots'] = { index: false, follow: false };
+
   try {
     // Await params to ensure it's resolved
     const { id } = await Promise.resolve(params);
@@ -35,6 +37,7 @@ export async function generateMetadata(
       return {
         title: 'Curso no encontrado',
         description: 'ID de curso inválido',
+        robots: robotsNoIndex,
       };
     }
 
@@ -45,6 +48,7 @@ export async function generateMetadata(
       return {
         title: 'Curso no encontrado',
         description: 'El curso solicitado no pudo ser encontrado.',
+        robots: robotsNoIndex,
       };
     }
 
@@ -85,6 +89,7 @@ export async function generateMetadata(
       metadataBase,
       title: `${course.title} | Artiefy`,
       description: course.description ?? 'No hay descripción disponible.',
+      robots: robotsNoIndex,
       openGraph: {
         type: 'website',
         locale: 'es_ES',
@@ -118,6 +123,7 @@ export async function generateMetadata(
     return {
       title: 'Error',
       description: 'Error al cargar el curso',
+      robots: robotsNoIndex,
     };
   }
 }

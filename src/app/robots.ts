@@ -1,42 +1,26 @@
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/estudiantes', '/planes', '/sign-in'],
-        disallow: [
-          '/private/',
-          '/estudiantes/cursos/',
-          '/estudiantes/programas/',
-          '/estudiantes?category=',
-          '/dashboard/',
-          '/user-profile/',
-          '/sign-up/',
-          '/api/',
-          '/admin/',
-          '/gracias/',
-          '/agradecimiento-curso/',
-          '/agradecimiento-plan/',
-          '/consult/',
-          '/proyectos/',
-          '/comunidad/',
-          '/clase-en-vivo/',
-          '/clases-grabadas/',
-          '/foro/',
-          '/certificados/',
-          '/myaccount/',
-          '/programas/',
-          '/cursos/',
-          '/not-found',
-          '/error',
-          '/global-error',
+        allow: [
+          '/',
+          '/sign-in',
+          '/planes',
+          '/estudiantes',
+          '/_next/',
+          '/favicon.ico',
           '/robots.txt',
           '/sitemap.xml',
         ],
+        // Bloquea cualquier otra ruta para evitar indexación fuera de las 4 principales
+        disallow: ['/*'],
       },
     ],
-    sitemap: 'https://artiefy.com/sitemap.xml',
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
