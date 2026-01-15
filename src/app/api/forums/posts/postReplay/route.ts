@@ -5,7 +5,7 @@ import { eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import {
-  createPostReply,
+  // createPostReply,
   deletePostReplyById,
   getPostById,
   getPostRepliesByPostId,
@@ -14,6 +14,7 @@ import {
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
 import { enrollments, forums, users } from '~/server/db/schema';
+import { deleteMediaFromS3, uploadMediaToS3 } from '~/server/lib/s3-upload';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -45,19 +46,112 @@ export async function POST(request: NextRequest) {
     const clerkUser = await currentUser();
     if (!clerkUser) return respondWithError('Usuario no encontrado', 500);
 
-    const body = (await request.json()) as {
-      content: string;
-      postId: number;
-      userId: string;
-    };
+    const contentType = request.headers.get('content-type') ?? '';
+    let content: string = '';
+    let postId: number = 0;
+    let imageKey: string | null = null;
+    let audioKey: string | null = null;
+    let videoKey: string | null = null;
 
-    const { content, postId } = body;
-    await createPostReply(postId, userId, content);
+    // Verificar si es multipart (con archivos) o JSON
+    if (contentType.includes('multipart/form-data')) {
+      let formData;
+      try {
+        formData = await request.formData();
+      } catch (error) {
+        console.error('Error parsing FormData:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+
+        // Log del tamaño del body para debugging
+        const contentLength = request.headers.get('content-length');
+        console.error('Request size:', contentLength, 'bytes');
+
+        return respondWithError(
+          `Error al parsear datos: ${errorMessage}. Verifica que el tamaño del archivo no exceda el límite permitido.`,
+          400
+        );
+      }
+      content = (formData.get('content') as string) || '';
+      postId = Number(formData.get('postId') as string) || 0;
+
+      const image = formData.get('image') as File | null;
+      const audio = formData.get('audio') as File | null;
+      const video = formData.get('video') as File | null;
+
+      // Subir archivos a S3
+      if (image) {
+        try {
+          const result = await uploadMediaToS3(image, 'image', userId);
+          imageKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo imagen:', error);
+          return respondWithError(
+            `Error subiendo imagen: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+
+      if (audio) {
+        try {
+          const result = await uploadMediaToS3(audio, 'audio', userId);
+          audioKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo audio:', error);
+          return respondWithError(
+            `Error subiendo audio: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+
+      if (video) {
+        try {
+          const result = await uploadMediaToS3(video, 'video', userId);
+          videoKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo video:', error);
+          return respondWithError(
+            `Error subiendo video: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+    } else {
+      // Es JSON
+      const body = (await request.json()) as {
+        content: string;
+        postId: number;
+        userId: string;
+      };
+      content = body.content;
+      postId = body.postId;
+    }
+
+    if (!content || !postId) {
+      return respondWithError('El contenido y postId son obligatorios', 400);
+    }
+
+    // Crear la respuesta con soporte a media
+    // const newReply = await db
+    //   .insert(postReplies)
+    //   .values({
+    //     postId: postId,
+    //     userId: userId,
+    //     content: content,
+    //     imageKey: imageKey,
+    //     audioKey: audioKey,
+    //     videoKey: videoKey,
+    //   })
+    //   .returning();
 
     console.log('[FORO][REPLY] ✅ Respuesta creada:', {
       postId,
       userId,
-      content,
+      hasImage: !!imageKey,
+      hasAudio: !!audioKey,
+      hasVideo: !!videoKey,
     });
 
     try {
@@ -238,6 +332,29 @@ export async function DELETE(request: NextRequest) {
     const reply = await getPostReplyById(parsedId);
     if (!reply) return respondWithError('Respuesta no encontrada', 404);
     if (reply.userId !== userId) return respondWithError('No autorizado', 403);
+
+    // Eliminar archivos de S3 si existen
+    if (reply.imageKey) {
+      try {
+        await deleteMediaFromS3(reply.imageKey);
+      } catch (error) {
+        console.error('Error al eliminar imagen:', error);
+      }
+    }
+    if (reply.audioKey) {
+      try {
+        await deleteMediaFromS3(reply.audioKey);
+      } catch (error) {
+        console.error('Error al eliminar audio:', error);
+      }
+    }
+    if (reply.videoKey) {
+      try {
+        await deleteMediaFromS3(reply.videoKey);
+      } catch (error) {
+        console.error('Error al eliminar video:', error);
+      }
+    }
 
     await deletePostReplyById(parsedId);
     return NextResponse.json({ message: 'Respuesta eliminada' });

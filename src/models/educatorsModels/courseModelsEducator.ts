@@ -249,6 +249,8 @@ export const getCourseById = async (courseId: number) => {
         certificationTypeId: courses.certificationTypeId,
         scheduleOptionId: courses.scheduleOptionId,
         spaceOptionId: courses.spaceOptionId,
+        horario: courses.horario,
+        espacios: courses.espacios,
       })
       .from(courses)
       .leftJoin(users, eq(courses.instructor, users.id))
@@ -263,61 +265,97 @@ export const getCourseById = async (courseId: number) => {
     // Obtener los nombres adicionales
     const category = course.categoryid
       ? await db
-        .select({ name: categories.name })
-        .from(categories)
-        .where(eq(categories.id, course.categoryid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: categories.name })
+          .from(categories)
+          .where(eq(categories.id, course.categoryid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const modalidad = course.modalidadesid
       ? await db
-        .select({ name: modalidades.name })
-        .from(modalidades)
-        .where(eq(modalidades.id, course.modalidadesid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: modalidades.name })
+          .from(modalidades)
+          .where(eq(modalidades.id, course.modalidadesid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const nivelName = course.nivelid
       ? await db
-        .select({ name: nivel.name })
-        .from(nivel)
-        .where(eq(nivel.id, course.nivelid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: nivel.name })
+          .from(nivel)
+          .where(eq(nivel.id, course.nivelid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
-    const courseTypeName = course.courseTypeId
-      ? await db
-        .select({ name: courseTypes.name })
+    // 🔍 Obtener tipos de curso desde la tabla intermedia (junction table)
+    let courseTypeRows = await db
+      .select({ name: courseTypes.name, id: courseTypes.id })
+      .from(courseCourseTypes)
+      .innerJoin(
+        courseTypes,
+        eq(courseCourseTypes.courseTypeId, courseTypes.id)
+      )
+      .where(eq(courseCourseTypes.courseId, courseId));
+
+    console.log(
+      `🔍 [getCourseById] courseTypeRows desde junction para ${courseId}:`,
+      courseTypeRows.length,
+      courseTypeRows
+    );
+
+    // 🔄 Fallback: si no hay en junction table, usar el valor antiguo de courseTypeId
+    if (courseTypeRows.length === 0 && course.courseTypeId) {
+      console.log(
+        `⚠️ No hay registros en junction para curso ${courseId}, usando courseTypeId antiguo: ${course.courseTypeId}`
+      );
+      const oldTypeRow = await db
+        .select({ name: courseTypes.name, id: courseTypes.id })
         .from(courseTypes)
-        .where(eq(courseTypes.id, course.courseTypeId))
-        .then((rows) => rows[0]?.name ?? null)
-      : null;
+        .where(eq(courseTypes.id, course.courseTypeId));
+
+      console.log(`✅ oldTypeRow encontrado:`, oldTypeRow);
+      if (oldTypeRow.length > 0) {
+        courseTypeRows = oldTypeRow;
+      }
+    }
+
+    const courseTypeIds = courseTypeRows.map((row) => row.id);
+    const courseTypeNames = courseTypeRows.map((row) => row.name);
+    const courseTypeName =
+      courseTypeNames.length > 0 ? courseTypeNames.join(', ') : null;
+
+    console.log(
+      `📌 [getCourseById] courseTypeIds finales:`,
+      courseTypeIds,
+      `courseTypeName:`,
+      courseTypeName
+    );
 
     const certificationTypeName = course.certificationTypeId
-      ? (
-        await db
-          .select({ name: certificationTypes.name })
-          .from(certificationTypes)
-          .where(eq(certificationTypes.id, course.certificationTypeId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: certificationTypes.name })
+            .from(certificationTypes)
+            .where(eq(certificationTypes.id, course.certificationTypeId))
+        )[0]?.name ?? null)
       : null;
 
     const scheduleOptionName = course.scheduleOptionId
-      ? (
-        await db
-          .select({ name: scheduleOptions.name })
-          .from(scheduleOptions)
-          .where(eq(scheduleOptions.id, course.scheduleOptionId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: scheduleOptions.name })
+            .from(scheduleOptions)
+            .where(eq(scheduleOptions.id, course.scheduleOptionId))
+        )[0]?.name ?? null)
       : null;
 
     const spaceOptionName = course.spaceOptionId
-      ? (
-        await db
-          .select({ name: spaceOptions.name })
-          .from(spaceOptions)
-          .where(eq(spaceOptions.id, course.spaceOptionId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: spaceOptions.name })
+            .from(spaceOptions)
+            .where(eq(spaceOptions.id, course.spaceOptionId))
+        )[0]?.name ?? null)
       : null;
 
     const totalStudents = await getTotalStudents(courseId);
@@ -330,9 +368,14 @@ export const getCourseById = async (courseId: number) => {
       modalidadName: modalidad,
       nivelName,
       courseTypeName,
+      courseTypeIds, // Array de IDs para el formulario
       certificationTypeName,
       scheduleOptionName,
       spaceOptionName,
+      scheduleOptionId: course.scheduleOptionId,
+      spaceOptionId: course.spaceOptionId,
+      horario: course.horario || course.scheduleOptionId, // Usar campo antiguo si existe, sino el nuevo
+      espacios: course.espacios || course.spaceOptionId, // Usar campo antiguo si existe, sino el nuevo
       totalStudents,
     };
 
@@ -343,6 +386,10 @@ export const getCourseById = async (courseId: number) => {
       scheduleOptionName,
       spaceOptionId: course.spaceOptionId,
       spaceOptionName,
+      courseTypeIds,
+      courseTypeName,
+      horario: course.horario,
+      espacios: course.espacios,
     });
 
     return result;
@@ -401,24 +448,34 @@ export const updateCourse = async (
 ) => {
   try {
     // 🔄 Sincroniza courseTypeId en tabla intermedia si existe
-    if (updateData.courseTypeId !== undefined) {
-      // Borra relaciones anteriores
+    if (
+      updateData.courseTypeId !== undefined &&
+      Array.isArray(updateData.courseTypeId)
+    ) {
+      // ✅ Primero SIEMPRE borra relaciones anteriores (permite limpiar)
       await db
         .delete(courseCourseTypes)
         .where(eq(courseCourseTypes.courseId, courseId));
 
-      // Inserta solo si hay valores
-      if (
-        Array.isArray(updateData.courseTypeId) &&
-        updateData.courseTypeId.length > 0
-      ) {
+      // Filtra valores null, undefined y 0 (valores inválidos)
+      const validTypeIds = updateData.courseTypeId.filter(
+        (typeId) =>
+          typeId !== null &&
+          typeId !== undefined &&
+          typeId !== 0 &&
+          Number.isFinite(typeId)
+      );
+
+      // Si hay IDs válidos, crea nuevas relaciones
+      if (validTypeIds.length > 0) {
         await db.insert(courseCourseTypes).values(
-          updateData.courseTypeId.map((typeId) => ({
+          validTypeIds.map((typeId) => ({
             courseId,
             courseTypeId: typeId,
           }))
         );
       }
+      // ✅ Si validTypeIds está vacío, ya se borraron todas las relaciones
     }
 
     // 🧼 Elimina courseTypeId para que no lo intente guardar en tabla principal
@@ -429,11 +486,19 @@ export const updateCourse = async (
       Object.entries(rest).filter(([_, v]) => v !== undefined)
     );
 
+    console.log('📝 [updateCourse] cleanedData (sin undefined):', cleanedData);
+
     // ⏱️ Agrega updatedAt
     const dataToUpdate = {
       ...cleanedData,
       updatedAt: new Date(),
     };
+
+    console.log(
+      '📝 [updateCourse] dataToUpdate (con updatedAt):',
+      dataToUpdate
+    );
+    console.log('📝 [updateCourse] courseId:', courseId);
 
     // 📝 Actualiza el curso
     const result = await db
@@ -441,6 +506,8 @@ export const updateCourse = async (
       .set(dataToUpdate)
       .where(eq(courses.id, courseId))
       .returning();
+
+    console.log('✅ [updateCourse] resultado:', result);
 
     return result[0];
   } catch (error) {

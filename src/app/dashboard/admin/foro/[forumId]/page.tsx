@@ -51,6 +51,9 @@ interface Post {
   };
   content: string;
   foroId: number;
+  imageKey?: string;
+  audioKey?: string;
+  videoKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +68,9 @@ interface PostReplay {
   };
   postId: number;
   content: string;
+  imageKey?: string;
+  audioKey?: string;
+  videoKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +99,12 @@ const ForumPage = () => {
   const [editingReplyId, setEditingReplyId] = useState<number | null>(null); // Estado de edición de la respuesta
   const [editPostContent, setEditPostContent] = useState<string>(''); // Estado de edición del post
   const [editReplyContent, setEditReplyContent] = useState<string>(''); // Estado de edición de la respuesta
+  const [postImage, setPostImage] = useState<File | null>(null);
+  const [postAudio, setPostAudio] = useState<File | null>(null);
+  const [postVideo, setPostVideo] = useState<File | null>(null);
+  const [replyImage, setReplyImage] = useState<File | null>(null);
+  const [replyAudio, setReplyAudio] = useState<File | null>(null);
+  const [replyVideo, setReplyVideo] = useState<File | null>(null);
   // const [error, setError] = useState(false);
   const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
   const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
@@ -178,20 +190,23 @@ const ForumPage = () => {
   const handlePostSubmit = async () => {
     if (!message.trim() || !user) return;
     try {
+      const formData = new FormData();
+      formData.append('content', message);
+      formData.append('foroId', ForumIdNumber?.toString() || '');
+      if (postImage) formData.append('image', postImage);
+      if (postAudio) formData.append('audio', postAudio);
+      if (postVideo) formData.append('video', postVideo);
+
       const response = await fetch('/api/forums/posts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: message,
-          foroId: ForumIdNumber,
-          userId: user.id,
-          userName: user.fullName,
-          userEmail: user.emailAddresses[0]?.emailAddress,
-        }),
+        body: formData,
       });
 
       if (response.ok) {
         setMessage('');
+        setPostImage(null);
+        setPostAudio(null);
+        setPostVideo(null);
         await fetchPosts();
 
         const role = user.publicMetadata?.role;
@@ -226,19 +241,25 @@ const ForumPage = () => {
     if (!replyMessage.trim() || !user || replyingToPostId === null) return;
 
     try {
+      const formData = new FormData();
+      formData.append('content', replyMessage);
+      formData.append('postId', replyingToPostId.toString());
+      formData.append('userId', user.fullName || user.id);
+      if (replyImage) formData.append('image', replyImage);
+      if (replyAudio) formData.append('audio', replyAudio);
+      if (replyVideo) formData.append('video', replyVideo);
+
       const response = await fetch('/api/forums/posts/postReplay', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: replyMessage,
-          postId: replyingToPostId,
-          userId: user.fullName,
-        }),
+        body: formData,
       });
 
       if (response.ok) {
         setReplyMessage('');
         setReplyingToPostId(null);
+        setReplyImage(null);
+        setReplyAudio(null);
+        setReplyVideo(null);
         await fetchPostReplays();
 
         const role = user.publicMetadata?.role;
@@ -407,7 +428,36 @@ const ForumPage = () => {
             </div>
           </div>
         ) : (
-          <p className="mt-3 text-sm text-gray-300">{reply.content}</p>
+          <>
+            <p className="mt-3 text-sm text-gray-300">{reply.content}</p>
+            {(reply.imageKey || reply.audioKey || reply.videoKey) && (
+              <div className="mt-3 space-y-2">
+                {reply.imageKey && (
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
+                    alt="Imagen de respuesta"
+                    width={400}
+                    height={256}
+                    className="max-h-64 rounded"
+                  />
+                )}
+                {reply.audioKey && (
+                  <audio
+                    controls
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
+                    className="w-full"
+                  />
+                )}
+                {reply.videoKey && (
+                  <video
+                    controls
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
+                    className="max-h-64 rounded w-full"
+                  />
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Menú editar/eliminar */}
@@ -602,6 +652,35 @@ const ForumPage = () => {
                   <p className="text-xs text-white">{post.userId.name}</p>
                 )}
 
+                {/* Mostrar media en posts */}
+                {(post.imageKey || post.audioKey || post.videoKey) && (
+                  <div className="mt-3 space-y-2">
+                    {post.imageKey && (
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
+                        alt="Imagen del post"
+                        width={400}
+                        height={256}
+                        className="max-h-64 rounded"
+                      />
+                    )}
+                    {post.audioKey && (
+                      <audio
+                        controls
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
+                        className="w-full"
+                      />
+                    )}
+                    {post.videoKey && (
+                      <video
+                        controls
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
+                        className="max-h-64 rounded w-full"
+                      />
+                    )}
+                  </div>
+                )}
+
                 {/* Menú editar/eliminar */}
                 {post.userId.id === user?.id && (
                   <Collapsible className="absolute top-6 right-2">
@@ -640,11 +719,58 @@ const ForumPage = () => {
                 {replyingToPostId === post.id && (
                   <div className="mt-3">
                     <textarea
-                      className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
+                      className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white mb-3"
                       placeholder="Escribe tu respuesta..."
                       value={replyMessage}
                       onChange={(e) => setReplyMessage(e.target.value)}
                     />
+                    <div className="mb-3 grid grid-cols-3 gap-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setReplyImage(e.target.files?.[0] || null)
+                          }
+                          className="hidden"
+                        />
+                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                          {replyImage
+                            ? '✓ ' + replyImage.name.slice(0, 12)
+                            : '□ Imagen'}
+                        </div>
+                      </label>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={(e) =>
+                            setReplyAudio(e.target.files?.[0] || null)
+                          }
+                          className="hidden"
+                        />
+                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                          {replyAudio
+                            ? '✓ ' + replyAudio.name.slice(0, 12)
+                            : '♪ Audio'}
+                        </div>
+                      </label>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={(e) =>
+                            setReplyVideo(e.target.files?.[0] || null)
+                          }
+                          className="hidden"
+                        />
+                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                          {replyVideo
+                            ? '✓ ' + replyVideo.name.slice(0, 12)
+                            : '▶ Video'}
+                        </div>
+                      </label>
+                    </div>
                     <div className="mt-2 flex justify-end gap-2">
                       <button
                         className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
@@ -674,13 +800,48 @@ const ForumPage = () => {
         {/* Crear nuevo post */}
         <div className="mx-full mt-6 max-w-4xl">
           <textarea
-            className="min-h-[120px] w-full resize-none rounded-lg border border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300"
-            placeholder="Escribe un nuevo mesaje..."
+            className="min-h-[120px] w-full resize-none rounded-lg border border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 mb-3"
+            placeholder="Escribe un nuevo mensaje..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPostImage(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+                {postImage ? '✓ ' + postImage.name.slice(0, 15) : '□ Imagen'}
+              </div>
+            </label>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => setPostAudio(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+                {postAudio ? '✓ ' + postAudio.name.slice(0, 15) : '♪ Audio'}
+              </div>
+            </label>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setPostVideo(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+                {postVideo ? '✓ ' + postVideo.name.slice(0, 15) : '▶ Video'}
+              </div>
+            </label>
+          </div>
           <button
-            className="flex flex-col gap-4 border-b border-gray-700 pb-5 sm:flex-row sm:items-center sm:justify-between"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
             onClick={handlePostSubmit}
           >
             Enviar

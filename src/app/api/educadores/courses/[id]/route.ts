@@ -53,7 +53,9 @@ interface PutRequestBody {
   subjects?: { id: number }[];
   individualPrice?: number | null;
   scheduleOptionId?: number | null;
+  horario?: number | null;
   spaceOptionId?: number | null;
+  espacios?: number | null;
   certificationTypeId?: number | null;
 }
 
@@ -79,7 +81,13 @@ function extractMeetingIdFromUrl(joinUrl?: string | null) {
 
 // arriba del updateData (mismo archivo)
 function parseCourseTypeIds(input: unknown): number[] | undefined {
-  if (Array.isArray(input)) return input.map(Number).filter(Number.isFinite);
+  if (Array.isArray(input)) {
+    // Filtra null/undefined ANTES de convertir a número
+    return input
+      .filter((item) => item !== null && item !== undefined)
+      .map(Number)
+      .filter(Number.isFinite);
+  }
   if (typeof input === 'number') return [input];
   // si es null/undefined, no tocar relaciones
   return undefined;
@@ -375,13 +383,23 @@ export async function GET(
       );
     }
 
-    const course = await getCourseByIdWithTypes(courseId);
+    // ✅ Usar getCourseById que tiene courseTypeIds, horario, espacios, etc.
+    const course = await getCourseById(courseId);
     if (!course) {
       return NextResponse.json(
         { error: 'Curso no encontrado' },
         { status: 404 }
       );
     }
+
+    console.log('✅ GET /api/educadores/courses/[id] retornando:', {
+      id: course.id,
+      title: course.title,
+      courseTypeIds: course.courseTypeIds,
+      scheduleOptionId: course.scheduleOptionId,
+      spaceOptionId: course.spaceOptionId,
+      certificationTypeId: course.certificationTypeId,
+    });
 
     return NextResponse.json(course);
   } catch (error) {
@@ -446,13 +464,20 @@ export async function PUT(
       // ✅ asegura que siempre sea array
 
       // dentro de updateData
-      courseTypeId: parsedCourseTypeIds, // number[] | undefined
+      courseTypeId: parsedCourseTypeIds?.filter(
+        (id) => id !== null && id !== undefined
+      ), // Filtra null
 
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
-      scheduleOptionId: data.scheduleOptionId ?? null,
-      spaceOptionId: data.spaceOptionId ?? null,
+      scheduleOptionId: data.scheduleOptionId ?? data.horario ?? null,
+      spaceOptionId: data.spaceOptionId ?? data.espacios ?? null,
       certificationTypeId: data.certificationTypeId ?? null,
     };
+
+    console.log(
+      '🚀 [PUT] updateData completo:',
+      JSON.stringify(updateData, null, 2)
+    );
 
     // Update course
     await updateCourse(courseId, updateData);

@@ -7,10 +7,19 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
-import { Reply, ThumbsUp } from 'lucide-react';
+import {
+  CornerDownLeft,
+  ImageIcon,
+  Mic,
+  Music,
+  ThumbsUp,
+  Video,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { AudioRecorder } from '~/components/AudioRecorder';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import {
   AlertDialog,
@@ -144,9 +153,13 @@ interface Forum {
 // Interface para posts de foro
 interface ForumPost {
   id: number;
+  postId?: number;
   content: string;
-  userId: string;
-  forumId: number;
+  userId: string | { id: string; name: string; email: string };
+  forumId?: number;
+  imageKey?: string | null;
+  audioKey?: string | null;
+  videoKey?: string | null;
   createdAt?: string;
   updatedAt?: string;
   repliesCount?: number;
@@ -156,6 +169,18 @@ interface ForumPost {
     role?: string;
     isEducator?: boolean;
   };
+}
+
+interface PostReply {
+  id: number;
+  postId: number;
+  userId: { id: string; name: string; email: string };
+  content: string;
+  imageKey?: string | null;
+  audioKey?: string | null;
+  videoKey?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Interface para proyectos de estudiantes
@@ -468,11 +493,38 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [forums, setForums] = useState<Forum[]>([]);
   const [newForumTitle, setNewForumTitle] = useState('');
   const [newForumDescription, setNewForumDescription] = useState('');
+  const [forumImage, setForumImage] = useState<File | null>(null);
+  const [forumDocument, setForumDocument] = useState<File | null>(null);
   const [isCreatingForum, setIsCreatingForum] = useState(false);
   const [selectedForum, setSelectedForum] = useState<number | null>(null);
   const [newPostContent, setNewPostContent] = useState('');
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+
+  // Estados para respuestas/comentarios de foros
+  const [replyingToPostId, setReplyingToPostId] = useState<Set<number>>(
+    new Set()
+  );
+  const [replyMessage, setReplyMessage] = useState<Record<number, string>>({});
+  const [postReplies, setPostReplies] = useState<{
+    [key: number]: PostReply[];
+  }>({});
+  const [expandedPosts, setExpandedPosts] = useState<Set<number>>(new Set());
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [replyImage, setReplyImage] = useState<Record<number, File>>({});
+  const [replyAudio, setReplyAudio] = useState<Record<number, File>>({});
+  const [replyVideo, setReplyVideo] = useState<Record<number, File>>({});
+
+  // Estados para media en posts
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedAudio, setSelectedAudio] = useState<File | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [isUploadingPost, setIsUploadingPost] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+  const [showReplyAudioRecorder, setShowReplyAudioRecorder] = useState<
+    Set<number>
+  >(new Set());
 
   // --- Proyectos de estudiantes ---
   const [studentProjects, setStudentProjects] = useState<StudentProject[]>([]);
@@ -481,6 +533,103 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
     null
   );
+
+  // Función para obtener respuestas de un post
+  const fetchPostReplies = useCallback(async () => {
+    if (!selectedForum || posts.length === 0) return;
+    try {
+      const postIds = posts.map((post) => post.id).join(',');
+      if (postIds) {
+        const response = await fetch(
+          `/api/forums/posts/postReplay?postIds=${postIds}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // Reorganizar replies por postId
+          const repliesByPost: { [key: number]: PostReply[] } = {};
+          data.forEach((reply: PostReply) => {
+            if (!repliesByPost[reply.postId]) {
+              repliesByPost[reply.postId] = [];
+            }
+            repliesByPost[reply.postId].push(reply);
+          });
+          setPostReplies(repliesByPost);
+        }
+      }
+    } catch (error) {
+      console.error('Error al obtener respuestas:', error);
+    }
+  }, [posts, selectedForum]);
+
+  // Fetch respuestas cuando se cargan los posts
+  useEffect(() => {
+    if (posts.length > 0) {
+      void fetchPostReplies();
+      // Abrir todos los formularios de respuesta por defecto
+      const allPostIds = new Set(posts.map((post) => post.id));
+      setReplyingToPostId(allPostIds);
+    }
+  }, [posts, fetchPostReplies]);
+
+  // Función para crear respuesta a un post
+  const handleCreateReply = async (postId: number) => {
+    const currentReplyMessage = replyMessage[postId] || '';
+    const currentReplyImage = replyImage[postId];
+    const currentReplyAudio = replyAudio[postId];
+    const currentReplyVideo = replyVideo[postId];
+
+    if (!currentReplyMessage.trim() || !user?.id || isSubmittingReply) return;
+
+    setIsSubmittingReply(true);
+    try {
+      const formData = new FormData();
+      formData.append('content', currentReplyMessage);
+      formData.append('postId', postId.toString());
+      formData.append('userId', user.fullName || user.id);
+
+      if (currentReplyImage) formData.append('image', currentReplyImage);
+      if (currentReplyAudio) formData.append('audio', currentReplyAudio);
+      if (currentReplyVideo) formData.append('video', currentReplyVideo);
+
+      const response = await fetch('/api/forums/posts/postReplay', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setReplyMessage((prev) => {
+          const updated = { ...prev };
+          delete updated[postId];
+          return updated;
+        });
+        setReplyImage((prev) => {
+          const updated = { ...prev };
+          delete updated[postId];
+          return updated;
+        });
+        setReplyAudio((prev) => {
+          const updated = { ...prev };
+          delete updated[postId];
+          return updated;
+        });
+        setReplyVideo((prev) => {
+          const updated = { ...prev };
+          delete updated[postId];
+          return updated;
+        });
+        setExpandedPosts((prev) => new Set(prev).add(postId));
+        await fetchPostReplies();
+        toast.success('Respuesta publicada');
+      } else {
+        toast.error('Error al enviar respuesta');
+      }
+    } catch (error) {
+      console.error('Error al enviar respuesta:', error);
+      toast.error('Error al enviar respuesta');
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
 
   // Fetch student projects for all students enrolled in this course
   useEffect(() => {
@@ -853,7 +1002,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Función para crear foro
   const handleCreateForum = async () => {
     if (!newForumTitle.trim() || !user?.id) {
-      toast.error('Por favor completa todos los campos');
+      toast.error('Por favor completa el título del foro');
       return;
     }
 
@@ -865,6 +1014,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       formData.append('description', newForumDescription);
       formData.append('userId', user.id);
 
+      if (forumImage) formData.append('coverImage', forumImage);
+      if (forumDocument) formData.append('document', forumDocument);
+
       const response = await fetch('/api/forums', {
         method: 'POST',
         body: formData,
@@ -874,6 +1026,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         toast.success('Foro creado exitosamente');
         setNewForumTitle('');
         setNewForumDescription('');
+        setForumImage(null);
+        setForumDocument(null);
         await fetchForums();
       } else {
         // Si el error es por correo, igual mostrar éxito pero advertir en consola
@@ -883,6 +1037,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           console.warn('Foro creado pero falló el correo:', data.error);
           setNewForumTitle('');
           setNewForumDescription('');
+          setForumImage(null);
+          setForumDocument(null);
           await fetchForums();
         } else {
           toast.error('Error al crear el foro');
@@ -919,25 +1075,37 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       return;
     }
 
+    setIsUploadingPost(true);
     try {
-      const response = await fetch(`/api/forums/${forumId}/posts`, {
+      const formData = new FormData();
+      formData.append('content', newPostContent);
+      formData.append('foroId', forumId.toString());
+
+      if (selectedImage) formData.append('image', selectedImage);
+      if (selectedAudio) formData.append('audio', selectedAudio);
+      if (selectedVideo) formData.append('video', selectedVideo);
+
+      const response = await fetch(`/api/forums/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: newPostContent,
-          userId: user.id,
-        }),
+        body: formData,
       });
 
       if (response.ok) {
-        toast.success('Respuesta publicada');
+        toast.success('Post publicado con éxito');
         setNewPostContent('');
+        setSelectedImage(null);
+        setSelectedAudio(null);
+        setSelectedVideo(null);
         await fetchPosts(forumId);
       } else {
-        toast.error('Error al publicar');
+        const error = await response.json();
+        toast.error(error.message || 'Error al publicar');
       }
     } catch (error) {
-      toast.error('Error al publicar');
+      toast.error('Error al publicar el post');
+      console.error(error);
+    } finally {
+      setIsUploadingPost(false);
     }
   };
 
@@ -2069,6 +2237,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Lista de Clases
                   </button>
                   <button
+                    onClick={() => setActiveTab('en-vivo')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'en-vivo'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Clases en Vivo
+                  </button>
+                  <button
                     onClick={() => setActiveTab('estudiantes')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
                       activeTab === 'estudiantes'
@@ -2240,6 +2418,86 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     />
                   </div>
                 )}
+                {/* Clases en Vivo Tab */}
+                {activeTab === 'en-vivo' && (
+                  <div className="animate-in fade-in space-y-8 duration-500">
+                    {/* Sobre el educador */}
+                    {course.instructorProfileImageKey && (
+                      <div className="group relative overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-8 shadow-xl transition-all duration-300 hover:border-cyan-500/60 hover:shadow-2xl hover:shadow-cyan-500/20">
+                        {/* Efecto de brillo en hover */}
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                        <h2 className="mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-3xl font-bold text-transparent">
+                          Sobre el educador
+                        </h2>
+
+                        <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center">
+                          {/* Foto del educador con efecto */}
+                          <div className="relative">
+                            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-75 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
+                              alt={course.instructorName}
+                              width={128}
+                              height={128}
+                              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              quality={70}
+                            />
+                          </div>
+
+                          {/* Información del educador */}
+                          <div className="relative flex-1">
+                            <h3 className="text-2xl font-bold text-white">
+                              {course.instructorName}
+                            </h3>
+                            {course.instructorProfesion && (
+                              <p className="mt-2 text-base font-semibold text-cyan-400">
+                                {course.instructorProfesion}
+                              </p>
+                            )}
+                            {course.instructorDescripcion && (
+                              <p className="mt-4 leading-relaxed text-white/80">
+                                {course.instructorDescripcion}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <h2 className="text-2xl font-bold text-white">
+                      Clases Agendadas
+                    </h2>
+
+                    {/* Clases agendadas */}
+                    <div className="space-y-4">
+                      <ScheduledMeetingsList
+                        meetings={meetingsForList}
+                        color={selectedColor}
+                      />
+                    </div>
+
+                    {/* Botones de acción */}
+                    <div className="flex w-full flex-col gap-3 sm:flex-row">
+                      <Button
+                        onClick={() => void handleSyncVideos()}
+                        disabled={isSyncingVideos}
+                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 disabled:opacity-50 sm:w-auto md:px-6 md:py-3 md:text-base"
+                      >
+                        {isSyncingVideos
+                          ? 'Sincronizando...'
+                          : 'Sincronizar Videos'}
+                      </Button>
+
+                      <Button
+                        onClick={() => setIsMeetingModalOpen(true)}
+                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 sm:w-auto md:px-6 md:py-3 md:text-base"
+                      >
+                        Agendar Clase
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {/* Estudiantes Tab */}
                 {activeTab === 'estudiantes' && (
                   <div className="animate-in fade-in duration-500">
@@ -2272,103 +2530,93 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         Foro del curso
                       </h2>
                       <p className="mb-4 text-sm text-white/60">
-                        {forums.length} comentarios · Comparte dudas y avances
-                        con tus compañeros
+                        {forums.length} foros · Crea nuevas conversaciones
                       </p>
-                      <div className="relative">
+                      <div className="relative space-y-3">
                         <textarea
-                          placeholder="Inicia una nueva discusión o comparte tu avance..."
+                          placeholder="Título del nuevo foro..."
                           value={newForumTitle}
                           onChange={(e) => setNewForumTitle(e.target.value)}
-                          rows={3}
-                          className="mb-3 w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
-                          style={{ minHeight: '70px' }}
+                          rows={2}
+                          className="w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          style={{ minHeight: '60px' }}
                         />
-                        <div className="mt-1 flex items-center justify-between">
-                          <div className="flex gap-4 text-xl text-gray-400">
+
+                        <textarea
+                          placeholder="Descripción del foro (opcional)..."
+                          value={newForumDescription}
+                          onChange={(e) =>
+                            setNewForumDescription(e.target.value)
+                          }
+                          rows={2}
+                          className="w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          style={{ minHeight: '50px' }}
+                        />
+
+                        {/* Inputs de media para foro */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) =>
+                                setForumImage(e.target.files?.[0] || null)
+                              }
+                              className="hidden"
+                            />
+                            <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                              <div className="text-lg">□</div>
+                              <div className="text-xs text-white/70">
+                                {forumImage
+                                  ? forumImage.name.slice(0, 15) + '...'
+                                  : 'Portada'}
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.txt"
+                              onChange={(e) =>
+                                setForumDocument(e.target.files?.[0] || null)
+                              }
+                              className="hidden"
+                            />
+                            <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                              <div className="text-lg">📄</div>
+                              <div className="text-xs text-white/70">
+                                {forumDocument
+                                  ? forumDocument.name.slice(0, 15) + '...'
+                                  : 'Documento'}
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-end gap-2">
+                          {(forumImage || forumDocument) && (
                             <button
-                              type="button"
-                              className="hover:text-cyan-400"
-                              title="Adjuntar imagen"
+                              onClick={() => {
+                                setForumImage(null);
+                                setForumDocument(null);
+                              }}
+                              className="px-3 py-2 text-xs text-white/60 hover:text-white transition-colors"
                             >
-                              <svg
-                                width="24"
-                                height="24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-6 w-6"
-                              >
-                                <rect
-                                  x="3"
-                                  y="3"
-                                  width="18"
-                                  height="18"
-                                  rx="2"
-                                />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <path d="M21 15l-5-5L5 21" />
-                              </svg>
+                              Limpiar archivos
                             </button>
-                            <button
-                              type="button"
-                              className="hover:text-cyan-400"
-                              title="Adjuntar video"
-                            >
-                              <svg
-                                width="24"
-                                height="24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-6 w-6"
-                              >
-                                <rect
-                                  x="2"
-                                  y="7"
-                                  width="20"
-                                  height="10"
-                                  rx="2"
-                                />
-                                <polygon points="10 9 15 12 10 15 10 9" />
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              className="hover:text-cyan-400"
-                              title="Adjuntar audio"
-                            >
-                              <svg
-                                width="24"
-                                height="24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-6 w-6"
-                              >
-                                <circle cx="12" cy="11" r="4" />
-                                <path d="M12 15v4" />
-                                <path d="M8 19h8" />
-                              </svg>
-                            </button>
-                          </div>
+                          )}
                           <Button
                             onClick={async () => {
                               if (!newForumTitle.trim()) return;
                               await handleCreateForum();
                               setNewForumTitle('');
+                              setNewForumDescription('');
                             }}
                             disabled={isCreatingForum || !newForumTitle.trim()}
                             className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-2 text-base font-semibold hover:bg-cyan-600"
                           >
-                            <span role="img" aria-label="publicar"></span>{' '}
-                            Publicar
+                            {isCreatingForum ? 'Creando...' : '+ Nuevo Foro'}
                           </Button>
                         </div>
                       </div>
@@ -2451,49 +2699,247 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           <div className="space-y-6">
                             {/* Header del foro */}
                             <div className="border-b border-white/10 pb-4">
-                              <h2 className="mb-1 text-2xl font-bold text-white">
-                                {
-                                  forums.find((f) => f.id === selectedForum)
-                                    ?.title
-                                }
-                              </h2>
-                              <p className="text-sm text-white/50">
-                                {posts.length}{' '}
-                                {posts.length === 1
-                                  ? 'respuesta'
-                                  : 'respuestas'}
-                              </p>
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <h2 className="mb-1 text-2xl font-bold text-white">
+                                    {
+                                      forums.find((f) => f.id === selectedForum)
+                                        ?.title
+                                    }
+                                  </h2>
+                                  <p className="text-sm text-white/50">
+                                    {posts.length}{' '}
+                                    {posts.length === 1 ? 'post' : 'posts'}
+                                  </p>
+                                </div>
+                                {forums.find((f) => f.id === selectedForum)
+                                  ?.coverImageKey && (
+                                  <button
+                                    onClick={() =>
+                                      setLightboxImage(
+                                        `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
+                                          forums.find(
+                                            (f) => f.id === selectedForum
+                                          )?.coverImageKey
+                                        }`
+                                      )
+                                    }
+                                    className="group relative overflow-hidden rounded-lg border border-cyan-700/30 hover:border-cyan-500/60 transition-colors flex-shrink-0"
+                                  >
+                                    <Image
+                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
+                                        forums.find(
+                                          (f) => f.id === selectedForum
+                                        )?.coverImageKey
+                                      }`}
+                                      alt="Imagen del foro"
+                                      className="h-24 w-24 object-cover group-hover:opacity-80 transition-opacity"
+                                      width={96}
+                                      height={96}
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        console.error(
+                                          'Error cargando imagen del foro'
+                                        );
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                                      <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                  </button>
+                                )}
+                              </div>
                             </div>
 
-                            {/* Formulario de respuesta */}
-                            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-4">
+                            {/* Formulario de crear post con media */}
+                            <div className="rounded-lg border border-cyan-700/30 bg-[#0d1726] p-4">
                               <textarea
-                                placeholder="Escribe tu respuesta..."
+                                placeholder="Comparte tu pensamiento, pregunta o avance..."
                                 value={newPostContent}
                                 onChange={(e) =>
                                   setNewPostContent(e.target.value)
                                 }
                                 rows={3}
-                                className="mb-3 w-full resize-none rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                                className="mb-3 w-full resize-none rounded-lg border border-cyan-700/20 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
                               />
+
+                              {/* Inputs de media */}
+                              <div className="mb-4 grid grid-cols-3 gap-2">
+                                {/* Imagen */}
+                                <label className="group cursor-pointer">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      setSelectedImage(
+                                        e.target.files?.[0] || null
+                                      )
+                                    }
+                                    className="hidden"
+                                  />
+                                  <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                    <div className="text-lg">□</div>
+                                    <div className="text-xs text-white/70">
+                                      {selectedImage
+                                        ? selectedImage.name.slice(0, 15) +
+                                          '...'
+                                        : 'Imagen'}
+                                    </div>
+                                    <div className="text-xs text-white/40">
+                                      Máx 5MB
+                                    </div>
+                                  </div>
+                                </label>
+
+                                {/* Audio */}
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setShowAudioRecorder(!showAudioRecorder)
+                                    }
+                                    className="group cursor-pointer w-full"
+                                  >
+                                    <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                      <div className="text-lg">♪</div>
+                                      <div className="text-xs text-white/70">
+                                        {selectedAudio
+                                          ? selectedAudio.name.slice(0, 15) +
+                                            '...'
+                                          : 'Audio'}
+                                      </div>
+                                      <div className="text-xs text-white/40">
+                                        Máx 50MB
+                                      </div>
+                                    </div>
+                                  </button>
+
+                                  {/* Input de archivo oculto */}
+                                  <input
+                                    type="file"
+                                    accept="audio/*"
+                                    onChange={(e) =>
+                                      setSelectedAudio(
+                                        e.target.files?.[0] || null
+                                      )
+                                    }
+                                    className="hidden"
+                                    id="audio-upload-input"
+                                  />
+
+                                  {/* Menú desplegable con grabador */}
+                                  {showAudioRecorder && (
+                                    <div className="absolute bottom-full right-0 z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
+                                      <div className="space-y-3">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            document
+                                              .getElementById(
+                                                'audio-upload-input'
+                                              )
+                                              ?.click();
+                                            setShowAudioRecorder(false);
+                                          }}
+                                          className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                                        >
+                                          📁 Subir archivo
+                                        </button>
+
+                                        <AudioRecorder
+                                          onAudioSelect={(file) => {
+                                            setSelectedAudio(file);
+                                            setShowAudioRecorder(false);
+                                          }}
+                                          onClose={() =>
+                                            setShowAudioRecorder(false)
+                                          }
+                                        />
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setShowAudioRecorder(false)
+                                          }
+                                          className="w-full rounded-lg bg-gray-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600"
+                                        >
+                                          Cerrar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Video */}
+                                <label className="group cursor-pointer">
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={(e) =>
+                                      setSelectedVideo(
+                                        e.target.files?.[0] || null
+                                      )
+                                    }
+                                    className="hidden"
+                                  />
+                                  <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                    <div className="text-lg">▶</div>
+                                    <div className="text-xs text-white/70">
+                                      {selectedVideo
+                                        ? selectedVideo.name.slice(0, 15) +
+                                          '...'
+                                        : 'Video'}
+                                    </div>
+                                    <div className="text-xs text-white/40">
+                                      Máx 200MB
+                                    </div>
+                                  </div>
+                                </label>
+                              </div>
+
+                              {/* Resumen de archivos seleccionados */}
+                              {(selectedImage ||
+                                selectedAudio ||
+                                selectedVideo) && (
+                                <div className="mb-3 rounded-lg bg-cyan-700/10 p-2 text-xs text-cyan-300">
+                                  <div className="font-semibold">
+                                    Archivos seleccionados:
+                                  </div>
+                                  {selectedImage && (
+                                    <div>🖼️ {selectedImage.name}</div>
+                                  )}
+                                  {selectedAudio && (
+                                    <div>🎙️ {selectedAudio.name}</div>
+                                  )}
+                                  {selectedVideo && (
+                                    <div>🎬 {selectedVideo.name}</div>
+                                  )}
+                                </div>
+                              )}
+
                               <div className="flex items-center justify-end gap-2">
                                 <span className="text-xs text-white/40">
                                   {newPostContent.length}
                                 </span>
                                 <Button
                                   onClick={() =>
-                                    handleCreatePost(selectedForum)
+                                    handleCreatePost(selectedForum!)
                                   }
-                                  disabled={!newPostContent.trim()}
+                                  disabled={
+                                    !newPostContent.trim() || isUploadingPost
+                                  }
                                   size="sm"
                                   className="bg-cyan-500 hover:bg-cyan-600"
                                 >
-                                  Publicar
+                                  {isUploadingPost
+                                    ? 'Subiendo...'
+                                    : 'Publicar Post'}
                                 </Button>
                               </div>
                             </div>
 
-                            {/* Lista de respuestas */}
+                            {/* Lista de posts */}
                             <div className="space-y-4">
                               {isLoadingPosts ? (
                                 <div className="flex items-center justify-center py-12">
@@ -2502,74 +2948,719 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               ) : posts.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
                                   <p className="text-sm text-white/60">
-                                    No hay respuestas aún
+                                    No hay posts aún. ¡Sé el primero en
+                                    compartir!
                                   </p>
                                 </div>
                               ) : (
-                                posts.map((post) => (
-                                  <div
-                                    key={post.id}
-                                    className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow"
-                                  >
-                                    <div className="mb-2 flex items-center gap-4">
-                                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
-                                        {post.user?.name?.[0]?.toUpperCase() ||
-                                          '?'}
+                                <div className="space-y-4">
+                                  {posts.map((post) => {
+                                    const userName =
+                                      typeof post.userId === 'object'
+                                        ? post.userId?.name
+                                        : post.user?.name;
+                                    const userInitial =
+                                      userName?.[0]?.toUpperCase() || '?';
+
+                                    return (
+                                      <div
+                                        key={post.id}
+                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow hover:border-cyan-700/60 transition-all"
+                                      >
+                                        <div className="flex gap-4">
+                                          {/* Avatar */}
+                                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-sm font-bold text-white">
+                                            {userInitial}
+                                          </div>
+
+                                          {/* Content */}
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="text-base font-semibold text-cyan-300">
+                                                {userName || 'Usuario'}
+                                              </span>
+                                              <span className="text-xs text-white/40">
+                                                {post.createdAt
+                                                  ? new Date(
+                                                      post.createdAt
+                                                    ).toLocaleDateString(
+                                                      'es-ES',
+                                                      {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                      }
+                                                    )
+                                                  : ''}
+                                              </span>
+                                            </div>
+
+                                            <p className="mt-2 text-sm leading-relaxed text-white/90">
+                                              {post.content}
+                                            </p>
+
+                                            {/* Mostrar media si existe */}
+                                            {(post.imageKey ||
+                                              post.audioKey ||
+                                              post.videoKey) && (
+                                              <div className="mt-6 space-y-4">
+                                                {/* Imagen y Video lado a lado */}
+                                                {(post.imageKey ||
+                                                  post.videoKey) && (
+                                                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                    {/* Imagen - Marco premium */}
+                                                    {post.imageKey && (
+                                                      <button
+                                                        onClick={() =>
+                                                          setLightboxImage(
+                                                            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`
+                                                          )
+                                                        }
+                                                        className="group relative overflow-hidden rounded-lg border border-cyan-700/35 shadow-lg shadow-black/50 transition-all duration-300 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/30"
+                                                      >
+                                                        <Image
+                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
+                                                          alt="Imagen del post"
+                                                          className="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                          loading="lazy"
+                                                          width={500}
+                                                          height={256}
+                                                          onError={(e) => {
+                                                            console.error(
+                                                              'Error cargando imagen:',
+                                                              e.currentTarget
+                                                                .src
+                                                            );
+                                                          }}
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-300">
+                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                        </div>
+                                                      </button>
+                                                    )}
+                                                    {/* Video */}
+                                                    {post.videoKey && (
+                                                      <div className="overflow-hidden rounded-lg border border-cyan-700/35 bg-black shadow-lg shadow-black/50 transition-all duration-300 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/30">
+                                                        <video
+                                                          controls
+                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
+                                                          className="h-64 w-full object-cover"
+                                                          onError={() =>
+                                                            console.error(
+                                                              'Error cargando video:',
+                                                              post.videoKey
+                                                            )
+                                                          }
+                                                        />
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                )}
+                                                {/* Audio - Ancho completo debajo */}
+                                                {post.audioKey && (
+                                                  <div className="flex items-center gap-3 rounded-lg border border-cyan-700/35 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-4 shadow-md shadow-black/30 transition-all duration-300 hover:border-cyan-400/60 hover:from-slate-900/80 hover:to-slate-900/80">
+                                                    <Music className="h-5 w-5 flex-shrink-0 text-cyan-400/80" />
+                                                    <audio
+                                                      controls
+                                                      className="flex-1 h-8"
+                                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+
+                                            {/* Acciones */}
+                                            <div className="mt-4 space-y-3 border-t border-white/10 pt-3">
+                                              <div className="flex items-center gap-2">
+                                                <button
+                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  title="Me gusta"
+                                                >
+                                                  <ThumbsUp className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    const isExpanded =
+                                                      expandedPosts.has(
+                                                        post.id
+                                                      );
+                                                    if (isExpanded) {
+                                                      expandedPosts.delete(
+                                                        post.id
+                                                      );
+                                                    } else {
+                                                      expandedPosts.add(
+                                                        post.id
+                                                      );
+                                                    }
+                                                    setExpandedPosts(
+                                                      new Set(expandedPosts)
+                                                    );
+                                                  }}
+                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white relative"
+                                                  title="Comentarios"
+                                                >
+                                                  <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
+                                                    {postReplies[post.id]
+                                                      ?.length || 0}
+                                                  </span>
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    setReplyingToPostId(
+                                                      (prev) => {
+                                                        const newSet = new Set(
+                                                          prev
+                                                        );
+                                                        if (
+                                                          newSet.has(post.id)
+                                                        ) {
+                                                          newSet.delete(
+                                                            post.id
+                                                          );
+                                                        } else {
+                                                          newSet.add(post.id);
+                                                          setReplyMessage('');
+                                                        }
+                                                        return newSet;
+                                                      }
+                                                    );
+                                                  }}
+                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  title="Responder"
+                                                >
+                                                  <CornerDownLeft className="h-5 w-5" />
+                                                </button>
+                                              </div>
+
+                                              {/* Respuestas colapsables - Diseño profesional */}
+                                              <div className="mt-3 border-t border-gray-800 pt-3">
+                                                {!expandedPosts.has(post.id) ? (
+                                                  <button
+                                                    onClick={() => {
+                                                      expandedPosts.add(
+                                                        post.id
+                                                      );
+                                                      setExpandedPosts(
+                                                        new Set(expandedPosts)
+                                                      );
+                                                    }}
+                                                    className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
+                                                  >
+                                                    Ver{' '}
+                                                    {postReplies[post.id]
+                                                      ?.length || 0}{' '}
+                                                    respuesta
+                                                    {(postReplies[post.id]
+                                                      ?.length || 0) > 1
+                                                      ? 's'
+                                                      : ''}
+                                                  </button>
+                                                ) : (
+                                                  <div className="space-y-3">
+                                                    <button
+                                                      onClick={() => {
+                                                        expandedPosts.delete(
+                                                          post.id
+                                                        );
+                                                        setExpandedPosts(
+                                                          new Set(expandedPosts)
+                                                        );
+                                                      }}
+                                                      className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
+                                                    >
+                                                      Ocultar respuestas
+                                                    </button>
+                                                    {postReplies[post.id]?.map(
+                                                      (reply) => {
+                                                        const replyUserName =
+                                                          typeof reply.userId ===
+                                                          'object'
+                                                            ? reply.userId?.name
+                                                            : 'Usuario';
+                                                        const replyUserInitial =
+                                                          replyUserName?.[0]?.toUpperCase() ||
+                                                          '?';
+                                                        return (
+                                                          <div
+                                                            key={reply.id}
+                                                            className="ml-6 rounded-xl bg-gray-800/50 p-4"
+                                                          >
+                                                            <div className="flex items-start gap-3">
+                                                              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-xs font-bold text-white">
+                                                                {
+                                                                  replyUserInitial
+                                                                }
+                                                              </div>
+                                                              <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                  <span className="text-sm font-semibold text-white">
+                                                                    {
+                                                                      replyUserName
+                                                                    }
+                                                                  </span>
+                                                                  <span className="text-xs text-gray-500">
+                                                                    {reply.createdAt
+                                                                      ? new Date(
+                                                                          reply.createdAt
+                                                                        ).toLocaleString(
+                                                                          'es-ES',
+                                                                          {
+                                                                            day: '2-digit',
+                                                                            month:
+                                                                              'short',
+                                                                            year: 'numeric',
+                                                                            hour: '2-digit',
+                                                                            minute:
+                                                                              '2-digit',
+                                                                          }
+                                                                        )
+                                                                      : ''}
+                                                                  </span>
+                                                                </div>
+                                                                {reply.content && (
+                                                                  <p className="mt-2 text-sm text-gray-300">
+                                                                    {
+                                                                      reply.content
+                                                                    }
+                                                                  </p>
+                                                                )}
+                                                                {(reply.imageKey ||
+                                                                  reply.videoKey ||
+                                                                  reply.audioKey) && (
+                                                                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                                    {(reply.imageKey ||
+                                                                      reply.videoKey) && (
+                                                                      <>
+                                                                        {reply.imageKey && (
+                                                                          <button
+                                                                            className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all cursor-pointer group"
+                                                                            onClick={() =>
+                                                                              setLightboxImage(
+                                                                                `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
+                                                                              )
+                                                                            }
+                                                                          >
+                                                                            <Image
+                                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
+                                                                              alt="Respuesta"
+                                                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                              width={
+                                                                                500
+                                                                              }
+                                                                              height={
+                                                                                160
+                                                                              }
+                                                                            />
+                                                                          </button>
+                                                                        )}
+                                                                        {reply.videoKey && (
+                                                                          <div className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all">
+                                                                            <video
+                                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
+                                                                              className="w-full h-full object-cover"
+                                                                              controls
+                                                                            />
+                                                                          </div>
+                                                                        )}
+                                                                      </>
+                                                                    )}
+                                                                    {reply.audioKey && (
+                                                                      <div className="col-span-1 sm:col-span-2">
+                                                                        <audio
+                                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
+                                                                          className="w-full rounded-lg border border-cyan-700/40 bg-gray-900"
+                                                                          controls
+                                                                        />
+                                                                      </div>
+                                                                    )}
+                                                                  </div>
+                                                                )}
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        );
+                                                      }
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+
+                                              {/* Formulario para responder */}
+                                              {replyingToPostId.has(
+                                                post.id
+                                              ) && (
+                                                <div className="mt-4 space-y-3 pl-4 border-l-2 border-cyan-700/30">
+                                                  <textarea
+                                                    className="w-full rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 resize-none focus:border-primary focus:outline-none"
+                                                    placeholder="Escribe tu respuesta..."
+                                                    value={
+                                                      replyMessage[post.id] ||
+                                                      ''
+                                                    }
+                                                    onChange={(e) =>
+                                                      setReplyMessage(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          [post.id]:
+                                                            e.target.value,
+                                                        })
+                                                      )
+                                                    }
+                                                    rows={2}
+                                                    autoFocus
+                                                  />
+
+                                                  {/* Audio Recorder para replies */}
+                                                  {showReplyAudioRecorder.has(
+                                                    post.id
+                                                  ) && (
+                                                    <div className="mb-2">
+                                                      <AudioRecorder
+                                                        onAudioSelect={(
+                                                          file
+                                                        ) => {
+                                                          setReplyAudio(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [post.id]: file,
+                                                            })
+                                                          );
+                                                          setShowReplyAudioRecorder(
+                                                            (prev) =>
+                                                              new Set(
+                                                                [
+                                                                  ...prev,
+                                                                ].filter(
+                                                                  (id) =>
+                                                                    id !==
+                                                                    post.id
+                                                                )
+                                                              )
+                                                          );
+                                                        }}
+                                                        onClose={() =>
+                                                          setShowReplyAudioRecorder(
+                                                            (prev) =>
+                                                              new Set(
+                                                                [
+                                                                  ...prev,
+                                                                ].filter(
+                                                                  (id) =>
+                                                                    id !==
+                                                                    post.id
+                                                                )
+                                                              )
+                                                          )
+                                                        }
+                                                      />
+                                                    </div>
+                                                  )}
+
+                                                  {/* Media previews */}
+                                                  {(replyImage[post.id] ||
+                                                    replyVideo[post.id] ||
+                                                    replyAudio[post.id]) && (
+                                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                                      {replyImage[post.id] && (
+                                                        <div className="relative overflow-hidden rounded-lg border border-cyan-700/40">
+                                                          <Image
+                                                            src={URL.createObjectURL(
+                                                              replyImage[
+                                                                post.id
+                                                              ]
+                                                            )}
+                                                            alt="Preview"
+                                                            className="h-40 w-full object-cover"
+                                                            width={500}
+                                                            height={160}
+                                                          />
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              setReplyImage(
+                                                                (prev) => {
+                                                                  const updated =
+                                                                    { ...prev };
+                                                                  delete updated[
+                                                                    post.id
+                                                                  ];
+                                                                  return updated;
+                                                                }
+                                                              )
+                                                            }
+                                                            className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                          >
+                                                            <X className="h-4 w-4" />
+                                                          </button>
+                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                                                            {
+                                                              replyImage[
+                                                                post.id
+                                                              ].name
+                                                            }
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                      {replyVideo[post.id] && (
+                                                        <div className="relative overflow-hidden rounded-lg border border-cyan-700/40 bg-black">
+                                                          <video
+                                                            src={URL.createObjectURL(
+                                                              replyVideo[
+                                                                post.id
+                                                              ]
+                                                            )}
+                                                            className="h-40 w-full object-cover"
+                                                          />
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              setReplyVideo(
+                                                                (prev) => {
+                                                                  const updated =
+                                                                    { ...prev };
+                                                                  delete updated[
+                                                                    post.id
+                                                                  ];
+                                                                  return updated;
+                                                                }
+                                                              )
+                                                            }
+                                                            className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                          >
+                                                            <X className="h-4 w-4" />
+                                                          </button>
+                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                                                            {
+                                                              replyVideo[
+                                                                post.id
+                                                              ].name
+                                                            }
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                      {replyAudio[post.id] && (
+                                                        <div className="relative flex items-center gap-2 rounded-lg border border-cyan-700/40 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-2">
+                                                          <Music className="h-4 w-4 flex-shrink-0 text-cyan-400/80" />
+                                                          <span className="flex-1 truncate text-xs font-semibold text-white">
+                                                            {
+                                                              replyAudio[
+                                                                post.id
+                                                              ].name
+                                                            }
+                                                          </span>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              setReplyAudio(
+                                                                (prev) => {
+                                                                  const updated =
+                                                                    { ...prev };
+                                                                  delete updated[
+                                                                    post.id
+                                                                  ];
+                                                                  return updated;
+                                                                }
+                                                              )
+                                                            }
+                                                            className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                          >
+                                                            <X className="h-3 w-3" />
+                                                          </button>
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  )}
+
+                                                  <div className="flex flex-wrap items-center gap-2">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        const input =
+                                                          document.createElement(
+                                                            'input'
+                                                          );
+                                                        input.type = 'file';
+                                                        input.accept =
+                                                          'audio/*';
+                                                        input.onchange = (
+                                                          e
+                                                        ) => {
+                                                          const file = (
+                                                            e.target as HTMLInputElement
+                                                          ).files?.[0];
+                                                          if (file)
+                                                            setReplyAudio(
+                                                              (prev) => ({
+                                                                ...prev,
+                                                                [post.id]: file,
+                                                              })
+                                                            );
+                                                        };
+                                                        input.click();
+                                                      }}
+                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      title="Subir audio"
+                                                    >
+                                                      <Mic className="h-4 w-4" />
+                                                    </button>
+
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        setShowReplyAudioRecorder(
+                                                          (prev) =>
+                                                            prev.has(post.id)
+                                                              ? new Set(
+                                                                  [
+                                                                    ...prev,
+                                                                  ].filter(
+                                                                    (id) =>
+                                                                      id !==
+                                                                      post.id
+                                                                  )
+                                                                )
+                                                              : new Set([
+                                                                  ...prev,
+                                                                  post.id,
+                                                                ])
+                                                        )
+                                                      }
+                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      title="Grabar audio"
+                                                    >
+                                                      <Music className="h-4 w-4" />
+                                                    </button>
+
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        const input =
+                                                          document.createElement(
+                                                            'input'
+                                                          );
+                                                        input.type = 'file';
+                                                        input.accept =
+                                                          'image/*';
+                                                        input.onchange = (
+                                                          e
+                                                        ) => {
+                                                          const file = (
+                                                            e.target as HTMLInputElement
+                                                          ).files?.[0];
+                                                          if (file)
+                                                            setReplyImage(
+                                                              (prev) => ({
+                                                                ...prev,
+                                                                [post.id]: file,
+                                                              })
+                                                            );
+                                                        };
+                                                        input.click();
+                                                      }}
+                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      title="Adjuntar imagen"
+                                                    >
+                                                      <ImageIcon className="h-4 w-4" />
+                                                    </button>
+
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        const input =
+                                                          document.createElement(
+                                                            'input'
+                                                          );
+                                                        input.type = 'file';
+                                                        input.accept =
+                                                          'video/*';
+                                                        input.onchange = (
+                                                          e
+                                                        ) => {
+                                                          const file = (
+                                                            e.target as HTMLInputElement
+                                                          ).files?.[0];
+                                                          if (file)
+                                                            setReplyVideo(
+                                                              (prev) => ({
+                                                                ...prev,
+                                                                [post.id]: file,
+                                                              })
+                                                            );
+                                                        };
+                                                        input.click();
+                                                      }}
+                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      title="Adjuntar video"
+                                                    >
+                                                      <Video className="h-4 w-4" />
+                                                    </button>
+
+                                                    <button
+                                                      onClick={() =>
+                                                        handleCreateReply(
+                                                          post.id
+                                                        )
+                                                      }
+                                                      disabled={
+                                                        (!(
+                                                          replyMessage[
+                                                            post.id
+                                                          ] || ''
+                                                        ).trim() &&
+                                                          !replyAudio[
+                                                            post.id
+                                                          ] &&
+                                                          !replyImage[
+                                                            post.id
+                                                          ] &&
+                                                          !replyVideo[
+                                                            post.id
+                                                          ]) ||
+                                                        isSubmittingReply
+                                                      }
+                                                      className="ml-auto rounded bg-cyan-700 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                                                    >
+                                                      {isSubmittingReply ? (
+                                                        <>
+                                                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent inline-block mr-1" />
+                                                          Enviando...
+                                                        </>
+                                                      ) : (
+                                                        'Responder'
+                                                      )}
+                                                    </button>
+                                                    <button
+                                                      onClick={() => {
+                                                        setReplyingToPostId(
+                                                          (prev) => {
+                                                            const newSet =
+                                                              new Set(prev);
+                                                            newSet.delete(
+                                                              post.id
+                                                            );
+                                                            return newSet;
+                                                          }
+                                                        );
+                                                        setReplyMessage('');
+                                                      }}
+                                                      className="rounded border border-white/20 px-3 py-1 text-xs text-white/60 transition-colors hover:text-white"
+                                                    >
+                                                      Cancelar
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
                                       </div>
-                                      <div className="min-w-0 flex-1">
-                                        <span className="block truncate text-base font-semibold text-cyan-300">
-                                          {post.user?.name || 'Usuario'}
-                                        </span>
-                                        <span className="ml-2 inline-block rounded bg-cyan-900/40 px-2 py-0.5 align-middle text-xs font-semibold text-cyan-300">
-                                          {post.user?.role === 'educador' ||
-                                          post.user?.isEducator
-                                            ? 'educador'
-                                            : ''}
-                                        </span>
-                                        <span className="mt-1 block text-xs text-white/40">
-                                          {post.createdAt
-                                            ? new Date(
-                                                post.createdAt
-                                              ).toLocaleDateString('es-ES', {
-                                                day: '2-digit',
-                                                month: 'short',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                              })
-                                            : ''}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="mb-3 text-base text-white/90">
-                                      {post.content}
-                                    </div>
-                                    <div className="mt-2 flex items-center gap-6 text-sm text-white/60">
-                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
-                                        <ThumbsUp className="h-5 w-5" />
-                                        Me gusta
-                                      </button>
-                                      <button className="flex items-center gap-1 transition hover:text-cyan-400">
-                                        <Reply className="h-5 w-5" />
-                                        Responder
-                                      </button>
-                                      <span className="ml-auto text-xs text-cyan-400">
-                                        {post.repliesCount || 0} respuestas
-                                      </span>
-                                    </div>
-                                    <div className="mt-2">
-                                      <textarea
-                                        placeholder="Escribe una respuesta..."
-                                        className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
-                                        rows={2}
-                                        style={{ resize: 'none' }}
-                                      />
-                                      <button className="float-right mt-2 rounded bg-cyan-500 px-4 py-1 font-semibold text-white transition hover:bg-cyan-600">
-                                        Responder
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))
+                                    );
+                                  })}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -2580,8 +3671,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {/* Modal para crear foro */}
                     {/* El modal de crear foro ha sido eliminado, ahora el formulario es siempre visible arriba */}
                   </div>
-                )}{' '}
-                {/* ⬅️ ESTE ES EL CIERRE CORRECTO */}
+                )}
                 {/* Proyectos Tab */}
                 {activeTab === 'proyectos' && (
                   <div className="animate-in fade-in duration-500">
@@ -2991,6 +4081,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           }}
           certificationTypes={[]}
         />
+      )}
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <Image
+            src={lightboxImage}
+            alt="Imagen ampliada"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            width={1000}
+            height={900}
+          />
+        </div>
       )}
     </div>
   );

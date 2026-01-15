@@ -16,6 +16,14 @@ const nextConfig = {
   reactCompiler: true,
   cacheComponents: false,
   expireTime: 3600,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100mb', // Aumentar límite para videos y archivos grandes en App Router
+    },
+  },
+  middleware: {
+    clientMaxBodySize: '100mb', // Permitir uploads grandes de multipart/form-data en API routes
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

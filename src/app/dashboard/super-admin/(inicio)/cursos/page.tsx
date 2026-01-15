@@ -123,11 +123,12 @@ export default function Page() {
         setIsLoadingMore(false);
 
         // Get other data in parallel
-        const [totalsResponse, categoriesResponse, certificationResponse] = await Promise.all([
-          fetch('/api/super-admin/courses/totals'),
-          fetch('/api/super-admin/categories'),
-          fetch('/api/super-admin/certification-types'),
-        ]);
+        const [totalsResponse, categoriesResponse, certificationResponse] =
+          await Promise.all([
+            fetch('/api/super-admin/courses/totals'),
+            fetch('/api/super-admin/categories'),
+            fetch('/api/super-admin/certification-types'),
+          ]);
 
         if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
         const { totalStudents } = (await totalsResponse.json()) as {
@@ -322,6 +323,8 @@ export default function Page() {
           certificationTypeId,
         });
 
+        const finalCourseTypeId: number | null = courseTypeId?.[0] ?? null;
+
         const updatePayload = {
           title,
           description: description ?? '',
@@ -332,16 +335,22 @@ export default function Page() {
           nivelid: Number(nivelid),
           rating,
           instructor: instructorName,
+          creatorId: editingCourse?.creatorId ?? '',
+          createdAt: editingCourse?.createdAt ?? new Date(),
           scheduleOptionId: horario ?? null,
           spaceOptionId: espacios ?? null,
           certificationTypeId: certificationTypeId ?? null,
+          courseTypeId: finalCourseTypeId,
         } as CourseData;
 
-        console.log('📦 PAYLOAD QUE SE ENVÍA:', JSON.stringify({
-          scheduleOptionId: updatePayload.scheduleOptionId,
-          spaceOptionId: updatePayload.spaceOptionId,
-          certificationTypeId: updatePayload.certificationTypeId,
-        }));
+        console.log(
+          '📦 PAYLOAD QUE SE ENVÍA:',
+          JSON.stringify({
+            scheduleOptionId: updatePayload.scheduleOptionId,
+            spaceOptionId: updatePayload.spaceOptionId,
+            certificationTypeId: updatePayload.certificationTypeId,
+          })
+        );
 
         response = await updateCourse(Number(id), updatePayload);
 
@@ -616,10 +625,11 @@ export default function Page() {
             setShowProgramCourses(false);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${!showProgramCourses
-            ? 'bg-primary text-white'
-            : 'bg-gray-800 text-gray-300'
-            }`}
+          className={`rounded-md px-4 py-2 ${
+            !showProgramCourses
+              ? 'bg-primary text-white'
+              : 'bg-gray-800 text-gray-300'
+          }`}
         >
           Cursos Independientes
         </button>
@@ -628,10 +638,11 @@ export default function Page() {
             setShowProgramCourses(true);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${showProgramCourses
-            ? 'bg-primary text-background'
-            : 'bg-gray-800 text-gray-300'
-            }`}
+          className={`rounded-md px-4 py-2 ${
+            showProgramCourses
+              ? 'bg-primary text-background'
+              : 'bg-gray-800 text-gray-300'
+          }`}
         >
           Cursos en Programas
         </button>
@@ -640,32 +651,47 @@ export default function Page() {
       {/* Course List with Loading Indicator */}
       <CourseListAdmin
         courses={displayedCourses}
-        onEditCourse={(course) => {
+        onEditCourse={async (course) => {
           if (course) {
-            const extendedCourse = course as ExtendedCourseData;
-            const certTypeId = extendedCourse.certificationTypeId ?? null;
-            const certTypeName = certTypeId
-              ? certificationTypes.find(ct => ct.id === certTypeId)?.name
-              : null;
+            try {
+              // 🔄 Fetch completo del curso para obtener todos los datos
+              const response = await fetch(
+                `/api/educadores/courses/${course.id}`
+              );
+              if (!response.ok) {
+                throw new Error('Failed to fetch course');
+              }
+              const fullCourseData = await response.json();
 
-            console.log('🔍 onEditCourse - Course data:', {
-              id: course.id,
-              title: course.title,
-              courseTypeId: course.courseTypeId,
-              certificationTypeId: certTypeId,
-              certificationTypeName: certTypeName,
-              scheduleOptionId: extendedCourse.scheduleOptionId,
-              spaceOptionId: extendedCourse.spaceOptionId,
-            });
-            setEditingCourse(extendedCourse);
-            setCourseTypeId(course.courseTypeId ? [course.courseTypeId] : []);
-            // Cargar el certificationTypeId del curso
-            setCertificationTypeId(certTypeId);
-            // Cargar el scheduleOptionId (horario) del curso
-            setHorario((extendedCourse.scheduleOptionId ?? null) as number | null);
-            // Cargar el spaceOptionId (espacios) del curso
-            setEspacios((extendedCourse.spaceOptionId ?? null) as number | null);
-            setIsModalOpen(true);
+              console.log('📥 Curso completo obtenido:', {
+                id: fullCourseData.id,
+                title: fullCourseData.title,
+                courseTypeIds: fullCourseData.courseTypeIds,
+                courseTypeName: fullCourseData.courseTypeName,
+                scheduleOptionId: fullCourseData.scheduleOptionId,
+                scheduleOptionName: fullCourseData.scheduleOptionName,
+                spaceOptionId: fullCourseData.spaceOptionId,
+                spaceOptionName: fullCourseData.spaceOptionName,
+                certificationTypeId: fullCourseData.certificationTypeId,
+                certificationTypeName: fullCourseData.certificationTypeName,
+              });
+
+              const extendedCourse = fullCourseData as ExtendedCourseData;
+              const certTypeId = fullCourseData.certificationTypeId ?? null;
+
+              setEditingCourse(extendedCourse);
+              setCourseTypeId(fullCourseData.courseTypeIds ?? []);
+              setCertificationTypeId(certTypeId);
+              setHorario(
+                (fullCourseData.scheduleOptionId ?? null) as number | null
+              );
+              setEspacios(
+                (fullCourseData.spaceOptionId ?? null) as number | null
+              );
+              setIsModalOpen(true);
+            } catch (error) {
+              console.error('❌ Error loading course:', error);
+            }
           }
         }}
         onDeleteCourse={(courseId) => {
@@ -784,10 +810,30 @@ export default function Page() {
               prev ? { ...prev, coverVideoCourseKey: val } : null
             );
           }}
-          horario={horario}
-          setHorario={setHorario}
-          espacios={espacios}
-          setEspacios={setEspacios}
+          horario={
+            editingCourse ? (editingCourse.scheduleOptionId ?? null) : horario
+          }
+          setHorario={(newHorario: number | null) => {
+            if (editingCourse) {
+              setEditingCourse((prev) =>
+                prev ? { ...prev, scheduleOptionId: newHorario } : null
+              );
+            } else {
+              setHorario(newHorario);
+            }
+          }}
+          espacios={
+            editingCourse ? (editingCourse.spaceOptionId ?? null) : espacios
+          }
+          setEspacios={(newEspacios: number | null) => {
+            if (editingCourse) {
+              setEditingCourse((prev) =>
+                prev ? { ...prev, spaceOptionId: newEspacios } : null
+              );
+            } else {
+              setEspacios(newEspacios);
+            }
+          }}
           certificationTypeId={
             editingCourse
               ? (editingCourse.certificationTypeId ?? null)

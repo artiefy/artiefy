@@ -388,19 +388,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           Sedes
                         </Link>
                       </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/whatsapp/inbox?session=sesion2"
-                          className={cn(
-                            'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
-                            pathname ===
-                              '/dashboard/super-admin/whatsapp/inbox' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          WhatsApp (Sesión 2)
-                        </Link>
-                      </li>
                     </ul>
                   )}
                 </li>

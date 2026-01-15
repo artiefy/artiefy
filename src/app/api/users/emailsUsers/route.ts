@@ -5,7 +5,11 @@ import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { db } from '~/server/db';
-import { userCredentials } from '~/server/db/schema';
+import {
+  credentialsDeliveryLogs,
+  emailLogs,
+  userCredentials,
+} from '~/server/db/schema';
 
 // Interfaces and types
 interface MailOptions {
@@ -30,6 +34,86 @@ const transporter = nodemailer.createTransport({
     pass: process.env.PASS,
   },
 });
+
+// Función auxiliar para guardar logs de email - GARANTIZA persistencia
+async function logEmail(data: {
+  userId?: string;
+  email: string;
+  emailType: 'welcome' | 'academic_notification' | 'other';
+  subject: string;
+  status: 'success' | 'failed';
+  errorMessage?: string;
+  errorDetails?: unknown;
+  recipientName?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  let logSuccessful = false;
+  try {
+    await db.insert(emailLogs).values({
+      userId: data.userId ?? null,
+      email: data.email,
+      emailType: data.emailType,
+      subject: data.subject,
+      status: data.status,
+      errorMessage: data.errorMessage ?? null,
+      errorDetails: data.errorDetails
+        ? JSON.parse(JSON.stringify(data.errorDetails))
+        : null,
+      recipientName: data.recipientName ?? null,
+      metadata: data.metadata ?? null,
+      createdAt: new Date(),
+    });
+    logSuccessful = true;
+    console.log(
+      `[EMAIL LOG] ✅ PERSISTIDO - ${data.status.toUpperCase()} - ${data.emailType} a ${data.email}`
+    );
+  } catch (logErr) {
+    console.error('[EMAIL LOG] ❌ ERROR GUARDANDO LOG:', logErr);
+    console.error('[EMAIL LOG] Datos que no se pudieron guardar:', {
+      email: data.email,
+      emailType: data.emailType,
+      status: data.status,
+    });
+  }
+  return logSuccessful;
+}
+
+// Función auxiliar para guardar logs de credenciales - GARANTIZA persistencia
+async function logCredentialsDelivery(data: {
+  userId: string;
+  usuario: string;
+  contrasena: string | null;
+  correo: string;
+  nota: string;
+}) {
+  let logSuccessful = false;
+  try {
+    const result = await db
+      .insert(credentialsDeliveryLogs)
+      .values({
+        userId: data.userId,
+        usuario: data.usuario,
+        contrasena: data.contrasena,
+        correo: data.correo,
+        nota: data.nota,
+      })
+      .returning({ id: credentialsDeliveryLogs.id });
+
+    logSuccessful = true;
+    console.log(
+      `[CRED LOG] ✅ PERSISTIDO - id: ${result[0]?.id}, usuario: ${data.usuario}, nota: ${data.nota}`
+    );
+  } catch (logErr) {
+    console.error('[CRED LOG] ❌ ERROR GUARDANDO LOG:', logErr);
+    console.error('[CRED LOG] Datos que no se pudieron guardar:', {
+      userId: data.userId,
+      usuario: data.usuario,
+      correo: data.correo,
+      nota: data.nota,
+    });
+  }
+  return logSuccessful;
+}
 
 // Function to generate a random password
 function generateRandomPassword(length = 12): string {
@@ -68,6 +152,16 @@ export async function POST(request: Request) {
           )?.emailAddress ?? '';
 
         if (!email) {
+          // Log que no hay email
+          await logCredentialsDelivery({
+            userId,
+            usuario:
+              `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
+            contrasena: null,
+            correo: 'desconocido',
+            nota: 'error: email no encontrado',
+          });
+
           results.push({
             userId,
             status: 'error',
@@ -99,8 +193,25 @@ export async function POST(request: Request) {
               clerkUserId: userId,
               email,
             });
-          } catch (error) {
-            console.error(`Error creando credenciales para ${userId}:`, error);
+          } catch (credError) {
+            const errorMsg =
+              credError instanceof Error
+                ? credError.message
+                : 'Error desconocido';
+            console.error(
+              `Error creando credenciales para ${userId}:`,
+              credError
+            );
+
+            // Log del error
+            await logCredentialsDelivery({
+              userId,
+              usuario: username,
+              contrasena: password,
+              correo: email,
+              nota: `error creando credenciales: ${errorMsg}`,
+            });
+
             results.push({
               userId,
               status: 'error',
@@ -133,6 +244,24 @@ export async function POST(request: Request) {
 
         await transporter.sendMail(mailOptions);
 
+        // ✅ Guardar logs
+        await logEmail({
+          userId,
+          email,
+          emailType: 'welcome',
+          subject: '🎨 Credenciales de Acceso - Artiefy',
+          status: 'success',
+          recipientName: username,
+        });
+
+        await logCredentialsDelivery({
+          userId,
+          usuario: username,
+          contrasena: password,
+          correo: email,
+          nota: 'exitoso',
+        });
+
         results.push({
           userId,
           status: 'success',
@@ -140,18 +269,57 @@ export async function POST(request: Request) {
           message: 'Credenciales enviadas correctamente',
         });
       } catch (error) {
+        const errorMsg =
+          error instanceof Error ? error.message : 'Error desconocido';
         console.error(`Error procesando usuario ${userId}:`, error);
+
+        // Log básico de error (sin variables que podrían no existir)
+        await logEmail({
+          userId,
+          email: 'sistema@artiefy.com',
+          emailType: 'welcome',
+          subject: '🎨 Error al enviar Credenciales',
+          status: 'failed',
+          errorMessage: errorMsg,
+          errorDetails: error,
+        }).catch((logErr) =>
+          console.error('[EMAIL LOG] Error guardando log:', logErr)
+        );
+
+        await logCredentialsDelivery({
+          userId,
+          usuario: `usuario-${userId.substring(0, 8)}`,
+          contrasena: null,
+          correo: 'error@artiefy.com',
+          nota: `error procesando usuario: ${errorMsg}`,
+        }).catch((logErr) =>
+          console.error('[CRED LOG] Error guardando log:', logErr)
+        );
+
         results.push({
           userId,
           status: 'error',
-          message: error instanceof Error ? error.message : 'Error desconocido',
+          message: errorMsg,
         });
       }
     }
 
     return NextResponse.json({ results });
   } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error en la ruta emailsUsers:', error);
+
+    // Log del error global
+    await logEmail({
+      email: 'sistema@artiefy.com',
+      emailType: 'other',
+      subject: 'Error en ruta emailsUsers',
+      status: 'failed',
+      errorMessage: errorMsg,
+      errorDetails: error,
+    }).catch((err) => console.error('No se pudo guardar log de error:', err));
+
     return NextResponse.json(
       { error: 'Error al enviar los correos' },
       { status: 500 }
