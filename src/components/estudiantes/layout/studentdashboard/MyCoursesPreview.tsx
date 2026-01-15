@@ -261,7 +261,7 @@ export default function MyCoursesPreview() {
             className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
             aria-label="Anterior"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
               <IoIosArrowBack className="text-2xl text-white" />
             </div>
           </button>
@@ -271,7 +271,7 @@ export default function MyCoursesPreview() {
           className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
           aria-label="Siguiente"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
             <IoIosArrowForward className="text-2xl text-white" />
           </div>
         </button>

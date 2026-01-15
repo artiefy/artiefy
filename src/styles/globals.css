@@ -52,6 +52,7 @@
   --color-border: oklch(0.2755 0.037 260.02);
   --color-input: oklch(0.2755 0.037 260.02);
   --color-ring: oklch(0.708 0 0);
+  /* (se usa --color-border en lugar de alias extra) */
 
   /* Sidebar Theme */
   --color-sidebar: oklch(0.985 0 0);
@@ -222,6 +223,57 @@
   background-color: rgba(115, 185, 230, 0.2);
   color: rgb(180, 220, 255);
   border: 1px solid rgba(115, 185, 230, 0.35);
+}
+
+/* Chip específico para tarjetas de Programa: púrpura único (no usado en StudentListCourses) */
+.chip-categoria-program {
+  background-color: rgba(190, 130, 255, 0.16); /* suave púrpura */
+  color: rgb(200, 150, 255);
+  border: 1px solid rgba(190, 130, 255, 0.28);
+}
+
+/* Texto púrpura para botones/enlaces en tarjetas de Programa */
+.text-program-purple {
+  color: rgb(190, 130, 255) !important;
+}
+
+/* Hover sutil que ilumina con el mismo púrpura */
+.group\/button:hover .text-program-purple,
+.group:hover .text-program-purple {
+  text-shadow: 0 0 8px rgba(190, 130, 255, 0.28);
+}
+
+/* Carousel arrow overrides: botones grandes en desktop */
+[data-slot='carousel-previous'],
+[data-slot='carousel-next'] {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.04
+  ) !important; /* más claro que el fondo */
+  border: 1px solid var(--color-border) !important;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Mobile circular arrows inside carousels */
+.carousel-mobile-arrow {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.04
+  ) !important; /* ligero sobre el fondo */
+  border: 1px solid var(--color-border) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Ensure icon color remains visible */
+.carousel-mobile-arrow > svg,
+[data-slot='carousel-previous'] svg,
+[data-slot='carousel-next'] svg {
+  color: white !important;
 }
 
 @layer base {

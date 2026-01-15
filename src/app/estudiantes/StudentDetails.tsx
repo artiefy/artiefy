@@ -864,7 +864,7 @@ export default function StudentDetails({
                         className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
                         aria-label="Anterior"
                       >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                           <IoIosArrowBack className="text-2xl text-white" />
                         </div>
                       </button>
@@ -874,7 +874,7 @@ export default function StudentDetails({
                       className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
                       aria-label="Siguiente"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                      <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                         <IoIosArrowForward className="text-2xl text-white" />
                       </div>
                     </button>
@@ -890,7 +890,7 @@ export default function StudentDetails({
               id="courses-filter-section"
               className="animation-delay-250 relative -mt-4 animate-zoom-in px-4 sm:-mt-6 sm:px-8 lg:px-20"
             >
-              <div className="relative z-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="relative z-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {courses.length > 0 ? (
                   courses.map((course) => {
                     const imageUrl =
@@ -1125,7 +1125,7 @@ export default function StudentDetails({
                             className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
                             aria-label="Anterior"
                           >
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                               <IoIosArrowBack className="text-2xl text-white" />
                             </div>
                           </button>
@@ -1135,7 +1135,7 @@ export default function StudentDetails({
                           className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
                           aria-label="Siguiente"
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                             <IoIosArrowForward className="text-2xl text-white" />
                           </div>
                         </button>
@@ -1144,7 +1144,7 @@ export default function StudentDetails({
                   </div>
                 ) : (
                   // Grid para vista 'programas' (sin carousel)
-                  <div className="my-6 grid gap-4 pr-4 sm:grid-cols-2 sm:pr-0 lg:grid-cols-3">
+                  <div className="my-6 grid gap-4 pr-4 sm:grid-cols-2 sm:pr-0 lg:grid-cols-4">
                     {sortedPrograms.map((program) => (
                       <div key={program.id}>
                         <StudentProgram program={program} />

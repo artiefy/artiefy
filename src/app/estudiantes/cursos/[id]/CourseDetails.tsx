@@ -997,20 +997,25 @@ export default function CourseDetails({
                             >
                               {isEnrolling ? 'Inscribiendo…' : 'Empezar Ahora'}
                             </button>
-                            <p className="text-center text-xs text-[#94A3B8]">
-                              Accede a este y a más de{' '}
-                              <span className="font-medium text-white">
-                                {totalSimilarCourses}{' '}
-                                {totalSimilarCourses === 1 ? 'curso' : 'cursos'}
-                              </span>{' '}
-                              con {planPhrase}.{' '}
-                              <a
-                                href="/planes"
-                                className="text-white hover:underline"
-                              >
-                                Ver planes
-                              </a>
-                            </p>
+                            {/* Solo mostrar frase de planes cuando el curso tiene tipo Pro o Premium */}
+                            {(_hasPro || _hasPremium) && (
+                              <p className="text-center text-xs text-[#94A3B8]">
+                                Accede a este y a más de{' '}
+                                <span className="font-medium text-white">
+                                  {totalSimilarCourses}{' '}
+                                  {totalSimilarCourses === 1
+                                    ? 'curso'
+                                    : 'cursos'}
+                                </span>{' '}
+                                con {planPhrase}.{' '}
+                                <a
+                                  href="/planes"
+                                  className="text-white hover:underline"
+                                >
+                                  Ver planes
+                                </a>
+                              </p>
+                            )}
                           </>
                         )}
                       </div>

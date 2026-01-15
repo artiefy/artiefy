@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- saved from url=(0047)https://artiefy-course-cards.lovable.app/cursos -->
+<!-- saved from url=(0041)https://artiefy-course-cards.lovable.app/ -->
 <html lang="es" class="dark">
   <plasmo-csui id="plasmo-inspector"
     ><template shadowrootmode="open"
@@ -3266,9 +3266,45 @@
       }
     </style>
     <style></style>
+    <style type="text/css">
+      .float-tooltip-kap {
+        position: absolute;
+        width: max-content; /* prevent shrinking near right edge */
+        max-width: max(50%, 150px);
+        padding: 3px 5px;
+        border-radius: 3px;
+        font: 12px sans-serif;
+        color: #eee;
+        background: rgba(0, 0, 0, 0.6);
+        pointer-events: none;
+      }
+    </style>
+    <style type="text/css">
+      .scene-nav-info {
+        position: absolute;
+        bottom: 5px;
+        width: 100%;
+        text-align: center;
+        color: slategrey;
+        opacity: 0.7;
+        font-size: 10px;
+        font-family: sans-serif;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .scene-container canvas:focus {
+        outline: none;
+      }
+    </style>
+    <style type="text/css">
+      .scene-container .clickable {
+        cursor: pointer;
+      }
+    </style>
   </head>
 
-  <body>
+  <body style="">
     <div id="root">
       <div
         role="region"
@@ -3288,7 +3324,7 @@
         aria-relevant="additions text"
         aria-atomic="false"
       ></section>
-      <div class="min-h-screen bg-background">
+      <div class="min-h-screen bg-[#0a1628]">
         <nav
           class="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur-md"
         >
@@ -3298,7 +3334,7 @@
               type="button"
               aria-haspopup="dialog"
               aria-expanded="false"
-              aria-controls="radix-:r7:"
+              aria-controls="radix-:r84:"
               data-state="closed"
             >
               <svg
@@ -3318,6 +3354,7 @@
                 <line x1="4" x2="20" y1="18" y2="18"></line></svg
               ><span class="sr-only">Abrir menú</span></button
             ><a
+              aria-current="page"
               class="flex shrink-0 items-center gap-2"
               href="https://artiefy-course-cards.lovable.app/"
               ><div
@@ -3358,15 +3395,15 @@
               <ul class="hidden items-center gap-1 lg:flex">
                 <li>
                   <a
-                    class="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                    aria-current="page"
+                    class="rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     href="https://artiefy-course-cards.lovable.app/"
                     >Inicio</a
                   >
                 </li>
                 <li>
                   <a
-                    aria-current="page"
-                    class="rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                    class="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     href="https://artiefy-course-cards.lovable.app/cursos"
                     >Cursos</a
                   >
@@ -3399,7 +3436,7 @@
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded="false"
-                aria-controls="radix-:ra:"
+                aria-controls="radix-:r87:"
                 data-state="closed"
               >
                 <svg
@@ -3425,20 +3462,503 @@
             </div>
           </div>
         </nav>
-        <section class="relative overflow-hidden py-20">
+        <button
+          class="fixed right-6 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg transition-all duration-300 hover:from-primary/90 hover:to-primary/70"
+          style="box-shadow: rgba(34, 211, 238, 0.4) 0px 4px 30px"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-message-square h-6 w-6 text-primary-foreground"
+          >
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+            ></path>
+          </svg>
+        </button>
+        <div
+          class="pointer-events-none fixed right-6 bottom-6 z-50 w-[380px] max-w-[calc(100vw-48px)] translate-y-4 opacity-0 transition-all duration-300"
+        >
           <div
-            class="pointer-events-none absolute top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]"
-          ></div>
-          <div
-            class="pointer-events-none absolute right-1/4 bottom-0 h-[400px] w-[400px] rounded-full bg-accent/5 blur-[100px]"
-          ></div>
-          <div class="relative z-10 container">
+            class="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl backdrop-blur-xl"
+          >
             <div
-              class="mx-auto max-w-3xl text-center"
+              class="border-b border-border/50 bg-gradient-to-r from-card to-muted/50 px-4 py-3"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-sparkles h-5 w-5 text-primary-foreground"
+                    >
+                      <path
+                        d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                      ></path>
+                      <path d="M20 3v4"></path>
+                      <path d="M22 5h-4"></path>
+                      <path d="M4 17v2"></path>
+                      <path d="M5 18H3"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-semibold text-foreground">Artie IA</h3>
+                      <span
+                        class="h-2 w-2 animate-pulse rounded-full bg-green-500"
+                      ></span>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                      Asistente de aprendizaje
+                    </p>
+                  </div>
+                </div>
+                <button
+                  class="rounded-lg p-2 transition-colors hover:bg-muted/50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-x h-5 w-5 text-muted-foreground"
+                  >
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="border-b border-border/50 bg-muted/10 px-3 py-2">
+              <div class="flex items-center justify-center gap-1">
+                <button
+                  class="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-ticket h-3.5 w-3.5"
+                  >
+                    <path
+                      d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"
+                    ></path>
+                    <path d="M13 5v2"></path>
+                    <path d="M13 17v2"></path>
+                    <path d="M13 11v2"></path></svg
+                  >Tickets</button
+                ><button
+                  class="flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-all duration-200"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-message-square h-3.5 w-3.5"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    ></path></svg
+                  >Chat IA</button
+                ><button
+                  class="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-folder-kanban h-3.5 w-3.5"
+                  >
+                    <path
+                      d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"
+                    ></path>
+                    <path d="M8 10v4"></path>
+                    <path d="M12 10v2"></path>
+                    <path d="M16 10v6"></path></svg
+                  >Proyectos
+                </button>
+              </div>
+            </div>
+            <div
+              class="scrollbar-minimal h-[350px] space-y-4 overflow-y-auto p-4"
+            >
+              <div
+                class="flex h-full flex-col items-center justify-center px-4 text-center"
+              >
+                <div
+                  class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-message-circle h-8 w-8 text-primary"
+                  >
+                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
+                  </svg>
+                </div>
+                <h4 class="mb-2 font-semibold text-foreground">Chats con IA</h4>
+                <p class="mb-4 text-sm text-muted-foreground">
+                  Comienza una conversación con Artie IA para recibir
+                  recomendaciones personalizadas de cursos.
+                </p>
+                <button
+                  class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-plus mr-2 h-4 w-4"
+                  >
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path></svg
+                  >Crear Nuevo Chat IA
+                </button>
+              </div>
+            </div>
+            <div class="border-t border-border/50 bg-muted/20 p-4">
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Escribe tu mensaje..."
+                  class="flex-1 rounded-xl border border-border/50 bg-muted/50 px-4 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                  value=""
+                /><button
+                  disabled=""
+                  class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-send h-4 w-4 text-primary-foreground"
+                  >
+                    <path
+                      d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+                    ></path>
+                    <path d="m21.854 2.147-10.94 10.939"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pointer-events-none fixed top-0 left-0 z-10"
+          style="opacity: 0; transform: translateX(10vw) scale(0)"
+        >
+          <div class="relative" style="transform: rotate(135deg)">
+            <svg
+              width="56"
+              height="56"
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              class="drop-shadow-[0_0_20px_rgba(34,211,238,0.6)]"
+            >
+              <path
+                d="M32 4C32 4 24 16 24 32C24 40 26 46 28 50L32 52L36 50C38 46 40 40 40 32C40 16 32 4 32 4Z"
+                fill="url(#rocketGradient)"
+                stroke="hsl(var(--primary))"
+                stroke-width="1.5"
+              ></path>
+              <ellipse
+                cx="32"
+                cy="12"
+                rx="4"
+                ry="6"
+                fill="hsl(var(--primary))"
+              ></ellipse>
+              <circle
+                cx="32"
+                cy="24"
+                r="5"
+                fill="hsl(var(--background))"
+                stroke="hsl(var(--primary))"
+                stroke-width="1.5"
+              ></circle>
+              <circle
+                cx="32"
+                cy="24"
+                r="3"
+                fill="url(#windowGradient)"
+              ></circle>
+              <path
+                d="M24 40L16 52L24 48V40Z"
+                fill="hsl(var(--primary))"
+                opacity="0.8"
+              ></path>
+              <path
+                d="M40 40L48 52L40 48V40Z"
+                fill="hsl(var(--primary))"
+                opacity="0.8"
+              ></path>
+              <defs>
+                <lineargradient
+                  id="rocketGradient"
+                  x1="32"
+                  y1="4"
+                  x2="32"
+                  y2="52"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop stop-color="hsl(var(--muted))"></stop>
+                  <stop
+                    offset="1"
+                    stop-color="hsl(var(--muted-foreground))"
+                    stop-opacity="0.3"
+                  ></stop>
+                </lineargradient>
+                <radialgradient id="windowGradient" cx="0.3" cy="0.3" r="0.7">
+                  <stop
+                    stop-color="hsl(var(--primary))"
+                    stop-opacity="0.8"
+                  ></stop>
+                  <stop
+                    offset="1"
+                    stop-color="hsl(var(--primary))"
+                    stop-opacity="0.2"
+                  ></stop>
+                </radialgradient>
+              </defs>
+            </svg>
+            <div
+              class="absolute top-[48px] left-1/2 -translate-x-1/2"
+              style="transform: scale(1.00146)"
+            >
+              <svg
+                width="28"
+                height="40"
+                viewBox="0 0 24 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 0C12 0 4 8 4 16C4 24 8 32 12 32C16 32 20 24 20 16C20 8 12 0 12 0Z"
+                  fill="url(#flameGradient)"
+                ></path>
+                <path
+                  d="M12 8C12 8 8 14 8 20C8 26 10 32 12 32C14 32 16 26 16 20C16 14 12 8 12 8Z"
+                  fill="url(#innerFlameGradient)"
+                ></path>
+                <defs>
+                  <lineargradient
+                    id="flameGradient"
+                    x1="12"
+                    y1="0"
+                    x2="12"
+                    y2="32"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stop-color="#f97316"></stop>
+                    <stop offset="0.5" stop-color="#eab308"></stop>
+                    <stop
+                      offset="1"
+                      stop-color="#22d3ee"
+                      stop-opacity="0"
+                    ></stop>
+                  </lineargradient>
+                  <lineargradient
+                    id="innerFlameGradient"
+                    x1="12"
+                    y1="8"
+                    x2="12"
+                    y2="32"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stop-color="#fef3c7"></stop>
+                    <stop offset="0.5" stop-color="#fbbf24"></stop>
+                    <stop
+                      offset="1"
+                      stop-color="#f97316"
+                      stop-opacity="0"
+                    ></stop>
+                  </lineargradient>
+                </defs>
+              </svg>
+            </div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 70px;
+                width: 6px;
+                height: 6px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.6),
+                  rgba(249, 115, 22, 0.4)
+                );
+                transform: translateX(0.35458px) scale(0.971634);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 82px;
+                width: 5.5px;
+                height: 5.5px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.53),
+                  rgba(249, 115, 22, 0.35)
+                );
+                transform: translateX(-2.23494px) scale(0.821205);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 94px;
+                width: 5px;
+                height: 5px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.46),
+                  rgba(249, 115, 22, 0.3)
+                );
+                transform: translateX(4.99787px) scale(0.60017);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 106px;
+                width: 4.5px;
+                height: 4.5px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.39),
+                  rgba(249, 115, 22, 0.25)
+                );
+                transform: translateX(-3.85447px) scale(0.691643);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 118px;
+                width: 4px;
+                height: 4px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.32),
+                  rgba(249, 115, 22, 0.2)
+                );
+                transform: translateX(1.43447px) scale(0.885242);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 130px;
+                width: 3.5px;
+                height: 3.5px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.25),
+                  rgba(249, 115, 22, 0.15)
+                );
+                transform: translateX(-0.35458px) scale(0.971634);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 142px;
+                width: 3px;
+                height: 3px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.18),
+                  rgba(249, 115, 22, 0.098)
+                );
+                transform: translateX(2.23494px) scale(0.821205);
+              "
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 rounded-full"
+              style="
+                top: 154px;
+                width: 2.5px;
+                height: 2.5px;
+                background: linear-gradient(
+                  rgba(34, 211, 238, 0.11),
+                  rgba(249, 115, 22, 0.05)
+                );
+                transform: translateX(-4.99787px) scale(0.60017);
+              "
+            ></div>
+          </div>
+        </div>
+        <section
+          class="relative flex min-h-[90vh] items-center overflow-hidden"
+        >
+          <div
+            class="pointer-events-none absolute top-1/4 left-1/4 h-[600px] w-[600px] rounded-full bg-cyan-500/10 blur-[150px]"
+          ></div>
+          <div
+            class="pointer-events-none absolute right-1/4 bottom-1/4 h-[500px] w-[500px] rounded-full bg-teal-500/8 blur-[120px]"
+          ></div>
+          <div class="relative z-10 container py-20">
+            <div
+              class="mx-auto max-w-4xl text-center"
               style="opacity: 1; transform: none"
             >
               <div
-                class="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                class="mb-8 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400"
+                style="opacity: 1; transform: none"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -3450,21 +3970,1185 @@
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="lucide lucide-graduation-cap h-4 w-4"
+                  class="lucide lucide-sparkles h-4 w-4"
                 >
                   <path
-                    d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"
+                    d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
                   ></path>
-                  <path d="M22 10v6"></path>
-                  <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path></svg
-                >8 cursos disponibles
+                  <path d="M20 3v4"></path>
+                  <path d="M22 5h-4"></path>
+                  <path d="M4 17v2"></path>
+                  <path d="M5 18H3"></path></svg
+                >La plataforma educativa del futuro
               </div>
               <h1
-                class="font-display mb-4 text-4xl font-bold text-foreground md:text-5xl"
+                class="font-display mb-6 text-4xl leading-tight font-bold text-white md:text-5xl lg:text-7xl"
               >
-                Pregúntale a
+                La comunidad que hace
+                <span class="relative"
+                  ><span
+                    class="bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(34,211,238,0.6)]"
+                    >sus ideas realidad</span
+                  ></span
+                >
+              </h1>
+              <p
+                class="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl"
+              >
+                Aprende con proyectos reales, crea con inteligencia artificial y
+                conecta con una comunidad que transforma ideas en productos que
+                impactan.
+              </p>
+              <form class="mx-auto mb-8 max-w-2xl">
+                <div class="group relative">
+                  <div
+                    class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 opacity-30 blur-lg transition-opacity group-hover:opacity-50"
+                  ></div>
+                  <div
+                    class="relative flex items-center overflow-hidden rounded-xl border border-slate-700/50 bg-slate-900/90"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-brain ml-5 h-6 w-6 text-cyan-400"
+                    >
+                      <path
+                        d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"
+                      ></path>
+                      <path
+                        d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"
+                      ></path>
+                      <path
+                        d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"
+                      ></path>
+                      <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path>
+                      <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"></path>
+                      <path d="M3.477 10.896a4 4 0 0 1 .585-.396"></path>
+                      <path d="M19.938 10.5a4 4 0 0 1 .585.396"></path>
+                      <path d="M6 18a4 4 0 0 1-1.967-.516"></path>
+                      <path d="M19.967 17.484A4 4 0 0 1 18 18"></path></svg
+                    ><input
+                      type="text"
+                      placeholder="Pregúntale a Artie: ¿Qué quieres aprender o crear hoy?"
+                      class="flex-1 bg-transparent px-4 py-5 text-lg text-white placeholder:text-slate-500 focus:outline-none"
+                      value=""
+                    /><button
+                      class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 m-2 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary bg-gradient-to-r from-cyan-500 to-teal-500 px-6 py-2 text-sm font-medium whitespace-nowrap text-white ring-offset-background transition-colors hover:bg-primary/90 hover:from-cyan-400 hover:to-teal-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                      type="submit"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-sparkles mr-2 h-5 w-5"
+                      >
+                        <path
+                          d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                        ></path>
+                        <path d="M20 3v4"></path>
+                        <path d="M22 5h-4"></path>
+                        <path d="M4 17v2"></path>
+                        <path d="M5 18H3"></path></svg
+                      >Buscar con IA
+                    </button>
+                  </div>
+                </div>
+              </form>
+              <div
+                class="flex flex-wrap justify-center gap-3 text-sm text-slate-500"
+              >
+                <span>Prueba:</span
+                ><button
+                  class="text-cyan-400 transition-colors hover:text-cyan-300"
+                >
+                  "Quiero aprender desarrollo web"</button
+                ><span>•</span
+                ><button
+                  class="text-cyan-400 transition-colors hover:text-cyan-300"
+                >
+                  "Crear un proyecto con IA"</button
+                ><span>•</span
+                ><button
+                  class="text-cyan-400 transition-colors hover:text-cyan-300"
+                >
+                  "Diseño UX desde cero"
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="absolute bottom-8 left-1/2 -translate-x-1/2"
+            style="opacity: 1"
+          >
+            <div
+              class="flex h-10 w-6 items-start justify-center rounded-full border-2 border-slate-600 p-2"
+              style="transform: translateY(2.56551px)"
+            >
+              <div class="h-3 w-1.5 rounded-full bg-cyan-400"></div>
+            </div>
+          </div>
+        </section>
+        <section class="border-y border-slate-800/30 py-16">
+          <div class="container">
+            <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+              <div
+                class="text-center"
+                style="opacity: 0; transform: translateY(20px)"
+              >
+                <p
+                  class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                >
+                  10K+
+                </p>
+                <p class="mt-1 text-slate-500">Estudiantes activos</p>
+              </div>
+              <div
+                class="text-center"
+                style="opacity: 0; transform: translateY(20px)"
+              >
+                <p
+                  class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                >
+                  200+
+                </p>
+                <p class="mt-1 text-slate-500">Cursos prácticos</p>
+              </div>
+              <div
+                class="text-center"
+                style="opacity: 0; transform: translateY(20px)"
+              >
+                <p
+                  class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                >
+                  500+
+                </p>
+                <p class="mt-1 text-slate-500">Proyectos lanzados</p>
+              </div>
+              <div
+                class="text-center"
+                style="opacity: 0; transform: translateY(20px)"
+              >
+                <p
+                  class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                >
+                  2
+                </p>
+                <p class="mt-1 text-slate-500">Espacios físicos</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="relative py-24">
+          <div
+            class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent"
+          ></div>
+          <div class="relative z-10 container">
+            <div
+              class="mb-16 text-center"
+              style="opacity: 0; transform: translateY(20px)"
+            >
+              <span
+                class="mb-4 inline-block rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-sm font-medium text-cyan-400"
+                >Cómo funciona</span
+              >
+              <h2
+                class="font-display mb-4 text-3xl font-bold text-white md:text-4xl"
+              >
+                De la idea al producto en 3 pasos
+              </h2>
+              <p class="mx-auto max-w-2xl text-lg text-slate-400">
+                No solo aprendes teoría. Construyes proyectos reales que puedes
+                mostrar.
+              </p>
+            </div>
+            <div class="grid gap-8 md:grid-cols-3">
+              <div
+                class="group relative"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-teal-500/10 opacity-0 transition-opacity group-hover:opacity-100"
+                ></div>
+                <div
+                  class="relative rounded-2xl border border-slate-800 bg-slate-900/60 p-8 transition-colors hover:border-cyan-500/30"
+                >
+                  <span
+                    class="absolute top-4 right-6 text-6xl font-bold text-slate-800"
+                    >01</span
+                  >
+                  <div
+                    class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-graduation-cap h-7 w-7 text-cyan-400"
+                    >
+                      <path
+                        d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"
+                      ></path>
+                      <path d="M22 10v6"></path>
+                      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+                    </svg>
+                  </div>
+                  <h3 class="mb-3 text-xl font-bold text-white">
+                    Aprende con propósito
+                  </h3>
+                  <p class="text-slate-400">
+                    Cursos diseñados alrededor de proyectos reales. Cada lección
+                    te acerca a un producto terminado.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="group relative"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-teal-500/10 opacity-0 transition-opacity group-hover:opacity-100"
+                ></div>
+                <div
+                  class="relative rounded-2xl border border-slate-800 bg-slate-900/60 p-8 transition-colors hover:border-cyan-500/30"
+                >
+                  <span
+                    class="absolute top-4 right-6 text-6xl font-bold text-slate-800"
+                    >02</span
+                  >
+                  <div
+                    class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-code h-7 w-7 text-cyan-400"
+                    >
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                  </div>
+                  <h3 class="mb-3 text-xl font-bold text-white">
+                    Construye con IA
+                  </h3>
+                  <p class="text-slate-400">
+                    Herramientas de IA que te ayudan a planear, ejecutar y
+                    documentar tu proyecto paso a paso.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="group relative"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-teal-500/10 opacity-0 transition-opacity group-hover:opacity-100"
+                ></div>
+                <div
+                  class="relative rounded-2xl border border-slate-800 bg-slate-900/60 p-8 transition-colors hover:border-cyan-500/30"
+                >
+                  <span
+                    class="absolute top-4 right-6 text-6xl font-bold text-slate-800"
+                    >03</span
+                  >
+                  <div
+                    class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-rocket h-7 w-7 text-cyan-400"
+                    >
+                      <path
+                        d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+                      ></path>
+                      <path
+                        d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+                      ></path>
+                      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+                      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+                    </svg>
+                  </div>
+                  <h3 class="mb-3 text-xl font-bold text-white">
+                    Lanza y comparte
+                  </h3>
+                  <p class="text-slate-400">
+                    Publica tu proyecto, recibe feedback de la comunidad y
+                    conecta con oportunidades reales.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="py-24">
+          <div class="container">
+            <div
+              class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end"
+              style="opacity: 0; transform: translateY(20px)"
+            >
+              <div>
                 <span
-                  class="inline-flex items-center gap-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+                  class="mb-4 inline-block rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-sm font-medium text-cyan-400"
+                  >Cursos</span
+                >
+                <h2
+                  class="font-display mb-4 text-3xl font-bold text-white md:text-4xl"
+                >
+                  Aprende habilidades que importan
+                </h2>
+                <p class="max-w-xl text-lg text-slate-400">
+                  Cursos prácticos con proyectos reales. No videos eternos, sino
+                  aprendizaje aplicado.
+                </p>
+              </div>
+              <a href="https://artiefy-course-cards.lovable.app/"
+                ><button
+                  class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-200 ring-offset-background transition-colors hover:bg-slate-800 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                >
+                  Ver todos los cursos<svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-arrow-right h-4 w-4"
+                  >
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg></button
+              ></a>
+            </div>
+            <div class="grid gap-6 md:grid-cols-3">
+              <div
+                class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 transition-all hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1677442136019-21780ecad995"
+                    alt="Fundamentos de IA y Machine Learning"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"
+                  ></div>
+                  <span
+                    class="absolute bottom-4 left-4 rounded-full border border-cyan-500/30 bg-cyan-500/20 px-3 py-1 text-xs font-medium text-cyan-400"
+                    >Inteligencia Artificial</span
+                  >
+                </div>
+                <div class="p-5">
+                  <h3
+                    class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                  >
+                    Fundamentos de IA y Machine Learning
+                  </h3>
+                  <p class="mb-4 text-sm text-slate-500">
+                    Por Dr. Carlos Mendoza
+                  </p>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400">2.4K estudiantes</span
+                    ><span class="flex items-center gap-1 text-yellow-500"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-star h-4 w-4 fill-current"
+                      >
+                        <path
+                          d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                        ></path></svg
+                      >4.9</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div
+                class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 transition-all hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1633356122544-f134324a6cee"
+                    alt="Full Stack con React y Node.js"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"
+                  ></div>
+                  <span
+                    class="absolute bottom-4 left-4 rounded-full border border-cyan-500/30 bg-cyan-500/20 px-3 py-1 text-xs font-medium text-cyan-400"
+                    >Desarrollo Web</span
+                  >
+                </div>
+                <div class="p-5">
+                  <h3
+                    class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                  >
+                    Full Stack con React y Node.js
+                  </h3>
+                  <p class="mb-4 text-sm text-slate-500">
+                    Por Ana María Torres
+                  </p>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400">3.1K estudiantes</span
+                    ><span class="flex items-center gap-1 text-yellow-500"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-star h-4 w-4 fill-current"
+                      >
+                        <path
+                          d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                        ></path></svg
+                      >4.8</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div
+                class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 transition-all hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1460925895917-afdab827c52f"
+                    alt="UX/UI: Creando Experiencias Digitales"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"
+                  ></div>
+                  <span
+                    class="absolute bottom-4 left-4 rounded-full border border-cyan-500/30 bg-cyan-500/20 px-3 py-1 text-xs font-medium text-cyan-400"
+                    >Diseño</span
+                  >
+                </div>
+                <div class="p-5">
+                  <h3
+                    class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                  >
+                    UX/UI: Creando Experiencias Digitales
+                  </h3>
+                  <p class="mb-4 text-sm text-slate-500">
+                    Por María José Vargas
+                  </p>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400">1.8K estudiantes</span
+                    ><span class="flex items-center gap-1 text-yellow-500"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-star h-4 w-4 fill-current"
+                      >
+                        <path
+                          d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                        ></path></svg
+                      >4.9</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="relative py-24">
+          <div
+            class="pointer-events-none absolute top-1/2 right-0 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-teal-500/5 blur-[100px]"
+          ></div>
+          <div class="relative z-10 container">
+            <div class="grid items-center gap-16 lg:grid-cols-2">
+              <div style="opacity: 0; transform: translateX(-30px)">
+                <span
+                  class="mb-4 inline-block rounded-full border border-teal-500/20 bg-teal-500/10 px-4 py-1.5 text-sm font-medium text-teal-400"
+                  >Proyectos</span
+                >
+                <h2
+                  class="font-display mb-6 text-3xl font-bold text-white md:text-4xl"
+                >
+                  Construye en público,
+                  <span class="text-teal-400">crece en comunidad</span>
+                </h2>
+                <p class="mb-8 text-lg text-slate-400">
+                  Publica tus avances, busca colaboradores, recibe feedback real
+                  y atrae oportunidades. No es solo aprender, es lanzar.
+                </p>
+                <ul class="mb-8 space-y-4">
+                  <li class="flex items-start gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check mt-0.5 h-5 w-5 shrink-0 text-teal-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Publica proyectos y recibe feedback de la comunidad
+                  </li>
+                  <li class="flex items-start gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check mt-0.5 h-5 w-5 shrink-0 text-teal-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Encuentra colaboradores con skills complementarios
+                  </li>
+                  <li class="flex items-start gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check mt-0.5 h-5 w-5 shrink-0 text-teal-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Atrae inversión y oportunidades laborales
+                  </li>
+                  <li class="flex items-start gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check mt-0.5 h-5 w-5 shrink-0 text-teal-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Documenta tu proceso y construye tu portafolio
+                  </li>
+                </ul>
+                <a href="https://artiefy-course-cards.lovable.app/proyectos"
+                  ><button
+                    class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-2 text-sm font-medium whitespace-nowrap text-white ring-offset-background transition-colors hover:bg-primary/90 hover:from-teal-400 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    Explorar proyectos<svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-arrow-right h-4 w-4"
+                    >
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg></button
+                ></a>
+              </div>
+              <div
+                class="relative"
+                style="opacity: 0; transform: translateX(30px)"
+              >
+                <div
+                  class="absolute -inset-4 rounded-3xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20 blur-xl"
+                ></div>
+                <div
+                  class="relative rounded-2xl border border-slate-800 bg-slate-900 p-6"
+                >
+                  <div class="mb-4 flex items-center gap-3">
+                    <div
+                      class="h-10 w-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500"
+                    ></div>
+                    <div>
+                      <p class="font-medium text-white">María García</p>
+                      <p class="text-sm text-slate-500">hace 2 horas</p>
+                    </div>
+                  </div>
+                  <p class="mb-4 text-slate-300">
+                    🚀 Acabo de lanzar mi app de gestión de tareas con IA!
+                    Gracias a todos los que dieron feedback durante el
+                    desarrollo.
+                  </p>
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1551288049-bebda4e38f71"
+                    alt="Project preview"
+                    class="mb-4 h-48 w-full rounded-xl object-cover"
+                  />
+                  <div class="flex items-center gap-6 text-slate-500">
+                    <span class="flex items-center gap-2"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-star h-4 w-4"
+                      >
+                        <path
+                          d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                        ></path>
+                      </svg>
+                      234</span
+                    ><span class="flex items-center gap-2"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-message-square h-4 w-4"
+                      >
+                        <path
+                          d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        ></path>
+                      </svg>
+                      45</span
+                    ><span class="flex items-center gap-2"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-users h-4 w-4"
+                      >
+                        <path
+                          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                        ></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      12 colaboradores</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="relative py-24">
+          <div
+            class="pointer-events-none absolute top-1/2 left-0 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-cyan-500/5 blur-[100px]"
+          ></div>
+          <div class="relative z-10 container">
+            <div
+              class="mb-16 text-center"
+              style="opacity: 0; transform: translateY(20px)"
+            >
+              <span
+                class="mb-4 inline-block rounded-full border border-purple-500/20 bg-purple-500/10 px-4 py-1.5 text-sm font-medium text-purple-400"
+                >Inteligencia Artificial</span
+              >
+              <h2
+                class="font-display mb-4 text-3xl font-bold text-white md:text-4xl"
+              >
+                Tu copiloto para crear más rápido
+              </h2>
+              <p class="mx-auto max-w-2xl text-lg text-slate-400">
+                Herramientas de IA integradas que te ayudan a aprender, planear
+                y ejecutar tus proyectos.
+              </p>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div
+                class="group rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition-colors hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-brain h-6 w-6 text-cyan-400"
+                  >
+                    <path
+                      d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"
+                    ></path>
+                    <path
+                      d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"
+                    ></path>
+                    <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path>
+                    <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path>
+                    <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"></path>
+                    <path d="M3.477 10.896a4 4 0 0 1 .585-.396"></path>
+                    <path d="M19.938 10.5a4 4 0 0 1 .585.396"></path>
+                    <path d="M6 18a4 4 0 0 1-1.967-.516"></path>
+                    <path d="M19.967 17.484A4 4 0 0 1 18 18"></path>
+                  </svg>
+                </div>
+                <h3
+                  class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                >
+                  Artie IA
+                </h3>
+                <p class="text-sm text-slate-400">
+                  Tu tutor personal que responde dudas y te guía en tiempo real.
+                </p>
+              </div>
+              <div
+                class="group rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition-colors hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-lightbulb h-6 w-6 text-yellow-400"
+                  >
+                    <path
+                      d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
+                    ></path>
+                    <path d="M9 18h6"></path>
+                    <path d="M10 22h4"></path>
+                  </svg>
+                </div>
+                <h3
+                  class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                >
+                  Ideación
+                </h3>
+                <p class="text-sm text-slate-400">
+                  Genera ideas de proyectos basadas en tus intereses y
+                  habilidades.
+                </p>
+              </div>
+              <div
+                class="group rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition-colors hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-target h-6 w-6 text-green-400"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                  </svg>
+                </div>
+                <h3
+                  class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                >
+                  Planificación
+                </h3>
+                <p class="text-sm text-slate-400">
+                  Crea roadmaps y divide proyectos en tareas manejables.
+                </p>
+              </div>
+              <div
+                class="group rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition-colors hover:border-cyan-500/30"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div
+                  class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-code h-6 w-6 text-purple-400"
+                  >
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                </div>
+                <h3
+                  class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400"
+                >
+                  Asistente de código
+                </h3>
+                <p class="text-sm text-slate-400">
+                  Debugging, refactoring y sugerencias de código inteligentes.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="relative py-24">
+          <div class="container">
+            <div class="grid items-center gap-16 lg:grid-cols-2">
+              <div
+                class="order-2 lg:order-1"
+                style="opacity: 0; transform: translateX(-30px)"
+              >
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-4">
+                    <div
+                      class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-colors hover:border-cyan-500/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-map-pin mb-3 h-8 w-8 text-cyan-400"
+                      >
+                        <path
+                          d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
+                        ></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <h4 class="font-bold text-white">Cali</h4>
+                      <p class="text-sm text-slate-500">Valle del Cauca</p>
+                    </div>
+                    <div
+                      class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-colors hover:border-cyan-500/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-globe mb-3 h-8 w-8 text-teal-400"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path
+                          d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"
+                        ></path>
+                        <path d="M2 12h20"></path>
+                      </svg>
+                      <h4 class="font-bold text-white">Digital</h4>
+                      <p class="text-sm text-slate-500">
+                        Desde cualquier lugar
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mt-8 space-y-4">
+                    <div
+                      class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-colors hover:border-cyan-500/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-map-pin mb-3 h-8 w-8 text-cyan-400"
+                      >
+                        <path
+                          d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
+                        ></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <h4 class="font-bold text-white">Florencia</h4>
+                      <p class="text-sm text-slate-500">Caquetá</p>
+                    </div>
+                    <div
+                      class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-colors hover:border-cyan-500/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-users mb-3 h-8 w-8 text-purple-400"
+                      >
+                        <path
+                          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                        ></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      <h4 class="font-bold text-white">Comunidad</h4>
+                      <p class="text-sm text-slate-500">Foros y networking</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="order-1 lg:order-2"
+                style="opacity: 0; transform: translateX(30px)"
+              >
+                <span
+                  class="mb-4 inline-block rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-sm font-medium text-cyan-400"
+                  >Espacios</span
+                >
+                <h2
+                  class="font-display mb-6 text-3xl font-bold text-white md:text-4xl"
+                >
+                  Físicos + Digitales para
+                  <span class="text-cyan-400">crear sin límites</span>
+                </h2>
+                <p class="mb-8 text-lg text-slate-400">
+                  Espacios equipados con tecnología de punta, laboratorios,
+                  impresoras 3D, coworking y una comunidad digital activa.
+                </p>
+                <ul class="mb-8 space-y-3">
+                  <li class="flex items-center gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check h-5 w-5 shrink-0 text-cyan-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Aulas de alta tecnología y laboratorios
+                  </li>
+                  <li class="flex items-center gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check h-5 w-5 shrink-0 text-cyan-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Coworking e impresoras 3D
+                  </li>
+                  <li class="flex items-center gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check h-5 w-5 shrink-0 text-cyan-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Mentoría y acompañamiento continuo
+                  </li>
+                  <li class="flex items-center gap-3 text-slate-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-circle-check h-5 w-5 shrink-0 text-cyan-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m9 12 2 2 4-4"></path></svg
+                    >Comunidad, foros y networking
+                  </li>
+                </ul>
+                <a href="https://artiefy-course-cards.lovable.app/espacios"
+                  ><button
+                    class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary bg-gradient-to-r from-cyan-500 to-teal-500 px-6 py-2 text-sm font-medium whitespace-nowrap text-white ring-offset-background transition-colors hover:bg-primary/90 hover:from-cyan-400 hover:to-teal-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    Explorar espacios<svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-arrow-right h-4 w-4"
+                    >
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg></button
+                ></a>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="relative py-24">
+          <div
+            class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent"
+          ></div>
+          <div class="relative z-10 container">
+            <div
+              class="mb-16 text-center"
+              style="opacity: 0; transform: translateY(20px)"
+            >
+              <span
+                class="mb-4 inline-block rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-sm font-medium text-cyan-400"
+                >Testimonios</span
+              >
+              <h2
+                class="font-display text-3xl font-bold text-white md:text-4xl"
+              >
+                Lo que dicen nuestros estudiantes
+              </h2>
+            </div>
+            <div class="grid gap-6 md:grid-cols-3">
+              <div
+                class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="mb-4 flex gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
                   ><svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -3475,427 +5159,346 @@
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="lucide lucide-sparkles h-8 w-8 text-primary"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
                   >
                     <path
-                      d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
                     ></path>
-                    <path d="M20 3v4"></path>
-                    <path d="M22 5h-4"></path>
-                    <path d="M4 17v2"></path>
-                    <path d="M5 18H3"></path></svg
-                  >Artie IA</span
-                >
-              </h1>
-              <p class="mb-8 text-lg text-muted-foreground">
-                Tu asistente de IA para encontrar el curso perfecto y comenzar a
-                crear proyectos increíbles.
-              </p>
-              <div class="flex justify-center">
-                <form class="w-full max-w-2xl">
-                  <div class="group relative transition-all duration-300">
-                    <div
-                      class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/40 via-accent/30 to-primary/40 opacity-0 blur-lg transition-opacity duration-300"
-                    ></div>
-                    <div
-                      class="relative flex items-center overflow-hidden rounded-xl border border-border/50 bg-card/80 shadow-lg backdrop-blur-sm"
-                    >
-                      <div class="flex items-center justify-center pl-4">
-                        <div class="relative">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="lucide lucide-sparkles h-5 w-5 text-primary transition-all duration-300"
-                          >
-                            <path
-                              d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
-                            ></path>
-                            <path d="M20 3v4"></path>
-                            <path d="M22 5h-4"></path>
-                            <path d="M4 17v2"></path>
-                            <path d="M5 18H3"></path>
-                          </svg>
-                        </div>
-                      </div>
-                      <input
-                        type="text"
-                        class="flex h-10 w-full flex-1 rounded-md border-0 border-input bg-transparent px-3 py-4 text-base text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        placeholder="Aprende con IA y construye proyectos reales"
-                        value=""
-                      /><button
-                        type="submit"
-                        class="m-1.5 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-search h-4 w-4"
-                        >
-                          <circle cx="11" cy="11" r="8"></circle>
-                          <path d="m21 21-4.3-4.3"></path></svg
-                        ><span class="hidden sm:inline">Buscar</span>
-                      </button>
-                    </div>
+                  </svg>
+                </div>
+                <p class="mb-6 leading-relaxed text-slate-300">
+                  "Pasé de no saber programar a lanzar mi primera app en 3
+                  meses. La metodología de proyectos reales marca la
+                  diferencia."
+                </p>
+                <div class="flex items-center gap-3">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1507003211169-0a1dd7228f2d"
+                    alt="Juan Carlos Pérez"
+                    class="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p class="font-medium text-white">Juan Carlos Pérez</p>
+                    <p class="text-sm text-slate-500">
+                      Desarrollador Full Stack
+                    </p>
                   </div>
-                </form>
+                </div>
+              </div>
+              <div
+                class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="mb-4 flex gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path>
+                  </svg>
+                </div>
+                <p class="mb-6 leading-relaxed text-slate-300">
+                  "La comunidad de Artiefy es increíble. Encontré cofundadores
+                  para mi startup y mentores que realmente se preocupan."
+                </p>
+                <div class="flex items-center gap-3">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1494790108377-be9c29b29330"
+                    alt="Laura Martínez"
+                    class="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p class="font-medium text-white">Laura Martínez</p>
+                    <p class="text-sm text-slate-500">CEO de TechStart</p>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"
+                style="opacity: 0; transform: translateY(30px)"
+              >
+                <div class="mb-4 flex gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path></svg
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-star h-4 w-4 fill-current text-yellow-500"
+                  >
+                    <path
+                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                    ></path>
+                  </svg>
+                </div>
+                <p class="mb-6 leading-relaxed text-slate-300">
+                  "Las herramientas de IA me ahorraron cientos de horas. Es como
+                  tener un mentor 24/7 que siempre tiene la respuesta."
+                </p>
+                <div class="flex items-center gap-3">
+                  <img
+                    src="./Artie IA - Aprende con IA_files/photo-1472099645785-5658abf4ff4e"
+                    alt="Andrés Rodríguez"
+                    class="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p class="font-medium text-white">Andrés Rodríguez</p>
+                    <p class="text-sm text-slate-500">Diseñador UX</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
-        <section class="border-b border-border/30 py-8">
+        <section class="py-24">
           <div class="container">
-            <section class="mb-12">
-              <div class="mb-5 flex items-center justify-between">
+            <div
+              class="relative overflow-hidden rounded-3xl border border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-center md:p-16"
+              style="opacity: 0; transform: translateY(30px)"
+            >
+              <div
+                class="pointer-events-none absolute top-0 left-1/4 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl"
+              ></div>
+              <div
+                class="pointer-events-none absolute right-1/4 bottom-0 h-96 w-96 rounded-full bg-teal-500/20 blur-3xl"
+              ></div>
+              <div class="relative z-10">
+                <span
+                  class="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-zap h-4 w-4"
+                  >
+                    <path
+                      d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                    ></path></svg
+                  >Oferta especial</span
+                >
                 <h2
-                  class="font-display text-2xl font-bold text-primary md:text-3xl"
+                  class="font-display mb-6 text-3xl font-bold text-white md:text-5xl"
                 >
-                  Seguir viendo
+                  Comienza tu transformación
+                  <span
+                    class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent"
+                    >hoy</span
+                  >
                 </h2>
-                <a
-                  class="text-sm text-primary underline-offset-4 transition-colors hover:underline"
-                  href="https://artiefy-course-cards.lovable.app/mis-cursos"
-                  >Ver todos</a
-                >
-              </div>
-              <div class="group relative">
-                <button
-                  class="absolute top-1/2 left-0 z-10 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:bg-card"
-                  aria-label="Anterior"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-chevron-left h-5 w-5 text-foreground"
-                  >
-                    <path d="m15 18-6-6 6-6"></path>
-                  </svg></button
-                ><button
-                  class="absolute top-1/2 right-0 z-10 flex h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 opacity-0 transition-opacity duration-300 group-hover:opacity-100 hover:bg-card"
-                  aria-label="Siguiente"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-chevron-right h-5 w-5 text-foreground"
-                  >
-                    <path d="m9 18 6-6-6-6"></path>
-                  </svg>
-                </button>
-                <div
-                  class="scrollbar-hide -mx-1 flex gap-5 overflow-x-auto px-1 pb-2"
-                  style="scrollbar-width: none"
-                >
-                  <a
-                    class="group relative w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl md:w-[320px]"
-                    href="https://artiefy-course-cards.lovable.app/curso/energia-solar/clase-1"
-                    ><div class="relative h-40 overflow-hidden">
-                      <img
-                        src="./Artie IA - Aprende con IA_files/photo-1509391366360-2e959784a276"
-                        alt="Fundamentos de Electricidad y Bases de Energía Solar"
-                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div
-                        class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"
-                      ></div>
-                      <div
-                        class="absolute top-3 right-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        <p>Seguir: Clase 1</p>
-                        <p
-                          class="max-w-[140px] truncate text-[10px] font-normal opacity-90"
-                        >
-                          Clase 1: Bienvenida
-                        </p>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <h3
-                        class="mb-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground"
-                      >
-                        Fundamentos de Electricidad y Bases de Energía Solar
-                      </h3>
-                      <p class="mb-3 text-xs text-muted-foreground">
-                        Energía Solar
-                      </p>
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="h-1 flex-1 overflow-hidden rounded-full bg-secondary"
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-all duration-500"
-                            style="width: 3%"
-                          ></div>
-                        </div>
-                        <span class="text-xs font-medium text-muted-foreground"
-                          >3%</span
-                        >
-                      </div>
-                    </div></a
-                  ><a
-                    class="group relative w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl md:w-[320px]"
-                    href="https://artiefy-course-cards.lovable.app/curso/frontend/clase-1"
-                    ><div class="relative h-40 overflow-hidden">
-                      <img
-                        src="./Artie IA - Aprende con IA_files/photo-1607799279861-4dd421887fb3"
-                        alt="Programación Frontend Semana"
-                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div
-                        class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"
-                      ></div>
-                      <div
-                        class="absolute top-3 right-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        <p>Seguir: Clase 1</p>
-                        <p
-                          class="max-w-[140px] truncate text-[10px] font-normal opacity-90"
-                        >
-                          Clase 1: Introducción al desarrollo
-                        </p>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <h3
-                        class="mb-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground"
-                      >
-                        Programación Frontend Semana
-                      </h3>
-                      <p class="mb-3 text-xs text-muted-foreground">
-                        Desarrollo Web
-                      </p>
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="h-1 flex-1 overflow-hidden rounded-full bg-secondary"
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-all duration-500"
-                            style="width: 0%"
-                          ></div>
-                        </div>
-                        <span class="text-xs font-medium text-muted-foreground"
-                          >0%</span
-                        >
-                      </div>
-                    </div></a
-                  ><a
-                    class="group relative w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl md:w-[320px]"
-                    href="https://artiefy-course-cards.lovable.app/curso/backend/clase-1"
-                    ><div class="relative h-40 overflow-hidden">
-                      <img
-                        src="./Artie IA - Aprende con IA_files/photo-1558494949-ef010cbdcc31"
-                        alt="Desarrollo Backend y Bases de Datos Combinada"
-                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div
-                        class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"
-                      ></div>
-                      <div
-                        class="absolute top-3 right-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        <p>Seguir: Clase 1</p>
-                        <p
-                          class="max-w-[140px] truncate text-[10px] font-normal opacity-90"
-                        >
-                          Clase 1: Bienvenida
-                        </p>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <h3
-                        class="mb-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground"
-                      >
-                        Desarrollo Backend y Bases de Datos Combinada
-                      </h3>
-                      <p class="mb-3 text-xs text-muted-foreground">
-                        Desarrollo Web
-                      </p>
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="h-1 flex-1 overflow-hidden rounded-full bg-secondary"
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-all duration-500"
-                            style="width: 0%"
-                          ></div>
-                        </div>
-                        <span class="text-xs font-medium text-muted-foreground"
-                          >0%</span
-                        >
-                      </div>
-                    </div></a
-                  ><a
-                    class="group relative w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl md:w-[320px]"
-                    href="https://artiefy-course-cards.lovable.app/curso/ia/clase-2"
-                    ><div class="relative h-40 overflow-hidden">
-                      <img
-                        src="./Artie IA - Aprende con IA_files/photo-1516321318423-f06f85e504b3"
-                        alt="Inteligencia Artificial Aplicada"
-                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div
-                        class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"
-                      ></div>
-                      <div
-                        class="absolute top-3 right-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        <p>Seguir: Clase 2</p>
-                        <p
-                          class="max-w-[140px] truncate text-[10px] font-normal opacity-90"
-                        >
-                          Clase 2: Redes Neuronales
-                        </p>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <h3
-                        class="mb-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground"
-                      >
-                        Inteligencia Artificial Aplicada
-                      </h3>
-                      <p class="mb-3 text-xs text-muted-foreground">
-                        Inteligencia Artificial
-                      </p>
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="h-1 flex-1 overflow-hidden rounded-full bg-secondary"
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-all duration-500"
-                            style="width: 15%"
-                          ></div>
-                        </div>
-                        <span class="text-xs font-medium text-muted-foreground"
-                          >15%</span
-                        >
-                      </div>
-                    </div></a
-                  ><a
-                    class="group relative w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl md:w-[320px]"
-                    href="https://artiefy-course-cards.lovable.app/curso/data-science/clase-3"
-                    ><div class="relative h-40 overflow-hidden">
-                      <img
-                        src="./Artie IA - Aprende con IA_files/photo-1551288049-bebda4e38f71"
-                        alt="Ciencia de Datos con Python"
-                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div
-                        class="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"
-                      ></div>
-                      <div
-                        class="absolute top-3 right-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        <p>Seguir: Clase 3</p>
-                        <p
-                          class="max-w-[140px] truncate text-[10px] font-normal opacity-90"
-                        >
-                          Clase 3: Pandas y NumPy
-                        </p>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <h3
-                        class="mb-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground"
-                      >
-                        Ciencia de Datos con Python
-                      </h3>
-                      <p class="mb-3 text-xs text-muted-foreground">
-                        Data Science
-                      </p>
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="h-1 flex-1 overflow-hidden rounded-full bg-secondary"
-                        >
-                          <div
-                            class="h-full rounded-full bg-primary transition-all duration-500"
-                            style="width: 28%"
-                          ></div>
-                        </div>
-                        <span class="text-xs font-medium text-muted-foreground"
-                          >28%</span
-                        >
-                      </div>
-                    </div></a
-                  >
-                </div>
-              </div>
-            </section>
-            <div class="py-6">
-              <div class="mb-4 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-trending-up h-5 w-5 text-primary"
-                  >
-                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                    <polyline points="16 7 22 7 22 13"></polyline>
-                  </svg>
-                  <h2
-                    class="font-display text-xl font-bold text-foreground md:text-2xl"
-                  >
-                    Top cursos
-                  </h2>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button
-                    class="rounded-full bg-muted/50 p-2 transition-colors hover:bg-muted"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="lucide lucide-chevron-left h-5 w-5 text-foreground"
+                <p class="mx-auto mb-10 max-w-2xl text-lg text-slate-400">
+                  Accede a todos los cursos, proyectos, herramientas de IA y la
+                  comunidad más activa de creadores de Latinoamérica.
+                </p>
+                <div class="flex flex-col justify-center gap-4 sm:flex-row">
+                  <a href="https://artiefy-course-cards.lovable.app/planes"
+                    ><button
+                      class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary bg-gradient-to-r from-cyan-500 to-teal-500 px-10 text-sm font-medium whitespace-nowrap text-white shadow-lg shadow-cyan-500/25 ring-offset-background transition-colors hover:bg-primary/90 hover:from-cyan-400 hover:to-teal-400 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
                     >
-                      <path d="m15 18-6-6 6-6"></path>
-                    </svg></button
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-award h-5 w-5"
+                      >
+                        <path
+                          d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"
+                        ></path>
+                        <circle cx="12" cy="8" r="6"></circle></svg
+                      >Ver planes y precios
+                    </button></a
                   ><button
-                    class="rounded-full bg-muted/50 p-2 transition-colors hover:bg-muted"
+                    class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-10 text-sm font-medium whitespace-nowrap text-white ring-offset-background transition-colors hover:bg-slate-700 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -3907,787 +5510,138 @@
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
-                      class="lucide lucide-chevron-right h-5 w-5 text-foreground"
+                      class="lucide lucide-play h-5 w-5"
                     >
-                      <path d="m9 18 6-6-6-6"></path>
-                    </svg>
+                      <polygon points="6 3 20 12 6 21 6 3"></polygon></svg
+                    >Prueba gratis 7 días
                   </button>
                 </div>
-              </div>
-              <div
-                class="scrollbar-hide flex gap-4 overflow-x-auto pb-2"
-                style="scrollbar-width: none"
-              >
-                <div class="group relative w-72 flex-shrink-0 cursor-pointer">
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1677442136019-21780ecad995"
-                      alt="Fundamentos de Inteligencia Artificial y Machine Learning"
-                      class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div
-                      class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
-                    ></div>
-                    <div
-                      class="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary"
-                    >
-                      <span class="text-sm font-bold text-primary-foreground"
-                        >1</span
-                      >
-                    </div>
-                    <div class="absolute right-3 bottom-3 left-3">
-                      <h3
-                        class="line-clamp-2 text-sm font-semibold text-foreground"
-                      >
-                        Fundamentos de Inteligencia Artificial y Machine
-                        Learning
-                      </h3>
-                      <p class="mt-1 text-xs text-muted-foreground">
-                        Dr. Carlos Mendoza
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div class="group relative w-72 flex-shrink-0 cursor-pointer">
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1633356122544-f134324a6cee"
-                      alt="Desarrollo Web Full Stack con React y Node.js"
-                      class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div
-                      class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
-                    ></div>
-                    <div
-                      class="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary"
-                    >
-                      <span class="text-sm font-bold text-primary-foreground"
-                        >2</span
-                      >
-                    </div>
-                    <div class="absolute right-3 bottom-3 left-3">
-                      <h3
-                        class="line-clamp-2 text-sm font-semibold text-foreground"
-                      >
-                        Desarrollo Web Full Stack con React y Node.js
-                      </h3>
-                      <p class="mt-1 text-xs text-muted-foreground">
-                        Ana María Torres
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div class="group relative w-72 flex-shrink-0 cursor-pointer">
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1551288049-bebda4e38f71(1)"
-                      alt="Ciencia de Datos con Python: De Cero a Experto"
-                      class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div
-                      class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
-                    ></div>
-                    <div
-                      class="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary"
-                    >
-                      <span class="text-sm font-bold text-primary-foreground"
-                        >3</span
-                      >
-                    </div>
-                    <div class="absolute right-3 bottom-3 left-3">
-                      <h3
-                        class="line-clamp-2 text-sm font-semibold text-foreground"
-                      >
-                        Ciencia de Datos con Python: De Cero a Experto
-                      </h3>
-                      <p class="mt-1 text-xs text-muted-foreground">
-                        Luis Fernando Ríos
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div class="group relative w-72 flex-shrink-0 cursor-pointer">
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1460925895917-afdab827c52f"
-                      alt="Diseño UX/UI: Creando Experiencias Digitales"
-                      class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div
-                      class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
-                    ></div>
-                    <div
-                      class="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary"
-                    >
-                      <span class="text-sm font-bold text-primary-foreground"
-                        >4</span
-                      >
-                    </div>
-                    <div class="absolute right-3 bottom-3 left-3">
-                      <h3
-                        class="line-clamp-2 text-sm font-semibold text-foreground"
-                      >
-                        Diseño UX/UI: Creando Experiencias Digitales
-                      </h3>
-                      <p class="mt-1 text-xs text-muted-foreground">
-                        María José Vargas
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div class="group relative w-72 flex-shrink-0 cursor-pointer">
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1558494949-ef010cbdcc31(1)"
-                      alt="Ciberseguridad y Hacking Ético Profesional"
-                      class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div
-                      class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
-                    ></div>
-                    <div
-                      class="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary"
-                    >
-                      <span class="text-sm font-bold text-primary-foreground"
-                        >5</span
-                      >
-                    </div>
-                    <div class="absolute right-3 bottom-3 left-3">
-                      <h3
-                        class="line-clamp-2 text-sm font-semibold text-foreground"
-                      >
-                        Ciberseguridad y Hacking Ético Profesional
-                      </h3>
-                      <p class="mt-1 text-xs text-muted-foreground">
-                        Andrés Felipe Castro
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <p class="mt-6 text-sm text-slate-500">
+                  Sin compromiso. Cancela cuando quieras.
+                </p>
               </div>
             </div>
           </div>
         </section>
-        <section class="border-b border-border/30 py-6">
+        <footer class="border-t border-slate-800/50 py-16">
           <div class="container">
-            <div class="flex flex-wrap items-center gap-4">
-              <div class="flex items-center gap-2 md:gap-3">
-                <button
-                  class="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-all duration-300"
-                >
-                  Cursos</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Programas</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Eventos
-                </button>
+            <div class="grid gap-10 md:grid-cols-4">
+              <div>
+                <div class="mb-4 flex items-center gap-2">
+                  <div
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-teal-500"
+                  >
+                    <span class="text-lg font-bold text-white">A</span>
+                  </div>
+                  <span class="font-display text-xl font-bold text-white"
+                    >Artiefy</span
+                  >
+                </div>
+                <p class="text-sm text-slate-500">
+                  La comunidad que hace sus ideas realidad. Aprende, crea y
+                  lanza con nosotros.
+                </p>
               </div>
-              <div
-                class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-2 md:gap-3"
-                style="scrollbar-width: none"
-              >
-                <button
-                  class="rounded-full bg-foreground px-5 py-2 text-sm font-medium whitespace-nowrap text-background transition-all duration-300"
-                >
-                  Destacados</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Tecnología</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Negocios</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Diseño</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Marketing</button
-                ><button
-                  class="rounded-full border border-border/50 bg-transparent px-5 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all duration-300 hover:border-foreground/50 hover:text-foreground"
-                >
-                  Ciencias
-                </button>
+              <div>
+                <h4 class="mb-4 font-semibold text-white">Plataforma</h4>
+                <ul class="space-y-2 text-slate-500">
+                  <li>
+                    <a
+                      class="transition-colors hover:text-cyan-400"
+                      href="https://artiefy-course-cards.lovable.app/"
+                      >Cursos</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="transition-colors hover:text-cyan-400"
+                      href="https://artiefy-course-cards.lovable.app/proyectos"
+                      >Proyectos</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="transition-colors hover:text-cyan-400"
+                      href="https://artiefy-course-cards.lovable.app/espacios"
+                      >Espacios</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="transition-colors hover:text-cyan-400"
+                      href="https://artiefy-course-cards.lovable.app/planes"
+                      >Planes</a
+                    >
+                  </li>
+                </ul>
               </div>
-              <button
-                class="[&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-colors hover:bg-muted hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="lucide lucide-filter h-4 w-4"
-                >
-                  <polygon
-                    points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
-                  ></polygon></svg
-                >Más filtros
-              </button>
-            </div>
-          </div>
-        </section>
-        <section class="py-16">
-          <div class="container">
-            <div class="mb-8 flex items-center justify-between">
-              <p class="text-muted-foreground">
-                Mostrando
-                <span class="font-medium text-foreground">8</span> cursos
-              </p>
+              <div>
+                <h4 class="mb-4 font-semibold text-white">Recursos</h4>
+                <ul class="space-y-2 text-slate-500">
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Blog</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Comunidad</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Ayuda</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >API</a
+                    >
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="mb-4 font-semibold text-white">Legal</h4>
+                <ul class="space-y-2 text-slate-500">
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Términos</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Privacidad</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://artiefy-course-cards.lovable.app/#"
+                      class="transition-colors hover:text-cyan-400"
+                      >Cookies</a
+                    >
+                  </li>
+                </ul>
+              </div>
             </div>
             <div
-              class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              style="opacity: 1"
+              class="mt-12 border-t border-slate-800/50 pt-8 text-center text-sm text-slate-600"
             >
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/fundamentos-ia"
-                  style="animation-delay: 0ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1677442136019-21780ecad995"
-                      alt="Fundamentos de Inteligencia Artificial y Machine Learning"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Fundamentos de Inteligencia Artificial y Machine Learning
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Dr. Carlos Mendoza</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-sparkles h-3 w-3"
-                        >
-                          <path
-                            d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
-                          ></path>
-                          <path d="M20 3v4"></path>
-                          <path d="M22 5h-4"></path>
-                          <path d="M4 17v2"></path>
-                          <path d="M5 18H3"></path></svg
-                        >Pro &amp; Premium
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Sincrónica</span
-                      ><span class="chip">Nivel Básico</span
-                      ><span class="chip">Virtual</span
-                      ><span class="chip">Mañana</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 9 de
-                      diciembre de 2025, 11:30 a.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/fullstack-react"
-                  style="animation-delay: 80ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1633356122544-f134324a6cee"
-                      alt="Desarrollo Web Full Stack con React y Node.js"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Desarrollo Web Full Stack con React y Node.js
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Ana María Torres</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-star h-3 w-3"
-                        >
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
-                          ></path></svg
-                        >Pro
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Virtual</span
-                      ><span class="chip">Nivel Intermedio</span
-                      ><span class="chip">Virtual</span
-                      ><span class="chip">Tarde</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 15 de
-                      diciembre de 2025, 2:00 p.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/ciencia-datos-python"
-                  style="animation-delay: 160ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1551288049-bebda4e38f71(1)"
-                      alt="Ciencia de Datos con Python: De Cero a Experto"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Ciencia de Datos con Python: De Cero a Experto
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Luis Fernando Ríos</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#f6ad55]/40 bg-[#3d3520] px-2 py-0.5 text-[10px] font-medium text-[#f6ad55]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-crown h-3 w-3"
-                        >
-                          <path
-                            d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"
-                          ></path>
-                          <path d="M5 21h14"></path></svg
-                        >Premium
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Sincrónica</span
-                      ><span class="chip">Nivel Avanzado</span
-                      ><span class="chip">Cali</span
-                      ><span class="chip">Noche</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 20 de
-                      diciembre de 2025, 7:00 p.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/diseno-ux-ui"
-                  style="animation-delay: 240ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1460925895917-afdab827c52f"
-                      alt="Diseño UX/UI: Creando Experiencias Digitales"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Diseño UX/UI: Creando Experiencias Digitales
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >María José Vargas</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-star h-3 w-3"
-                        >
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
-                          ></path></svg
-                        >Pro
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Presencial</span
-                      ><span class="chip">Nivel Básico</span
-                      ><span class="chip">Florencia</span
-                      ><span class="chip">Mañana</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 10 de enero
-                      de 2026, 9:00 a.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/ciberseguridad"
-                  style="animation-delay: 320ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1558494949-ef010cbdcc31(1)"
-                      alt="Ciberseguridad y Hacking Ético Profesional"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Ciberseguridad y Hacking Ético Profesional
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Andrés Felipe Castro</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#f6ad55]/40 bg-[#3d3520] px-2 py-0.5 text-[10px] font-medium text-[#f6ad55]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-crown h-3 w-3"
-                        >
-                          <path
-                            d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"
-                          ></path>
-                          <path d="M5 21h14"></path></svg
-                        >Premium
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Virtual</span
-                      ><span class="chip">Nivel Avanzado</span
-                      ><span class="chip">Virtual</span
-                      ><span class="chip">Noche</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 5 de enero de
-                      2026, 8:00 p.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/blockchain"
-                  style="animation-delay: 400ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1639322537228-f710d846310a"
-                      alt="Blockchain y Desarrollo de Smart Contracts"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Blockchain y Desarrollo de Smart Contracts
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Daniela Herrera</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-sparkles h-3 w-3"
-                        >
-                          <path
-                            d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
-                          ></path>
-                          <path d="M20 3v4"></path>
-                          <path d="M22 5h-4"></path>
-                          <path d="M4 17v2"></path>
-                          <path d="M5 18H3"></path></svg
-                        >Pro &amp; Premium
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Sincrónica</span
-                      ><span class="chip">Nivel Intermedio</span
-                      ><span class="chip">Virtual</span
-                      ><span class="chip">Tarde</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 12 de enero
-                      de 2026, 4:00 p.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/robotica-iot"
-                  style="animation-delay: 480ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1485827404703-89b55fcc595e"
-                      alt="Robótica e Internet de las Cosas (IoT)"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Robótica e Internet de las Cosas (IoT)
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Ing. Ricardo Gómez</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-star h-3 w-3"
-                        >
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
-                          ></path></svg
-                        >Pro
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Presencial</span
-                      ><span class="chip">Nivel Intermedio</span
-                      ><span class="chip">Cali</span
-                      ><span class="chip">Mañana</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 18 de enero
-                      de 2026, 8:00 a.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
-              <div style="opacity: 1; transform: none">
-                <a
-                  class="card-course animate-fade-up opacity-0"
-                  href="https://artiefy-course-cards.lovable.app/cursos/scrum-agile"
-                  style="animation-delay: 560ms"
-                  ><div class="relative overflow-hidden">
-                    <img
-                      src="./Artie IA - Aprende con IA_files/photo-1522071820081-009f0129c71c"
-                      alt="Metodologías Ágiles y Scrum Master Certificado"
-                      class="h-44 w-full object-cover transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      class="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-2 p-4">
-                    <h3
-                      class="line-clamp-2 text-base leading-snug font-semibold text-foreground md:text-lg"
-                    >
-                      Metodologías Ágiles y Scrum Master Certificado
-                    </h3>
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="text-xs text-muted-foreground">
-                        Por:
-                        <span class="font-medium text-primary"
-                          >Paula Andrea Niño</span
-                        >
-                      </p>
-                      <div
-                        class="flex items-center gap-1 rounded-full border border-[#4fd1c5]/40 bg-[#1a3a4a] px-2 py-0.5 text-[10px] font-medium text-[#4fd1c5]"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-sparkles h-3 w-3"
-                        >
-                          <path
-                            d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
-                          ></path>
-                          <path d="M20 3v4"></path>
-                          <path d="M22 5h-4"></path>
-                          <path d="M4 17v2"></path>
-                          <path d="M5 18H3"></path></svg
-                        >Pro &amp; Premium
-                      </div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="chip">Virtual</span
-                      ><span class="chip">Nivel Básico</span
-                      ><span class="chip">Virtual</span
-                      ><span class="chip">Tarde</span>
-                    </div>
-                    <p
-                      class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <span class="text-primary">📅</span>Empieza: 22 de enero
-                      de 2026, 3:00 p.&nbsp;m.
-                    </p>
-                  </div></a
-                >
-              </div>
+              © 2024 Artiefy. Todos los derechos reservados.
             </div>
           </div>
-        </section>
+        </footer>
       </div>
     </div>
 
@@ -4695,6 +5649,8 @@
       id="lovable-badge"
       role="complementary"
       aria-label="Edit with Lovable"
+      class="closing"
+      style="display: none"
     >
       <a
         id="lovable-badge-cta"

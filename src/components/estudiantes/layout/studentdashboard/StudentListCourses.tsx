@@ -546,7 +546,7 @@ export default async function StudentListCourses({
           </GradientText>
         </div>
       </div>
-      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-26">
+      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
         {processedCourses.map(
           ({
             course,

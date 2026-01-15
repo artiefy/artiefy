@@ -21,6 +21,23 @@
   color: #fff;
 }
 
+/* Fix autocomplete background */
+.student-searchbar__input:-webkit-autofill,
+.student-searchbar__input:-webkit-autofill:hover,
+.student-searchbar__input:-webkit-autofill:focus,
+.student-searchbar__input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: #fff !important;
+  transition: background-color 5000s ease-in-out 0s;
+  background-color: transparent !important;
+  caret-color: #fff !important;
+}
+
+/* Ensure caret is always visible */
+.student-searchbar__input {
+  caret-color: #fff;
+}
+
 .student-searchbar__input::placeholder,
 .student-searchbar__input {
   font-family:

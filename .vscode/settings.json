@@ -319,6 +319,16 @@
   "chat.implicitContext.enabled": {
     "panel": "always"
   },
+  // Nuevas configuraciones recomendadas de VS Code 1.108
+  "chat.useAgentSkills": true,
+  "chat.restoreLastPanelSession": false,
+  "chat.tools.terminal.enableAutoApprove": true,
+  "chat.tools.terminal.autoApproveWorkspaceNpmScripts": true,
+  "chat.tools.terminal.preventShellHistory": true,
+  "breadcrumbs.symbolPathSeparator": "/",
+  "git.blame.ignoreWhitespace": true,
+  "git.blame.editorDecoration.disableHover": false,
+  "debug.breakpointsView.presentation": "tree",
   // Vira theme customization (applied workspace-wide)
   "editor.fontLigatures": "'ss01','ss05','dlig'",
   "editor.fontFamily": "JetBrains Mono, 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
