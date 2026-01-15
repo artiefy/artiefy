@@ -2469,14 +2469,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       Clases Agendadas
                     </h2>
 
-                    {/* Clases agendadas */}
-                    <div className="space-y-4">
-                      <ScheduledMeetingsList
-                        meetings={meetingsForList}
-                        color={selectedColor}
-                      />
-                    </div>
-
                     {/* Botones de acción */}
                     <div className="flex w-full flex-col gap-3 sm:flex-row">
                       <Button
@@ -2495,6 +2487,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       >
                         Agendar Clase
                       </Button>
+                    </div>
+
+                    {/* Clases agendadas */}
+                    <div className="space-y-4">
+                      <ScheduledMeetingsList
+                        meetings={meetingsForList}
+                        color={selectedColor}
+                      />
                     </div>
                   </div>
                 )}
